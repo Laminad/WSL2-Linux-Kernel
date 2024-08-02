@@ -29,7 +29,10 @@
 #include <linux/sched/vhost_task.h>
 #include <linux/interval_tree_generic.h>
 #include <linux/nospec.h>
+<<<<<<< HEAD
 #include <linux/kcov.h>
+=======
+>>>>>>> master
 
 #include "vhost.h"
 
@@ -476,6 +479,7 @@ bool vhost_exceeds_weight(struct vhost_virtqueue *vq,
 }
 EXPORT_SYMBOL_GPL(vhost_exceeds_weight);
 
+<<<<<<< HEAD
 static size_t vhost_get_avail_size(struct vhost_virtqueue *vq,
 				   unsigned int num)
 {
@@ -506,6 +510,11 @@ void vhost_dev_init(struct vhost_dev *dev,
 		    bool use_worker,
 		    int (*msg_handler)(struct vhost_dev *dev, u32 asid,
 				       struct vhost_iotlb_msg *msg))
+=======
+void vhost_dev_init(struct vhost_dev *dev,
+		    struct vhost_virtqueue **vqs, int nvqs,
+		    int iov_limit, int weight, int byte_weight)
+>>>>>>> master
 {
 	struct vhost_virtqueue *vq;
 	int i;
@@ -517,11 +526,19 @@ void vhost_dev_init(struct vhost_dev *dev,
 	dev->umem = NULL;
 	dev->iotlb = NULL;
 	dev->mm = NULL;
+<<<<<<< HEAD
 	dev->iov_limit = iov_limit;
 	dev->weight = weight;
 	dev->byte_weight = byte_weight;
 	dev->use_worker = use_worker;
 	dev->msg_handler = msg_handler;
+=======
+	dev->worker = NULL;
+	dev->iov_limit = iov_limit;
+	dev->weight = weight;
+	dev->byte_weight = byte_weight;
+	init_llist_head(&dev->work_list);
+>>>>>>> master
 	init_waitqueue_head(&dev->wait);
 	INIT_LIST_HEAD(&dev->read_list);
 	INIT_LIST_HEAD(&dev->pending_list);
@@ -1293,7 +1310,35 @@ static void vhost_dev_unlock_vqs(struct vhost_dev *d)
 static inline int vhost_get_avail_idx(struct vhost_virtqueue *vq,
 				      __virtio16 *idx)
 {
+<<<<<<< HEAD
 	return vhost_get_avail(vq, *idx, &vq->avail->idx);
+=======
+	struct vhost_umem_node *tmp, *node;
+
+	if (!size)
+		return -EFAULT;
+
+	node = kmalloc(sizeof(*node), GFP_ATOMIC);
+	if (!node)
+		return -ENOMEM;
+
+	if (umem->numem == max_iotlb_entries) {
+		tmp = list_first_entry(&umem->umem_list, typeof(*tmp), link);
+		vhost_umem_free(umem, tmp);
+	}
+
+	node->start = start;
+	node->size = size;
+	node->last = end;
+	node->userspace_addr = userspace_addr;
+	node->perm = perm;
+	INIT_LIST_HEAD(&node->link);
+	list_add_tail(&node->link, &umem->umem_list);
+	vhost_umem_interval_tree_insert(node, &umem->umem_tree);
+	umem->numem++;
+
+	return 0;
+>>>>>>> master
 }
 
 static inline int vhost_get_avail_head(struct vhost_virtqueue *vq,
@@ -1457,6 +1502,7 @@ ssize_t vhost_chr_write_iter(struct vhost_dev *dev,
 		ret = -EINVAL;
 		goto done;
 	}
+<<<<<<< HEAD
 
 	if (msg.type == VHOST_IOTLB_UPDATE && msg.size == 0) {
 		ret = -EINVAL;
@@ -1468,6 +1514,9 @@ ssize_t vhost_chr_write_iter(struct vhost_dev *dev,
 	else
 		ret = vhost_process_iotlb_msg(dev, asid, &msg);
 	if (ret) {
+=======
+	if (vhost_process_iotlb_msg(dev, &msg)) {
+>>>>>>> master
 		ret = -EFAULT;
 		goto done;
 	}
@@ -1856,6 +1905,18 @@ static long vhost_vring_set_num_addr(struct vhost_dev *d,
 {
 	long r;
 
+<<<<<<< HEAD
+=======
+	r = get_user(idx, idxp);
+	if (r < 0)
+		return r;
+	if (idx >= d->nvqs)
+		return -ENOBUFS;
+
+	idx = array_index_nospec(idx, d->nvqs);
+	vq = d->vqs[idx];
+
+>>>>>>> master
 	mutex_lock(&vq->mutex);
 
 	switch (ioctl) {
@@ -2162,8 +2223,13 @@ static int log_write(void __user *log_base,
 
 static int log_write_hva(struct vhost_virtqueue *vq, u64 hva, u64 len)
 {
+<<<<<<< HEAD
 	struct vhost_iotlb *umem = vq->umem;
 	struct vhost_iotlb_map *u;
+=======
+	struct vhost_umem *umem = vq->umem;
+	struct vhost_umem_node *u;
+>>>>>>> master
 	u64 start, end, l, min;
 	int r;
 	bool hit = false;
@@ -2173,6 +2239,7 @@ static int log_write_hva(struct vhost_virtqueue *vq, u64 hva, u64 len)
 		/* More than one GPAs can be mapped into a single HVA. So
 		 * iterate all possible umems here to be safe.
 		 */
+<<<<<<< HEAD
 		list_for_each_entry(u, &umem->list, link) {
 			if (u->addr > hva - 1 + len ||
 			    u->addr - 1 + u->size < hva)
@@ -2182,6 +2249,18 @@ static int log_write_hva(struct vhost_virtqueue *vq, u64 hva, u64 len)
 			l = end - start + 1;
 			r = log_write(vq->log_base,
 				      u->start + start - u->addr,
+=======
+		list_for_each_entry(u, &umem->umem_list, link) {
+			if (u->userspace_addr > hva - 1 + len ||
+			    u->userspace_addr - 1 + u->size < hva)
+				continue;
+			start = max(u->userspace_addr, hva);
+			end = min(u->userspace_addr - 1 + u->size,
+				  hva - 1 + len);
+			l = end - start + 1;
+			r = log_write(vq->log_base,
+				      u->start + start - u->userspace_addr,
+>>>>>>> master
 				      l);
 			if (r < 0)
 				return r;
@@ -2201,7 +2280,11 @@ static int log_write_hva(struct vhost_virtqueue *vq, u64 hva, u64 len)
 
 static int log_used(struct vhost_virtqueue *vq, u64 used_offset, u64 len)
 {
+<<<<<<< HEAD
 	struct iovec *iov = vq->log_iov;
+=======
+	struct iovec iov[64];
+>>>>>>> master
 	int i, ret;
 
 	if (!vq->iotlb)

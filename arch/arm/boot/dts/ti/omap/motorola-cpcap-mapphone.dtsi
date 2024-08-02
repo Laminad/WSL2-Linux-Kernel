@@ -101,10 +101,18 @@
 			pinctrl-3 = <&uart3_pins>;
 			pinctrl-names = "default", "ulpi", "utmi", "uart";
 			#phy-cells = <0>;
+<<<<<<< HEAD:arch/arm/boot/dts/ti/omap/motorola-cpcap-mapphone.dtsi
 			interrupts-extended =
 				<&cpcap 15 0>, <&cpcap 14 0>, <&cpcap 28 0>,
 				<&cpcap 19 0>, <&cpcap 18 0>, <&cpcap 17 0>,
 				<&cpcap 16 0>, <&cpcap 49 0>, <&cpcap 48 0>;
+=======
+			interrupts-extended = <
+				&cpcap 15 0 &cpcap 14 0 &cpcap 28 0 &cpcap 19 0
+				&cpcap 18 0 &cpcap 17 0 &cpcap 16 0 &cpcap 49 0
+				&cpcap 48 0
+			>;
+>>>>>>> master:arch/arm/boot/dts/motorola-cpcap-mapphone.dtsi
 			interrupt-names =
 				"id_ground", "id_float", "se0conn",
 				"vbusvld", "sessvld", "sessend",

@@ -77,6 +77,9 @@ static cpumask_t xmon_batch_cpus = CPU_MASK_NONE;
 #define xmon_owner 0
 #endif /* CONFIG_SMP */
 
+#ifdef CONFIG_PPC_PSERIES
+static int set_indicator_token = RTAS_UNKNOWN_SERVICE;
+#endif
 static unsigned long in_xmon __read_mostly = 0;
 static int xmon_on = IS_ENABLED(CONFIG_XMON_DEFAULT);
 static bool xmon_is_ro = IS_ENABLED(CONFIG_XMON_DEFAULT_RO_MODE);
@@ -396,7 +399,10 @@ static inline void disable_surveillance(void)
 #ifdef CONFIG_PPC_PSERIES
 	/* Since this can't be a module, args should end up below 4GB. */
 	static struct rtas_args args;
+<<<<<<< HEAD
 	const s32 token = rtas_function_token(RTAS_FN_SET_INDICATOR);
+=======
+>>>>>>> master
 
 	/*
 	 * At this point we have got all the cpus we can into
@@ -405,10 +411,17 @@ static inline void disable_surveillance(void)
 	 * If we did try to take rtas.lock there would be a
 	 * real possibility of deadlock.
 	 */
+<<<<<<< HEAD
 	if (token == RTAS_UNKNOWN_SERVICE)
 		return;
 
 	rtas_call_unlocked(&args, token, 3, 1, NULL,
+=======
+	if (set_indicator_token == RTAS_UNKNOWN_SERVICE)
+		return;
+
+	rtas_call_unlocked(&args, set_indicator_token, 3, 1, NULL,
+>>>>>>> master
 			   SURVEILLANCE_TOKEN, 0, 0);
 
 #endif /* CONFIG_PPC_PSERIES */
@@ -503,8 +516,11 @@ static int xmon_core(struct pt_regs *regs, volatile int fromipi)
 	local_irq_save(flags);
 	hard_irq_disable();
 
+<<<<<<< HEAD
 	locked_down = xmon_is_locked_down();
 
+=======
+>>>>>>> master
 	if (!fromipi) {
 		tracing_enabled = tracing_is_on();
 		tracing_off();
@@ -3976,6 +3992,14 @@ static void xmon_init(int enable)
 		__debugger_iabr_match = xmon_iabr_match;
 		__debugger_break_match = xmon_break_match;
 		__debugger_fault_handler = xmon_fault_handler;
+
+#ifdef CONFIG_PPC_PSERIES
+		/*
+		 * Get the token here to avoid trying to get a lock
+		 * during the crash, causing a deadlock.
+		 */
+		set_indicator_token = rtas_token("set-indicator");
+#endif
 	} else {
 		__debugger = NULL;
 		__debugger_ipi = NULL;

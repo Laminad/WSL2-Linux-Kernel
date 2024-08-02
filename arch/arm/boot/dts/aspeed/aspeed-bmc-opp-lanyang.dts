@@ -325,5 +325,8 @@
 &adc {
 	status = "okay";
 };
+<<<<<<< HEAD:arch/arm/boot/dts/aspeed/aspeed-bmc-opp-lanyang.dts
 
 #include "ibm-power9-dual.dtsi"
+=======
+>>>>>>> master:arch/arm/boot/dts/aspeed-bmc-opp-lanyang.dts

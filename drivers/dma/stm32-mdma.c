@@ -1411,6 +1411,13 @@ static irqreturn_t stm32_mdma_irq_handler(int irq, void *devid)
 	}
 	id = __ffs(status);
 	chan = &dmadev->chan[id];
+<<<<<<< HEAD
+=======
+	if (!chan) {
+		dev_dbg(mdma2dev(dmadev), "MDMA channel not initialized\n");
+		goto exit;
+	}
+>>>>>>> master
 
 	/* Handle interrupt for the channel */
 	spin_lock(&chan->vchan.lock);

@@ -67,7 +67,11 @@ do_compat_cache_op(unsigned long start, unsigned long end, int flags)
  */
 long compat_arm_syscall(struct pt_regs *regs, int scno)
 {
+<<<<<<< HEAD
 	unsigned long addr;
+=======
+	siginfo_t info;
+>>>>>>> master
 
 	switch (scno) {
 	/*
@@ -112,7 +116,11 @@ long compat_arm_syscall(struct pt_regs *regs, int scno)
 
 	addr = instruction_pointer(regs) - (compat_thumb_mode(regs) ? 2 : 4);
 
+<<<<<<< HEAD
 	arm64_notify_die("Oops - bad compat syscall(2)", regs,
 			 SIGILL, ILL_ILLTRP, addr, 0);
+=======
+	arm64_notify_die("Oops - bad compat syscall(2)", regs, &info, scno);
+>>>>>>> master
 	return 0;
 }

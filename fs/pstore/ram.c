@@ -726,6 +726,18 @@ static int ramoops_probe(struct platform_device *pdev)
 	phys_addr_t paddr;
 	int err = -EINVAL;
 
+<<<<<<< HEAD
+=======
+	if (dev_of_node(dev) && !pdata) {
+		pdata = &pdata_local;
+		memset(pdata, 0, sizeof(*pdata));
+
+		err = ramoops_parse_dt(pdev, pdata);
+		if (err < 0)
+			goto fail_out;
+	}
+
+>>>>>>> master
 	/*
 	 * Only a single ramoops area allowed at a time, so fail extra
 	 * probes.
@@ -817,10 +829,15 @@ static int ramoops_probe(struct platform_device *pdev)
 	 * the single region size is how to check.
 	 */
 	cxt->pstore.flags = 0;
+<<<<<<< HEAD
 	if (cxt->max_dump_cnt) {
 		cxt->pstore.flags |= PSTORE_FLAGS_DMESG;
 		cxt->pstore.max_reason = pdata->max_reason;
 	}
+=======
+	if (cxt->max_dump_cnt)
+		cxt->pstore.flags |= PSTORE_FLAGS_DMESG;
+>>>>>>> master
 	if (cxt->console_size)
 		cxt->pstore.flags |= PSTORE_FLAGS_CONSOLE;
 	if (cxt->max_ftrace_cnt)
@@ -835,7 +852,11 @@ static int ramoops_probe(struct platform_device *pdev)
 	 */
 	if (cxt->pstore.flags & PSTORE_FLAGS_DMESG) {
 		cxt->pstore.bufsize = cxt->dprzs[0]->buffer_size;
+<<<<<<< HEAD
 		cxt->pstore.buf = kvzalloc(cxt->pstore.bufsize, GFP_KERNEL);
+=======
+		cxt->pstore.buf = kzalloc(cxt->pstore.bufsize, GFP_KERNEL);
+>>>>>>> master
 		if (!cxt->pstore.buf) {
 			pr_err("cannot allocate pstore crash dump buffer\n");
 			err = -ENOMEM;

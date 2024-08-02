@@ -625,10 +625,13 @@ cur_state_store(struct device *dev, struct device_attribute *attr,
 	if ((long)state < 0)
 		return -EINVAL;
 
+<<<<<<< HEAD
 	/* Requested state should be less than max_state + 1 */
 	if (state > cdev->max_state)
 		return -EINVAL;
 
+=======
+>>>>>>> master
 	mutex_lock(&cdev->lock);
 
 	result = cdev->ops->set_cur_state(cdev, state);

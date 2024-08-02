@@ -1829,6 +1829,14 @@ static void lpphy_papd_cal_txpwr(struct b43_wldev *dev)
 
 	lpphy_set_tx_power_control(dev, B43_LPPHY_TXPCTL_OFF);
 
+<<<<<<< HEAD
+=======
+	if (dev->dev->chip_id == 0x4325 && dev->dev->chip_rev == 0)
+		lpphy_papd_cal(dev, oldgains, 0, 1, 30);
+	else
+		lpphy_papd_cal(dev, oldgains, 0, 1, 65);
+
+>>>>>>> master
 	if (old_afe_ovr)
 		lpphy_set_tx_gains(dev, oldgains);
 	lpphy_set_bb_mult(dev, old_bbmult);

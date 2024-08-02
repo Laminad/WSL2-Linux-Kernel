@@ -272,6 +272,7 @@ static inline struct aa_profile *aa_get_newest_profile(struct aa_profile *p)
 	return labels_profile(aa_get_newest_label(&p->label));
 }
 
+<<<<<<< HEAD
 static inline aa_state_t RULE_MEDIATES(struct aa_ruleset *rules,
 				       unsigned char class)
 {
@@ -285,6 +286,21 @@ static inline aa_state_t RULE_MEDIATES(struct aa_ruleset *rules,
 static inline aa_state_t RULE_MEDIATES_AF(struct aa_ruleset *rules, u16 AF)
 {
 	aa_state_t state = RULE_MEDIATES(rules, AA_CLASS_NET);
+=======
+static inline unsigned int PROFILE_MEDIATES(struct aa_profile *profile,
+					    unsigned char class)
+{
+	if (class <= AA_CLASS_LAST)
+		return profile->policy.start[class];
+	else
+		return aa_dfa_match_len(profile->policy.dfa,
+					profile->policy.start[0], &class, 1);
+}
+
+static inline unsigned int PROFILE_MEDIATES_AF(struct aa_profile *profile,
+					       u16 AF) {
+	unsigned int state = PROFILE_MEDIATES(profile, AA_CLASS_NET);
+>>>>>>> master
 	__be16 be_af = cpu_to_be16(AF);
 
 	if (!state)

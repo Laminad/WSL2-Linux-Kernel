@@ -1475,6 +1475,26 @@ static void blk_mq_requeue_work(struct work_struct *work)
 	list_splice_init(&q->flush_list, &flush_list);
 	spin_unlock_irq(&q->requeue_lock);
 
+<<<<<<< HEAD
+=======
+	list_for_each_entry_safe(rq, next, &rq_list, queuelist) {
+		if (!(rq->rq_flags & (RQF_SOFTBARRIER | RQF_DONTPREP)))
+			continue;
+
+		rq->rq_flags &= ~RQF_SOFTBARRIER;
+		list_del_init(&rq->queuelist);
+		/*
+		 * If RQF_DONTPREP, rq has contained some driver specific
+		 * data, so insert it to hctx dispatch list to avoid any
+		 * merge.
+		 */
+		if (rq->rq_flags & RQF_DONTPREP)
+			blk_mq_request_bypass_insert(rq, false);
+		else
+			blk_mq_sched_insert_request(rq, true, false, false);
+	}
+
+>>>>>>> master
 	while (!list_empty(&rq_list)) {
 		rq = list_entry(rq_list.next, struct request, queuelist);
 		/*
@@ -1596,10 +1616,46 @@ static bool blk_mq_req_expired(struct request *rq, struct blk_expired_data *expi
 
 void blk_mq_put_rq_ref(struct request *rq)
 {
+<<<<<<< HEAD
 	if (is_flush_rq(rq)) {
 		if (rq->end_io(rq, 0) == RQ_END_IO_FREE)
 			blk_mq_free_request(rq);
 	} else if (req_ref_put_and_test(rq)) {
+=======
+	unsigned long *next = priv;
+
+	/*
+	 * Just do a quick check if it is expired before locking the request in
+	 * so we're not unnecessarilly synchronizing across CPUs.
+	 */
+	if (!blk_mq_req_expired(rq, next))
+		return;
+
+	/*
+	 * We have reason to believe the request may be expired. Take a
+	 * reference on the request to lock this request lifetime into its
+	 * currently allocated context to prevent it from being reallocated in
+	 * the event the completion by-passes this timeout handler.
+	 *
+	 * If the reference was already released, then the driver beat the
+	 * timeout handler to posting a natural completion.
+	 */
+	if (!refcount_inc_not_zero(&rq->ref))
+		return;
+
+	/*
+	 * The request is now locked and cannot be reallocated underneath the
+	 * timeout handler's processing. Re-verify this exact request is truly
+	 * expired; if it is not expired, then the request was completed and
+	 * reallocated as a new request.
+	 */
+	if (blk_mq_req_expired(rq, next))
+		blk_mq_rq_timed_out(rq, reserved);
+
+	if (is_flush_rq(rq, hctx))
+		rq->end_io(rq, 0);
+	else if (refcount_dec_and_test(&rq->ref))
+>>>>>>> master
 		__blk_mq_free_request(rq);
 	}
 }
@@ -2845,12 +2901,70 @@ void blk_mq_flush_plug_list(struct blk_plug *plug, bool from_schedule)
 			return;
 	}
 
+<<<<<<< HEAD
 	do {
 		blk_mq_dispatch_plug_list(plug, from_schedule);
 	} while (!rq_list_empty(plug->mq_list));
 }
 
 static void blk_mq_try_issue_list_directly(struct blk_mq_hw_ctx *hctx,
+=======
+	if (q->elevator && !bypass_insert)
+		goto insert;
+
+	if (!blk_mq_get_dispatch_budget(hctx))
+		goto insert;
+
+	if (!blk_mq_get_driver_tag(rq)) {
+		blk_mq_put_dispatch_budget(hctx);
+		goto insert;
+	}
+
+	return __blk_mq_issue_directly(hctx, rq, cookie);
+insert:
+	if (bypass_insert)
+		return BLK_STS_RESOURCE;
+
+	blk_mq_request_bypass_insert(rq, run_queue);
+	return BLK_STS_OK;
+}
+
+static void blk_mq_try_issue_directly(struct blk_mq_hw_ctx *hctx,
+		struct request *rq, blk_qc_t *cookie)
+{
+	blk_status_t ret;
+	int srcu_idx;
+
+	might_sleep_if(hctx->flags & BLK_MQ_F_BLOCKING);
+
+	hctx_lock(hctx, &srcu_idx);
+
+	ret = __blk_mq_try_issue_directly(hctx, rq, cookie, false);
+	if (ret == BLK_STS_RESOURCE || ret == BLK_STS_DEV_RESOURCE)
+		blk_mq_request_bypass_insert(rq, true);
+	else if (ret != BLK_STS_OK)
+		blk_mq_end_request(rq, ret);
+
+	hctx_unlock(hctx, srcu_idx);
+}
+
+blk_status_t blk_mq_request_issue_directly(struct request *rq)
+{
+	blk_status_t ret;
+	int srcu_idx;
+	blk_qc_t unused_cookie;
+	struct blk_mq_ctx *ctx = rq->mq_ctx;
+	struct blk_mq_hw_ctx *hctx = blk_mq_map_queue(rq->q, ctx->cpu);
+
+	hctx_lock(hctx, &srcu_idx);
+	ret = __blk_mq_try_issue_directly(hctx, rq, &unused_cookie, true);
+	hctx_unlock(hctx, srcu_idx);
+
+	return ret;
+}
+
+void blk_mq_try_issue_list_directly(struct blk_mq_hw_ctx *hctx,
+>>>>>>> master
 		struct list_head *list)
 {
 	int queued = 0;
@@ -2861,6 +2975,7 @@ static void blk_mq_try_issue_list_directly(struct blk_mq_hw_ctx *hctx,
 				queuelist);
 
 		list_del_init(&rq->queuelist);
+<<<<<<< HEAD
 		ret = blk_mq_request_issue_directly(rq, list_empty(list));
 		switch (ret) {
 		case BLK_STS_OK:
@@ -2873,6 +2988,16 @@ static void blk_mq_try_issue_list_directly(struct blk_mq_hw_ctx *hctx,
 				blk_mq_run_hw_queue(hctx, false);
 			goto out;
 		default:
+=======
+		ret = blk_mq_request_issue_directly(rq);
+		if (ret != BLK_STS_OK) {
+			if (ret == BLK_STS_RESOURCE ||
+					ret == BLK_STS_DEV_RESOURCE) {
+				blk_mq_request_bypass_insert(rq,
+							list_empty(list));
+				break;
+			}
+>>>>>>> master
 			blk_mq_end_request(rq, ret);
 			break;
 		}
@@ -3661,12 +3786,15 @@ static void blk_mq_exit_hctx(struct request_queue *q,
 		set->ops->exit_hctx(hctx, hctx_idx);
 
 	blk_mq_remove_cpuhp(hctx);
+<<<<<<< HEAD
 
 	xa_erase(&q->hctx_table, hctx_idx);
 
 	spin_lock(&q->unused_hctx_lock);
 	list_add(&hctx->hctx_list, &q->unused_hctx_list);
 	spin_unlock(&q->unused_hctx_lock);
+=======
+>>>>>>> master
 }
 
 static void blk_mq_exit_hw_queues(struct request_queue *q,
@@ -3751,12 +3879,20 @@ blk_mq_alloc_hctx(struct request_queue *q, struct blk_mq_tag_set *set,
 	 * runtime
 	 */
 	hctx->ctxs = kmalloc_array_node(nr_cpu_ids, sizeof(void *),
+<<<<<<< HEAD
 			gfp, node);
+=======
+			GFP_NOIO | __GFP_NOWARN | __GFP_NORETRY, node);
+>>>>>>> master
 	if (!hctx->ctxs)
 		goto free_cpumask;
 
 	if (sbitmap_init_node(&hctx->ctx_map, nr_cpu_ids, ilog2(8),
+<<<<<<< HEAD
 				gfp, node, false, false))
+=======
+				GFP_NOIO | __GFP_NOWARN | __GFP_NORETRY, node))
+>>>>>>> master
 		goto free_ctxs;
 	hctx->nr_ctx = 0;
 
@@ -3768,10 +3904,32 @@ blk_mq_alloc_hctx(struct request_queue *q, struct blk_mq_tag_set *set,
 	if (!hctx->fq)
 		goto free_bitmap;
 
+<<<<<<< HEAD
 	blk_mq_hctx_kobj_init(hctx);
+=======
+	hctx->fq = blk_alloc_flush_queue(q, hctx->numa_node, set->cmd_size,
+			GFP_NOIO | __GFP_NOWARN | __GFP_NORETRY);
+	if (!hctx->fq)
+		goto exit_hctx;
+>>>>>>> master
 
 	return hctx;
 
+<<<<<<< HEAD
+=======
+	if (hctx->flags & BLK_MQ_F_BLOCKING)
+		init_srcu_struct(hctx->srcu);
+
+	blk_mq_debugfs_register_hctx(q, hctx);
+
+	return 0;
+
+ free_fq:
+	blk_free_flush_queue(hctx->fq);
+ exit_hctx:
+	if (set->ops->exit_hctx)
+		set->ops->exit_hctx(hctx, hctx_idx);
+>>>>>>> master
  free_bitmap:
 	sbitmap_free(&hctx->ctx_map);
  free_ctxs:
@@ -4231,9 +4389,28 @@ static void blk_mq_realloc_hw_ctxs(struct blk_mq_tag_set *set,
 		int node = blk_mq_get_hctx_node(set, i);
 		struct blk_mq_hw_ctx *old_hctx = xa_load(&q->hctx_table, i);
 
+<<<<<<< HEAD
 		if (old_hctx) {
 			old_node = old_hctx->numa_node;
 			blk_mq_exit_hctx(q, set, old_hctx, i);
+=======
+		if (hctxs[i])
+			continue;
+
+		node = blk_mq_hw_queue_to_node(q->mq_map, i);
+		hctxs[i] = kzalloc_node(blk_mq_hw_ctx_size(set),
+				GFP_NOIO | __GFP_NOWARN | __GFP_NORETRY,
+				node);
+		if (!hctxs[i])
+			break;
+
+		if (!zalloc_cpumask_var_node(&hctxs[i]->cpumask,
+					GFP_NOIO | __GFP_NOWARN | __GFP_NORETRY,
+					node)) {
+			kfree(hctxs[i]);
+			hctxs[i] = NULL;
+			break;
+>>>>>>> master
 		}
 
 		if (!blk_mq_alloc_and_init_hctx(set, q, i, node)) {
@@ -4651,8 +4828,13 @@ int blk_mq_update_nr_requests(struct request_queue *q, unsigned int nr)
 		}
 		if (ret)
 			break;
+<<<<<<< HEAD
 		if (q->elevator && q->elevator->type->ops.depth_updated)
 			q->elevator->type->ops.depth_updated(hctx);
+=======
+		if (q->elevator && q->elevator->type->ops.mq.depth_updated)
+			q->elevator->type->ops.mq.depth_updated(hctx);
+>>>>>>> master
 	}
 	if (!ret) {
 		q->nr_requests = nr;

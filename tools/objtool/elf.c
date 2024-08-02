@@ -24,6 +24,7 @@
 
 #define MAX_NAME_LEN 128
 
+<<<<<<< HEAD
 static inline u32 str_hash(const char *str)
 {
 	return jhash(str, strlen(str), 0);
@@ -130,6 +131,9 @@ static int symbol_hole_by_offset(const void *key, const struct rb_node *node)
 }
 
 struct section *find_section_by_name(const struct elf *elf, const char *name)
+=======
+struct section *find_section_by_name(struct elf *elf, const char *name)
+>>>>>>> master
 {
 	struct section *sec;
 
@@ -514,11 +518,16 @@ static int read_symbols(struct elf *elf)
 
 	/* Create parent/child links for any cold subfunctions */
 	list_for_each_entry(sec, &elf->sections, list) {
+<<<<<<< HEAD
 		sec_for_each_sym(sec, sym) {
+=======
+		list_for_each_entry(sym, &sec->symbol_list, list) {
+>>>>>>> master
 			char pname[MAX_NAME_LEN + 1];
 			size_t pnamelen;
 			if (sym->type != STT_FUNC)
 				continue;
+<<<<<<< HEAD
 
 			if (sym->pfunc == NULL)
 				sym->pfunc = sym;
@@ -526,6 +535,9 @@ static int read_symbols(struct elf *elf)
 			if (sym->cfunc == NULL)
 				sym->cfunc = sym;
 
+=======
+			sym->pfunc = sym->cfunc = sym;
+>>>>>>> master
 			coldstr = strstr(sym->name, ".cold");
 			if (!coldstr)
 				continue;
@@ -697,11 +709,33 @@ static int elf_update_symbol(struct elf *elf, struct section *symtab,
 		idx -= max_idx;
 	}
 
+<<<<<<< HEAD
 	/* something went side-ways */
 	if (idx < 0) {
 		WARN("negative index");
 		return -1;
 	}
+=======
+			if (!gelf_getrela(sec->data, i, &rela->rela)) {
+				WARN_ELF("gelf_getrela");
+				return -1;
+			}
+
+			rela->type = GELF_R_TYPE(rela->rela.r_info);
+			rela->addend = rela->rela.r_addend;
+			rela->offset = rela->rela.r_offset;
+			symndx = GELF_R_SYM(rela->rela.r_info);
+			rela->sym = find_symbol_by_index(elf, symndx);
+			rela->rela_sec = sec;
+			if (!rela->sym) {
+				WARN("can't find rela entry symbol %d for %s",
+				     symndx, sec->name);
+				return -1;
+			}
+
+			list_add_tail(&rela->list, &sec->rela_list);
+			hash_add(sec->rela_hash, &rela->hash, rela->offset);
+>>>>>>> master
 
 	/* setup extended section index magic and write the symbol */
 	if ((shndx >= SHN_UNDEF && shndx < SHN_LORESERVE) || is_special_shndx) {

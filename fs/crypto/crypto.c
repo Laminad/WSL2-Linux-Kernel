@@ -113,7 +113,11 @@ int fscrypt_crypt_block(const struct inode *inode, fscrypt_direction_t rw,
 
 	if (WARN_ON_ONCE(len <= 0))
 		return -EINVAL;
+<<<<<<< HEAD
 	if (WARN_ON_ONCE(len % FSCRYPT_CONTENTS_ALIGNMENT != 0))
+=======
+	if (WARN_ON_ONCE(len % FS_CRYPTO_BLOCK_SIZE != 0))
+>>>>>>> master
 		return -EINVAL;
 
 	fscrypt_generate_iv(&iv, lblk_num, ci);
@@ -184,6 +188,7 @@ struct page *fscrypt_encrypt_pagecache_blocks(struct page *page,
 	unsigned int i;
 	int err;
 
+<<<<<<< HEAD
 	if (WARN_ON_ONCE(!PageLocked(page)))
 		return ERR_PTR(-EINVAL);
 
@@ -202,6 +207,38 @@ struct page *fscrypt_encrypt_pagecache_blocks(struct page *page,
 			fscrypt_free_bounce_page(ciphertext_page);
 			return ERR_PTR(err);
 		}
+=======
+	if (inode->i_sb->s_cop->flags & FS_CFLG_OWN_PAGES) {
+		/* with inplace-encryption we just encrypt the page */
+		err = fscrypt_do_page_crypto(inode, FS_ENCRYPT, lblk_num, page,
+					     ciphertext_page, len, offs,
+					     gfp_flags);
+		if (err)
+			return ERR_PTR(err);
+
+		return ciphertext_page;
+	}
+
+	if (WARN_ON_ONCE(!PageLocked(page)))
+		return ERR_PTR(-EINVAL);
+
+	ctx = fscrypt_get_ctx(inode, gfp_flags);
+	if (IS_ERR(ctx))
+		return (struct page *)ctx;
+
+	/* The encryption operation will require a bounce page. */
+	ciphertext_page = fscrypt_alloc_bounce_page(ctx, gfp_flags);
+	if (IS_ERR(ciphertext_page))
+		goto errout;
+
+	ctx->w.control_page = page;
+	err = fscrypt_do_page_crypto(inode, FS_ENCRYPT, lblk_num,
+				     page, ciphertext_page, len, offs,
+				     gfp_flags);
+	if (err) {
+		ciphertext_page = ERR_PTR(err);
+		goto errout;
+>>>>>>> master
 	}
 	SetPagePrivate(ciphertext_page);
 	set_page_private(ciphertext_page, (unsigned long)page);
@@ -230,8 +267,17 @@ int fscrypt_encrypt_block_inplace(const struct inode *inode, struct page *page,
 				  unsigned int len, unsigned int offs,
 				  u64 lblk_num, gfp_t gfp_flags)
 {
+<<<<<<< HEAD
 	return fscrypt_crypt_block(inode, FS_ENCRYPT, lblk_num, page, page,
 				   len, offs, gfp_flags);
+=======
+	if (WARN_ON_ONCE(!PageLocked(page) &&
+			 !(inode->i_sb->s_cop->flags & FS_CFLG_OWN_PAGES)))
+		return -EINVAL;
+
+	return fscrypt_do_page_crypto(inode, FS_DECRYPT, lblk_num, page, page,
+				      len, offs, GFP_NOFS);
+>>>>>>> master
 }
 EXPORT_SYMBOL(fscrypt_encrypt_block_inplace);
 

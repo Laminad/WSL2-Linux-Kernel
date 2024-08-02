@@ -1783,7 +1783,10 @@ TRACE_EVENT(svc_process,
 		__field(u32, vers)
 		__field(u32, proc)
 		__string(service, name)
+<<<<<<< HEAD
 		__string(procedure, svc_proc_name(rqst))
+=======
+>>>>>>> master
 		__string(addr, rqst->rq_xprt ?
 			 rqst->rq_xprt->xpt_remotebuf : "(null)")
 	),
@@ -1793,7 +1796,10 @@ TRACE_EVENT(svc_process,
 		__entry->vers = rqst->rq_vers;
 		__entry->proc = rqst->rq_proc;
 		__assign_str(service, name);
+<<<<<<< HEAD
 		__assign_str(procedure, svc_proc_name(rqst));
+=======
+>>>>>>> master
 		__assign_str(addr, rqst->rq_xprt ?
 			     rqst->rq_xprt->xpt_remotebuf : "(null)");
 	),

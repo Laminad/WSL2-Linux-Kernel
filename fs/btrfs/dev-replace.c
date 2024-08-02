@@ -698,12 +698,19 @@ static int btrfs_dev_replace_start(struct btrfs_fs_info *fs_info,
 	trans = btrfs_start_transaction(root, 1);
 	if (IS_ERR(trans)) {
 		ret = PTR_ERR(trans);
+<<<<<<< HEAD
 		down_write(&dev_replace->rwsem);
+=======
+		btrfs_dev_replace_write_lock(dev_replace);
+>>>>>>> master
 		dev_replace->replace_state =
 			BTRFS_IOCTL_DEV_REPLACE_STATE_NEVER_STARTED;
 		dev_replace->srcdev = NULL;
 		dev_replace->tgtdev = NULL;
+<<<<<<< HEAD
 		up_write(&dev_replace->rwsem);
+=======
+>>>>>>> master
 		goto leave;
 	}
 
@@ -722,6 +729,10 @@ static int btrfs_dev_replace_start(struct btrfs_fs_info *fs_info,
 	return ret;
 
 leave:
+<<<<<<< HEAD
+=======
+	btrfs_dev_replace_write_unlock(dev_replace);
+>>>>>>> master
 	btrfs_destroy_dev_replace_tgtdev(tgt_device);
 	return ret;
 }
@@ -887,11 +898,14 @@ static int btrfs_dev_replace_finishing(struct btrfs_fs_info *fs_info,
 	}
 	btrfs_wait_ordered_roots(fs_info, U64_MAX, 0, (u64)-1);
 
+<<<<<<< HEAD
 	/*
 	 * We have to use this loop approach because at this point src_device
 	 * has to be available for transaction commit to complete, yet new
 	 * chunks shouldn't be allocated on the device.
 	 */
+=======
+>>>>>>> master
 	while (1) {
 		trans = btrfs_start_transaction(root, 0);
 		if (IS_ERR(trans)) {
@@ -900,6 +914,7 @@ static int btrfs_dev_replace_finishing(struct btrfs_fs_info *fs_info,
 		}
 		ret = btrfs_commit_transaction(trans);
 		WARN_ON(ret);
+<<<<<<< HEAD
 
 		/* Prevent write_all_supers() during the finishing procedure */
 		mutex_lock(&fs_devices->device_list_mutex);
@@ -915,6 +930,20 @@ static int btrfs_dev_replace_finishing(struct btrfs_fs_info *fs_info,
 	}
 
 	down_write(&dev_replace->rwsem);
+=======
+		/* keep away write_all_supers() during the finishing procedure */
+		mutex_lock(&fs_info->fs_devices->device_list_mutex);
+		mutex_lock(&fs_info->chunk_mutex);
+		if (src_device->has_pending_chunks) {
+			mutex_unlock(&root->fs_info->chunk_mutex);
+			mutex_unlock(&root->fs_info->fs_devices->device_list_mutex);
+		} else {
+			break;
+		}
+	}
+
+	btrfs_dev_replace_write_lock(dev_replace);
+>>>>>>> master
 	dev_replace->replace_state =
 		scrub_ret ? BTRFS_IOCTL_DEV_REPLACE_STATE_CANCELED
 			  : BTRFS_IOCTL_DEV_REPLACE_STATE_FINISHED;
@@ -1087,6 +1116,7 @@ int btrfs_dev_replace_cancel(struct btrfs_fs_info *fs_info)
 	case BTRFS_IOCTL_DEV_REPLACE_STATE_FINISHED:
 	case BTRFS_IOCTL_DEV_REPLACE_STATE_CANCELED:
 		result = BTRFS_IOCTL_DEV_REPLACE_RESULT_NOT_STARTED;
+<<<<<<< HEAD
 		up_write(&dev_replace->rwsem);
 		break;
 	case BTRFS_IOCTL_DEV_REPLACE_STATE_STARTED:
@@ -1107,6 +1137,21 @@ int btrfs_dev_replace_cancel(struct btrfs_fs_info *fs_info)
 				btrfs_dev_name(src_device), src_device->devid,
 				btrfs_dev_name(tgt_device));
 		}
+=======
+		btrfs_dev_replace_write_unlock(dev_replace);
+		break;
+	case BTRFS_IOCTL_DEV_REPLACE_STATE_STARTED:
+		result = BTRFS_IOCTL_DEV_REPLACE_RESULT_NO_ERROR;
+		tgt_device = dev_replace->tgtdev;
+		src_device = dev_replace->srcdev;
+		btrfs_dev_replace_write_unlock(dev_replace);
+		btrfs_scrub_cancel(fs_info);
+		/* btrfs_dev_replace_finishing() will handle the cleanup part */
+		btrfs_info_in_rcu(fs_info,
+			"dev_replace from %s (devid %llu) to %s canceled",
+			btrfs_dev_name(src_device), src_device->devid,
+			btrfs_dev_name(tgt_device));
+>>>>>>> master
 		break;
 	case BTRFS_IOCTL_DEV_REPLACE_STATE_SUSPENDED:
 		/*
@@ -1123,9 +1168,14 @@ int btrfs_dev_replace_cancel(struct btrfs_fs_info *fs_info)
 		dev_replace->time_stopped = ktime_get_real_seconds();
 		dev_replace->item_needs_writeback = 1;
 
+<<<<<<< HEAD
 		up_write(&dev_replace->rwsem);
 
 		/* Scrub for replace must not be running in suspended state */
+=======
+		btrfs_dev_replace_write_unlock(dev_replace);
+
+>>>>>>> master
 		btrfs_scrub_cancel(fs_info);
 
 		trans = btrfs_start_transaction(root, 0);
@@ -1145,7 +1195,10 @@ int btrfs_dev_replace_cancel(struct btrfs_fs_info *fs_info)
 			btrfs_destroy_dev_replace_tgtdev(tgt_device);
 		break;
 	default:
+<<<<<<< HEAD
 		up_write(&dev_replace->rwsem);
+=======
+>>>>>>> master
 		result = -EINVAL;
 	}
 
@@ -1207,7 +1260,11 @@ int btrfs_resume_dev_replace_async(struct btrfs_fs_info *fs_info)
 			   "you may cancel the operation after 'mount -o degraded'");
 		dev_replace->replace_state =
 					BTRFS_IOCTL_DEV_REPLACE_STATE_SUSPENDED;
+<<<<<<< HEAD
 		up_write(&dev_replace->rwsem);
+=======
+		btrfs_dev_replace_write_unlock(dev_replace);
+>>>>>>> master
 		return 0;
 	}
 	up_write(&dev_replace->rwsem);
@@ -1217,11 +1274,19 @@ int btrfs_resume_dev_replace_async(struct btrfs_fs_info *fs_info)
 	 * should never allow both to start and pause. We don't want to allow
 	 * dev-replace to start anyway.
 	 */
+<<<<<<< HEAD
 	if (!btrfs_exclop_start(fs_info, BTRFS_EXCLOP_DEV_REPLACE)) {
 		down_write(&dev_replace->rwsem);
 		dev_replace->replace_state =
 					BTRFS_IOCTL_DEV_REPLACE_STATE_SUSPENDED;
 		up_write(&dev_replace->rwsem);
+=======
+	if (test_and_set_bit(BTRFS_FS_EXCL_OP, &fs_info->flags)) {
+		btrfs_dev_replace_write_lock(dev_replace);
+		dev_replace->replace_state =
+					BTRFS_IOCTL_DEV_REPLACE_STATE_SUSPENDED;
+		btrfs_dev_replace_write_unlock(dev_replace);
+>>>>>>> master
 		btrfs_info(fs_info,
 		"cannot resume dev-replace, other exclusive operation running");
 		return 0;

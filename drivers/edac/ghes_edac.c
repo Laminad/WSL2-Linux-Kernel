@@ -511,6 +511,7 @@ static void ghes_edac_unregister(struct ghes *ghes)
 
 	mutex_lock(&ghes_reg_mutex);
 
+<<<<<<< HEAD
 	system_scanned = false;
 	memset(&ghes_hw, 0, sizeof(struct ghes_hw_desc));
 
@@ -536,6 +537,15 @@ static void ghes_edac_unregister(struct ghes *ghes)
 
 unlock:
 	mutex_unlock(&ghes_reg_mutex);
+=======
+	if (atomic_dec_return(&ghes_init))
+		return;
+
+	mci = ghes_pvt->mci;
+	ghes_pvt = NULL;
+	edac_mc_del_mc(mci->pdev);
+	edac_mc_free(mci);
+>>>>>>> master
 }
 
 static int __init ghes_edac_init(void)

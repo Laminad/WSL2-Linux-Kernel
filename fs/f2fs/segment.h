@@ -776,6 +776,7 @@ static inline int check_block_count(struct f2fs_sb_info *sbi,
 		f2fs_err(sbi, "Mismatch valid blocks %d vs. %d",
 			 GET_SIT_VBLOCKS(raw_sit), valid_blocks);
 		set_sbi_flag(sbi, SBI_NEED_FSCK);
+<<<<<<< HEAD
 		f2fs_handle_error(sbi, ERROR_INCONSISTENT_SIT);
 		return -EFSCORRUPTED;
 	}
@@ -785,13 +786,21 @@ static inline int check_block_count(struct f2fs_sb_info *sbi,
 				BLKS_PER_SEG(sbi),
 				usable_blks_per_seg) != BLKS_PER_SEG(sbi));
 
+=======
+		return -EFSCORRUPTED;
+	}
+
+>>>>>>> master
 	/* check segment usage, and check boundary of a given segment number */
 	if (unlikely(GET_SIT_VBLOCKS(raw_sit) > usable_blks_per_seg
 					|| !valid_main_segno(sbi, segno))) {
 		f2fs_err(sbi, "Wrong valid blocks %d or segno %u",
 			 GET_SIT_VBLOCKS(raw_sit), segno);
 		set_sbi_flag(sbi, SBI_NEED_FSCK);
+<<<<<<< HEAD
 		f2fs_handle_error(sbi, ERROR_INCONSISTENT_SIT);
+=======
+>>>>>>> master
 		return -EFSCORRUPTED;
 	}
 	return 0;

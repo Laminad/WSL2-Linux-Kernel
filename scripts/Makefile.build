@@ -205,9 +205,45 @@ sub_cmd_record_mcount = perl $(srctree)/scripts/recordmcount.pl "$(ARCH)" \
 	"$(if $(part-of-module),1,0)" "$(@)";
 recordmcount_source := $(srctree)/scripts/recordmcount.pl
 endif # BUILD_C_RECORDMCOUNT
+<<<<<<< HEAD
 cmd_record_mcount = $(if $(findstring $(strip $(CC_FLAGS_FTRACE)),$(_c_flags)),	\
 	$(sub_cmd_record_mcount))
 endif # CONFIG_FTRACE_MCOUNT_USE_RECORDMCOUNT
+=======
+cmd_record_mcount =						\
+	if [ "$(findstring $(CC_FLAGS_FTRACE),$(_c_flags))" =	\
+	     "$(CC_FLAGS_FTRACE)" ]; then			\
+		$(sub_cmd_record_mcount)			\
+	fi;
+endif # CC_USING_RECORD_MCOUNT
+endif # CONFIG_FTRACE_MCOUNT_RECORD
+
+ifdef CONFIG_STACK_VALIDATION
+ifneq ($(SKIP_STACK_VALIDATION),1)
+
+__objtool_obj := $(objtree)/tools/objtool/objtool
+
+objtool_args = $(if $(CONFIG_UNWINDER_ORC),orc generate,check)
+
+objtool_args += $(if $(part-of-module), --module,)
+
+ifndef CONFIG_FRAME_POINTER
+objtool_args += --no-fp
+endif
+ifdef CONFIG_GCOV_KERNEL
+objtool_args += --no-unreachable
+endif
+ifdef CONFIG_RETPOLINE
+  objtool_args += --retpoline
+endif
+
+
+ifdef CONFIG_MODVERSIONS
+objtool_o = $(@D)/.tmp_$(@F)
+else
+objtool_o = $(@)
+endif
+>>>>>>> master
 
 # 'OBJECT_FILES_NON_STANDARD := y': skip objtool checking for a directory
 # 'OBJECT_FILES_NON_STANDARD_foo.o := 'y': skip objtool checking for a file

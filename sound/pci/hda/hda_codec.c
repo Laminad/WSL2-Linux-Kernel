@@ -2969,6 +2969,7 @@ static int hda_codec_runtime_resume(struct device *dev)
 #endif /* CONFIG_PM */
 
 #ifdef CONFIG_PM_SLEEP
+<<<<<<< HEAD
 static int hda_codec_pm_prepare(struct device *dev)
 {
 	struct hda_codec *codec = dev_to_hda_codec(dev);
@@ -2989,6 +2990,24 @@ static void hda_codec_pm_complete(struct device *dev)
 	if (pm_runtime_suspended(dev) && (codec->jackpoll_interval ||
 	    hda_codec_need_resume(codec) || codec->forced_resume))
 		pm_request_resume(dev);
+=======
+static int hda_codec_force_resume(struct device *dev)
+{
+	struct hda_codec *codec = dev_to_hda_codec(dev);
+	bool forced_resume = !codec->relaxed_resume;
+	int ret;
+
+	/* The get/put pair below enforces the runtime resume even if the
+	 * device hasn't been used at suspend time.  This trick is needed to
+	 * update the jack state change during the sleep.
+	 */
+	if (forced_resume)
+		pm_runtime_get_noresume(dev);
+	ret = pm_runtime_force_resume(dev);
+	if (forced_resume)
+		pm_runtime_put(dev);
+	return ret;
+>>>>>>> master
 }
 
 static int hda_codec_pm_suspend(struct device *dev)
@@ -3000,14 +3019,21 @@ static int hda_codec_pm_suspend(struct device *dev)
 static int hda_codec_pm_resume(struct device *dev)
 {
 	dev->power.power_state = PMSG_RESUME;
+<<<<<<< HEAD
 	return pm_runtime_force_resume(dev);
+=======
+	return hda_codec_force_resume(dev);
+>>>>>>> master
 }
 
 static int hda_codec_pm_freeze(struct device *dev)
 {
+<<<<<<< HEAD
 	struct hda_codec *codec = dev_to_hda_codec(dev);
 
 	cancel_delayed_work_sync(&codec->jackpoll_work);
+=======
+>>>>>>> master
 	dev->power.power_state = PMSG_FREEZE;
 	return pm_runtime_force_suspend(dev);
 }
@@ -3015,21 +3041,32 @@ static int hda_codec_pm_freeze(struct device *dev)
 static int hda_codec_pm_thaw(struct device *dev)
 {
 	dev->power.power_state = PMSG_THAW;
+<<<<<<< HEAD
 	return pm_runtime_force_resume(dev);
+=======
+	return hda_codec_force_resume(dev);
+>>>>>>> master
 }
 
 static int hda_codec_pm_restore(struct device *dev)
 {
 	dev->power.power_state = PMSG_RESTORE;
+<<<<<<< HEAD
 	return pm_runtime_force_resume(dev);
+=======
+	return hda_codec_force_resume(dev);
+>>>>>>> master
 }
 #endif /* CONFIG_PM_SLEEP */
 
 /* referred in hda_bind.c */
 const struct dev_pm_ops hda_codec_driver_pm = {
 #ifdef CONFIG_PM_SLEEP
+<<<<<<< HEAD
 	.prepare = hda_codec_pm_prepare,
 	.complete = hda_codec_pm_complete,
+=======
+>>>>>>> master
 	.suspend = hda_codec_pm_suspend,
 	.resume = hda_codec_pm_resume,
 	.freeze = hda_codec_pm_freeze,

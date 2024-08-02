@@ -27,6 +27,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+<<<<<<< HEAD
 
 #include "libbpf_common.h"
 #include "libbpf_legacy.h"
@@ -39,6 +40,8 @@ LIBBPF_API int libbpf_set_memlock_rlim(size_t memlock_bytes);
 
 struct bpf_map_create_opts {
 	size_t sz; /* size of this struct for forward/backward compatibility */
+=======
+>>>>>>> master
 
 	__u32 btf_fd;
 	__u32 btf_key_type_id;

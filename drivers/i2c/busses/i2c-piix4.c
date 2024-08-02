@@ -457,8 +457,12 @@ static int piix4_setup_sb800(struct pci_dev *PIIX4_dev,
 		 piix4_smba, i2ccfg >> 4);
 
 	/* Find which register is used for port selection */
+<<<<<<< HEAD
 	if (PIIX4_dev->vendor == PCI_VENDOR_ID_AMD ||
 	    PIIX4_dev->vendor == PCI_VENDOR_ID_HYGON) {
+=======
+	if (PIIX4_dev->vendor == PCI_VENDOR_ID_AMD) {
+>>>>>>> master
 		if (PIIX4_dev->device == PCI_DEVICE_ID_AMD_KERNCZ_SMBUS ||
 		    (PIIX4_dev->device == PCI_DEVICE_ID_AMD_HUDSON2_SMBUS &&
 		     PIIX4_dev->revision >= 0x1F)) {

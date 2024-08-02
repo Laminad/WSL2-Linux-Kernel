@@ -436,6 +436,55 @@ struct device_dma_parameters {
 };
 
 /**
+<<<<<<< HEAD
+=======
+ * struct device_connection - Device Connection Descriptor
+ * @endpoint: The names of the two devices connected together
+ * @id: Unique identifier for the connection
+ * @list: List head, private, for internal use only
+ */
+struct device_connection {
+	const char		*endpoint[2];
+	const char		*id;
+	struct list_head	list;
+};
+
+void *device_connection_find_match(struct device *dev, const char *con_id,
+				void *data,
+				void *(*match)(struct device_connection *con,
+					       int ep, void *data));
+
+struct device *device_connection_find(struct device *dev, const char *con_id);
+
+void device_connection_add(struct device_connection *con);
+void device_connection_remove(struct device_connection *con);
+
+/**
+ * device_connections_add - Add multiple device connections at once
+ * @cons: Zero terminated array of device connection descriptors
+ */
+static inline void device_connections_add(struct device_connection *cons)
+{
+	struct device_connection *c;
+
+	for (c = cons; c->endpoint[0]; c++)
+		device_connection_add(c);
+}
+
+/**
+ * device_connections_remove - Remove multiple device connections at once
+ * @cons: Zero terminated array of device connection descriptors
+ */
+static inline void device_connections_remove(struct device_connection *cons)
+{
+	struct device_connection *c;
+
+	for (c = cons; c->endpoint[0]; c++)
+		device_connection_remove(c);
+}
+
+/**
+>>>>>>> master
  * enum device_link_state - Device link states.
  * @DL_STATE_NONE: The presence of the drivers is not being tracked.
  * @DL_STATE_DORMANT: None of the supplier/consumer drivers is present.
@@ -1224,12 +1273,18 @@ extern int (*platform_notify_remove)(struct device *dev);
  * get_device - atomically increment the reference count for the device.
  *
  */
+<<<<<<< HEAD
 struct device *get_device(struct device *dev);
 void put_device(struct device *dev);
 
 DEFINE_FREE(put_device, struct device *, if (_T) put_device(_T))
 
 bool kill_device(struct device *dev);
+=======
+extern struct device *get_device(struct device *dev);
+extern void put_device(struct device *dev);
+extern bool kill_device(struct device *dev);
+>>>>>>> master
 
 #ifdef CONFIG_DEVTMPFS
 int devtmpfs_mount(void);

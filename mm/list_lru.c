@@ -52,12 +52,16 @@ static int lru_shrinker_id(struct list_lru *lru)
 static inline struct list_lru_one *
 list_lru_from_memcg_idx(struct list_lru *lru, int nid, int idx)
 {
+<<<<<<< HEAD
 	if (list_lru_memcg_aware(lru) && idx >= 0) {
 		struct list_lru_memcg *mlru = xa_load(&lru->xa, idx);
 
 		return mlru ? &mlru->node[nid] : NULL;
 	}
 	return &lru->node[nid].lru;
+=======
+	return lru->memcg_aware;
+>>>>>>> master
 }
 
 static inline struct list_lru_one *
@@ -335,7 +339,72 @@ static void init_one_lru(struct list_lru_one *l)
 }
 
 #ifdef CONFIG_MEMCG_KMEM
+<<<<<<< HEAD
 static struct list_lru_memcg *memcg_init_list_lru_one(gfp_t gfp)
+=======
+static void __memcg_destroy_list_lru_node(struct list_lru_memcg *memcg_lrus,
+					  int begin, int end)
+{
+	int i;
+
+	for (i = begin; i < end; i++)
+		kfree(memcg_lrus->lru[i]);
+}
+
+static int __memcg_init_list_lru_node(struct list_lru_memcg *memcg_lrus,
+				      int begin, int end)
+{
+	int i;
+
+	for (i = begin; i < end; i++) {
+		struct list_lru_one *l;
+
+		l = kmalloc(sizeof(struct list_lru_one), GFP_KERNEL);
+		if (!l)
+			goto fail;
+
+		init_one_lru(l);
+		memcg_lrus->lru[i] = l;
+	}
+	return 0;
+fail:
+	__memcg_destroy_list_lru_node(memcg_lrus, begin, i);
+	return -ENOMEM;
+}
+
+static int memcg_init_list_lru_node(struct list_lru_node *nlru)
+{
+	struct list_lru_memcg *memcg_lrus;
+	int size = memcg_nr_cache_ids;
+
+	memcg_lrus = kvmalloc(sizeof(*memcg_lrus) +
+			      size * sizeof(void *), GFP_KERNEL);
+	if (!memcg_lrus)
+		return -ENOMEM;
+
+	if (__memcg_init_list_lru_node(memcg_lrus, 0, size)) {
+		kvfree(memcg_lrus);
+		return -ENOMEM;
+	}
+	RCU_INIT_POINTER(nlru->memcg_lrus, memcg_lrus);
+
+	return 0;
+}
+
+static void memcg_destroy_list_lru_node(struct list_lru_node *nlru)
+{
+	struct list_lru_memcg *memcg_lrus;
+	/*
+	 * This is called when shrinker has already been unregistered,
+	 * and nobody can use it. So, there is no need to use kvfree_rcu().
+	 */
+	memcg_lrus = rcu_dereference_protected(nlru->memcg_lrus, true);
+	__memcg_destroy_list_lru_node(memcg_lrus, 0, memcg_nr_cache_ids);
+	kvfree(memcg_lrus);
+}
+
+static void kvfree_rcu(struct rcu_head *head)
+>>>>>>> master
 {
 	int nid;
 	struct list_lru_memcg *mlru;
@@ -366,9 +435,42 @@ static void memcg_list_lru_free(struct list_lru *lru, int src_idx)
 
 static inline void memcg_init_list_lru(struct list_lru *lru, bool memcg_aware)
 {
+<<<<<<< HEAD
 	if (memcg_aware)
 		xa_init_flags(&lru->xa, XA_FLAGS_LOCK_IRQ);
 	lru->memcg_aware = memcg_aware;
+=======
+	struct list_lru_memcg *memcg_lrus;
+
+	memcg_lrus = rcu_dereference_protected(nlru->memcg_lrus,
+					       lockdep_is_held(&list_lrus_mutex));
+	/* do not bother shrinking the array back to the old size, because we
+	 * cannot handle allocation failures here */
+	__memcg_destroy_list_lru_node(memcg_lrus, old_size, new_size);
+}
+
+static int memcg_init_list_lru(struct list_lru *lru, bool memcg_aware)
+{
+	int i;
+
+	lru->memcg_aware = memcg_aware;
+
+	if (!memcg_aware)
+		return 0;
+
+	for_each_node(i) {
+		if (memcg_init_list_lru_node(&lru->node[i]))
+			goto fail;
+	}
+	return 0;
+fail:
+	for (i = i - 1; i >= 0; i--) {
+		if (!lru->node[i].memcg_lrus)
+			continue;
+		memcg_destroy_list_lru_node(&lru->node[i]);
+	}
+	return -ENOMEM;
+>>>>>>> master
 }
 
 static void memcg_destroy_list_lru(struct list_lru *lru)

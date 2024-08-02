@@ -656,8 +656,11 @@ static void nmi_stop_this_cpu(struct pt_regs *regs)
 	/*
 	 * IRQs are already hard disabled by the smp_handle_nmi_ipi.
 	 */
+<<<<<<< HEAD
 	set_cpu_online(smp_processor_id(), false);
 
+=======
+>>>>>>> master
 	spin_begin();
 	while (1)
 		spin_cpu_relax();

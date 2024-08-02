@@ -41,6 +41,9 @@ enum auxtrace_error_type {
 /* Auxtrace records must have the same alignment as perf event records */
 #define PERF_AUXTRACE_RECORD_ALIGNMENT 8
 
+/* Auxtrace records must have the same alignment as perf event records */
+#define PERF_AUXTRACE_RECORD_ALIGNMENT 8
+
 enum auxtrace_type {
 	PERF_AUXTRACE_UNKNOWN,
 	PERF_AUXTRACE_INTEL_PT,

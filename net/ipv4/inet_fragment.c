@@ -24,8 +24,11 @@
 #include <net/ip.h>
 #include <net/ipv6.h>
 
+<<<<<<< HEAD
 #include "../core/sock_destructor.h"
 
+=======
+>>>>>>> master
 /* Use skb->cb to track consecutive/adjacent fragments coming at
  * the end of the queue. Nodes in the rb-tree queue will
  * contain "runs" of one or more adjacent fragments.
@@ -41,7 +44,10 @@ struct ipfrag_skb_cb {
 	};
 	struct sk_buff		*next_frag;
 	int			frag_run_len;
+<<<<<<< HEAD
 	int			ip_defrag_offset;
+=======
+>>>>>>> master
 };
 
 #define FRAG_CB(skb)		((struct ipfrag_skb_cb *)((skb)->cb))
@@ -264,8 +270,12 @@ static void inet_frag_destroy_rcu(struct rcu_head *head)
 	kmem_cache_free(f->frags_cachep, q);
 }
 
+<<<<<<< HEAD
 unsigned int inet_frag_rbtree_purge(struct rb_root *root,
 				    enum skb_drop_reason reason)
+=======
+unsigned int inet_frag_rbtree_purge(struct rb_root *root)
+>>>>>>> master
 {
 	struct rb_node *p = rb_first(root);
 	unsigned int sum = 0;
@@ -279,7 +289,11 @@ unsigned int inet_frag_rbtree_purge(struct rb_root *root,
 			struct sk_buff *next = FRAG_CB(skb)->next_frag;
 
 			sum += skb->truesize;
+<<<<<<< HEAD
 			kfree_skb_reason(skb, reason);
+=======
+			kfree_skb(skb);
+>>>>>>> master
 			skb = next;
 		}
 	}
@@ -333,21 +347,35 @@ static struct inet_frag_queue *inet_frag_alloc(struct fqdir *fqdir,
 	return q;
 }
 
+<<<<<<< HEAD
 static struct inet_frag_queue *inet_frag_create(struct fqdir *fqdir,
+=======
+static struct inet_frag_queue *inet_frag_create(struct netns_frags *nf,
+>>>>>>> master
 						void *arg,
 						struct inet_frag_queue **prev)
 {
 	struct inet_frags *f = fqdir->f;
 	struct inet_frag_queue *q;
 
+<<<<<<< HEAD
 	q = inet_frag_alloc(fqdir, f, arg);
+=======
+	q = inet_frag_alloc(nf, f, arg);
+>>>>>>> master
 	if (!q) {
 		*prev = ERR_PTR(-ENOMEM);
 		return NULL;
 	}
+<<<<<<< HEAD
 	mod_timer(&q->timer, jiffies + fqdir->timeout);
 
 	*prev = rhashtable_lookup_get_insert_key(&fqdir->rhashtable, &q->key,
+=======
+	mod_timer(&q->timer, jiffies + nf->timeout);
+
+	*prev = rhashtable_lookup_get_insert_key(&nf->rhashtable, &q->key,
+>>>>>>> master
 						 &q->node, f->rhash_params);
 	if (*prev) {
 		q->flags |= INET_FRAG_COMPLETE;
@@ -361,8 +389,11 @@ static struct inet_frag_queue *inet_frag_create(struct fqdir *fqdir,
 /* TODO : call from rcu_read_lock() and no longer use refcount_inc_not_zero() */
 struct inet_frag_queue *inet_frag_find(struct fqdir *fqdir, void *key)
 {
+<<<<<<< HEAD
 	/* This pairs with WRITE_ONCE() in fqdir_pre_exit(). */
 	long high_thresh = READ_ONCE(fqdir->high_thresh);
+=======
+>>>>>>> master
 	struct inet_frag_queue *fq = NULL, *prev;
 
 	if (!high_thresh || frag_mem_limit(fqdir) > high_thresh)
@@ -370,10 +401,17 @@ struct inet_frag_queue *inet_frag_find(struct fqdir *fqdir, void *key)
 
 	rcu_read_lock();
 
+<<<<<<< HEAD
 	prev = rhashtable_lookup(&fqdir->rhashtable, key, fqdir->f->rhash_params);
 	if (!prev)
 		fq = inet_frag_create(fqdir, key, &prev);
 	if (!IS_ERR_OR_NULL(prev)) {
+=======
+	prev = rhashtable_lookup(&nf->rhashtable, key, nf->f->rhash_params);
+	if (!prev)
+		fq = inet_frag_create(nf, key, &prev);
+	if (prev && !IS_ERR(prev)) {
+>>>>>>> master
 		fq = prev;
 		if (!refcount_inc_not_zero(&fq->refcnt))
 			fq = NULL;
@@ -399,12 +437,21 @@ int inet_frag_queue_insert(struct inet_frag_queue *q, struct sk_buff *skb,
 	 */
 	if (!last)
 		fragrun_create(q, skb);  /* First fragment. */
+<<<<<<< HEAD
 	else if (FRAG_CB(last)->ip_defrag_offset + last->len < end) {
 		/* This is the common case: skb goes to the end. */
 		/* Detect and discard overlaps. */
 		if (offset < FRAG_CB(last)->ip_defrag_offset + last->len)
 			return IPFRAG_OVERLAP;
 		if (offset == FRAG_CB(last)->ip_defrag_offset + last->len)
+=======
+	else if (last->ip_defrag_offset + last->len < end) {
+		/* This is the common case: skb goes to the end. */
+		/* Detect and discard overlaps. */
+		if (offset < last->ip_defrag_offset + last->len)
+			return IPFRAG_OVERLAP;
+		if (offset == last->ip_defrag_offset + last->len)
+>>>>>>> master
 			fragrun_append_to_last(q, skb);
 		else
 			fragrun_create(q, skb);
@@ -421,6 +468,7 @@ int inet_frag_queue_insert(struct inet_frag_queue *q, struct sk_buff *skb,
 
 			parent = *rbn;
 			curr = rb_to_skb(parent);
+<<<<<<< HEAD
 			curr_run_end = FRAG_CB(curr)->ip_defrag_offset +
 					FRAG_CB(curr)->frag_run_len;
 			if (end <= FRAG_CB(curr)->ip_defrag_offset)
@@ -428,6 +476,15 @@ int inet_frag_queue_insert(struct inet_frag_queue *q, struct sk_buff *skb,
 			else if (offset >= curr_run_end)
 				rbn = &parent->rb_right;
 			else if (offset >= FRAG_CB(curr)->ip_defrag_offset &&
+=======
+			curr_run_end = curr->ip_defrag_offset +
+					FRAG_CB(curr)->frag_run_len;
+			if (end <= curr->ip_defrag_offset)
+				rbn = &parent->rb_left;
+			else if (offset >= curr_run_end)
+				rbn = &parent->rb_right;
+			else if (offset >= curr->ip_defrag_offset &&
+>>>>>>> master
 				 end <= curr_run_end)
 				return IPFRAG_DUP;
 			else
@@ -441,7 +498,11 @@ int inet_frag_queue_insert(struct inet_frag_queue *q, struct sk_buff *skb,
 		rb_insert_color(&skb->rbnode, &q->rb_fragments);
 	}
 
+<<<<<<< HEAD
 	FRAG_CB(skb)->ip_defrag_offset = offset;
+=======
+	skb->ip_defrag_offset = offset;
+>>>>>>> master
 
 	return IPFRAG_OK;
 }
@@ -451,6 +512,7 @@ void *inet_frag_reasm_prepare(struct inet_frag_queue *q, struct sk_buff *skb,
 			      struct sk_buff *parent)
 {
 	struct sk_buff *fp, *head = skb_rb_first(&q->rb_fragments);
+<<<<<<< HEAD
 	void (*destructor)(struct sk_buff *);
 	unsigned int orig_truesize = 0;
 	struct sk_buff **nextp = NULL;
@@ -473,6 +535,15 @@ void *inet_frag_reasm_prepare(struct inet_frag_queue *q, struct sk_buff *skb,
 			head = skb;
 			goto out_restore_sk;
 		}
+=======
+	struct sk_buff **nextp;
+	int delta;
+
+	if (head != skb) {
+		fp = skb_clone(skb, GFP_ATOMIC);
+		if (!fp)
+			return NULL;
+>>>>>>> master
 		FRAG_CB(fp)->next_frag = FRAG_CB(skb)->next_frag;
 		if (RB_EMPTY_NODE(&skb->rbnode))
 			FRAG_CB(parent)->next_frag = fp;
@@ -481,12 +552,15 @@ void *inet_frag_reasm_prepare(struct inet_frag_queue *q, struct sk_buff *skb,
 					&q->rb_fragments);
 		if (q->fragments_tail == skb)
 			q->fragments_tail = fp;
+<<<<<<< HEAD
 
 		if (orig_truesize) {
 			/* prevent skb_morph from releasing sk */
 			skb->sk = NULL;
 			skb->destructor = NULL;
 		}
+=======
+>>>>>>> master
 		skb_morph(skb, head);
 		FRAG_CB(skb)->next_frag = FRAG_CB(head)->next_frag;
 		rb_replace_node(&head->rbnode, &skb->rbnode,
@@ -494,17 +568,29 @@ void *inet_frag_reasm_prepare(struct inet_frag_queue *q, struct sk_buff *skb,
 		consume_skb(head);
 		head = skb;
 	}
+<<<<<<< HEAD
 	WARN_ON(FRAG_CB(head)->ip_defrag_offset != 0);
+=======
+	WARN_ON(head->ip_defrag_offset != 0);
+>>>>>>> master
 
 	delta = -head->truesize;
 
 	/* Head of list must not be cloned. */
 	if (skb_unclone(head, GFP_ATOMIC))
+<<<<<<< HEAD
 		goto out_restore_sk;
 
 	delta += head->truesize;
 	if (delta)
 		add_frag_mem_limit(q->fqdir, delta);
+=======
+		return NULL;
+
+	delta += head->truesize;
+	if (delta)
+		add_frag_mem_limit(q->net, delta);
+>>>>>>> master
 
 	/* If the first fragment is fragmented itself, we split
 	 * it to two chunks: the first with data and paged part
@@ -516,7 +602,11 @@ void *inet_frag_reasm_prepare(struct inet_frag_queue *q, struct sk_buff *skb,
 
 		clone = alloc_skb(0, GFP_ATOMIC);
 		if (!clone)
+<<<<<<< HEAD
 			goto out_restore_sk;
+=======
+			return NULL;
+>>>>>>> master
 		skb_shinfo(clone)->frag_list = skb_shinfo(head)->frag_list;
 		skb_frag_list_init(head);
 		for (i = 0; i < skb_shinfo(head)->nr_frags; i++)
@@ -526,13 +616,18 @@ void *inet_frag_reasm_prepare(struct inet_frag_queue *q, struct sk_buff *skb,
 		head->truesize += clone->truesize;
 		clone->csum = 0;
 		clone->ip_summed = head->ip_summed;
+<<<<<<< HEAD
 		add_frag_mem_limit(q->fqdir, clone->truesize);
+=======
+		add_frag_mem_limit(q->net, clone->truesize);
+>>>>>>> master
 		skb_shinfo(head)->frag_list = clone;
 		nextp = &clone->next;
 	} else {
 		nextp = &skb_shinfo(head)->frag_list;
 	}
 
+<<<<<<< HEAD
 out_restore_sk:
 	if (orig_truesize) {
 		int ts_delta = head->truesize - orig_truesize;
@@ -548,11 +643,14 @@ out_restore_sk:
 		refcount_add(ts_delta, &sk->sk_wmem_alloc);
 	}
 
+=======
+>>>>>>> master
 	return nextp;
 }
 EXPORT_SYMBOL(inet_frag_reasm_prepare);
 
 void inet_frag_reasm_finish(struct inet_frag_queue *q, struct sk_buff *head,
+<<<<<<< HEAD
 			    void *reasm_data, bool try_coalesce)
 {
 	struct sock *sk = is_skb_wmem(head) ? head->sk : NULL;
@@ -561,6 +659,13 @@ void inet_frag_reasm_finish(struct inet_frag_queue *q, struct sk_buff *head,
 	struct rb_node *rbn;
 	struct sk_buff *fp;
 	int sum_truesize;
+=======
+			    void *reasm_data)
+{
+	struct sk_buff **nextp = (struct sk_buff **)reasm_data;
+	struct rb_node *rbn;
+	struct sk_buff *fp;
+>>>>>>> master
 
 	skb_push(head, head->data - skb_network_header(head));
 
@@ -568,23 +673,37 @@ void inet_frag_reasm_finish(struct inet_frag_queue *q, struct sk_buff *head,
 	fp = FRAG_CB(head)->next_frag;
 	rbn = rb_next(&head->rbnode);
 	rb_erase(&head->rbnode, &q->rb_fragments);
+<<<<<<< HEAD
 
 	sum_truesize = head->truesize;
+=======
+>>>>>>> master
 	while (rbn || fp) {
 		/* fp points to the next sk_buff in the current run;
 		 * rbn points to the next run.
 		 */
 		/* Go through the current run. */
 		while (fp) {
+<<<<<<< HEAD
 			struct sk_buff *next_frag = FRAG_CB(fp)->next_frag;
 			bool stolen;
 			int delta;
 
 			sum_truesize += fp->truesize;
+=======
+			*nextp = fp;
+			nextp = &fp->next;
+			fp->prev = NULL;
+			memset(&fp->rbnode, 0, sizeof(fp->rbnode));
+			fp->sk = NULL;
+			head->data_len += fp->len;
+			head->len += fp->len;
+>>>>>>> master
 			if (head->ip_summed != fp->ip_summed)
 				head->ip_summed = CHECKSUM_NONE;
 			else if (head->ip_summed == CHECKSUM_COMPLETE)
 				head->csum = csum_add(head->csum, fp->csum);
+<<<<<<< HEAD
 
 			if (try_coalesce && skb_try_coalesce(head, fp, &stolen,
 							     &delta)) {
@@ -603,6 +722,10 @@ void inet_frag_reasm_finish(struct inet_frag_queue *q, struct sk_buff *head,
 			}
 
 			fp = next_frag;
+=======
+			head->truesize += fp->truesize;
+			fp = FRAG_CB(fp)->next_frag;
+>>>>>>> master
 		}
 		/* Move to the next run. */
 		if (rbn) {
@@ -613,21 +736,29 @@ void inet_frag_reasm_finish(struct inet_frag_queue *q, struct sk_buff *head,
 			rbn = rbnext;
 		}
 	}
+<<<<<<< HEAD
 	sub_frag_mem_limit(q->fqdir, sum_truesize);
+=======
+	sub_frag_mem_limit(q->net, head->truesize);
+>>>>>>> master
 
 	*nextp = NULL;
 	skb_mark_not_on_list(head);
 	head->prev = NULL;
 	head->tstamp = q->stamp;
+<<<<<<< HEAD
 	head->mono_delivery_time = q->mono_delivery_time;
 
 	if (sk)
 		refcount_add(sum_truesize - head_truesize, &sk->sk_wmem_alloc);
+=======
+>>>>>>> master
 }
 EXPORT_SYMBOL(inet_frag_reasm_finish);
 
 struct sk_buff *inet_frag_pull_head(struct inet_frag_queue *q)
 {
+<<<<<<< HEAD
 	struct sk_buff *head, *skb;
 
 	head = skb_rb_first(&q->rb_fragments);
@@ -646,6 +777,32 @@ struct sk_buff *inet_frag_pull_head(struct inet_frag_queue *q)
 		q->fragments_tail = NULL;
 
 	sub_frag_mem_limit(q->fqdir, head->truesize);
+=======
+	struct sk_buff *head;
+
+	if (q->fragments) {
+		head = q->fragments;
+		q->fragments = head->next;
+	} else {
+		struct sk_buff *skb;
+
+		head = skb_rb_first(&q->rb_fragments);
+		if (!head)
+			return NULL;
+		skb = FRAG_CB(head)->next_frag;
+		if (skb)
+			rb_replace_node(&head->rbnode, &skb->rbnode,
+					&q->rb_fragments);
+		else
+			rb_erase(&head->rbnode, &q->rb_fragments);
+		memset(&head->rbnode, 0, sizeof(head->rbnode));
+		barrier();
+	}
+	if (head == q->fragments_tail)
+		q->fragments_tail = NULL;
+
+	sub_frag_mem_limit(q->net, head->truesize);
+>>>>>>> master
 
 	return head;
 }

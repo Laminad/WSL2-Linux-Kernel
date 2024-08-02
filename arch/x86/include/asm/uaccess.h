@@ -105,7 +105,262 @@ extern int __get_user_bad(void);
  * Return: zero on success, or -EFAULT on error.
  * On error, the variable @x is set to zero.
  */
+<<<<<<< HEAD
 #define get_user(x,ptr) ({ might_fault(); do_get_user_call(get_user,x,ptr); })
+=======
+#define put_user(x, ptr)					\
+({								\
+	int __ret_pu;						\
+	__typeof__(*(ptr)) __pu_val;				\
+	__chk_user_ptr(ptr);					\
+	might_fault();						\
+	__pu_val = x;						\
+	switch (sizeof(*(ptr))) {				\
+	case 1:							\
+		__put_user_x(1, __pu_val, ptr, __ret_pu);	\
+		break;						\
+	case 2:							\
+		__put_user_x(2, __pu_val, ptr, __ret_pu);	\
+		break;						\
+	case 4:							\
+		__put_user_x(4, __pu_val, ptr, __ret_pu);	\
+		break;						\
+	case 8:							\
+		__put_user_x8(__pu_val, ptr, __ret_pu);		\
+		break;						\
+	default:						\
+		__put_user_x(X, __pu_val, ptr, __ret_pu);	\
+		break;						\
+	}							\
+	__builtin_expect(__ret_pu, 0);				\
+})
+
+#define __put_user_size(x, ptr, size, retval, errret)			\
+do {									\
+	retval = 0;							\
+	__chk_user_ptr(ptr);						\
+	switch (size) {							\
+	case 1:								\
+		__put_user_asm(x, ptr, retval, "b", "b", "iq", errret);	\
+		break;							\
+	case 2:								\
+		__put_user_asm(x, ptr, retval, "w", "w", "ir", errret);	\
+		break;							\
+	case 4:								\
+		__put_user_asm(x, ptr, retval, "l", "k", "ir", errret);	\
+		break;							\
+	case 8:								\
+		__put_user_asm_u64(x, ptr, retval, errret);		\
+		break;							\
+	default:							\
+		__put_user_bad();					\
+	}								\
+} while (0)
+
+/*
+ * This doesn't do __uaccess_begin/end - the exception handling
+ * around it must do that.
+ */
+#define __put_user_size_ex(x, ptr, size)				\
+do {									\
+	__chk_user_ptr(ptr);						\
+	switch (size) {							\
+	case 1:								\
+		__put_user_asm_ex(x, ptr, "b", "b", "iq");		\
+		break;							\
+	case 2:								\
+		__put_user_asm_ex(x, ptr, "w", "w", "ir");		\
+		break;							\
+	case 4:								\
+		__put_user_asm_ex(x, ptr, "l", "k", "ir");		\
+		break;							\
+	case 8:								\
+		__put_user_asm_ex_u64((__typeof__(*ptr))(x), ptr);	\
+		break;							\
+	default:							\
+		__put_user_bad();					\
+	}								\
+} while (0)
+
+#ifdef CONFIG_X86_32
+#define __get_user_asm_u64(x, ptr, retval, errret)			\
+({									\
+	__typeof__(ptr) __ptr = (ptr);					\
+	asm volatile("\n"					\
+		     "1:	movl %2,%%eax\n"			\
+		     "2:	movl %3,%%edx\n"			\
+		     "3:\n"				\
+		     ".section .fixup,\"ax\"\n"				\
+		     "4:	mov %4,%0\n"				\
+		     "	xorl %%eax,%%eax\n"				\
+		     "	xorl %%edx,%%edx\n"				\
+		     "	jmp 3b\n"					\
+		     ".previous\n"					\
+		     _ASM_EXTABLE(1b, 4b)				\
+		     _ASM_EXTABLE(2b, 4b)				\
+		     : "=r" (retval), "=&A"(x)				\
+		     : "m" (__m(__ptr)), "m" __m(((u32 __user *)(__ptr)) + 1),	\
+		       "i" (errret), "0" (retval));			\
+})
+
+#define __get_user_asm_ex_u64(x, ptr)			(x) = __get_user_bad()
+#else
+#define __get_user_asm_u64(x, ptr, retval, errret) \
+	 __get_user_asm(x, ptr, retval, "q", "", "=r", errret)
+#define __get_user_asm_ex_u64(x, ptr) \
+	 __get_user_asm_ex(x, ptr, "q", "", "=r")
+#endif
+
+#define __get_user_size(x, ptr, size, retval, errret)			\
+do {									\
+	retval = 0;							\
+	__chk_user_ptr(ptr);						\
+	switch (size) {							\
+	case 1:								\
+		__get_user_asm(x, ptr, retval, "b", "b", "=q", errret);	\
+		break;							\
+	case 2:								\
+		__get_user_asm(x, ptr, retval, "w", "w", "=r", errret);	\
+		break;							\
+	case 4:								\
+		__get_user_asm(x, ptr, retval, "l", "k", "=r", errret);	\
+		break;							\
+	case 8:								\
+		__get_user_asm_u64(x, ptr, retval, errret);		\
+		break;							\
+	default:							\
+		(x) = __get_user_bad();					\
+	}								\
+} while (0)
+
+#define __get_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
+	asm volatile("\n"						\
+		     "1:	mov"itype" %2,%"rtype"1\n"		\
+		     "2:\n"						\
+		     ".section .fixup,\"ax\"\n"				\
+		     "3:	mov %3,%0\n"				\
+		     "	xor"itype" %"rtype"1,%"rtype"1\n"		\
+		     "	jmp 2b\n"					\
+		     ".previous\n"					\
+		     _ASM_EXTABLE(1b, 3b)				\
+		     : "=r" (err), ltype(x)				\
+		     : "m" (__m(addr)), "i" (errret), "0" (err))
+
+#define __get_user_asm_nozero(x, addr, err, itype, rtype, ltype, errret)	\
+	asm volatile("\n"						\
+		     "1:	mov"itype" %2,%"rtype"1\n"		\
+		     "2:\n"						\
+		     ".section .fixup,\"ax\"\n"				\
+		     "3:	mov %3,%0\n"				\
+		     "	jmp 2b\n"					\
+		     ".previous\n"					\
+		     _ASM_EXTABLE(1b, 3b)				\
+		     : "=r" (err), ltype(x)				\
+		     : "m" (__m(addr)), "i" (errret), "0" (err))
+
+/*
+ * This doesn't do __uaccess_begin/end - the exception handling
+ * around it must do that.
+ */
+#define __get_user_size_ex(x, ptr, size)				\
+do {									\
+	__chk_user_ptr(ptr);						\
+	switch (size) {							\
+	case 1:								\
+		__get_user_asm_ex(x, ptr, "b", "b", "=q");		\
+		break;							\
+	case 2:								\
+		__get_user_asm_ex(x, ptr, "w", "w", "=r");		\
+		break;							\
+	case 4:								\
+		__get_user_asm_ex(x, ptr, "l", "k", "=r");		\
+		break;							\
+	case 8:								\
+		__get_user_asm_ex_u64(x, ptr);				\
+		break;							\
+	default:							\
+		(x) = __get_user_bad();					\
+	}								\
+} while (0)
+
+#define __get_user_asm_ex(x, addr, itype, rtype, ltype)			\
+	asm volatile("1:	mov"itype" %1,%"rtype"0\n"		\
+		     "2:\n"						\
+		     ".section .fixup,\"ax\"\n"				\
+                     "3:xor"itype" %"rtype"0,%"rtype"0\n"		\
+		     "  jmp 2b\n"					\
+		     ".previous\n"					\
+		     _ASM_EXTABLE_EX(1b, 3b)				\
+		     : ltype(x) : "m" (__m(addr)))
+
+#define __put_user_nocheck(x, ptr, size)			\
+({								\
+	int __pu_err;						\
+	__typeof__(*(ptr)) __pu_val;				\
+	__pu_val = x;						\
+	__uaccess_begin();					\
+	__put_user_size(__pu_val, (ptr), (size), __pu_err, -EFAULT);\
+	__uaccess_end();					\
+	__builtin_expect(__pu_err, 0);				\
+})
+
+#define __get_user_nocheck(x, ptr, size)				\
+({									\
+	int __gu_err;							\
+	__inttype(*(ptr)) __gu_val;					\
+	__typeof__(ptr) __gu_ptr = (ptr);				\
+	__typeof__(size) __gu_size = (size);				\
+	__uaccess_begin_nospec();					\
+	__get_user_size(__gu_val, __gu_ptr, __gu_size, __gu_err, -EFAULT);	\
+	__uaccess_end();						\
+	(x) = (__force __typeof__(*(ptr)))__gu_val;			\
+	__builtin_expect(__gu_err, 0);					\
+})
+
+/* FIXME: this hack is definitely wrong -AK */
+struct __large_struct { unsigned long buf[100]; };
+#define __m(x) (*(struct __large_struct __user *)(x))
+
+/*
+ * Tell gcc we read from memory instead of writing: this is because
+ * we do not write to any memory gcc knows about, so there are no
+ * aliasing issues.
+ */
+#define __put_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
+	asm volatile("\n"						\
+		     "1:	mov"itype" %"rtype"1,%2\n"		\
+		     "2:\n"						\
+		     ".section .fixup,\"ax\"\n"				\
+		     "3:	mov %3,%0\n"				\
+		     "	jmp 2b\n"					\
+		     ".previous\n"					\
+		     _ASM_EXTABLE(1b, 3b)				\
+		     : "=r"(err)					\
+		     : ltype(x), "m" (__m(addr)), "i" (errret), "0" (err))
+
+#define __put_user_asm_ex(x, addr, itype, rtype, ltype)			\
+	asm volatile("1:	mov"itype" %"rtype"0,%1\n"		\
+		     "2:\n"						\
+		     _ASM_EXTABLE_EX(1b, 2b)				\
+		     : : ltype(x), "m" (__m(addr)))
+
+/*
+ * uaccess_try and catch
+ */
+#define uaccess_try	do {						\
+	current->thread.uaccess_err = 0;				\
+	__uaccess_begin();						\
+	barrier();
+
+#define uaccess_try_nospec do {						\
+	current->thread.uaccess_err = 0;				\
+	__uaccess_begin_nospec();					\
+
+#define uaccess_catch(err)						\
+	__uaccess_end();						\
+	(err) |= (current->thread.uaccess_err ? -EFAULT : 0);		\
+} while (0)
+>>>>>>> master
 
 /**
  * __get_user - Get a simple variable from user space, with less checking.

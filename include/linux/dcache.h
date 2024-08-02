@@ -169,8 +169,11 @@ struct dentry_operations {
       * typically using d_splice_alias. */
 
 #define DCACHE_REFERENCED		0x00000040 /* Recently used, don't discard. */
+<<<<<<< HEAD
 
 #define DCACHE_DONTCACHE		0x00000080 /* Purge from memory on final dput() */
+=======
+>>>>>>> master
 
 #define DCACHE_CANT_MOUNT		0x00000100
 #define DCACHE_GENOCIDE			0x00000200

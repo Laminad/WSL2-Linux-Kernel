@@ -2371,7 +2371,11 @@ static int fdp1_probe(struct platform_device *pdev)
 		dprintk(fdp1, "FDP1 Version R-Car H3\n");
 		break;
 	case FD1_IP_M3N:
+<<<<<<< HEAD:drivers/media/platform/renesas/rcar_fdp1.c
 		dprintk(fdp1, "FDP1 Version R-Car M3-N\n");
+=======
+		dprintk(fdp1, "FDP1 Version R-Car M3N\n");
+>>>>>>> master:drivers/media/platform/rcar_fdp1.c
 		break;
 	case FD1_IP_E3:
 		dprintk(fdp1, "FDP1 Version R-Car E3\n");

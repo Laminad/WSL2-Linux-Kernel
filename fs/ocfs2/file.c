@@ -2179,15 +2179,26 @@ static int ocfs2_is_io_unaligned(struct inode *inode, size_t count, loff_t pos)
 static int ocfs2_inode_lock_for_extent_tree(struct inode *inode,
 					    struct buffer_head **di_bh,
 					    int meta_level,
+<<<<<<< HEAD
+=======
+					    int overwrite_io,
+>>>>>>> master
 					    int write_sem,
 					    int wait)
 {
 	int ret = 0;
 
 	if (wait)
+<<<<<<< HEAD
 		ret = ocfs2_inode_lock(inode, di_bh, meta_level);
 	else
 		ret = ocfs2_try_inode_lock(inode, di_bh, meta_level);
+=======
+		ret = ocfs2_inode_lock(inode, NULL, meta_level);
+	else
+		ret = ocfs2_try_inode_lock(inode,
+			overwrite_io ? NULL : di_bh, meta_level);
+>>>>>>> master
 	if (ret < 0)
 		goto out;
 
@@ -2212,7 +2223,10 @@ static int ocfs2_inode_lock_for_extent_tree(struct inode *inode,
 
 out_unlock:
 	brelse(*di_bh);
+<<<<<<< HEAD
 	*di_bh = NULL;
+=======
+>>>>>>> master
 	ocfs2_inode_unlock(inode, meta_level);
 out:
 	return ret;
@@ -2243,6 +2257,10 @@ static int ocfs2_prepare_inode_for_write(struct file *file,
 	struct dentry *dentry = file->f_path.dentry;
 	struct inode *inode = d_inode(dentry);
 	struct buffer_head *di_bh = NULL;
+<<<<<<< HEAD
+=======
+	loff_t end;
+>>>>>>> master
 	u32 cpos;
 	u32 clusters;
 
@@ -2254,6 +2272,10 @@ static int ocfs2_prepare_inode_for_write(struct file *file,
 		ret = ocfs2_inode_lock_for_extent_tree(inode,
 						       &di_bh,
 						       meta_level,
+<<<<<<< HEAD
+=======
+						       overwrite_io,
+>>>>>>> master
 						       write_sem,
 						       wait);
 		if (ret < 0) {
@@ -2309,6 +2331,7 @@ static int ocfs2_prepare_inode_for_write(struct file *file,
 							   &di_bh,
 							   meta_level,
 							   write_sem);
+<<<<<<< HEAD
 			meta_level = 1;
 			write_sem = 1;
 			ret = ocfs2_inode_lock_for_extent_tree(inode,
@@ -2316,6 +2339,15 @@ static int ocfs2_prepare_inode_for_write(struct file *file,
 							       meta_level,
 							       write_sem,
 							       wait);
+=======
+			ret = ocfs2_inode_lock_for_extent_tree(inode,
+							       &di_bh,
+							       meta_level,
+							       overwrite_io,
+							       1,
+							       wait);
+			write_sem = 1;
+>>>>>>> master
 			if (ret < 0) {
 				if (ret != -EAGAIN)
 					mlog_errno(ret);

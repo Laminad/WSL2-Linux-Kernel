@@ -3,9 +3,15 @@
 #define BME680_H_
 
 #define BME680_REG_CHIP_ID			0xD0
+<<<<<<< HEAD
 #define   BME680_CHIP_ID_VAL			0x61
 #define BME680_REG_SOFT_RESET			0xE0
 #define   BME680_CMD_SOFTRESET			0xB6
+=======
+#define BME680_CHIP_ID_VAL			0x61
+#define BME680_REG_SOFT_RESET			0xE0
+#define BME680_CMD_SOFTRESET			0xB6
+>>>>>>> master
 #define BME680_REG_STATUS			0x73
 #define   BME680_SPI_MEM_PAGE_BIT		BIT(4)
 #define     BME680_SPI_MEM_PAGE_1_VAL		1

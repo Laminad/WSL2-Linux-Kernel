@@ -134,6 +134,12 @@ static void chap_close(struct iscsit_conn *conn)
 	conn->auth_protocol = NULL;
 }
 
+static void chap_close(struct iscsi_conn *conn)
+{
+	kfree(conn->auth_protocol);
+	conn->auth_protocol = NULL;
+}
+
 static struct iscsi_chap *chap_server_open(
 	struct iscsit_conn *conn,
 	struct iscsi_node_auth *auth,
@@ -205,6 +211,7 @@ static struct iscsi_chap *chap_server_open(
 	return chap;
 }
 
+<<<<<<< HEAD
 static const char base64_lookup_table[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -239,6 +246,10 @@ static int chap_base64_decode(u8 *dst, const char *src, size_t len)
 
 static int chap_server_compute_hash(
 	struct iscsit_conn *conn,
+=======
+static int chap_server_compute_md5(
+	struct iscsi_conn *conn,
+>>>>>>> master
 	struct iscsi_node_auth *auth,
 	char *nr_in_ptr,
 	char *nr_out_ptr,

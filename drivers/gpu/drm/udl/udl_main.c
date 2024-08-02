@@ -27,7 +27,11 @@ static struct urb *udl_get_urb_locked(struct udl_device *udl, long timeout);
 
 static int udl_parse_vendor_descriptor(struct udl_device *udl)
 {
+<<<<<<< HEAD
 	struct usb_device *udev = udl_to_usb_device(udl);
+=======
+	struct udl_device *udl = to_udl(dev);
+>>>>>>> master
 	char *desc;
 	char *buf;
 	char *desc_end;
@@ -148,6 +152,11 @@ void udl_urb_completion(struct urb *urb)
 static void udl_free_urb_list(struct drm_device *dev)
 {
 	struct udl_device *udl = to_udl(dev);
+<<<<<<< HEAD
+=======
+	int count = udl->urbs.count;
+	struct list_head *node;
+>>>>>>> master
 	struct urb_node *unode;
 	struct urb *urb;
 
@@ -234,6 +243,12 @@ retry:
 
 static struct urb *udl_get_urb_locked(struct udl_device *udl, long timeout)
 {
+<<<<<<< HEAD
+=======
+	struct udl_device *udl = to_udl(dev);
+	int ret = 0;
+	struct list_head *entry;
+>>>>>>> master
 	struct urb_node *unode;
 
 	assert_spin_locked(&udl->urbs.lock);
@@ -289,6 +304,7 @@ int udl_submit_urb(struct drm_device *dev, struct urb *urb, size_t len)
 	return ret;
 }
 
+<<<<<<< HEAD
 /* wait until all pending URBs have been processed */
 void udl_sync_pending_urbs(struct drm_device *dev)
 {
@@ -306,14 +322,21 @@ void udl_sync_pending_urbs(struct drm_device *dev)
 
 int udl_init(struct udl_device *udl)
 {
+=======
+int udl_init(struct udl_device *udl)
+{
+>>>>>>> master
 	struct drm_device *dev = &udl->drm;
 	int ret = -ENOMEM;
 
 	DRM_DEBUG("\n");
+<<<<<<< HEAD
 
 	udl->dmadev = usb_intf_get_dma_device(to_usb_interface(dev->dev));
 	if (!udl->dmadev)
 		drm_warn(dev, "buffer sharing not supported"); /* not an error */
+=======
+>>>>>>> master
 
 	mutex_init(&udl->gem_lock);
 
@@ -336,6 +359,13 @@ int udl_init(struct udl_device *udl)
 	if (ret)
 		goto err;
 
+<<<<<<< HEAD
+=======
+	ret = udl_fbdev_init(dev);
+	if (ret)
+		goto err;
+
+>>>>>>> master
 	drm_kms_helper_poll_init(dev);
 
 	return 0;
@@ -343,7 +373,10 @@ int udl_init(struct udl_device *udl)
 err:
 	if (udl->urbs.count)
 		udl_free_urb_list(dev);
+<<<<<<< HEAD
 	put_device(udl->dmadev);
+=======
+>>>>>>> master
 	DRM_ERROR("%d\n", ret);
 	return ret;
 }
@@ -358,3 +391,18 @@ int udl_drop_usb(struct drm_device *dev)
 
 	return 0;
 }
+<<<<<<< HEAD
+=======
+
+void udl_fini(struct drm_device *dev)
+{
+	struct udl_device *udl = to_udl(dev);
+
+	drm_kms_helper_poll_fini(dev);
+
+	if (udl->urbs.count)
+		udl_free_urb_list(dev);
+
+	udl_fbdev_cleanup(dev);
+}
+>>>>>>> master

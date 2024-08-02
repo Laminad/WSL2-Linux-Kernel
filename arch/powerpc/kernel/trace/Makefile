@@ -6,7 +6,10 @@
 ifdef CONFIG_FUNCTION_TRACER
 # do not trace tracer code
 CFLAGS_REMOVE_ftrace.o = $(CC_FLAGS_FTRACE)
+<<<<<<< HEAD
 CFLAGS_REMOVE_ftrace_64_pg.o = $(CC_FLAGS_FTRACE)
+=======
+>>>>>>> master
 endif
 
 obj32-$(CONFIG_FUNCTION_TRACER)		+= ftrace.o ftrace_entry.o

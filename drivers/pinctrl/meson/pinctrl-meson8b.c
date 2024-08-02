@@ -750,8 +750,12 @@ static const char * const ethernet_groups[] = {
 	"eth_tx_clk", "eth_tx_en", "eth_txd1_0", "eth_txd1_1",
 	"eth_txd0_0", "eth_txd0_1", "eth_rx_clk", "eth_rx_dv",
 	"eth_rxd1", "eth_rxd0", "eth_mdio_en", "eth_mdc", "eth_ref_clk",
+<<<<<<< HEAD
 	"eth_txd2", "eth_txd3", "eth_rxd3", "eth_rxd2",
 	"eth_rxd3_h", "eth_rxd2_h"
+=======
+	"eth_txd2", "eth_txd3", "eth_rxd3", "eth_rxd2"
+>>>>>>> master
 };
 
 static const char * const i2c_a_groups[] = {

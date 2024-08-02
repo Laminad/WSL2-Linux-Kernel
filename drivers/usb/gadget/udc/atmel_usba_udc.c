@@ -2146,6 +2146,7 @@ static struct usba_ep * atmel_udc_of_init(struct platform_device *pdev,
 	if (!match)
 		return ERR_PTR(-EINVAL);
 
+<<<<<<< HEAD
 	udc_config = match->data;
 	udc->ep_prealloc = udc_config->ep_prealloc;
 	udc->errata = udc_config->errata;
@@ -2160,6 +2161,16 @@ static struct usba_ep * atmel_udc_of_init(struct platform_device *pdev,
 		if (IS_ERR(udc->pmc))
 			return ERR_CAST(udc->pmc);
 	}
+=======
+	udc->errata = match->data;
+	udc->pmc = syscon_regmap_lookup_by_compatible("atmel,at91sam9g45-pmc");
+	if (IS_ERR(udc->pmc))
+		udc->pmc = syscon_regmap_lookup_by_compatible("atmel,at91sam9rl-pmc");
+	if (IS_ERR(udc->pmc))
+		udc->pmc = syscon_regmap_lookup_by_compatible("atmel,at91sam9x5-pmc");
+	if (udc->errata && IS_ERR(udc->pmc))
+		return ERR_CAST(udc->pmc);
+>>>>>>> master
 
 	udc->num_ep = 0;
 

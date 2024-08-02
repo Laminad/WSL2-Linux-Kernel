@@ -893,6 +893,7 @@ void __init hook_debug_fault_code(int nr,
 	debug_fault_info[nr].name	= name;
 }
 
+<<<<<<< HEAD
 /*
  * In debug exception context, we explicitly disable preemption despite
  * having interrupts disabled.
@@ -928,6 +929,71 @@ void do_debug_exception(unsigned long addr_if_watchpoint, unsigned long esr,
 
 	if (inf->fn(addr_if_watchpoint, esr, regs)) {
 		arm64_notify_die(inf->name, regs, inf->sig, inf->code, pc, esr);
+=======
+#ifdef CONFIG_ARM64_ERRATUM_1463225
+DECLARE_PER_CPU(int, __in_cortex_a76_erratum_1463225_wa);
+
+static int __exception
+cortex_a76_erratum_1463225_debug_handler(struct pt_regs *regs)
+{
+	if (user_mode(regs))
+		return 0;
+
+	if (!__this_cpu_read(__in_cortex_a76_erratum_1463225_wa))
+		return 0;
+
+	/*
+	 * We've taken a dummy step exception from the kernel to ensure
+	 * that interrupts are re-enabled on the syscall path. Return back
+	 * to cortex_a76_erratum_1463225_svc_handler() with debug exceptions
+	 * masked so that we can safely restore the mdscr and get on with
+	 * handling the syscall.
+	 */
+	regs->pstate |= PSR_D_BIT;
+	return 1;
+}
+#else
+static int __exception
+cortex_a76_erratum_1463225_debug_handler(struct pt_regs *regs)
+{
+	return 0;
+}
+#endif /* CONFIG_ARM64_ERRATUM_1463225 */
+
+asmlinkage int __exception do_debug_exception(unsigned long addr_if_watchpoint,
+					       unsigned int esr,
+					       struct pt_regs *regs)
+{
+	const struct fault_info *inf = debug_fault_info + DBG_ESR_EVT(esr);
+	unsigned long pc = instruction_pointer(regs);
+	int rv;
+
+	if (cortex_a76_erratum_1463225_debug_handler(regs))
+		return 0;
+
+	/*
+	 * Tell lockdep we disabled irqs in entry.S. Do nothing if they were
+	 * already disabled to preserve the last enabled/disabled addresses.
+	 */
+	if (interrupts_enabled(regs))
+		trace_hardirqs_off();
+
+	if (user_mode(regs) && pc > TASK_SIZE)
+		arm64_apply_bp_hardening();
+
+	if (!inf->fn(addr_if_watchpoint, esr, regs)) {
+		rv = 1;
+	} else {
+		struct siginfo info;
+
+		clear_siginfo(&info);
+		info.si_signo = inf->sig;
+		info.si_errno = 0;
+		info.si_code  = inf->code;
+		info.si_addr  = (void __user *)pc;
+		arm64_notify_die(inf->name, regs, &info, esr);
+		rv = 0;
+>>>>>>> master
 	}
 
 	debug_exception_exit(regs);

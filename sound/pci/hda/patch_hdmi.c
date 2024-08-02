@@ -1647,7 +1647,23 @@ static void hdmi_present_sense_via_verbs(struct hdmi_spec_per_pin *per_pin,
 			eld->eld_valid = false;
 	}
 
+<<<<<<< HEAD
 	update_eld(codec, per_pin, eld, repoll);
+=======
+	if (do_repoll)
+		schedule_delayed_work(&per_pin->work, msecs_to_jiffies(300));
+	else
+		update_eld(codec, per_pin, eld);
+
+	ret = !repoll || !eld->monitor_present || eld->eld_valid;
+
+	jack = snd_hda_jack_tbl_get(codec, pin_nid);
+	if (jack) {
+		jack->block_report = !ret;
+		jack->pin_sense = (eld->monitor_present && eld->eld_valid) ?
+			AC_PINSENSE_PRESENCE : 0;
+	}
+>>>>>>> master
 	mutex_unlock(&per_pin->lock);
  out:
 	snd_hda_power_down_pm(codec);
@@ -1860,8 +1876,12 @@ static void hdmi_repoll_eld(struct work_struct *work)
 	struct hdmi_spec *spec = codec->spec;
 	struct hda_jack_tbl *jack;
 
+<<<<<<< HEAD
 	jack = snd_hda_jack_tbl_get_mst(codec, per_pin->pin_nid,
 					per_pin->dev_id);
+=======
+	jack = snd_hda_jack_tbl_get(codec, per_pin->pin_nid);
+>>>>>>> master
 	if (jack)
 		jack->jack_dirty = 1;
 
@@ -2491,12 +2511,19 @@ static void generic_hdmi_free(struct hda_codec *codec)
 	struct hdmi_spec *spec = codec->spec;
 	int pin_idx, pcm_idx;
 
+<<<<<<< HEAD
 	if (spec->acomp_registered) {
 		snd_hdac_acomp_exit(&codec->bus->core);
 	} else if (codec_has_acomp(codec)) {
 		snd_hdac_acomp_register_notifier(&codec->bus->core, NULL);
 	}
 	codec->relaxed_resume = 0;
+=======
+	if (codec_has_acomp(codec)) {
+		snd_hdac_acomp_register_notifier(&codec->bus->core, NULL);
+		codec->relaxed_resume = 0;
+	}
+>>>>>>> master
 
 	for (pin_idx = 0; pin_idx < spec->num_pins; pin_idx++) {
 		struct hdmi_spec_per_pin *per_pin = get_pin(spec, pin_idx);
@@ -3837,6 +3864,8 @@ static int patch_nvhdmi_legacy(struct hda_codec *codec)
 		nvhdmi_chmap_cea_alloc_validate_get_type;
 	spec->chmap.ops.chmap_validate = nvhdmi_chmap_validate;
 	spec->nv_dp_workaround = true;
+
+	codec->link_down_at_suspend = 1;
 
 	codec->link_down_at_suspend = 1;
 

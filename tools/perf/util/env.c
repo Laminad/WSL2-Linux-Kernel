@@ -457,8 +457,12 @@ const char *perf_env__arch(struct perf_env *env)
 	char *arch_name;
 
 	if (!env || !env->arch) { /* Assume local operation */
+<<<<<<< HEAD
 		static struct utsname uts = { .machine[0] = '\0', };
 		if (uts.machine[0] == '\0' && uname(&uts) < 0)
+=======
+		if (uname(&uts) < 0)
+>>>>>>> master
 			return NULL;
 		arch_name = uts.machine;
 	} else

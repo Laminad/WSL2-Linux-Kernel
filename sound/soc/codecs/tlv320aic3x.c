@@ -1672,6 +1672,25 @@ static int aic3x_component_probe(struct snd_soc_component *component)
 	aic3x_add_widgets(component);
 
 	return 0;
+<<<<<<< HEAD
+=======
+
+err_notif:
+	while (i--)
+		regulator_unregister_notifier(aic3x->supplies[i].consumer,
+					      &aic3x->disable_nb[i].nb);
+	return ret;
+}
+
+static void aic3x_remove(struct snd_soc_component *component)
+{
+	struct aic3x_priv *aic3x = snd_soc_component_get_drvdata(component);
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(aic3x->supplies); i++)
+		regulator_unregister_notifier(aic3x->supplies[i].consumer,
+					      &aic3x->disable_nb[i].nb);
+>>>>>>> master
 }
 
 static const struct snd_soc_component_driver soc_component_dev_aic3x = {
@@ -1832,9 +1851,20 @@ int aic3x_probe(struct device *dev, struct regmap *regmap, kernel_ulong_t driver
 			dev_err(dev, "Failed to init class D: %d\n", ret);
 	}
 
+<<<<<<< HEAD
 	ret = devm_snd_soc_register_component(dev, &soc_component_dev_aic3x, &aic3x_dai, 1);
 	if (ret)
 		return ret;
+=======
+	ret = devm_snd_soc_register_component(&i2c->dev,
+			&soc_component_dev_aic3x, &aic3x_dai, 1);
+
+	if (ret != 0)
+		goto err_gpio;
+
+	INIT_LIST_HEAD(&aic3x->list);
+	list_add(&aic3x->list, &reset_list);
+>>>>>>> master
 
 	return 0;
 }
@@ -1844,9 +1874,20 @@ void aic3x_remove(struct device *dev)
 {
 	struct aic3x_priv *aic3x = dev_get_drvdata(dev);
 
+<<<<<<< HEAD
 	/* Leave the codec in reset state */
 	if (aic3x->gpio_reset && !aic3x->shared_reset)
 		gpiod_set_value(aic3x->gpio_reset, 1);
+=======
+	list_del(&aic3x->list);
+
+	if (gpio_is_valid(aic3x->gpio_reset) &&
+	    !aic3x_is_shared_reset(aic3x)) {
+		gpio_set_value(aic3x->gpio_reset, 0);
+		gpio_free(aic3x->gpio_reset);
+	}
+	return 0;
+>>>>>>> master
 }
 EXPORT_SYMBOL(aic3x_remove);
 

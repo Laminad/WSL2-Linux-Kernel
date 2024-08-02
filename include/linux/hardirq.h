@@ -112,12 +112,23 @@ void irq_exit_rcu(void);
 		__preempt_count_add(NMI_OFFSET + HARDIRQ_OFFSET);	\
 	} while (0)
 
+#ifndef arch_nmi_enter
+#define arch_nmi_enter()	do { } while (0)
+#define arch_nmi_exit()		do { } while (0)
+#endif
+
 #define nmi_enter()						\
 	do {							\
+<<<<<<< HEAD
 		__nmi_enter();					\
 		lockdep_hardirq_enter();			\
 		ct_nmi_enter();				\
 		instrumentation_begin();			\
+=======
+		arch_nmi_enter();				\
+		printk_nmi_enter();				\
+		lockdep_off();					\
+>>>>>>> master
 		ftrace_nmi_enter();				\
 		instrumentation_end();				\
 	} while (0)
@@ -134,10 +145,16 @@ void irq_exit_rcu(void);
 	do {							\
 		instrumentation_begin();			\
 		ftrace_nmi_exit();				\
+<<<<<<< HEAD
 		instrumentation_end();				\
 		ct_nmi_exit();					\
 		lockdep_hardirq_exit();				\
 		__nmi_exit();					\
+=======
+		lockdep_on();					\
+		printk_nmi_exit();				\
+		arch_nmi_exit();				\
+>>>>>>> master
 	} while (0)
 
 #endif /* LINUX_HARDIRQ_H */

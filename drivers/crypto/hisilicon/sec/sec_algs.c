@@ -224,6 +224,27 @@ err_free_hw_sgls:
 	return ret;
 }
 
+<<<<<<< HEAD
+=======
+static void sec_free_hw_sgl(struct sec_hw_sgl *hw_sgl,
+			    dma_addr_t psec_sgl, struct sec_dev_info *info)
+{
+	struct sec_hw_sgl *sgl_current, *sgl_next;
+	dma_addr_t sgl_next_dma;
+
+	sgl_current = hw_sgl;
+	while (sgl_current) {
+		sgl_next = sgl_current->next;
+		sgl_next_dma = sgl_current->next_sgl;
+
+		dma_pool_free(info->hw_sgl_pool, sgl_current, psec_sgl);
+
+		sgl_current = sgl_next;
+		psec_sgl = sgl_next_dma;
+	}
+}
+
+>>>>>>> master
 static int sec_alg_skcipher_setkey(struct crypto_skcipher *tfm,
 				   const u8 *key, unsigned int keylen,
 				   enum sec_cipher_alg alg)
@@ -721,7 +742,10 @@ static int sec_alg_skcipher_crypto(struct skcipher_request *skreq,
 	int *splits_out_nents = NULL;
 	struct sec_request_el *el, *temp;
 	bool split = skreq->src != skreq->dst;
+<<<<<<< HEAD
 	gfp_t gfp = skreq->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ? GFP_KERNEL : GFP_ATOMIC;
+=======
+>>>>>>> master
 
 	mutex_init(&sec_req->lock);
 	sec_req->req_base = &skreq->base;
@@ -777,7 +801,11 @@ static int sec_alg_skcipher_crypto(struct skcipher_request *skreq,
 					       splits_in[i], splits_in_nents[i],
 					       split ? splits_out[i] : NULL,
 					       split ? splits_out_nents[i] : 0,
+<<<<<<< HEAD
 					       info, gfp);
+=======
+					       info);
+>>>>>>> master
 		if (IS_ERR(el)) {
 			ret = PTR_ERR(el);
 			goto err_free_elements;
@@ -814,11 +842,19 @@ static int sec_alg_skcipher_crypto(struct skcipher_request *skreq,
 		ret = -EBUSY;
 		if ((skreq->base.flags & CRYPTO_TFM_REQ_MAY_BACKLOG)) {
 			list_add_tail(&sec_req->backlog_head, &ctx->backlog);
+<<<<<<< HEAD
 			spin_unlock_bh(&queue->queuelock);
 			goto out;
 		}
 
 		spin_unlock_bh(&queue->queuelock);
+=======
+			mutex_unlock(&queue->queuelock);
+			goto out;
+		}
+
+		mutex_unlock(&queue->queuelock);
+>>>>>>> master
 		goto err_free_elements;
 	}
 	ret = sec_send_request(sec_req, queue);

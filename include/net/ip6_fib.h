@@ -198,8 +198,14 @@ struct fib6_info {
 	u8				should_flush:1,
 					dst_nocount:1,
 					dst_nopolicy:1,
+<<<<<<< HEAD
 					fib6_destroying:1,
 					unused:4;
+=======
+					dst_host:1,
+					fib6_destroying:1,
+					unused:2;
+>>>>>>> master
 
 	struct rcu_head			rcu;
 	struct nexthop			*nh;

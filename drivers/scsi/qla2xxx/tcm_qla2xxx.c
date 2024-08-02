@@ -371,10 +371,23 @@ static void tcm_qla2xxx_close_session(struct se_session *se_sess)
 
 	BUG_ON(!sess);
 
+<<<<<<< HEAD
 	target_stop_session(se_sess);
 
 	sess->explicit_logout = 1;
 	tcm_qla2xxx_put_sess(sess);
+=======
+	spin_lock_irqsave(&vha->hw->tgt.sess_lock, flags);
+	target_sess_cmd_list_set_waiting(se_sess);
+	spin_unlock_irqrestore(&vha->hw->tgt.sess_lock, flags);
+
+	tcm_qla2xxx_put_sess(sess);
+}
+
+static u32 tcm_qla2xxx_sess_get_index(struct se_session *se_sess)
+{
+	return 0;
+>>>>>>> master
 }
 
 static int tcm_qla2xxx_write_pending(struct se_cmd *se_cmd)
@@ -821,7 +834,11 @@ static void tcm_qla2xxx_clear_nacl_from_fcport_map(struct fc_port *sess)
 
 static void tcm_qla2xxx_shutdown_sess(struct fc_port *sess)
 {
+<<<<<<< HEAD
 	target_stop_session(sess->se_sess);
+=======
+	target_sess_cmd_list_set_waiting(sess->se_sess);
+>>>>>>> master
 }
 
 static int tcm_qla2xxx_init_nodeacl(struct se_node_acl *se_nacl,

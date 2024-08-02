@@ -19,7 +19,10 @@
 #include <linux/netfilter_bridge/ebtables.h>
 #include <linux/netfilter_arp/arp_tables.h>
 #include <net/netfilter/nf_tables.h>
+<<<<<<< HEAD
 #include <net/netfilter/nf_log.h>
+=======
+>>>>>>> master
 
 /* Used for matches where *info is larger than X byte */
 #define NFT_MATCH_LARGE_THRESH	192
@@ -310,7 +313,12 @@ nft_target_destroy(const struct nft_ctx *ctx, const struct nft_expr *expr)
 	if (par.target->destroy != NULL)
 		par.target->destroy(&par);
 
+<<<<<<< HEAD
 	__nft_mt_tg_destroy(me, expr);
+=======
+	module_put(me);
+	kfree(expr->ops);
+>>>>>>> master
 }
 
 static int nft_extension_dump_info(struct sk_buff *skb, int attr,
@@ -516,8 +524,11 @@ __nft_match_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
 
 	nft_match_set_mtchk_param(&par, ctx, match, info, &e, proto, inv);
 
+<<<<<<< HEAD
 	nft_compat_wait_for_destructors();
 
+=======
+>>>>>>> master
 	return xt_check_match(&par, size, proto, inv);
 }
 
@@ -561,7 +572,12 @@ __nft_match_destroy(const struct nft_ctx *ctx, const struct nft_expr *expr,
 	if (par.match->destroy != NULL)
 		par.match->destroy(&par);
 
+<<<<<<< HEAD
 	__nft_mt_tg_destroy(me, expr);
+=======
+	module_put(me);
+	kfree(expr->ops);
+>>>>>>> master
 }
 
 static void
@@ -773,6 +789,7 @@ static const struct nfnetlink_subsystem nfnl_compat_subsys = {
 
 static struct nft_expr_type nft_match_type;
 
+<<<<<<< HEAD
 static bool nft_match_reduce(struct nft_regs_track *track,
 			     const struct nft_expr *expr)
 {
@@ -781,6 +798,8 @@ static bool nft_match_reduce(struct nft_regs_track *track,
 	return strcmp(match->name, "comment") == 0;
 }
 
+=======
+>>>>>>> master
 static const struct nft_expr_ops *
 nft_match_select_ops(const struct nft_ctx *ctx,
 		     const struct nlattr * const tb[])
@@ -823,7 +842,10 @@ nft_match_select_ops(const struct nft_ctx *ctx,
 	ops->dump = nft_match_dump;
 	ops->validate = nft_match_validate;
 	ops->data = match;
+<<<<<<< HEAD
 	ops->reduce = nft_match_reduce;
+=======
+>>>>>>> master
 
 	matchsize = NFT_EXPR_SIZE(XT_ALIGN(match->matchsize));
 	if (matchsize > NFT_MATCH_LARGE_THRESH) {
@@ -913,7 +935,10 @@ nft_target_select_ops(const struct nft_ctx *ctx,
 	ops->dump = nft_target_dump;
 	ops->validate = nft_target_validate;
 	ops->data = target;
+<<<<<<< HEAD
 	ops->reduce = NFT_REDUCE_READONLY;
+=======
+>>>>>>> master
 
 	if (family == NFPROTO_BRIDGE)
 		ops->eval = nft_target_eval_bridge;

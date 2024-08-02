@@ -67,6 +67,7 @@ struct net {
 						 */
 	spinlock_t		rules_mod_lock;
 
+<<<<<<< HEAD
 	atomic_t		dev_unreg_count;
 
 	unsigned int		dev_base_seq;	/* protected by rtnl_mutex */
@@ -74,6 +75,10 @@ struct net {
 
 	spinlock_t		nsid_lock;
 	atomic_t		fnhe_genid;
+=======
+	u32			hash_mix;
+	atomic64_t		cookie_gen;
+>>>>>>> master
 
 	struct list_head	list;		/* list of network namespaces */
 	struct list_head	exit_list;	/* To linked to call pernet exit
@@ -409,9 +414,15 @@ static inline struct net *read_pnet(const possible_net_t *pnet)
 #endif
 
 int peernet2id_alloc(struct net *net, struct net *peer, gfp_t gfp);
+<<<<<<< HEAD
 int peernet2id(const struct net *net, struct net *peer);
 bool peernet_has_id(const struct net *net, struct net *peer);
 struct net *get_net_ns_by_id(const struct net *net, int id);
+=======
+int peernet2id(struct net *net, struct net *peer);
+bool peernet_has_id(struct net *net, struct net *peer);
+struct net *get_net_ns_by_id(struct net *net, int id);
+>>>>>>> master
 
 struct pernet_operations {
 	struct list_head list;

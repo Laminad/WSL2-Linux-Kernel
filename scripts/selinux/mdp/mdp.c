@@ -19,7 +19,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+<<<<<<< HEAD
 #include <linux/kconfig.h>
+=======
+>>>>>>> master
 
 static void usage(char *name)
 {

@@ -155,6 +155,7 @@ static double find_stat(const struct evsel *evsel, int aggr_idx, enum stat_type 
 	const struct evsel *cur;
 	int evsel_ctx = evsel_context(evsel);
 
+<<<<<<< HEAD
 	evlist__for_each_entry(evsel->evlist, cur) {
 		struct perf_stat_aggr *aggr;
 
@@ -180,6 +181,11 @@ static double find_stat(const struct evsel *evsel, int aggr_idx, enum stat_type 
 		if (type == STAT_NSECS)
 			return aggr->counts.val;
 		return aggr->counts.val * cur->scale;
+=======
+	evlist__for_each_entry (evsel_list, c2) {
+		if (!strcasecmp(c2->name, name) && !c2->collect_stat)
+			return c2;
+>>>>>>> master
 	}
 	return 0.0;
 }
@@ -634,9 +640,179 @@ void *perf_stat__print_shadow_stats_metricgroup(struct perf_stat_config *config,
 	return NULL;
 }
 
+<<<<<<< HEAD
 void perf_stat__print_shadow_stats(struct perf_stat_config *config,
 				   struct evsel *evsel,
 				   double avg, int aggr_idx,
+=======
+/* Mark MetricExpr target events and link events using them to them. */
+void perf_stat__collect_metric_expr(struct perf_evlist *evsel_list)
+{
+	struct perf_evsel *counter, *leader, **metric_events, *oc;
+	bool found;
+	const char **metric_names;
+	int i;
+	int num_metric_names;
+
+	evlist__for_each_entry(evsel_list, counter) {
+		bool invalid = false;
+
+		leader = counter->leader;
+		if (!counter->metric_expr)
+			continue;
+		metric_events = counter->metric_events;
+		if (!metric_events) {
+			if (expr__find_other(counter->metric_expr, counter->name,
+						&metric_names, &num_metric_names) < 0)
+				continue;
+
+			metric_events = calloc(sizeof(struct perf_evsel *),
+					       num_metric_names + 1);
+			if (!metric_events)
+				return;
+			counter->metric_events = metric_events;
+		}
+
+		for (i = 0; i < num_metric_names; i++) {
+			found = false;
+			if (leader) {
+				/* Search in group */
+				for_each_group_member (oc, leader) {
+					if (!strcasecmp(oc->name, metric_names[i]) &&
+						!oc->collect_stat) {
+						found = true;
+						break;
+					}
+				}
+			}
+			if (!found) {
+				/* Search ignoring groups */
+				oc = perf_stat__find_event(evsel_list, metric_names[i]);
+			}
+			if (!oc) {
+				/* Deduping one is good enough to handle duplicated PMUs. */
+				static char *printed;
+
+				/*
+				 * Adding events automatically would be difficult, because
+				 * it would risk creating groups that are not schedulable.
+				 * perf stat doesn't understand all the scheduling constraints
+				 * of events. So we ask the user instead to add the missing
+				 * events.
+				 */
+				if (!printed || strcasecmp(printed, metric_names[i])) {
+					fprintf(stderr,
+						"Add %s event to groups to get metric expression for %s\n",
+						metric_names[i],
+						counter->name);
+					printed = strdup(metric_names[i]);
+				}
+				invalid = true;
+				continue;
+			}
+			metric_events[i] = oc;
+			oc->collect_stat = true;
+		}
+		metric_events[i] = NULL;
+		free(metric_names);
+		if (invalid) {
+			free(metric_events);
+			counter->metric_events = NULL;
+			counter->metric_expr = NULL;
+		}
+	}
+}
+
+static double runtime_stat_avg(struct runtime_stat *st,
+			       enum stat_type type, int ctx, int cpu)
+{
+	struct saved_value *v;
+
+	v = saved_value_lookup(NULL, cpu, false, type, ctx, st);
+	if (!v)
+		return 0.0;
+
+	return avg_stats(&v->stats);
+}
+
+static double runtime_stat_n(struct runtime_stat *st,
+			     enum stat_type type, int ctx, int cpu)
+{
+	struct saved_value *v;
+
+	v = saved_value_lookup(NULL, cpu, false, type, ctx, st);
+	if (!v)
+		return 0.0;
+
+	return v->stats.n;
+}
+
+static void print_stalled_cycles_frontend(int cpu,
+					  struct perf_evsel *evsel, double avg,
+					  struct perf_stat_output_ctx *out,
+					  struct runtime_stat *st)
+{
+	double total, ratio = 0.0;
+	const char *color;
+	int ctx = evsel_context(evsel);
+
+	total = runtime_stat_avg(st, STAT_CYCLES, ctx, cpu);
+
+	if (total)
+		ratio = avg / total * 100.0;
+
+	color = get_ratio_color(GRC_STALLED_CYCLES_FE, ratio);
+
+	if (ratio)
+		out->print_metric(out->ctx, color, "%7.2f%%", "frontend cycles idle",
+				  ratio);
+	else
+		out->print_metric(out->ctx, NULL, NULL, "frontend cycles idle", 0);
+}
+
+static void print_stalled_cycles_backend(int cpu,
+					 struct perf_evsel *evsel, double avg,
+					 struct perf_stat_output_ctx *out,
+					 struct runtime_stat *st)
+{
+	double total, ratio = 0.0;
+	const char *color;
+	int ctx = evsel_context(evsel);
+
+	total = runtime_stat_avg(st, STAT_CYCLES, ctx, cpu);
+
+	if (total)
+		ratio = avg / total * 100.0;
+
+	color = get_ratio_color(GRC_STALLED_CYCLES_BE, ratio);
+
+	out->print_metric(out->ctx, color, "%7.2f%%", "backend cycles idle", ratio);
+}
+
+static void print_branch_misses(int cpu,
+				struct perf_evsel *evsel,
+				double avg,
+				struct perf_stat_output_ctx *out,
+				struct runtime_stat *st)
+{
+	double total, ratio = 0.0;
+	const char *color;
+	int ctx = evsel_context(evsel);
+
+	total = runtime_stat_avg(st, STAT_BRANCHES, ctx, cpu);
+
+	if (total)
+		ratio = avg / total * 100.0;
+
+	color = get_ratio_color(GRC_CACHE_MISSES, ratio);
+
+	out->print_metric(out->ctx, color, "%7.2f%%", "of all branches", ratio);
+}
+
+static void print_l1_dcache_misses(int cpu,
+				   struct perf_evsel *evsel,
+				   double avg,
+>>>>>>> master
 				   struct perf_stat_output_ctx *out,
 				   struct rblist *metric_events)
 {

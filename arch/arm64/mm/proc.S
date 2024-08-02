@@ -89,7 +89,15 @@ SYM_FUNC_START(cpu_do_suspend)
 	mrs	x9, mdscr_el1
 	mrs	x10, oslsr_el1
 	mrs	x11, sctlr_el1
+<<<<<<< HEAD
 	get_this_cpu_offset x12
+=======
+alternative_if_not ARM64_HAS_VIRT_HOST_EXTN
+	mrs	x12, tpidr_el1
+alternative_else
+	mrs	x12, tpidr_el2
+alternative_endif
+>>>>>>> master
 	mrs	x13, sp_el0
 	stp	x2, x3, [x0]
 	stp	x4, x5, [x0, #16]
@@ -97,11 +105,14 @@ SYM_FUNC_START(cpu_do_suspend)
 	stp	x8, x9, [x0, #48]
 	stp	x10, x11, [x0, #64]
 	stp	x12, x13, [x0, #80]
+<<<<<<< HEAD
 	/*
 	 * Save x18 as it may be used as a platform register, e.g. by shadow
 	 * call stack.
 	 */
 	str	x18, [x0, #96]
+=======
+>>>>>>> master
 	ret
 SYM_FUNC_END(cpu_do_suspend)
 
@@ -304,6 +315,15 @@ SYM_TYPED_FUNC_START(idmap_kpti_install_ng_mappings)
 	/* We're done: fire up swapper_pg_dir again */
 	__idmap_cpu_set_reserved_ttbr1 x8, x9
 	msr	ttbr1_el1, swapper_ttb
+	isb
+
+	/*
+	 * Invalidate the local I-cache so that any instructions fetched
+	 * speculatively from the PoC are discarded, since they may have
+	 * been dynamically patched at the PoU.
+	 */
+	ic	iallu
+	dsb	nsh
 	isb
 
 	/* Set the flag to zero to indicate that we're all done */

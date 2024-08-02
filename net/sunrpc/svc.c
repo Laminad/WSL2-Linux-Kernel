@@ -1233,18 +1233,103 @@ void svc_printk(struct svc_rqst *rqstp, const char *fmt, ...)
 static __printf(2,3) void svc_printk(struct svc_rqst *rqstp, const char *fmt, ...) {}
 #endif
 
+<<<<<<< HEAD
 __be32
 svc_generic_init_request(struct svc_rqst *rqstp,
 		const struct svc_program *progp,
 		struct svc_process_info *ret)
+=======
+extern void svc_tcp_prep_reply_hdr(struct svc_rqst *);
+
+/*
+ * Common routine for processing the RPC request.
+ */
+static int
+svc_process_common(struct svc_rqst *rqstp, struct kvec *argv, struct kvec *resv)
+>>>>>>> master
 {
 	const struct svc_version *versp = NULL;	/* compiler food */
 	const struct svc_procedure *procp = NULL;
 
+<<<<<<< HEAD
 	if (rqstp->rq_vers >= progp->pg_nvers )
 		goto err_bad_vers;
 	versp = progp->pg_vers[rqstp->rq_vers];
 	if (!versp)
+=======
+	rpc_stat = rpc_success;
+
+	if (argv->iov_len < 6*4)
+		goto err_short_len;
+
+	/* Will be turned off by GSS integrity and privacy services */
+	set_bit(RQ_SPLICE_OK, &rqstp->rq_flags);
+	/* Will be turned off only when NFSv4 Sessions are used */
+	set_bit(RQ_USEDEFERRAL, &rqstp->rq_flags);
+	clear_bit(RQ_DROPME, &rqstp->rq_flags);
+
+	/* Setup reply header */
+	if (rqstp->rq_prot == IPPROTO_TCP)
+		svc_tcp_prep_reply_hdr(rqstp);
+
+	svc_putu32(resv, rqstp->rq_xid);
+
+	vers = svc_getnl(argv);
+
+	/* First words of reply: */
+	svc_putnl(resv, 1);		/* REPLY */
+
+	if (vers != 2)		/* RPC version number */
+		goto err_bad_rpc;
+
+	/* Save position in case we later decide to reject: */
+	reply_statp = resv->iov_base + resv->iov_len;
+
+	svc_putnl(resv, 0);		/* ACCEPT */
+
+	rqstp->rq_prog = prog = svc_getnl(argv);	/* program number */
+	rqstp->rq_vers = vers = svc_getnl(argv);	/* version number */
+	rqstp->rq_proc = proc = svc_getnl(argv);	/* procedure number */
+
+	for (progp = serv->sv_program; progp; progp = progp->pg_next)
+		if (prog == progp->pg_prog)
+			break;
+
+	/*
+	 * Decode auth data, and add verifier to reply buffer.
+	 * We do this before anything else in order to get a decent
+	 * auth verifier.
+	 */
+	auth_res = svc_authenticate(rqstp, &auth_stat);
+	/* Also give the program a chance to reject this call: */
+	if (auth_res == SVC_OK && progp) {
+		auth_stat = rpc_autherr_badcred;
+		auth_res = progp->pg_authenticate(rqstp);
+	}
+	switch (auth_res) {
+	case SVC_OK:
+		break;
+	case SVC_GARBAGE:
+		goto err_garbage;
+	case SVC_SYSERR:
+		rpc_stat = rpc_system_err;
+		goto err_bad;
+	case SVC_DENIED:
+		goto err_bad_auth;
+	case SVC_CLOSE:
+		goto close;
+	case SVC_DROP:
+		goto dropit;
+	case SVC_COMPLETE:
+		goto sendit;
+	}
+
+	if (progp == NULL)
+		goto err_bad_prog;
+
+	if (vers >= progp->pg_nvers ||
+	  !(versp = progp->pg_vers[vers]))
+>>>>>>> master
 		goto err_bad_vers;
 
 	/*
@@ -1416,10 +1501,15 @@ svc_process_common(struct svc_rqst *rqstp)
 	return 0;
 
  close:
+<<<<<<< HEAD
 	svc_authorise(rqstp);
 close_xprt:
 	if (rqstp->rq_xprt && test_bit(XPT_TEMP, &rqstp->rq_xprt->xpt_flags))
 		svc_xprt_close(rqstp->rq_xprt);
+=======
+	if (rqstp->rq_xprt && test_bit(XPT_TEMP, &rqstp->rq_xprt->xpt_flags))
+		svc_close_xprt(rqstp->rq_xprt);
+>>>>>>> master
 	dprintk("svc: svc_process close\n");
 	return 0;
 

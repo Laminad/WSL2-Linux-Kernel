@@ -64,6 +64,7 @@ static void export_imc_mode_and_cmd(struct device_node *node,
 		loc = (u64)(ptr->vbase) + cb_offset;
 		imc_mode_addr = (u64 *)(loc + IMC_CNTL_BLK_MODE_OFFSET);
 		sprintf(mode, "imc_mode_%d", (u32)(ptr->id));
+<<<<<<< HEAD
 		imc_debugfs_create_x64(mode, 0600, imc_debugfs_parent,
 				       imc_mode_addr);
 
@@ -71,6 +72,17 @@ static void export_imc_mode_and_cmd(struct device_node *node,
 		sprintf(cmd, "imc_cmd_%d", (u32)(ptr->id));
 		imc_debugfs_create_x64(cmd, 0600, imc_debugfs_parent,
 				       imc_cmd_addr);
+=======
+		if (!imc_debugfs_create_x64(mode, 0600, imc_debugfs_parent,
+					    imc_mode_addr))
+			goto err;
+
+		imc_cmd_addr = (u64 *)(loc + IMC_CNTL_BLK_CMD_OFFSET);
+		sprintf(cmd, "imc_cmd_%d", (u32)(ptr->id));
+		if (!imc_debugfs_create_x64(cmd, 0600, imc_debugfs_parent,
+					    imc_cmd_addr))
+			goto err;
+>>>>>>> master
 		ptr++;
 	}
 }
@@ -143,7 +155,11 @@ static struct imc_pmu *imc_pmu_create(struct device_node *parent, int pmu_index,
 
 	/* Return for unknown domain */
 	if (domain < 0)
+<<<<<<< HEAD
 		return NULL;
+=======
+		return -EINVAL;
+>>>>>>> master
 
 	/* memory for pmu */
 	pmu_ptr = kzalloc(sizeof(*pmu_ptr), GFP_KERNEL);

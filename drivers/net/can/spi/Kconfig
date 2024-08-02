@@ -9,10 +9,17 @@ config CAN_HI311X
 
 config CAN_MCP251X
 	tristate "Microchip MCP251x and MCP25625 SPI CAN controllers"
+<<<<<<< HEAD
 	help
 	  Driver for the Microchip MCP251x and MCP25625 SPI CAN
 	  controllers.
 
 source "drivers/net/can/spi/mcp251xfd/Kconfig"
+=======
+	depends on HAS_DMA
+	---help---
+	  Driver for the Microchip MCP251x and MCP25625 SPI CAN
+	  controllers.
+>>>>>>> master
 
 endmenu

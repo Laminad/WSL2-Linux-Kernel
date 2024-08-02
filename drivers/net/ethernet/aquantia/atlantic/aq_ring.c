@@ -344,9 +344,13 @@ static void aq_rx_checksum(struct aq_ring_s *self,
 		return;
 
 	if (unlikely(buff->is_cso_err)) {
+<<<<<<< HEAD
 		u64_stats_update_begin(&self->stats.rx.syncp);
 		++self->stats.rx.errors;
 		u64_stats_update_end(&self->stats.rx.syncp);
+=======
+		++self->stats.rx.errors;
+>>>>>>> master
 		skb->ip_summed = CHECKSUM_NONE;
 		return;
 	}
@@ -360,6 +364,7 @@ static void aq_rx_checksum(struct aq_ring_s *self,
 		__skb_incr_checksum_unnecessary(skb);
 }
 
+<<<<<<< HEAD
 int aq_xdp_xmit(struct net_device *dev, int num_frames,
 		struct xdp_frame **frames, u32 flags)
 {
@@ -527,6 +532,13 @@ static bool aq_add_rx_fragment(struct device *dev,
 
 static int __aq_ring_rx_clean(struct aq_ring_s *self, struct napi_struct *napi,
 			      int *work_done, int budget)
+=======
+#define AQ_SKB_ALIGN SKB_DATA_ALIGN(sizeof(struct skb_shared_info))
+int aq_ring_rx_clean(struct aq_ring_s *self,
+		     struct napi_struct *napi,
+		     int *work_done,
+		     int budget)
+>>>>>>> master
 {
 	struct net_device *ndev = aq_nic_get_ndev(self->aq_nic);
 	int err = 0;

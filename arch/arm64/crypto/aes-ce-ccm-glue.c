@@ -94,6 +94,46 @@ static int ccm_init_mac(struct aead_request *req, u8 maciv[], u32 msglen)
 	return 0;
 }
 
+<<<<<<< HEAD
+=======
+static void ccm_update_mac(struct crypto_aes_ctx *key, u8 mac[], u8 const in[],
+			   u32 abytes, u32 *macp)
+{
+	if (may_use_simd()) {
+		kernel_neon_begin();
+		ce_aes_ccm_auth_data(mac, in, abytes, macp, key->key_enc,
+				     num_rounds(key));
+		kernel_neon_end();
+	} else {
+		if (*macp > 0 && *macp < AES_BLOCK_SIZE) {
+			int added = min(abytes, AES_BLOCK_SIZE - *macp);
+
+			crypto_xor(&mac[*macp], in, added);
+
+			*macp += added;
+			in += added;
+			abytes -= added;
+		}
+
+		while (abytes >= AES_BLOCK_SIZE) {
+			__aes_arm64_encrypt(key->key_enc, mac, mac,
+					    num_rounds(key));
+			crypto_xor(mac, in, AES_BLOCK_SIZE);
+
+			in += AES_BLOCK_SIZE;
+			abytes -= AES_BLOCK_SIZE;
+		}
+
+		if (abytes > 0) {
+			__aes_arm64_encrypt(key->key_enc, mac, mac,
+					    num_rounds(key));
+			crypto_xor(mac, in, abytes);
+			*macp = abytes;
+		}
+	}
+}
+
+>>>>>>> master
 static void ccm_calculate_auth_mac(struct aead_request *req, u8 mac[])
 {
 	struct crypto_aead *aead = crypto_aead_reqtfm(req);

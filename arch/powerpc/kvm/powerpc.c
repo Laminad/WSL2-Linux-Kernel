@@ -661,7 +661,11 @@ int kvm_vm_ioctl_check_extension(struct kvm *kvm, long ext)
 		r = KVM_MAX_VCPUS;
 		break;
 	case KVM_CAP_MAX_VCPU_ID:
+<<<<<<< HEAD
 		r = KVM_MAX_VCPU_IDS;
+=======
+		r = KVM_MAX_VCPU_ID;
+>>>>>>> master
 		break;
 #ifdef CONFIG_PPC_BOOK3S_64
 	case KVM_CAP_PPC_GET_SMMU_INFO:

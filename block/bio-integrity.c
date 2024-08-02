@@ -275,11 +275,26 @@ bool bio_integrity_prep(struct bio *bio)
 		if (bytes > len)
 			bytes = len;
 
+<<<<<<< HEAD
 		if (bio_integrity_add_page(bio, virt_to_page(buf),
 					   bytes, offset) < bytes) {
 			printk(KERN_ERR "could not attach integrity payload\n");
 			goto err_end_io;
 		}
+=======
+		ret = bio_integrity_add_page(bio, virt_to_page(buf),
+					     bytes, offset);
+
+		if (ret == 0) {
+			printk(KERN_ERR "could not attach integrity payload\n");
+			kfree(buf);
+			status = BLK_STS_RESOURCE;
+			goto err_end_io;
+		}
+
+		if (ret < bytes)
+			break;
+>>>>>>> master
 
 		buf += bytes;
 		len -= bytes;

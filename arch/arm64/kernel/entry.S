@@ -608,11 +608,343 @@ SYM_CODE_END(el\el\ht\()_\regsize\()_\label)
 
 SYM_CODE_START_LOCAL(ret_to_kernel)
 	kernel_exit 1
+<<<<<<< HEAD
 SYM_CODE_END(ret_to_kernel)
 
 SYM_CODE_START_LOCAL(ret_to_user)
 	ldr	x19, [tsk, #TSK_TI_FLAGS]	// re-check for single-step
 	enable_step_tsk x19, x2
+=======
+el1_sp_pc:
+	/*
+	 * Stack or PC alignment exception handling
+	 */
+	mrs	x0, far_el1
+	inherit_daif	pstate=x23, tmp=x2
+	mov	x2, sp
+	bl	do_sp_pc_abort
+	ASM_BUG()
+el1_undef:
+	/*
+	 * Undefined instruction
+	 */
+	inherit_daif	pstate=x23, tmp=x2
+	mov	x0, sp
+	bl	do_undefinstr
+	kernel_exit 1
+el1_dbg:
+	/*
+	 * Debug exception handling
+	 */
+	cmp	x24, #ESR_ELx_EC_BRK64		// if BRK64
+	cinc	x24, x24, eq			// set bit '0'
+	tbz	x24, #0, el1_inv		// EL1 only
+	mrs	x0, far_el1
+	mov	x2, sp				// struct pt_regs
+	bl	do_debug_exception
+	kernel_exit 1
+el1_inv:
+	// TODO: add support for undefined instructions in kernel mode
+	inherit_daif	pstate=x23, tmp=x2
+	mov	x0, sp
+	mov	x2, x1
+	mov	x1, #BAD_SYNC
+	bl	bad_mode
+	ASM_BUG()
+ENDPROC(el1_sync)
+
+	.align	6
+el1_irq:
+	kernel_entry 1
+	enable_da_f
+#ifdef CONFIG_TRACE_IRQFLAGS
+	bl	trace_hardirqs_off
+#endif
+
+	irq_handler
+
+#ifdef CONFIG_PREEMPT
+	ldr	w24, [tsk, #TSK_TI_PREEMPT]	// get preempt count
+	cbnz	w24, 1f				// preempt count != 0
+	ldr	x0, [tsk, #TSK_TI_FLAGS]	// get flags
+	tbz	x0, #TIF_NEED_RESCHED, 1f	// needs rescheduling?
+	bl	el1_preempt
+1:
+#endif
+#ifdef CONFIG_TRACE_IRQFLAGS
+	bl	trace_hardirqs_on
+#endif
+	kernel_exit 1
+ENDPROC(el1_irq)
+
+#ifdef CONFIG_PREEMPT
+el1_preempt:
+	mov	x24, lr
+1:	bl	preempt_schedule_irq		// irq en/disable is done inside
+	ldr	x0, [tsk, #TSK_TI_FLAGS]	// get new tasks TI_FLAGS
+	tbnz	x0, #TIF_NEED_RESCHED, 1b	// needs rescheduling?
+	ret	x24
+#endif
+
+/*
+ * EL0 mode handlers.
+ */
+	.align	6
+el0_sync:
+	kernel_entry 0
+	mrs	x25, esr_el1			// read the syndrome register
+	lsr	x24, x25, #ESR_ELx_EC_SHIFT	// exception class
+	cmp	x24, #ESR_ELx_EC_SVC64		// SVC in 64-bit state
+	b.eq	el0_svc
+	cmp	x24, #ESR_ELx_EC_DABT_LOW	// data abort in EL0
+	b.eq	el0_da
+	cmp	x24, #ESR_ELx_EC_IABT_LOW	// instruction abort in EL0
+	b.eq	el0_ia
+	cmp	x24, #ESR_ELx_EC_FP_ASIMD	// FP/ASIMD access
+	b.eq	el0_fpsimd_acc
+	cmp	x24, #ESR_ELx_EC_SVE		// SVE access
+	b.eq	el0_sve_acc
+	cmp	x24, #ESR_ELx_EC_FP_EXC64	// FP/ASIMD exception
+	b.eq	el0_fpsimd_exc
+	cmp	x24, #ESR_ELx_EC_SYS64		// configurable trap
+	b.eq	el0_sys
+	cmp	x24, #ESR_ELx_EC_SP_ALIGN	// stack alignment exception
+	b.eq	el0_sp_pc
+	cmp	x24, #ESR_ELx_EC_PC_ALIGN	// pc alignment exception
+	b.eq	el0_sp_pc
+	cmp	x24, #ESR_ELx_EC_UNKNOWN	// unknown exception in EL0
+	b.eq	el0_undef
+	cmp	x24, #ESR_ELx_EC_BREAKPT_LOW	// debug exception in EL0
+	b.ge	el0_dbg
+	b	el0_inv
+
+#ifdef CONFIG_COMPAT
+	.align	6
+el0_sync_compat:
+	kernel_entry 0, 32
+	mrs	x25, esr_el1			// read the syndrome register
+	lsr	x24, x25, #ESR_ELx_EC_SHIFT	// exception class
+	cmp	x24, #ESR_ELx_EC_SVC32		// SVC in 32-bit state
+	b.eq	el0_svc_compat
+	cmp	x24, #ESR_ELx_EC_DABT_LOW	// data abort in EL0
+	b.eq	el0_da
+	cmp	x24, #ESR_ELx_EC_IABT_LOW	// instruction abort in EL0
+	b.eq	el0_ia
+	cmp	x24, #ESR_ELx_EC_FP_ASIMD	// FP/ASIMD access
+	b.eq	el0_fpsimd_acc
+	cmp	x24, #ESR_ELx_EC_FP_EXC32	// FP/ASIMD exception
+	b.eq	el0_fpsimd_exc
+	cmp	x24, #ESR_ELx_EC_PC_ALIGN	// pc alignment exception
+	b.eq	el0_sp_pc
+	cmp	x24, #ESR_ELx_EC_UNKNOWN	// unknown exception in EL0
+	b.eq	el0_undef
+	cmp	x24, #ESR_ELx_EC_CP15_32	// CP15 MRC/MCR trap
+	b.eq	el0_undef
+	cmp	x24, #ESR_ELx_EC_CP15_64	// CP15 MRRC/MCRR trap
+	b.eq	el0_undef
+	cmp	x24, #ESR_ELx_EC_CP14_MR	// CP14 MRC/MCR trap
+	b.eq	el0_undef
+	cmp	x24, #ESR_ELx_EC_CP14_LS	// CP14 LDC/STC trap
+	b.eq	el0_undef
+	cmp	x24, #ESR_ELx_EC_CP14_64	// CP14 MRRC/MCRR trap
+	b.eq	el0_undef
+	cmp	x24, #ESR_ELx_EC_BREAKPT_LOW	// debug exception in EL0
+	b.ge	el0_dbg
+	b	el0_inv
+el0_svc_compat:
+	mov	x0, sp
+	bl	el0_svc_compat_handler
+	b	ret_to_user
+
+	.align	6
+el0_irq_compat:
+	kernel_entry 0, 32
+	b	el0_irq_naked
+
+el0_error_compat:
+	kernel_entry 0, 32
+	b	el0_error_naked
+#endif
+
+el0_da:
+	/*
+	 * Data abort handling
+	 */
+	mrs	x26, far_el1
+	enable_daif
+	ct_user_exit
+	clear_address_tag x0, x26
+	mov	x1, x25
+	mov	x2, sp
+	bl	do_mem_abort
+	b	ret_to_user
+el0_ia:
+	/*
+	 * Instruction abort handling
+	 */
+	mrs	x26, far_el1
+	enable_da_f
+#ifdef CONFIG_TRACE_IRQFLAGS
+	bl	trace_hardirqs_off
+#endif
+	ct_user_exit
+	mov	x0, x26
+	mov	x1, x25
+	mov	x2, sp
+	bl	do_el0_ia_bp_hardening
+	b	ret_to_user
+el0_fpsimd_acc:
+	/*
+	 * Floating Point or Advanced SIMD access
+	 */
+	enable_daif
+	ct_user_exit
+	mov	x0, x25
+	mov	x1, sp
+	bl	do_fpsimd_acc
+	b	ret_to_user
+el0_sve_acc:
+	/*
+	 * Scalable Vector Extension access
+	 */
+	enable_daif
+	ct_user_exit
+	mov	x0, x25
+	mov	x1, sp
+	bl	do_sve_acc
+	b	ret_to_user
+el0_fpsimd_exc:
+	/*
+	 * Floating Point, Advanced SIMD or SVE exception
+	 */
+	enable_daif
+	ct_user_exit
+	mov	x0, x25
+	mov	x1, sp
+	bl	do_fpsimd_exc
+	b	ret_to_user
+el0_sp_pc:
+	/*
+	 * Stack or PC alignment exception handling
+	 */
+	mrs	x26, far_el1
+	enable_da_f
+#ifdef CONFIG_TRACE_IRQFLAGS
+	bl	trace_hardirqs_off
+#endif
+	ct_user_exit
+	mov	x0, x26
+	mov	x1, x25
+	mov	x2, sp
+	bl	do_sp_pc_abort
+	b	ret_to_user
+el0_undef:
+	/*
+	 * Undefined instruction
+	 */
+	enable_daif
+	ct_user_exit
+	mov	x0, sp
+	bl	do_undefinstr
+	b	ret_to_user
+el0_sys:
+	/*
+	 * System instructions, for trapped cache maintenance instructions
+	 */
+	enable_daif
+	ct_user_exit
+	mov	x0, x25
+	mov	x1, sp
+	bl	do_sysinstr
+	b	ret_to_user
+el0_dbg:
+	/*
+	 * Debug exception handling
+	 */
+	tbnz	x24, #0, el0_inv		// EL0 only
+	mrs	x0, far_el1
+	mov	x1, x25
+	mov	x2, sp
+	bl	do_debug_exception
+	enable_da_f
+	ct_user_exit
+	b	ret_to_user
+el0_inv:
+	enable_daif
+	ct_user_exit
+	mov	x0, sp
+	mov	x1, #BAD_SYNC
+	mov	x2, x25
+	bl	bad_el0_sync
+	b	ret_to_user
+ENDPROC(el0_sync)
+
+	.align	6
+el0_irq:
+	kernel_entry 0
+el0_irq_naked:
+	enable_da_f
+#ifdef CONFIG_TRACE_IRQFLAGS
+	bl	trace_hardirqs_off
+#endif
+
+	ct_user_exit
+#ifdef CONFIG_HARDEN_BRANCH_PREDICTOR
+	tbz	x22, #55, 1f
+	bl	do_el0_irq_bp_hardening
+1:
+#endif
+	irq_handler
+
+#ifdef CONFIG_TRACE_IRQFLAGS
+	bl	trace_hardirqs_on
+#endif
+	b	ret_to_user
+ENDPROC(el0_irq)
+
+el1_error:
+	kernel_entry 1
+	mrs	x1, esr_el1
+	enable_dbg
+	mov	x0, sp
+	bl	do_serror
+	kernel_exit 1
+ENDPROC(el1_error)
+
+el0_error:
+	kernel_entry 0
+el0_error_naked:
+	mrs	x1, esr_el1
+	enable_dbg
+	mov	x0, sp
+	bl	do_serror
+	enable_da_f
+	ct_user_exit
+	b	ret_to_user
+ENDPROC(el0_error)
+
+/*
+ * Ok, we need to do extra processing, enter the slow path.
+ */
+work_pending:
+	mov	x0, sp				// 'regs'
+	bl	do_notify_resume
+#ifdef CONFIG_TRACE_IRQFLAGS
+	bl	trace_hardirqs_on		// enabled while in userspace
+#endif
+	ldr	x1, [tsk, #TSK_TI_FLAGS]	// re-check for single-step
+	b	finish_ret_to_user
+/*
+ * "slow" syscall return path.
+ */
+ret_to_user:
+	disable_daif
+	ldr	x1, [tsk, #TSK_TI_FLAGS]
+	and	x2, x1, #_TIF_WORK_MASK
+	cbnz	x2, work_pending
+finish_ret_to_user:
+	enable_step_tsk x1, x2
+>>>>>>> master
 #ifdef CONFIG_GCC_PLUGIN_STACKLEAK
 	bl	stackleak_erase_on_task_stack
 #endif

@@ -164,7 +164,11 @@ static struct device_node *ti_find_clock_provider(struct device_node *from,
 void __init ti_dt_clocks_register(struct ti_dt_clk oclks[])
 {
 	struct ti_dt_clk *c;
+<<<<<<< HEAD
 	struct device_node *node, *parent, *child;
+=======
+	struct device_node *node, *parent;
+>>>>>>> master
 	struct clk *clk;
 	struct of_phandle_args clkspec;
 	char buf[64];
@@ -201,6 +205,7 @@ void __init ti_dt_clocks_register(struct ti_dt_clk oclks[])
 		if (num_args && clkctrl_nodes_missing)
 			continue;
 
+<<<<<<< HEAD
 		node = ti_find_clock_provider(NULL, buf);
 		if (num_args && compat_mode) {
 			parent = node;
@@ -211,6 +216,13 @@ void __init ti_dt_clocks_register(struct ti_dt_clk oclks[])
 				of_node_put(parent);
 				node = child;
 			}
+=======
+		node = of_find_node_by_name(NULL, buf);
+		if (num_args) {
+			parent = node;
+			node = of_get_child_by_name(parent, "clk");
+			of_node_put(parent);
+>>>>>>> master
 		}
 
 		clkspec.np = node;

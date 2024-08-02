@@ -1165,9 +1165,14 @@ int hns_nic_init_phy(struct net_device *ndev, struct hnae_handle *h)
 	if (!h->phy_dev)
 		return 0;
 
+<<<<<<< HEAD
 	ethtool_convert_legacy_u32_to_link_mode(supported, h->if_support);
 	linkmode_and(phy_dev->supported, phy_dev->supported, supported);
 	linkmode_copy(phy_dev->advertising, phy_dev->supported);
+=======
+	phy_dev->supported &= h->if_support;
+	phy_dev->advertising = phy_dev->supported;
+>>>>>>> master
 
 	if (h->phy_if == PHY_INTERFACE_MODE_XGMII)
 		phy_dev->autoneg = false;
@@ -1183,8 +1188,11 @@ int hns_nic_init_phy(struct net_device *ndev, struct hnae_handle *h)
 	if (unlikely(ret))
 		return -ENODEV;
 
+<<<<<<< HEAD
 	phy_attached_info(phy_dev);
 
+=======
+>>>>>>> master
 	return 0;
 }
 
@@ -1506,7 +1514,11 @@ static int hns_nic_net_stop(struct net_device *ndev)
 
 static void hns_tx_timeout_reset(struct hns_nic_priv *priv);
 #define HNS_TX_TIMEO_LIMIT (40 * HZ)
+<<<<<<< HEAD
 static void hns_nic_net_timeout(struct net_device *ndev, unsigned int txqueue)
+=======
+static void hns_nic_net_timeout(struct net_device *ndev)
+>>>>>>> master
 {
 	struct hns_nic_priv *priv = netdev_priv(ndev);
 
@@ -1518,6 +1530,23 @@ static void hns_nic_net_timeout(struct net_device *ndev, unsigned int txqueue)
 		ndev->watchdog_timeo = HNS_NIC_TX_TIMEOUT;
 		hns_tx_timeout_reset(priv);
 	}
+<<<<<<< HEAD
+=======
+}
+
+static int hns_nic_do_ioctl(struct net_device *netdev, struct ifreq *ifr,
+			    int cmd)
+{
+	struct phy_device *phy_dev = netdev->phydev;
+
+	if (!netif_running(netdev))
+		return -EINVAL;
+
+	if (!phy_dev)
+		return -ENOTSUPP;
+
+	return phy_mii_ioctl(phy_dev, ifr, cmd);
+>>>>>>> master
 }
 
 static netdev_tx_t hns_nic_net_xmit(struct sk_buff *skb,
@@ -2125,7 +2154,12 @@ static int hns_nic_init_ring_data(struct hns_nic_priv *priv)
 		rd->fini_process = is_ver1 ? hns_nic_tx_fini_pro :
 			hns_nic_tx_fini_pro_v2;
 
+<<<<<<< HEAD
 		netif_napi_add(priv->netdev, &rd->napi, hns_nic_common_poll);
+=======
+		netif_napi_add(priv->netdev, &rd->napi,
+			       hns_nic_common_poll, NAPI_POLL_WEIGHT);
+>>>>>>> master
 		rd->ring->irq_init_flag = RCB_IRQ_NOT_INITED;
 	}
 	for (i = h->q_num; i < h->q_num * 2; i++) {
@@ -2137,7 +2171,12 @@ static int hns_nic_init_ring_data(struct hns_nic_priv *priv)
 		rd->fini_process = is_ver1 ? hns_nic_rx_fini_pro :
 			hns_nic_rx_fini_pro_v2;
 
+<<<<<<< HEAD
 		netif_napi_add(priv->netdev, &rd->napi, hns_nic_common_poll);
+=======
+		netif_napi_add(priv->netdev, &rd->napi,
+			       hns_nic_common_poll, NAPI_POLL_WEIGHT);
+>>>>>>> master
 		rd->ring->irq_init_flag = RCB_IRQ_NOT_INITED;
 	}
 

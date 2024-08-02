@@ -849,6 +849,7 @@ config TOSHIBA_WMI
 config ACPI_CMPC
 	tristate "CMPC Laptop Extras"
 	depends on ACPI && INPUT
+	depends on BACKLIGHT_LCD_SUPPORT
 	depends on RFKILL || RFKILL=n
 	select BACKLIGHT_CLASS_DEVICE
 	help
@@ -1017,9 +1018,244 @@ config INTEL_IMR
 
 	  If you are running on a Galileo/Quark say Y here.
 
+<<<<<<< HEAD
 config INTEL_IPS
 	tristate "Intel Intelligent Power Sharing"
 	depends on ACPI && PCI
+=======
+config INTEL_PMC_CORE
+	tristate "Intel PMC Core driver"
+	depends on PCI
+	---help---
+	  The Intel Platform Controller Hub for Intel Core SoCs provides access
+	  to Power Management Controller registers via a PCI interface. This
+	  driver can utilize debugging capabilities and supported features as
+	  exposed by the Power Management Controller.
+
+	  Supported features:
+		- SLP_S0_RESIDENCY counter
+		- PCH IP Power Gating status
+		- LTR Ignore
+		- MPHY/PLL gating status (Sunrisepoint PCH only)
+
+config IBM_RTL
+	tristate "Device driver to enable PRTL support"
+	depends on PCI
+	---help---
+	 Enable support for IBM Premium Real Time Mode (PRTM).
+	 This module will allow you the enter and exit PRTM in the BIOS via
+	 sysfs on platforms that support this feature.  System in PRTM will
+	 not receive CPU-generated SMIs for recoverable errors.  Use of this
+	 feature without proper support may void your hardware warranty.
+
+	 If the proper BIOS support is found the driver will load and create
+	 /sys/devices/system/ibm_rtl/.  The "state" variable will indicate
+	 whether or not the BIOS is in PRTM.
+	 state = 0 (BIOS SMIs on)
+	 state = 1 (BIOS SMIs off)
+
+config XO1_RFKILL
+	tristate "OLPC XO-1 software RF kill switch"
+	depends on OLPC || COMPILE_TEST
+	depends on RFKILL
+	---help---
+	  Support for enabling/disabling the WLAN interface on the OLPC XO-1
+	  laptop.
+
+config XO15_EBOOK
+	tristate "OLPC XO-1.5 ebook switch"
+	depends on OLPC || COMPILE_TEST
+	depends on ACPI && INPUT
+	---help---
+	  Support for the ebook switch on the OLPC XO-1.5 laptop.
+
+	  This switch is triggered as the screen is rotated and folded down to
+	  convert the device into ebook form.
+
+config SAMSUNG_LAPTOP
+	tristate "Samsung Laptop driver"
+	depends on RFKILL || RFKILL = n
+	depends on ACPI_VIDEO || ACPI_VIDEO = n
+	depends on BACKLIGHT_CLASS_DEVICE
+	select LEDS_CLASS
+	select NEW_LEDS
+	---help---
+	  This module implements a driver for a wide range of different
+	  Samsung laptops.  It offers control over the different
+	  function keys, wireless LED, LCD backlight level.
+
+	  It may also provide some sysfs files described in
+	  <file:Documentation/ABI/testing/sysfs-driver-samsung-laptop>
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called samsung-laptop.
+
+config MXM_WMI
+       tristate "WMI support for MXM Laptop Graphics"
+       depends on ACPI_WMI
+       ---help---
+          MXM is a standard for laptop graphics cards, the WMI interface
+	  is required for switchable nvidia graphics machines
+
+config INTEL_OAKTRAIL
+	tristate "Intel Oaktrail Platform Extras"
+	depends on ACPI
+	depends on ACPI_VIDEO || ACPI_VIDEO = n
+	depends on RFKILL && BACKLIGHT_CLASS_DEVICE && ACPI
+	---help---
+	  Intel Oaktrail platform need this driver to provide interfaces to
+	  enable/disable the Camera, WiFi, BT etc. devices. If in doubt, say Y
+	  here; it will only load on supported platforms.
+
+config SAMSUNG_Q10
+	tristate "Samsung Q10 Extras"
+	depends on ACPI
+	depends on BACKLIGHT_LCD_SUPPORT
+	select BACKLIGHT_CLASS_DEVICE
+	---help---
+	  This driver provides support for backlight control on Samsung Q10
+	  and related laptops, including Dell Latitude X200.
+
+config APPLE_GMUX
+	tristate "Apple Gmux Driver"
+	depends on ACPI
+	depends on PNP
+	depends on BACKLIGHT_CLASS_DEVICE
+	depends on BACKLIGHT_APPLE=n || BACKLIGHT_APPLE
+	depends on ACPI_VIDEO=n || ACPI_VIDEO
+	---help---
+	  This driver provides support for the gmux device found on many
+	  Apple laptops, which controls the display mux for the hybrid
+	  graphics as well as the backlight. Currently only backlight
+	  control is supported by the driver.
+
+config INTEL_RST
+        tristate "Intel Rapid Start Technology Driver"
+	depends on ACPI
+	---help---
+	  This driver provides support for modifying paramaters on systems
+	  equipped with Intel's Rapid Start Technology. When put in an ACPI
+	  sleep state, these devices will wake after either a configured
+	  timeout or when the system battery reaches a critical state,
+	  automatically copying memory contents to disk. On resume, the
+	  firmware will copy the memory contents back to RAM and resume the OS
+	  as usual.
+
+config INTEL_SMARTCONNECT
+        tristate "Intel Smart Connect disabling driver"
+	depends on ACPI
+	---help---
+	  Intel Smart Connect is a technology intended to permit devices to
+	  update state by resuming for a short period of time at regular
+	  intervals. If a user enables this functionality under Windows and
+	  then reboots into Linux, the system may remain configured to resume
+	  on suspend. In the absence of any userspace to support it, the system
+	  will then remain awake until something triggers another suspend.
+
+	  This driver checks to determine whether the device has Intel Smart
+	  Connect enabled, and if so disables it.
+
+config PVPANIC
+	tristate "pvpanic device support"
+	depends on ACPI
+	---help---
+	  This driver provides support for the pvpanic device.  pvpanic is
+	  a paravirtualized device provided by QEMU; it lets a virtual machine
+	  (guest) communicate panic events to the host.
+
+config INTEL_PMC_IPC
+	tristate "Intel PMC IPC Driver"
+	depends on ACPI
+	---help---
+	This driver provides support for PMC control on some Intel platforms.
+	The PMC is an ARC processor which defines IPC commands for communication
+	with other entities in the CPU.
+
+config INTEL_BXTWC_PMIC_TMU
+	tristate "Intel BXT Whiskey Cove TMU Driver"
+	depends on REGMAP
+	depends on INTEL_SOC_PMIC_BXTWC && INTEL_PMC_IPC
+	---help---
+	  Select this driver to use Intel BXT Whiskey Cove PMIC TMU feature.
+	  This driver enables the alarm wakeup functionality in the TMU unit
+	  of Whiskey Cove PMIC.
+
+config SURFACE_PRO3_BUTTON
+	tristate "Power/home/volume buttons driver for Microsoft Surface Pro 3/4 tablet"
+	depends on ACPI && INPUT
+	---help---
+	  This driver handles the power/home/volume buttons on the Microsoft Surface Pro 3/4 tablet.
+
+config SURFACE_3_BUTTON
+	tristate "Power/home/volume buttons driver for Microsoft Surface 3 tablet"
+	depends on ACPI && KEYBOARD_GPIO && I2C
+	---help---
+	  This driver handles the power/home/volume buttons on the Microsoft Surface 3 tablet.
+
+config INTEL_PUNIT_IPC
+	tristate "Intel P-Unit IPC Driver"
+	---help---
+	  This driver provides support for Intel P-Unit Mailbox IPC mechanism,
+	  which is used to bridge the communications between kernel and P-Unit.
+
+config INTEL_TELEMETRY
+	tristate "Intel SoC Telemetry Driver"
+	depends on INTEL_PMC_IPC && INTEL_PUNIT_IPC && X86_64
+	---help---
+	  This driver provides interfaces to configure and use
+	  telemetry for INTEL SoC from APL onwards. It is also
+	  used to get various SoC events and parameters
+	  directly via debugfs files. Various tools may use
+	  this interface for SoC state monitoring.
+
+config MLX_PLATFORM
+	tristate "Mellanox Technologies platform support"
+	depends on I2C && REGMAP
+	---help---
+	  This option enables system support for the Mellanox Technologies
+	  platform. The Mellanox systems provide data center networking
+	  solutions based on Virtual Protocol Interconnect (VPI) technology
+	  enable seamless connectivity to 56/100Gb/s InfiniBand or 10/40/56GbE
+	  connection.
+
+	  If you have a Mellanox system, say Y or M here.
+
+config INTEL_TURBO_MAX_3
+	bool "Intel Turbo Boost Max Technology 3.0 enumeration driver"
+	depends on X86_64 && SCHED_MC_PRIO
+	---help---
+	  This driver reads maximum performance ratio of each CPU and set up
+	  the scheduler priority metrics. In this way scheduler can prefer
+	  CPU with higher performance to schedule tasks.
+	  This driver is only required when the system is not using Hardware
+	  P-States (HWP). In HWP mode, priority can be read from ACPI tables.
+
+config TOUCHSCREEN_DMI
+	bool "DMI based touchscreen configuration info"
+	depends on ACPI && DMI && I2C=y && TOUCHSCREEN_SILEAD
+	---help---
+	  Certain ACPI based tablets with e.g. Silead or Chipone touchscreens
+	  do not have enough data in ACPI tables for the touchscreen driver to
+	  handle the touchscreen properly, as OEMs expect the data to be baked
+	  into the tablet model specific version of the driver shipped with the
+	  the OS-image for the device. This option supplies the missing info.
+	  Enable this for x86 tablets with Silead or Chipone touchscreens.
+
+config INTEL_CHTDC_TI_PWRBTN
+	tristate "Intel Cherry Trail Dollar Cove TI power button driver"
+	depends on INTEL_SOC_PMIC_CHTDC_TI
+	depends on INPUT
+	---help---
+	  This option adds a power button driver driver for Dollar Cove TI
+	  PMIC on Intel Cherry Trail devices.
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called intel_chtdc_ti_pwrbtn.
+
+config I2C_MULTI_INSTANTIATE
+	tristate "I2C multi instantiate pseudo device driver"
+	depends on I2C && ACPI
+>>>>>>> master
 	help
 	  Intel Calpella platforms support dynamic power sharing between the
 	  CPU and GPU, maximizing performance in a given TDP.  This driver,
@@ -1098,6 +1334,18 @@ config SEL3350_PLATFORM
 
 	  To compile this driver as a module, choose M here: the module
 	  will be called sel3350-platform.
+
+config INTEL_ATOMISP2_PM
+	tristate "Intel AtomISP2 dummy / power-management driver"
+	depends on PCI && IOSF_MBI && PM
+	help
+	  Power-management driver for Intel's Image Signal Processor found on
+	  Bay and Cherry Trail devices. This dummy driver's sole purpose is to
+	  turn the ISP off (put it in D3) to save power and to allow entering
+	  of S0ix modes.
+
+	  To compile this driver as a module, choose M here: the module
+	  will be called intel_atomisp2_pm.
 
 endif # X86_PLATFORM_DEVICES
 

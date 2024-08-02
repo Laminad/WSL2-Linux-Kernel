@@ -709,6 +709,7 @@ qede_setup_tc_offload(struct net_device *dev, enum tc_setup_type type,
 }
 
 static const struct net_device_ops qede_netdev_ops = {
+<<<<<<< HEAD
 	.ndo_open		= qede_open,
 	.ndo_stop		= qede_close,
 	.ndo_start_xmit		= qede_start_xmit,
@@ -719,6 +720,17 @@ static const struct net_device_ops qede_netdev_ops = {
 	.ndo_change_mtu		= qede_change_mtu,
 	.ndo_eth_ioctl		= qede_ioctl,
 	.ndo_tx_timeout		= qede_tx_timeout,
+=======
+	.ndo_open = qede_open,
+	.ndo_stop = qede_close,
+	.ndo_start_xmit = qede_start_xmit,
+	.ndo_select_queue = qede_select_queue,
+	.ndo_set_rx_mode = qede_set_rx_mode,
+	.ndo_set_mac_address = qede_set_mac_addr,
+	.ndo_validate_addr = eth_validate_addr,
+	.ndo_change_mtu = qede_change_mtu,
+	.ndo_do_ioctl = qede_ioctl,
+>>>>>>> master
 #ifdef CONFIG_QED_SRIOV
 	.ndo_set_vf_mac		= qede_set_vf_mac,
 	.ndo_set_vf_vlan	= qede_set_vf_vlan,
@@ -745,6 +757,7 @@ static const struct net_device_ops qede_netdev_ops = {
 };
 
 static const struct net_device_ops qede_netdev_vf_ops = {
+<<<<<<< HEAD
 	.ndo_open		= qede_open,
 	.ndo_stop		= qede_close,
 	.ndo_start_xmit		= qede_start_xmit,
@@ -778,6 +791,44 @@ static const struct net_device_ops qede_netdev_vf_xdp_ops = {
 	.ndo_features_check	= qede_features_check,
 	.ndo_bpf		= qede_xdp,
 	.ndo_xdp_xmit		= qede_xdp_transmit,
+=======
+	.ndo_open = qede_open,
+	.ndo_stop = qede_close,
+	.ndo_start_xmit = qede_start_xmit,
+	.ndo_select_queue = qede_select_queue,
+	.ndo_set_rx_mode = qede_set_rx_mode,
+	.ndo_set_mac_address = qede_set_mac_addr,
+	.ndo_validate_addr = eth_validate_addr,
+	.ndo_change_mtu = qede_change_mtu,
+	.ndo_vlan_rx_add_vid = qede_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid = qede_vlan_rx_kill_vid,
+	.ndo_fix_features = qede_fix_features,
+	.ndo_set_features = qede_set_features,
+	.ndo_get_stats64 = qede_get_stats64,
+	.ndo_udp_tunnel_add = qede_udp_tunnel_add,
+	.ndo_udp_tunnel_del = qede_udp_tunnel_del,
+	.ndo_features_check = qede_features_check,
+};
+
+static const struct net_device_ops qede_netdev_vf_xdp_ops = {
+	.ndo_open = qede_open,
+	.ndo_stop = qede_close,
+	.ndo_start_xmit = qede_start_xmit,
+	.ndo_select_queue = qede_select_queue,
+	.ndo_set_rx_mode = qede_set_rx_mode,
+	.ndo_set_mac_address = qede_set_mac_addr,
+	.ndo_validate_addr = eth_validate_addr,
+	.ndo_change_mtu = qede_change_mtu,
+	.ndo_vlan_rx_add_vid = qede_vlan_rx_add_vid,
+	.ndo_vlan_rx_kill_vid = qede_vlan_rx_kill_vid,
+	.ndo_fix_features = qede_fix_features,
+	.ndo_set_features = qede_set_features,
+	.ndo_get_stats64 = qede_get_stats64,
+	.ndo_udp_tunnel_add = qede_udp_tunnel_add,
+	.ndo_udp_tunnel_del = qede_udp_tunnel_del,
+	.ndo_features_check = qede_features_check,
+	.ndo_bpf = qede_xdp,
+>>>>>>> master
 };
 
 /* -------------------------------------------------------------------------

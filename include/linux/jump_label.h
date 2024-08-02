@@ -82,6 +82,11 @@ extern bool static_key_initialized;
 				    "%s(): static key '%pS' used before call to jump_label_init()", \
 				    __func__, (key))
 
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_JUMP_LABEL
+
+>>>>>>> master
 struct static_key {
 	atomic_t enabled;
 #ifdef CONFIG_JUMP_LABEL
@@ -106,6 +111,14 @@ struct static_key {
 #endif	/* CONFIG_JUMP_LABEL */
 };
 
+<<<<<<< HEAD
+=======
+#else
+struct static_key {
+	atomic_t enabled;
+};
+#endif	/* CONFIG_JUMP_LABEL */
+>>>>>>> master
 #endif /* __ASSEMBLY__ */
 
 #ifdef CONFIG_JUMP_LABEL
@@ -509,10 +522,13 @@ extern bool ____wrong_branch_error(void);
 #define static_branch_unlikely(x)	unlikely_notrace(static_key_enabled(&(x)->key))
 
 #endif /* CONFIG_JUMP_LABEL */
+<<<<<<< HEAD
 
 #define static_branch_maybe(config, x)					\
 	(IS_ENABLED(config) ? static_branch_likely(x)			\
 			    : static_branch_unlikely(x))
+=======
+>>>>>>> master
 
 /*
  * Advanced usage; refcount, branch is enabled when: count != 0

@@ -4683,10 +4683,17 @@ out:
 }
 
 /* Lock an inode and grab a bh pointing to the inode. */
+<<<<<<< HEAD
 int ocfs2_reflink_inodes_lock(struct inode *s_inode,
 			      struct buffer_head **bh_s,
 			      struct inode *t_inode,
 			      struct buffer_head **bh_t)
+=======
+static int ocfs2_reflink_inodes_lock(struct inode *s_inode,
+				     struct buffer_head **bh_s,
+				     struct inode *t_inode,
+				     struct buffer_head **bh_t)
+>>>>>>> master
 {
 	struct inode *inode1 = s_inode;
 	struct inode *inode2 = t_inode;

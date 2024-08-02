@@ -646,8 +646,19 @@ retry:
 
 	count = drm_helper_probe_get_modes(connector);
 
+<<<<<<< HEAD
 	if (count == 0 && (connector->status == connector_status_connected ||
 			   connector->status == connector_status_unknown)) {
+=======
+	/*
+	 * Fallback for when DDC probe failed in drm_get_edid() and thus skipped
+	 * override/firmware EDID.
+	 */
+	if (count == 0 && connector->status == connector_status_connected)
+		count = drm_add_override_edid_modes(connector);
+
+	if (count == 0 && connector->status == connector_status_connected)
+>>>>>>> master
 		count = drm_add_modes_noedid(connector, 1024, 768);
 
 		/*
@@ -766,6 +777,9 @@ static void output_poll_execute(struct work_struct *work)
 	enum drm_connector_status old_status;
 	bool repoll = false, changed;
 	u64 old_epoch_counter;
+
+	if (!dev->mode_config.poll_enabled)
+		return;
 
 	if (!dev->mode_config.poll_enabled)
 		return;
@@ -943,9 +957,14 @@ void drm_kms_helper_poll_fini(struct drm_device *dev)
 	if (!dev->mode_config.poll_enabled)
 		return;
 
+<<<<<<< HEAD
 	drm_kms_helper_poll_disable(dev);
 
 	dev->mode_config.poll_enabled = false;
+=======
+	dev->mode_config.poll_enabled = false;
+	cancel_delayed_work_sync(&dev->mode_config.output_poll_work);
+>>>>>>> master
 }
 EXPORT_SYMBOL(drm_kms_helper_poll_fini);
 

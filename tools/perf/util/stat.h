@@ -187,6 +187,7 @@ void *perf_stat__print_shadow_stats_metricgroup(struct perf_stat_config *config,
 						struct perf_stat_output_ctx *out,
 						struct rblist *metric_events);
 
+<<<<<<< HEAD
 int evlist__alloc_stats(struct perf_stat_config *config,
 			struct evlist *evlist, bool alloc_raw);
 void evlist__free_stats(struct evlist *evlist);
@@ -198,6 +199,12 @@ void evlist__save_aggr_prev_raw_counts(struct evlist *evlist);
 int evlist__alloc_aggr_stats(struct evlist *evlist, int nr_aggr);
 void evlist__reset_aggr_stats(struct evlist *evlist);
 void evlist__copy_res_stats(struct perf_stat_config *config, struct evlist *evlist);
+=======
+int perf_evlist__alloc_stats(struct perf_evlist *evlist, bool alloc_raw);
+void perf_evlist__free_stats(struct perf_evlist *evlist);
+void perf_evlist__reset_stats(struct perf_evlist *evlist);
+void perf_evlist__reset_prev_raw_counts(struct perf_evlist *evlist);
+>>>>>>> master
 
 int perf_stat_process_counter(struct perf_stat_config *config,
 			      struct evsel *counter);

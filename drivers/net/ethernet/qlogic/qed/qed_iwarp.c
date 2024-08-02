@@ -2667,8 +2667,11 @@ qed_iwarp_ll2_start(struct qed_hwfn *p_hwfn,
 
 	memset(&data, 0, sizeof(data));
 	data.input.conn_type = QED_LL2_TYPE_IWARP;
+<<<<<<< HEAD
 	/* SYN will use ctx based queues */
 	data.input.rx_conn_type = QED_LL2_RX_TYPE_CTX;
+=======
+>>>>>>> master
 	data.input.mtu = params->max_mtu;
 	data.input.rx_num_desc = QED_IWARP_LL2_SYN_RX_SIZE;
 	data.input.tx_num_desc = QED_IWARP_LL2_SYN_TX_SIZE;
@@ -2770,8 +2773,12 @@ qed_iwarp_ll2_start(struct qed_hwfn *p_hwfn,
 	iwarp_info->max_num_partial_fpdus = (u16)p_hwfn->p_rdma_info->num_qps;
 
 	iwarp_info->mpa_intermediate_buf = kzalloc(buff_size, GFP_KERNEL);
+<<<<<<< HEAD
 	if (!iwarp_info->mpa_intermediate_buf) {
 		rc = -ENOMEM;
+=======
+	if (!iwarp_info->mpa_intermediate_buf)
+>>>>>>> master
 		goto err;
 	}
 

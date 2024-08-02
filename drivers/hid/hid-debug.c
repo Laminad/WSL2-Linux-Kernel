@@ -1114,6 +1114,12 @@ static int hid_debug_rdesc_show(struct seq_file *f, void *p)
 	hid_dump_input_mapping(hdev, f);
 
 	up(&hdev->driver_input_lock);
+<<<<<<< HEAD
+=======
+
+	return 0;
+}
+>>>>>>> master
 
 	return 0;
 }
@@ -1160,11 +1166,24 @@ static ssize_t hid_debug_events_read(struct file *file, char __user *buffer,
 		set_current_state(TASK_INTERRUPTIBLE);
 
 		while (kfifo_is_empty(&list->hid_debug_fifo)) {
+<<<<<<< HEAD
 			if (signal_pending(current)) {
 				ret = -ERESTARTSYS;
 				break;
 			}
 
+=======
+			if (file->f_flags & O_NONBLOCK) {
+				ret = -EAGAIN;
+				break;
+			}
+
+			if (signal_pending(current)) {
+				ret = -ERESTARTSYS;
+				break;
+			}
+
+>>>>>>> master
 			/* if list->hdev is NULL we cannot remove_wait_queue().
 			 * if list->hdev->debug is 0 then hid_debug_unregister()
 			 * was already called and list->hdev is being destroyed.
@@ -1176,11 +1195,14 @@ static ssize_t hid_debug_events_read(struct file *file, char __user *buffer,
 				goto out;
 			}
 
+<<<<<<< HEAD
 			if (file->f_flags & O_NONBLOCK) {
 				ret = -EAGAIN;
 				break;
 			}
 
+=======
+>>>>>>> master
 			/* allow O_NONBLOCK from other threads */
 			mutex_unlock(&list->read_mutex);
 			schedule();
@@ -1228,8 +1250,11 @@ static int hid_debug_events_release(struct inode *inode, struct file *file)
 	list_del(&list->node);
 	spin_unlock_irqrestore(&list->hdev->debug_list_lock, flags);
 	kfifo_free(&list->hid_debug_fifo);
+<<<<<<< HEAD
 
 	kref_put(&list->hdev->ref, hiddev_free);
+=======
+>>>>>>> master
 	kfree(list);
 
 	return 0;

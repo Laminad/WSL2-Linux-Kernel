@@ -558,7 +558,11 @@ void do_barrier_nospec_fixups_range(bool enable, void *fixup_start, void *fixup_
 	printk(KERN_DEBUG "barrier-nospec: patched %d locations\n", i);
 }
 
+<<<<<<< HEAD
 static void __init patch_btb_flush_section(long *curr)
+=======
+static void patch_btb_flush_section(long *curr)
+>>>>>>> master
 {
 	unsigned int *start, *end;
 
@@ -566,11 +570,19 @@ static void __init patch_btb_flush_section(long *curr)
 	end = (void *)curr + *(curr + 1);
 	for (; start < end; start++) {
 		pr_devel("patching dest %lx\n", (unsigned long)start);
+<<<<<<< HEAD
 		patch_instruction(start, ppc_inst(PPC_RAW_NOP()));
 	}
 }
 
 void __init do_btb_flush_fixups(void)
+=======
+		patch_instruction(start, PPC_INST_NOP);
+	}
+}
+
+void do_btb_flush_fixups(void)
+>>>>>>> master
 {
 	long *start, *end;
 
@@ -580,7 +592,11 @@ void __init do_btb_flush_fixups(void)
 	for (; start < end; start += 2)
 		patch_btb_flush_section(start);
 }
+<<<<<<< HEAD
 #endif /* CONFIG_PPC_E500 */
+=======
+#endif /* CONFIG_PPC_FSL_BOOK3E */
+>>>>>>> master
 
 void do_lwsync_fixups(unsigned long value, void *fixup_start, void *fixup_end)
 {

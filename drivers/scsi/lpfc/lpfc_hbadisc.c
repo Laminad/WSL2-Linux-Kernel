@@ -1296,7 +1296,11 @@ lpfc_linkdown(struct lpfc_hba *phba)
 	lpfc_destroy_vport_work_array(phba, vports);
 
 	/* Clean up any SLI3 firmware default rpi's */
+<<<<<<< HEAD
 	if (phba->sli_rev > LPFC_SLI_REV3 || offline)
+=======
+	if (phba->sli_rev > LPFC_SLI_REV3)
+>>>>>>> master
 		goto skip_unreg_did;
 
 	mb = mempool_alloc(phba->mbox_mem_pool, GFP_KERNEL);

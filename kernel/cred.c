@@ -214,7 +214,12 @@ struct cred *prepare_creds(void)
 	memcpy(new, old, sizeof(struct cred));
 
 	new->non_rcu = 0;
+<<<<<<< HEAD
 	atomic_long_set(&new->usage, 1);
+=======
+	atomic_set(&new->usage, 1);
+	set_cred_subscribers(new, 0);
+>>>>>>> master
 	get_group_info(new->group_info);
 	get_uid(new->user);
 	get_user_ns(new->user_ns);
@@ -487,6 +492,12 @@ const struct cred *override_creds(const struct cred *new)
 	kdebug("override_creds(%p{%ld})", new,
 	       atomic_long_read(&new->usage));
 
+<<<<<<< HEAD
+=======
+	validate_creds(old);
+	validate_creds(new);
+
+>>>>>>> master
 	/*
 	 * NOTE! This uses 'get_new_cred()' rather than 'get_cred()'.
 	 *
@@ -494,8 +505,17 @@ const struct cred *override_creds(const struct cred *new)
 	 * we are only installing the cred into the thread-synchronous
 	 * '->cred' pointer, not the '->real_cred' pointer that is
 	 * visible to other threads under RCU.
+<<<<<<< HEAD
 	 */
 	get_new_cred((struct cred *)new);
+=======
+	 *
+	 * Also note that we did validate_creds() manually, not depending
+	 * on the validation in 'get_cred()'.
+	 */
+	get_new_cred((struct cred *)new);
+	alter_cred_subscribers(new, 1);
+>>>>>>> master
 	rcu_assign_pointer(current->cred, new);
 
 	kdebug("override_creds() = %p{%ld}", old,
@@ -641,7 +661,12 @@ struct cred *prepare_kernel_cred(struct task_struct *daemon)
 
 	*new = *old;
 	new->non_rcu = 0;
+<<<<<<< HEAD
 	atomic_long_set(&new->usage, 1);
+=======
+	atomic_set(&new->usage, 1);
+	set_cred_subscribers(new, 0);
+>>>>>>> master
 	get_uid(new->user);
 	get_user_ns(new->user_ns);
 	get_group_info(new->group_info);

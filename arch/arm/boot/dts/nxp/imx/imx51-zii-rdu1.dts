@@ -451,7 +451,11 @@
 			  "", "", "", "",
 			  "", "", "", "";
 
+<<<<<<< HEAD:arch/arm/boot/dts/nxp/imx/imx51-zii-rdu1.dts
 	unused-sd3-wp-hog {
+=======
+	unused-sd3-wp-gpio {
+>>>>>>> master:arch/arm/boot/dts/imx51-zii-rdu1.dts
 		/*
 		 * See pinctrl_esdhc1 below for more details on this
 		 */

@@ -3632,7 +3632,22 @@ static bool hns3_nic_reclaim_desc(struct hns3_enet_ring *ring,
 
 void hns3_clean_tx_ring(struct hns3_enet_ring *ring, int budget)
 {
+<<<<<<< HEAD
 	struct net_device *netdev = ring_to_netdev(ring);
+=======
+	int u = ring->next_to_use;
+	int c = ring->next_to_clean;
+
+	if (unlikely(h > ring->desc_num))
+		return 0;
+
+	return u > c ? (h > c && h <= u) : (h > c || h <= u);
+}
+
+bool hns3_clean_tx_ring(struct hns3_enet_ring *ring, int budget)
+{
+	struct net_device *netdev = ring->tqp->handle->kinfo.netdev;
+>>>>>>> master
 	struct hns3_nic_priv *priv = netdev_priv(netdev);
 	struct netdev_queue *dev_queue;
 	int bytes, pkts;
@@ -4773,6 +4788,8 @@ static void hns3_nic_init_coal_cfg(struct hns3_nic_priv *priv)
 
 static int hns3_nic_alloc_vector_data(struct hns3_nic_priv *priv)
 {
+#define HNS3_VECTOR_PF_MAX_NUM		64
+
 	struct hnae3_handle *h = priv->ae_handle;
 	struct hns3_enet_tqp_vector *tqp_vector;
 	struct hnae3_vector_info *vector;
@@ -4785,6 +4802,10 @@ static int hns3_nic_alloc_vector_data(struct hns3_nic_priv *priv)
 	/* RSS size, cpu online and vector_num should be the same */
 	/* Should consider 2p/4p later */
 	vector_num = min_t(u16, num_online_cpus(), tqp_num);
+<<<<<<< HEAD
+=======
+	vector_num = min_t(u16, vector_num, HNS3_VECTOR_PF_MAX_NUM);
+>>>>>>> master
 
 	vector = devm_kcalloc(&pdev->dev, vector_num, sizeof(*vector),
 			      GFP_KERNEL);
@@ -4846,7 +4867,17 @@ static void hns3_nic_uninit_vector_data(struct hns3_nic_priv *priv)
 		h->ae_algo->ops->unmap_ring_from_vector(h,
 			tqp_vector->vector_irq, vector_ring_chain);
 
+<<<<<<< HEAD
 		hns3_free_vector_ring_chain(tqp_vector, vector_ring_chain);
+=======
+		if (tqp_vector->irq_init_flag == HNS3_VECTOR_INITED) {
+			irq_set_affinity_notifier(tqp_vector->vector_irq,
+						  NULL);
+			irq_set_affinity_hint(tqp_vector->vector_irq, NULL);
+			free_irq(tqp_vector->vector_irq, tqp_vector);
+			tqp_vector->irq_init_flag = HNS3_VECTOR_NOT_INITED;
+		}
+>>>>>>> master
 
 		hns3_clear_ring_group(&tqp_vector->rx_group);
 		hns3_clear_ring_group(&tqp_vector->tx_group);

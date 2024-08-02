@@ -676,6 +676,7 @@ unsigned long native_calibrate_tsc(void)
 
 	crystal_khz = ecx_hz / 1000;
 
+<<<<<<< HEAD
 	/*
 	 * Denverton SoCs don't report crystal clock, and also don't support
 	 * CPUID.0x16 for the calculation below, so hardcode the 25MHz crystal
@@ -704,6 +705,23 @@ unsigned long native_calibrate_tsc(void)
 		cpuid(0x16, &eax_base_mhz, &ebx, &ecx, &edx);
 		crystal_khz = eax_base_mhz * 1000 *
 			eax_denominator / ebx_numerator;
+=======
+	if (crystal_khz == 0) {
+		switch (boot_cpu_data.x86_model) {
+		case INTEL_FAM6_SKYLAKE_MOBILE:
+		case INTEL_FAM6_SKYLAKE_DESKTOP:
+		case INTEL_FAM6_KABYLAKE_MOBILE:
+		case INTEL_FAM6_KABYLAKE_DESKTOP:
+			crystal_khz = 24000;	/* 24.0 MHz */
+			break;
+		case INTEL_FAM6_ATOM_GOLDMONT_X:
+			crystal_khz = 25000;	/* 25.0 MHz */
+			break;
+		case INTEL_FAM6_ATOM_GOLDMONT:
+			crystal_khz = 19200;	/* 19.2 MHz */
+			break;
+		}
+>>>>>>> master
 	}
 
 	if (crystal_khz == 0)

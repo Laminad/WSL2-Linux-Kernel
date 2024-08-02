@@ -33,6 +33,32 @@ typedef int (*hyperv_fill_flush_list_func)(
 		void *data);
 
 void hyperv_vector_handler(struct pt_regs *regs);
+<<<<<<< HEAD
+=======
+void hv_setup_vmbus_irq(void (*handler)(void));
+void hv_remove_vmbus_irq(void);
+
+/* On x86/x64, there isn't a real IRQ to be enabled/disable */
+static inline void hv_enable_vmbus_irq(void) {}
+static inline void hv_disable_vmbus_irq(void) {}
+
+void hv_setup_kexec_handler(void (*handler)(void));
+void hv_remove_kexec_handler(void);
+void hv_setup_crash_handler(void (*handler)(struct pt_regs *regs));
+void hv_remove_crash_handler(void);
+
+/*
+ * Routines for stimer0 Direct Mode handling.
+ * On x86/x64, there are no percpu actions to take.
+ */
+void hv_stimer0_vector_handler(struct pt_regs *regs);
+void hv_stimer0_callback_vector(void);
+int hv_setup_stimer0_irq(int *irq, int *vector, void (*handler)(void));
+void hv_remove_stimer0_irq(int irq);
+
+static inline void hv_enable_stimer0_percpu_irq(int irq) {}
+static inline void hv_disable_stimer0_percpu_irq(int irq) {}
+>>>>>>> master
 
 static inline unsigned char hv_get_nmi_reason(void)
 {

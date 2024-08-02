@@ -63,7 +63,10 @@ struct virtio_ccw_device {
 	unsigned int revision; /* Transport revision */
 	wait_queue_head_t wait_q;
 	spinlock_t lock;
+<<<<<<< HEAD
 	rwlock_t irq_lock;
+=======
+>>>>>>> master
 	struct mutex io_lock; /* Serializes I/O requests */
 	struct list_head virtqueues;
 	bool is_thinint;
@@ -148,6 +151,7 @@ struct airq_info {
 };
 static struct airq_info *airq_areas[MAX_AIRQ_AREAS];
 static DEFINE_MUTEX(airq_areas_lock);
+<<<<<<< HEAD
 
 static u8 *summary_indicators;
 
@@ -155,6 +159,8 @@ static inline u8 *get_summary_indicator(struct airq_info *info)
 {
 	return summary_indicators + info->summary_indicator_idx;
 }
+=======
+>>>>>>> master
 
 #define CCW_CMD_SET_VQ 0x13
 #define CCW_CMD_VDEV_RESET 0x33
@@ -430,7 +436,11 @@ static int virtio_ccw_read_vq_conf(struct virtio_ccw_device *vcdev,
 	ret = ccw_io_helper(vcdev, ccw, VIRTIO_CCW_DOING_READ_VQ_CONF);
 	if (ret)
 		return ret;
+<<<<<<< HEAD
 	return vcdev->dma_area->config_block.num ?: -ENOENT;
+=======
+	return vcdev->config_block->num ?: -ENOENT;
+>>>>>>> master
 }
 
 static void virtio_ccw_del_vq(struct virtqueue *vq, struct ccw1 *ccw)
@@ -1346,7 +1356,10 @@ static int virtio_ccw_online(struct ccw_device *cdev)
 	init_waitqueue_head(&vcdev->wait_q);
 	INIT_LIST_HEAD(&vcdev->virtqueues);
 	spin_lock_init(&vcdev->lock);
+<<<<<<< HEAD
 	rwlock_init(&vcdev->irq_lock);
+=======
+>>>>>>> master
 	mutex_init(&vcdev->io_lock);
 
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);

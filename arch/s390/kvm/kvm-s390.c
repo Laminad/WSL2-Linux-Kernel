@@ -1156,7 +1156,12 @@ static int kvm_s390_vm_start_migration(struct kvm *kvm)
 		return 0;
 	}
 	/* mark all the pages in active slots as dirty */
+<<<<<<< HEAD
 	kvm_for_each_memslot(ms, bkt, slots) {
+=======
+	for (slotnr = 0; slotnr < slots->used_slots; slotnr++) {
+		ms = slots->memslots + slotnr;
+>>>>>>> master
 		if (!ms->dirty_bitmap)
 			return -EINVAL;
 		/*
@@ -5345,6 +5350,7 @@ static long kvm_s390_vcpu_sida_op(struct kvm_vcpu *vcpu,
 	void *sida_addr;
 	int r = 0;
 
+<<<<<<< HEAD
 	if (mop->flags || !mop->size)
 		return -EINVAL;
 	if (mop->size + mop->sida_offset < mop->size)
@@ -5352,6 +5358,9 @@ static long kvm_s390_vcpu_sida_op(struct kvm_vcpu *vcpu,
 	if (mop->size + mop->sida_offset > sida_size(vcpu->arch.sie_block))
 		return -E2BIG;
 	if (!kvm_s390_pv_cpu_is_protected(vcpu))
+=======
+	if (mop->flags & ~supported_flags || mop->ar >= NUM_ACRS || !mop->size)
+>>>>>>> master
 		return -EINVAL;
 
 	sida_addr = (char *)sida_addr(vcpu->arch.sie_block) + mop->sida_offset;
@@ -5822,11 +5831,18 @@ void kvm_arch_commit_memory_region(struct kvm *kvm,
 					old->npages * PAGE_SIZE);
 		if (rc)
 			break;
+<<<<<<< HEAD
 		fallthrough;
 	case KVM_MR_CREATE:
 		rc = gmap_map_segment(kvm->arch.gmap, new->userspace_addr,
 				      new->base_gfn * PAGE_SIZE,
 				      new->npages * PAGE_SIZE);
+=======
+		/* FALLTHROUGH */
+	case KVM_MR_CREATE:
+		rc = gmap_map_segment(kvm->arch.gmap, mem->userspace_addr,
+				      mem->guest_phys_addr, mem->memory_size);
+>>>>>>> master
 		break;
 	case KVM_MR_FLAGS_ONLY:
 		break;

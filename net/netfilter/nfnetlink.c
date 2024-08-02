@@ -712,8 +712,11 @@ static int nfnetlink_bind(struct net *net, int group)
 	rcu_read_unlock();
 	if (!ss)
 		request_module_nowait("nfnetlink-subsys-%d", type);
+<<<<<<< HEAD
 
 	nfnetlink_bind_event(net, group);
+=======
+>>>>>>> master
 	return 0;
 }
 

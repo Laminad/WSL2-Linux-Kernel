@@ -599,6 +599,7 @@ static int rockchip_pcie_parse_host_dt(struct rockchip_pcie *rockchip)
 		dev_info(dev, "no vpcie3v3 regulator found\n");
 	}
 
+<<<<<<< HEAD
 	rockchip->vpcie1v8 = devm_regulator_get(dev, "vpcie1v8");
 	if (IS_ERR(rockchip->vpcie1v8))
 		return PTR_ERR(rockchip->vpcie1v8);
@@ -606,6 +607,21 @@ static int rockchip_pcie_parse_host_dt(struct rockchip_pcie *rockchip)
 	rockchip->vpcie0v9 = devm_regulator_get(dev, "vpcie0v9");
 	if (IS_ERR(rockchip->vpcie0v9))
 		return PTR_ERR(rockchip->vpcie0v9);
+=======
+	rockchip->vpcie1v8 = devm_regulator_get_optional(dev, "vpcie1v8");
+	if (IS_ERR(rockchip->vpcie1v8)) {
+		if (PTR_ERR(rockchip->vpcie1v8) != -ENODEV)
+			return PTR_ERR(rockchip->vpcie1v8);
+		dev_info(dev, "no vpcie1v8 regulator found\n");
+	}
+
+	rockchip->vpcie0v9 = devm_regulator_get_optional(dev, "vpcie0v9");
+	if (IS_ERR(rockchip->vpcie0v9)) {
+		if (PTR_ERR(rockchip->vpcie0v9) != -ENODEV)
+			return PTR_ERR(rockchip->vpcie0v9);
+		dev_info(dev, "no vpcie0v9 regulator found\n");
+	}
+>>>>>>> master
 
 	return 0;
 }

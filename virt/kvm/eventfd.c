@@ -315,7 +315,11 @@ kvm_irqfd_assign(struct kvm *kvm, struct kvm_irqfd *args)
 	if (!kvm_arch_irqfd_allowed(kvm, args))
 		return -EINVAL;
 
+<<<<<<< HEAD
 	irqfd = kzalloc(sizeof(*irqfd), GFP_KERNEL_ACCOUNT);
+=======
+	irqfd = kzalloc(sizeof(*irqfd), GFP_KERNEL);
+>>>>>>> master
 	if (!irqfd)
 		return -ENOMEM;
 

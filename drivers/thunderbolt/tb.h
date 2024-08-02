@@ -162,6 +162,7 @@ struct tb_switch_tmu {
  *
  * When the switch is being added or removed to the domain (other
  * switches) you need to have domain lock held.
+<<<<<<< HEAD
  *
  * In USB4 terminology this structure represents a router.
  *
@@ -169,6 +170,8 @@ struct tb_switch_tmu {
  * For Gen 4 links the link is also bonded when it is asymmetric. The
  * correct way to find out whether the link is bonded or not is to look
  * @bonded field of the upstream port.
+=======
+>>>>>>> master
  */
 struct tb_switch {
 	struct device dev;

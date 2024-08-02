@@ -673,9 +673,24 @@ static int ov5645_set_power_on(struct device *dev)
 
 	ret = ov5645_set_register_array(ov5645, ov5645_global_init_setting,
 					ARRAY_SIZE(ov5645_global_init_setting));
+<<<<<<< HEAD
 	if (ret < 0) {
 		dev_err(ov5645->dev, "could not set init registers\n");
 		goto exit;
+=======
+			if (ret < 0) {
+				dev_err(ov5645->dev,
+					"could not set init registers\n");
+				ov5645_set_power_off(ov5645);
+				goto exit;
+			}
+
+			usleep_range(500, 1000);
+		} else {
+			ov5645_write_reg(ov5645, OV5645_IO_MIPI_CTRL00, 0x58);
+			ov5645_set_power_off(ov5645);
+		}
+>>>>>>> master
 	}
 
 	usleep_range(500, 1000);
@@ -989,7 +1004,11 @@ static int ov5645_s_stream(struct v4l2_subdev *subdev, int enable)
 
 		ret = ov5645_write_reg(ov5645, OV5645_IO_MIPI_CTRL00, 0x45);
 		if (ret < 0)
+<<<<<<< HEAD
 			goto err_rpm_put;
+=======
+			return ret;
+>>>>>>> master
 
 		ret = ov5645_write_reg(ov5645, OV5645_SYSTEM_CTRL0,
 				       OV5645_SYSTEM_CTRL0_START);
@@ -998,7 +1017,11 @@ static int ov5645_s_stream(struct v4l2_subdev *subdev, int enable)
 	} else {
 		ret = ov5645_write_reg(ov5645, OV5645_IO_MIPI_CTRL00, 0x40);
 		if (ret < 0)
+<<<<<<< HEAD
 			goto stream_off_rpm_put;
+=======
+			return ret;
+>>>>>>> master
 
 		ret = ov5645_write_reg(ov5645, OV5645_SYSTEM_CTRL0,
 				       OV5645_SYSTEM_CTRL0_STOP);

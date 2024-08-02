@@ -1011,7 +1011,126 @@ static void xfer_put(const struct scmi_protocol_handle *ph,
 	__scmi_xfer_put(&info->tx_minfo, xfer);
 }
 
+<<<<<<< HEAD
 static bool scmi_xfer_done_no_timeout(struct scmi_chan_info *cinfo,
+=======
+/**
+ * scmi_tx_prepare() - mailbox client callback to prepare for the transfer
+ *
+ * @cl: client pointer
+ * @m: mailbox message
+ *
+ * This function prepares the shared memory which contains the header and the
+ * payload.
+ */
+static void scmi_tx_prepare(struct mbox_client *cl, void *m)
+{
+	struct scmi_xfer *t = m;
+	struct scmi_chan_info *cinfo = client_to_scmi_chan_info(cl);
+	struct scmi_shared_mem __iomem *mem = cinfo->payload;
+
+	/*
+	 * Ideally channel must be free by now unless OS timeout last
+	 * request and platform continued to process the same, wait
+	 * until it releases the shared memory, otherwise we may endup
+	 * overwriting its response with new message payload or vice-versa
+	 */
+	spin_until_cond(ioread32(&mem->channel_status) &
+			SCMI_SHMEM_CHAN_STAT_CHANNEL_FREE);
+	/* Mark channel busy + clear error */
+	iowrite32(0x0, &mem->channel_status);
+	iowrite32(t->hdr.poll_completion ? 0 : SCMI_SHMEM_FLAG_INTR_ENABLED,
+		  &mem->flags);
+	iowrite32(sizeof(mem->msg_header) + t->tx.len, &mem->length);
+	iowrite32(pack_scmi_header(&t->hdr), &mem->msg_header);
+	if (t->tx.buf)
+		memcpy_toio(mem->msg_payload, t->tx.buf, t->tx.len);
+}
+
+/**
+ * scmi_xfer_get() - Allocate one message
+ *
+ * @handle: Pointer to SCMI entity handle
+ *
+ * Helper function which is used by various command functions that are
+ * exposed to clients of this driver for allocating a message traffic event.
+ *
+ * This function can sleep depending on pending requests already in the system
+ * for the SCMI entity. Further, this also holds a spinlock to maintain
+ * integrity of internal data structures.
+ *
+ * Return: 0 if all went fine, else corresponding error.
+ */
+static struct scmi_xfer *scmi_xfer_get(const struct scmi_handle *handle)
+{
+	u16 xfer_id;
+	struct scmi_xfer *xfer;
+	unsigned long flags, bit_pos;
+	struct scmi_info *info = handle_to_scmi_info(handle);
+	struct scmi_xfers_info *minfo = &info->minfo;
+
+	/* Keep the locked section as small as possible */
+	spin_lock_irqsave(&minfo->xfer_lock, flags);
+	bit_pos = find_first_zero_bit(minfo->xfer_alloc_table,
+				      info->desc->max_msg);
+	if (bit_pos == info->desc->max_msg) {
+		spin_unlock_irqrestore(&minfo->xfer_lock, flags);
+		return ERR_PTR(-ENOMEM);
+	}
+	set_bit(bit_pos, minfo->xfer_alloc_table);
+	spin_unlock_irqrestore(&minfo->xfer_lock, flags);
+
+	xfer_id = bit_pos;
+
+	xfer = &minfo->xfer_block[xfer_id];
+	xfer->hdr.seq = xfer_id;
+	reinit_completion(&xfer->done);
+
+	return xfer;
+}
+
+/**
+ * scmi_xfer_put() - Release a message
+ *
+ * @handle: Pointer to SCMI entity handle
+ * @xfer: message that was reserved by scmi_xfer_get
+ *
+ * This holds a spinlock to maintain integrity of internal data structures.
+ */
+void scmi_xfer_put(const struct scmi_handle *handle, struct scmi_xfer *xfer)
+{
+	unsigned long flags;
+	struct scmi_info *info = handle_to_scmi_info(handle);
+	struct scmi_xfers_info *minfo = &info->minfo;
+
+	/*
+	 * Keep the locked section as small as possible
+	 * NOTE: we might escape with smp_mb and no lock here..
+	 * but just be conservative and symmetric.
+	 */
+	spin_lock_irqsave(&minfo->xfer_lock, flags);
+	clear_bit(xfer->hdr.seq, minfo->xfer_alloc_table);
+	spin_unlock_irqrestore(&minfo->xfer_lock, flags);
+}
+
+static bool
+scmi_xfer_poll_done(const struct scmi_chan_info *cinfo, struct scmi_xfer *xfer)
+{
+	struct scmi_shared_mem __iomem *mem = cinfo->payload;
+	u16 xfer_id = MSG_XTRACT_TOKEN(ioread32(&mem->msg_header));
+
+	if (xfer->hdr.seq != xfer_id)
+		return false;
+
+	return ioread32(&mem->channel_status) &
+		(SCMI_SHMEM_CHAN_STAT_CHANNEL_ERROR |
+		SCMI_SHMEM_CHAN_STAT_CHANNEL_FREE);
+}
+
+#define SCMI_MAX_POLL_TO_NS	(100 * NSEC_PER_USEC)
+
+static bool scmi_xfer_done_no_timeout(const struct scmi_chan_info *cinfo,
+>>>>>>> master
 				      struct scmi_xfer *xfer, ktime_t stop)
 {
 	struct scmi_info *info = handle_to_scmi_info(cinfo->handle);

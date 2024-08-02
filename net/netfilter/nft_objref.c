@@ -74,6 +74,7 @@ static void nft_objref_deactivate(const struct nft_ctx *ctx,
 	if (phase == NFT_TRANS_COMMIT)
 		return;
 
+<<<<<<< HEAD
 	nft_use_dec(&obj->use);
 }
 
@@ -85,6 +86,20 @@ static void nft_objref_activate(const struct nft_ctx *ctx,
 	nft_use_inc_restore(&obj->use);
 }
 
+=======
+	obj->use--;
+}
+
+static void nft_objref_activate(const struct nft_ctx *ctx,
+				const struct nft_expr *expr)
+{
+	struct nft_object *obj = nft_objref_priv(expr);
+
+	obj->use++;
+}
+
+static struct nft_expr_type nft_objref_type;
+>>>>>>> master
 static const struct nft_expr_ops nft_objref_ops = {
 	.type		= &nft_objref_type,
 	.size		= NFT_EXPR_SIZE(sizeof(struct nft_object *)),
@@ -187,7 +202,11 @@ static void nft_objref_map_activate(const struct nft_ctx *ctx,
 {
 	struct nft_objref_map *priv = nft_expr_priv(expr);
 
+<<<<<<< HEAD
 	nf_tables_activate_set(ctx, priv->set);
+=======
+	priv->set->use++;
+>>>>>>> master
 }
 
 static void nft_objref_map_destroy(const struct nft_ctx *ctx,

@@ -354,6 +354,11 @@ static int tc_setup_cbs(struct stmmac_priv *priv,
 	if (queue <= 0 || queue >= tx_queues_count)
 		return -EINVAL;
 	if (!priv->dma_cap.av)
+<<<<<<< HEAD
+=======
+		return -EOPNOTSUPP;
+	if (priv->speed != SPEED_100 && priv->speed != SPEED_1000)
+>>>>>>> master
 		return -EOPNOTSUPP;
 
 	port_transmit_rate_kbps = qopt->idleslope - qopt->sendslope;

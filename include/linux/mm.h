@@ -1040,6 +1040,24 @@ int vma_is_stack_for_current(struct vm_area_struct *vma);
 struct mmu_gather;
 struct inode;
 
+<<<<<<< HEAD
+=======
+#if !defined(__HAVE_ARCH_PTE_DEVMAP) || !defined(CONFIG_TRANSPARENT_HUGEPAGE)
+static inline int pmd_devmap(pmd_t pmd)
+{
+	return 0;
+}
+static inline int pud_devmap(pud_t pud)
+{
+	return 0;
+}
+static inline int pgd_devmap(pgd_t pgd)
+{
+	return 0;
+}
+#endif
+
+>>>>>>> master
 /*
  * compound_order() can be called without holding a reference, which means
  * that niceties like page_folio() don't work.  These callers should be
@@ -1162,8 +1180,44 @@ static inline int is_vmalloc_or_module_addr(const void *x)
  */
 static inline int folio_entire_mapcount(struct folio *folio)
 {
+<<<<<<< HEAD
 	VM_BUG_ON_FOLIO(!folio_test_large(folio), folio);
 	return atomic_read(&folio->_entire_mapcount) + 1;
+=======
+	return kvmalloc_node(size, flags, NUMA_NO_NODE);
+}
+static inline void *kvzalloc_node(size_t size, gfp_t flags, int node)
+{
+	return kvmalloc_node(size, flags | __GFP_ZERO, node);
+}
+static inline void *kvzalloc(size_t size, gfp_t flags)
+{
+	return kvmalloc(size, flags | __GFP_ZERO);
+}
+
+static inline void *kvmalloc_array(size_t n, size_t size, gfp_t flags)
+{
+	size_t bytes;
+
+	if (unlikely(check_mul_overflow(n, size, &bytes)))
+		return NULL;
+
+	return kvmalloc(bytes, flags);
+}
+
+static inline void *kvcalloc(size_t n, size_t size, gfp_t flags)
+{
+	return kvmalloc_array(n, size, flags | __GFP_ZERO);
+}
+
+extern void kvfree(const void *addr);
+
+static inline int compound_mapcount(struct page *page)
+{
+	VM_BUG_ON_PAGE(!PageCompound(page), page);
+	page = compound_head(page);
+	return atomic_read(compound_mapcount_ptr(page)) + 1;
+>>>>>>> master
 }
 
 /*
@@ -1444,6 +1498,10 @@ static inline void folio_get(struct folio *folio)
 	folio_ref_inc(folio);
 }
 
+/* 127: arbitrary random number, small enough to assemble well */
+#define page_ref_zero_or_close_to_overflow(page) \
+	((unsigned int) page_ref_count(page) + 127u <= 127u)
+
 static inline void get_page(struct page *page)
 {
 	folio_get(page_folio(page));
@@ -1452,8 +1510,16 @@ static inline void get_page(struct page *page)
 static inline __must_check bool try_get_page(struct page *page)
 {
 	page = compound_head(page);
+<<<<<<< HEAD
 	if (WARN_ON_ONCE(page_ref_count(page) <= 0))
 		return false;
+=======
+	/*
+	 * Getting a normal page or the head of a compound page
+	 * requires to already have an elevated page->_refcount.
+	 */
+	VM_BUG_ON_PAGE(page_ref_zero_or_close_to_overflow(page), page);
+>>>>>>> master
 	page_ref_inc(page);
 	return true;
 }
@@ -1531,6 +1597,15 @@ void release_pages(release_pages_arg, int nr);
 static inline void folios_put(struct folio **folios, unsigned int nr)
 {
 	release_pages(folios, nr);
+}
+
+static inline __must_check bool try_get_page(struct page *page)
+{
+	page = compound_head(page);
+	if (WARN_ON_ONCE(page_ref_count(page) <= 0))
+		return false;
+	page_ref_inc(page);
+	return true;
 }
 
 static inline void put_page(struct page *page)

@@ -972,8 +972,12 @@ static int page_vma_mkclean_one(struct page_vma_mapped_walk *pvmw)
 			if (!pmd_dirty(*pmd) && !pmd_write(*pmd))
 				continue;
 
+<<<<<<< HEAD
 			flush_cache_range(vma, address,
 					  address + HPAGE_PMD_SIZE);
+=======
+			flush_cache_page(vma, address, page_to_pfn(page));
+>>>>>>> master
 			entry = pmdp_invalidate(vma, address, pmd);
 			entry = pmd_wrprotect(entry);
 			entry = pmd_mkclean(entry);
@@ -1593,7 +1597,68 @@ static bool try_to_unmap_one(struct folio *folio, struct vm_area_struct *vma,
 				}
 				hugetlb_vma_unlock_write(vma);
 			}
+<<<<<<< HEAD
 			pteval = huge_ptep_clear_flush(vma, address, pvmw.pte);
+=======
+		}
+
+		if (IS_ENABLED(CONFIG_MIGRATION) &&
+		    (flags & TTU_MIGRATION) &&
+		    is_zone_device_page(page)) {
+			swp_entry_t entry;
+			pte_t swp_pte;
+
+			pteval = ptep_get_and_clear(mm, pvmw.address, pvmw.pte);
+
+			/*
+			 * Store the pfn of the page in a special migration
+			 * pte. do_swap_page() will wait until the migration
+			 * pte is removed and then restart fault handling.
+			 */
+			entry = make_migration_entry(page, 0);
+			swp_pte = swp_entry_to_pte(entry);
+			if (pte_soft_dirty(pteval))
+				swp_pte = pte_swp_mksoft_dirty(swp_pte);
+			set_pte_at(mm, pvmw.address, pvmw.pte, swp_pte);
+			/*
+			 * No need to invalidate here it will synchronize on
+			 * against the special swap migration pte.
+			 *
+			 * The assignment to subpage above was computed from a
+			 * swap PTE which results in an invalid pointer.
+			 * Since only PAGE_SIZE pages can currently be
+			 * migrated, just set it to page. This will need to be
+			 * changed when hugepage migrations to device private
+			 * memory are supported.
+			 */
+			subpage = page;
+			goto discard;
+		}
+
+		if (!(flags & TTU_IGNORE_ACCESS)) {
+			if (ptep_clear_flush_young_notify(vma, address,
+						pvmw.pte)) {
+				ret = false;
+				page_vma_mapped_walk_done(&pvmw);
+				break;
+			}
+		}
+
+		/* Nuke the page table entry. */
+		flush_cache_page(vma, address, pte_pfn(*pvmw.pte));
+		if (should_defer_flush(mm, flags)) {
+			/*
+			 * We clear the PTE but do not flush so potentially
+			 * a remote CPU could still be writing to the page.
+			 * If the entry was previously clean then the
+			 * architecture must guarantee that a clear->dirty
+			 * transition on a cached TLB entry is written through
+			 * and traps if the PTE is unmapped.
+			 */
+			pteval = ptep_get_and_clear(mm, address, pvmw.pte);
+
+			set_tlb_ubc_flush_pending(mm, pte_dirty(pteval));
+>>>>>>> master
 		} else {
 			flush_cache_page(vma, address, pfn);
 			/* Nuke the page table entry. */
@@ -1748,6 +1813,7 @@ static bool try_to_unmap_one(struct folio *folio, struct vm_area_struct *vma,
 			set_pte_at(mm, address, pvmw.pte, swp_pte);
 		} else {
 			/*
+<<<<<<< HEAD
 			 * This is a locked file-backed folio,
 			 * so it cannot be removed from the page
 			 * cache and replaced by a new folio before
@@ -1757,6 +1823,16 @@ static bool try_to_unmap_one(struct folio *folio, struct vm_area_struct *vma,
 			 * still using this folio.
 			 *
 			 * See Documentation/mm/mmu_notifier.rst
+=======
+			 * This is a locked file-backed page, thus it cannot
+			 * be removed from the page cache and replaced by a new
+			 * page before mmu_notifier_invalidate_range_end, so no
+			 * concurrent thread might update its page table to
+			 * point at new page while a device still is using this
+			 * page.
+			 *
+			 * See Documentation/vm/mmu_notifier.rst
+>>>>>>> master
 			 */
 			dec_mm_counter(mm, mm_counter_file(&folio->page));
 		}

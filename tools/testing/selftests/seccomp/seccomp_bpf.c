@@ -1854,6 +1854,7 @@ TEST_F(TRACE_poke, getpid_runs_normally)
 # error "Do not know how to find your architecture's registers and syscalls"
 #endif
 
+<<<<<<< HEAD
 /*
  * Most architectures can change the syscall by just updating the
  * associated register. This is the default if not defined above.
@@ -1879,6 +1880,21 @@ TEST_F(TRACE_poke, getpid_runs_normally)
 # define SYSCALL_RET_SET(_regs, _val)		\
 	do {					\
 		SYSCALL_RET(_regs) = (_val);	\
+=======
+/* When the syscall return can't be changed, stub out the tests for it. */
+#ifdef SYSCALL_NUM_RET_SHARE_REG
+# define EXPECT_SYSCALL_RETURN(val, action)	EXPECT_EQ(-1, action)
+#else
+# define EXPECT_SYSCALL_RETURN(val, action)		\
+	do {						\
+		errno = 0;				\
+		if (val < 0) {				\
+			EXPECT_EQ(-1, action);		\
+			EXPECT_EQ(-(val), errno);	\
+		} else {				\
+			EXPECT_EQ(val, action);		\
+		}					\
+>>>>>>> master
 	} while (0)
 #endif
 
@@ -1945,8 +1961,13 @@ int get_syscall(struct __test_metadata *_metadata, pid_t tracee)
 }
 
 /* Architecture-specific syscall changing routine. */
+<<<<<<< HEAD
 void __change_syscall(struct __test_metadata *_metadata,
 		    pid_t tracee, long *syscall, long *ret)
+=======
+void change_syscall(struct __test_metadata *_metadata,
+		    pid_t tracee, int syscall, int result)
+>>>>>>> master
 {
 	ARCH_REGS orig, regs;
 
@@ -1965,9 +1986,34 @@ void __change_syscall(struct __test_metadata *_metadata,
 	if (ret)
 		SYSCALL_RET_SET(regs, *ret);
 
+<<<<<<< HEAD
 	/* Flush any register changes made. */
 	if (memcmp(&orig, &regs, sizeof(orig)) != 0)
 		EXPECT_EQ(0, ARCH_SETREGS(regs));
+=======
+#else
+	ASSERT_EQ(1, 0) {
+		TH_LOG("How is the syscall changed on this architecture?");
+	}
+#endif
+
+	/* If syscall is skipped, change return value. */
+	if (syscall == -1)
+#ifdef SYSCALL_NUM_RET_SHARE_REG
+		TH_LOG("Can't modify syscall return on this architecture");
+#else
+		regs.SYSCALL_RET = result;
+#endif
+
+#ifdef HAVE_GETREGS
+	ret = ptrace(PTRACE_SETREGS, tracee, 0, &regs);
+#else
+	iov.iov_base = &regs;
+	iov.iov_len = sizeof(regs);
+	ret = ptrace(PTRACE_SETREGSET, tracee, NT_PRSTATUS, &iov);
+#endif
+	EXPECT_EQ(0, ret);
+>>>>>>> master
 }
 
 /* Change only syscall number. */
@@ -2006,17 +2052,29 @@ void tracer_seccomp(struct __test_metadata *_metadata, pid_t tracee,
 	case 0x1002:
 		/* change getpid to getppid. */
 		EXPECT_EQ(__NR_getpid, get_syscall(_metadata, tracee));
+<<<<<<< HEAD
 		change_syscall_nr(_metadata, tracee, __NR_getppid);
+=======
+		change_syscall(_metadata, tracee, __NR_getppid, 0);
+>>>>>>> master
 		break;
 	case 0x1003:
 		/* skip gettid with valid return code. */
 		EXPECT_EQ(__NR_gettid, get_syscall(_metadata, tracee));
+<<<<<<< HEAD
 		change_syscall_ret(_metadata, tracee, 45000);
+=======
+		change_syscall(_metadata, tracee, -1, 45000);
+>>>>>>> master
 		break;
 	case 0x1004:
 		/* skip openat with error. */
 		EXPECT_EQ(__NR_openat, get_syscall(_metadata, tracee));
+<<<<<<< HEAD
 		change_syscall_ret(_metadata, tracee, -ESRCH);
+=======
+		change_syscall(_metadata, tracee, -1, -ESRCH);
+>>>>>>> master
 		break;
 	case 0x1005:
 		/* do nothing (allow getppid) */
@@ -2103,7 +2161,18 @@ void tracer_ptrace(struct __test_metadata *_metadata, pid_t tracee,
 		return;
 	}
 
+<<<<<<< HEAD
 	__change_syscall(_metadata, tracee, syscall_nr, syscall_ret);
+=======
+	nr = get_syscall(_metadata, tracee);
+
+	if (nr == __NR_getpid)
+		change_syscall(_metadata, tracee, __NR_getppid, 0);
+	if (nr == __NR_gettid)
+		change_syscall(_metadata, tracee, -1, 45000);
+	if (nr == __NR_openat)
+		change_syscall(_metadata, tracee, -1, -ESRCH);
+>>>>>>> master
 }
 
 FIXTURE_VARIANT(TRACE_syscall) {
@@ -2200,9 +2269,32 @@ TEST(negative_ENOSYS)
 	EXPECT_EQ(errno, ENOSYS);
 }
 
+<<<<<<< HEAD
 TEST_F(TRACE_syscall, negative_ENOSYS)
 {
 	negative_ENOSYS(_metadata);
+=======
+TEST_F(TRACE_syscall, ptrace_syscall_errno)
+{
+	/* Swap SECCOMP_RET_TRACE tracer for PTRACE_SYSCALL tracer. */
+	teardown_trace_fixture(_metadata, self->tracer);
+	self->tracer = setup_trace_fixture(_metadata, tracer_ptrace, NULL,
+					   true);
+
+	/* Tracer should skip the open syscall, resulting in ESRCH. */
+	EXPECT_SYSCALL_RETURN(-ESRCH, syscall(__NR_openat));
+}
+
+TEST_F(TRACE_syscall, ptrace_syscall_faked)
+{
+	/* Swap SECCOMP_RET_TRACE tracer for PTRACE_SYSCALL tracer. */
+	teardown_trace_fixture(_metadata, self->tracer);
+	self->tracer = setup_trace_fixture(_metadata, tracer_ptrace, NULL,
+					   true);
+
+	/* Tracer should skip the gettid syscall, resulting fake pid. */
+	EXPECT_SYSCALL_RETURN(45000, syscall(__NR_gettid));
+>>>>>>> master
 }
 
 TEST_F(TRACE_syscall, syscall_allowed)
@@ -2220,9 +2312,37 @@ TEST_F(TRACE_syscall, syscall_redirected)
 }
 
 TEST_F(TRACE_syscall, syscall_errno)
+<<<<<<< HEAD
 {
 	/* Tracer should skip the open syscall, resulting in ESRCH. */
 	EXPECT_SYSCALL_RETURN(-ESRCH, syscall(__NR_openat));
+=======
+{
+	long ret;
+
+	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+	ASSERT_EQ(0, ret);
+
+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->prog, 0, 0);
+	ASSERT_EQ(0, ret);
+
+	/* openat has been skipped and an errno return. */
+	EXPECT_SYSCALL_RETURN(-ESRCH, syscall(__NR_openat));
+}
+
+TEST_F(TRACE_syscall, syscall_faked)
+{
+	long ret;
+
+	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+	ASSERT_EQ(0, ret);
+
+	ret = prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &self->prog, 0, 0);
+	ASSERT_EQ(0, ret);
+
+	/* gettid has been skipped and an altered return value stored. */
+	EXPECT_SYSCALL_RETURN(45000, syscall(__NR_gettid));
+>>>>>>> master
 }
 
 TEST_F(TRACE_syscall, syscall_faked)
@@ -3280,7 +3400,11 @@ TEST(get_metadata)
 
 	/* Only real root can get metadata. */
 	if (geteuid()) {
+<<<<<<< HEAD
 		SKIP(return, "get_metadata requires real root");
+=======
+		XFAIL(return, "get_metadata requires real root");
+>>>>>>> master
 		return;
 	}
 

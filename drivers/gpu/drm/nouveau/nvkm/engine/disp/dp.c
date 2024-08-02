@@ -453,6 +453,7 @@ nvkm_dp_train(struct nvkm_outp *outp, u32 dataKBps)
 	int ret = -EINVAL, nr, rate;
 	u8  pwr;
 
+<<<<<<< HEAD
 	/* Retraining link?  Skip source configuration, it can mess up the active modeset. */
 	if (atomic_read(&outp->dp.lt.done)) {
 		for (rate = 0; rate < outp->dp.rates; rate++) {
@@ -461,6 +462,31 @@ nvkm_dp_train(struct nvkm_outp *outp, u32 dataKBps)
 		}
 		WARN_ON(1);
 		return -EINVAL;
+=======
+	/* Find the lowest configuration of the OR that can support
+	 * the required link rate.
+	 *
+	 * We will refuse to program the OR to lower rates, even if
+	 * link training fails at higher rates (or even if the sink
+	 * can't support the rate at all, though the DD is supposed
+	 * to prevent such situations from happening).
+	 *
+	 * Attempting to do so can cause the entire display to hang,
+	 * and it's better to have a failed modeset than that.
+	 */
+	for (cfg = nvkm_dp_rates; cfg->rate; cfg++) {
+		if (cfg->nr <= outp_nr && cfg->nr <= outp_bw) {
+			/* Try to respect sink limits too when selecting
+			 * lowest link configuration.
+			 */
+			if (!failsafe ||
+			    (cfg->nr <= sink_nr && cfg->bw <= sink_bw))
+				failsafe = cfg;
+		}
+
+		if (failsafe && cfg[1].rate < dataKBps)
+			break;
+>>>>>>> master
 	}
 
 	/* Ensure sink is not in a low-power state. */

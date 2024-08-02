@@ -201,6 +201,17 @@ static void dev_map_free(struct bpf_map *map)
 
 	/* Make sure prior __dev_map_entry_free() have completed. */
 	rcu_barrier();
+<<<<<<< HEAD
+=======
+
+	/* To ensure all pending flush operations have completed wait for flush
+	 * bitmap to indicate all flush_needed bits to be zero on _all_ cpus.
+	 * Because the above synchronize_rcu() ensures the map is disconnected
+	 * from the program we can assume no new bits will be set.
+	 */
+	for_each_online_cpu(cpu) {
+		unsigned long *bitmap = per_cpu_ptr(dtab->flush_needed, cpu);
+>>>>>>> master
 
 	if (dtab->map.map_type == BPF_MAP_TYPE_DEVMAP_HASH) {
 		for (i = 0; i < dtab->n_buckets; i++) {
@@ -237,7 +248,25 @@ static void dev_map_free(struct bpf_map *map)
 		bpf_map_area_free(dtab->netdev_map);
 	}
 
+<<<<<<< HEAD
 	bpf_map_area_free(dtab);
+=======
+	for (i = 0; i < dtab->map.max_entries; i++) {
+		struct bpf_dtab_netdev *dev;
+
+		dev = dtab->netdev_map[i];
+		if (!dev)
+			continue;
+
+		free_percpu(dev->bulkq);
+		dev_put(dev->dev);
+		kfree(dev);
+	}
+
+	free_percpu(dtab->flush_needed);
+	bpf_map_area_free(dtab->netdev_map);
+	kfree(dtab);
+>>>>>>> master
 }
 
 static int dev_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
@@ -411,12 +440,31 @@ void __dev_flush(void)
 	struct list_head *flush_list = this_cpu_ptr(&dev_flush_list);
 	struct xdp_dev_bulk_queue *bq, *tmp;
 
+<<<<<<< HEAD
 	list_for_each_entry_safe(bq, tmp, flush_list, flush_node) {
 		bq_xmit_all(bq, XDP_XMIT_FLUSH);
 		bq->dev_rx = NULL;
 		bq->xdp_prog = NULL;
 		__list_del_clearprev(&bq->flush_node);
+=======
+	rcu_read_lock();
+	for_each_set_bit(bit, bitmap, map->max_entries) {
+		struct bpf_dtab_netdev *dev = READ_ONCE(dtab->netdev_map[bit]);
+		struct xdp_bulk_queue *bq;
+
+		/* This is possible if the dev entry is removed by user space
+		 * between xdp redirect and flush op.
+		 */
+		if (unlikely(!dev))
+			continue;
+
+		bq = this_cpu_ptr(dev->bulkq);
+		bq_xmit_all(dev, bq, XDP_XMIT_FLUSH, true);
+
+		__clear_bit(bit, bitmap);
+>>>>>>> master
 	}
+	rcu_read_unlock();
 }
 
 /* Elements are kept alive by RCU; either by rcu_read_lock() (from syscall) or
@@ -790,9 +838,28 @@ static void *dev_map_lookup_elem(struct bpf_map *map, void *key)
 
 static void *dev_map_hash_lookup_elem(struct bpf_map *map, void *key)
 {
+<<<<<<< HEAD
 	struct bpf_dtab_netdev *obj = __dev_map_hash_lookup_elem(map,
 								*(u32 *)key);
 	return obj ? &obj->val : NULL;
+=======
+	if (dev->dev->netdev_ops->ndo_xdp_xmit) {
+		struct xdp_bulk_queue *bq;
+		unsigned long *bitmap;
+
+		int cpu;
+
+		rcu_read_lock();
+		for_each_online_cpu(cpu) {
+			bitmap = per_cpu_ptr(dev->dtab->flush_needed, cpu);
+			__clear_bit(dev->bit, bitmap);
+
+			bq = per_cpu_ptr(dev->bulkq, cpu);
+			bq_xmit_all(dev, bq, XDP_XMIT_FLUSH, false);
+		}
+		rcu_read_unlock();
+	}
+>>>>>>> master
 }
 
 static void __dev_map_entry_free(struct rcu_head *rcu)

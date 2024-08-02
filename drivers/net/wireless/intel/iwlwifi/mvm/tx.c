@@ -761,9 +761,16 @@ int iwl_mvm_tx_skb_non_sta(struct iwl_mvm *mvm, struct sk_buff *skb)
 		if (info.control.vif->type == NL80211_IFTYPE_P2P_DEVICE ||
 		    info.control.vif->type == NL80211_IFTYPE_AP ||
 		    info.control.vif->type == NL80211_IFTYPE_ADHOC) {
+<<<<<<< HEAD
 			u32 link_id = u32_get_bits(info.control.flags,
 						   IEEE80211_TX_CTRL_MLO_LINK);
 			struct iwl_mvm_vif_link_info *link;
+=======
+			if (!ieee80211_is_data(hdr->frame_control))
+				sta_id = mvmvif->bcast_sta.sta_id;
+			else
+				sta_id = mvmvif->mcast_sta.sta_id;
+>>>>>>> master
 
 			if (link_id == IEEE80211_LINK_UNSPECIFIED) {
 				if (info.control.vif->active_links)

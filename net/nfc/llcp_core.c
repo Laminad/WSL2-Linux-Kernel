@@ -558,7 +558,11 @@ static int nfc_llcp_build_gb(struct nfc_llcp_local *local)
 {
 	u8 *gb_cur, version, version_length;
 	u8 lto_length, wks_length, miux_length;
+<<<<<<< HEAD
 	const u8 *version_tlv = NULL, *lto_tlv = NULL,
+=======
+	u8 *version_tlv = NULL, *lto_tlv = NULL,
+>>>>>>> master
 	   *wks_tlv = NULL, *miux_tlv = NULL;
 	__be16 wks = cpu_to_be16(local->local_wks);
 	u8 gb_len = 0;

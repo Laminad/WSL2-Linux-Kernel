@@ -204,6 +204,7 @@ void sfp_parse_support(struct sfp_bus *bus, const struct sfp_eeprom_id *id,
 
 	/* 1000Base-PX or 1000Base-BX10 */
 	if ((id->base.e_base_px || id->base.e_base_bx10) &&
+<<<<<<< HEAD
 	    br_min <= 1300 && br_max >= 1200) {
 		phylink_set(modes, 1000baseX_Full);
 		__set_bit(PHY_INTERFACE_MODE_1000BASEX, interfaces);
@@ -218,6 +219,10 @@ void sfp_parse_support(struct sfp_bus *bus, const struct sfp_eeprom_id *id,
 		phylink_set(modes, 100baseFX_Full);
 		__set_bit(PHY_INTERFACE_MODE_100BASEX, interfaces);
 	}
+=======
+	    br_min <= 1300 && br_max >= 1200)
+		phylink_set(modes, 1000baseX_Full);
+>>>>>>> master
 
 	/* For active or passive cables, select the link modes
 	 * based on the bit rates and the cable compliance bytes.
@@ -468,7 +473,10 @@ static int sfp_register_bus(struct sfp_bus *bus)
 				return ret;
 		}
 	}
+<<<<<<< HEAD
 	bus->registered = true;
+=======
+>>>>>>> master
 	bus->socket_ops->attach(bus->sfp);
 	if (bus->started)
 		bus->socket_ops->start(bus->sfp);

@@ -125,6 +125,7 @@ static struct clk_regmap gxbb_fixed_pll_dco = {
 			.fw_name = "xtal",
 		},
 		.num_parents = 1,
+<<<<<<< HEAD
 	},
 };
 
@@ -146,6 +147,8 @@ static struct clk_regmap gxbb_fixed_pll = {
 		 * This clock won't ever change at runtime so
 		 * CLK_SET_RATE_PARENT is not required
 		 */
+=======
+>>>>>>> master
 	},
 };
 
@@ -407,6 +410,14 @@ static struct clk_regmap gxbb_sys_pll_dco = {
 			.fw_name = "xtal",
 		},
 		.num_parents = 1,
+<<<<<<< HEAD
+=======
+		/*
+		 * Display directly handle hdmi pll registers ATM, we need
+		 * NOCACHE to keep our view of the clock as accurate as possible
+		 */
+		.flags = CLK_GET_RATE_NOCACHE,
+>>>>>>> master
 	},
 };
 
@@ -424,7 +435,10 @@ static struct clk_regmap gxbb_sys_pll = {
 			&gxbb_sys_pll_dco.hw
 		},
 		.num_parents = 1,
+<<<<<<< HEAD
 		.flags = CLK_SET_RATE_PARENT,
+=======
+>>>>>>> master
 	},
 };
 
@@ -526,6 +540,7 @@ static struct clk_regmap gxl_gp0_pll_dco = {
 			.fw_name = "xtal",
 		},
 		.num_parents = 1,
+<<<<<<< HEAD
 	},
 };
 
@@ -552,6 +567,8 @@ static struct clk_regmap gxbb_gp0_pll = {
 		},
 		.num_parents = 1,
 		.flags = CLK_SET_RATE_PARENT,
+=======
+>>>>>>> master
 	},
 };
 

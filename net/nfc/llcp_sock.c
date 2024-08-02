@@ -109,10 +109,16 @@ static int llcp_sock_bind(struct socket *sock, struct sockaddr *addr, int alen)
 					  GFP_KERNEL);
 	if (!llcp_sock->service_name) {
 		ret = -ENOMEM;
+<<<<<<< HEAD
 		goto sock_llcp_put_local;
+=======
+		goto put_dev;
+>>>>>>> master
 	}
 	llcp_sock->ssap = nfc_llcp_get_sdp_ssap(local, llcp_sock);
 	if (llcp_sock->ssap == LLCP_SAP_MAX) {
+		kfree(llcp_sock->service_name);
+		llcp_sock->service_name = NULL;
 		ret = -EADDRINUSE;
 		goto free_service_name;
 	}

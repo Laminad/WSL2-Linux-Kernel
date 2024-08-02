@@ -527,6 +527,7 @@ struct pmu {
 	 * Runs from perf_event_open(). Should return 0 for "no match"
 	 * or non-zero for "match".
 	 */
+<<<<<<< HEAD
 	int (*aux_output_match)		(struct perf_event *event);
 					/* optional */
 
@@ -535,6 +536,9 @@ struct pmu {
 	 * big.LITTLE things.
 	 */
 	bool (*filter)			(struct pmu *pmu, int cpu); /* optional */
+=======
+	int (*filter_match)		(struct perf_event *event); /* optional */
+>>>>>>> master
 
 	/*
 	 * Check period value for PERF_EVENT_IOC_PERIOD ioctl.
@@ -1387,6 +1391,11 @@ static inline int is_software_event(struct perf_event *event)
 static inline int in_software_context(struct perf_event *event)
 {
 	return event->pmu_ctx->pmu->task_ctx_nr == perf_sw_context;
+}
+
+static inline int is_exclusive_pmu(struct pmu *pmu)
+{
+	return pmu->capabilities & PERF_PMU_CAP_EXCLUSIVE;
 }
 
 static inline int is_exclusive_pmu(struct pmu *pmu)

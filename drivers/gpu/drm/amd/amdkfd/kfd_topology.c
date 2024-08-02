@@ -1138,6 +1138,18 @@ static struct kfd_topology_device *kfd_assign_gpu(struct kfd_node *gpu)
 		if (dev->node_props.cpu_cores_count)
 			continue;
 
+<<<<<<< HEAD
+=======
+	down_write(&topology_lock);
+	list_for_each_entry(dev, &topology_device_list, list) {
+		/* Discrete GPUs need their own topology device list
+		 * entries. Don't assign them to CPU/APU nodes.
+		 */
+		if (!gpu->device_info->needs_iommu_device &&
+		    dev->node_props.cpu_cores_count)
+			continue;
+
+>>>>>>> master
 		if (!dev->gpu && (dev->node_props.simd_count > 0)) {
 			dev->gpu = gpu;
 			out_dev = dev;
@@ -1153,6 +1165,10 @@ static struct kfd_topology_device *kfd_assign_gpu(struct kfd_node *gpu)
 			break;
 		}
 	}
+<<<<<<< HEAD
+=======
+	up_write(&topology_lock);
+>>>>>>> master
 	return out_dev;
 }
 

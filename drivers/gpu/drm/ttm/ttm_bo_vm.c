@@ -255,6 +255,7 @@ vm_fault_t ttm_bo_vm_fault_reserved(struct vm_fault *vmf,
 			pfn = page_to_pfn(page);
 		}
 
+<<<<<<< HEAD
 		/*
 		 * Note that the value of @prot at this point may differ from
 		 * the value of @vma->vm_page_prot in the caching- and
@@ -264,11 +265,22 @@ vm_fault_t ttm_bo_vm_fault_reserved(struct vm_fault *vmf,
 		 * See vmf_insert_pfn_prot() for a discussion.
 		 */
 		ret = vmf_insert_pfn_prot(vma, address, pfn, prot);
+=======
+		if (vma->vm_flags & VM_MIXEDMAP)
+			ret = vmf_insert_mixed(&cvma, address,
+					__pfn_to_pfn_t(pfn, PFN_DEV));
+		else
+			ret = vmf_insert_pfn(&cvma, address, pfn);
+>>>>>>> master
 
 		/* Never error on prefaulted PTEs */
 		if (unlikely((ret & VM_FAULT_ERROR))) {
 			if (i == 0)
+<<<<<<< HEAD
 				return VM_FAULT_NOPAGE;
+=======
+				goto out_io_unlock;
+>>>>>>> master
 			else
 				break;
 		}

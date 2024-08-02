@@ -885,6 +885,10 @@ int crypto4xx_build_pd(struct crypto_async_request *req,
 		u32 sd_idx = fst_sd;
 		nbytes = datalen;
 		sa->sa_command_0.bf.scatter = 1;
+<<<<<<< HEAD
+=======
+		pd_uinfo->using_sd = 1;
+>>>>>>> master
 		pd_uinfo->first_sd = fst_sd;
 		sd = crypto4xx_get_sdp(dev, &sd_dma, sd_idx);
 		pd->dest = sd_dma;
@@ -1277,7 +1281,7 @@ static struct crypto4xx_alg_common crypto4xx_alg[] = {
 			.cra_priority = CRYPTO4XX_CRYPTO_PRIORITY,
 			.cra_flags = CRYPTO_ALG_ASYNC |
 				CRYPTO_ALG_KERN_DRIVER_ONLY,
-			.cra_blocksize = AES_BLOCK_SIZE,
+			.cra_blocksize = 1,
 			.cra_ctxsize = sizeof(struct crypto4xx_ctx),
 			.cra_module = THIS_MODULE,
 		},

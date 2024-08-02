@@ -62,6 +62,11 @@
 #endif
 
 #include "process.h"
+<<<<<<< HEAD
+=======
+
+__visible DEFINE_PER_CPU(unsigned long, rsp_scratch);
+>>>>>>> master
 
 /* Prints also some state that isn't saved in the pt_regs */
 void __show_regs(struct pt_regs *regs, enum show_regs_mode mode,
@@ -353,8 +358,59 @@ static __always_inline void x86_pkru_load(struct thread_struct *prev,
 	if (!cpu_feature_enabled(X86_FEATURE_OSPKE))
 		return;
 
+<<<<<<< HEAD
 	/* Stash the prev task's value: */
 	prev->pkru = rdpkru();
+=======
+	childregs = task_pt_regs(p);
+	fork_frame = container_of(childregs, struct fork_frame, regs);
+	frame = &fork_frame->frame;
+
+	/*
+	 * For a new task use the RESET flags value since there is no before.
+	 * All the status flags are zero; DF and all the system flags must also
+	 * be 0, specifically IF must be 0 because we context switch to the new
+	 * task with interrupts disabled.
+	 */
+	frame->flags = X86_EFLAGS_FIXED;
+	frame->bp = 0;
+	frame->ret_addr = (unsigned long) ret_from_fork;
+	p->thread.sp = (unsigned long) fork_frame;
+	p->thread.io_bitmap_ptr = NULL;
+
+	savesegment(gs, p->thread.gsindex);
+	p->thread.gsbase = p->thread.gsindex ? 0 : me->thread.gsbase;
+	savesegment(fs, p->thread.fsindex);
+	p->thread.fsbase = p->thread.fsindex ? 0 : me->thread.fsbase;
+	savesegment(es, p->thread.es);
+	savesegment(ds, p->thread.ds);
+	memset(p->thread.ptrace_bps, 0, sizeof(p->thread.ptrace_bps));
+
+	if (unlikely(p->flags & PF_KTHREAD)) {
+		/* kernel thread */
+		memset(childregs, 0, sizeof(struct pt_regs));
+		frame->bx = sp;		/* function */
+		frame->r12 = arg;
+		return 0;
+	}
+	frame->bx = 0;
+	*childregs = *current_pt_regs();
+
+	childregs->ax = 0;
+	if (sp)
+		childregs->sp = sp;
+
+	err = -ENOMEM;
+	if (unlikely(test_tsk_thread_flag(me, TIF_IO_BITMAP))) {
+		p->thread.io_bitmap_ptr = kmemdup(me->thread.io_bitmap_ptr,
+						  IO_BITMAP_BYTES, GFP_KERNEL);
+		if (!p->thread.io_bitmap_ptr) {
+			p->thread.io_bitmap_max = 0;
+			return -ENOMEM;
+		}
+		set_tsk_thread_flag(p, TIF_IO_BITMAP);
+	}
+>>>>>>> master
 
 	/*
 	 * PKRU writes are slightly expensive.  Avoid them when not
@@ -629,6 +685,20 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 	update_task_stack(next_p);
 
 	switch_to_extra(prev_p, next_p);
+<<<<<<< HEAD
+=======
+
+#ifdef CONFIG_XEN_PV
+	/*
+	 * On Xen PV, IOPL bits in pt_regs->flags have no effect, and
+	 * current_pt_regs()->flags may not match the current task's
+	 * intended IOPL.  We need to switch it manually.
+	 */
+	if (unlikely(static_cpu_has(X86_FEATURE_XENPV) &&
+		     prev->iopl != next->iopl))
+		xen_set_iopl_mask(next->iopl);
+#endif
+>>>>>>> master
 
 	if (static_cpu_has_bug(X86_BUG_SYSRET_SS_ATTRS)) {
 		/*

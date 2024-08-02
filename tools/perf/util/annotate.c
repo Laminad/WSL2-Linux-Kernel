@@ -1009,8 +1009,14 @@ static int symbol__inc_addr_samples(struct map_symbol *ms,
 
 	if (sym == NULL)
 		return 0;
+<<<<<<< HEAD
 	src = symbol__hists(sym, evsel->evlist->core.nr_entries);
 	return src ? __symbol__inc_addr_samples(ms, src, evsel->core.idx, addr, sample) : 0;
+=======
+	src = symbol__hists(sym, evsel->evlist->nr_entries);
+	return (src) ?  __symbol__inc_addr_samples(sym, map, src, evsel->idx,
+						   addr, sample) : 0;
+>>>>>>> master
 }
 
 static int symbol__account_cycles(u64 addr, u64 start,
@@ -2327,7 +2333,10 @@ void symbol__calc_percent(struct symbol *sym, struct evsel *evsel)
 int symbol__annotate(struct map_symbol *ms, struct evsel *evsel,
 		     struct arch **parch)
 {
+<<<<<<< HEAD
 	struct symbol *sym = ms->sym;
+=======
+>>>>>>> master
 	struct annotation *notes = symbol__annotation(sym);
 	struct annotate_args args = {
 		.evsel		= evsel,
@@ -2342,10 +2351,15 @@ int symbol__annotate(struct map_symbol *ms, struct evsel *evsel,
 		return errno;
 
 	args.arch = arch = arch__find(arch_name);
+<<<<<<< HEAD
 	if (arch == NULL) {
 		pr_err("%s: unsupported arch %s\n", __func__, arch_name);
 		return ENOTSUP;
 	}
+=======
+	if (arch == NULL)
+		return ENOTSUP;
+>>>>>>> master
 
 	if (parch)
 		*parch = arch;
@@ -2358,11 +2372,17 @@ int symbol__annotate(struct map_symbol *ms, struct evsel *evsel,
 		}
 	}
 
+<<<<<<< HEAD
 	args.ms = *ms;
 	if (annotate_opts.full_addr)
 		notes->start = map__objdump_2mem(ms->map, ms->sym->start);
 	else
 		notes->start = map__rip_2objdump(ms->map, ms->sym->start);
+=======
+	args.ms.map = map;
+	args.ms.sym = sym;
+	notes->start = map__rip_2objdump(map, sym->start);
+>>>>>>> master
 
 	return symbol__disassemble(sym, &args);
 }

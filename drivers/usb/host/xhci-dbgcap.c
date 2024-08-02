@@ -652,8 +652,13 @@ static void xhci_dbc_stop(struct xhci_dbc *dbc)
 	spin_unlock_irqrestore(&dbc->lock, flags);
 
 	if (!ret) {
+<<<<<<< HEAD
 		xhci_dbc_mem_cleanup(dbc);
 		pm_runtime_put_sync(dbc->dev); /* note, was self.controller */
+=======
+		xhci_dbc_mem_cleanup(xhci);
+		pm_runtime_put_sync(xhci_to_hcd(xhci)->self.controller);
+>>>>>>> master
 	}
 }
 

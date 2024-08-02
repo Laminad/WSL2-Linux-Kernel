@@ -272,12 +272,15 @@ static void rsi_rx_done_handler(struct urb *urb)
 	if (!rx_cb->rx_skb)
 		return;
 
+<<<<<<< HEAD
 	if (urb->status) {
 		dev_kfree_skb(rx_cb->rx_skb);
 		rx_cb->rx_skb = NULL;
 		return;
 	}
 
+=======
+>>>>>>> master
 	if (urb->actual_length <= 0 ||
 	    urb->actual_length > rx_cb->rx_skb->len) {
 		rsi_dbg(INFO_ZONE, "%s: Invalid packet length = %d\n",

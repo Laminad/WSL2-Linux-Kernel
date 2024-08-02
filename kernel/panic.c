@@ -382,6 +382,12 @@ void panic(const char *fmt, ...)
 	if (_crash_kexec_post_notifiers)
 		__crash_kexec(NULL);
 
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_VT
+	unblank_screen();
+#endif
+>>>>>>> master
 	console_unblank();
 
 	/*

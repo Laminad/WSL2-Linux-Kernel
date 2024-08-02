@@ -688,9 +688,62 @@ int mt76_register_device(struct mt76_dev *dev, bool vht,
 	int ret;
 
 	dev_set_drvdata(dev->dev, dev);
+<<<<<<< HEAD
 	ret = mt76_phy_init(phy, hw);
 	if (ret)
 		return ret;
+=======
+
+	INIT_LIST_HEAD(&dev->txwi_cache);
+
+	SET_IEEE80211_DEV(hw, dev->dev);
+	SET_IEEE80211_PERM_ADDR(hw, dev->macaddr);
+
+	wiphy->features |= NL80211_FEATURE_ACTIVE_MONITOR;
+
+	wiphy->available_antennas_tx = dev->antenna_mask;
+	wiphy->available_antennas_rx = dev->antenna_mask;
+
+	hw->txq_data_size = sizeof(struct mt76_txq);
+	hw->max_tx_fragments = 16;
+
+	ieee80211_hw_set(hw, SIGNAL_DBM);
+	ieee80211_hw_set(hw, PS_NULLFUNC_STACK);
+	ieee80211_hw_set(hw, HOST_BROADCAST_PS_BUFFERING);
+	ieee80211_hw_set(hw, AMPDU_AGGREGATION);
+	ieee80211_hw_set(hw, SUPPORTS_RC_TABLE);
+	ieee80211_hw_set(hw, SUPPORT_FAST_XMIT);
+	ieee80211_hw_set(hw, SUPPORTS_CLONED_SKBS);
+	ieee80211_hw_set(hw, SUPPORTS_AMSDU_IN_AMPDU);
+	ieee80211_hw_set(hw, TX_AMSDU);
+	ieee80211_hw_set(hw, TX_FRAG_LIST);
+	ieee80211_hw_set(hw, MFP_CAPABLE);
+	ieee80211_hw_set(hw, AP_LINK_PS);
+
+	wiphy->flags |= WIPHY_FLAG_IBSS_RSN;
+
+	if (dev->cap.has_2ghz) {
+		ret = mt76_init_sband_2g(dev, rates, n_rates);
+		if (ret)
+			return ret;
+	}
+
+	if (dev->cap.has_5ghz) {
+		ret = mt76_init_sband_5g(dev, rates + 4, n_rates - 4, vht);
+		if (ret)
+			return ret;
+	}
+
+	wiphy_read_of_freq_limits(dev->hw->wiphy);
+	mt76_check_sband(dev, NL80211_BAND_2GHZ);
+	mt76_check_sband(dev, NL80211_BAND_5GHZ);
+
+	if (IS_ENABLED(CONFIG_MT76_LEDS)) {
+		ret = mt76_led_init(dev);
+		if (ret)
+			return ret;
+	}
+>>>>>>> master
 
 	if (phy->cap.has_2ghz) {
 		ret = mt76_init_sband_2g(phy, rates, n_rates);

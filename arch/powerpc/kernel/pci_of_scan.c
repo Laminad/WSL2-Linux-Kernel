@@ -78,6 +78,7 @@ unsigned int pci_parse_of_flags(u32 addr0, int bridge)
 
 	if (as == OF_PCI_ADDR0_SPACE_MMIO32 || as == OF_PCI_ADDR0_SPACE_MMIO64) {
 		flags = IORESOURCE_MEM | PCI_BASE_ADDRESS_SPACE_MEMORY;
+<<<<<<< HEAD
 
 		if (as == OF_PCI_ADDR0_SPACE_MMIO64)
 			flags |= PCI_BASE_ADDRESS_MEM_TYPE_64 | IORESOURCE_MEM_64;
@@ -89,6 +90,15 @@ unsigned int pci_parse_of_flags(u32 addr0, int bridge)
 			flags |= IORESOURCE_PREFETCH |
 				 PCI_BASE_ADDRESS_MEM_PREFETCH;
 
+=======
+		flags |= (addr0 >> 22) & PCI_BASE_ADDRESS_MEM_TYPE_64;
+		if (flags & PCI_BASE_ADDRESS_MEM_TYPE_64)
+			flags |= IORESOURCE_MEM_64;
+		flags |= (addr0 >> 28) & PCI_BASE_ADDRESS_MEM_TYPE_1M;
+		if (addr0 & 0x40000000)
+			flags |= IORESOURCE_PREFETCH
+				 | PCI_BASE_ADDRESS_MEM_PREFETCH;
+>>>>>>> master
 		/* Note: We don't know whether the ROM has been left enabled
 		 * by the firmware or not. We mark it as disabled (ie, we do
 		 * not set the IORESOURCE_ROM_ENABLE flag) for now rather than

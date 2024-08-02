@@ -534,6 +534,7 @@ static int dsa_switch_lag_fdb_del(struct dsa_switch *ds,
 {
 	struct dsa_port *dp;
 
+<<<<<<< HEAD
 	if (!ds->ops->lag_fdb_del)
 		return -EOPNOTSUPP;
 
@@ -586,6 +587,13 @@ static int dsa_switch_lag_leave(struct dsa_switch *ds,
 						    info->dp->index, info->lag);
 
 	return -EOPNOTSUPP;
+=======
+	if (!ds->ops->port_mdb_add)
+		return;
+
+	for_each_set_bit(port, bitmap, ds->num_ports)
+		ds->ops->port_mdb_add(ds, port, mdb);
+>>>>>>> master
 }
 
 static int dsa_switch_mdb_add(struct dsa_switch *ds,

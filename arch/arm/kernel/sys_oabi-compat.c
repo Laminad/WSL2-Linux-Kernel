@@ -301,6 +301,7 @@ asmlinkage long sys_oabi_epoll_ctl(int epfd, int op, int fd,
 asmlinkage long sys_oabi_epoll_ctl(int epfd, int op, int fd,
 				   struct oabi_epoll_event __user *event)
 {
+<<<<<<< HEAD
 	return -EINVAL;
 }
 #endif
@@ -317,6 +318,34 @@ epoll_put_uevent(__poll_t revents, __u64 data,
 			return NULL;
 
 		return (void __user *)(oevent+1);
+=======
+	struct epoll_event *kbuf;
+	struct oabi_epoll_event e;
+	mm_segment_t fs;
+	long ret, err, i;
+
+	if (maxevents <= 0 ||
+			maxevents > (INT_MAX/sizeof(*kbuf)) ||
+			maxevents > (INT_MAX/sizeof(*events)))
+		return -EINVAL;
+	if (!access_ok(VERIFY_WRITE, events, sizeof(*events) * maxevents))
+		return -EFAULT;
+	kbuf = kmalloc_array(maxevents, sizeof(*kbuf), GFP_KERNEL);
+	if (!kbuf)
+		return -ENOMEM;
+	fs = get_fs();
+	set_fs(KERNEL_DS);
+	ret = sys_epoll_wait(epfd, kbuf, maxevents, timeout);
+	set_fs(fs);
+	err = 0;
+	for (i = 0; i < ret; i++) {
+		e.events = kbuf[i].events;
+		e.data = kbuf[i].data;
+		err = __copy_to_user(events, &e, sizeof(e));
+		if (err)
+			break;
+		events++;
+>>>>>>> master
 	}
 
 	if (__put_user(revents, &uevent->events) ||

@@ -73,7 +73,10 @@ struct fsl_esai {
 	u32 slots;
 	u32 tx_mask;
 	u32 rx_mask;
+<<<<<<< HEAD
 	u32 channels[2];
+=======
+>>>>>>> master
 	u32 hck_rate[2];
 	u32 sck_rate[2];
 	bool hck_dir[2];
@@ -759,24 +762,77 @@ static int fsl_esai_trigger(struct snd_pcm_substream *substream, int cmd,
 {
 	struct fsl_esai *esai_priv = snd_soc_dai_get_drvdata(dai);
 	bool tx = substream->stream == SNDRV_PCM_STREAM_PLAYBACK;
+<<<<<<< HEAD
 	unsigned long lock_flags;
 
 	esai_priv->channels[tx] = substream->runtime->channels;
+=======
+	u8 i, channels = substream->runtime->channels;
+	u32 pins = DIV_ROUND_UP(channels, esai_priv->slots);
+	u32 mask;
+>>>>>>> master
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+<<<<<<< HEAD
 		spin_lock_irqsave(&esai_priv->lock, lock_flags);
 		fsl_esai_trigger_start(esai_priv, tx);
 		spin_unlock_irqrestore(&esai_priv->lock, lock_flags);
+=======
+		regmap_update_bits(esai_priv->regmap, REG_ESAI_xFCR(tx),
+				   ESAI_xFCR_xFEN_MASK, ESAI_xFCR_xFEN);
+
+		/* Write initial words reqiured by ESAI as normal procedure */
+		for (i = 0; tx && i < channels; i++)
+			regmap_write(esai_priv->regmap, REG_ESAI_ETDR, 0x0);
+
+		/*
+		 * When set the TE/RE in the end of enablement flow, there
+		 * will be channel swap issue for multi data line case.
+		 * In order to workaround this issue, we switch the bit
+		 * enablement sequence to below sequence
+		 * 1) clear the xSMB & xSMA: which is done in probe and
+		 *                           stop state.
+		 * 2) set TE/RE
+		 * 3) set xSMB
+		 * 4) set xSMA:  xSMA is the last one in this flow, which
+		 *               will trigger esai to start.
+		 */
+		regmap_update_bits(esai_priv->regmap, REG_ESAI_xCR(tx),
+				   tx ? ESAI_xCR_TE_MASK : ESAI_xCR_RE_MASK,
+				   tx ? ESAI_xCR_TE(pins) : ESAI_xCR_RE(pins));
+		mask = tx ? esai_priv->tx_mask : esai_priv->rx_mask;
+
+		regmap_update_bits(esai_priv->regmap, REG_ESAI_xSMB(tx),
+				   ESAI_xSMB_xS_MASK, ESAI_xSMB_xS(mask));
+		regmap_update_bits(esai_priv->regmap, REG_ESAI_xSMA(tx),
+				   ESAI_xSMA_xS_MASK, ESAI_xSMA_xS(mask));
+
+>>>>>>> master
 		break;
 	case SNDRV_PCM_TRIGGER_SUSPEND:
 	case SNDRV_PCM_TRIGGER_STOP:
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+<<<<<<< HEAD
 		spin_lock_irqsave(&esai_priv->lock, lock_flags);
 		fsl_esai_trigger_stop(esai_priv, tx);
 		spin_unlock_irqrestore(&esai_priv->lock, lock_flags);
+=======
+		regmap_update_bits(esai_priv->regmap, REG_ESAI_xCR(tx),
+				   tx ? ESAI_xCR_TE_MASK : ESAI_xCR_RE_MASK, 0);
+		regmap_update_bits(esai_priv->regmap, REG_ESAI_xSMA(tx),
+				   ESAI_xSMA_xS_MASK, 0);
+		regmap_update_bits(esai_priv->regmap, REG_ESAI_xSMB(tx),
+				   ESAI_xSMB_xS_MASK, 0);
+
+		/* Disable and reset FIFO */
+		regmap_update_bits(esai_priv->regmap, REG_ESAI_xFCR(tx),
+				   ESAI_xFCR_xFR | ESAI_xFCR_xFEN, ESAI_xFCR_xFR);
+		regmap_update_bits(esai_priv->regmap, REG_ESAI_xFCR(tx),
+				   ESAI_xFCR_xFR, 0);
+>>>>>>> master
 		break;
 	default:
 		return -EINVAL;
@@ -1081,6 +1137,15 @@ static int fsl_esai_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "failed to init imx pcm dma: %d\n", ret);
 		goto err_pm_get_sync;
 	}
+
+	esai_priv->tx_mask = 0xFFFFFFFF;
+	esai_priv->rx_mask = 0xFFFFFFFF;
+
+	/* Clear the TSMA, TSMB, RSMA, RSMB */
+	regmap_write(esai_priv->regmap, REG_ESAI_TSMA, 0);
+	regmap_write(esai_priv->regmap, REG_ESAI_TSMB, 0);
+	regmap_write(esai_priv->regmap, REG_ESAI_RSMA, 0);
+	regmap_write(esai_priv->regmap, REG_ESAI_RSMB, 0);
 
 	ret = devm_snd_soc_register_component(&pdev->dev, &fsl_esai_component,
 					      &fsl_esai_dai, 1);

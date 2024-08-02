@@ -357,7 +357,7 @@ static void mpol_rebind_policy(struct mempolicy *pol, const nodemask_t *newmask)
 {
 	if (!pol || pol->mode == MPOL_LOCAL)
 		return;
-	if (!mpol_store_user_nodemask(pol) &&
+	if (!mpol_store_user_nodemask(pol) && !(pol->flags & MPOL_F_LOCAL) &&
 	    nodes_equal(pol->w.cpuset_mems_allowed, *newmask))
 		return;
 
@@ -420,7 +420,11 @@ static const struct mempolicy_operations mpol_ops[MPOL_MAX] = {
 	},
 };
 
+<<<<<<< HEAD
 static int migrate_folio_add(struct folio *folio, struct list_head *foliolist,
+=======
+static int migrate_page_add(struct page *page, struct list_head *pagelist,
+>>>>>>> master
 				unsigned long flags);
 
 struct queue_pages {
@@ -449,6 +453,7 @@ static inline bool queue_folio_required(struct folio *folio,
 }
 
 /*
+<<<<<<< HEAD
  * queue_folios_pmd() has three possible return values:
  * 0 - folios are placed on the right node or queued successfully, or
  *     special page is met, i.e. zero page, or unmovable page is found
@@ -458,6 +463,18 @@ static inline bool queue_folio_required(struct folio *folio,
  *        policy.
  */
 static int queue_folios_pmd(pmd_t *pmd, spinlock_t *ptl, unsigned long addr,
+=======
+ * queue_pages_pmd() has four possible return values:
+ * 0 - pages are placed on the right node or queued successfully.
+ * 1 - there is unmovable page, and MPOL_MF_MOVE* & MPOL_MF_STRICT were
+ *     specified.
+ * 2 - THP was split.
+ * -EIO - is migration entry or only MPOL_MF_STRICT was specified and an
+ *        existing page was already on a node that does not follow the
+ *        policy.
+ */
+static int queue_pages_pmd(pmd_t *pmd, spinlock_t *ptl, unsigned long addr,
+>>>>>>> master
 				unsigned long end, struct mm_walk *walk)
 	__releases(ptl)
 {
@@ -470,6 +487,7 @@ static int queue_folios_pmd(pmd_t *pmd, spinlock_t *ptl, unsigned long addr,
 		ret = -EIO;
 		goto unlock;
 	}
+<<<<<<< HEAD
 	folio = pfn_folio(pmd_pfn(*pmd));
 	if (is_huge_zero_page(&folio->page)) {
 		walk->action = ACTION_CONTINUE;
@@ -484,6 +502,24 @@ static int queue_folios_pmd(pmd_t *pmd, spinlock_t *ptl, unsigned long addr,
 		if (!vma_migratable(walk->vma) ||
 		    migrate_folio_add(folio, qp->pagelist, flags)) {
 			qp->has_unmovable = true;
+=======
+	page = pmd_page(*pmd);
+	if (is_huge_zero_page(page)) {
+		spin_unlock(ptl);
+		__split_huge_pmd(walk->vma, pmd, addr, false, NULL);
+		ret = 2;
+		goto out;
+	}
+	if (!queue_pages_required(page, qp))
+		goto unlock;
+
+	flags = qp->flags;
+	/* go to thp migration */
+	if (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL)) {
+		if (!vma_migratable(walk->vma) ||
+		    migrate_page_add(page, qp->pagelist, flags)) {
+			ret = 1;
+>>>>>>> master
 			goto unlock;
 		}
 	} else
@@ -497,11 +533,19 @@ unlock:
  * Scan through pages checking if pages follow certain conditions,
  * and move them to the pagelist if they do.
  *
+<<<<<<< HEAD
  * queue_folios_pte_range() has three possible return values:
  * 0 - folios are placed on the right node or queued successfully, or
  *     special page is met, i.e. zero page, or unmovable page is found
  *     but continue walking (indicated by queue_pages.has_unmovable).
  * -EIO - only MPOL_MF_STRICT was specified and an existing folio was already
+=======
+ * queue_pages_pte_range() has three possible return values:
+ * 0 - pages are placed on the right node or queued successfully.
+ * 1 - there is unmovable page, and MPOL_MF_MOVE* & MPOL_MF_STRICT were
+ *     specified.
+ * -EIO - only MPOL_MF_STRICT was specified and an existing page was already
+>>>>>>> master
  *        on a node that does not follow the policy.
  */
 static int queue_folios_pte_range(pmd_t *pmd, unsigned long addr,
@@ -511,6 +555,7 @@ static int queue_folios_pte_range(pmd_t *pmd, unsigned long addr,
 	struct folio *folio;
 	struct queue_pages *qp = walk->private;
 	unsigned long flags = qp->flags;
+<<<<<<< HEAD
 	pte_t *pte, *mapped_pte;
 	pte_t ptent;
 	spinlock_t *ptl;
@@ -518,6 +563,20 @@ static int queue_folios_pte_range(pmd_t *pmd, unsigned long addr,
 	ptl = pmd_trans_huge_lock(pmd, vma);
 	if (ptl)
 		return queue_folios_pmd(pmd, ptl, addr, end, walk);
+=======
+	int ret;
+	bool has_unmovable = false;
+	pte_t *pte;
+	spinlock_t *ptl;
+
+	ptl = pmd_trans_huge_lock(pmd, vma);
+	if (ptl) {
+		ret = queue_pages_pmd(pmd, ptl, addr, end, walk);
+		if (ret != 2)
+			return ret;
+	}
+	/* THP was split, fall through to pte walk */
+>>>>>>> master
 
 	mapped_pte = pte = pte_offset_map_lock(walk->mm, pmd, addr, &ptl);
 	if (!pte) {
@@ -540,26 +599,45 @@ static int queue_folios_pte_range(pmd_t *pmd, unsigned long addr,
 		if (!queue_folio_required(folio, qp))
 			continue;
 		if (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL)) {
+<<<<<<< HEAD
 			/*
 			 * MPOL_MF_STRICT must be specified if we get here.
 			 * Continue walking vmas due to MPOL_MF_MOVE* flags.
 			 */
 			if (!vma_migratable(vma))
 				qp->has_unmovable = true;
+=======
+			/* MPOL_MF_STRICT must be specified if we get here */
+			if (!vma_migratable(vma)) {
+				has_unmovable = true;
+				break;
+			}
+>>>>>>> master
 
 			/*
 			 * Do not abort immediately since there may be
 			 * temporary off LRU pages in the range.  Still
 			 * need migrate other LRU pages.
 			 */
+<<<<<<< HEAD
 			if (migrate_folio_add(folio, qp->pagelist, flags))
 				qp->has_unmovable = true;
+=======
+			if (migrate_page_add(page, qp->pagelist, flags))
+				has_unmovable = true;
+>>>>>>> master
 		} else
 			break;
 	}
 	pte_unmap_unlock(mapped_pte, ptl);
 	cond_resched();
 
+<<<<<<< HEAD
+=======
+	if (has_unmovable)
+		return 1;
+
+>>>>>>> master
 	return addr != end ? -EIO : 0;
 }
 
@@ -672,6 +750,7 @@ static int queue_pages_test_walk(unsigned long start, unsigned long end,
 	unsigned long endvma = vma->vm_end;
 	unsigned long flags = qp->flags;
 
+<<<<<<< HEAD
 	/* range check first */
 	VM_BUG_ON_VMA(!range_in_vma(vma, start, end), vma);
 
@@ -689,6 +768,8 @@ static int queue_pages_test_walk(unsigned long start, unsigned long end,
 		/* hole at middle or tail of range */
 		return -EFAULT;
 
+=======
+>>>>>>> master
 	/*
 	 * Need check MPOL_MF_STRICT to return -EIO if possible
 	 * regardless of vma_migratable
@@ -739,9 +820,13 @@ static const struct mm_walk_ops queue_pages_lock_vma_walk_ops = {
  * 1 - there is unmovable page, but MPOL_MF_MOVE* & MPOL_MF_STRICT were
  *     specified.
  * 0 - queue pages successfully or no misplaced page.
+<<<<<<< HEAD
  * errno - i.e. misplaced pages with MPOL_MF_STRICT specified (-EIO) or
  *         memory range specified by nodemask and maxnode points outside
  *         your accessible address space (-EFAULT)
+=======
+ * -EIO - there is misplaced page and only MPOL_MF_STRICT was specified.
+>>>>>>> master
  */
 static int
 queue_pages_range(struct mm_struct *mm, unsigned long start, unsigned long end,
@@ -1032,7 +1117,14 @@ static long do_get_mempolicy(int *policy, nodemask_t *nmask,
 }
 
 #ifdef CONFIG_MIGRATION
+<<<<<<< HEAD
 static int migrate_folio_add(struct folio *folio, struct list_head *foliolist,
+=======
+/*
+ * page migration, thp tail pages can be passed.
+ */
+static int migrate_page_add(struct page *page, struct list_head *pagelist,
+>>>>>>> master
 				unsigned long flags)
 {
 	/*
@@ -1043,6 +1135,7 @@ static int migrate_folio_add(struct folio *folio, struct list_head *foliolist,
 	 * every page is mapped to the same process. Doing that is very
 	 * expensive, so check the estimated mapcount of the folio instead.
 	 */
+<<<<<<< HEAD
 	if ((flags & MPOL_MF_MOVE_ALL) || folio_estimated_sharers(folio) == 1) {
 		if (folio_isolate_lru(folio)) {
 			list_add_tail(&folio->lru, foliolist);
@@ -1054,12 +1147,31 @@ static int migrate_folio_add(struct folio *folio, struct list_head *foliolist,
 			 * Non-movable folio may reach here.  And, there may be
 			 * temporary off LRU folios or non-LRU movable folios.
 			 * Treat them as unmovable folios since they can't be
+=======
+	if ((flags & MPOL_MF_MOVE_ALL) || page_mapcount(head) == 1) {
+		if (!isolate_lru_page(head)) {
+			list_add_tail(&head->lru, pagelist);
+			mod_node_page_state(page_pgdat(head),
+				NR_ISOLATED_ANON + page_is_file_cache(head),
+				hpage_nr_pages(head));
+		} else if (flags & MPOL_MF_STRICT) {
+			/*
+			 * Non-movable page may reach here.  And, there may be
+			 * temporary off LRU pages or non-LRU movable pages.
+			 * Treat them as unmovable pages since they can't be
+>>>>>>> master
 			 * isolated, so they can't be moved at the moment.  It
 			 * should return -EIO for this case too.
 			 */
 			return -EIO;
 		}
 	}
+<<<<<<< HEAD
+=======
+
+	return 0;
+}
+>>>>>>> master
 
 	return 0;
 }
@@ -1244,7 +1356,11 @@ static struct folio *new_folio(struct folio *src, unsigned long start)
 }
 #else
 
+<<<<<<< HEAD
 static int migrate_folio_add(struct folio *folio, struct list_head *foliolist,
+=======
+static int migrate_page_add(struct page *page, struct list_head *pagelist,
+>>>>>>> master
 				unsigned long flags)
 {
 	return -EIO;
@@ -1330,6 +1446,7 @@ static long do_mbind(unsigned long start, unsigned long len,
 	if (err)
 		goto mpol_out;
 
+<<<<<<< HEAD
 	/*
 	 * Lock the VMAs before scanning for pages to migrate, to ensure we don't
 	 * miss a concurrently inserted page.
@@ -1349,6 +1466,17 @@ static long do_mbind(unsigned long start, unsigned long len,
 		if (err)
 			break;
 	}
+=======
+	ret = queue_pages_range(mm, start, end, nmask,
+			  flags | MPOL_MF_INVERT, &pagelist);
+
+	if (ret < 0) {
+		err = -EIO;
+		goto up_out;
+	}
+
+	err = mbind_range(mm, start, end, new);
+>>>>>>> master
 
 	if (!err) {
 		int nr_failed = 0;
@@ -1361,7 +1489,11 @@ static long do_mbind(unsigned long start, unsigned long len,
 				putback_movable_pages(&pagelist);
 		}
 
+<<<<<<< HEAD
 		if (((ret > 0) || nr_failed) && (flags & MPOL_MF_STRICT))
+=======
+		if ((ret > 0) || (nr_failed && (flags & MPOL_MF_STRICT)))
+>>>>>>> master
 			err = -EIO;
 	} else {
 up_out:
@@ -1369,7 +1501,12 @@ up_out:
 			putback_movable_pages(&pagelist);
 	}
 
+<<<<<<< HEAD
 	mmap_write_unlock(mm);
+=======
+up_out:
+	up_write(&mm->mmap_sem);
+>>>>>>> master
 mpol_out:
 	mpol_put(new);
 	if (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL))
@@ -1445,10 +1582,13 @@ static int copy_nodes_to_user(unsigned long __user *mask, unsigned long maxnode,
 {
 	unsigned long copy = ALIGN(maxnode-1, 64) / 8;
 	unsigned int nbytes = BITS_TO_LONGS(nr_node_ids) * sizeof(long);
+<<<<<<< HEAD
 	bool compat = in_compat_syscall();
 
 	if (compat)
 		nbytes = BITS_TO_COMPAT_LONGS(nr_node_ids) * sizeof(compat_long_t);
+=======
+>>>>>>> master
 
 	if (copy > nbytes) {
 		if (copy > PAGE_SIZE)
@@ -1743,12 +1883,17 @@ bool vma_migratable(struct vm_area_struct *vma)
 	if (vma->vm_flags & (VM_IO | VM_PFNMAP))
 		return false;
 
+<<<<<<< HEAD
 	/*
 	 * DAX device mappings require predictable access latency, so avoid
 	 * incurring periodic faults.
 	 */
 	if (vma_is_dax(vma))
 		return false;
+=======
+	nr_bits = min_t(unsigned long, maxnode-1, nr_node_ids);
+	alloc_size = ALIGN(nr_bits, BITS_PER_LONG) / 8;
+>>>>>>> master
 
 	if (is_vm_hugetlb_page(vma) &&
 		!hugepage_migration_supported(hstate_vma(vma)))
@@ -2239,6 +2384,7 @@ struct folio *vma_alloc_folio(gfp_t gfp, int order, struct vm_area_struct *vma,
 		if (!nmask || node_isset(hpage_node, *nmask)) {
 			mpol_cond_put(pol);
 			/*
+<<<<<<< HEAD
 			 * First, try to allocate THP only on local node, but
 			 * don't reclaim unnecessarily, just compact.
 			 */
@@ -2255,6 +2401,37 @@ struct folio *vma_alloc_folio(gfp_t gfp, int order, struct vm_area_struct *vma,
 				folio = __folio_alloc(gfp, order, hpage_node,
 						      nmask);
 
+=======
+			 * We cannot invoke reclaim if __GFP_THISNODE
+			 * is set. Invoking reclaim with
+			 * __GFP_THISNODE set, would cause THP
+			 * allocations to trigger heavy swapping
+			 * despite there may be tons of free memory
+			 * (including potentially plenty of THP
+			 * already available in the buddy) on all the
+			 * other NUMA nodes.
+			 *
+			 * At most we could invoke compaction when
+			 * __GFP_THISNODE is set (but we would need to
+			 * refrain from invoking reclaim even if
+			 * compaction returned COMPACT_SKIPPED because
+			 * there wasn't not enough memory to succeed
+			 * compaction). For now just avoid
+			 * __GFP_THISNODE instead of limiting the
+			 * allocation path to a strict and single
+			 * compaction invocation.
+			 *
+			 * Supposedly if direct reclaim was enabled by
+			 * the caller, the app prefers THP regardless
+			 * of the node it comes from so this would be
+			 * more desiderable behavior than only
+			 * providing THP originated from the local
+			 * node in such case.
+			 */
+			if (!(gfp & __GFP_DIRECT_RECLAIM))
+				gfp |= __GFP_THISNODE;
+			page = __alloc_pages_node(hpage_node, gfp, order);
+>>>>>>> master
 			goto out;
 		}
 	}

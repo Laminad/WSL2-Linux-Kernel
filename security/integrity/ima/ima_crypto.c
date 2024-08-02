@@ -538,7 +538,11 @@ int ima_calc_file_hash(struct file *file, struct ima_digest_data *hash)
 	loff_t i_size;
 	int rc;
 	struct file *f = file;
+<<<<<<< HEAD
 	bool new_file_instance = false;
+=======
+	bool new_file_instance = false, modified_flags = false;
+>>>>>>> master
 
 	/*
 	 * For consistency, fail file's opened with the O_DIRECT flag on
@@ -556,10 +560,25 @@ int ima_calc_file_hash(struct file *file, struct ima_digest_data *hash)
 				O_TRUNC | O_CREAT | O_NOCTTY | O_EXCL);
 		flags |= O_RDONLY;
 		f = dentry_open(&file->f_path, flags, file->f_cred);
+<<<<<<< HEAD
 		if (IS_ERR(f))
 			return PTR_ERR(f);
 
 		new_file_instance = true;
+=======
+		if (IS_ERR(f)) {
+			/*
+			 * Cannot open the file again, lets modify f_flags
+			 * of original and continue
+			 */
+			pr_info_ratelimited("Unable to reopen file for reading.\n");
+			f = file;
+			f->f_flags |= FMODE_READ;
+			modified_flags = true;
+		} else {
+			new_file_instance = true;
+		}
+>>>>>>> master
 	}
 
 	i_size = i_size_read(file_inode(f));
@@ -574,6 +593,11 @@ int ima_calc_file_hash(struct file *file, struct ima_digest_data *hash)
 out:
 	if (new_file_instance)
 		fput(f);
+<<<<<<< HEAD
+=======
+	else if (modified_flags)
+		f->f_flags &= ~FMODE_READ;
+>>>>>>> master
 	return rc;
 }
 

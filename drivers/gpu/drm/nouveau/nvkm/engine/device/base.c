@@ -1589,6 +1589,7 @@ nvcf_chipset = {
 static const struct nvkm_device_chip
 nvd7_chipset = {
 	.name = "GF117",
+<<<<<<< HEAD
 	.bar      = { 0x00000001, gf100_bar_new },
 	.bios     = { 0x00000001, nvkm_bios_new },
 	.bus      = { 0x00000001, gf100_bus_new },
@@ -1619,6 +1620,38 @@ nvd7_chipset = {
 	.msvld    = { 0x00000001, gf100_msvld_new },
 	.pm       = { 0x00000001, gf117_pm_new },
 	.sw       = { 0x00000001, gf100_sw_new },
+=======
+	.bar = gf100_bar_new,
+	.bios = nvkm_bios_new,
+	.bus = gf100_bus_new,
+	.clk = gf100_clk_new,
+	.devinit = gf100_devinit_new,
+	.fb = gf100_fb_new,
+	.fuse = gf100_fuse_new,
+	.gpio = gf119_gpio_new,
+	.i2c = gf117_i2c_new,
+	.ibus = gf117_ibus_new,
+	.iccsense = gf100_iccsense_new,
+	.imem = nv50_instmem_new,
+	.ltc = gf100_ltc_new,
+	.mc = gf100_mc_new,
+	.mmu = gf100_mmu_new,
+	.mxm = nv50_mxm_new,
+	.pci = gf106_pci_new,
+	.therm = gf119_therm_new,
+	.timer = nv41_timer_new,
+	.volt = gf117_volt_new,
+	.ce[0] = gf100_ce_new,
+	.disp = gf119_disp_new,
+	.dma = gf119_dma_new,
+	.fifo = gf100_fifo_new,
+	.gr = gf117_gr_new,
+	.mspdec = gf100_mspdec_new,
+	.msppp = gf100_msppp_new,
+	.msvld = gf100_msvld_new,
+	.pm = gf117_pm_new,
+	.sw = gf100_sw_new,
+>>>>>>> master
 };
 
 static const struct nvkm_device_chip

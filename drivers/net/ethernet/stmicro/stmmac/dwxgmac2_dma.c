@@ -366,10 +366,17 @@ static int dwxgmac2_dma_interrupt(struct stmmac_priv *priv,
 	/* TX/RX NORMAL interrupts */
 	if (likely(intr_status & XGMAC_NIS)) {
 		if (likely(intr_status & XGMAC_RI)) {
+<<<<<<< HEAD
 			u64_stats_update_begin(&stats->syncp);
 			u64_stats_inc(&stats->rx_normal_irq_n[chan]);
 			u64_stats_update_end(&stats->syncp);
 			ret |= handle_rx;
+=======
+			if (likely(intr_en & XGMAC_RIE)) {
+				x->rx_normal_irq_n++;
+				ret |= handle_rx;
+			}
+>>>>>>> master
 		}
 		if (likely(intr_status & (XGMAC_TI | XGMAC_TBU))) {
 			u64_stats_update_begin(&stats->syncp);

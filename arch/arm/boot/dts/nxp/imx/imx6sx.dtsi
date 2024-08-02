@@ -486,7 +486,11 @@
 				status = "disabled";
 			};
 
+<<<<<<< HEAD:arch/arm/boot/dts/nxp/imx/imx6sx.dtsi
 			gpt: timer@2098000 {
+=======
+			gpt: gpt@2098000 {
+>>>>>>> master:arch/arm/boot/dts/imx6sx.dtsi
 				compatible = "fsl,imx6sx-gpt", "fsl,imx6dl-gpt";
 				reg = <0x02098000 0x4000>;
 				interrupts = <GIC_SPI 55 IRQ_TYPE_LEVEL_HIGH>;

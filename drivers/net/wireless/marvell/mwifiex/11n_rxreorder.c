@@ -101,22 +101,39 @@ mwifiex_11n_dispatch_pkt_until_start_win(struct mwifiex_private *priv,
 	struct sk_buff_head list;
 	struct sk_buff *skb;
 	int pkt_to_send, i;
+<<<<<<< HEAD
 
 	__skb_queue_head_init(&list);
 	spin_lock_bh(&priv->rx_reorder_tbl_lock);
+=======
+	void *rx_tmp_ptr;
+	unsigned long flags;
+>>>>>>> master
 
 	pkt_to_send = (start_win > tbl->start_win) ?
 		      min((start_win - tbl->start_win), tbl->win_size) :
 		      tbl->win_size;
 
 	for (i = 0; i < pkt_to_send; ++i) {
+<<<<<<< HEAD
+=======
+		spin_lock_irqsave(&priv->rx_reorder_tbl_lock, flags);
+		rx_tmp_ptr = NULL;
+>>>>>>> master
 		if (tbl->rx_reorder_ptr[i]) {
 			skb = tbl->rx_reorder_ptr[i];
 			__skb_queue_tail(&list, skb);
 			tbl->rx_reorder_ptr[i] = NULL;
 		}
+<<<<<<< HEAD
+=======
+		spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock, flags);
+		if (rx_tmp_ptr)
+			mwifiex_11n_dispatch_pkt(priv, rx_tmp_ptr);
+>>>>>>> master
 	}
 
+	spin_lock_irqsave(&priv->rx_reorder_tbl_lock, flags);
 	/*
 	 * We don't have a circular buffer, hence use rotation to simulate
 	 * circular buffer
@@ -127,10 +144,14 @@ mwifiex_11n_dispatch_pkt_until_start_win(struct mwifiex_private *priv,
 	}
 
 	tbl->start_win = start_win;
+<<<<<<< HEAD
 	spin_unlock_bh(&priv->rx_reorder_tbl_lock);
 
 	while ((skb = __skb_dequeue(&list)))
 		mwifiex_11n_dispatch_pkt(priv, skb);
+=======
+	spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock, flags);
+>>>>>>> master
 }
 
 /*
@@ -148,18 +169,35 @@ mwifiex_11n_scan_and_dispatch(struct mwifiex_private *priv,
 	struct sk_buff_head list;
 	struct sk_buff *skb;
 	int i, j, xchg;
+<<<<<<< HEAD
 
 	__skb_queue_head_init(&list);
 	spin_lock_bh(&priv->rx_reorder_tbl_lock);
+=======
+	void *rx_tmp_ptr;
+	unsigned long flags;
+>>>>>>> master
 
 	for (i = 0; i < tbl->win_size; ++i) {
-		if (!tbl->rx_reorder_ptr[i])
+		spin_lock_irqsave(&priv->rx_reorder_tbl_lock, flags);
+		if (!tbl->rx_reorder_ptr[i]) {
+			spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock,
+					       flags);
 			break;
+<<<<<<< HEAD
 		skb = tbl->rx_reorder_ptr[i];
 		__skb_queue_tail(&list, skb);
 		tbl->rx_reorder_ptr[i] = NULL;
+=======
+		}
+		rx_tmp_ptr = tbl->rx_reorder_ptr[i];
+		tbl->rx_reorder_ptr[i] = NULL;
+		spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock, flags);
+		mwifiex_11n_dispatch_pkt(priv, rx_tmp_ptr);
+>>>>>>> master
 	}
 
+	spin_lock_irqsave(&priv->rx_reorder_tbl_lock, flags);
 	/*
 	 * We don't have a circular buffer, hence use rotation to simulate
 	 * circular buffer
@@ -172,11 +210,15 @@ mwifiex_11n_scan_and_dispatch(struct mwifiex_private *priv,
 		}
 	}
 	tbl->start_win = (tbl->start_win + i) & (MAX_TID_VALUE - 1);
+<<<<<<< HEAD
 
 	spin_unlock_bh(&priv->rx_reorder_tbl_lock);
 
 	while ((skb = __skb_dequeue(&list)))
 		mwifiex_11n_dispatch_pkt(priv, skb);
+=======
+	spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock, flags);
+>>>>>>> master
 }
 
 /*
@@ -209,9 +251,15 @@ mwifiex_del_rx_reorder_entry(struct mwifiex_private *priv,
 	del_timer_sync(&tbl->timer_context.timer);
 	tbl->timer_context.timer_is_set = false;
 
+<<<<<<< HEAD
 	spin_lock_bh(&priv->rx_reorder_tbl_lock);
 	list_del(&tbl->list);
 	spin_unlock_bh(&priv->rx_reorder_tbl_lock);
+=======
+	spin_lock_irqsave(&priv->rx_reorder_tbl_lock, flags);
+	list_del(&tbl->list);
+	spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock, flags);
+>>>>>>> master
 
 	kfree(tbl->rx_reorder_ptr);
 	kfree(tbl);
@@ -230,7 +278,9 @@ struct mwifiex_rx_reorder_tbl *
 mwifiex_11n_get_rx_reorder_tbl(struct mwifiex_private *priv, int tid, u8 *ta)
 {
 	struct mwifiex_rx_reorder_tbl *tbl;
+	unsigned long flags;
 
+<<<<<<< HEAD
 	spin_lock_bh(&priv->rx_reorder_tbl_lock);
 	list_for_each_entry(tbl, &priv->rx_reorder_tbl_ptr, list) {
 		if (!memcmp(tbl->ta, ta, ETH_ALEN) && tbl->tid == tid) {
@@ -239,6 +289,17 @@ mwifiex_11n_get_rx_reorder_tbl(struct mwifiex_private *priv, int tid, u8 *ta)
 		}
 	}
 	spin_unlock_bh(&priv->rx_reorder_tbl_lock);
+=======
+	spin_lock_irqsave(&priv->rx_reorder_tbl_lock, flags);
+	list_for_each_entry(tbl, &priv->rx_reorder_tbl_ptr, list) {
+		if (!memcmp(tbl->ta, ta, ETH_ALEN) && tbl->tid == tid) {
+			spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock,
+					       flags);
+			return tbl;
+		}
+	}
+	spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock, flags);
+>>>>>>> master
 
 	return NULL;
 }
@@ -253,6 +314,7 @@ void mwifiex_11n_del_rx_reorder_tbl_by_ta(struct mwifiex_private *priv, u8 *ta)
 	if (!ta)
 		return;
 
+<<<<<<< HEAD
 	spin_lock_bh(&priv->rx_reorder_tbl_lock);
 	list_for_each_entry_safe(tbl, tmp, &priv->rx_reorder_tbl_ptr, list) {
 		if (!memcmp(tbl->ta, ta, ETH_ALEN)) {
@@ -262,6 +324,18 @@ void mwifiex_11n_del_rx_reorder_tbl_by_ta(struct mwifiex_private *priv, u8 *ta)
 		}
 	}
 	spin_unlock_bh(&priv->rx_reorder_tbl_lock);
+=======
+	spin_lock_irqsave(&priv->rx_reorder_tbl_lock, flags);
+	list_for_each_entry_safe(tbl, tmp, &priv->rx_reorder_tbl_ptr, list) {
+		if (!memcmp(tbl->ta, ta, ETH_ALEN)) {
+			spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock,
+					       flags);
+			mwifiex_del_rx_reorder_entry(priv, tbl);
+			spin_lock_irqsave(&priv->rx_reorder_tbl_lock, flags);
+		}
+	}
+	spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock, flags);
+>>>>>>> master
 
 	return;
 }
@@ -275,6 +349,7 @@ mwifiex_11n_find_last_seq_num(struct reorder_tmr_cnxt *ctx)
 {
 	struct mwifiex_rx_reorder_tbl *rx_reorder_tbl_ptr = ctx->ptr;
 	struct mwifiex_private *priv = ctx->priv;
+<<<<<<< HEAD
 	int i;
 
 	spin_lock_bh(&priv->rx_reorder_tbl_lock);
@@ -285,6 +360,20 @@ mwifiex_11n_find_last_seq_num(struct reorder_tmr_cnxt *ctx)
 		}
 	}
 	spin_unlock_bh(&priv->rx_reorder_tbl_lock);
+=======
+	unsigned long flags;
+	int i;
+
+	spin_lock_irqsave(&priv->rx_reorder_tbl_lock, flags);
+	for (i = rx_reorder_tbl_ptr->win_size - 1; i >= 0; --i) {
+		if (rx_reorder_tbl_ptr->rx_reorder_ptr[i]) {
+			spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock,
+					       flags);
+			return i;
+		}
+	}
+	spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock, flags);
+>>>>>>> master
 
 	return -1;
 }
@@ -789,9 +878,15 @@ void mwifiex_11n_cleanup_reorder_tbl(struct mwifiex_private *priv)
 	spin_lock_bh(&priv->rx_reorder_tbl_lock);
 	list_for_each_entry_safe(del_tbl_ptr, tmp_node,
 				 &priv->rx_reorder_tbl_ptr, list) {
+<<<<<<< HEAD
 		spin_unlock_bh(&priv->rx_reorder_tbl_lock);
 		mwifiex_del_rx_reorder_entry(priv, del_tbl_ptr);
 		spin_lock_bh(&priv->rx_reorder_tbl_lock);
+=======
+		spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock, flags);
+		mwifiex_del_rx_reorder_entry(priv, del_tbl_ptr);
+		spin_lock_irqsave(&priv->rx_reorder_tbl_lock, flags);
+>>>>>>> master
 	}
 	INIT_LIST_HEAD(&priv->rx_reorder_tbl_ptr);
 	spin_unlock_bh(&priv->rx_reorder_tbl_lock);

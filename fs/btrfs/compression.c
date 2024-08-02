@@ -56,6 +56,7 @@ const char* btrfs_compress_type2str(enum btrfs_compression_type type)
 	return NULL;
 }
 
+<<<<<<< HEAD
 static inline struct compressed_bio *to_compressed_bio(struct btrfs_bio *bbio)
 {
 	return container_of(bbio, struct compressed_bio, bbio);
@@ -75,6 +76,8 @@ static struct compressed_bio *alloc_compressed_bio(struct btrfs_inode *inode,
 	return to_compressed_bio(bbio);
 }
 
+=======
+>>>>>>> master
 bool btrfs_compress_is_valid_type(const char *str, size_t len)
 {
 	int i;
@@ -91,6 +94,7 @@ bool btrfs_compress_is_valid_type(const char *str, size_t len)
 	return false;
 }
 
+<<<<<<< HEAD
 static int compression_compress_pages(int type, struct list_head *ws,
                struct address_space *mapping, u64 start, struct page **pages,
                unsigned long *out_pages, unsigned long *total_in,
@@ -167,6 +171,8 @@ static void btrfs_free_compressed_pages(struct compressed_bio *cb)
 	kfree(cb->compressed_pages);
 }
 
+=======
+>>>>>>> master
 static int btrfs_decompress_bio(struct compressed_bio *cb);
 
 static void end_compressed_bio_read(struct btrfs_bio *bbio)

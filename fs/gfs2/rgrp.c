@@ -732,6 +732,7 @@ void gfs2_clear_rgrpd(struct gfs2_sbd *sdp)
 			}
 			gfs2_rgrp_brelse(rgd);
 			glock_clear_object(gl, rgd);
+			gfs2_rgrp_brelse(rgd);
 			gfs2_glock_put(gl);
 		}
 

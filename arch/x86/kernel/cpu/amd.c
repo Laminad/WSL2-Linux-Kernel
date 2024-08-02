@@ -920,7 +920,11 @@ static void clear_rdrand_cpuid_bit(struct cpuinfo_x86 *c)
 		return;
 
 	/*
+<<<<<<< HEAD
 	 * The self-test can clear X86_FEATURE_RDRAND, so check for
+=======
+	 * The nordrand option can clear X86_FEATURE_RDRAND, so check for
+>>>>>>> master
 	 * RDRAND support using the CPUID function directly.
 	 */
 	if (!(cpuid_ecx(1) & BIT(30)) || rdrand_force)
@@ -972,6 +976,7 @@ static void init_amd_bd(struct cpuinfo_x86 *c)
 	 * instruction support via CPUID.
 	 */
 	clear_rdrand_cpuid_bit(c);
+<<<<<<< HEAD
 }
 
 static void fix_erratum_1386(struct cpuinfo_x86 *c)
@@ -1007,10 +1012,13 @@ void init_spectral_chicken(struct cpuinfo_x86 *c)
 		}
 	}
 #endif
+=======
+>>>>>>> master
 }
 
 static void init_amd_zn(struct cpuinfo_x86 *c)
 {
+<<<<<<< HEAD
 	setup_force_cpu_cap(X86_FEATURE_ZEN);
 #ifdef CONFIG_NUMA
 	node_reclaim_distance = 32;
@@ -1091,6 +1099,16 @@ static void init_amd_zen3(struct cpuinfo_x86 *c)
 
 static void init_amd_zen4(struct cpuinfo_x86 *c)
 {
+=======
+	set_cpu_cap(c, X86_FEATURE_ZEN);
+
+	/*
+	 * Fix erratum 1076: CPB feature bit not being set in CPUID.
+	 * Always set it, except when running under a hypervisor.
+	 */
+	if (!cpu_has(c, X86_FEATURE_HYPERVISOR) && !cpu_has(c, X86_FEATURE_CPB))
+		set_cpu_cap(c, X86_FEATURE_CPB);
+>>>>>>> master
 }
 
 static void init_amd(struct cpuinfo_x86 *c)
@@ -1126,9 +1144,13 @@ static void init_amd(struct cpuinfo_x86 *c)
 	case 0x12: init_amd_ln(c); break;
 	case 0x15: init_amd_bd(c); break;
 	case 0x16: init_amd_jg(c); break;
+<<<<<<< HEAD
 	case 0x17: init_spectral_chicken(c);
 		   fallthrough;
 	case 0x19: init_amd_zn(c); break;
+=======
+	case 0x17: init_amd_zn(c); break;
+>>>>>>> master
 	}
 
 	if (boot_cpu_has(X86_FEATURE_ZEN1))

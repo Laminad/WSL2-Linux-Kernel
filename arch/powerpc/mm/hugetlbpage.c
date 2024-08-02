@@ -19,6 +19,10 @@
 #include <linux/swap.h>
 #include <linux/swapops.h>
 #include <linux/kmemleak.h>
+<<<<<<< HEAD
+=======
+#include <asm/pgtable.h>
+>>>>>>> master
 #include <asm/pgalloc.h>
 #include <asm/tlb.h>
 #include <asm/setup.h>
@@ -135,7 +139,11 @@ pte_t *huge_pte_alloc(struct mm_struct *mm, struct vm_area_struct *vma,
 		hpdp = (hugepd_t *)p4;
 	} else {
 		pdshift = PUD_SHIFT;
+<<<<<<< HEAD
 		pu = pud_alloc(mm, p4, addr);
+=======
+		pu = pud_alloc(mm, pg, addr);
+>>>>>>> master
 		if (!pu)
 			return NULL;
 		if (pshift == PUD_SHIFT)
@@ -163,7 +171,11 @@ pte_t *huge_pte_alloc(struct mm_struct *mm, struct vm_area_struct *vma,
 		hpdp = (hugepd_t *)p4;
 	} else {
 		pdshift = PUD_SHIFT;
+<<<<<<< HEAD
 		pu = pud_alloc(mm, p4, addr);
+=======
+		pu = pud_alloc(mm, pg, addr);
+>>>>>>> master
 		if (!pu)
 			return NULL;
 		if (pshift >= PUD_SHIFT) {

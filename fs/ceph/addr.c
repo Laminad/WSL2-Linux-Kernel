@@ -1061,6 +1061,7 @@ get_more_pages:
 				continue;
 			}
 			if (page_offset(page) >= ceph_wbc.i_size) {
+<<<<<<< HEAD
 				struct folio *folio = page_folio(page);
 
 				dout("folio at %lu beyond eof %llu\n",
@@ -1071,6 +1072,16 @@ get_more_pages:
 					folio_invalidate(folio, 0,
 							folio_size(folio));
 				folio_unlock(folio);
+=======
+				dout("%p page eof %llu\n",
+				     page, ceph_wbc.i_size);
+				if ((ceph_wbc.size_stable ||
+				    page_offset(page) >= i_size_read(inode)) &&
+				    clear_page_dirty_for_io(page))
+					mapping->a_ops->invalidatepage(page,
+								0, PAGE_SIZE);
+				unlock_page(page);
+>>>>>>> master
 				continue;
 			}
 			if (strip_unit_end && (page->index > strip_unit_end)) {

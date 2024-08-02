@@ -46,6 +46,7 @@ static void perf_record_cpu_map_data__read_one_mask(const struct perf_record_cpu
 	if (data->mask32_data.long_size == 4)
 		bitmap[0] = data->mask32_data.mask[i];
 	else
+<<<<<<< HEAD
 		bitmap[0] = data->mask64_data.mask[i];
 #else
 	if (data->mask32_data.long_size == 4) {
@@ -61,6 +62,100 @@ static void perf_record_cpu_map_data__read_one_mask(const struct perf_record_cpu
 #endif
 	}
 #endif
+=======
+		cpus = cpu_map__default_new();
+out_free_tmp:
+	free(tmp_cpus);
+	return cpus;
+}
+
+static struct cpu_map *cpu_map__read_all_cpu_map(void)
+{
+	struct cpu_map *cpus = NULL;
+	FILE *onlnf;
+
+	onlnf = fopen("/sys/devices/system/cpu/online", "r");
+	if (!onlnf)
+		return cpu_map__default_new();
+
+	cpus = cpu_map__read(onlnf);
+	fclose(onlnf);
+	return cpus;
+}
+
+struct cpu_map *cpu_map__new(const char *cpu_list)
+{
+	struct cpu_map *cpus = NULL;
+	unsigned long start_cpu, end_cpu = 0;
+	char *p = NULL;
+	int i, nr_cpus = 0;
+	int *tmp_cpus = NULL, *tmp;
+	int max_entries = 0;
+
+	if (!cpu_list)
+		return cpu_map__read_all_cpu_map();
+
+	/*
+	 * must handle the case of empty cpumap to cover
+	 * TOPOLOGY header for NUMA nodes with no CPU
+	 * ( e.g., because of CPU hotplug)
+	 */
+	if (!isdigit(*cpu_list) && *cpu_list != '\0')
+		goto out;
+
+	while (isdigit(*cpu_list)) {
+		p = NULL;
+		start_cpu = strtoul(cpu_list, &p, 0);
+		if (start_cpu >= INT_MAX
+		    || (*p != '\0' && *p != ',' && *p != '-'))
+			goto invalid;
+
+		if (*p == '-') {
+			cpu_list = ++p;
+			p = NULL;
+			end_cpu = strtoul(cpu_list, &p, 0);
+
+			if (end_cpu >= INT_MAX || (*p != '\0' && *p != ','))
+				goto invalid;
+
+			if (end_cpu < start_cpu)
+				goto invalid;
+		} else {
+			end_cpu = start_cpu;
+		}
+
+		for (; start_cpu <= end_cpu; start_cpu++) {
+			/* check for duplicates */
+			for (i = 0; i < nr_cpus; i++)
+				if (tmp_cpus[i] == (int)start_cpu)
+					goto invalid;
+
+			if (nr_cpus == max_entries) {
+				max_entries += MAX_NR_CPUS;
+				tmp = realloc(tmp_cpus, max_entries * sizeof(int));
+				if (tmp == NULL)
+					goto invalid;
+				tmp_cpus = tmp;
+			}
+			tmp_cpus[nr_cpus++] = (int)start_cpu;
+		}
+		if (*p)
+			++p;
+
+		cpu_list = p;
+	}
+
+	if (nr_cpus > 0)
+		cpus = cpu_map__trim_new(nr_cpus, tmp_cpus);
+	else if (*cpu_list != '\0')
+		cpus = cpu_map__default_new();
+	else
+		cpus = cpu_map__dummy_new();
+invalid:
+	free(tmp_cpus);
+out:
+	return cpus;
+>>>>>>> master
 }
 static struct perf_cpu_map *cpu_map__from_entries(const struct perf_record_cpu_map_data *data)
 {
@@ -637,7 +732,11 @@ size_t cpu_map__snprint_mask(struct perf_cpu_map *map, char *buf, size_t size)
 	if (buf == NULL)
 		return 0;
 
+<<<<<<< HEAD
 	bitmap = zalloc(last_cpu.cpu / 8 + 1);
+=======
+	bitmap = zalloc(last_cpu / 8 + 1);
+>>>>>>> master
 	if (bitmap == NULL) {
 		buf[0] = '\0';
 		return 0;

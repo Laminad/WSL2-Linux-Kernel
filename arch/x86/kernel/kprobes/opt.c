@@ -162,6 +162,11 @@ asm (
 
 void optprobe_template_func(void);
 STACK_FRAME_NON_STANDARD(optprobe_template_func);
+NOKPROBE_SYMBOL(optprobe_template_func);
+NOKPROBE_SYMBOL(optprobe_template_entry);
+NOKPROBE_SYMBOL(optprobe_template_val);
+NOKPROBE_SYMBOL(optprobe_template_call);
+NOKPROBE_SYMBOL(optprobe_template_end);
 
 #define TMPL_CLAC_IDX \
 	((long)optprobe_template_clac - (long)optprobe_template_entry)
@@ -209,7 +214,11 @@ static int copy_optimized_instructions(u8 *dest, u8 *src, u8 *real)
 	struct insn insn;
 	int len = 0, ret;
 
+<<<<<<< HEAD
 	while (len < JMP32_INSN_SIZE) {
+=======
+	while (len < RELATIVEJUMP_SIZE) {
+>>>>>>> master
 		ret = __copy_instruction(dest + len, src + len, real + len, &insn);
 		if (!ret || !can_boost(&insn, src + len))
 			return -EINVAL;

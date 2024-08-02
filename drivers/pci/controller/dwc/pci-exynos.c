@@ -324,8 +324,14 @@ static int exynos_pcie_probe(struct platform_device *pdev)
 	ep->pci.ops = &dw_pcie_ops;
 
 	ep->phy = devm_of_phy_get(dev, np, NULL);
+<<<<<<< HEAD
 	if (IS_ERR(ep->phy))
 		return PTR_ERR(ep->phy);
+=======
+	if (IS_ERR(ep->phy)) {
+		if (PTR_ERR(ep->phy) != -ENODEV)
+			return PTR_ERR(ep->phy);
+>>>>>>> master
 
 	/* External Local Bus interface (ELBI) registers */
 	ep->elbi_base = devm_platform_ioremap_resource_byname(pdev, "elbi");

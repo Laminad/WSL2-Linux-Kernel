@@ -147,6 +147,7 @@ static void pma_cnt_assign(struct ib_pma_portcounters *pma_cnt,
 			     vl_15_dropped);
 }
 
+<<<<<<< HEAD
 static int query_ib_ppcnt(struct mlx5_core_dev *dev, u8 port_num, void *out,
 			  size_t sz)
 {
@@ -170,10 +171,14 @@ static int query_ib_ppcnt(struct mlx5_core_dev *dev, u8 port_num, void *out,
 }
 
 static int process_pma_cmd(struct mlx5_ib_dev *dev, u32 port_num,
+=======
+static int process_pma_cmd(struct mlx5_ib_dev *dev, u8 port_num,
+>>>>>>> master
 			   const struct ib_mad *in_mad, struct ib_mad *out_mad)
 {
 	struct mlx5_core_dev *mdev;
 	bool native_port = true;
+<<<<<<< HEAD
 	u32 mdev_port_num;
 	void *out_cnt;
 	int err;
@@ -194,7 +199,22 @@ static int process_pma_cmd(struct mlx5_ib_dev *dev, u32 port_num,
 		mdev = dev->mdev;
 		mdev_port_num = 1;
 	}
+=======
+	u8 mdev_port_num;
+	void *out_cnt;
+	int err;
+>>>>>>> master
 
+	mdev = mlx5_ib_get_native_port_mdev(dev, port_num, &mdev_port_num);
+	if (!mdev) {
+		/* Fail to get the native port, likely due to 2nd port is still
+		 * unaffiliated. In such case default to 1st port and attached
+		 * PF device.
+		 */
+		native_port = false;
+		mdev = dev->mdev;
+		mdev_port_num = 1;
+	}
 	/* Declaring support of extended counters */
 	if (in_mad->mad_hdr.attr_id == IB_PMA_CLASS_PORT_INFO) {
 		struct ib_class_port_info cpi = {};
@@ -216,8 +236,13 @@ static int process_pma_cmd(struct mlx5_ib_dev *dev, u32 port_num,
 			goto done;
 		}
 
+<<<<<<< HEAD
 		err = mlx5_core_query_vport_counter(mdev, 0, 0, mdev_port_num,
 						    out_cnt);
+=======
+		err = mlx5_core_query_vport_counter(mdev, 0, 0,
+						    mdev_port_num, out_cnt, sz);
+>>>>>>> master
 		if (!err)
 			pma_cnt_ext_assign(pma_cnt_ext, out_cnt);
 	} else {
@@ -231,7 +256,12 @@ static int process_pma_cmd(struct mlx5_ib_dev *dev, u32 port_num,
 			goto done;
 		}
 
+<<<<<<< HEAD
 		err = query_ib_ppcnt(mdev, mdev_port_num, out_cnt, sz);
+=======
+		err = mlx5_core_query_ib_ppcnt(mdev, mdev_port_num,
+					       out_cnt, sz);
+>>>>>>> master
 		if (!err)
 			pma_cnt_assign(pma_cnt, out_cnt);
 	}
@@ -242,6 +272,7 @@ done:
 	if (native_port)
 		mlx5_ib_put_native_port_mdev(dev, port_num);
 	return err;
+<<<<<<< HEAD
 }
 
 int mlx5_ib_process_mad(struct ib_device *ibdev, int mad_flags, u32 port_num,
@@ -305,12 +336,43 @@ int mlx5_ib_process_mad(struct ib_device *ibdev, int mad_flags, u32 port_num,
 		return IB_MAD_RESULT_SUCCESS | IB_MAD_RESULT_CONSUMED;
 
 	return IB_MAD_RESULT_SUCCESS | IB_MAD_RESULT_REPLY;
+=======
+>>>>>>> master
 }
 
 int mlx5_query_ext_port_caps(struct mlx5_ib_dev *dev, unsigned int port)
 {
+<<<<<<< HEAD
 	struct ib_smp *in_mad;
 	struct ib_smp *out_mad;
+=======
+	struct mlx5_ib_dev *dev = to_mdev(ibdev);
+	const struct ib_mad *in_mad = (const struct ib_mad *)in;
+	struct ib_mad *out_mad = (struct ib_mad *)out;
+	int ret;
+
+	if (WARN_ON_ONCE(in_mad_size != sizeof(*in_mad) ||
+			 *out_mad_size != sizeof(*out_mad)))
+		return IB_MAD_RESULT_FAILURE;
+
+	memset(out_mad->data, 0, sizeof(out_mad->data));
+
+	if (MLX5_CAP_GEN(dev->mdev, vport_counters) &&
+	    in_mad->mad_hdr.mgmt_class == IB_MGMT_CLASS_PERF_MGMT &&
+	    in_mad->mad_hdr.method == IB_MGMT_METHOD_GET) {
+		ret = process_pma_cmd(dev, port_num, in_mad, out_mad);
+	} else {
+		ret =  process_mad(ibdev, mad_flags, port_num, in_wc, in_grh,
+				   in_mad, out_mad);
+	}
+	return ret;
+}
+
+int mlx5_query_ext_port_caps(struct mlx5_ib_dev *dev, u8 port)
+{
+	struct ib_smp *in_mad  = NULL;
+	struct ib_smp *out_mad = NULL;
+>>>>>>> master
 	int err = -ENOMEM;
 	u16 packet_error;
 

@@ -309,6 +309,7 @@ again:
 			       vnode->fid.vid, vnode->fid.vnode, ret);
 		}
 
+<<<<<<< HEAD
 		spin_lock(&vnode->lock);
 		if (ret == -ENOENT)
 			afs_kill_lockers_enoent(vnode);
@@ -316,6 +317,15 @@ again:
 			afs_next_locker(vnode, 0);
 		spin_unlock(&vnode->lock);
 		return;
+=======
+		/* The new front of the queue now owns the state variables. */
+		next = list_entry(vnode->pending_locks.next,
+				  struct file_lock, fl_u.afs.link);
+		vnode->lock_key = key_get(afs_file_key(next->fl_file));
+		vnode->lock_type = (next->fl_type == F_RDLCK) ? AFS_LOCK_READ : AFS_LOCK_WRITE;
+		vnode->lock_state = AFS_VNODE_LOCK_WAITING_FOR_CB;
+		goto again;
+>>>>>>> master
 
 	/* If we've already got a lock, then it must be time to extend that
 	 * lock as AFS locks time out after 5 minutes.
@@ -447,6 +457,53 @@ static int afs_do_setlk_check(struct afs_vnode *vnode, struct key *key,
 }
 
 /*
+<<<<<<< HEAD
+=======
+ * Remove the front runner from the pending queue.
+ * - The caller must hold vnode->lock.
+ */
+static void afs_dequeue_lock(struct afs_vnode *vnode, struct file_lock *fl)
+{
+	struct file_lock *next;
+
+	_enter("");
+
+	/* ->lock_type, ->lock_key and ->lock_state only belong to this
+	 * file_lock if we're at the front of the pending queue or if we have
+	 * the lock granted or if the lock_state is NEED_UNLOCK or UNLOCKING.
+	 */
+	if (vnode->granted_locks.next == &fl->fl_u.afs.link &&
+	    vnode->granted_locks.prev == &fl->fl_u.afs.link) {
+		list_del_init(&fl->fl_u.afs.link);
+		afs_defer_unlock(vnode);
+		return;
+	}
+
+	if (!list_empty(&vnode->granted_locks) ||
+	    vnode->pending_locks.next != &fl->fl_u.afs.link) {
+		list_del_init(&fl->fl_u.afs.link);
+		return;
+	}
+
+	list_del_init(&fl->fl_u.afs.link);
+	key_put(vnode->lock_key);
+	vnode->lock_key = NULL;
+	vnode->lock_state = AFS_VNODE_LOCK_NONE;
+
+	if (list_empty(&vnode->pending_locks))
+		return;
+
+	/* The new front of the queue now owns the state variables. */
+	next = list_entry(vnode->pending_locks.next,
+			  struct file_lock, fl_u.afs.link);
+	vnode->lock_key = key_get(afs_file_key(next->fl_file));
+	vnode->lock_type = (next->fl_type == F_RDLCK) ? AFS_LOCK_READ : AFS_LOCK_WRITE;
+	vnode->lock_state = AFS_VNODE_LOCK_WAITING_FOR_CB;
+	afs_lock_may_be_available(vnode);
+}
+
+/*
+>>>>>>> master
  * request a lock on a file on the server
  */
 static int afs_do_setlk(struct file *file, struct file_lock *fl)

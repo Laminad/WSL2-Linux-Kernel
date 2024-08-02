@@ -461,12 +461,15 @@ static struct meson_pmx_group meson_gxbb_periphs_groups[] = {
 	GROUP(uart_rts_c,	1,	16),
 	GROUP(uart_tx_c,	1,	19),
 	GROUP(uart_rx_c,	1,	18),
+<<<<<<< HEAD
 	GROUP(tsin_a_fail,	3,	3),
 	GROUP(tsin_a_d_valid,	3,	2),
 	GROUP(tsin_a_sop,	3,	1),
 	GROUP(tsin_a_clk,	3,	0),
 	GROUP(tsin_a_d0,	3,	4),
 	GROUP(tsin_a_dp,	3,	5),
+=======
+>>>>>>> master
 	GROUP(pwm_a_y,		1,	21),
 	GROUP(pwm_f_y,		1,	20),
 	GROUP(i2s_out_ch23_y,	1,	5),

@@ -745,6 +745,94 @@ queue_attr_store(struct kobject *kobj, struct attribute *attr,
 	return res;
 }
 
+<<<<<<< HEAD
+=======
+static void blk_free_queue_rcu(struct rcu_head *rcu_head)
+{
+	struct request_queue *q = container_of(rcu_head, struct request_queue,
+					       rcu_head);
+	kmem_cache_free(blk_requestq_cachep, q);
+}
+
+/**
+ * __blk_release_queue - release a request queue when it is no longer needed
+ * @work: pointer to the release_work member of the request queue to be released
+ *
+ * Description:
+ *     blk_release_queue is the counterpart of blk_init_queue(). It should be
+ *     called when a request queue is being released; typically when a block
+ *     device is being de-registered. Its primary task it to free the queue
+ *     itself.
+ *
+ * Notes:
+ *     The low level driver must have finished any outstanding requests first
+ *     via blk_cleanup_queue().
+ *
+ *     Although blk_release_queue() may be called with preemption disabled,
+ *     __blk_release_queue() may sleep.
+ */
+static void __blk_release_queue(struct work_struct *work)
+{
+	struct request_queue *q = container_of(work, typeof(*q), release_work);
+
+	if (test_bit(QUEUE_FLAG_POLL_STATS, &q->queue_flags))
+		blk_stat_remove_callback(q, q->poll_cb);
+	blk_stat_free_callback(q->poll_cb);
+
+	if (!blk_queue_dead(q)) {
+		/*
+		 * Last reference was dropped without having called
+		 * blk_cleanup_queue().
+		 */
+		WARN_ONCE(blk_queue_init_done(q),
+			  "request queue %p has been registered but blk_cleanup_queue() has not been called for that queue\n",
+			  q);
+		blk_exit_queue(q);
+	}
+
+	WARN(blk_queue_root_blkg(q),
+	     "request queue %p is being released but it has not yet been removed from the blkcg controller\n",
+	     q);
+
+	blk_free_queue_stats(q->stats);
+
+	if (q->mq_ops)
+		cancel_delayed_work_sync(&q->requeue_work);
+
+	blk_exit_rl(q, &q->root_rl);
+
+	if (q->queue_tags)
+		__blk_queue_free_tags(q);
+
+	if (!q->mq_ops) {
+		if (q->exit_rq_fn)
+			q->exit_rq_fn(q, q->fq->flush_rq);
+		blk_free_flush_queue(q->fq);
+	} else {
+		blk_mq_release(q);
+	}
+
+	blk_trace_shutdown(q);
+
+	if (q->mq_ops)
+		blk_mq_debugfs_unregister(q);
+
+	bioset_exit(&q->bio_split);
+
+	ida_simple_remove(&blk_queue_ida, q->id);
+	call_rcu(&q->rcu_head, blk_free_queue_rcu);
+}
+
+static void blk_release_queue(struct kobject *kobj)
+{
+	struct request_queue *q =
+		container_of(kobj, struct request_queue, kobj);
+
+	INIT_WORK(&q->release_work, __blk_release_queue);
+	schedule_work(&q->release_work);
+}
+
+>>>>>>> master
 static const struct sysfs_ops queue_sysfs_ops = {
 	.show	= queue_attr_show,
 	.store	= queue_attr_store,

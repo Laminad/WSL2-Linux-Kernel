@@ -438,6 +438,7 @@ int mlxsw_core_kvd_sizes_get(struct mlxsw_core *mlxsw_core,
 			     u64 *p_single_size, u64 *p_double_size,
 			     u64 *p_linear_size);
 
+<<<<<<< HEAD
 u32 mlxsw_core_read_frc_h(struct mlxsw_core *mlxsw_core);
 u32 mlxsw_core_read_frc_l(struct mlxsw_core *mlxsw_core);
 
@@ -445,6 +446,10 @@ u32 mlxsw_core_read_utc_sec(struct mlxsw_core *mlxsw_core);
 u32 mlxsw_core_read_utc_nsec(struct mlxsw_core *mlxsw_core);
 
 bool mlxsw_core_sdq_supports_cqe_v2(struct mlxsw_core *mlxsw_core);
+=======
+void mlxsw_core_fw_flash_start(struct mlxsw_core *mlxsw_core);
+void mlxsw_core_fw_flash_end(struct mlxsw_core *mlxsw_core);
+>>>>>>> master
 
 bool mlxsw_core_res_valid(struct mlxsw_core *mlxsw_core,
 			  enum mlxsw_res_id res_id);

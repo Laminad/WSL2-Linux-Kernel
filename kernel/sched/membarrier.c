@@ -532,7 +532,11 @@ static int membarrier_register_private_expedited(int flags)
 	 * groups, which use the same mm. (CLONE_VM but not
 	 * CLONE_THREAD).
 	 */
+<<<<<<< HEAD
 	if ((atomic_read(&mm->membarrier_state) & ready_state) == ready_state)
+=======
+	if ((atomic_read(&mm->membarrier_state) & state) == state)
+>>>>>>> master
 		return 0;
 	if (flags & MEMBARRIER_FLAG_SYNC_CORE)
 		set_state |= MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE;

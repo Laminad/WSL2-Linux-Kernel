@@ -228,6 +228,7 @@ static int rsi_register_rates_channels(struct rsi_hw *adapter, int band)
 	sbands->ht_cap.mcs.tx_params = IEEE80211_HT_MCS_TX_DEFINED;
 	/* sbands->ht_cap.mcs.rx_highest = 0x82; */
 	return 0;
+<<<<<<< HEAD
 }
 
 static int rsi_mac80211_hw_scan_start(struct ieee80211_hw *hw,
@@ -290,6 +291,8 @@ static void rsi_mac80211_cancel_hw_scan(struct ieee80211_hw *hw,
 	}
 	common->hwscan = NULL;
 	mutex_unlock(&common->mutex);
+=======
+>>>>>>> master
 }
 
 /**

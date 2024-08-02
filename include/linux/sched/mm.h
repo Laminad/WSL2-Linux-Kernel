@@ -54,6 +54,7 @@ static inline void mmdrop(struct mm_struct *mm)
 		__mmdrop(mm);
 }
 
+<<<<<<< HEAD
 #ifdef CONFIG_PREEMPT_RT
 /*
  * RCU callback for delayed mm drop. Not strictly RCU, but call_rcu() is
@@ -109,6 +110,31 @@ static inline void mmdrop_lazy_tlb_sched(struct mm_struct *mm)
 		mmdrop_sched(mm);
 	else
 		smp_mb(); /* see mmdrop_lazy_tlb() above */
+=======
+/*
+ * This has to be called after a get_task_mm()/mmget_not_zero()
+ * followed by taking the mmap_sem for writing before modifying the
+ * vmas or anything the coredump pretends not to change from under it.
+ *
+ * It also has to be called when mmgrab() is used in the context of
+ * the process, but then the mm_count refcount is transferred outside
+ * the context of the process to run down_write() on that pinned mm.
+ *
+ * NOTE: find_extend_vma() called from GUP context is the only place
+ * that can modify the "mm" (notably the vm_start/end) under mmap_sem
+ * for reading and outside the context of the process, so it is also
+ * the only case that holds the mmap_sem for reading that must call
+ * this function. Generally if the mmap_sem is hold for reading
+ * there's no need of this check after get_task_mm()/mmget_not_zero().
+ *
+ * This function can be obsoleted and the check can be removed, after
+ * the coredump code will hold the mmap_sem for writing before
+ * invoking the ->core_dump methods.
+ */
+static inline bool mmget_still_valid(struct mm_struct *mm)
+{
+	return likely(!mm->core_state);
+>>>>>>> master
 }
 
 /**

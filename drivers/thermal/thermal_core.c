@@ -292,7 +292,7 @@ static void thermal_zone_device_set_polling(struct thermal_zone_device *tz,
 		mod_delayed_work(system_freezable_power_efficient_wq,
 				 &tz->poll_queue, delay);
 	else
-		cancel_delayed_work(&tz->poll_queue);
+		cancel_delayed_work_sync(&tz->poll_queue);
 }
 
 static void monitor_thermal_zone(struct thermal_zone_device *tz)
@@ -396,12 +396,16 @@ static void thermal_zone_device_init(struct thermal_zone_device *tz)
 {
 	struct thermal_instance *pos;
 	tz->temperature = THERMAL_TEMP_INVALID;
+<<<<<<< HEAD
 	tz->prev_low_trip = -INT_MAX;
 	tz->prev_high_trip = INT_MAX;
+=======
+>>>>>>> master
 	list_for_each_entry(pos, &tz->thermal_instances, tz_node)
 		pos->initialized = false;
 }
 
+<<<<<<< HEAD
 void __thermal_zone_device_update(struct thermal_zone_device *tz,
 				  enum thermal_notify_event event)
 {
@@ -485,6 +489,12 @@ int thermal_zone_device_is_enabled(struct thermal_zone_device *tz)
 	lockdep_assert_held(&tz->lock);
 
 	return tz->mode == THERMAL_DEVICE_ENABLED;
+=======
+static void thermal_zone_device_reset(struct thermal_zone_device *tz)
+{
+	tz->passive = 0;
+	thermal_zone_device_init(tz);
+>>>>>>> master
 }
 
 void thermal_zone_device_update(struct thermal_zone_device *tz,
@@ -1146,7 +1156,14 @@ void thermal_cooling_device_unregister(struct thermal_cooling_device *cdev)
 
 	mutex_unlock(&thermal_list_lock);
 
+<<<<<<< HEAD
 	device_unregister(&cdev->device);
+=======
+	ida_simple_remove(&thermal_cdev_ida, cdev->id);
+	device_del(&cdev->device);
+	thermal_cooling_device_destroy_sysfs(cdev);
+	put_device(&cdev->device);
+>>>>>>> master
 }
 EXPORT_SYMBOL_GPL(thermal_cooling_device_unregister);
 
@@ -1548,6 +1565,7 @@ static int thermal_pm_notify(struct notifier_block *nb,
 		mutex_lock(&thermal_list_lock);
 
 		list_for_each_entry(tz, &thermal_tz_list, node) {
+<<<<<<< HEAD
 			mutex_lock(&tz->lock);
 
 			tz->suspended = false;
@@ -1556,6 +1574,11 @@ static int thermal_pm_notify(struct notifier_block *nb,
 			__thermal_zone_device_update(tz, THERMAL_EVENT_UNSPECIFIED);
 
 			mutex_unlock(&tz->lock);
+=======
+			thermal_zone_device_init(tz);
+			thermal_zone_device_update(tz,
+						   THERMAL_EVENT_UNSPECIFIED);
+>>>>>>> master
 		}
 
 		mutex_unlock(&thermal_list_lock);

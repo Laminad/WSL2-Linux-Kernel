@@ -497,6 +497,46 @@ fail:
 
 bool amdgpu_bo_support_uswc(u64 bo_flags)
 {
+<<<<<<< HEAD
+=======
+	struct ttm_operation_ctx ctx = {
+		.interruptible = (bp->type != ttm_bo_type_kernel),
+		.no_wait_gpu = false,
+		.resv = bp->resv,
+		.flags = bp->type != ttm_bo_type_kernel ?
+			TTM_OPT_FLAG_ALLOW_RES_EVICT : 0
+	};
+	struct amdgpu_bo *bo;
+	unsigned long page_align, size = bp->size;
+	size_t acc_size;
+	int r;
+
+	page_align = roundup(bp->byte_align, PAGE_SIZE) >> PAGE_SHIFT;
+	size = ALIGN(size, PAGE_SIZE);
+
+	if (!amdgpu_bo_validate_size(adev, size, bp->domain))
+		return -ENOMEM;
+
+	*bo_ptr = NULL;
+
+	acc_size = ttm_bo_dma_acc_size(&adev->mman.bdev, size,
+				       sizeof(struct amdgpu_bo));
+
+	bo = kzalloc(sizeof(struct amdgpu_bo), GFP_KERNEL);
+	if (bo == NULL)
+		return -ENOMEM;
+	drm_gem_private_object_init(adev->ddev, &bo->gem_base, size);
+	INIT_LIST_HEAD(&bo->shadow_list);
+	INIT_LIST_HEAD(&bo->va);
+	bo->preferred_domains = bp->preferred_domain ? bp->preferred_domain :
+		bp->domain;
+	bo->allowed_domains = bo->preferred_domains;
+	if (bp->type != ttm_bo_type_kernel &&
+	    bo->allowed_domains == AMDGPU_GEM_DOMAIN_VRAM)
+		bo->allowed_domains |= AMDGPU_GEM_DOMAIN_GTT;
+
+	bo->flags = bp->flags;
+>>>>>>> master
 
 #ifdef CONFIG_X86_32
 	/* XXX: Write-combined CPU mappings of GTT seem broken on 32-bit

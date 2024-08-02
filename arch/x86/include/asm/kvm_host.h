@@ -143,7 +143,18 @@
 #define KVM_HPAGE_MASK(x)	(~(KVM_HPAGE_SIZE(x) - 1))
 #define KVM_PAGES_PER_HPAGE(x)	(KVM_HPAGE_SIZE(x) / PAGE_SIZE)
 
+<<<<<<< HEAD
 #define KVM_MEMSLOT_PAGES_TO_MMU_PAGES_RATIO 50
+=======
+static inline gfn_t gfn_to_index(gfn_t gfn, gfn_t base_gfn, int level)
+{
+	/* KVM_HPAGE_GFN_SHIFT(PT_PAGE_TABLE_LEVEL) must be 0. */
+	return (gfn >> KVM_HPAGE_GFN_SHIFT(level)) -
+		(base_gfn >> KVM_HPAGE_GFN_SHIFT(level));
+}
+
+#define KVM_PERMILLE_MMU_PAGES 20
+>>>>>>> master
 #define KVM_MIN_ALLOC_MMU_PAGES 64UL
 #define KVM_MMU_HASH_SHIFT 12
 #define KVM_NUM_MMU_PAGES (1 << KVM_MMU_HASH_SHIFT)
@@ -395,6 +406,47 @@ struct kvm_rmap_head {
 	unsigned long val;
 };
 
+<<<<<<< HEAD
+=======
+struct kvm_mmu_page {
+	struct list_head link;
+	struct hlist_node hash_link;
+	struct list_head lpage_disallowed_link;
+
+	/*
+	 * The following two entries are used to key the shadow page in the
+	 * hash table.
+	 */
+	gfn_t gfn;
+	union kvm_mmu_page_role role;
+
+	u64 *spt;
+	/* hold the gfn of each spte inside spt */
+	gfn_t *gfns;
+	bool unsync;
+	bool lpage_disallowed; /* Can't be replaced by an equiv large page */
+	int root_count;          /* Currently serving as active root */
+	unsigned int unsync_children;
+	struct kvm_rmap_head parent_ptes; /* rmap pointers to parent sptes */
+
+	/* The page is obsolete if mmu_valid_gen != kvm->arch.mmu_valid_gen.  */
+	unsigned long mmu_valid_gen;
+
+	DECLARE_BITMAP(unsync_child_bitmap, 512);
+
+#ifdef CONFIG_X86_32
+	/*
+	 * Used out of the mmu-lock to avoid reading spte values while an
+	 * update is in progress; see the comments in __get_spte_lockless().
+	 */
+	int clear_spte_count;
+#endif
+
+	/* Number of writes since the last time traversal visited this page.  */
+	atomic_t write_flooding_count;
+};
+
+>>>>>>> master
 struct kvm_pio_request {
 	unsigned long linear_rip;
 	unsigned long count;
@@ -749,7 +801,10 @@ struct kvm_vcpu_arch {
 	u64 ia32_xss;
 	u64 microcode_version;
 	u64 arch_capabilities;
+<<<<<<< HEAD
 	u64 perf_capabilities;
+=======
+>>>>>>> master
 
 	/*
 	 * Paging state of the vcpu
@@ -1104,6 +1159,7 @@ struct kvm_hv {
 	u64 hv_reenlightenment_control;
 	u64 hv_tsc_emulation_control;
 	u64 hv_tsc_emulation_status;
+<<<<<<< HEAD
 	u64 hv_invtsc_control;
 
 	/* How many vCPUs have VP index != vCPU index */
@@ -1136,6 +1192,11 @@ struct kvm_xen {
 	struct gfn_to_pfn_cache shinfo_cache;
 	struct idr evtchn_ports;
 	unsigned long poll_mask[BITS_TO_LONGS(KVM_MAX_VCPUS)];
+=======
+
+	/* How many vCPUs have VP index != vCPU index */
+	atomic_t num_mismatched_vp_indexes;
+>>>>>>> master
 };
 
 enum kvm_irqchip_mode {
@@ -1144,6 +1205,7 @@ enum kvm_irqchip_mode {
 	KVM_IRQCHIP_SPLIT,        /* created with KVM_CAP_SPLIT_IRQCHIP */
 };
 
+<<<<<<< HEAD
 struct kvm_x86_msr_filter {
 	u8 count;
 	bool default_allow:1;
@@ -1168,6 +1230,15 @@ enum kvm_apicv_inhibit {
 	/* INHIBITs that are relevant to both Intel's APICv and AMD's AVIC. */
 	/********************************************************************/
 
+=======
+struct kvm_arch {
+	unsigned long n_used_mmu_pages;
+	unsigned long n_requested_mmu_pages;
+	unsigned long n_max_mmu_pages;
+	unsigned int indirect_shadow_pages;
+	unsigned long mmu_valid_gen;
+	struct hlist_head mmu_page_hash[KVM_NUM_MMU_PAGES];
+>>>>>>> master
 	/*
 	 * APIC acceleration is disabled by a module parameter
 	 * and/or not supported in hardware.
@@ -1253,6 +1324,7 @@ struct kvm_arch {
 	struct hlist_head mmu_page_hash[KVM_NUM_MMU_PAGES];
 	struct list_head active_mmu_pages;
 	struct list_head zapped_obsolete_pages;
+<<<<<<< HEAD
 	/*
 	 * A list of kvm_mmu_page structs that, if zapped, could possibly be
 	 * replaced by an NX huge page.  A shadow page is on this list if its
@@ -1266,6 +1338,10 @@ struct kvm_arch {
 	 */
 	struct list_head possible_nx_huge_pages;
 #ifdef CONFIG_KVM_EXTERNAL_WRITE_TRACKING
+=======
+	struct list_head lpage_disallowed_mmu_pages;
+	struct kvm_page_track_notifier_node mmu_sp_tracker;
+>>>>>>> master
 	struct kvm_page_track_notifier_head track_notifier_head;
 #endif
 	/*
@@ -1355,6 +1431,7 @@ struct kvm_arch {
 	bool x2apic_broadcast_quirk_disabled;
 
 	bool guest_can_read_msr_platform_info;
+<<<<<<< HEAD
 	bool exception_payload_enabled;
 
 	bool triple_fault_event;
@@ -1484,6 +1561,25 @@ struct kvm_vm_stat {
 	u64 nx_lpage_splits;
 	u64 max_mmu_page_hash_collisions;
 	u64 max_mmu_rmap_size;
+=======
+
+	struct task_struct *nx_lpage_recovery_thread;
+};
+
+struct kvm_vm_stat {
+	ulong mmu_shadow_zapped;
+	ulong mmu_pte_write;
+	ulong mmu_pte_updated;
+	ulong mmu_pde_zapped;
+	ulong mmu_flooded;
+	ulong mmu_recycled;
+	ulong mmu_cache_miss;
+	ulong mmu_unsync;
+	ulong remote_tlb_flush;
+	ulong lpages;
+	ulong nx_lpage_splits;
+	ulong max_mmu_page_hash_collisions;
+>>>>>>> master
 };
 
 struct kvm_vcpu_stat {
@@ -1671,10 +1767,16 @@ struct kvm_x86_ops {
 
 	bool (*has_wbinvd_exit)(void);
 
+<<<<<<< HEAD
 	u64 (*get_l2_tsc_offset)(struct kvm_vcpu *vcpu);
 	u64 (*get_l2_tsc_multiplier)(struct kvm_vcpu *vcpu);
 	void (*write_tsc_offset)(struct kvm_vcpu *vcpu);
 	void (*write_tsc_multiplier)(struct kvm_vcpu *vcpu);
+=======
+	u64 (*read_l1_tsc_offset)(struct kvm_vcpu *vcpu);
+	/* Returns actual tsc_offset set in active VMCS */
+	u64 (*write_l1_tsc_offset)(struct kvm_vcpu *vcpu, u64 offset);
+>>>>>>> master
 
 	/*
 	 * Retrieve somewhat arbitrary exit information.  Intended to
@@ -1853,8 +1955,22 @@ void kvm_mmu_try_split_huge_pages(struct kvm *kvm,
 void kvm_mmu_zap_collapsible_sptes(struct kvm *kvm,
 				   const struct kvm_memory_slot *memslot);
 void kvm_mmu_slot_leaf_clear_dirty(struct kvm *kvm,
+<<<<<<< HEAD
 				   const struct kvm_memory_slot *memslot);
 void kvm_mmu_invalidate_mmio_sptes(struct kvm *kvm, u64 gen);
+=======
+				   struct kvm_memory_slot *memslot);
+void kvm_mmu_slot_largepage_remove_write_access(struct kvm *kvm,
+					struct kvm_memory_slot *memslot);
+void kvm_mmu_slot_set_dirty(struct kvm *kvm,
+			    struct kvm_memory_slot *memslot);
+void kvm_mmu_clear_dirty_pt_masked(struct kvm *kvm,
+				   struct kvm_memory_slot *slot,
+				   gfn_t gfn_offset, unsigned long mask);
+void kvm_mmu_zap_all(struct kvm *kvm);
+void kvm_mmu_invalidate_mmio_sptes(struct kvm *kvm, u64 gen);
+unsigned long kvm_mmu_calculate_mmu_pages(struct kvm *kvm);
+>>>>>>> master
 void kvm_mmu_change_mmu_pages(struct kvm *kvm, unsigned long kvm_nr_mmu_pages);
 
 int load_pdptrs(struct kvm_vcpu *vcpu, unsigned long cr3);
@@ -2123,6 +2239,7 @@ enum {
 #define HF_SMM_MASK		(1 << 1)
 #define HF_SMM_INSIDE_NMI_MASK	(1 << 2)
 
+<<<<<<< HEAD
 # define __KVM_VCPU_MULTIPLE_ADDRESS_SPACE
 # define KVM_ADDRESS_SPACE_NUM 2
 # define kvm_arch_vcpu_memslots_id(vcpu) ((vcpu)->arch.hflags & HF_SMM_MASK ? 1 : 0)
@@ -2130,6 +2247,37 @@ enum {
 #else
 # define kvm_memslots_for_spte_role(kvm, role) __kvm_memslots(kvm, 0)
 #endif
+=======
+#define kvm_arch_vcpu_memslots_id(vcpu) ((vcpu)->arch.hflags & HF_SMM_MASK ? 1 : 0)
+#define kvm_memslots_for_spte_role(kvm, role) __kvm_memslots(kvm, (role).smm)
+
+asmlinkage void __noreturn kvm_spurious_fault(void);
+
+/*
+ * Hardware virtualization extension instructions may fault if a
+ * reboot turns off virtualization while processes are running.
+ * Usually after catching the fault we just panic; during reboot
+ * instead the instruction is ignored.
+ */
+#define ____kvm_handle_fault_on_reboot(insn, cleanup_insn)		\
+	"666: \n\t"							\
+	insn "\n\t"							\
+	"jmp	668f \n\t"						\
+	"667: \n\t"							\
+	"call	kvm_spurious_fault \n\t"				\
+	"668: \n\t"							\
+	".pushsection .fixup, \"ax\" \n\t"				\
+	"700: \n\t"							\
+	cleanup_insn "\n\t"						\
+	"cmpb	$0, kvm_rebooting\n\t"					\
+	"je	667b \n\t"						\
+	"jmp	668b \n\t"						\
+	".popsection \n\t"						\
+	_ASM_EXTABLE(666b, 700b)
+
+#define __kvm_handle_fault_on_reboot(insn)		\
+	____kvm_handle_fault_on_reboot(insn, "")
+>>>>>>> master
 
 #define KVM_ARCH_WANT_MMU_NOTIFIER
 

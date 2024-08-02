@@ -16,7 +16,11 @@
 #ifdef CONFIG_TRACEPOINTS
 
 #ifndef CONFIG_JUMP_LABEL
+<<<<<<< HEAD
 	.data
+=======
+	.section	".toc","aw"
+>>>>>>> master
 
 	.globl hcall_tracepoint_refcount
 hcall_tracepoint_refcount:

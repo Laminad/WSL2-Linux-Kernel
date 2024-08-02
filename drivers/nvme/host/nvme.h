@@ -921,7 +921,12 @@ static inline bool nvme_ctrl_use_ana(struct nvme_ctrl *ctrl)
 void nvme_mpath_unfreeze(struct nvme_subsystem *subsys);
 void nvme_mpath_wait_freeze(struct nvme_subsystem *subsys);
 void nvme_mpath_start_freeze(struct nvme_subsystem *subsys);
+<<<<<<< HEAD
 void nvme_mpath_default_iopolicy(struct nvme_subsystem *subsys);
+=======
+void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
+			struct nvme_ctrl *ctrl, int *flags);
+>>>>>>> master
 void nvme_failover_req(struct request *req);
 void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl);
 int nvme_mpath_alloc_disk(struct nvme_ctrl *ctrl,struct nvme_ns_head *head);
@@ -997,7 +1002,11 @@ static inline void nvme_mpath_init_ctrl(struct nvme_ctrl *ctrl)
 static inline int nvme_mpath_init_identify(struct nvme_ctrl *ctrl,
 		struct nvme_id_ctrl *id)
 {
+<<<<<<< HEAD
 	if (ctrl->subsys->cmic & NVME_CTRL_CMIC_ANA)
+=======
+	if (ctrl->subsys->cmic & (1 << 3))
+>>>>>>> master
 		dev_warn(ctrl->device,
 "Please enable CONFIG_NVME_MULTIPATH for full support of multi-port devices.\n");
 	return 0;
@@ -1020,6 +1029,7 @@ static inline void nvme_mpath_wait_freeze(struct nvme_subsystem *subsys)
 static inline void nvme_mpath_start_freeze(struct nvme_subsystem *subsys)
 {
 }
+<<<<<<< HEAD
 static inline void nvme_mpath_default_iopolicy(struct nvme_subsystem *subsys)
 {
 }
@@ -1029,6 +1039,8 @@ static inline void nvme_mpath_start_request(struct request *rq)
 static inline void nvme_mpath_end_request(struct request *rq)
 {
 }
+=======
+>>>>>>> master
 #endif /* CONFIG_NVME_MULTIPATH */
 
 int nvme_revalidate_zones(struct nvme_ns *ns);

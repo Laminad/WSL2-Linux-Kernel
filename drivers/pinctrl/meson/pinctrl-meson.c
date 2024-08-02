@@ -363,6 +363,7 @@ static int meson_pinconf_set(struct pinctrl_dev *pcdev, unsigned int pin,
 			arg = pinconf_to_config_argument(configs[i]);
 			break;
 
+<<<<<<< HEAD
 		default:
 			break;
 		}
@@ -370,6 +371,14 @@ static int meson_pinconf_set(struct pinctrl_dev *pcdev, unsigned int pin,
 		switch (param) {
 		case PIN_CONFIG_BIAS_DISABLE:
 			ret = meson_pinconf_disable_bias(pc, pin);
+=======
+			meson_calc_reg_and_bit(bank, pin, REG_PULLEN, &reg,
+					       &bit);
+			ret = regmap_update_bits(pc->reg_pullen, reg,
+						 BIT(bit), 0);
+			if (ret)
+				return ret;
+>>>>>>> master
 			break;
 		case PIN_CONFIG_BIAS_PULL_UP:
 			ret = meson_pinconf_enable_bias(pc, pin, true);

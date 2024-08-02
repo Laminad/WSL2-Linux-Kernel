@@ -191,6 +191,12 @@ struct vim2m_dev {
 
 	atomic_t		num_inst;
 	struct mutex		dev_mutex;
+<<<<<<< HEAD:drivers/media/test-drivers/vim2m.c
+=======
+	spinlock_t		irqlock;
+
+	struct delayed_work	work_run;
+>>>>>>> master:drivers/media/platform/vim2m.c
 
 	struct v4l2_m2m_dev	*m2m_dev;
 };
@@ -603,16 +609,26 @@ static void device_run(void *priv)
 
 	device_process(ctx, src_buf, dst_buf);
 
+<<<<<<< HEAD:drivers/media/test-drivers/vim2m.c
 	/* Complete request controls if any */
 	v4l2_ctrl_request_complete(src_buf->vb2_buf.req_obj.req,
 				   &ctx->hdl);
 
 	/* Run delayed work, which simulates a hardware irq  */
 	schedule_delayed_work(&ctx->work_run, msecs_to_jiffies(ctx->transtime));
+=======
+	/* Run delayed work, which simulates a hardware irq  */
+	schedule_delayed_work(&dev->work_run, msecs_to_jiffies(ctx->transtime));
+>>>>>>> master:drivers/media/platform/vim2m.c
 }
 
 static void device_work(struct work_struct *w)
 {
+<<<<<<< HEAD:drivers/media/test-drivers/vim2m.c
+=======
+	struct vim2m_dev *vim2m_dev =
+		container_of(w, struct vim2m_dev, work_run.work);
+>>>>>>> master:drivers/media/platform/vim2m.c
 	struct vim2m_ctx *curr_ctx;
 	struct vim2m_dev *vim2m_dev;
 	struct vb2_v4l2_buffer *src_vb, *dst_vb;
@@ -1069,9 +1085,13 @@ static int vim2m_start_streaming(struct vb2_queue *q, unsigned int count)
 static void vim2m_stop_streaming(struct vb2_queue *q)
 {
 	struct vim2m_ctx *ctx = vb2_get_drv_priv(q);
+	struct vim2m_dev *dev = ctx->dev;
 	struct vb2_v4l2_buffer *vbuf;
 
 	cancel_delayed_work_sync(&ctx->work_run);
+
+	if (v4l2_m2m_get_curr_priv(dev->m2m_dev) == ctx)
+		cancel_delayed_work_sync(&dev->work_run);
 
 	for (;;) {
 		if (V4L2_TYPE_IS_OUTPUT(q->type))
@@ -1314,6 +1334,7 @@ static int vim2m_probe(struct platform_device *pdev)
 	vfd = &dev->vfd;
 	vfd->lock = &dev->dev_mutex;
 	vfd->v4l2_dev = &dev->v4l2_dev;
+	INIT_DELAYED_WORK(&dev->work_run, device_work);
 
 	video_set_drvdata(vfd, dev);
 	v4l2_info(&dev->v4l2_dev,
@@ -1389,6 +1410,10 @@ static void vim2m_remove(struct platform_device *pdev)
 	media_device_unregister(&dev->mdev);
 	v4l2_m2m_unregister_media_controller(dev->m2m_dev);
 #endif
+<<<<<<< HEAD:drivers/media/test-drivers/vim2m.c
+=======
+	v4l2_m2m_release(dev->m2m_dev);
+>>>>>>> master:drivers/media/platform/vim2m.c
 	video_unregister_device(&dev->vfd);
 }
 

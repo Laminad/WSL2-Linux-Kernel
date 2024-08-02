@@ -16,6 +16,7 @@ cflags-$(CONFIG_X86)		+= -m$(BITS) -D__KERNEL__ \
 				   -mno-mmx -mno-sse -fshort-wchar \
 				   -Wno-pointer-sign \
 				   $(call cc-disable-warning, address-of-packed-member) \
+<<<<<<< HEAD
 				   $(call cc-disable-warning, gnu) \
 				   -fno-asynchronous-unwind-tables \
 				   $(CLANG_FLAGS)
@@ -30,6 +31,17 @@ cflags-$(CONFIG_ARM)		+= -DEFI_HAVE_STRLEN -DEFI_HAVE_STRNLEN \
 				   $(call cc-option,-mno-single-pic-base)
 cflags-$(CONFIG_RISCV)		+= -fpic -mno-relax
 cflags-$(CONFIG_LOONGARCH)	+= -fpie
+=======
+				   $(call cc-disable-warning, gnu)
+
+# arm64 uses the full KBUILD_CFLAGS so it's necessary to explicitly
+# disable the stackleak plugin
+cflags-$(CONFIG_ARM64)		:= $(subst -pg,,$(KBUILD_CFLAGS)) -fpie \
+				   $(DISABLE_STACKLEAK_PLUGIN)
+cflags-$(CONFIG_ARM)		:= $(subst -pg,,$(KBUILD_CFLAGS)) \
+				   -fno-builtin -fpic \
+				   $(call cc-option,-mno-single-pic-base)
+>>>>>>> master
 
 cflags-$(CONFIG_EFI_PARAMS_FROM_FDT)	+= -I$(srctree)/scripts/dtc/libfdt
 

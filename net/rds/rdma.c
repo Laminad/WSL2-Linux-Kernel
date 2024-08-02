@@ -568,6 +568,7 @@ int rds_rdma_extra_size(struct rds_rdma_args *args,
 	if (args->nr_local == 0)
 		return -EINVAL;
 
+<<<<<<< HEAD
 	if (args->nr_local > UIO_MAXIOV)
 		return -EMSGSIZE;
 
@@ -577,6 +578,14 @@ int rds_rdma_extra_size(struct rds_rdma_args *args,
 	if (!iov->iov)
 		return -ENOMEM;
 
+=======
+	iov->iov = kcalloc(args->nr_local,
+			   sizeof(struct rds_iovec),
+			   GFP_KERNEL);
+	if (!iov->iov)
+		return -ENOMEM;
+
+>>>>>>> master
 	vec = &iov->iov[0];
 
 	if (copy_from_user(vec, local_vec, args->nr_local *
@@ -670,8 +679,13 @@ int rds_cmsg_rdma_args(struct rds_sock *rs, struct rds_message *rm,
 
 	WARN_ON(!nr_pages);
 	op->op_sg = rds_message_alloc_sgs(rm, nr_pages);
+<<<<<<< HEAD
 	if (IS_ERR(op->op_sg)) {
 		ret = PTR_ERR(op->op_sg);
+=======
+	if (!op->op_sg) {
+		ret = -ENOMEM;
+>>>>>>> master
 		goto out_pages;
 	}
 
@@ -719,6 +733,7 @@ int rds_cmsg_rdma_args(struct rds_sock *rs, struct rds_message *rm,
 		 * If it's a READ operation, we need to pin the pages for writing.
 		 */
 		ret = rds_pin_pages(iov->addr, nr, pages, !op->op_write);
+<<<<<<< HEAD
 		if ((!odp_supported && ret <= 0) ||
 		    (odp_supported && ret <= 0 && ret != -EOPNOTSUPP))
 			goto out_pages;
@@ -757,6 +772,12 @@ int rds_cmsg_rdma_args(struct rds_sock *rs, struct rds_message *rm,
 			op->op_odp_mr = local_odp_mr;
 			op->op_odp_addr = iov->addr;
 		}
+=======
+		if (ret < 0)
+			goto out_pages;
+		else
+			ret = 0;
+>>>>>>> master
 
 		rdsdebug("RDS: nr_bytes %u nr %u iov->bytes %llu iov->addr %llx\n",
 			 nr_bytes, nr, iov->bytes, iov->addr);

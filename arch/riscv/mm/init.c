@@ -72,7 +72,12 @@ static void __init zone_sizes_init(void)
 	unsigned long max_zone_pfns[MAX_NR_ZONES] = { 0, };
 
 #ifdef CONFIG_ZONE_DMA32
+<<<<<<< HEAD
 	max_zone_pfns[ZONE_DMA32] = PFN_DOWN(dma32_phys_limit);
+=======
+	max_zone_pfns[ZONE_DMA32] = PFN_DOWN(min(4UL * SZ_1G,
+			(unsigned long) PFN_PHYS(max_low_pfn)));
+>>>>>>> master
 #endif
 	max_zone_pfns[ZONE_NORMAL] = max_low_pfn;
 

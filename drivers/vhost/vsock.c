@@ -40,14 +40,22 @@ enum {
 };
 
 /* Used to track all the vhost_vsock instances on the system. */
+<<<<<<< HEAD
 static DEFINE_MUTEX(vhost_vsock_mutex);
+=======
+static DEFINE_SPINLOCK(vhost_vsock_lock);
+>>>>>>> master
 static DEFINE_READ_MOSTLY_HASHTABLE(vhost_vsock_hash, 8);
 
 struct vhost_vsock {
 	struct vhost_dev dev;
 	struct vhost_virtqueue vqs[2];
 
+<<<<<<< HEAD
 	/* Link to global vhost_vsock_hash, writes use vhost_vsock_mutex */
+=======
+	/* Link to global vhost_vsock_hash, writes use vhost_vsock_lock */
+>>>>>>> master
 	struct hlist_node hash;
 
 	struct vhost_work send_pkt_work;
@@ -64,7 +72,11 @@ static u32 vhost_transport_get_local_cid(void)
 	return VHOST_VSOCK_DEFAULT_HOST_CID;
 }
 
+<<<<<<< HEAD
 /* Callers that dereference the return value must hold vhost_vsock_mutex or the
+=======
+/* Callers that dereference the return value must hold vhost_vsock_lock or the
+>>>>>>> master
  * RCU read lock.
  */
 static struct vhost_vsock *vhost_vsock_get(u32 guest_cid)
@@ -107,8 +119,12 @@ vhost_transport_do_send_pkt(struct vhost_vsock *vsock,
 	vhost_disable_notify(&vsock->dev, vq);
 
 	do {
+<<<<<<< HEAD
 		struct virtio_vsock_hdr *hdr;
 		size_t iov_len, payload_len;
+=======
+		struct virtio_vsock_pkt *pkt;
+>>>>>>> master
 		struct iov_iter iov_iter;
 		u32 flags_to_restore = 0;
 		struct sk_buff *skb;
@@ -221,6 +237,7 @@ vhost_transport_do_send_pkt(struct vhost_vsock *vsock,
 		if (skb->len > 0) {
 			hdr->flags |= cpu_to_le32(flags_to_restore);
 
+<<<<<<< HEAD
 			/* We are queueing the same skb to handle
 			 * the remaining bytes, and we want to deliver it
 			 * to monitoring devices in the next iteration.
@@ -242,6 +259,10 @@ vhost_transport_do_send_pkt(struct vhost_vsock *vsock,
 
 			consume_skb(skb);
 		}
+=======
+		total_len += pkt->len;
+		virtio_transport_free_pkt(pkt);
+>>>>>>> master
 	} while(likely(!vhost_exceeds_weight(vq, ++pkts, total_len)));
 	if (added)
 		vhost_signal(&vsock->dev, vq);
@@ -273,11 +294,17 @@ vhost_transport_send_pkt(struct sk_buff *skb)
 
 	rcu_read_lock();
 
+	rcu_read_lock();
+
 	/* Find the vhost_vsock according to guest context id  */
 	vsock = vhost_vsock_get(le64_to_cpu(hdr->dst_cid));
 	if (!vsock) {
 		rcu_read_unlock();
+<<<<<<< HEAD
 		kfree_skb(skb);
+=======
+		virtio_transport_free_pkt(pkt);
+>>>>>>> master
 		return -ENODEV;
 	}
 
@@ -287,6 +314,11 @@ vhost_transport_send_pkt(struct sk_buff *skb)
 	virtio_vsock_skb_queue_tail(&vsock->send_pkt_queue, skb);
 	vhost_vq_work_queue(&vsock->vqs[VSOCK_VQ_RX], &vsock->send_pkt_work);
 
+<<<<<<< HEAD
+=======
+	vhost_work_queue(&vsock->dev, &vsock->send_pkt_work);
+
+>>>>>>> master
 	rcu_read_unlock();
 	return len;
 }
@@ -297,6 +329,12 @@ vhost_transport_cancel_pkt(struct vsock_sock *vsk)
 	struct vhost_vsock *vsock;
 	int cnt = 0;
 	int ret = -ENODEV;
+<<<<<<< HEAD
+
+	rcu_read_lock();
+=======
+	LIST_HEAD(freeme);
+>>>>>>> master
 
 	rcu_read_lock();
 
@@ -468,6 +506,10 @@ static void vhost_vsock_handle_tx_kick(struct vhost_work *work)
 						  poll.work);
 	struct vhost_vsock *vsock = container_of(vq->dev, struct vhost_vsock,
 						 dev);
+<<<<<<< HEAD
+=======
+	struct virtio_vsock_pkt *pkt;
+>>>>>>> master
 	int head, pkts = 0, total_len = 0;
 	unsigned int out, in;
 	struct sk_buff *skb;
@@ -483,7 +525,11 @@ static void vhost_vsock_handle_tx_kick(struct vhost_work *work)
 
 	vhost_disable_notify(&vsock->dev, vq);
 	do {
+<<<<<<< HEAD
 		struct virtio_vsock_hdr *hdr;
+=======
+		u32 len;
+>>>>>>> master
 
 		if (!vhost_vsock_more_replies(vsock)) {
 			/* Stop tx until the device processes already
@@ -527,7 +573,13 @@ static void vhost_vsock_handle_tx_kick(struct vhost_work *work)
 		else
 			kfree_skb(skb);
 
+<<<<<<< HEAD
 		vhost_add_used(vq, head, 0);
+=======
+		len += sizeof(pkt->hdr);
+		vhost_add_used(vq, head, len);
+		total_len += len;
+>>>>>>> master
 		added = true;
 	} while(likely(!vhost_exceeds_weight(vq, ++pkts, total_len)));
 
@@ -666,7 +718,11 @@ static int vhost_vsock_dev_open(struct inode *inode, struct file *file)
 
 	vhost_dev_init(&vsock->dev, vqs, ARRAY_SIZE(vsock->vqs),
 		       UIO_MAXIOV, VHOST_VSOCK_PKT_WEIGHT,
+<<<<<<< HEAD
 		       VHOST_VSOCK_WEIGHT, true, NULL);
+=======
+		       VHOST_VSOCK_WEIGHT);
+>>>>>>> master
 
 	file->private_data = vsock;
 	skb_queue_head_init(&vsock->send_pkt_queue);
@@ -706,17 +762,31 @@ static void vhost_vsock_reset_orphans(struct sock *sk)
 	vsk->peer_shutdown = SHUTDOWN_MASK;
 	sk->sk_state = SS_UNCONNECTED;
 	sk->sk_err = ECONNRESET;
+<<<<<<< HEAD
 	sk_error_report(sk);
+=======
+	sk->sk_error_report(sk);
+>>>>>>> master
 }
 
 static int vhost_vsock_dev_release(struct inode *inode, struct file *file)
 {
 	struct vhost_vsock *vsock = file->private_data;
 
+<<<<<<< HEAD
 	mutex_lock(&vhost_vsock_mutex);
 	if (vsock->guest_cid)
 		hash_del_rcu(&vsock->hash);
 	mutex_unlock(&vhost_vsock_mutex);
+
+	/* Wait for other CPUs to finish using vsock */
+	synchronize_rcu();
+=======
+	spin_lock_bh(&vhost_vsock_lock);
+	if (vsock->guest_cid)
+		hash_del_rcu(&vsock->hash);
+	spin_unlock_bh(&vhost_vsock_lock);
+>>>>>>> master
 
 	/* Wait for other CPUs to finish using vsock */
 	synchronize_rcu();
@@ -763,7 +833,11 @@ static int vhost_vsock_set_cid(struct vhost_vsock *vsock, u64 guest_cid)
 		return -EADDRINUSE;
 
 	/* Refuse if CID is already in use */
+<<<<<<< HEAD
 	mutex_lock(&vhost_vsock_mutex);
+=======
+	spin_lock_bh(&vhost_vsock_lock);
+>>>>>>> master
 	other = vhost_vsock_get(guest_cid);
 	if (other && other != vsock) {
 		mutex_unlock(&vhost_vsock_mutex);
@@ -775,7 +849,11 @@ static int vhost_vsock_set_cid(struct vhost_vsock *vsock, u64 guest_cid)
 
 	vsock->guest_cid = guest_cid;
 	hash_add_rcu(vhost_vsock_hash, &vsock->hash, vsock->guest_cid);
+<<<<<<< HEAD
 	mutex_unlock(&vhost_vsock_mutex);
+=======
+	spin_unlock_bh(&vhost_vsock_lock);
+>>>>>>> master
 
 	return 0;
 }

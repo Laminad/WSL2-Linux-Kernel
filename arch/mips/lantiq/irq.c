@@ -191,11 +191,17 @@ static int ltq_eiu_settype(struct irq_data *d, unsigned int type)
 			if (edge)
 				irq_set_handler(d->hwirq, handle_edge_irq);
 
+<<<<<<< HEAD
 			spin_lock_irqsave(&ltq_eiu_lock, flags);
 			ltq_eiu_w32((ltq_eiu_r32(LTQ_EIU_EXIN_C) &
 				    (~(7 << (i * 4)))) | (val << (i * 4)),
 				    LTQ_EIU_EXIN_C);
 			spin_unlock_irqrestore(&ltq_eiu_lock, flags);
+=======
+			ltq_eiu_w32((ltq_eiu_r32(LTQ_EIU_EXIN_C) &
+				    (~(7 << (i * 4)))) | (val << (i * 4)),
+				    LTQ_EIU_EXIN_C);
+>>>>>>> master
 		}
 	}
 
@@ -285,10 +291,16 @@ static struct irq_chip ltq_eiu_type = {
 
 static void ltq_hw_irq_handler(struct irq_desc *desc)
 {
+<<<<<<< HEAD
 	unsigned int module = irq_desc_get_irq(desc) - 2;
 	u32 irq;
 	irq_hw_number_t hwirq;
 	int vpe = smp_processor_id();
+=======
+	int module = irq_desc_get_irq(desc) - 2;
+	u32 irq;
+	int hwirq;
+>>>>>>> master
 
 	irq = ltq_icu_r32(vpe, module, LTQ_ICU_IOSR);
 	if (irq == 0)
@@ -300,7 +312,11 @@ static void ltq_hw_irq_handler(struct irq_desc *desc)
 	 */
 	irq = __fls(irq);
 	hwirq = irq + MIPS_CPU_IRQ_CASCADE + (INT_NUM_IM_OFFSET * module);
+<<<<<<< HEAD
 	generic_handle_domain_irq(ltq_domain, hwirq);
+=======
+	generic_handle_irq(irq_linear_revmap(ltq_domain, hwirq));
+>>>>>>> master
 
 	/* if this is a EBU irq, we need to ack it or get a deadlock */
 	if (irq == LTQ_ICU_EBU_IRQ && !module && LTQ_EBU_PCC_ISTAT != 0)

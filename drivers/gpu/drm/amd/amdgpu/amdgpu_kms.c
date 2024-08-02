@@ -135,7 +135,23 @@ int amdgpu_driver_load_kms(struct amdgpu_device *adev, unsigned long flags)
 	struct drm_device *dev;
 	int r, acpi_status;
 
+<<<<<<< HEAD
 	dev = adev_to_drm(adev);
+=======
+	adev = kzalloc(sizeof(struct amdgpu_device), GFP_KERNEL);
+	if (adev == NULL) {
+		return -ENOMEM;
+	}
+	dev->dev_private = (void *)adev;
+
+	if ((amdgpu_runtime_pm != 0) &&
+	    amdgpu_has_atpx() &&
+	    (amdgpu_is_atpx_hybrid() ||
+	     amdgpu_has_atpx_dgpu_power_cntl()) &&
+	    ((flags & AMD_IS_APU) == 0) &&
+	    !pci_is_thunderbolt_attached(dev->pdev))
+		flags |= AMD_IS_PX;
+>>>>>>> master
 
 	/* amdgpu_device_init should report only fatal error
 	 * like memory allocation failure or iomapping failure,
@@ -186,12 +202,24 @@ int amdgpu_driver_load_kms(struct amdgpu_device *adev, unsigned long flags)
 	 * but failure is not fatal
 	 */
 
+<<<<<<< HEAD
 	acpi_status = amdgpu_acpi_init(adev);
 	if (acpi_status)
 		dev_dbg(dev->dev, "Error during ACPI methods call\n");
 
 	if (amdgpu_acpi_smart_shift_update(dev, AMDGPU_SS_DRV_LOAD))
 		DRM_WARN("smart shift update failed\n");
+=======
+	if (amdgpu_device_is_px(dev)) {
+		dev_pm_set_driver_flags(dev->dev, DPM_FLAG_NEVER_SKIP);
+		pm_runtime_use_autosuspend(dev->dev);
+		pm_runtime_set_autosuspend_delay(dev->dev, 5000);
+		pm_runtime_set_active(dev->dev);
+		pm_runtime_allow(dev->dev);
+		pm_runtime_mark_last_busy(dev->dev);
+		pm_runtime_put_autosuspend(dev->dev);
+	}
+>>>>>>> master
 
 out:
 	if (r)
@@ -746,6 +774,9 @@ int amdgpu_info_ioctl(struct drm_device *dev, void *data, struct drm_file *filp)
 		if (info->read_mmr_reg.count > 128)
 			return -EINVAL;
 
+		if (info->read_mmr_reg.count > 128)
+			return -EINVAL;
+
 		regs = kmalloc_array(info->read_mmr_reg.count, sizeof(*regs), GFP_KERNEL);
 		if (!regs)
 			return -ENOMEM;
@@ -1218,6 +1249,7 @@ int amdgpu_driver_open_kms(struct drm_device *dev, struct drm_file *file_priv)
 	int r, pasid;
 
 	/* Ensure IB tests are run on ring */
+<<<<<<< HEAD
 	flush_delayed_work(&adev->delayed_init_work);
 
 
@@ -1225,6 +1257,9 @@ int amdgpu_driver_open_kms(struct drm_device *dev, struct drm_file *file_priv)
 		DRM_ERROR("RAS Intr triggered, device disabled!!");
 		return -EHWPOISON;
 	}
+=======
+	flush_delayed_work(&adev->late_init_work);
+>>>>>>> master
 
 	file_priv->driver_priv = NULL;
 

@@ -2395,6 +2395,17 @@ static int edma_probe(struct platform_device *pdev)
 		/* Reset only unused - not reserved - paRAM slots */
 		if (!test_bit(i, ecc->slot_inuse))
 			edma_write_slot(ecc, i, &dummy_paramset);
+<<<<<<< HEAD
+=======
+	}
+
+	/* Clear the xbar mapped channels in unused list */
+	xbar_chans = info->xbar_chans;
+	if (xbar_chans) {
+		for (i = 0; xbar_chans[i][1] != -1; i++) {
+			off = xbar_chans[i][1];
+		}
+>>>>>>> master
 	}
 
 	irq = platform_get_irq_byname(pdev, "edma3_ccint");

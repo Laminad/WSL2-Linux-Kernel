@@ -442,8 +442,13 @@ config PPC_64S_HASH_MMU
 
 config PPC_RADIX_MMU
 	bool "Radix MMU Support"
+<<<<<<< HEAD
 	depends on PPC_BOOK3S_64
 	select ARCH_HAS_GIGANTIC_PAGE
+=======
+	depends on PPC_BOOK3S_64 && HUGETLB_PAGE
+	select ARCH_HAS_GIGANTIC_PAGE if (MEMORY_ISOLATION && COMPACTION) || CMA
+>>>>>>> master
 	default y
 	help
 	  Enable support for the Power ISA 3.0 Radix style MMU. Currently this

@@ -27,6 +27,24 @@
  * @s: The stats to update (local or global)
  * @index: The index inside @s
  * @sample: New data to include
+<<<<<<< HEAD
+=======
+ *
+ * @delta is the difference between the current rtt sample and the
+ * running average srtt. We add 1/8 of that to the srtt in order to
+ * update the current srtt estimate. The variance estimate is a bit
+ * more complicated. We subtract the current variance estimate from
+ * the abs value of the @delta and add 1/4 of that to the running
+ * total.  That's equivalent to 3/4 of the current variance
+ * estimate plus 1/4 of the abs of @delta.
+ *
+ * Note that the index points at the array entry containing the smoothed
+ * mean value, and the variance is always in the following entry
+ *
+ * Reference: TCP/IP Illustrated, vol 2, p. 831,832
+ * All times are in units of integer nanoseconds. Unlike the TCP/IP case,
+ * they are not scaled fixed point.
+>>>>>>> master
  */
 static inline void gfs2_update_stats(struct gfs2_lkstats *s, unsigned index,
 				     s64 sample)

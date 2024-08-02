@@ -284,6 +284,28 @@ For 32-bit we have the following conventions - kernel is built with
 
 #endif
 
+<<<<<<< HEAD
+=======
+/*
+ * Mitigate Spectre v1 for conditional swapgs code paths.
+ *
+ * FENCE_SWAPGS_USER_ENTRY is used in the user entry swapgs code path, to
+ * prevent a speculative swapgs when coming from kernel space.
+ *
+ * FENCE_SWAPGS_KERNEL_ENTRY is used in the kernel entry non-swapgs code path,
+ * to prevent the swapgs from getting speculatively skipped when coming from
+ * user space.
+ */
+.macro FENCE_SWAPGS_USER_ENTRY
+	ALTERNATIVE "", "lfence", X86_FEATURE_FENCE_SWAPGS_USER
+.endm
+.macro FENCE_SWAPGS_KERNEL_ENTRY
+	ALTERNATIVE "", "lfence", X86_FEATURE_FENCE_SWAPGS_KERNEL
+.endm
+
+#endif /* CONFIG_X86_64 */
+
+>>>>>>> master
 /*
  * IBRS kernel mitigation for Spectre_v2.
  *
@@ -296,6 +318,7 @@ For 32-bit we have the following conventions - kernel is built with
  *
  * Assumes x86_spec_ctrl_{base,current} to have SPEC_CTRL_IBRS set.
  */
+<<<<<<< HEAD
 .macro IBRS_ENTER save_reg
 #ifdef CONFIG_CPU_IBRS_ENTRY
 	ALTERNATIVE "jmp .Lend_\@", "", X86_FEATURE_KERNEL_IBRS
@@ -318,6 +341,15 @@ For 32-bit we have the following conventions - kernel is built with
 	shr	$32, %rdx
 	wrmsr
 .Lend_\@:
+=======
+.macro CALL_enter_from_user_mode
+#ifdef CONFIG_CONTEXT_TRACKING
+#ifdef CONFIG_JUMP_LABEL
+	STATIC_JUMP_IF_FALSE .Lafter_call_\@, context_tracking_enabled, def=0
+#endif
+	call enter_from_user_mode
+.Lafter_call_\@:
+>>>>>>> master
 #endif
 .endm
 

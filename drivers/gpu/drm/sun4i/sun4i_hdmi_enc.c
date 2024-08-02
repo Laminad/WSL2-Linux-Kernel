@@ -108,6 +108,31 @@ static void sun4i_hdmi_enable(struct drm_encoder *encoder,
 
 	DRM_DEBUG_DRIVER("Enabling the HDMI Output\n");
 
+<<<<<<< HEAD
+=======
+	clk_prepare_enable(hdmi->tmds_clk);
+
+	sun4i_hdmi_setup_avi_infoframes(hdmi, mode);
+	val |= SUN4I_HDMI_PKT_CTRL_TYPE(0, SUN4I_HDMI_PKT_AVI);
+	val |= SUN4I_HDMI_PKT_CTRL_TYPE(1, SUN4I_HDMI_PKT_END);
+	writel(val, hdmi->base + SUN4I_HDMI_PKT_CTRL_REG(0));
+
+	val = SUN4I_HDMI_VID_CTRL_ENABLE;
+	if (hdmi->hdmi_monitor)
+		val |= SUN4I_HDMI_VID_CTRL_HDMI_MODE;
+
+	writel(val, hdmi->base + SUN4I_HDMI_VID_CTRL_REG);
+}
+
+static void sun4i_hdmi_mode_set(struct drm_encoder *encoder,
+				struct drm_display_mode *mode,
+				struct drm_display_mode *adjusted_mode)
+{
+	struct sun4i_hdmi *hdmi = drm_encoder_to_sun4i_hdmi(encoder);
+	unsigned int x, y;
+	u32 val;
+
+>>>>>>> master
 	clk_set_rate(hdmi->mod_clk, mode->crtc_clock * 1000);
 	clk_set_rate(hdmi->tmds_clk, mode->crtc_clock * 1000);
 

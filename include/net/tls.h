@@ -188,6 +188,10 @@ enum tls_context_flags {
 	TLS_RX_DEV_CLOSED = 2,
 };
 
+enum tls_context_flags {
+	TLS_RX_SYNC_RUNNING = 0,
+};
+
 struct cipher_context {
 	char *iv;
 	char *rec_seq;
@@ -330,7 +334,43 @@ struct tls_offload_context_rx {
 };
 
 #define TLS_OFFLOAD_CONTEXT_SIZE_RX					\
+<<<<<<< HEAD
 	(sizeof(struct tls_offload_context_rx) + TLS_DRIVER_STATE_SIZE_RX)
+=======
+	(ALIGN(sizeof(struct tls_offload_context_rx), sizeof(void *)) + \
+	 TLS_DRIVER_STATE_SIZE)
+
+void tls_ctx_free(struct tls_context *ctx);
+int wait_on_pending_writer(struct sock *sk, long *timeo);
+int tls_sk_query(struct sock *sk, int optname, char __user *optval,
+		int __user *optlen);
+int tls_sk_attach(struct sock *sk, int optname, char __user *optval,
+		  unsigned int optlen);
+
+int tls_set_sw_offload(struct sock *sk, struct tls_context *ctx, int tx);
+int tls_sw_sendmsg(struct sock *sk, struct msghdr *msg, size_t size);
+int tls_sw_sendpage(struct sock *sk, struct page *page,
+		    int offset, size_t size, int flags);
+void tls_sw_close(struct sock *sk, long timeout);
+void tls_sw_free_resources_tx(struct sock *sk);
+void tls_sw_free_resources_rx(struct sock *sk);
+void tls_sw_release_resources_rx(struct sock *sk);
+int tls_sw_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
+		   int nonblock, int flags, int *addr_len);
+unsigned int tls_sw_poll(struct file *file, struct socket *sock,
+			 struct poll_table_struct *wait);
+ssize_t tls_sw_splice_read(struct socket *sock, loff_t *ppos,
+			   struct pipe_inode_info *pipe,
+			   size_t len, unsigned int flags);
+
+int tls_set_device_offload(struct sock *sk, struct tls_context *ctx);
+int tls_device_sendmsg(struct sock *sk, struct msghdr *msg, size_t size);
+int tls_device_sendpage(struct sock *sk, struct page *page,
+			int offset, size_t size, int flags);
+void tls_device_sk_destruct(struct sock *sk);
+void tls_device_init(void);
+void tls_device_cleanup(void);
+>>>>>>> master
 
 struct tls_record_info *tls_get_record(struct tls_offload_context_tx *context,
 				       u32 seq, u64 *p_record_sn);
@@ -354,10 +394,15 @@ tls_validate_xmit_skb_sw(struct sock *sk, struct net_device *dev,
 
 static inline bool tls_is_skb_tx_device_offloaded(const struct sk_buff *skb)
 {
+<<<<<<< HEAD
 #ifdef CONFIG_TLS_DEVICE
 	struct sock *sk = skb->sk;
 
 	return sk && sk_fullsock(sk) &&
+=======
+#ifdef CONFIG_SOCK_VALIDATE_XMIT
+	return sk_fullsock(sk) &&
+>>>>>>> master
 	       (smp_load_acquire(&sk->sk_validate_xmit_skb) ==
 	       &tls_validate_xmit_skb);
 #else

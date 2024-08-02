@@ -1013,10 +1013,13 @@ int __init hpet_enable(void)
 	hpet_set_mapping();
 	if (!hpet_virt_address)
 		return 0;
+<<<<<<< HEAD
 
 	/* Validate that the config register is working */
 	if (!hpet_cfg_working())
 		goto out_nohpet;
+=======
+>>>>>>> master
 
 	/*
 	 * Read the period and check for a sane value:

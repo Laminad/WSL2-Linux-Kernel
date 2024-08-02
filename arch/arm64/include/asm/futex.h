@@ -16,7 +16,11 @@
 do {									\
 	unsigned int loops = FUTEX_MAX_LOOPS;				\
 									\
+<<<<<<< HEAD
 	uaccess_enable_privileged();					\
+=======
+	uaccess_enable();						\
+>>>>>>> master
 	asm volatile(							\
 "	prfm	pstl1strm, %2\n"					\
 "1:	ldxr	%w1, %2\n"						\
@@ -25,6 +29,7 @@ do {									\
 "	cbz	%w0, 3f\n"						\
 "	sub	%w4, %w4, %w0\n"					\
 "	cbnz	%w4, 1b\n"						\
+<<<<<<< HEAD
 "	mov	%w0, %w6\n"						\
 "3:\n"									\
 "	dmb	ish\n"							\
@@ -33,6 +38,21 @@ do {									\
 	: "=&r" (ret), "=&r" (oldval), "+Q" (*uaddr), "=&r" (tmp),	\
 	  "+r" (loops)							\
 	: "r" (oparg), "Ir" (-EAGAIN)					\
+=======
+"	mov	%w0, %w7\n"						\
+"3:\n"									\
+"	dmb	ish\n"							\
+"	.pushsection .fixup,\"ax\"\n"					\
+"	.align	2\n"							\
+"4:	mov	%w0, %w6\n"						\
+"	b	3b\n"							\
+"	.popsection\n"							\
+	_ASM_EXTABLE(1b, 4b)						\
+	_ASM_EXTABLE(2b, 4b)						\
+	: "=&r" (ret), "=&r" (oldval), "+Q" (*uaddr), "=&r" (tmp),	\
+	  "+r" (loops)							\
+	: "r" (oparg), "Ir" (-EFAULT), "Ir" (-EAGAIN)			\
+>>>>>>> master
 	: "memory");							\
 	uaccess_disable_privileged();					\
 } while (0)
@@ -100,6 +120,7 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *_uaddr,
 "	cbz	%w3, 3f\n"
 "	sub	%w4, %w4, %w3\n"
 "	cbnz	%w4, 1b\n"
+<<<<<<< HEAD
 "	mov	%w0, %w7\n"
 "3:\n"
 "	dmb	ish\n"
@@ -108,12 +129,32 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *_uaddr,
 	_ASM_EXTABLE_UACCESS_ERR(2b, 4b, %w0)
 	: "+r" (ret), "=&r" (val), "+Q" (*uaddr), "=&r" (tmp), "+r" (loops)
 	: "r" (oldval), "r" (newval), "Ir" (-EAGAIN)
+=======
+"	mov	%w0, %w8\n"
+"3:\n"
+"	dmb	ish\n"
+"4:\n"
+"	.pushsection .fixup,\"ax\"\n"
+"5:	mov	%w0, %w7\n"
+"	b	4b\n"
+"	.popsection\n"
+	_ASM_EXTABLE(1b, 5b)
+	_ASM_EXTABLE(2b, 5b)
+	: "+r" (ret), "=&r" (val), "+Q" (*uaddr), "=&r" (tmp), "+r" (loops)
+	: "r" (oldval), "r" (newval), "Ir" (-EFAULT), "Ir" (-EAGAIN)
+>>>>>>> master
 	: "memory");
 	uaccess_disable_privileged();
 
 	if (!ret)
 		*uval = val;
 
+<<<<<<< HEAD
+=======
+	if (!ret)
+		*uval = val;
+
+>>>>>>> master
 	return ret;
 }
 

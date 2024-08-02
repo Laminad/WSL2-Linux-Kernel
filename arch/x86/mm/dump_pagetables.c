@@ -362,8 +362,180 @@ static void note_page(struct ptdump_state *pt_st, unsigned long addr, int level,
 	}
 }
 
+<<<<<<< HEAD
 static void ptdump_walk_pgd_level_core(struct seq_file *m,
 				       struct mm_struct *mm, pgd_t *pgd,
+=======
+static inline pgprotval_t effective_prot(pgprotval_t prot1, pgprotval_t prot2)
+{
+	return (prot1 & prot2 & (_PAGE_USER | _PAGE_RW)) |
+	       ((prot1 | prot2) & _PAGE_NX);
+}
+
+static void walk_pte_level(struct seq_file *m, struct pg_state *st, pmd_t addr,
+			   pgprotval_t eff_in, unsigned long P)
+{
+	int i;
+	pte_t *pte;
+	pgprotval_t prot, eff;
+
+	for (i = 0; i < PTRS_PER_PTE; i++) {
+		st->current_address = normalize_addr(P + i * PTE_LEVEL_MULT);
+		pte = pte_offset_map(&addr, st->current_address);
+		prot = pte_flags(*pte);
+		eff = effective_prot(eff_in, prot);
+		note_page(m, st, __pgprot(prot), eff, 5);
+		pte_unmap(pte);
+	}
+}
+#ifdef CONFIG_KASAN
+
+/*
+ * This is an optimization for KASAN=y case. Since all kasan page tables
+ * eventually point to the kasan_zero_page we could call note_page()
+ * right away without walking through lower level page tables. This saves
+ * us dozens of seconds (minutes for 5-level config) while checking for
+ * W+X mapping or reading kernel_page_tables debugfs file.
+ */
+static inline bool kasan_page_table(struct seq_file *m, struct pg_state *st,
+				void *pt)
+{
+	if (__pa(pt) == __pa(kasan_zero_pmd) ||
+	    (pgtable_l5_enabled() && __pa(pt) == __pa(kasan_zero_p4d)) ||
+	    __pa(pt) == __pa(kasan_zero_pud)) {
+		pgprotval_t prot = pte_flags(kasan_zero_pte[0]);
+		note_page(m, st, __pgprot(prot), 0, 5);
+		return true;
+	}
+	return false;
+}
+#else
+static inline bool kasan_page_table(struct seq_file *m, struct pg_state *st,
+				void *pt)
+{
+	return false;
+}
+#endif
+
+#if PTRS_PER_PMD > 1
+
+static void walk_pmd_level(struct seq_file *m, struct pg_state *st, pud_t addr,
+			   pgprotval_t eff_in, unsigned long P)
+{
+	int i;
+	pmd_t *start, *pmd_start;
+	pgprotval_t prot, eff;
+
+	pmd_start = start = (pmd_t *)pud_page_vaddr(addr);
+	for (i = 0; i < PTRS_PER_PMD; i++) {
+		st->current_address = normalize_addr(P + i * PMD_LEVEL_MULT);
+		if (!pmd_none(*start)) {
+			prot = pmd_flags(*start);
+			eff = effective_prot(eff_in, prot);
+			if (pmd_large(*start) || !pmd_present(*start)) {
+				note_page(m, st, __pgprot(prot), eff, 4);
+			} else if (!kasan_page_table(m, st, pmd_start)) {
+				walk_pte_level(m, st, *start, eff,
+					       P + i * PMD_LEVEL_MULT);
+			}
+		} else
+			note_page(m, st, __pgprot(0), 0, 4);
+		start++;
+	}
+}
+
+#else
+#define walk_pmd_level(m,s,a,e,p) walk_pte_level(m,s,__pmd(pud_val(a)),e,p)
+#define pud_large(a) pmd_large(__pmd(pud_val(a)))
+#define pud_none(a)  pmd_none(__pmd(pud_val(a)))
+#endif
+
+#if PTRS_PER_PUD > 1
+
+static void walk_pud_level(struct seq_file *m, struct pg_state *st, p4d_t addr,
+			   pgprotval_t eff_in, unsigned long P)
+{
+	int i;
+	pud_t *start, *pud_start;
+	pgprotval_t prot, eff;
+	pud_t *prev_pud = NULL;
+
+	pud_start = start = (pud_t *)p4d_page_vaddr(addr);
+
+	for (i = 0; i < PTRS_PER_PUD; i++) {
+		st->current_address = normalize_addr(P + i * PUD_LEVEL_MULT);
+		if (!pud_none(*start)) {
+			prot = pud_flags(*start);
+			eff = effective_prot(eff_in, prot);
+			if (pud_large(*start) || !pud_present(*start)) {
+				note_page(m, st, __pgprot(prot), eff, 3);
+			} else if (!kasan_page_table(m, st, pud_start)) {
+				walk_pmd_level(m, st, *start, eff,
+					       P + i * PUD_LEVEL_MULT);
+			}
+		} else
+			note_page(m, st, __pgprot(0), 0, 3);
+
+		prev_pud = start;
+		start++;
+	}
+}
+
+#else
+#define walk_pud_level(m,s,a,e,p) walk_pmd_level(m,s,__pud(p4d_val(a)),e,p)
+#define p4d_large(a) pud_large(__pud(p4d_val(a)))
+#define p4d_none(a)  pud_none(__pud(p4d_val(a)))
+#endif
+
+static void walk_p4d_level(struct seq_file *m, struct pg_state *st, pgd_t addr,
+			   pgprotval_t eff_in, unsigned long P)
+{
+	int i;
+	p4d_t *start, *p4d_start;
+	pgprotval_t prot, eff;
+
+	if (PTRS_PER_P4D == 1)
+		return walk_pud_level(m, st, __p4d(pgd_val(addr)), eff_in, P);
+
+	p4d_start = start = (p4d_t *)pgd_page_vaddr(addr);
+
+	for (i = 0; i < PTRS_PER_P4D; i++) {
+		st->current_address = normalize_addr(P + i * P4D_LEVEL_MULT);
+		if (!p4d_none(*start)) {
+			prot = p4d_flags(*start);
+			eff = effective_prot(eff_in, prot);
+			if (p4d_large(*start) || !p4d_present(*start)) {
+				note_page(m, st, __pgprot(prot), eff, 2);
+			} else if (!kasan_page_table(m, st, p4d_start)) {
+				walk_pud_level(m, st, *start, eff,
+					       P + i * P4D_LEVEL_MULT);
+			}
+		} else
+			note_page(m, st, __pgprot(0), 0, 2);
+
+		start++;
+	}
+}
+
+#define pgd_large(a) (pgtable_l5_enabled() ? pgd_large(a) : p4d_large(__p4d(pgd_val(a))))
+#define pgd_none(a)  (pgtable_l5_enabled() ? pgd_none(a) : p4d_none(__p4d(pgd_val(a))))
+
+static inline bool is_hypervisor_range(int idx)
+{
+#ifdef CONFIG_X86_64
+	/*
+	 * A hole in the beginning of kernel address space reserved
+	 * for a hypervisor.
+	 */
+	return	(idx >= pgd_index(GUARD_HOLE_BASE_ADDR)) &&
+		(idx <  pgd_index(GUARD_HOLE_END_ADDR));
+#else
+	return false;
+#endif
+}
+
+static void ptdump_walk_pgd_level_core(struct seq_file *m, pgd_t *pgd,
+>>>>>>> master
 				       bool checkwx, bool dmesg)
 {
 	const struct ptdump_range ptdump_ranges[] = {

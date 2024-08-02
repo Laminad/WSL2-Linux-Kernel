@@ -528,6 +528,13 @@ static inline void sony_schedule_work(struct sony_sc *sc,
 		if (!sc->defer_initialization && sc->state_worker_initialized)
 			schedule_work(&sc->state_worker);
 		spin_unlock_irqrestore(&sc->lock, flags);
+<<<<<<< HEAD
+=======
+		break;
+	case SONY_WORKER_HOTPLUG:
+		if (sc->hotplug_worker_initialized)
+			schedule_work(&sc->hotplug_worker);
+>>>>>>> master
 		break;
 	}
 }
@@ -1880,6 +1887,7 @@ static inline void sony_init_output_report(struct sony_sc *sc,
 static inline void sony_cancel_work_sync(struct sony_sc *sc)
 {
 	unsigned long flags;
+<<<<<<< HEAD
 
 	if (sc->state_worker_initialized) {
 		spin_lock_irqsave(&sc->lock, flags);
@@ -1889,6 +1897,19 @@ static inline void sony_cancel_work_sync(struct sony_sc *sc)
 	}
 }
 
+=======
+
+	if (sc->hotplug_worker_initialized)
+		cancel_work_sync(&sc->hotplug_worker);
+	if (sc->state_worker_initialized) {
+		spin_lock_irqsave(&sc->lock, flags);
+		sc->state_worker_initialized = 0;
+		spin_unlock_irqrestore(&sc->lock, flags);
+		cancel_work_sync(&sc->state_worker);
+	}
+}
+
+>>>>>>> master
 static int sony_input_configured(struct hid_device *hdev,
 					struct hid_input *hidinput)
 {
@@ -2118,8 +2139,13 @@ static int sony_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	 */
 	if (!(hdev->claimed & HID_CLAIMED_INPUT)) {
 		hid_err(hdev, "failed to claim input\n");
+<<<<<<< HEAD
 		ret = -ENODEV;
 		goto err;
+=======
+		hid_hw_stop(hdev);
+		return -ENODEV;
+>>>>>>> master
 	}
 
 	if (sc->quirks & (GHL_GUITAR_PS3WIIU | GHL_GUITAR_PS4)) {

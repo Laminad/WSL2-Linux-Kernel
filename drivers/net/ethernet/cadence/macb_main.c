@@ -1698,8 +1698,14 @@ static int macb_rx_poll(struct napi_struct *napi, int budget)
 			queue_writel(queue, IDR, bp->rx_intr_mask);
 			if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
 				queue_writel(queue, ISR, MACB_BIT(RCOMP));
+<<<<<<< HEAD
 			netdev_vdbg(bp->dev, "poll: packets pending, reschedule\n");
 			napi_schedule(napi);
+=======
+			napi_reschedule(napi);
+		} else {
+			queue_writel(queue, IER, bp->rx_intr_mask);
+>>>>>>> master
 		}
 	}
 
@@ -1831,6 +1837,7 @@ static void macb_hresp_error_task(struct tasklet_struct *t)
 	netif_tx_start_all_queues(dev);
 }
 
+<<<<<<< HEAD
 static irqreturn_t macb_wol_interrupt(int irq, void *dev_id)
 {
 	struct macb_queue *queue = dev_id;
@@ -1887,6 +1894,21 @@ static irqreturn_t gem_wol_interrupt(int irq, void *dev_id)
 	spin_unlock(&bp->lock);
 
 	return IRQ_HANDLED;
+=======
+static void macb_tx_restart(struct macb_queue *queue)
+{
+	unsigned int head = queue->tx_head;
+	unsigned int tail = queue->tx_tail;
+	struct macb *bp = queue->bp;
+
+	if (bp->caps & MACB_CAPS_ISR_CLEAR_ON_WRITE)
+		queue_writel(queue, ISR, MACB_BIT(TXUBR));
+
+	if (head == tail)
+		return;
+
+	macb_writel(bp, NCR, macb_readl(bp, NCR) | MACB_BIT(TSTART));
+>>>>>>> master
 }
 
 static irqreturn_t macb_interrupt(int irq, void *dev_id)
@@ -1961,6 +1983,15 @@ static irqreturn_t macb_interrupt(int irq, void *dev_id)
 			break;
 		}
 
+<<<<<<< HEAD
+=======
+		if (status & MACB_BIT(TCOMP))
+			macb_tx_interrupt(queue);
+
+		if (status & MACB_BIT(TXUBR))
+			macb_tx_restart(queue);
+
+>>>>>>> master
 		/* Link change detection isn't possible with RMII, so we'll
 		 * add that if/when we get our hands on a full-blown MII PHY.
 		 */
@@ -2798,9 +2829,34 @@ static void macb_init_hw(struct macb *bp)
 
 	macb_configure_dma(bp);
 
+<<<<<<< HEAD
 	/* Enable RX partial store and forward and set watermark */
 	if (bp->rx_watermark)
 		gem_writel(bp, PBUFRXCUT, (bp->rx_watermark | GEM_BIT(ENCUTTHRU)));
+=======
+	/* Initialize TX and RX buffers */
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) {
+		queue_writel(queue, RBQP, lower_32_bits(queue->rx_ring_dma));
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+		if (bp->hw_dma_cap & HW_DMA_CAP_64B)
+			queue_writel(queue, RBQPH, upper_32_bits(queue->rx_ring_dma));
+#endif
+		queue_writel(queue, TBQP, lower_32_bits(queue->tx_ring_dma));
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+		if (bp->hw_dma_cap & HW_DMA_CAP_64B)
+			queue_writel(queue, TBQPH, upper_32_bits(queue->tx_ring_dma));
+#endif
+
+		/* Enable interrupts */
+		queue_writel(queue, IER,
+			     bp->rx_intr_mask |
+			     MACB_TX_INT_FLAGS |
+			     MACB_BIT(HRESP));
+	}
+
+	/* Enable TX and RX */
+	macb_writel(bp, NCR, macb_readl(bp, NCR) | MACB_BIT(RE) | MACB_BIT(TE));
+>>>>>>> master
 }
 
 /* The hash address register is 64 bits long and takes up two
@@ -2951,6 +3007,7 @@ static int macb_open(struct net_device *dev)
 		napi_enable(&queue->napi_tx);
 	}
 
+<<<<<<< HEAD
 	macb_init_hw(bp);
 
 	err = phy_power_on(bp->sgmii_phy);
@@ -2960,6 +3017,16 @@ static int macb_open(struct net_device *dev)
 	err = macb_phylink_connect(bp);
 	if (err)
 		goto phy_off;
+=======
+	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue)
+		napi_enable(&queue->napi);
+
+	bp->macbgem_ops.mog_init_rings(bp);
+	macb_init_hw(bp);
+
+	/* schedule a link state check */
+	phy_start(dev->phydev);
+>>>>>>> master
 
 	netif_tx_start_all_queues(dev);
 
@@ -3979,6 +4046,7 @@ static int macb_clk_init(struct platform_device *pdev, struct clk **pclk,
 		*hclk = devm_clk_get(&pdev->dev, "hclk");
 	}
 
+<<<<<<< HEAD
 	if (IS_ERR_OR_NULL(*pclk))
 		return dev_err_probe(&pdev->dev,
 				     IS_ERR(*pclk) ? PTR_ERR(*pclk) : -ENODEV,
@@ -3988,6 +4056,25 @@ static int macb_clk_init(struct platform_device *pdev, struct clk **pclk,
 		return dev_err_probe(&pdev->dev,
 				     IS_ERR(*hclk) ? PTR_ERR(*hclk) : -ENODEV,
 				     "failed to get hclk\n");
+=======
+	if (IS_ERR_OR_NULL(*pclk)) {
+		err = PTR_ERR(*pclk);
+		if (!err)
+			err = -ENODEV;
+
+		dev_err(&pdev->dev, "failed to get macb_clk (%u)\n", err);
+		return err;
+	}
+
+	if (IS_ERR_OR_NULL(*hclk)) {
+		err = PTR_ERR(*hclk);
+		if (!err)
+			err = -ENODEV;
+
+		dev_err(&pdev->dev, "failed to get hclk (%u)\n", err);
+		return err;
+	}
+>>>>>>> master
 
 	*tx_clk = devm_clk_get_optional(&pdev->dev, "tx_clk");
 	if (IS_ERR(*tx_clk))
@@ -4827,7 +4914,11 @@ static const struct macb_config sama5d4_config = {
 };
 
 static const struct macb_config emac_config = {
+<<<<<<< HEAD
 	.caps = MACB_CAPS_NEEDS_RSTONUBR | MACB_CAPS_MACB_IS_EMAC,
+=======
+	.caps = MACB_CAPS_NEEDS_RSTONUBR,
+>>>>>>> master
 	.clk_init = at91ether_clk_init,
 	.init = at91ether_init,
 	.usrio = &macb_default_usrio,
@@ -5095,6 +5186,21 @@ static int macb_probe(struct platform_device *pdev)
 	bp->rx_intr_mask = MACB_RX_INT_FLAGS;
 	if (bp->caps & MACB_CAPS_NEEDS_RSTONUBR)
 		bp->rx_intr_mask |= MACB_BIT(RXUBR);
+<<<<<<< HEAD
+=======
+
+	mac = of_get_mac_address(np);
+	if (mac) {
+		ether_addr_copy(bp->dev->dev_addr, mac);
+	} else {
+		err = of_get_nvmem_mac_address(np, bp->dev->dev_addr);
+		if (err) {
+			if (err == -EPROBE_DEFER)
+				goto err_out_free_netdev;
+			macb_get_hwaddr(bp);
+		}
+	}
+>>>>>>> master
 
 	err = of_get_ethdev_address(np, bp->dev);
 	if (err == -EPROBE_DEFER)

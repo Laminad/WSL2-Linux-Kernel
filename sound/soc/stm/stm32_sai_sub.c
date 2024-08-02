@@ -772,6 +772,14 @@ static int stm32_sai_startup(struct snd_pcm_substream *substream,
 					     SNDRV_PCM_HW_PARAM_CHANNELS, 2);
 	}
 
+	if (STM_SAI_PROTOCOL_IS_SPDIF(sai)) {
+		snd_pcm_hw_constraint_mask64(substream->runtime,
+					     SNDRV_PCM_HW_PARAM_FORMAT,
+					     SNDRV_PCM_FMTBIT_S32_LE);
+		snd_pcm_hw_constraint_single(substream->runtime,
+					     SNDRV_PCM_HW_PARAM_CHANNELS, 2);
+	}
+
 	ret = clk_prepare_enable(sai->sai_ck);
 	if (ret < 0) {
 		dev_err(cpu_dai->dev, "Failed to enable clock: %d\n", ret);
@@ -1489,16 +1497,24 @@ static int stm32_sai_sub_parse_of(struct platform_device *pdev,
 	if (STM_SAI_IS_F4(sai->pdata))
 		return 0;
 
+<<<<<<< HEAD
 	/* Register mclk provider if requested */
 	if (of_property_present(np, "#clock-cells")) {
 		ret = stm32_sai_add_mclk_provider(sai);
 		if (ret < 0)
 			return ret;
+=======
+	if (STM_SAI_IS_PLAYBACK(sai)) {
+		memcpy(sai->cpu_dai_drv, &stm32_sai_playback_dai,
+		       sizeof(stm32_sai_playback_dai));
+		sai->cpu_dai_drv->playback.stream_name = sai->cpu_dai_drv->name;
+>>>>>>> master
 	} else {
 		sai->sai_mclk = devm_clk_get_optional(&pdev->dev, "MCLK");
 		if (IS_ERR(sai->sai_mclk))
 			return PTR_ERR(sai->sai_mclk);
 	}
+	sai->cpu_dai_drv->name = dev_name(&pdev->dev);
 
 	return 0;
 }

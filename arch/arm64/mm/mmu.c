@@ -1117,6 +1117,7 @@ static void free_empty_p4d_table(pgd_t *pgdp, unsigned long addr,
 static void free_empty_tables(unsigned long addr, unsigned long end,
 			      unsigned long floor, unsigned long ceiling)
 {
+<<<<<<< HEAD
 	unsigned long next;
 	pgd_t *pgdp, pgd;
 
@@ -1137,13 +1138,26 @@ void __meminit vmemmap_set_pmd(pmd_t *pmdp, void *p, int node,
 			       unsigned long addr, unsigned long next)
 {
 	pmd_set_huge(pmdp, __pa(p), __pgprot(PROT_SECT_NORMAL));
+=======
+	/*
+	 * Only 4k granule supports level 1 block mappings.
+	 * SW table walks can't handle removal of intermediate entries.
+	 */
+	return IS_ENABLED(CONFIG_ARM64_4K_PAGES) &&
+	       !IS_ENABLED(CONFIG_ARM64_PTDUMP_DEBUGFS);
+>>>>>>> master
 }
 
 int __meminit vmemmap_check_pmd(pmd_t *pmdp, int node,
 				unsigned long addr, unsigned long next)
 {
+<<<<<<< HEAD
 	vmemmap_verify((pte_t *)pmdp, node, addr, next);
 	return 1;
+=======
+	/* See arch_ioremap_pud_supported() */
+	return !IS_ENABLED(CONFIG_ARM64_PTDUMP_DEBUGFS);
+>>>>>>> master
 }
 
 int __meminit vmemmap_populate(unsigned long start, unsigned long end, int node,

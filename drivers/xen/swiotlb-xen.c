@@ -139,8 +139,28 @@ xen_swiotlb_alloc_coherent(struct device *dev, size_t size,
 	phys_addr_t phys;
 	void *ret;
 
+<<<<<<< HEAD
 	/* Align the allocation to the Xen page size */
 	size = 1UL << (order + XEN_PAGE_SHIFT);
+=======
+	/*
+	* Ignore region specifiers - the kernel's ideas of
+	* pseudo-phys memory layout has nothing to do with the
+	* machine physical layout.  We can't allocate highmem
+	* because we can't return a pointer to it.
+	*/
+	flags &= ~(__GFP_DMA | __GFP_HIGHMEM);
+
+	/* Convert the size to actually allocated. */
+	size = 1UL << (order + XEN_PAGE_SHIFT);
+
+	/* On ARM this function returns an ioremap'ped virtual address for
+	 * which virt_to_phys doesn't return the corresponding physical
+	 * address. In fact on ARM virt_to_phys only works for kernel direct
+	 * mapped RAM memory. Also see comment below.
+	 */
+	ret = xen_alloc_coherent_pages(hwdev, size, dma_handle, flags, attrs);
+>>>>>>> master
 
 	ret = (void *)__get_free_pages(flags, get_order(size));
 	if (!ret)
@@ -178,7 +198,15 @@ xen_swiotlb_free_coherent(struct device *dev, size_t size, void *vaddr,
 	    WARN_ON_ONCE(range_straddles_page_boundary(phys, size)))
 	    	return;
 
+<<<<<<< HEAD
 	if (TestClearPageXenRemapped(virt_to_page(vaddr)))
+=======
+	/* Convert the size to actually allocated. */
+	size = 1UL << (order + XEN_PAGE_SHIFT);
+
+	if (!WARN_ON((dev_addr + size - 1 > dma_mask) ||
+		     range_straddles_page_boundary(phys, size)))
+>>>>>>> master
 		xen_destroy_contiguous_region(phys, order);
 	free_pages((unsigned long)vaddr, get_order(size));
 }

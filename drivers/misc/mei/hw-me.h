@@ -22,7 +22,10 @@
  * @kind: MEI head kind
  * @dma_size: device DMA buffers size
  * @fw_ver_supported: is fw version retrievable from FW
+<<<<<<< HEAD
  * @hw_trc_supported: does the hw support trc register
+=======
+>>>>>>> master
  */
 struct mei_cfg {
 	const struct mei_fw_status fw_status;
@@ -30,7 +33,10 @@ struct mei_cfg {
 	const char *kind;
 	size_t dma_size[DMA_DSCR_NUM];
 	u32 fw_ver_supported:1;
+<<<<<<< HEAD
 	u32 hw_trc_supported:1;
+=======
+>>>>>>> master
 };
 
 

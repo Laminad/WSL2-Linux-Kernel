@@ -48,7 +48,11 @@ config FSI_MASTER_AST_CF
 	depends on GPIOLIB
 	depends on GPIO_ASPEED
 	select GENERIC_ALLOCATOR
+<<<<<<< HEAD
 	help
+=======
+	---help---
+>>>>>>> master
 	This option enables a FSI master using the AST2400 and AST2500 GPIO
 	lines driven by the internal ColdFire coprocessor. This requires
 	the corresponding machine specific ColdFire firmware to be available.

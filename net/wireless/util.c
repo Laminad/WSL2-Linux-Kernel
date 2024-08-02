@@ -1161,11 +1161,14 @@ int cfg80211_change_iface(struct cfg80211_registered_device *rdev,
 
 		cfg80211_process_rdev_events(rdev);
 		cfg80211_mlme_purge_registrations(dev->ieee80211_ptr);
+<<<<<<< HEAD
 
 		memset(&dev->ieee80211_ptr->u, 0,
 		       sizeof(dev->ieee80211_ptr->u));
 		memset(&dev->ieee80211_ptr->links, 0,
 		       sizeof(dev->ieee80211_ptr->links));
+=======
+>>>>>>> master
 	}
 
 	err = rdev_change_virtual_intf(rdev, dev, ntype, params);
@@ -1521,6 +1524,7 @@ static u32 cfg80211_calculate_bitrate_he(struct rate_info *rate)
 		result /= 2;
 
 	return result / 10000;
+<<<<<<< HEAD
 }
 
 static u32 cfg80211_calculate_bitrate_eht(struct rate_info *rate)
@@ -1760,6 +1764,8 @@ warn:
 	WARN_ONCE(1, "invalid rate bw=%d, mcs=%d, nss=%d\n",
 		  rate->bw, rate->mcs, rate->nss);
 	return 0;
+=======
+>>>>>>> master
 }
 
 u32 cfg80211_calculate_bitrate(struct rate_info *rate)
@@ -2479,6 +2485,7 @@ const unsigned char bridge_tunnel_header[] __aligned(2) =
 	{ 0xaa, 0xaa, 0x03, 0x00, 0x00, 0xf8 };
 EXPORT_SYMBOL(bridge_tunnel_header);
 
+<<<<<<< HEAD
 /* Layer 2 Update frame (802.2 Type 1 LLC XID Update response) */
 struct iapp_layer2_update {
 	u8 da[ETH_ALEN];	/* broadcast */
@@ -2631,6 +2638,8 @@ int ieee80211_get_vht_max_nss(struct ieee80211_vht_cap *cap,
 }
 EXPORT_SYMBOL(ieee80211_get_vht_max_nss);
 
+=======
+>>>>>>> master
 bool cfg80211_iftype_allowed(struct wiphy *wiphy, enum nl80211_iftype iftype,
 			     bool is_4addr, u8 check_swif)
 
@@ -2653,6 +2662,7 @@ bool cfg80211_iftype_allowed(struct wiphy *wiphy, enum nl80211_iftype iftype,
 	return false;
 }
 EXPORT_SYMBOL(cfg80211_iftype_allowed);
+<<<<<<< HEAD
 
 void cfg80211_remove_link(struct wireless_dev *wdev, unsigned int link_id)
 {
@@ -2717,3 +2727,5 @@ cfg80211_get_iftype_ext_capa(struct wiphy *wiphy, enum nl80211_iftype type)
 	return NULL;
 }
 EXPORT_SYMBOL(cfg80211_get_iftype_ext_capa);
+=======
+>>>>>>> master

@@ -538,6 +538,7 @@ static int mlxcpld_i2c_probe(struct platform_device *pdev)
 
 	priv->dev = &pdev->dev;
 	priv->base_addr = MLXPLAT_CPLD_LPC_I2C_BASE_ADDR;
+<<<<<<< HEAD
 	priv->polling_time = MLXCPLD_I2C_POLL_TIME;
 
 	/* Set I2C bus frequency if platform data provides this info. */
@@ -547,6 +548,8 @@ static int mlxcpld_i2c_probe(struct platform_device *pdev)
 		if (err)
 			goto mlxcpld_i2_probe_failed;
 	}
+=======
+>>>>>>> master
 
 	/* Register with i2c layer */
 	mlxcpld_i2c_adapter.timeout = usecs_to_jiffies(MLXCPLD_I2C_XFER_TO);

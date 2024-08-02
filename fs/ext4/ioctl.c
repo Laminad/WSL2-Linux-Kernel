@@ -334,7 +334,11 @@ static void swap_inode_data(struct inode *inode1, struct inode *inode2)
 	i_size_write(inode2, isize);
 }
 
+<<<<<<< HEAD
 void ext4_reset_inode_seed(struct inode *inode)
+=======
+static void reset_inode_seed(struct inode *inode)
+>>>>>>> master
 {
 	struct ext4_inode_info *ei = EXT4_I(inode);
 	struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
@@ -349,7 +353,11 @@ void ext4_reset_inode_seed(struct inode *inode)
 	ei->i_csum_seed = ext4_chksum(sbi, csum, (__u8 *)&gen, sizeof(gen));
 }
 
+<<<<<<< HEAD
 /*
+=======
+/**
+>>>>>>> master
  * Swap the information from the given @inode and the inode
  * EXT4_BOOT_LOADER_INO. It will basically swap i_data and all other
  * important fields of the inodes.
@@ -371,8 +379,12 @@ static long swap_inode_boot_loader(struct super_block *sb,
 	blkcnt_t blocks;
 	unsigned short bytes;
 
+<<<<<<< HEAD
 	inode_bl = ext4_iget(sb, EXT4_BOOT_LOADER_INO,
 			EXT4_IGET_SPECIAL | EXT4_IGET_BAD);
+=======
+	inode_bl = ext4_iget(sb, EXT4_BOOT_LOADER_INO, EXT4_IGET_SPECIAL);
+>>>>>>> master
 	if (IS_ERR(inode_bl))
 		return PTR_ERR(inode_bl);
 	ei_bl = EXT4_I(inode_bl);
@@ -390,13 +402,21 @@ static long swap_inode_boot_loader(struct super_block *sb,
 	}
 
 	if (IS_RDONLY(inode) || IS_APPEND(inode) || IS_IMMUTABLE(inode) ||
+<<<<<<< HEAD
 	    !inode_owner_or_capable(idmap, inode) ||
 	    !capable(CAP_SYS_ADMIN)) {
+=======
+	    !inode_owner_or_capable(inode) || !capable(CAP_SYS_ADMIN)) {
+>>>>>>> master
 		err = -EPERM;
 		goto journal_err_out;
 	}
 
+<<<<<<< HEAD
 	filemap_invalidate_lock(inode->i_mapping);
+=======
+	down_write(&EXT4_I(inode)->i_mmap_sem);
+>>>>>>> master
 	err = filemap_write_and_wait(inode->i_mapping);
 	if (err)
 		goto err_out;
@@ -453,10 +473,17 @@ static long swap_inode_boot_loader(struct super_block *sb,
 	inode_set_ctime_current(inode_bl);
 	inode_inc_iversion(inode);
 
+<<<<<<< HEAD
 	inode->i_generation = get_random_u32();
 	inode_bl->i_generation = get_random_u32();
 	ext4_reset_inode_seed(inode);
 	ext4_reset_inode_seed(inode_bl);
+=======
+	inode->i_generation = prandom_u32();
+	inode_bl->i_generation = prandom_u32();
+	reset_inode_seed(inode);
+	reset_inode_seed(inode_bl);
+>>>>>>> master
 
 	ext4_discard_preallocations(inode, 0);
 
@@ -506,7 +533,11 @@ err_out1:
 	ext4_double_up_write_data_sem(inode, inode_bl);
 
 err_out:
+<<<<<<< HEAD
 	filemap_invalidate_unlock(inode->i_mapping);
+=======
+	up_write(&EXT4_I(inode)->i_mmap_sem);
+>>>>>>> master
 journal_err_out:
 	unlock_two_nondirectories(inode, inode_bl);
 	iput(inode_bl);
@@ -574,6 +605,29 @@ static bool dax_compatible(struct inode *inode, unsigned int oldflags,
 	return true;
 }
 
+/*
+ * If immutable is set and we are not clearing it, we're not allowed to change
+ * anything else in the inode.  Don't error out if we're only trying to set
+ * immutable on an immutable file.
+ */
+static int ext4_ioctl_check_immutable(struct inode *inode, __u32 new_projid,
+				      unsigned int flags)
+{
+	struct ext4_inode_info *ei = EXT4_I(inode);
+	unsigned int oldflags = ei->i_flags;
+
+	if (!(oldflags & EXT4_IMMUTABLE_FL) || !(flags & EXT4_IMMUTABLE_FL))
+		return 0;
+
+	if ((oldflags & ~EXT4_IMMUTABLE_FL) != (flags & ~EXT4_IMMUTABLE_FL))
+		return -EPERM;
+	if (ext4_has_feature_project(inode->i_sb) &&
+	    __kprojid_val(ei->i_projid) != new_projid)
+		return -EPERM;
+
+	return 0;
+}
+
 static int ext4_ioctl_setflags(struct inode *inode,
 			       unsigned int flags)
 {
@@ -621,6 +675,20 @@ static int ext4_ioctl_setflags(struct inode *inode,
 			err = -ENOTEMPTY;
 			goto flags_out;
 		}
+	}
+
+	/*
+	 * Wait for all pending directio and then flush all the dirty pages
+	 * for this file.  The flush marks all the pages readonly, so any
+	 * subsequent attempt to write to the file (particularly mmap pages)
+	 * will come through the filesystem and fail.
+	 */
+	if (S_ISREG(inode->i_mode) && !IS_IMMUTABLE(inode) &&
+	    (flags & EXT4_IMMUTABLE_FL)) {
+		inode_dio_wait(inode);
+		err = filemap_write_and_wait(inode->i_mapping);
+		if (err)
+			goto flags_out;
 	}
 
 	/*
@@ -731,10 +799,13 @@ static int ext4_ioctl_setproject(struct inode *inode, __u32 projid)
 	if (ext4_is_quota_file(inode))
 		return err;
 
+<<<<<<< HEAD
 	err = dquot_initialize(inode);
 	if (err)
 		return err;
 
+=======
+>>>>>>> master
 	err = ext4_get_inode_loc(inode, &iloc);
 	if (err)
 		return err;
@@ -750,6 +821,13 @@ static int ext4_ioctl_setproject(struct inode *inode, __u32 projid)
 		brelse(iloc.bh);
 	}
 
+<<<<<<< HEAD
+=======
+	err = dquot_initialize(inode);
+	if (err)
+		return err;
+
+>>>>>>> master
 	handle = ext4_journal_start(inode, EXT4_HT_QUOTA,
 		EXT4_QUOTA_INIT_BLOCKS(sb) +
 		EXT4_QUOTA_DEL_BLOCKS(sb) + 3);
@@ -971,6 +1049,7 @@ group_add_out:
 	return err;
 }
 
+<<<<<<< HEAD
 int ext4_fileattr_get(struct dentry *dentry, struct fileattr *fa)
 {
 	struct inode *inode = d_inode(dentry);
@@ -1222,6 +1301,33 @@ static int ext4_ioctl_setuuid(struct file *filp,
 }
 
 static long __ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+=======
+static int ext4_ioctl_check_project(struct inode *inode, struct fsxattr *fa)
+{
+	/*
+	 * Project Quota ID state is only allowed to change from within the init
+	 * namespace. Enforce that restriction only if we are trying to change
+	 * the quota ID state. Everything else is allowed in user namespaces.
+	 */
+	if (current_user_ns() == &init_user_ns)
+		return 0;
+
+	if (__kprojid_val(EXT4_I(inode)->i_projid) != fa->fsx_projid)
+		return -EINVAL;
+
+	if (ext4_test_inode_flag(inode, EXT4_INODE_PROJINHERIT)) {
+		if (!(fa->fsx_xflags & FS_XFLAG_PROJINHERIT))
+			return -EINVAL;
+	} else {
+		if (fa->fsx_xflags & FS_XFLAG_PROJINHERIT)
+			return -EINVAL;
+	}
+
+	return 0;
+}
+
+long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+>>>>>>> master
 {
 	struct inode *inode = file_inode(filp);
 	struct super_block *sb = inode->i_sb;
@@ -1232,6 +1338,47 @@ static long __ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	switch (cmd) {
 	case FS_IOC_GETFSMAP:
 		return ext4_ioc_getfsmap(sb, (void __user *)arg);
+<<<<<<< HEAD
+=======
+	case EXT4_IOC_GETFLAGS:
+		flags = ei->i_flags & EXT4_FL_USER_VISIBLE;
+		return put_user(flags, (int __user *) arg);
+	case EXT4_IOC_SETFLAGS: {
+		int err;
+
+		if (!inode_owner_or_capable(inode))
+			return -EACCES;
+
+		if (get_user(flags, (int __user *) arg))
+			return -EFAULT;
+
+		if (flags & ~EXT4_FL_USER_VISIBLE)
+			return -EOPNOTSUPP;
+		/*
+		 * chattr(1) grabs flags via GETFLAGS, modifies the result and
+		 * passes that to SETFLAGS. So we cannot easily make SETFLAGS
+		 * more restrictive than just silently masking off visible but
+		 * not settable flags as we always did.
+		 */
+		flags &= EXT4_FL_USER_MODIFIABLE;
+		if (ext4_mask_flags(inode->i_mode, flags) != flags)
+			return -EOPNOTSUPP;
+
+		err = mnt_want_write_file(filp);
+		if (err)
+			return err;
+
+		inode_lock(inode);
+		err = ext4_ioctl_check_immutable(inode,
+				from_kprojid(&init_user_ns, ei->i_projid),
+				flags);
+		if (!err)
+			err = ext4_ioctl_setflags(inode, flags);
+		inode_unlock(inode);
+		mnt_drop_write_file(filp);
+		return err;
+	}
+>>>>>>> master
 	case EXT4_IOC_GETVERSION:
 	case EXT4_IOC_GETVERSION_OLD:
 		return put_user(inode->i_generation, (int __user *) arg);
@@ -1552,8 +1699,40 @@ resizefs_out:
 	{
 		if (!inode_owner_or_capable(idmap, inode))
 			return -EACCES;
+<<<<<<< HEAD
 		ext4_clear_inode_es(inode);
 		return 0;
+=======
+
+		if (fa.fsx_xflags & ~EXT4_SUPPORTED_FS_XFLAGS)
+			return -EOPNOTSUPP;
+
+		flags = ext4_xflags_to_iflags(fa.fsx_xflags);
+		if (ext4_mask_flags(inode->i_mode, flags) != flags)
+			return -EOPNOTSUPP;
+
+		err = mnt_want_write_file(filp);
+		if (err)
+			return err;
+
+		inode_lock(inode);
+		err = ext4_ioctl_check_project(inode, &fa);
+		if (err)
+			goto out;
+		flags = (ei->i_flags & ~EXT4_FL_XFLAG_VISIBLE) |
+			 (flags & EXT4_FL_XFLAG_VISIBLE);
+		err = ext4_ioctl_check_immutable(inode, fa.fsx_projid, flags);
+		if (err)
+			goto out;
+		err = ext4_ioctl_setflags(inode, flags);
+		if (err)
+			goto out;
+		err = ext4_ioctl_setproject(filp, fa.fsx_projid);
+out:
+		inode_unlock(inode);
+		mnt_drop_write_file(filp);
+		return err;
+>>>>>>> master
 	}
 
 	case EXT4_IOC_GETSTATE:

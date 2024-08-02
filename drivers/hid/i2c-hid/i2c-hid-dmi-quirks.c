@@ -10,10 +10,15 @@
 #include <linux/types.h>
 #include <linux/dmi.h>
 #include <linux/mod_devicetable.h>
+<<<<<<< HEAD
 #include <linux/hid.h>
 
 #include "i2c-hid.h"
 #include "../hid-ids.h"
+=======
+
+#include "i2c-hid.h"
+>>>>>>> master
 
 
 struct i2c_hid_desc_override {
@@ -344,6 +349,7 @@ static const struct dmi_system_id i2c_hid_dmi_desc_override_table[] = {
 		.driver_data = (void *)&sipodev_desc
 	},
 	{
+<<<<<<< HEAD
 		.ident = "Trekstor SURFBOOK E11B",
 		.matches = {
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "TREKSTOR"),
@@ -352,6 +358,8 @@ static const struct dmi_system_id i2c_hid_dmi_desc_override_table[] = {
 		.driver_data = (void *)&sipodev_desc
 	},
 	{
+=======
+>>>>>>> master
 		.ident = "Direkt-Tek DTLAPY116-2",
 		.matches = {
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "Direkt-Tek"),
@@ -376,6 +384,7 @@ static const struct dmi_system_id i2c_hid_dmi_desc_override_table[] = {
 		.driver_data = (void *)&sipodev_desc
 	},
 	{
+<<<<<<< HEAD
 		.ident = "Mediacom FlexBook edge 13",
 		.matches = {
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "MEDIACOM"),
@@ -384,6 +393,8 @@ static const struct dmi_system_id i2c_hid_dmi_desc_override_table[] = {
 		.driver_data = (void *)&sipodev_desc
 	},
 	{
+=======
+>>>>>>> master
 		.ident = "Odys Winbook 13",
 		.matches = {
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "AXDIA International GmbH"),
@@ -391,6 +402,7 @@ static const struct dmi_system_id i2c_hid_dmi_desc_override_table[] = {
 		},
 		.driver_data = (void *)&sipodev_desc
 	},
+<<<<<<< HEAD
 	{
 		.ident = "iBall Aer3",
 		.matches = {
@@ -437,6 +449,8 @@ static const struct dmi_system_id i2c_hid_dmi_quirk_table[] = {
 		},
 		.driver_data = (void *)&i2c_hid_elan_flipped_quirks,
 	},
+=======
+>>>>>>> master
 	{ }	/* Terminate list */
 };
 
@@ -474,6 +488,7 @@ char *i2c_hid_get_dmi_hid_report_desc_override(uint8_t *i2c_name,
 	*size = override->hid_report_desc_size;
 	return override->hid_report_desc;
 }
+<<<<<<< HEAD
 
 u32 i2c_hid_get_dmi_quirks(const u16 vendor, const u16 product)
 {
@@ -492,3 +507,5 @@ u32 i2c_hid_get_dmi_quirks(const u16 vendor, const u16 product)
 
 	return quirks;
 }
+=======
+>>>>>>> master

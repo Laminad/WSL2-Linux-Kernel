@@ -1188,11 +1188,15 @@ static int coda_start_encoding(struct coda_ctx *ctx)
 			 CODA_264PARAM_DEBLKFILTEROFFSETALPHA_OFFSET) |
 			((ctx->params.h264_slice_beta_offset_div2 &
 			  CODA_264PARAM_DEBLKFILTEROFFSETBETA_MASK) <<
+<<<<<<< HEAD:drivers/media/platform/chips-media/coda-bit.c
 			 CODA_264PARAM_DEBLKFILTEROFFSETBETA_OFFSET) |
 			(ctx->params.h264_constrained_intra_pred_flag <<
 			 CODA_264PARAM_CONSTRAINEDINTRAPREDFLAG_OFFSET) |
 			(ctx->params.h264_chroma_qp_index_offset &
 			 CODA_264PARAM_CHROMAQPOFFSET_MASK);
+=======
+			 CODA_264PARAM_DEBLKFILTEROFFSETBETA_OFFSET);
+>>>>>>> master:drivers/media/platform/coda/coda-bit.c
 		coda_write(dev, value, CODA_CMD_ENC_SEQ_264_PARA);
 		break;
 	case V4L2_PIX_FMT_JPEG:
@@ -2443,6 +2447,7 @@ static void coda_finish_decode(struct coda_ctx *ctx)
 		v4l2_err(&dev->v4l2_dev,
 			 "decoded frame index out of range: %d\n", decoded_idx);
 	} else {
+<<<<<<< HEAD:drivers/media/platform/chips-media/coda-bit.c
 		int sequence;
 
 		decoded_frame = &ctx->internal_frames[decoded_idx];
@@ -2454,6 +2459,13 @@ static void coda_finish_decode(struct coda_ctx *ctx)
 		sequence = val + ctx->first_frame_sequence
 			       - ctx->sequence_offset;
 		spin_lock(&ctx->buffer_meta_lock);
+=======
+		val = coda_read(dev, CODA_RET_DEC_PIC_FRAME_NUM);
+		if (ctx->sequence_offset == -1)
+			ctx->sequence_offset = val;
+		val -= ctx->sequence_offset;
+		spin_lock_irqsave(&ctx->buffer_meta_lock, flags);
+>>>>>>> master:drivers/media/platform/coda/coda-bit.c
 		if (!list_empty(&ctx->buffer_meta_list)) {
 			meta = list_first_entry(&ctx->buffer_meta_list,
 					      struct coda_buffer_meta, list);

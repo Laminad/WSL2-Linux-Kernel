@@ -44,6 +44,7 @@
 		backlight = <&backlight>;
 		power-supply = <&pp3300_disp>;
 
+<<<<<<< HEAD
 		panel-timing {
 			clock-frequency = <266666667>;
 			hactive = <2400>;
@@ -58,6 +59,8 @@
 			vsync-active = <0>;
 		};
 
+=======
+>>>>>>> master
 		port {
 			panel_in_edp: endpoint {
 				remote-endpoint = <&edp_out_panel>;

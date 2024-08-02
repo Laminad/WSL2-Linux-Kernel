@@ -494,6 +494,7 @@ void mmc_cleanup_queue(struct mmc_queue *mq)
 	if (blk_queue_quiesced(q))
 		blk_mq_unquiesce_queue(q);
 
+<<<<<<< HEAD
 	/*
 	 * If the recovery completes the last (and only remaining) request in
 	 * the queue, and the card has been removed, we could end up here with
@@ -501,6 +502,9 @@ void mmc_cleanup_queue(struct mmc_queue *mq)
 	 */
 	cancel_work_sync(&mq->recovery_work);
 
+=======
+	blk_cleanup_queue(q);
+>>>>>>> master
 	blk_mq_free_tag_set(&mq->tag_set);
 
 	/*

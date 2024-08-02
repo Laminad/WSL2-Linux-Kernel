@@ -762,6 +762,7 @@ static __always_inline bool system_supports_sme(void)
 		cpus_have_const_cap(ARM64_SME);
 }
 
+<<<<<<< HEAD
 static __always_inline bool system_supports_sme2(void)
 {
 	return IS_ENABLED(CONFIG_ARM64_SME) &&
@@ -888,6 +889,9 @@ static inline bool cpu_has_amu_feat(int cpu)
 	return false;
 }
 #endif
+=======
+void arm64_set_ssbd_mitigation(bool state);
+>>>>>>> master
 
 /* Get a cpu that supports the Activity Monitors Unit (AMU) */
 extern int get_cpu_with_amu_feat(void);

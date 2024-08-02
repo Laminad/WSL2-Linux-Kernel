@@ -147,6 +147,40 @@ extern void *memcpy(void *, const void *, size_t);
 
 #ifndef CONFIG_FORTIFY_SOURCE
 
+<<<<<<< HEAD
+=======
+#include <asm/mmx.h>
+
+/*
+ *	This CPU favours 3DNow strongly (eg AMD Athlon)
+ */
+
+static inline void *__constant_memcpy3d(void *to, const void *from, size_t len)
+{
+	if (len < 512)
+		return __constant_memcpy(to, from, len);
+	return _mmx_memcpy(to, from, len);
+}
+
+static inline void *__memcpy3d(void *to, const void *from, size_t len)
+{
+	if (len < 512)
+		return __memcpy(to, from, len);
+	return _mmx_memcpy(to, from, len);
+}
+
+#define memcpy(t, f, n)				\
+	(__builtin_constant_p((n))		\
+	 ? __constant_memcpy3d((t), (f), (n))	\
+	 : __memcpy3d((t), (f), (n)))
+
+#else
+
+/*
+ *	No 3D Now!
+ */
+
+>>>>>>> master
 #define memcpy(t, f, n) __builtin_memcpy(t, f, n)
 
 #endif /* !CONFIG_FORTIFY_SOURCE */
@@ -184,6 +218,70 @@ extern size_t strnlen(const char *s, size_t count);
 #define __HAVE_ARCH_STRSTR
 extern char *strstr(const char *cs, const char *ct);
 
+<<<<<<< HEAD
+=======
+/*
+ * This looks horribly ugly, but the compiler can optimize it totally,
+ * as we by now know that both pattern and count is constant..
+ */
+static __always_inline
+void *__constant_c_and_count_memset(void *s, unsigned long pattern,
+				    size_t count)
+{
+	switch (count) {
+	case 0:
+		return s;
+	case 1:
+		*(unsigned char *)s = pattern & 0xff;
+		return s;
+	case 2:
+		*(unsigned short *)s = pattern & 0xffff;
+		return s;
+	case 3:
+		*(unsigned short *)s = pattern & 0xffff;
+		*((unsigned char *)s + 2) = pattern & 0xff;
+		return s;
+	case 4:
+		*(unsigned long *)s = pattern;
+		return s;
+	}
+
+#define COMMON(x)							\
+	asm volatile("rep ; stosl"					\
+		     x							\
+		     : "=&c" (d0), "=&D" (d1)				\
+		     : "a" (eax), "0" (count/4), "1" ((long)s)	\
+		     : "memory")
+
+	{
+		int d0, d1;
+		unsigned long eax = pattern;
+
+		switch (count % 4) {
+		case 0:
+			COMMON("");
+			return s;
+		case 1:
+			COMMON("\n\tstosb");
+			return s;
+		case 2:
+			COMMON("\n\tstosw");
+			return s;
+		default:
+			COMMON("\n\tstosw\n\tstosb");
+			return s;
+		}
+	}
+
+#undef COMMON
+}
+
+#define __constant_c_x_memset(s, c, count)			\
+	(__builtin_constant_p(count)				\
+	 ? __constant_c_and_count_memset((s), (c), (count))	\
+	 : __constant_c_memset((s), (c), (count)))
+
+>>>>>>> master
 #define __memset(s, c, count)				\
 	(__builtin_constant_p(count)			\
 	 ? __constant_count_memset((s), (c), (count))	\

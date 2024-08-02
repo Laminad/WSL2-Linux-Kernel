@@ -17,7 +17,10 @@
 #include <linux/irq.h>
 #include <linux/kexec.h>
 #include <linux/i8253.h>
+<<<<<<< HEAD
 #include <linux/random.h>
+=======
+>>>>>>> master
 #include <asm/processor.h>
 #include <asm/hypervisor.h>
 #include <asm/hyperv-tlfs.h>

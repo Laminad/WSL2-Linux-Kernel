@@ -183,8 +183,18 @@ int crypto_ahash_setkey(struct crypto_ahash *tfm, const u8 *key,
 }
 EXPORT_SYMBOL_GPL(crypto_ahash_setkey);
 
+<<<<<<< HEAD
 static int ahash_save_req(struct ahash_request *req, crypto_completion_t cplt,
 			  bool has_state)
+=======
+static inline unsigned int ahash_align_buffer_size(unsigned len,
+						   unsigned long mask)
+{
+	return len + (mask & ~(crypto_tfm_ctx_alignment() - 1));
+}
+
+static int ahash_save_req(struct ahash_request *req, crypto_completion_t cplt)
+>>>>>>> master
 {
 	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
 	unsigned long alignmask = crypto_ahash_alignmask(tfm);

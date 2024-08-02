@@ -18,7 +18,20 @@
 #include <linux/set_memory.h>
 #include <linux/slab.h>
 #include <linux/stop_machine.h>
+<<<<<<< HEAD
 #include <linux/stringify.h>
+=======
+#include <linux/sched/debug.h>
+#include <linux/set_memory.h>
+#include <linux/stringify.h>
+#include <linux/vmalloc.h>
+#include <asm/traps.h>
+#include <asm/ptrace.h>
+#include <asm/cacheflush.h>
+#include <asm/debug-monitors.h>
+#include <asm/system_misc.h>
+#include <asm/insn.h>
+>>>>>>> master
 #include <linux/uaccess.h>
 #include <linux/vmalloc.h>
 
@@ -41,9 +54,25 @@ DEFINE_PER_CPU(struct kprobe_ctlblk, kprobe_ctlblk);
 static void __kprobes
 post_kprobe_handler(struct kprobe *, struct kprobe_ctlblk *, struct pt_regs *);
 
+static int __kprobes patch_text(kprobe_opcode_t *addr, u32 opcode)
+{
+	void *addrs[1];
+	u32 insns[1];
+
+	addrs[0] = addr;
+	insns[0] = opcode;
+
+	return aarch64_insn_patch_text(addrs, insns, 1);
+}
+
 static void __kprobes arch_prepare_ss_slot(struct kprobe *p)
 {
+<<<<<<< HEAD
 	kprobe_opcode_t *addr = p->ainsn.api.insn;
+=======
+	/* prepare insn slot */
+	patch_text(p->ainsn.api.insn, p->opcode);
+>>>>>>> master
 
 	/*
 	 * Prepare insn slot, Mark Rutland points out it depends on a coupe of
@@ -131,9 +160,19 @@ int __kprobes arch_prepare_kprobe(struct kprobe *p)
 
 void *alloc_insn_page(void)
 {
+<<<<<<< HEAD
 	return __vmalloc_node_range(PAGE_SIZE, 1, VMALLOC_START, VMALLOC_END,
 			GFP_KERNEL, PAGE_KERNEL_ROX, VM_FLUSH_RESET_PERMS,
 			NUMA_NO_NODE, __builtin_return_address(0));
+=======
+	void *page;
+
+	page = vmalloc_exec(PAGE_SIZE);
+	if (page)
+		set_memory_ro((unsigned long)page, 1);
+
+	return page;
+>>>>>>> master
 }
 
 /* arm kprobe: install breakpoint in text */
@@ -379,6 +418,7 @@ int __init arch_populate_kprobe_blacklist(void)
 {
 	int ret;
 
+<<<<<<< HEAD
 	ret = kprobe_add_area_blacklist((unsigned long)__entry_text_start,
 					(unsigned long)__entry_text_end);
 	if (ret)
@@ -394,6 +434,54 @@ int __init arch_populate_kprobe_blacklist(void)
 	ret = kprobe_add_area_blacklist((unsigned long)__hyp_idmap_text_start,
 					(unsigned long)__hyp_idmap_text_end);
 	return ret;
+=======
+	if (user_mode(regs))
+		return DBG_HOOK_ERROR;
+
+	/* return error if this is not our step */
+	retval = kprobe_ss_hit(kcb, instruction_pointer(regs));
+
+	if (retval == DBG_HOOK_HANDLED) {
+		kprobes_restore_local_irqflag(kcb, regs);
+		kernel_disable_single_step();
+
+		post_kprobe_handler(kcb, regs);
+	}
+
+	return retval;
+}
+
+int __kprobes
+kprobe_breakpoint_handler(struct pt_regs *regs, unsigned int esr)
+{
+	if (user_mode(regs))
+		return DBG_HOOK_ERROR;
+
+	kprobe_handler(regs);
+	return DBG_HOOK_HANDLED;
+}
+
+bool arch_within_kprobe_blacklist(unsigned long addr)
+{
+	if ((addr >= (unsigned long)__kprobes_text_start &&
+	    addr < (unsigned long)__kprobes_text_end) ||
+	    (addr >= (unsigned long)__entry_text_start &&
+	    addr < (unsigned long)__entry_text_end) ||
+	    (addr >= (unsigned long)__idmap_text_start &&
+	    addr < (unsigned long)__idmap_text_end) ||
+	    (addr >= (unsigned long)__hyp_text_start &&
+	    addr < (unsigned long)__hyp_text_end) ||
+	    !!search_exception_tables(addr))
+		return true;
+
+	if (!is_kernel_in_hyp_mode()) {
+		if ((addr >= (unsigned long)__hyp_idmap_text_start &&
+		    addr < (unsigned long)__hyp_idmap_text_end))
+			return true;
+	}
+
+	return false;
+>>>>>>> master
 }
 
 void __kprobes __used *trampoline_probe_handler(struct pt_regs *regs)

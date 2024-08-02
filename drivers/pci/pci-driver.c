@@ -1318,11 +1318,19 @@ static int pci_pm_runtime_suspend(struct device *dev)
 		 * log level.
 		 */
 		if (error == -EBUSY || error == -EAGAIN) {
+<<<<<<< HEAD
 			pci_dbg(pci_dev, "can't suspend now (%ps returned %d)\n",
 				pm->runtime_suspend, error);
 			return error;
 		} else if (error) {
 			pci_err(pci_dev, "can't suspend (%ps returned %d)\n",
+=======
+			dev_dbg(dev, "can't suspend now (%pf returned %d)\n",
+				pm->runtime_suspend, error);
+			return error;
+		} else if (error) {
+			dev_err(dev, "can't suspend (%pf returned %d)\n",
+>>>>>>> master
 				pm->runtime_suspend, error);
 			return error;
 		}
@@ -1349,6 +1357,10 @@ static int pci_pm_runtime_suspend(struct device *dev)
 
 static int pci_pm_runtime_resume(struct device *dev)
 {
+<<<<<<< HEAD
+=======
+	int rc = 0;
+>>>>>>> master
 	struct pci_dev *pci_dev = to_pci_dev(dev);
 	const struct dev_pm_ops *pm = dev->driver ? dev->driver->pm : NULL;
 	pci_power_t prev_state = pci_dev->current_state;
@@ -1368,8 +1380,13 @@ static int pci_pm_runtime_resume(struct device *dev)
 	pci_fixup_device(pci_fixup_resume_early, pci_dev);
 	pci_pm_default_resume(pci_dev);
 
+<<<<<<< HEAD
 	if (prev_state == PCI_D3cold)
 		pci_pm_bridge_power_up_actions(pci_dev);
+=======
+	if (pm && pm->runtime_resume)
+		rc = pm->runtime_resume(dev);
+>>>>>>> master
 
 	if (pm && pm->runtime_resume)
 		error = pm->runtime_resume(dev);

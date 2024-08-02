@@ -21,10 +21,15 @@
 
 #define MWAIT_ECX_INTERRUPT_BREAK	0x1
 #define MWAITX_ECX_TIMER_ENABLE		BIT(1)
+<<<<<<< HEAD
 #define MWAITX_MAX_WAIT_CYCLES		UINT_MAX
 #define MWAITX_DISABLE_CSTATES		0xf0
 #define TPAUSE_C01_STATE		1
 #define TPAUSE_C02_STATE		0
+=======
+#define MWAITX_MAX_LOOPS		((u32)-1)
+#define MWAITX_DISABLE_CSTATES		0xf0
+>>>>>>> master
 
 static __always_inline void __monitor(const void *eax, unsigned long ecx,
 			     unsigned long edx)
@@ -90,6 +95,11 @@ static __always_inline void __mwaitx(unsigned long eax, unsigned long ebx,
 static __always_inline void __sti_mwait(unsigned long eax, unsigned long ecx)
 {
 	mds_idle_clear_cpu_buffers();
+<<<<<<< HEAD
+=======
+
+	trace_hardirqs_on();
+>>>>>>> master
 	/* "mwait %eax, %ecx;" */
 	asm volatile("sti; .byte 0x0f, 0x01, 0xc9;"
 		     :: "a" (eax), "c" (ecx));

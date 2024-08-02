@@ -33,6 +33,7 @@
  * respectively NA for All or X for Supervisor and no access for User.
  * Then we use the APG to say whether accesses are according to Page rules or
  * "all Supervisor" rules (Access to all)
+<<<<<<< HEAD:arch/powerpc/include/asm/nohash/32/mmu-8xx.h
  * _PAGE_ACCESSED is also managed via APG. When _PAGE_ACCESSED is not set, say
  * "all User" rules, that will lead to NA for all.
  * Therefore, we define 4 APG groups. lsb is _PAGE_ACCESSED
@@ -43,6 +44,14 @@
  * 4-15 => Not Used
  */
 #define MI_APG_INIT	0xde000000
+=======
+ * Therefore, we define 2 APG groups. lsb is _PMD_USER
+ * 0 => No user => 01 (all accesses performed according to page definition)
+ * 1 => User => 00 (all accesses performed as supervisor iaw page definition)
+ * We define all 16 groups so that all other bits of APG can take any value
+ */
+#define MI_APG_INIT	0x44444444
+>>>>>>> master:arch/powerpc/include/asm/mmu-8xx.h
 
 /* The effective page number register.  When read, contains the information
  * about the last instruction TLB miss.  When MI_RPN is written, bits in
@@ -103,9 +112,24 @@
 #define MD_Ks		0x80000000	/* Should not be set */
 #define MD_Kp		0x40000000	/* Should always be set */
 
+<<<<<<< HEAD:arch/powerpc/include/asm/nohash/32/mmu-8xx.h
 /* See explanation above at the definition of MI_APG_INIT */
 #define MD_APG_INIT	0xdc000000
 #define MD_APG_KUAP	0xde000000
+=======
+/*
+ * All pages' PP data bits are set to either 000 or 011 or 001, which means
+ * respectively RW for Supervisor and no access for User, or RO for
+ * Supervisor and no access for user and NA for ALL.
+ * Then we use the APG to say whether accesses are according to Page rules or
+ * "all Supervisor" rules (Access to all)
+ * Therefore, we define 2 APG groups. lsb is _PMD_USER
+ * 0 => No user => 01 (all accesses performed according to page definition)
+ * 1 => User => 00 (all accesses performed as supervisor iaw page definition)
+ * We define all 16 groups so that all other bits of APG can take any value
+ */
+#define MD_APG_INIT	0x44444444
+>>>>>>> master:arch/powerpc/include/asm/mmu-8xx.h
 
 /* The effective page number register.  When read, contains the information
  * about the last instruction TLB miss.  When MD_RPN is written, bits in
@@ -157,6 +181,7 @@
  */
 #define SPRN_M_TW	799
 
+<<<<<<< HEAD:arch/powerpc/include/asm/nohash/32/mmu-8xx.h
 #if defined(CONFIG_PPC_4K_PAGES)
 #define mmu_virtual_psize	MMU_PAGE_4K
 #elif defined(CONFIG_PPC_16K_PAGES)
@@ -166,6 +191,11 @@
 #define PTE_FRAG_SIZE		(1UL << 12)
 #else
 #error "Unsupported PAGE_SIZE"
+=======
+#ifdef CONFIG_PPC_MM_SLICES
+#include <asm/nohash/32/slice.h>
+#define SLICE_ARRAY_SIZE	(1 << (32 - SLICE_LOW_SHIFT - 1))
+>>>>>>> master:arch/powerpc/include/asm/mmu-8xx.h
 #endif
 
 #define mmu_linear_psize	MMU_PAGE_8M

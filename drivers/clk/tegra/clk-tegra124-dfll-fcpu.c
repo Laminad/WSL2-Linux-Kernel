@@ -621,8 +621,16 @@ static void tegra124_dfll_fcpu_remove(struct platform_device *pdev)
 	 * returns *soc is freed.
 	 */
 	soc = tegra_dfll_unregister(pdev);
+<<<<<<< HEAD
 	if (IS_ERR(soc))
 		return;
+=======
+	if (IS_ERR(soc)) {
+		dev_err(&pdev->dev, "failed to unregister DFLL: %ld\n",
+			PTR_ERR(soc));
+		return PTR_ERR(soc);
+	}
+>>>>>>> master
 
 	tegra_cvb_remove_opp_table(soc->dev, soc->cvb, soc->max_freq);
 }

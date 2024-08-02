@@ -320,7 +320,11 @@ struct dw_pcie_rp {
 	struct irq_domain	*irq_domain;
 	struct irq_domain	*msi_domain;
 	dma_addr_t		msi_data;
+<<<<<<< HEAD
 	struct irq_chip		*msi_irq_chip;
+=======
+	struct page		*msi_page;
+>>>>>>> master
 	u32			num_vectors;
 	u32			irq_mask[MAX_MSI_CTRLS];
 	struct pci_host_bridge  *bridge;

@@ -63,9 +63,12 @@ struct devtable {
 	int (*do_entry)(const char *filename, void *symval, char *alias);
 };
 
+<<<<<<< HEAD
 /* Size of alias provided to do_entry functions */
 #define ALIAS_SIZE 500
 
+=======
+>>>>>>> master
 /* Define a variable f that holds the value of field f of struct devid
  * based at address m.
  */
@@ -84,7 +87,11 @@ struct devtable {
  * T[N] the variable has type T(*)[N], _not_ T*.
  */
 #define DEF_FIELD_ADDR(m, devid, f) \
+<<<<<<< HEAD
 	DEF_FIELD_ADDR_VAR(m, devid, f, f)
+=======
+	typeof(((struct devid *)0)->f) *f = ((m) + OFF_##devid##_##f)
+>>>>>>> master
 
 #define ADD(str, sep, cond, field)                              \
 do {                                                            \
@@ -734,6 +741,11 @@ static int do_vio_entry(const char *filename, void *symval,
 	add_wildcard(alias);
 	return 1;
 }
+<<<<<<< HEAD
+=======
+
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+>>>>>>> master
 
 static void do_input(char *alias,
 		     kernel_ulong_t *arr, unsigned int min, unsigned int max)
@@ -941,6 +953,7 @@ static int do_i2c_entry(const char *filename, void *symval,
 
 	return 1;
 }
+<<<<<<< HEAD
 
 static int do_i3c_entry(const char *filename, void *symval,
 			char *alias)
@@ -959,6 +972,8 @@ static int do_i3c_entry(const char *filename, void *symval,
 
 	return 1;
 }
+=======
+>>>>>>> master
 
 /* Looks like: spi:S */
 static int do_spi_entry(const char *filename, void *symval,
@@ -1344,6 +1359,7 @@ static int do_typec_entry(const char *filename, void *symval, char *alias)
 
 	return 1;
 }
+<<<<<<< HEAD
 
 /* Looks like: tee:uuid */
 static int do_tee_entry(const char *filename, void *symval, char *alias)
@@ -1477,6 +1493,8 @@ static int do_cdx_entry(const char *filename, void *symval,
 	ADD(alias, "d", device != CDX_ANY_ID, device);
 	return 1;
 }
+=======
+>>>>>>> master
 
 /* Does namelen bytes of name exactly match the symbol? */
 static bool sym_is(const char *name, unsigned namelen, const char *symbol)
@@ -1494,7 +1512,11 @@ static void do_table(void *symval, unsigned long size,
 		     struct module *mod)
 {
 	unsigned int i;
+<<<<<<< HEAD
 	char alias[ALIAS_SIZE];
+=======
+	char alias[500];
+>>>>>>> master
 
 	device_id_check(mod->name, device_id, size, id_size, symval);
 	/* Leave last one: it's the terminator. */
@@ -1529,7 +1551,10 @@ static const struct devtable devtable[] = {
 	{"vmbus", SIZE_hv_vmbus_device_id, do_vmbus_entry},
 	{"rpmsg", SIZE_rpmsg_device_id, do_rpmsg_entry},
 	{"i2c", SIZE_i2c_device_id, do_i2c_entry},
+<<<<<<< HEAD
 	{"i3c", SIZE_i3c_device_id, do_i3c_entry},
+=======
+>>>>>>> master
 	{"spi", SIZE_spi_device_id, do_spi_entry},
 	{"dmi", SIZE_dmi_system_id, do_dmi_entry},
 	{"platform", SIZE_platform_device_id, do_platform_entry},
@@ -1549,6 +1574,7 @@ static const struct devtable devtable[] = {
 	{"fslmc", SIZE_fsl_mc_device_id, do_fsl_mc_entry},
 	{"tbsvc", SIZE_tb_service_id, do_tbsvc_entry},
 	{"typec", SIZE_typec_device_id, do_typec_entry},
+<<<<<<< HEAD
 	{"tee", SIZE_tee_client_device_id, do_tee_entry},
 	{"wmi", SIZE_wmi_device_id, do_wmi_entry},
 	{"mhi", SIZE_mhi_device_id, do_mhi_entry},
@@ -1558,6 +1584,8 @@ static const struct devtable devtable[] = {
 	{"dfl", SIZE_dfl_device_id, do_dfl_entry},
 	{"ishtp", SIZE_ishtp_device_id, do_ishtp_entry},
 	{"cdx", SIZE_cdx_device_id, do_cdx_entry},
+=======
+>>>>>>> master
 };
 
 /* Create MODULE_ALIAS() statements.

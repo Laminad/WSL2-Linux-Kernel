@@ -24,7 +24,115 @@ static LIST_HEAD(f2fs_stat_list);
 static DEFINE_RAW_SPINLOCK(f2fs_stat_lock);
 #ifdef CONFIG_DEBUG_FS
 static struct dentry *f2fs_debugfs_root;
+<<<<<<< HEAD
 #endif
+=======
+static DEFINE_MUTEX(f2fs_stat_mutex);
+
+static void update_general_status(struct f2fs_sb_info *sbi)
+{
+	struct f2fs_stat_info *si = F2FS_STAT(sbi);
+	int i;
+
+	/* validation check of the segment numbers */
+	si->hit_largest = atomic64_read(&sbi->read_hit_largest);
+	si->hit_cached = atomic64_read(&sbi->read_hit_cached);
+	si->hit_rbtree = atomic64_read(&sbi->read_hit_rbtree);
+	si->hit_total = si->hit_largest + si->hit_cached + si->hit_rbtree;
+	si->total_ext = atomic64_read(&sbi->total_hit_ext);
+	si->ext_tree = atomic_read(&sbi->total_ext_tree);
+	si->zombie_tree = atomic_read(&sbi->total_zombie_tree);
+	si->ext_node = atomic_read(&sbi->total_ext_node);
+	si->ndirty_node = get_pages(sbi, F2FS_DIRTY_NODES);
+	si->ndirty_dent = get_pages(sbi, F2FS_DIRTY_DENTS);
+	si->ndirty_meta = get_pages(sbi, F2FS_DIRTY_META);
+	si->ndirty_data = get_pages(sbi, F2FS_DIRTY_DATA);
+	si->ndirty_qdata = get_pages(sbi, F2FS_DIRTY_QDATA);
+	si->ndirty_imeta = get_pages(sbi, F2FS_DIRTY_IMETA);
+	si->ndirty_dirs = sbi->ndirty_inode[DIR_INODE];
+	si->ndirty_files = sbi->ndirty_inode[FILE_INODE];
+	si->nquota_files = sbi->nquota_files;
+	si->ndirty_all = sbi->ndirty_inode[DIRTY_META];
+	si->inmem_pages = get_pages(sbi, F2FS_INMEM_PAGES);
+	si->aw_cnt = atomic_read(&sbi->aw_cnt);
+	si->vw_cnt = atomic_read(&sbi->vw_cnt);
+	si->max_aw_cnt = atomic_read(&sbi->max_aw_cnt);
+	si->max_vw_cnt = atomic_read(&sbi->max_vw_cnt);
+	si->nr_wb_cp_data = get_pages(sbi, F2FS_WB_CP_DATA);
+	si->nr_wb_data = get_pages(sbi, F2FS_WB_DATA);
+	if (SM_I(sbi) && SM_I(sbi)->fcc_info) {
+		si->nr_flushed =
+			atomic_read(&SM_I(sbi)->fcc_info->issued_flush);
+		si->nr_flushing =
+			atomic_read(&SM_I(sbi)->fcc_info->issing_flush);
+		si->flush_list_empty =
+			llist_empty(&SM_I(sbi)->fcc_info->issue_list);
+	}
+	if (SM_I(sbi) && SM_I(sbi)->dcc_info) {
+		si->nr_discarded =
+			atomic_read(&SM_I(sbi)->dcc_info->issued_discard);
+		si->nr_discarding =
+			atomic_read(&SM_I(sbi)->dcc_info->issing_discard);
+		si->nr_discard_cmd =
+			atomic_read(&SM_I(sbi)->dcc_info->discard_cmd_cnt);
+		si->undiscard_blks = SM_I(sbi)->dcc_info->undiscard_blks;
+	}
+	si->total_count = (int)sbi->user_block_count / sbi->blocks_per_seg;
+	si->rsvd_segs = reserved_segments(sbi);
+	si->overp_segs = overprovision_segments(sbi);
+	si->valid_count = valid_user_blocks(sbi);
+	si->discard_blks = discard_blocks(sbi);
+	si->valid_node_count = valid_node_count(sbi);
+	si->valid_inode_count = valid_inode_count(sbi);
+	si->inline_xattr = atomic_read(&sbi->inline_xattr);
+	si->inline_inode = atomic_read(&sbi->inline_inode);
+	si->inline_dir = atomic_read(&sbi->inline_dir);
+	si->append = sbi->im[APPEND_INO].ino_num;
+	si->update = sbi->im[UPDATE_INO].ino_num;
+	si->orphans = sbi->im[ORPHAN_INO].ino_num;
+	si->utilization = utilization(sbi);
+
+	si->free_segs = free_segments(sbi);
+	si->free_secs = free_sections(sbi);
+	si->prefree_count = prefree_segments(sbi);
+	si->dirty_count = dirty_segments(sbi);
+	if (sbi->node_inode)
+		si->node_pages = NODE_MAPPING(sbi)->nrpages;
+	if (sbi->meta_inode)
+		si->meta_pages = META_MAPPING(sbi)->nrpages;
+	si->nats = NM_I(sbi)->nat_cnt;
+	si->dirty_nats = NM_I(sbi)->dirty_nat_cnt;
+	si->sits = MAIN_SEGS(sbi);
+	si->dirty_sits = SIT_I(sbi)->dirty_sentries;
+	si->free_nids = NM_I(sbi)->nid_cnt[FREE_NID];
+	si->avail_nids = NM_I(sbi)->available_nids;
+	si->alloc_nids = NM_I(sbi)->nid_cnt[PREALLOC_NID];
+	si->bg_gc = sbi->bg_gc;
+	si->skipped_atomic_files[BG_GC] = sbi->skipped_atomic_files[BG_GC];
+	si->skipped_atomic_files[FG_GC] = sbi->skipped_atomic_files[FG_GC];
+	si->util_free = (int)(free_user_blocks(sbi) >> sbi->log_blocks_per_seg)
+		* 100 / (int)(sbi->user_block_count >> sbi->log_blocks_per_seg)
+		/ 2;
+	si->util_valid = (int)(written_block_count(sbi) >>
+						sbi->log_blocks_per_seg)
+		* 100 / (int)(sbi->user_block_count >> sbi->log_blocks_per_seg)
+		/ 2;
+	si->util_invalid = 50 - si->util_free - si->util_valid;
+	for (i = CURSEG_HOT_DATA; i <= CURSEG_COLD_NODE; i++) {
+		struct curseg_info *curseg = CURSEG_I(sbi, i);
+		si->curseg[i] = curseg->segno;
+		si->cursec[i] = GET_SEC_FROM_SEG(sbi, curseg->segno);
+		si->curzone[i] = GET_ZONE_FROM_SEC(sbi, si->cursec[i]);
+	}
+
+	for (i = 0; i < 2; i++) {
+		si->segment_count[i] = sbi->segment_count[i];
+		si->block_count[i] = sbi->block_count[i];
+	}
+
+	si->inplace_count = atomic_read(&sbi->inplace_count);
+}
+>>>>>>> master
 
 /*
  * This function calculates BDF of every segments
@@ -321,6 +429,7 @@ get_cache:
 
 	si->page_mem = 0;
 	if (sbi->node_inode) {
+<<<<<<< HEAD
 		unsigned long npages = NODE_MAPPING(sbi)->nrpages;
 
 		si->page_mem += (unsigned long long)npages << PAGE_SHIFT;
@@ -337,6 +446,15 @@ get_cache:
 		si->page_mem += (unsigned long long)npages << PAGE_SHIFT;
 	}
 #endif
+=======
+		unsigned npages = NODE_MAPPING(sbi)->nrpages;
+		si->page_mem += (unsigned long long)npages << PAGE_SHIFT;
+	}
+	if (sbi->meta_inode) {
+		unsigned npages = META_MAPPING(sbi)->nrpages;
+		si->page_mem += (unsigned long long)npages << PAGE_SHIFT;
+	}
+>>>>>>> master
 }
 
 static const char *s_flag[MAX_SBI_FLAG] = {

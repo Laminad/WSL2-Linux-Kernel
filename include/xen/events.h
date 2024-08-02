@@ -74,7 +74,12 @@ int evtchn_get(evtchn_port_t evtchn);
 void evtchn_put(evtchn_port_t evtchn);
 
 void xen_send_IPI_one(unsigned int cpu, enum ipi_vector vector);
+<<<<<<< HEAD
 void rebind_evtchn_irq(evtchn_port_t evtchn, int irq);
+=======
+void rebind_evtchn_irq(int evtchn, int irq);
+int xen_set_affinity_evtchn(struct irq_desc *desc, unsigned int tcpu);
+>>>>>>> master
 
 static inline void notify_remote_via_evtchn(evtchn_port_t port)
 {

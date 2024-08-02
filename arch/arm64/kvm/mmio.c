@@ -87,6 +87,16 @@ int kvm_handle_mmio_return(struct kvm_vcpu *vcpu)
 	/* Detect an already handled MMIO return */
 	if (unlikely(!vcpu->mmio_needed))
 		return 0;
+<<<<<<< HEAD:arch/arm64/kvm/mmio.c
+=======
+
+	vcpu->mmio_needed = 0;
+
+	if (!run->mmio.is_write) {
+		len = run->mmio.len;
+		if (len > sizeof(unsigned long))
+			return -EINVAL;
+>>>>>>> master:virt/kvm/arm/mmio.c
 
 	vcpu->mmio_needed = 0;
 
@@ -115,7 +125,38 @@ int kvm_handle_mmio_return(struct kvm_vcpu *vcpu)
 	 * The MMIO instruction is emulated and should not be re-executed
 	 * in the guest.
 	 */
+<<<<<<< HEAD:arch/arm64/kvm/mmio.c
 	kvm_incr_pc(vcpu);
+=======
+	kvm_skip_instr(vcpu, kvm_vcpu_trap_il_is32bit(vcpu));
+
+	return 0;
+}
+
+static int decode_hsr(struct kvm_vcpu *vcpu, bool *is_write, int *len)
+{
+	unsigned long rt;
+	int access_size;
+	bool sign_extend;
+
+	if (kvm_vcpu_dabt_iss1tw(vcpu)) {
+		/* page table accesses IO mem: tell guest to fix its TTBR */
+		kvm_inject_dabt(vcpu, kvm_vcpu_get_hfar(vcpu));
+		return 1;
+	}
+
+	access_size = kvm_vcpu_dabt_get_as(vcpu);
+	if (unlikely(access_size < 0))
+		return access_size;
+
+	*is_write = kvm_vcpu_dabt_iswrite(vcpu);
+	sign_extend = kvm_vcpu_dabt_issext(vcpu);
+	rt = kvm_vcpu_dabt_get_rd(vcpu);
+
+	*len = access_size;
+	vcpu->arch.mmio_decode.sign_extend = sign_extend;
+	vcpu->arch.mmio_decode.rt = rt;
+>>>>>>> master:virt/kvm/arm/mmio.c
 
 	return 0;
 }

@@ -260,6 +260,7 @@ static void dsa_master_ethtool_teardown(struct net_device *dev)
 	cpu_dp->orig_ethtool_ops = NULL;
 }
 
+<<<<<<< HEAD
 /* Keep the master always promiscuous if the tagging protocol requires that
  * (garbles MAC DA) or if it doesn't support unicast filtering, case in which
  * it would revert to promiscuous mode as soon as we call dev_uc_add() on it
@@ -355,6 +356,9 @@ static void dsa_master_reset_mtu(struct net_device *dev)
 		netdev_dbg(dev,
 			   "Unable to reset MTU to exclude DSA overheads\n");
 }
+=======
+static struct lock_class_key dsa_master_addr_list_lock_key;
+>>>>>>> master
 
 int dsa_master_setup(struct net_device *dev, struct dsa_port *cpu_dp)
 {
@@ -391,6 +395,8 @@ int dsa_master_setup(struct net_device *dev, struct dsa_port *cpu_dp)
 	wmb();
 
 	dev->dsa_ptr = cpu_dp;
+	lockdep_set_class(&dev->addr_list_lock,
+			  &dsa_master_addr_list_lock_key);
 
 	dsa_master_set_promiscuity(dev, 1);
 

@@ -343,6 +343,7 @@ static const struct qusb2_phy_cfg qusb2_v2_phy_cfg = {
 	.se_clk_scheme_default = true,
 	.autoresume_en	  = BIT(0),
 	.update_tune1_with_efuse = true,
+<<<<<<< HEAD
 };
 
 static const struct qusb2_phy_cfg sdm660_phy_cfg = {
@@ -367,6 +368,8 @@ static const struct qusb2_phy_cfg sm6115_phy_cfg = {
 	.disable_ctrl	= (CLAMP_N_EN | FREEZIO_N | POWER_DOWN),
 	.mask_core_ready = PLL_LOCKED,
 	.autoresume_en	 = BIT(3),
+=======
+>>>>>>> master
 };
 
 static const char * const qusb2_phy_vreg_names[] = {
@@ -588,10 +591,19 @@ static void qusb2_phy_set_tune2_param(struct qusb2_phy *qphy)
 	/* Fused TUNE1/2 value is the higher nibble only */
 	if (cfg->update_tune1_with_efuse)
 		qusb2_write_mask(qphy->base, cfg->regs[QUSB2PHY_PORT_TUNE1],
+<<<<<<< HEAD
 				 hstx_trim << HSTX_TRIM_SHIFT, HSTX_TRIM_MASK);
 	else
 		qusb2_write_mask(qphy->base, cfg->regs[QUSB2PHY_PORT_TUNE2],
 				 hstx_trim << HSTX_TRIM_SHIFT, HSTX_TRIM_MASK);
+=======
+				 val[0] << HSTX_TRIM_SHIFT,
+				 HSTX_TRIM_MASK);
+	else
+		qusb2_write_mask(qphy->base, cfg->regs[QUSB2PHY_PORT_TUNE2],
+				 val[0] << HSTX_TRIM_SHIFT,
+				 HSTX_TRIM_MASK);
+>>>>>>> master
 }
 
 static int qusb2_phy_set_mode(struct phy *phy,

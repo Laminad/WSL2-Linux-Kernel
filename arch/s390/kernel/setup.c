@@ -399,7 +399,7 @@ static unsigned long __init stack_alloc_early(void)
 	return stack;
 }
 
-static void __init setup_lowcore(void)
+static void __init setup_lowcore_dat_off(void)
 {
 	struct lowcore *lc, *abs_lc;
 
@@ -407,6 +407,7 @@ static void __init setup_lowcore(void)
 	 * Setup lowcore for boot cpu
 	 */
 	BUILD_BUG_ON(sizeof(struct lowcore) != LC_PAGES * PAGE_SIZE);
+<<<<<<< HEAD
 	lc = memblock_alloc_low(sizeof(*lc), sizeof(*lc));
 	if (!lc)
 		panic("%s: Failed to allocate %zu bytes align=%zx\n",
@@ -417,6 +418,15 @@ static void __init setup_lowcore(void)
 	lc->external_new_psw.mask = PSW_KERNEL_BITS | PSW_MASK_MCHECK;
 	lc->external_new_psw.addr = (unsigned long) ext_int_handler;
 	lc->svc_new_psw.mask = PSW_KERNEL_BITS | PSW_MASK_MCHECK;
+=======
+	lc = memblock_virt_alloc_low(sizeof(*lc), sizeof(*lc));
+	lc->restart_psw.mask = PSW_KERNEL_BITS;
+	lc->restart_psw.addr = (unsigned long) restart_int_handler;
+	lc->external_new_psw.mask = PSW_KERNEL_BITS | PSW_MASK_MCHECK;
+	lc->external_new_psw.addr = (unsigned long) ext_int_handler;
+	lc->svc_new_psw.mask = PSW_KERNEL_BITS |
+		PSW_MASK_IO | PSW_MASK_EXT | PSW_MASK_MCHECK;
+>>>>>>> master
 	lc->svc_new_psw.addr = (unsigned long) system_call;
 	lc->program_new_psw.mask = PSW_KERNEL_BITS | PSW_MASK_MCHECK;
 	lc->program_new_psw.addr = (unsigned long) pgm_check_handler;
@@ -481,6 +491,16 @@ static void __init setup_lowcore(void)
 	lowcore_ptr[0] = lc;
 	if (abs_lowcore_map(0, lowcore_ptr[0], false))
 		panic("Couldn't setup absolute lowcore");
+}
+
+static void __init setup_lowcore_dat_on(void)
+{
+	__ctl_clear_bit(0, 28);
+	S390_lowcore.external_new_psw.mask |= PSW_MASK_DAT;
+	S390_lowcore.svc_new_psw.mask |= PSW_MASK_DAT;
+	S390_lowcore.program_new_psw.mask |= PSW_MASK_DAT;
+	S390_lowcore.io_new_psw.mask |= PSW_MASK_DAT;
+	__ctl_set_bit(0, 28);
 }
 
 static struct resource code_resource = {
@@ -911,8 +931,11 @@ void __init setup_arch(char **cmdline_p)
 		pr_info("Linux is running natively in 64-bit mode\n");
 	else
 		pr_info("Linux is running as a guest in 64-bit mode\n");
+<<<<<<< HEAD
 
 	log_component_list();
+=======
+>>>>>>> master
 
 	/* Have one command line that is parsed and saved in /proc/cmdline */
 	/* boot_command_line has been already set up in early.c */
@@ -972,7 +995,7 @@ void __init setup_arch(char **cmdline_p)
 #endif
 
 	setup_resources();
-	setup_lowcore();
+	setup_lowcore_dat_off();
 	smp_fill_possible_mask();
 	cpu_detect_mhz_feature();
         cpu_init();
@@ -992,9 +1015,13 @@ void __init setup_arch(char **cmdline_p)
 	 * After paging_init created the kernel page table, the new PSWs
 	 * in lowcore can now run with DAT enabled.
 	 */
+<<<<<<< HEAD
 #ifdef CONFIG_CRASH_DUMP
 	smp_save_dump_ipl_cpu();
 #endif
+=======
+	setup_lowcore_dat_on();
+>>>>>>> master
 
         /* Setup default console */
 	conmode_default();

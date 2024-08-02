@@ -21,9 +21,12 @@ snd-usb-audio-objs := 	card.o \
 			quirks.o \
 			stream.o \
 			validate.o
+<<<<<<< HEAD
 
 snd-usb-audio-$(CONFIG_SND_USB_AUDIO_MIDI_V2) += midi2.o
 snd-usb-audio-$(CONFIG_SND_USB_AUDIO_USE_MEDIA_CONTROLLER) += media.o
+=======
+>>>>>>> master
 
 snd-usbmidi-lib-objs := midi.o
 

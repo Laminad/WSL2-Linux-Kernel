@@ -467,6 +467,7 @@ static int __udf_get_block(struct inode *inode, sector_t block,
 	return 0;
 }
 
+<<<<<<< HEAD
 int udf_get_block(struct inode *inode, sector_t block,
 		  struct buffer_head *bh_result, int create)
 {
@@ -495,6 +496,8 @@ static int udf_get_block_wb(struct inode *inode, sector_t block,
 	return __udf_get_block(inode, block, bh_result, 0);
 }
 
+=======
+>>>>>>> master
 /* Extend the file with new blocks totaling 'new_block_bytes',
  * return the number of extents added
  */
@@ -631,6 +634,24 @@ static void udf_do_extend_final_block(struct inode *inode,
 			last_ext->extLength, 1);
 }
 
+/* Extend the final block of the file to final_block_len bytes */
+static void udf_do_extend_final_block(struct inode *inode,
+				      struct extent_position *last_pos,
+				      struct kernel_long_ad *last_ext,
+				      uint32_t final_block_len)
+{
+	struct super_block *sb = inode->i_sb;
+	uint32_t added_bytes;
+
+	added_bytes = final_block_len -
+		      (last_ext->extLength & (sb->s_blocksize - 1));
+	last_ext->extLength += added_bytes;
+	UDF_I(inode)->i_lenExtents += added_bytes;
+
+	udf_write_aext(inode, last_pos, &last_ext->extLocation,
+			last_ext->extLength, 1);
+}
+
 static int udf_extend_file(struct inode *inode, loff_t newsize)
 {
 
@@ -640,12 +661,20 @@ static int udf_extend_file(struct inode *inode, loff_t newsize)
 	int8_t etype;
 	struct super_block *sb = inode->i_sb;
 	sector_t first_block = newsize >> sb->s_blocksize_bits, offset;
+<<<<<<< HEAD
 	loff_t new_elen;
+=======
+	unsigned long partial_final_block;
+>>>>>>> master
 	int adsize;
 	struct udf_inode_info *iinfo = UDF_I(inode);
 	struct kernel_long_ad extent;
 	int err = 0;
+<<<<<<< HEAD
 	bool within_last_ext;
+=======
+	int within_final_block;
+>>>>>>> master
 
 	if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
 		adsize = sizeof(struct short_ad);
@@ -662,10 +691,14 @@ static int udf_extend_file(struct inode *inode, loff_t newsize)
 	udf_discard_prealloc(inode);
 
 	etype = inode_bmap(inode, first_block, &epos, &eloc, &elen, &offset);
+<<<<<<< HEAD
 	within_last_ext = (etype != -1);
 	/* We don't expect extents past EOF... */
 	WARN_ON_ONCE(within_last_ext &&
 		     elen > ((loff_t)offset + 1) << inode->i_blkbits);
+=======
+	within_final_block = (etype != -1);
+>>>>>>> master
 
 	if ((!epos.bh && epos.offset == udf_file_entry_alloc_offset(inode)) ||
 	    (epos.bh && epos.offset == sizeof(struct allocExtDesc))) {
@@ -681,17 +714,32 @@ static int udf_extend_file(struct inode *inode, loff_t newsize)
 		extent.extLength |= etype << 30;
 	}
 
+<<<<<<< HEAD
 	new_elen = ((loff_t)offset << inode->i_blkbits) |
 					(newsize & (sb->s_blocksize - 1));
+=======
+	partial_final_block = newsize & (sb->s_blocksize - 1);
+>>>>>>> master
 
 	/* File has extent covering the new size (could happen when extending
 	 * inside a block)?
 	 */
+<<<<<<< HEAD
 	if (within_last_ext) {
 		/* Extending file within the last file block */
 		udf_do_extend_final_block(inode, &epos, &extent, new_elen);
 	} else {
 		err = udf_do_extend_file(inode, &epos, &extent, new_elen);
+=======
+	if (within_final_block) {
+		/* Extending file within the last file block */
+		udf_do_extend_final_block(inode, &epos, &extent,
+					  partial_final_block);
+	} else {
+		loff_t add = ((loff_t)offset << sb->s_blocksize_bits) |
+			     partial_final_block;
+		err = udf_do_extend_file(inode, &epos, &extent, add);
+>>>>>>> master
 	}
 
 	if (err < 0)
@@ -796,8 +844,13 @@ static int inode_getblk(struct inode *inode, struct udf_map_rq *map)
 
 	/* Are we beyond EOF and preallocated extent? */
 	if (etype == -1) {
+<<<<<<< HEAD
 		loff_t hole_len;
 
+=======
+		int ret;
+		loff_t hole_len;
+>>>>>>> master
 		isBeyondEOF = true;
 		if (count) {
 			if (c)
@@ -815,7 +868,13 @@ static int inode_getblk(struct inode *inode, struct udf_map_rq *map)
 		/* Create extents for the hole between EOF and offset */
 		hole_len = (loff_t)offset << inode->i_blkbits;
 		ret = udf_do_extend_file(inode, &prev_epos, laarr, hole_len);
+<<<<<<< HEAD
 		if (ret < 0)
+=======
+		if (ret < 0) {
+			*err = ret;
+			newblock = 0;
+>>>>>>> master
 			goto out_free;
 		c = 0;
 		offset = 0;
@@ -1417,7 +1476,10 @@ reread:
 		ret = -EIO;
 		goto out;
 	}
+<<<<<<< HEAD
 	iinfo->i_hidden = hidden_inode;
+=======
+>>>>>>> master
 	iinfo->i_unique = 0;
 	iinfo->i_lenEAttr = 0;
 	iinfo->i_lenExtents = 0;

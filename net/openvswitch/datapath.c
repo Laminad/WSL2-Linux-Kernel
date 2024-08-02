@@ -2379,7 +2379,11 @@ static int ovs_vport_cmd_set(struct sk_buff *skb, struct genl_info *info)
 
 	err = ovs_vport_cmd_fill_info(vport, reply, genl_info_net(info),
 				      info->snd_portid, info->snd_seq, 0,
+<<<<<<< HEAD
 				      OVS_VPORT_CMD_SET, GFP_KERNEL);
+=======
+				      OVS_VPORT_CMD_NEW, GFP_ATOMIC);
+>>>>>>> master
 	BUG_ON(err < 0);
 
 	ovs_unlock();
@@ -2466,7 +2470,11 @@ static int ovs_vport_cmd_get(struct sk_buff *skb, struct genl_info *info)
 		goto exit_unlock_free;
 	err = ovs_vport_cmd_fill_info(vport, reply, genl_info_net(info),
 				      info->snd_portid, info->snd_seq, 0,
+<<<<<<< HEAD
 				      OVS_VPORT_CMD_GET, GFP_ATOMIC);
+=======
+				      OVS_VPORT_CMD_NEW, GFP_ATOMIC);
+>>>>>>> master
 	BUG_ON(err < 0);
 	rcu_read_unlock();
 
@@ -2502,7 +2510,11 @@ static int ovs_vport_cmd_dump(struct sk_buff *skb, struct netlink_callback *cb)
 						    NETLINK_CB(cb->skb).portid,
 						    cb->nlh->nlmsg_seq,
 						    NLM_F_MULTI,
+<<<<<<< HEAD
 						    OVS_VPORT_CMD_GET,
+=======
+						    OVS_VPORT_CMD_NEW,
+>>>>>>> master
 						    GFP_ATOMIC) < 0)
 				goto out;
 

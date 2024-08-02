@@ -113,8 +113,13 @@ static int nft_lookup_init(const struct nft_ctx *ctx,
 	if (IS_ERR(set))
 		return PTR_ERR(set);
 
+<<<<<<< HEAD
 	err = nft_parse_register_load(tb[NFTA_LOOKUP_SREG], &priv->sreg,
 				      set->klen);
+=======
+	priv->sreg = nft_parse_register(tb[NFTA_LOOKUP_SREG]);
+	err = nft_validate_register_load(priv->sreg, set->klen);
+>>>>>>> master
 	if (err < 0)
 		return err;
 
@@ -172,7 +177,11 @@ static void nft_lookup_activate(const struct nft_ctx *ctx,
 {
 	struct nft_lookup *priv = nft_expr_priv(expr);
 
+<<<<<<< HEAD
 	nf_tables_activate_set(ctx, priv->set);
+=======
+	priv->set->use++;
+>>>>>>> master
 }
 
 static void nft_lookup_destroy(const struct nft_ctx *ctx,

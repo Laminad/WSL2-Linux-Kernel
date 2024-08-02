@@ -788,10 +788,13 @@ static void batadv_iv_ogm_schedule_buff(struct batadv_hard_iface *hard_iface)
 	unsigned long send_time;
 
 	lockdep_assert_held(&hard_iface->bat_iv.ogm_buff_mutex);
+<<<<<<< HEAD
 
 	/* interface already disabled by batadv_iv_ogm_iface_disable */
 	if (!*ogm_buff)
 		return;
+=======
+>>>>>>> master
 
 	/* the interface gets activated here to avoid race conditions between
 	 * the moment of activating the interface in
@@ -896,6 +899,17 @@ static u8 batadv_iv_orig_ifinfo_sum(struct batadv_orig_node *orig_node,
 	batadv_orig_ifinfo_put(orig_ifinfo);
 
 	return sum;
+}
+
+static void batadv_iv_ogm_schedule(struct batadv_hard_iface *hard_iface)
+{
+	if (hard_iface->if_status == BATADV_IF_NOT_IN_USE ||
+	    hard_iface->if_status == BATADV_IF_TO_BE_REMOVED)
+		return;
+
+	mutex_lock(&hard_iface->bat_iv.ogm_buff_mutex);
+	batadv_iv_ogm_schedule_buff(hard_iface);
+	mutex_unlock(&hard_iface->bat_iv.ogm_buff_mutex);
 }
 
 /**

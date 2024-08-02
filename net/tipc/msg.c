@@ -615,6 +615,52 @@ none:
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * tipc_msg_make_bundle(): Create bundle buf and append message to its tail
+ * @list: the buffer chain, where head is the buffer to replace/append
+ * @skb: buffer to be created, appended to and returned in case of success
+ * @msg: message to be appended
+ * @mtu: max allowable size for the bundle buffer, inclusive header
+ * @dnode: destination node for message. (Not always present in header)
+ * Returns true if success, otherwise false
+ */
+bool tipc_msg_make_bundle(struct sk_buff **skb,  struct tipc_msg *msg,
+			  u32 mtu, u32 dnode)
+{
+	struct sk_buff *_skb;
+	struct tipc_msg *bmsg;
+	u32 msz = msg_size(msg);
+	u32 max = mtu - INT_H_SIZE;
+
+	if (msg_user(msg) == MSG_FRAGMENTER)
+		return false;
+	if (msg_user(msg) == TUNNEL_PROTOCOL)
+		return false;
+	if (msg_user(msg) == BCAST_PROTOCOL)
+		return false;
+	if (msz > (max / 2))
+		return false;
+
+	_skb = tipc_buf_acquire(max, GFP_ATOMIC);
+	if (!_skb)
+		return false;
+
+	skb_trim(_skb, INT_H_SIZE);
+	bmsg = buf_msg(_skb);
+	tipc_msg_init(msg_prevnode(msg), bmsg, MSG_BUNDLER, 0,
+		      INT_H_SIZE, dnode);
+	msg_set_importance(bmsg, msg_importance(msg));
+	msg_set_seqno(bmsg, msg_seqno(msg));
+	msg_set_ack(bmsg, msg_ack(msg));
+	msg_set_bcast_ack(bmsg, msg_bcast_ack(msg));
+	tipc_msg_bundle(_skb, msg, mtu);
+	*skb = _skb;
+	return true;
+}
+
+/**
+>>>>>>> master
  * tipc_msg_reverse(): swap source and destination addresses and add error code
  * @own_node: originating node id for reversed message
  * @skb:  buffer containing message to be reversed; will be consumed

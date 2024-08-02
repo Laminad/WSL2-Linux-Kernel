@@ -894,9 +894,12 @@ static int rds_rm_size(struct msghdr *msg, int num_sgs,
 	int retval;
 	bool zcopy_cookie = false;
 	struct rds_iov_vector *iov, *tmp_iov;
+<<<<<<< HEAD
 
 	if (num_sgs < 0)
 		return -EINVAL;
+=======
+>>>>>>> master
 
 	for_each_cmsghdr(cmsg, msg) {
 		if (!CMSG_OK(msg, cmsg))
@@ -1312,7 +1315,14 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 
 	/* Parse any control messages the user may have included. */
 	ret = rds_cmsg_send(rs, rm, msg, &allocated_mr, &vct);
+<<<<<<< HEAD
 	if (ret)
+=======
+	if (ret) {
+		/* Trigger connection so that its ready for the next retry */
+		if (ret ==  -EAGAIN)
+			rds_conn_connect_if_down(conn);
+>>>>>>> master
 		goto out;
 
 	if (rm->rdma.op_active && !conn->c_trans->xmit_rdma) {

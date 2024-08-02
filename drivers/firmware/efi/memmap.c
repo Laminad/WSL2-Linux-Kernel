@@ -83,7 +83,11 @@ void __init efi_memmap_unmap(void)
 	if (!efi_enabled(EFI_MEMMAP))
 		return;
 
+<<<<<<< HEAD
 	if (!(efi.memmap.flags & EFI_MEMMAP_LATE)) {
+=======
+	if (!efi.memmap.late) {
+>>>>>>> master
 		unsigned long size;
 
 		size = efi.memmap.desc_size * efi.memmap.nr_map;

@@ -109,9 +109,20 @@ static void fuse_file_put(struct fuse_file *ff, bool sync, bool isdir)
 	if (refcount_dec_and_test(&ff->count)) {
 		struct fuse_args *args = &ff->release_args->args;
 
+<<<<<<< HEAD
 		if (isdir ? ff->fm->fc->no_opendir : ff->fm->fc->no_open) {
 			/* Do nothing when client does not implement 'open' */
 			fuse_release_end(ff->fm, args, 0);
+=======
+		if (ff->fc->no_open && !isdir) {
+			/*
+			 * Drop the release request when client does not
+			 * implement 'open'
+			 */
+			__clear_bit(FR_BACKGROUND, &req->flags);
+			iput(req->misc.release.inode);
+			fuse_put_request(ff->fc, req);
+>>>>>>> master
 		} else if (sync) {
 			fuse_simple_request(ff->fm, args);
 			fuse_release_end(ff->fm, args, 0);
@@ -199,6 +210,13 @@ void fuse_finish_open(struct inode *inode, struct file *file)
 	struct fuse_file *ff = file->private_data;
 	struct fuse_conn *fc = get_fuse_conn(inode);
 
+<<<<<<< HEAD
+=======
+	if (ff->open_flags & FOPEN_DIRECT_IO)
+		file->f_op = &fuse_direct_io_file_operations;
+	if (!(ff->open_flags & FOPEN_KEEP_CACHE))
+		invalidate_inode_pages2(inode->i_mapping);
+>>>>>>> master
 	if (ff->open_flags & FOPEN_STREAM)
 		stream_open(inode, file);
 	else if (ff->open_flags & FOPEN_NONSEEKABLE)
@@ -236,8 +254,14 @@ int fuse_open_common(struct inode *inode, struct file *file, bool isdir)
 	if (err)
 		return err;
 
+<<<<<<< HEAD
 	if (is_wb_truncate || dax_truncate)
+=======
+	if (is_wb_truncate) {
+>>>>>>> master
 		inode_lock(inode);
+		fuse_set_nowrite(inode);
+	}
 
 	if (dax_truncate) {
 		filemap_invalidate_lock(inode->i_mapping);
@@ -253,6 +277,7 @@ int fuse_open_common(struct inode *inode, struct file *file, bool isdir)
 	if (!err)
 		fuse_finish_open(inode, file);
 
+<<<<<<< HEAD
 	if (is_wb_truncate || dax_truncate)
 		fuse_release_nowrite(inode);
 	if (!err) {
@@ -267,7 +292,12 @@ int fuse_open_common(struct inode *inode, struct file *file, bool isdir)
 		filemap_invalidate_unlock(inode->i_mapping);
 out_inode_unlock:
 	if (is_wb_truncate || dax_truncate)
+=======
+	if (is_wb_truncate) {
+		fuse_release_nowrite(inode);
+>>>>>>> master
 		inode_unlock(inode);
+	}
 
 	return err;
 }
@@ -302,11 +332,18 @@ static void fuse_prepare_release(struct fuse_inode *fi, struct fuse_file *ff,
 	ra->args.nocreds = true;
 }
 
+<<<<<<< HEAD
 void fuse_file_release(struct inode *inode, struct fuse_file *ff,
 		       unsigned int open_flags, fl_owner_t id, bool isdir)
 {
 	struct fuse_inode *fi = get_fuse_inode(inode);
 	struct fuse_release_args *ra = ff->release_args;
+=======
+void fuse_release_common(struct file *file, bool isdir)
+{
+	struct fuse_file *ff = file->private_data;
+	struct fuse_req *req = ff->reserved_req;
+>>>>>>> master
 	int opcode = isdir ? FUSE_RELEASEDIR : FUSE_RELEASE;
 
 	fuse_prepare_release(fi, ff, open_flags, opcode);
@@ -327,6 +364,7 @@ void fuse_file_release(struct inode *inode, struct fuse_file *ff,
 	 * synchronous RELEASE is allowed (and desirable) in this case
 	 * because the server can be trusted not to screw up.
 	 */
+<<<<<<< HEAD
 	fuse_file_put(ff, ff->fm->fc->destroy, isdir);
 }
 
@@ -334,6 +372,9 @@ void fuse_release_common(struct file *file, bool isdir)
 {
 	fuse_file_release(file_inode(file), file->private_data, file->f_flags,
 			  (fl_owner_t) file, isdir);
+=======
+	fuse_file_put(ff, ff->fc->destroy_req != NULL, isdir);
+>>>>>>> master
 }
 
 static int fuse_open(struct inode *inode, struct file *file)
@@ -923,10 +964,15 @@ static void fuse_readpages_end(struct fuse_mount *fm, struct fuse_args *args,
 		unlock_page(page);
 		put_page(page);
 	}
+<<<<<<< HEAD
 	if (ia->ff)
 		fuse_file_put(ia->ff, false, false);
 
 	fuse_io_free(ia);
+=======
+	if (req->ff)
+		fuse_file_put(req->ff, false, false);
+>>>>>>> master
 }
 
 static void fuse_send_readpages(struct fuse_io_args *ia, struct file *file)
@@ -1627,6 +1673,7 @@ static ssize_t fuse_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
 	if (fuse_is_bad(inode))
 		return -EIO;
 
+<<<<<<< HEAD
 	if (FUSE_IS_DAX(inode))
 		return fuse_dax_read_iter(iocb, to);
 
@@ -1634,6 +1681,10 @@ static ssize_t fuse_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
 		return fuse_cache_read_iter(iocb, to);
 	else
 		return fuse_direct_read_iter(iocb, to);
+=======
+	if (req->ff)
+		fuse_file_put(req->ff, false, false);
+>>>>>>> master
 }
 
 static ssize_t fuse_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
@@ -1759,7 +1810,11 @@ __acquires(fi->lock)
 	struct fuse_mount *fm = get_fuse_mount(inode);
 	struct fuse_inode *fi = get_fuse_inode(inode);
 	loff_t crop = i_size_read(inode);
+<<<<<<< HEAD
 	struct fuse_writepage_args *wpa;
+=======
+	struct fuse_req *req;
+>>>>>>> master
 
 	while (fi->writectr >= 0 && !list_empty(&fi->queued_writes)) {
 		wpa = list_entry(fi->queued_writes.next,
@@ -2138,7 +2193,11 @@ static bool fuse_writepage_add(struct fuse_writepage_args *new_wpa,
 		struct backing_dev_info *bdi = inode_to_bdi(new_wpa->inode);
 
 		dec_wb_stat(&bdi->wb, WB_WRITEBACK);
+<<<<<<< HEAD
 		dec_node_page_state(new_ap->pages[0], NR_WRITEBACK_TEMP);
+=======
+		dec_node_page_state(new_req->pages[0], NR_WRITEBACK_TEMP);
+>>>>>>> master
 		wb_writeout_inc(&bdi->wb);
 		fuse_writepage_free(new_wpa);
 	}
@@ -3022,6 +3081,7 @@ static long fuse_file_fallocate(struct file *file, int mode, loff_t offset,
 			goto out;
 	}
 
+<<<<<<< HEAD
 	if (mode & (FALLOC_FL_PUNCH_HOLE | FALLOC_FL_ZERO_RANGE)) {
 		loff_t endbyte = offset + length - 1;
 
@@ -3030,6 +3090,8 @@ static long fuse_file_fallocate(struct file *file, int mode, loff_t offset,
 			goto out;
 	}
 
+=======
+>>>>>>> master
 	if (!(mode & FALLOC_FL_KEEP_SIZE) &&
 	    offset + length > i_size_read(inode)) {
 		err = inode_newsize_ok(inode, offset + length);
@@ -3037,10 +3099,13 @@ static long fuse_file_fallocate(struct file *file, int mode, loff_t offset,
 			goto out;
 	}
 
+<<<<<<< HEAD
 	err = file_modified(file);
 	if (err)
 		goto out;
 
+=======
+>>>>>>> master
 	if (!(mode & FALLOC_FL_KEEP_SIZE))
 		set_bit(FUSE_I_SIZE_UNSTABLE, &fi->state);
 

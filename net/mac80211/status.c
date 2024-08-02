@@ -1163,6 +1163,7 @@ void ieee80211_tx_status_ext(struct ieee80211_hw *hw,
 				if (sta->deflink.status_stats.lost_packets)
 					sta->deflink.status_stats.lost_packets = 0;
 
+<<<<<<< HEAD
 				/* Track when last packet was ACKed */
 				sta->deflink.status_stats.last_pkt_time = jiffies;
 
@@ -1191,6 +1192,15 @@ void ieee80211_tx_status_ext(struct ieee80211_hw *hw,
 			} else {
 				ieee80211_lost_packet(sta, info);
 			}
+=======
+			/* Track when last TDLS packet was ACKed */
+			if (test_sta_flag(sta, WLAN_STA_TDLS_PEER_AUTH))
+				sta->status_stats.last_tdls_pkt_time = jiffies;
+		} else if (test_sta_flag(sta, WLAN_STA_PS_STA)) {
+			return;
+		} else {
+			ieee80211_lost_packet(sta, info);
+>>>>>>> master
 		}
 
 		rate_control_tx_status(local, status);

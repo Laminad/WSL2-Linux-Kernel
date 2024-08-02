@@ -246,7 +246,11 @@ static ssize_t unbind_store(struct device_driver *drv, const char *buf,
 	bus_put(bus);
 	return err;
 }
+<<<<<<< HEAD
 static DRIVER_ATTR_IGNORE_LOCKDEP(unbind, 0200, NULL, unbind_store);
+=======
+static DRIVER_ATTR_IGNORE_LOCKDEP(unbind, S_IWUSR, NULL, unbind_store);
+>>>>>>> master
 
 /*
  * Manually attach a device to a driver.
@@ -272,7 +276,11 @@ static ssize_t bind_store(struct device_driver *drv, const char *buf,
 	bus_put(bus);
 	return err;
 }
+<<<<<<< HEAD
 static DRIVER_ATTR_IGNORE_LOCKDEP(bind, 0200, NULL, bind_store);
+=======
+static DRIVER_ATTR_IGNORE_LOCKDEP(bind, S_IWUSR, NULL, bind_store);
+>>>>>>> master
 
 static ssize_t drivers_autoprobe_show(const struct bus_type *bus, char *buf)
 {
@@ -818,6 +826,7 @@ static void klist_devices_put(struct klist_node *n)
 static ssize_t bus_uevent_store(const struct bus_type *bus,
 				const char *buf, size_t count)
 {
+<<<<<<< HEAD
 	struct subsys_private *sp = bus_to_subsys(bus);
 	int ret;
 
@@ -830,6 +839,12 @@ static ssize_t bus_uevent_store(const struct bus_type *bus,
 	if (ret)
 		return ret;
 	return count;
+=======
+	int rc;
+
+	rc = kobject_synth_uevent(&bus->p->subsys.kobj, buf, count);
+	return rc ? rc : count;
+>>>>>>> master
 }
 /*
  * "open code" the old BUS_ATTR() macro here.  We want to use BUS_ATTR_WO()

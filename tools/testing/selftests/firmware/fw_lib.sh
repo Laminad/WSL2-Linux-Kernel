@@ -118,12 +118,15 @@ verify_reqs()
 		if [ ! "$HAS_FW_LOADER_USER_HELPER" = "yes" ]; then
 			echo "usermode helper disabled so ignoring test"
 			exit 0
+<<<<<<< HEAD
 		fi
 	fi
 	if [ "$TEST_REQS_FW_UPLOAD" = "yes" ]; then
 		if [ ! "$HAS_FW_UPLOAD" = "yes" ]; then
 			echo "firmware upload disabled so ignoring test"
 			exit 0
+=======
+>>>>>>> master
 		fi
 	fi
 }

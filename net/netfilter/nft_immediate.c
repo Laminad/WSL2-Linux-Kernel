@@ -180,6 +180,9 @@ static void nft_immediate_deactivate(const struct nft_ctx *ctx,
 	if (phase == NFT_TRANS_COMMIT)
 		return;
 
+	if (phase == NFT_TRANS_COMMIT)
+		return;
+
 	return nft_data_release(&priv->data, nft_dreg_to_type(priv->dreg));
 }
 

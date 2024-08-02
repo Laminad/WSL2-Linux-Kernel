@@ -156,6 +156,7 @@ static bool glock_blocked_by_withdraw(struct gfs2_glock *gl)
 {
 	struct gfs2_sbd *sdp = gl->gl_name.ln_sbd;
 
+<<<<<<< HEAD
 	if (!gfs2_withdrawing_or_withdrawn(sdp))
 		return false;
 	if (gl->gl_ops->go_flags & GLOF_NONDISK)
@@ -168,6 +169,9 @@ static bool glock_blocked_by_withdraw(struct gfs2_glock *gl)
 
 static void __gfs2_glock_free(struct gfs2_glock *gl)
 {
+=======
+	BUG_ON(atomic_read(&gl->gl_revokes));
+>>>>>>> master
 	rhashtable_remove_fast(&gl_hash_table, &gl->gl_node, ht_parms);
 	smp_mb();
 	wake_up_glock(gl);
@@ -246,7 +250,12 @@ void gfs2_glock_add_to_lru(struct gfs2_glock *gl)
 
 	spin_lock(&lru_lock);
 
+<<<<<<< HEAD
 	list_move_tail(&gl->gl_lru, &lru_list);
+=======
+	list_del(&gl->gl_lru);
+	list_add_tail(&gl->gl_lru, &lru_list);
+>>>>>>> master
 
 	if (!test_bit(GLF_LRU, &gl->gl_flags)) {
 		set_bit(GLF_LRU, &gl->gl_flags);
@@ -1662,7 +1671,10 @@ static void __gfs2_glock_dq(struct gfs2_holder *gh)
 		if (list_empty(&gl->gl_holders))
 			fast_path = 1;
 	}
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 	if (!test_bit(GLF_LFLUSH, &gl->gl_flags) && demote_ok(gl))
 		gfs2_glock_add_to_lru(gl);
 
@@ -2044,6 +2056,7 @@ static long gfs2_scan_glock_lru(int nr)
 			break;
 		/* Test for being demotable */
 		if (!test_bit(GLF_LOCK, &gl->gl_flags)) {
+<<<<<<< HEAD
 			if (!spin_trylock(&gl->gl_lockref.lock))
 				continue;
 			if (gl->gl_lockref.count <= 1 &&
@@ -2054,6 +2067,13 @@ static long gfs2_scan_glock_lru(int nr)
 				freed++;
 			}
 			spin_unlock(&gl->gl_lockref.lock);
+=======
+			list_move(&gl->gl_lru, &dispose);
+			atomic_dec(&lru_count);
+			clear_bit(GLF_LRU, &gl->gl_flags);
+			freed++;
+			continue;
+>>>>>>> master
 		}
 	}
 	if (!list_empty(&dispose))

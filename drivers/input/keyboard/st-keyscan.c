@@ -168,7 +168,12 @@ static int keyscan_probe(struct platform_device *pdev)
 
 	input_set_drvdata(input_dev, keypad_data);
 
+<<<<<<< HEAD
 	keypad_data->base = devm_platform_get_and_ioremap_resource(pdev, 0, NULL);
+=======
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	keypad_data->base = devm_ioremap_resource(&pdev->dev, res);
+>>>>>>> master
 	if (IS_ERR(keypad_data->base))
 		return PTR_ERR(keypad_data->base);
 

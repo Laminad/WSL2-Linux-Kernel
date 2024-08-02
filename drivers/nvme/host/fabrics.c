@@ -622,6 +622,66 @@ static struct nvmf_transport_ops *nvmf_lookup_transport(
 	return NULL;
 }
 
+<<<<<<< HEAD
+=======
+/*
+ * For something we're not in a state to send to the device the default action
+ * is to busy it and retry it after the controller state is recovered.  However,
+ * if the controller is deleting or if anything is marked for failfast or
+ * nvme multipath it is immediately failed.
+ *
+ * Note: commands used to initialize the controller will be marked for failfast.
+ * Note: nvme cli/ioctl commands are marked for failfast.
+ */
+blk_status_t nvmf_fail_nonready_command(struct nvme_ctrl *ctrl,
+		struct request *rq)
+{
+	if (ctrl->state != NVME_CTRL_DELETING &&
+	    ctrl->state != NVME_CTRL_DEAD &&
+	    !blk_noretry_request(rq) && !(rq->cmd_flags & REQ_NVME_MPATH))
+		return BLK_STS_RESOURCE;
+
+	nvme_req(rq)->status = NVME_SC_HOST_PATH_ERROR;
+	blk_mq_start_request(rq);
+	nvme_complete_rq(rq);
+	return BLK_STS_OK;
+}
+EXPORT_SYMBOL_GPL(nvmf_fail_nonready_command);
+
+bool __nvmf_check_ready(struct nvme_ctrl *ctrl, struct request *rq,
+		bool queue_live)
+{
+	struct nvme_request *req = nvme_req(rq);
+
+	/*
+	 * If we are in some state of setup or teardown only allow
+	 * internally generated commands.
+	 */
+	if (!blk_rq_is_passthrough(rq) || (req->flags & NVME_REQ_USERCMD))
+		return false;
+
+	/*
+	 * Only allow commands on a live queue, except for the connect command,
+	 * which is require to set the queue live in the appropinquate states.
+	 */
+	switch (ctrl->state) {
+	case NVME_CTRL_NEW:
+	case NVME_CTRL_CONNECTING:
+		if (req->cmd->common.opcode == nvme_fabrics_command &&
+		    req->cmd->fabrics.fctype == nvme_fabrics_type_connect)
+			return true;
+		break;
+	default:
+		break;
+	case NVME_CTRL_DEAD:
+		return false;
+	}
+
+	return queue_live;
+}
+EXPORT_SYMBOL_GPL(__nvmf_check_ready);
+
+>>>>>>> master
 static const match_table_t opt_tokens = {
 	{ NVMF_OPT_TRANSPORT,		"transport=%s"		},
 	{ NVMF_OPT_TRADDR,		"traddr=%s"		},

@@ -2807,6 +2807,160 @@ static void f1x_map_sysaddr_to_csrow(struct mem_ctl_info *mci, u64 sys_addr,
 }
 
 /*
+<<<<<<< HEAD
+=======
+ * debug routine to display the memory sizes of all logical DIMMs and its
+ * CSROWs
+ */
+static void debug_display_dimm_sizes(struct amd64_pvt *pvt, u8 ctrl)
+{
+	int dimm, size0, size1;
+	u32 *dcsb = ctrl ? pvt->csels[1].csbases : pvt->csels[0].csbases;
+	u32 dbam  = ctrl ? pvt->dbam1 : pvt->dbam0;
+
+	if (pvt->fam == 0xf) {
+		/* K8 families < revF not supported yet */
+	       if (pvt->ext_model < K8_REV_F)
+			return;
+	       else
+		       WARN_ON(ctrl != 0);
+	}
+
+	if (pvt->fam == 0x10) {
+		dbam = (ctrl && !dct_ganging_enabled(pvt)) ? pvt->dbam1
+							   : pvt->dbam0;
+		dcsb = (ctrl && !dct_ganging_enabled(pvt)) ?
+				 pvt->csels[1].csbases :
+				 pvt->csels[0].csbases;
+	} else if (ctrl) {
+		dbam = pvt->dbam0;
+		dcsb = pvt->csels[1].csbases;
+	}
+	edac_dbg(1, "F2x%d80 (DRAM Bank Address Mapping): 0x%08x\n",
+		 ctrl, dbam);
+
+	edac_printk(KERN_DEBUG, EDAC_MC, "DCT%d chip selects:\n", ctrl);
+
+	/* Dump memory sizes for DIMM and its CSROWs */
+	for (dimm = 0; dimm < 4; dimm++) {
+
+		size0 = 0;
+		if (dcsb[dimm*2] & DCSB_CS_ENABLE)
+			/*
+			 * For F15m60h, we need multiplier for LRDIMM cs_size
+			 * calculation. We pass dimm value to the dbam_to_cs
+			 * mapper so we can find the multiplier from the
+			 * corresponding DCSM.
+			 */
+			size0 = pvt->ops->dbam_to_cs(pvt, ctrl,
+						     DBAM_DIMM(dimm, dbam),
+						     dimm);
+
+		size1 = 0;
+		if (dcsb[dimm*2 + 1] & DCSB_CS_ENABLE)
+			size1 = pvt->ops->dbam_to_cs(pvt, ctrl,
+						     DBAM_DIMM(dimm, dbam),
+						     dimm);
+
+		amd64_info(EDAC_MC ": %d: %5dMB %d: %5dMB\n",
+				dimm * 2,     size0,
+				dimm * 2 + 1, size1);
+	}
+}
+
+static struct amd64_family_type family_types[] = {
+	[K8_CPUS] = {
+		.ctl_name = "K8",
+		.f1_id = PCI_DEVICE_ID_AMD_K8_NB_ADDRMAP,
+		.f2_id = PCI_DEVICE_ID_AMD_K8_NB_MEMCTL,
+		.ops = {
+			.early_channel_count	= k8_early_channel_count,
+			.map_sysaddr_to_csrow	= k8_map_sysaddr_to_csrow,
+			.dbam_to_cs		= k8_dbam_to_chip_select,
+		}
+	},
+	[F10_CPUS] = {
+		.ctl_name = "F10h",
+		.f1_id = PCI_DEVICE_ID_AMD_10H_NB_MAP,
+		.f2_id = PCI_DEVICE_ID_AMD_10H_NB_DRAM,
+		.ops = {
+			.early_channel_count	= f1x_early_channel_count,
+			.map_sysaddr_to_csrow	= f1x_map_sysaddr_to_csrow,
+			.dbam_to_cs		= f10_dbam_to_chip_select,
+		}
+	},
+	[F15_CPUS] = {
+		.ctl_name = "F15h",
+		.f1_id = PCI_DEVICE_ID_AMD_15H_NB_F1,
+		.f2_id = PCI_DEVICE_ID_AMD_15H_NB_F2,
+		.ops = {
+			.early_channel_count	= f1x_early_channel_count,
+			.map_sysaddr_to_csrow	= f1x_map_sysaddr_to_csrow,
+			.dbam_to_cs		= f15_dbam_to_chip_select,
+		}
+	},
+	[F15_M30H_CPUS] = {
+		.ctl_name = "F15h_M30h",
+		.f1_id = PCI_DEVICE_ID_AMD_15H_M30H_NB_F1,
+		.f2_id = PCI_DEVICE_ID_AMD_15H_M30H_NB_F2,
+		.ops = {
+			.early_channel_count	= f1x_early_channel_count,
+			.map_sysaddr_to_csrow	= f1x_map_sysaddr_to_csrow,
+			.dbam_to_cs		= f16_dbam_to_chip_select,
+		}
+	},
+	[F15_M60H_CPUS] = {
+		.ctl_name = "F15h_M60h",
+		.f1_id = PCI_DEVICE_ID_AMD_15H_M60H_NB_F1,
+		.f2_id = PCI_DEVICE_ID_AMD_15H_M60H_NB_F2,
+		.ops = {
+			.early_channel_count	= f1x_early_channel_count,
+			.map_sysaddr_to_csrow	= f1x_map_sysaddr_to_csrow,
+			.dbam_to_cs		= f15_m60h_dbam_to_chip_select,
+		}
+	},
+	[F16_CPUS] = {
+		.ctl_name = "F16h",
+		.f1_id = PCI_DEVICE_ID_AMD_16H_NB_F1,
+		.f2_id = PCI_DEVICE_ID_AMD_16H_NB_F2,
+		.ops = {
+			.early_channel_count	= f1x_early_channel_count,
+			.map_sysaddr_to_csrow	= f1x_map_sysaddr_to_csrow,
+			.dbam_to_cs		= f16_dbam_to_chip_select,
+		}
+	},
+	[F16_M30H_CPUS] = {
+		.ctl_name = "F16h_M30h",
+		.f1_id = PCI_DEVICE_ID_AMD_16H_M30H_NB_F1,
+		.f2_id = PCI_DEVICE_ID_AMD_16H_M30H_NB_F2,
+		.ops = {
+			.early_channel_count	= f1x_early_channel_count,
+			.map_sysaddr_to_csrow	= f1x_map_sysaddr_to_csrow,
+			.dbam_to_cs		= f16_dbam_to_chip_select,
+		}
+	},
+	[F17_CPUS] = {
+		.ctl_name = "F17h",
+		.f0_id = PCI_DEVICE_ID_AMD_17H_DF_F0,
+		.f6_id = PCI_DEVICE_ID_AMD_17H_DF_F6,
+		.ops = {
+			.early_channel_count	= f17_early_channel_count,
+			.dbam_to_cs		= f17_base_addr_to_cs_size,
+		}
+	},
+	[F17_M10H_CPUS] = {
+		.ctl_name = "F17h_M10h",
+		.f0_id = PCI_DEVICE_ID_AMD_17H_M10H_DF_F0,
+		.f6_id = PCI_DEVICE_ID_AMD_17H_M10H_DF_F6,
+		.ops = {
+			.early_channel_count	= f17_early_channel_count,
+			.dbam_to_cs		= f17_base_addr_to_cs_size,
+		}
+	},
+};
+
+/*
+>>>>>>> master
  * These are tables of eigenvectors (one per line) which can be used for the
  * construction of the syndrome tables. The modified syndrome search algorithm
  * uses those to find the symbol in error and thus the DIMM.
@@ -3084,6 +3238,15 @@ static void decode_umc_error(int node_id, struct mce *m)
 	if (m->status & MCI_STATUS_DEFERRED)
 		ecc_type = 3;
 
+<<<<<<< HEAD
+=======
+	err.channel = find_umc_channel(pvt, m);
+	if (err.channel < 0) {
+		err.err_code = ERR_CHANNEL;
+		goto log_error;
+	}
+
+>>>>>>> master
 	if (!(m->status & MCI_STATUS_SYNDV)) {
 		err.err_code = ERR_SYND;
 		goto log_error;
@@ -3099,6 +3262,13 @@ static void decode_umc_error(int node_id, struct mce *m)
 	}
 
 	pvt->ops->get_err_info(m, &err);
+
+	if (umc_normaddr_to_sysaddr(m->addr, pvt->mc_node_id, err.channel, &sys_addr)) {
+		err.err_code = ERR_NORM_ADDR;
+		goto log_error;
+	}
+
+	error_address_to_page_and_offset(sys_addr, &err);
 
 	if (umc_normaddr_to_sysaddr(m->addr, pvt->mc_node_id, err.channel, &sys_addr)) {
 		err.err_code = ERR_NORM_ADDR;
@@ -4085,6 +4255,7 @@ static int per_family_init(struct amd64_pvt *pvt)
 		break;
 
 	case 0x17:
+<<<<<<< HEAD
 		switch (pvt->model) {
 		case 0x10 ... 0x2f:
 			pvt->ctl_name			= "F17h_M10h";
@@ -4164,6 +4335,15 @@ static int per_family_init(struct amd64_pvt *pvt)
 			pvt->flags.zn_regs_v2   = 1;
 			break;
 		}
+=======
+		if (pvt->model >= 0x10 && pvt->model <= 0x2f) {
+			fam_type = &family_types[F17_M10H_CPUS];
+			pvt->ops = &family_types[F17_M10H_CPUS].ops;
+			break;
+		}
+		fam_type	= &family_types[F17_CPUS];
+		pvt->ops	= &family_types[F17_CPUS].ops;
+>>>>>>> master
 		break;
 
 	default:

@@ -5509,7 +5509,10 @@ static ssize_t show_slab_objects(struct kmem_cache *s,
 					     node, nodes[node]);
 	}
 #endif
+<<<<<<< HEAD
 	len += sysfs_emit_at(buf, len, "\n");
+=======
+>>>>>>> master
 	kfree(nodes);
 
 	return len;

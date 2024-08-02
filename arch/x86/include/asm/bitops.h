@@ -45,6 +45,10 @@
  * We do the locked ops that don't return the old value as
  * a mask operation on a byte.
  */
+<<<<<<< HEAD
+=======
+#define IS_IMMEDIATE(nr)		(__builtin_constant_p(nr))
+>>>>>>> master
 #define CONST_MASK_ADDR(nr, addr)	WBYTE_ADDR((void *)(addr) + ((nr)>>3))
 #define CONST_MASK(nr)			(1 << ((nr) & 7))
 
@@ -107,10 +111,28 @@ arch_clear_bit_unlock_is_negative_byte(long nr, volatile unsigned long *addr)
 #define arch_clear_bit_unlock_is_negative_byte                                 \
 	arch_clear_bit_unlock_is_negative_byte
 
+<<<<<<< HEAD
 static __always_inline void
 arch___clear_bit_unlock(long nr, volatile unsigned long *addr)
 {
 	arch___clear_bit(nr, addr);
+=======
+// Let everybody know we have it
+#define clear_bit_unlock_is_negative_byte clear_bit_unlock_is_negative_byte
+
+/*
+ * __clear_bit_unlock - Clears a bit in memory
+ * @nr: Bit to clear
+ * @addr: Address to start counting from
+ *
+ * __clear_bit() is non-atomic and implies release semantics before the memory
+ * operation. It can be used for an unlock if no other CPUs can concurrently
+ * modify other bits in the word.
+ */
+static __always_inline void __clear_bit_unlock(long nr, volatile unsigned long *addr)
+{
+	__clear_bit(nr, addr);
+>>>>>>> master
 }
 
 static __always_inline void

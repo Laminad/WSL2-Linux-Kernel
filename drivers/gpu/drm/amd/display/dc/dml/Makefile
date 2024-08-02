@@ -34,9 +34,21 @@ ifdef CONFIG_PPC64
 dml_ccflags := -mhard-float -maltivec
 endif
 
+<<<<<<< HEAD
 ifdef CONFIG_ARM64
 dml_rcflags := -mgeneral-regs-only
 endif
+=======
+ifdef CONFIG_CC_IS_CLANG
+dml_ccflags += -msse2
+endif
+
+CFLAGS_display_mode_lib.o := $(dml_ccflags)
+CFLAGS_display_pipe_clocks.o := $(dml_ccflags)
+CFLAGS_dml1_display_rq_dlg_calc.o := $(dml_ccflags)
+CFLAGS_display_rq_dlg_helpers.o := $(dml_ccflags)
+CFLAGS_dml_common_defs.o := $(dml_ccflags)
+>>>>>>> master
 
 ifdef CONFIG_LOONGARCH
 dml_ccflags := -mfpu=64

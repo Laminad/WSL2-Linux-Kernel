@@ -3225,8 +3225,12 @@ static void mtk_poll_controller(struct net_device *dev)
 
 static int mtk_start_dma(struct mtk_eth *eth)
 {
+<<<<<<< HEAD
 	u32 val, rx_2b_offset = (NET_IP_ALIGN == 2) ? MTK_RX_2B_OFFSET : 0;
 	const struct mtk_reg_map *reg_map = eth->soc->reg_map;
+=======
+	u32 rx_2b_offset = (NET_IP_ALIGN == 2) ? MTK_RX_2B_OFFSET : 0;
+>>>>>>> master
 	int err;
 
 	err = mtk_dma_init(eth);
@@ -3241,6 +3245,7 @@ static int mtk_start_dma(struct mtk_eth *eth)
 		       MTK_TX_BT_32DWORDS | MTK_NDP_CO_PRO |
 		       MTK_RX_2B_OFFSET | MTK_TX_WB_DDONE;
 
+<<<<<<< HEAD
 		if (mtk_is_netsys_v2_or_greater(eth))
 			val |= MTK_MUTLI_CNT | MTK_RESV_BUF |
 			       MTK_WCOMP_EN | MTK_DMAD_WR_WDONE |
@@ -3258,6 +3263,12 @@ static int mtk_start_dma(struct mtk_eth *eth)
 			MTK_MULTI_EN | MTK_PDMA_SIZE_8DWORDS,
 			reg_map->pdma.glo_cfg);
 	}
+=======
+	mtk_w32(eth,
+		MTK_RX_DMA_EN | rx_2b_offset |
+		MTK_RX_BT_32DWORDS | MTK_MULTI_EN,
+		MTK_PDMA_GLO_CFG);
+>>>>>>> master
 
 	return 0;
 }

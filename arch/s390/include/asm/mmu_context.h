@@ -45,6 +45,7 @@ static inline int init_new_context(struct task_struct *tsk,
 		 * context created by exec, the value of asce_limit can
 		 * only be zero in this case
 		 */
+<<<<<<< HEAD
 		VM_BUG_ON(mm->context.asce_limit);
 		/* continue as 3-level task */
 		mm->context.asce_limit = _REGION2_SIZE;
@@ -53,6 +54,13 @@ static inline int init_new_context(struct task_struct *tsk,
 		/* forked 3-level task */
 		init_entry = _REGION3_ENTRY_EMPTY;
 		asce_type = _ASCE_TYPE_REGION3;
+=======
+	case 0:
+		/* context created by exec, set asce limit to 4TB */
+		mm->context.asce_limit = STACK_TOP_MAX;
+		mm->context.asce = __pa(mm->pgd) | _ASCE_TABLE_LENGTH |
+				   _ASCE_USER_BITS | _ASCE_TYPE_REGION3;
+>>>>>>> master
 		break;
 	case TASK_SIZE_MAX:
 		/* forked 5-level task */
@@ -64,6 +72,13 @@ static inline int init_new_context(struct task_struct *tsk,
 		init_entry = _REGION2_ENTRY_EMPTY;
 		asce_type = _ASCE_TYPE_REGION2;
 		break;
+<<<<<<< HEAD
+=======
+	case _REGION3_SIZE:
+		/* forked 2-level compat task, set new asce with new mm->pgd */
+		mm->context.asce = __pa(mm->pgd) | _ASCE_TABLE_LENGTH |
+				   _ASCE_USER_BITS | _ASCE_TYPE_SEGMENT;
+>>>>>>> master
 	}
 	mm->context.asce = __pa(mm->pgd) | _ASCE_TABLE_LENGTH |
 			   _ASCE_USER_BITS | asce_type;
@@ -93,9 +108,25 @@ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
 {
 	unsigned long flags;
 
+<<<<<<< HEAD
 	local_irq_save(flags);
 	switch_mm_irqs_off(prev, next, tsk);
 	local_irq_restore(flags);
+=======
+	S390_lowcore.user_asce = next->context.asce;
+	cpumask_set_cpu(cpu, &next->context.cpu_attach_mask);
+	/* Clear previous user-ASCE from CR1 and CR7 */
+	if (!test_cpu_flag(CIF_ASCE_PRIMARY)) {
+		__ctl_load(S390_lowcore.kernel_asce, 1, 1);
+		set_cpu_flag(CIF_ASCE_PRIMARY);
+	}
+	if (test_cpu_flag(CIF_ASCE_SECONDARY)) {
+		__ctl_load(S390_lowcore.vdso_asce, 7, 7);
+		clear_cpu_flag(CIF_ASCE_SECONDARY);
+	}
+	if (prev != next)
+		cpumask_clear_cpu(cpu, &prev->context.cpu_attach_mask);
+>>>>>>> master
 }
 
 #define finish_arch_post_lock_switch finish_arch_post_lock_switch

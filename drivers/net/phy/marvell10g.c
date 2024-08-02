@@ -37,6 +37,7 @@
 #define MV_VERSION(a,b,c,d) ((a) << 24 | (b) << 16 | (c) << 8 | (d))
 
 enum {
+<<<<<<< HEAD
 	MV_PMA_FW_VER0		= 0xc011,
 	MV_PMA_FW_VER1		= 0xc012,
 	MV_PMA_21X0_PORT_CTRL	= 0xc04a,
@@ -48,6 +49,8 @@ enum {
 	MV_PMA_21X0_PORT_CTRL_MACTYPE_5GBASER			= 0x4,
 	MV_PMA_21X0_PORT_CTRL_MACTYPE_5GBASER_NO_SGMII_AN	= 0x5,
 	MV_PMA_21X0_PORT_CTRL_MACTYPE_10GBASER_RATE_MATCH	= 0x6,
+=======
+>>>>>>> master
 	MV_PMA_BOOT		= 0xc050,
 	MV_PMA_BOOT_FATAL	= BIT(0),
 

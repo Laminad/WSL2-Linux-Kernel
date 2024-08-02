@@ -77,6 +77,7 @@ static int led_pwm_add(struct device *dev, struct led_pwm_priv *priv,
 	led_data->cdev.max_brightness = led->max_brightness;
 	led_data->cdev.flags = LED_CORE_SUSPENDRESUME;
 
+<<<<<<< HEAD
 	led_data->pwm = devm_fwnode_pwm_get(dev, fwnode, NULL);
 	if (IS_ERR(led_data->pwm))
 		return dev_err_probe(dev, PTR_ERR(led_data->pwm),
@@ -122,6 +123,17 @@ static int led_pwm_add(struct device *dev, struct led_pwm_priv *priv,
 	if (ret) {
 		dev_err(dev, "failed to register PWM led for %s: %d\n",
 			led->name, ret);
+=======
+	if (child)
+		led_data->pwm = devm_of_pwm_get(dev, child, NULL);
+	else
+		led_data->pwm = devm_pwm_get(dev, led->name);
+	if (IS_ERR(led_data->pwm)) {
+		ret = PTR_ERR(led_data->pwm);
+		if (ret != -EPROBE_DEFER)
+			dev_err(dev, "unable to request PWM for %s: %d\n",
+				led->name, ret);
+>>>>>>> master
 		return ret;
 	}
 

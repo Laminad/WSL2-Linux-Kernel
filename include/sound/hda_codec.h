@@ -55,10 +55,13 @@ struct hda_bus {
 	unsigned int in_reset:1;	/* during reset operation */
 	unsigned int no_response_fallback:1; /* don't fallback at RIRB error */
 	unsigned int bus_probing :1;	/* during probing process */
+<<<<<<< HEAD:include/sound/hda_codec.h
 	unsigned int keep_power:1;	/* keep power up for notification */
 	unsigned int jackpoll_in_suspend:1; /* keep jack polling during
 					     * runtime suspend
 					     */
+=======
+>>>>>>> master:sound/pci/hda/hda_codec.h
 
 	int primary_dig_out_type;	/* primary digital out PCM type */
 	unsigned int mixer_assigned;	/* codec addr for mixer name */
@@ -254,9 +257,12 @@ struct hda_codec {
 	unsigned int force_pin_prefix:1; /* Add location prefix */
 	unsigned int link_down_at_suspend:1; /* link down at runtime suspend */
 	unsigned int relaxed_resume:1;	/* don't resume forcibly for jack */
+<<<<<<< HEAD:include/sound/hda_codec.h
 	unsigned int forced_resume:1; /* forced resume for jack */
 	unsigned int no_stream_clean_at_suspend:1; /* do not clean streams at suspend */
 	unsigned int ctl_dev_id:1; /* old control element id build behaviour */
+=======
+>>>>>>> master:sound/pci/hda/hda_codec.h
 
 #ifdef CONFIG_PM
 	unsigned long power_on_acct;

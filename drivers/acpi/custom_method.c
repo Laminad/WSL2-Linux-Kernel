@@ -57,7 +57,10 @@ static ssize_t cm_write(struct file *file, const char __user *user_buf,
 	    (*ppos + count < count) ||
 	    (count > uncopied_bytes)) {
 		kfree(buf);
+<<<<<<< HEAD
 		buf = NULL;
+=======
+>>>>>>> master
 		return -EINVAL;
 	}
 
@@ -79,6 +82,7 @@ static ssize_t cm_write(struct file *file, const char __user *user_buf,
 		add_taint(TAINT_OVERRIDDEN_ACPI_TABLE, LOCKDEP_NOW_UNRELIABLE);
 	}
 
+	kfree(buf);
 	return count;
 }
 

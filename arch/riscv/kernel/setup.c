@@ -211,9 +211,14 @@ static void __init init_resources(void)
 			goto error;
 	}
 
+<<<<<<< HEAD
 	/* Add /memory regions to the resource tree */
 	for_each_mem_region(region) {
 		res = &mem_res[res_idx--];
+=======
+	set_max_mapnr(PFN_DOWN(mem_size));
+	max_low_pfn = PFN_DOWN(memblock_end_of_DRAM());
+>>>>>>> master
 
 		if (unlikely(memblock_is_nomap(region))) {
 			res->name = "Reserved";

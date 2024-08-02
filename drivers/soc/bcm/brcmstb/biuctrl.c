@@ -343,7 +343,11 @@ static int __init brcmstb_biuctrl_init(void)
 
 	ret = setup_hifcpubiuctrl_regs(np);
 	if (ret)
+<<<<<<< HEAD
 		goto out_put;
+=======
+		return ret;
+>>>>>>> master
 
 	ret = mcp_write_pairing_set();
 	if (ret) {

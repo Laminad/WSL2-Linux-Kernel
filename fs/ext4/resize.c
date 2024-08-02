@@ -497,8 +497,12 @@ static int set_flexbg_block_bitmap(struct super_block *sb, handle_t *handle,
 			return -ENOMEM;
 
 		BUFFER_TRACE(bh, "get_write_access");
+<<<<<<< HEAD
 		err = ext4_journal_get_write_access(handle, sb, bh,
 						    EXT4_JTR_NONE);
+=======
+		err = ext4_journal_get_write_access(handle, bh);
+>>>>>>> master
 		if (err) {
 			brelse(bh);
 			return err;
@@ -970,8 +974,14 @@ static int add_new_gdb_meta_bg(struct super_block *sb,
 	gdb_bh = ext4_sb_bread(sb, gdblock, 0);
 	if (IS_ERR(gdb_bh))
 		return PTR_ERR(gdb_bh);
+<<<<<<< HEAD
 	n_group_desc = kvmalloc((gdb_num + 1) * sizeof(struct buffer_head *),
 				GFP_KERNEL);
+=======
+	n_group_desc = ext4_kvmalloc((gdb_num + 1) *
+				     sizeof(struct buffer_head *),
+				     GFP_NOFS);
+>>>>>>> master
 	if (!n_group_desc) {
 		brelse(gdb_bh);
 		err = -ENOMEM;
@@ -988,16 +998,26 @@ static int add_new_gdb_meta_bg(struct super_block *sb,
 	n_group_desc[gdb_num] = gdb_bh;
 
 	BUFFER_TRACE(gdb_bh, "get_write_access");
+<<<<<<< HEAD
 	err = ext4_journal_get_write_access(handle, sb, gdb_bh, EXT4_JTR_NONE);
+=======
+	err = ext4_journal_get_write_access(handle, gdb_bh);
+>>>>>>> master
 	if (err) {
 		kvfree(n_group_desc);
 		brelse(gdb_bh);
 		return err;
 	}
 
+<<<<<<< HEAD
 	rcu_assign_pointer(EXT4_SB(sb)->s_group_desc, n_group_desc);
 	EXT4_SB(sb)->s_gdb_count++;
 	ext4_kvfree_array_rcu(o_group_desc);
+=======
+	EXT4_SB(sb)->s_group_desc = n_group_desc;
+	EXT4_SB(sb)->s_gdb_count++;
+	kvfree(o_group_desc);
+>>>>>>> master
 	return err;
 }
 
@@ -1193,8 +1213,12 @@ static void update_backups(struct super_block *sb, sector_t blk_off, char *data,
 			   backup_block, backup_block -
 			   ext4_group_first_block_no(sb, group));
 		BUFFER_TRACE(bh, "get_write_access");
+<<<<<<< HEAD
 		if ((err = ext4_journal_get_write_access(handle, sb, bh,
 							 EXT4_JTR_NONE))) {
+=======
+		if ((err = ext4_journal_get_write_access(handle, bh))) {
+>>>>>>> master
 			brelse(bh);
 			break;
 		}

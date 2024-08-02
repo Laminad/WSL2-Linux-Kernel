@@ -49,12 +49,17 @@ static int vcn_v1_0_stop(struct amdgpu_device *adev);
 static void vcn_v1_0_set_dec_ring_funcs(struct amdgpu_device *adev);
 static void vcn_v1_0_set_enc_ring_funcs(struct amdgpu_device *adev);
 static void vcn_v1_0_set_irq_funcs(struct amdgpu_device *adev);
+<<<<<<< HEAD
 static int vcn_v1_0_set_powergating_state(void *handle, enum amd_powergating_state state);
 static int vcn_v1_0_pause_dpg_mode(struct amdgpu_device *adev,
 				int inst_idx, struct dpg_pause_state *new_state);
 
 static void vcn_v1_0_idle_work_handler(struct work_struct *work);
 static void vcn_v1_0_ring_begin_use(struct amdgpu_ring *ring);
+=======
+static void vcn_v1_0_jpeg_ring_set_patch_ring(struct amdgpu_ring *ring, uint32_t ptr);
+static int vcn_v1_0_set_powergating_state(void *handle, enum amd_powergating_state state);
+>>>>>>> master
 
 /**
  * vcn_v1_0_early_init - set function pointers and load microcode
@@ -235,7 +240,12 @@ static int vcn_v1_0_hw_fini(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
+<<<<<<< HEAD
 	cancel_delayed_work_sync(&adev->vcn.idle_work);
+=======
+	if (RREG32_SOC15(VCN, 0, mmUVD_STATUS))
+		vcn_v1_0_set_powergating_state(adev, AMD_PG_STATE_GATE);
+>>>>>>> master
 
 	if ((adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG) ||
 		(adev->vcn.cur_state != AMD_PG_STATE_GATE &&

@@ -502,12 +502,20 @@ static int netem_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 	 */
 	if (q->corrupt && q->corrupt >= get_crandom(&q->corrupt_cor, &q->prng)) {
 		if (skb_is_gso(skb)) {
+<<<<<<< HEAD
 			skb = netem_segment(skb, sch, to_free);
 			if (!skb)
 				return rc_drop;
 			segs = skb->next;
 			skb_mark_not_on_list(skb);
 			qdisc_skb_cb(skb)->pkt_len = skb->len;
+=======
+			segs = netem_segment(skb, sch, to_free);
+			if (!segs)
+				return rc_drop;
+		} else {
+			segs = skb;
+>>>>>>> master
 		}
 
 		skb = skb_unshare(skb, GFP_ATOMIC);
@@ -527,8 +535,11 @@ static int netem_enqueue(struct sk_buff *skb, struct Qdisc *sch,
 	}
 
 	if (unlikely(sch->q.qlen >= sch->limit)) {
+<<<<<<< HEAD
 		/* re-link segs, so that qdisc_drop_all() frees them all */
 		skb->next = segs;
+=======
+>>>>>>> master
 		qdisc_drop_all(skb, sch, to_free);
 		return rc_drop;
 	}

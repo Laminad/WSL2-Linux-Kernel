@@ -958,10 +958,19 @@ static void __fib6_drop_pcpu_from(struct fib6_nh *fib6_nh,
 {
 	int cpu;
 
+<<<<<<< HEAD
 	if (!fib6_nh->rt6i_pcpu)
 		return;
 
 	rcu_read_lock();
+=======
+	/* Make sure rt6_make_pcpu_route() wont add other percpu routes
+	 * while we are cleaning them here.
+	 */
+	f6i->fib6_destroying = 1;
+	mb(); /* paired with the cmpxchg() in rt6_make_pcpu_route() */
+
+>>>>>>> master
 	/* release the reference to this fib entry from
 	 * all of its cached pcpu routes
 	 */
@@ -1032,6 +1041,7 @@ static void fib6_purge_rt(struct fib6_info *rt, struct fib6_node *fn,
 {
 	struct fib6_table *table = rt->fib6_table;
 
+<<<<<<< HEAD
 	/* Flush all cached dst in exception table */
 	rt6_flush_exceptions(rt);
 	fib6_drop_pcpu_from(rt, table);
@@ -1040,6 +1050,12 @@ static void fib6_purge_rt(struct fib6_info *rt, struct fib6_node *fn,
 		list_del_init(&rt->nh_list);
 
 	if (refcount_read(&rt->fib6_ref) != 1) {
+=======
+	if (rt->rt6i_pcpu)
+		fib6_drop_pcpu_from(rt, table);
+
+	if (atomic_read(&rt->fib6_ref) != 1) {
+>>>>>>> master
 		/* This route is used as dummy address holder in some split
 		 * nodes. It is not leaked, but it still holds other resources,
 		 * which must be released in time. So, scan ascendant nodes
@@ -1212,6 +1228,7 @@ next_iter:
 add:
 		nlflags |= NLM_F_CREATE;
 
+<<<<<<< HEAD
 		/* The route should only be notified if it is the first
 		 * route in the node or if it is added as a sibling
 		 * route to the first route in the node.
@@ -1245,6 +1262,28 @@ add:
 				rt6_multipath_rebalance(next_sibling);
 				return err;
 			}
+=======
+		err = call_fib6_entry_notifiers(info->nl_net,
+						FIB_EVENT_ENTRY_ADD,
+						rt, extack);
+		if (err) {
+			struct fib6_info *sibling, *next_sibling;
+
+			/* If the route has siblings, then it first
+			 * needs to be unlinked from them.
+			 */
+			if (!rt->fib6_nsiblings)
+				return err;
+
+			list_for_each_entry_safe(sibling, next_sibling,
+						 &rt->fib6_siblings,
+						 fib6_siblings)
+				sibling->fib6_nsiblings--;
+			rt->fib6_nsiblings = 0;
+			list_del_init(&rt->fib6_siblings);
+			rt6_multipath_rebalance(next_sibling);
+			return err;
+>>>>>>> master
 		}
 
 		rcu_assign_pointer(rt->fib6_next, iter);

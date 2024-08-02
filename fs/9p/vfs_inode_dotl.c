@@ -128,7 +128,10 @@ static struct inode *v9fs_qid_iget_dotl(struct super_block *sb,
 		goto error;
 
 	v9fs_stat2inode_dotl(st, inode, 0);
+<<<<<<< HEAD
 	v9fs_set_netfs_context(inode);
+=======
+>>>>>>> master
 	v9fs_cache_inode_get_cookie(inode);
 	retval = v9fs_get_acl(inode, fid);
 	if (retval)
@@ -476,7 +479,11 @@ v9fs_vfs_getattr_dotl(struct mnt_idmap *idmap,
 		return PTR_ERR(st);
 
 	v9fs_stat2inode_dotl(st, d_inode(dentry), 0);
+<<<<<<< HEAD
 	generic_fillattr(&nop_mnt_idmap, request_mask, d_inode(dentry), stat);
+=======
+	generic_fillattr(d_inode(dentry), stat);
+>>>>>>> master
 	/* Change block size to what the server returned */
 	stat->blksize = st->st_blksize;
 
@@ -683,6 +690,11 @@ v9fs_stat2inode_dotl(struct p9_stat_dotl *stat, struct inode *inode,
 			mode |= inode->i_mode & ~S_IALLUGO;
 			inode->i_mode = mode;
 		}
+<<<<<<< HEAD
+=======
+		if (stat->st_result_mask & P9_STATS_RDEV)
+			inode->i_rdev = new_decode_dev(stat->st_rdev);
+>>>>>>> master
 		if (!(flags & V9FS_STAT2INODE_KEEP_ISIZE) &&
 		    stat->st_result_mask & P9_STATS_SIZE)
 			v9fs_i_size_write(inode, stat->st_size);
@@ -972,7 +984,11 @@ int v9fs_refresh_inode_dotl(struct p9_fid *fid, struct inode *inode)
 	 * We don't want to refresh inode->i_size,
 	 * because we may have cached data
 	 */
+<<<<<<< HEAD
 	flags = (v9ses->cache & CACHE_LOOSE) ?
+=======
+	flags = (v9ses->cache == CACHE_LOOSE || v9ses->cache == CACHE_FSCACHE) ?
+>>>>>>> master
 		V9FS_STAT2INODE_KEEP_ISIZE : 0;
 	v9fs_stat2inode_dotl(st, inode, flags);
 out:

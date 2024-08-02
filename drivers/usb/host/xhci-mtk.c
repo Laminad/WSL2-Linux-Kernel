@@ -710,22 +710,33 @@ static void xhci_mtk_remove(struct platform_device *pdev)
 	struct usb_hcd	*hcd = mtk->hcd;
 	struct xhci_hcd	*xhci = hcd_to_xhci(hcd);
 	struct usb_hcd  *shared_hcd = xhci->shared_hcd;
+<<<<<<< HEAD
 	struct device *dev = &pdev->dev;
 
 	pm_runtime_get_sync(dev);
 	xhci->xhc_state |= XHCI_STATE_REMOVING;
 	dev_pm_clear_wake_irq(dev);
 	device_init_wakeup(dev, false);
+=======
+
+	usb_remove_hcd(shared_hcd);
+	xhci->shared_hcd = NULL;
+	device_init_wakeup(&dev->dev, false);
+>>>>>>> master
 
 	if (shared_hcd) {
 		usb_remove_hcd(shared_hcd);
 		xhci->shared_hcd = NULL;
 	}
 	usb_remove_hcd(hcd);
+<<<<<<< HEAD
 
 	if (shared_hcd)
 		usb_put_hcd(shared_hcd);
 
+=======
+	usb_put_hcd(shared_hcd);
+>>>>>>> master
 	usb_put_hcd(hcd);
 	xhci_mtk_sch_exit(mtk);
 	clk_bulk_disable_unprepare(BULK_CLKS_NUM, mtk->clks);

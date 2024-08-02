@@ -20,6 +20,7 @@ static void a5xx_dump(struct msm_gpu *gpu);
 
 static void update_shadow_rptr(struct msm_gpu *gpu, struct msm_ringbuffer *ring)
 {
+<<<<<<< HEAD
 	struct adreno_gpu *adreno_gpu = to_adreno_gpu(gpu);
 	struct a5xx_gpu *a5xx_gpu = to_a5xx_gpu(adreno_gpu);
 
@@ -27,6 +28,42 @@ static void update_shadow_rptr(struct msm_gpu *gpu, struct msm_ringbuffer *ring)
 		OUT_PKT7(ring, CP_WHERE_AM_I, 2);
 		OUT_RING(ring, lower_32_bits(shadowptr(a5xx_gpu, ring)));
 		OUT_RING(ring, upper_32_bits(shadowptr(a5xx_gpu, ring)));
+=======
+	struct device *dev = &gpu->pdev->dev;
+	const struct firmware *fw;
+	struct device_node *np, *mem_np;
+	struct resource r;
+	phys_addr_t mem_phys;
+	ssize_t mem_size;
+	void *mem_region = NULL;
+	int ret;
+
+	if (!IS_ENABLED(CONFIG_ARCH_QCOM))
+		return -EINVAL;
+
+	np = of_get_child_by_name(dev->of_node, "zap-shader");
+	if (!np)
+		return -ENODEV;
+
+	mem_np = of_parse_phandle(np, "memory-region", 0);
+	of_node_put(np);
+	if (!mem_np)
+		return -EINVAL;
+
+	ret = of_address_to_resource(mem_np, 0, &r);
+	of_node_put(mem_np);
+	if (ret)
+		return ret;
+
+	mem_phys = r.start;
+	mem_size = resource_size(&r);
+
+	/* Request the MDT file for the firmware */
+	fw = adreno_request_fw(to_adreno_gpu(gpu), fwname);
+	if (IS_ERR(fw)) {
+		DRM_DEV_ERROR(dev, "Unable to load %s\n", fwname);
+		return PTR_ERR(fw);
+>>>>>>> master
 	}
 }
 

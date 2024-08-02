@@ -184,6 +184,7 @@ static int vfio_ccw_mdev_open_device(struct vfio_device *vdev)
 	if (ret)
 		goto out_unregister;
 
+<<<<<<< HEAD
 	vfio_ccw_fsm_event(private, VFIO_CCW_EVENT_OPEN);
 	if (private->state == VFIO_CCW_STATE_NOT_OPER) {
 		ret = -EINVAL;
@@ -191,6 +192,23 @@ static int vfio_ccw_mdev_open_device(struct vfio_device *vdev)
 	}
 
 	return ret;
+=======
+static int vfio_ccw_mdev_remove(struct mdev_device *mdev)
+{
+	struct vfio_ccw_private *private =
+		dev_get_drvdata(mdev_parent_dev(mdev));
+
+	if ((private->state != VFIO_CCW_STATE_NOT_OPER) &&
+	    (private->state != VFIO_CCW_STATE_STANDBY)) {
+		if (!vfio_ccw_sch_quiesce(private->sch))
+			private->state = VFIO_CCW_STATE_STANDBY;
+		/* The state will be NOT_OPER on error. */
+	}
+
+	cp_free(&private->cp);
+	private->mdev = NULL;
+	atomic_inc(&private->avail);
+>>>>>>> master
 
 out_unregister:
 	vfio_ccw_unregister_dev_regions(private);
@@ -214,6 +232,7 @@ static ssize_t vfio_ccw_mdev_read_io_region(struct vfio_ccw_private *private,
 	struct ccw_io_region *region;
 	int ret;
 
+<<<<<<< HEAD
 	if (pos + count > sizeof(*region))
 		return -EINVAL;
 
@@ -225,6 +244,18 @@ static ssize_t vfio_ccw_mdev_read_io_region(struct vfio_ccw_private *private,
 		ret = count;
 	mutex_unlock(&private->io_mutex);
 	return ret;
+=======
+	if ((private->state != VFIO_CCW_STATE_NOT_OPER) &&
+	    (private->state != VFIO_CCW_STATE_STANDBY)) {
+		if (!vfio_ccw_mdev_reset(mdev))
+			private->state = VFIO_CCW_STATE_STANDBY;
+		/* The state will be NOT_OPER on error. */
+	}
+
+	cp_free(&private->cp);
+	vfio_unregister_notifier(mdev_dev(mdev), VFIO_IOMMU_NOTIFY,
+				 &private->nb);
+>>>>>>> master
 }
 
 static ssize_t vfio_ccw_mdev_read(struct vfio_device *vdev,

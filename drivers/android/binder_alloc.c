@@ -998,6 +998,7 @@ enum lru_status binder_alloc_free_page(struct list_head *item,
 	index = page - alloc->pages;
 	page_addr = (uintptr_t)alloc->buffer + index * PAGE_SIZE;
 
+<<<<<<< HEAD
 	mm = alloc->mm;
 	if (!mmget_not_zero(mm))
 		goto err_mmget;
@@ -1006,6 +1007,14 @@ enum lru_status binder_alloc_free_page(struct list_head *item,
 	vma = vma_lookup(mm, page_addr);
 	if (vma && vma != binder_alloc_get_vma(alloc))
 		goto err_invalid_vma;
+=======
+	mm = alloc->vma_vm_mm;
+	if (!mmget_not_zero(mm))
+		goto err_mmget;
+	if (!down_write_trylock(&mm->mmap_sem))
+		goto err_down_write_mmap_sem_failed;
+	vma = binder_alloc_get_vma(alloc);
+>>>>>>> master
 
 	list_lru_isolate(lru, item);
 	spin_unlock(lock);
@@ -1017,8 +1026,13 @@ enum lru_status binder_alloc_free_page(struct list_head *item,
 
 		trace_binder_unmap_user_end(alloc, index);
 	}
+<<<<<<< HEAD
 	mmap_read_unlock(mm);
 	mmput_async(mm);
+=======
+	up_write(&mm->mmap_sem);
+	mmput(mm);
+>>>>>>> master
 
 	trace_binder_unmap_kernel_start(alloc, index);
 

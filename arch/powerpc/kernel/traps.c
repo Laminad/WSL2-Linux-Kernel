@@ -842,7 +842,20 @@ static void __machine_check_exception(struct pt_regs *regs)
 	if (check_io_access(regs))
 		goto bail;
 
+<<<<<<< HEAD
 	die_mce("Machine check", regs, SIGBUS);
+=======
+	if (!nested)
+		nmi_exit();
+
+	die("Machine check", regs, SIGBUS);
+
+	/* Must die if the interrupt is not recoverable */
+	if (!(regs->msr & MSR_RI))
+		nmi_panic(regs, "Unrecoverable Machine check");
+>>>>>>> master
+
+	return;
 
 bail:
 	/* Must die if the interrupt is not recoverable */
@@ -1683,7 +1696,15 @@ bad:
 
 DEFINE_INTERRUPT_HANDLER(stack_overflow_exception)
 {
+<<<<<<< HEAD
 	die("Kernel stack overflow", regs, SIGSEGV);
+=======
+	pr_crit("Kernel stack overflow in process %s[%d], r1=%lx\n",
+		current->comm, task_pid_nr(current), regs->gpr[1]);
+	debugger(regs);
+	show_regs(regs);
+	panic("kernel stack overflow");
+>>>>>>> master
 }
 
 DEFINE_INTERRUPT_HANDLER(kernel_fp_unavailable_exception)

@@ -8162,10 +8162,17 @@ static int niu_pci_vpd_scan_props(struct niu *np, u32 start, u32 end)
 				     "VPD_SCAN: Reading in property [%s] len[%d]\n",
 				     namebuf, prop_len);
 			for (i = 0; i < prop_len; i++) {
+<<<<<<< HEAD
 				err =  niu_pci_eeprom_read(np, off + i);
 				if (err < 0)
 					return err;
 				*prop_buf++ = err;
+=======
+				err = niu_pci_eeprom_read(np, off + i);
+				if (err >= 0)
+					*prop_buf = err;
+				++prop_buf;
+>>>>>>> master
 			}
 		}
 

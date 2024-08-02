@@ -1067,9 +1067,13 @@ static int tipc_nl_service_list(struct net *net, struct tipc_nl_msg *msg,
 
 		if (*last_type ||
 		    (!i && *last_key && (*last_lower == *last_key))) {
+<<<<<<< HEAD
 			tipc_uaddr(&ua, TIPC_SERVICE_RANGE, TIPC_NODE_SCOPE,
 				   *last_type, *last_lower, *last_lower);
 			service = tipc_service_find(net, &ua);
+=======
+			service = tipc_service_find(net, *last_type);
+>>>>>>> master
 			if (!service)
 				return -EPIPE;
 		} else {

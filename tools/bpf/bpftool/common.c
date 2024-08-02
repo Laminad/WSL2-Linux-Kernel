@@ -380,9 +380,30 @@ int do_pin_any(int argc, char **argv, int (*get_fd)(int *, char ***))
 	if (!REQ_ARGS(3))
 		return -EINVAL;
 
+<<<<<<< HEAD
 	fd = get_fd(&argc, &argv);
 	if (fd < 0)
 		return fd;
+=======
+	if (!is_prefix(*argv, "id")) {
+		p_err("expected 'id' got %s", *argv);
+		return -1;
+	}
+	NEXT_ARG();
+
+	id = strtoul(*argv, &endptr, 0);
+	if (*endptr) {
+		p_err("can't parse %s as ID", *argv);
+		return -1;
+	}
+	NEXT_ARG();
+
+	fd = get_fd_by_id(id);
+	if (fd < 0) {
+		p_err("can't open object by id (%u): %s", id, strerror(errno));
+		return -1;
+	}
+>>>>>>> master
 
 	err = do_pin_fd(fd, *argv);
 

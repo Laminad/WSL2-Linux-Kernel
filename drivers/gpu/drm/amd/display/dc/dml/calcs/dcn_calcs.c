@@ -1478,12 +1478,62 @@ void dcn_bw_update_from_pplib_dcfclks(
 	struct dc *dc,
 	struct dm_pp_clock_levels_with_voltage *dcfclks)
 {
+<<<<<<< HEAD:drivers/gpu/drm/amd/display/dc/dml/calcs/dcn_calcs.c
 	if (dcfclks->num_levels >= 3) {
 		dc->dcn_soc->dcfclkv_min0p65 = dcfclks->data[0].clocks_in_khz / 1000.0;
 		dc->dcn_soc->dcfclkv_mid0p72 = dcfclks->data[dcfclks->num_levels - 3].clocks_in_khz / 1000.0;
 		dc->dcn_soc->dcfclkv_nom0p8 = dcfclks->data[dcfclks->num_levels - 2].clocks_in_khz / 1000.0;
 		dc->dcn_soc->dcfclkv_max0p9 = dcfclks->data[dcfclks->num_levels - 1].clocks_in_khz / 1000.0;
 	}
+=======
+	struct dc_context *ctx = dc->ctx;
+	struct dm_pp_clock_levels_with_voltage fclks = {0}, dcfclks = {0};
+	bool res;
+
+	/* TODO: This is not the proper way to obtain fabric_and_dram_bandwidth, should be min(fclk, memclk) */
+	res = dm_pp_get_clock_levels_by_type_with_voltage(
+			ctx, DM_PP_CLOCK_TYPE_FCLK, &fclks);
+
+	kernel_fpu_begin();
+
+	if (res)
+		res = verify_clock_values(&fclks);
+
+	if (res) {
+		ASSERT(fclks.num_levels >= 3);
+		dc->dcn_soc->fabric_and_dram_bandwidth_vmin0p65 = 32 * (fclks.data[0].clocks_in_khz / 1000.0) / 1000.0;
+		dc->dcn_soc->fabric_and_dram_bandwidth_vmid0p72 = dc->dcn_soc->number_of_channels *
+				(fclks.data[fclks.num_levels - (fclks.num_levels > 2 ? 3 : 2)].clocks_in_khz / 1000.0)
+				* ddr4_dram_factor_single_Channel / 1000.0;
+		dc->dcn_soc->fabric_and_dram_bandwidth_vnom0p8 = dc->dcn_soc->number_of_channels *
+				(fclks.data[fclks.num_levels - 2].clocks_in_khz / 1000.0)
+				* ddr4_dram_factor_single_Channel / 1000.0;
+		dc->dcn_soc->fabric_and_dram_bandwidth_vmax0p9 = dc->dcn_soc->number_of_channels *
+				(fclks.data[fclks.num_levels - 1].clocks_in_khz / 1000.0)
+				* ddr4_dram_factor_single_Channel / 1000.0;
+	} else
+		BREAK_TO_DEBUGGER();
+
+	kernel_fpu_end();
+
+	res = dm_pp_get_clock_levels_by_type_with_voltage(
+			ctx, DM_PP_CLOCK_TYPE_DCFCLK, &dcfclks);
+
+	kernel_fpu_begin();
+
+	if (res)
+		res = verify_clock_values(&dcfclks);
+
+	if (res && dcfclks.num_levels >= 3) {
+		dc->dcn_soc->dcfclkv_min0p65 = dcfclks.data[0].clocks_in_khz / 1000.0;
+		dc->dcn_soc->dcfclkv_mid0p72 = dcfclks.data[dcfclks.num_levels - 3].clocks_in_khz / 1000.0;
+		dc->dcn_soc->dcfclkv_nom0p8 = dcfclks.data[dcfclks.num_levels - 2].clocks_in_khz / 1000.0;
+		dc->dcn_soc->dcfclkv_max0p9 = dcfclks.data[dcfclks.num_levels - 1].clocks_in_khz / 1000.0;
+	} else
+		BREAK_TO_DEBUGGER();
+
+	kernel_fpu_end();
+>>>>>>> master:drivers/gpu/drm/amd/display/dc/calcs/dcn_calcs.c
 }
 
 void dcn_get_soc_clks(

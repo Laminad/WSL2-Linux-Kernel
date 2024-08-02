@@ -824,6 +824,12 @@ static int ax88772_phylink_setup(struct usbnet *dev)
 
 static int ax88772_bind(struct usbnet *dev, struct usb_interface *intf)
 {
+<<<<<<< HEAD
+=======
+	int ret, i;
+	u8 buf[ETH_ALEN] = {0}, chipcode = 0;
+	u32 phyid;
+>>>>>>> master
 	struct asix_common_private *priv;
 	u8 buf[ETH_ALEN] = {0};
 	int ret, i;
@@ -873,8 +879,18 @@ static int ax88772_bind(struct usbnet *dev, struct usb_interface *intf)
 	if (ret < 0)
 		return ret;
 
+<<<<<<< HEAD
 	priv->phy_addr = ret;
 	priv->embd_phy = ((priv->phy_addr & 0x1f) == AX_EMBD_PHY_ADDR);
+=======
+	ret = (chipcode == AX_AX88772_CHIPCODE) ? ax88772_hw_reset(dev, 0) :
+						  ax88772a_hw_reset(dev, 0);
+
+	if (ret < 0) {
+		netdev_dbg(dev->net, "Failed to reset AX88772: %d\n", ret);
+		return ret;
+	}
+>>>>>>> master
 
 	ret = asix_read_cmd(dev, AX_CMD_STATMNGSTS_REG, 0, 0, 1,
 			    &priv->chipcode, 0);

@@ -36,6 +36,17 @@
 #define __type_min(T) ((T)((T)-type_max(T)-(T)1))
 #define type_min(t)	__type_min(typeof(t))
 
+<<<<<<< HEAD
+=======
+/*
+ * Avoids triggering -Wtype-limits compilation warning,
+ * while using unsigned data types to check a < 0.
+ */
+#define is_non_negative(a) ((a) > 0 || (a) == 0)
+#define is_negative(a) (!(is_non_negative(a)))
+
+#ifdef COMPILER_HAS_GENERIC_BUILTIN_OVERFLOW
+>>>>>>> master
 /*
  * Avoids triggering -Wtype-limits compilation warning,
  * while using unsigned data types to check a < 0.
@@ -128,6 +139,7 @@ static inline bool __must_check __must_check_overflow(bool overflow)
 	*_d = (_a_full << _to_shift);					\
 	(_to_shift != _s || is_negative(*_d) || is_negative(_a) ||	\
 	(*_d >> _to_shift) != _a);					\
+<<<<<<< HEAD
 }))
 
 #define __overflows_type_constexpr(x, T) (			\
@@ -140,6 +152,8 @@ static inline bool __must_check __must_check_overflow(bool overflow)
 #define __overflows_type(x, T)		({	\
 	typeof(T) v = 0;			\
 	check_add_overflow((x), v, &v);		\
+=======
+>>>>>>> master
 })
 
 /**

@@ -691,8 +691,13 @@ static int kirin_pcie_power_off(struct kirin_pcie *kirin_pcie)
 	return 0;
 }
 
+<<<<<<< HEAD
 static int kirin_pcie_power_on(struct platform_device *pdev,
 			       struct kirin_pcie *kirin_pcie)
+=======
+static int kirin_add_pcie_port(struct dw_pcie *pci,
+			       struct platform_device *pdev)
+>>>>>>> master
 {
 	struct device *dev = &pdev->dev;
 	int ret;

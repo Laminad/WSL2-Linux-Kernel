@@ -181,7 +181,37 @@ static int crypto_cbc_create(struct crypto_template *tmpl, struct rtattr **tb)
 	if (IS_ERR(inst))
 		return PTR_ERR(inst);
 
+<<<<<<< HEAD
 	alg = skcipher_ialg_simple(inst);
+=======
+	inst = kzalloc(sizeof(*inst) + sizeof(*spawn), GFP_KERNEL);
+	if (!inst)
+		return -ENOMEM;
+
+	algt = crypto_get_attr_type(tb);
+	err = PTR_ERR(algt);
+	if (IS_ERR(algt))
+		goto err_free_inst;
+
+	mask = CRYPTO_ALG_TYPE_MASK |
+		crypto_requires_off(algt->type, algt->mask,
+				    CRYPTO_ALG_NEED_FALLBACK);
+
+	alg = crypto_get_attr_alg(tb, CRYPTO_ALG_TYPE_CIPHER, mask);
+	err = PTR_ERR(alg);
+	if (IS_ERR(alg))
+		goto err_free_inst;
+
+	spawn = skcipher_instance_ctx(inst);
+	err = crypto_init_spawn(spawn, alg, skcipher_crypto_instance(inst),
+				CRYPTO_ALG_TYPE_MASK);
+	if (err)
+		goto err_put_alg;
+
+	err = crypto_inst_setname(skcipher_crypto_instance(inst), "cbc", alg);
+	if (err)
+		goto err_drop_spawn;
+>>>>>>> master
 
 	err = -EINVAL;
 	if (!is_power_of_2(alg->cra_blocksize))
@@ -191,12 +221,29 @@ static int crypto_cbc_create(struct crypto_template *tmpl, struct rtattr **tb)
 	inst->alg.decrypt = crypto_cbc_decrypt;
 
 	err = skcipher_register_instance(tmpl, inst);
+<<<<<<< HEAD
 	if (err) {
 out_free_inst:
 		inst->free(inst);
 	}
+=======
+	if (err)
+		goto err_drop_spawn;
+	crypto_mod_put(alg);
+>>>>>>> master
 
 	return err;
+<<<<<<< HEAD
+=======
+
+err_drop_spawn:
+	crypto_drop_spawn(spawn);
+err_put_alg:
+	crypto_mod_put(alg);
+err_free_inst:
+	kfree(inst);
+	goto out;
+>>>>>>> master
 }
 
 static struct crypto_template crypto_cbc_tmpl = {

@@ -51,6 +51,14 @@ struct service_hndl {
 	struct list_head list;
 };
 
+<<<<<<< HEAD:drivers/crypto/intel/qat/qat_common/adf_common_drv.h
+=======
+static inline int get_current_node(void)
+{
+	return topology_physical_package_id(raw_smp_processor_id());
+}
+
+>>>>>>> master:drivers/crypto/qat/qat_common/adf_common_drv.h
 int adf_service_register(struct service_hndl *service);
 int adf_service_unregister(struct service_hndl *service);
 

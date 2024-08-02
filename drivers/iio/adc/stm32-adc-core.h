@@ -52,12 +52,18 @@
 #define STM32F4_ADC_CCR			(STM32_ADCX_COMN_OFFSET + 0x04)
 
 /* STM32F4_ADC_SR - bit fields */
+<<<<<<< HEAD
 #define STM32F4_OVR			BIT(5)
+=======
+>>>>>>> master
 #define STM32F4_STRT			BIT(4)
 #define STM32F4_EOC			BIT(1)
 
 /* STM32F4_ADC_CR1 - bit fields */
+<<<<<<< HEAD
 #define STM32F4_OVRIE			BIT(26)
+=======
+>>>>>>> master
 #define STM32F4_RES_SHIFT		24
 #define STM32F4_RES_MASK		GENMASK(25, 24)
 #define STM32F4_SCAN			BIT(8)
@@ -75,11 +81,16 @@
 #define STM32F4_ADON			BIT(0)
 
 /* STM32F4_ADC_CSR - bit fields */
+<<<<<<< HEAD
 #define STM32F4_OVR3			BIT(21)
 #define STM32F4_EOC3			BIT(17)
 #define STM32F4_OVR2			BIT(13)
 #define STM32F4_EOC2			BIT(9)
 #define STM32F4_OVR1			BIT(5)
+=======
+#define STM32F4_EOC3			BIT(17)
+#define STM32F4_EOC2			BIT(9)
+>>>>>>> master
 #define STM32F4_EOC1			BIT(1)
 
 /* STM32F4_ADC_CCR - bit fields */
@@ -103,6 +114,7 @@
 #define STM32H7_ADC_CALFACT		0xC4
 #define STM32H7_ADC_CALFACT2		0xC8
 
+<<<<<<< HEAD
 /* STM32MP1 - ADC2 instance option register */
 #define STM32MP1_ADC2_OR		0xD0
 
@@ -117,18 +129,26 @@
 #define STM32MP13_ADC_CALFACT		0xB4
 #define STM32MP13_ADC2_OR		0xC8
 
+=======
+>>>>>>> master
 /* STM32H7 - common registers for all ADC instances */
 #define STM32H7_ADC_CSR			(STM32_ADCX_COMN_OFFSET + 0x00)
 #define STM32H7_ADC_CCR			(STM32_ADCX_COMN_OFFSET + 0x08)
 
 /* STM32H7_ADC_ISR - bit fields */
 #define STM32MP1_VREGREADY		BIT(12)
+<<<<<<< HEAD
 #define STM32H7_OVR			BIT(4)
+=======
+>>>>>>> master
 #define STM32H7_EOC			BIT(2)
 #define STM32H7_ADRDY			BIT(0)
 
 /* STM32H7_ADC_IER - bit fields */
+<<<<<<< HEAD
 #define STM32H7_OVRIE			STM32H7_OVR
+=======
+>>>>>>> master
 #define STM32H7_EOCIE			STM32H7_EOC
 
 /* STM32H7_ADC_CR - bit fields */
@@ -142,7 +162,10 @@
 #define STM32H7_LINCALRDYW3		BIT(24)
 #define STM32H7_LINCALRDYW2		BIT(23)
 #define STM32H7_LINCALRDYW1		BIT(22)
+<<<<<<< HEAD
 #define STM32H7_LINCALRDYW_MASK		GENMASK(27, 22)
+=======
+>>>>>>> master
 #define STM32H7_ADCALLIN		BIT(16)
 #define STM32H7_BOOST			BIT(8)
 #define STM32H7_ADSTP			BIT(4)
@@ -167,9 +190,12 @@ enum stm32h7_adc_dmngt {
 	STM32H7_DMNGT_DMA_CIRC,		/* DMA circular mode */
 };
 
+<<<<<<< HEAD
 /* STM32H7_ADC_DIFSEL - bit fields */
 #define STM32H7_DIFSEL_MASK		GENMASK(19, 0)
 
+=======
+>>>>>>> master
 /* STM32H7_ADC_CALFACT - bit fields */
 #define STM32H7_CALFACT_D_SHIFT		16
 #define STM32H7_CALFACT_D_MASK		GENMASK(26, 16)
@@ -181,6 +207,7 @@ enum stm32h7_adc_dmngt {
 #define STM32H7_LINCALFACT_MASK		GENMASK(29, 0)
 
 /* STM32H7_ADC_CSR - bit fields */
+<<<<<<< HEAD
 #define STM32H7_OVR_SLV			BIT(20)
 #define STM32H7_EOC_SLV			BIT(18)
 #define STM32H7_OVR_MST			BIT(4)
@@ -189,11 +216,18 @@ enum stm32h7_adc_dmngt {
 /* STM32H7_ADC_CCR - bit fields */
 #define STM32H7_VBATEN			BIT(24)
 #define STM32H7_VREFEN			BIT(22)
+=======
+#define STM32H7_EOC_SLV			BIT(18)
+#define STM32H7_EOC_MST			BIT(2)
+
+/* STM32H7_ADC_CCR - bit fields */
+>>>>>>> master
 #define STM32H7_PRESC_SHIFT		18
 #define STM32H7_PRESC_MASK		GENMASK(21, 18)
 #define STM32H7_CKMODE_SHIFT		16
 #define STM32H7_CKMODE_MASK		GENMASK(17, 16)
 
+<<<<<<< HEAD
 /* STM32MP1_ADC2_OR - bit fields */
 #define STM32MP1_VDDCOREEN		BIT(0)
 
@@ -243,6 +277,8 @@ enum stm32h7_adc_dmngt {
 #define STM32MP15_IPIDR_NUMBER		0x00110005
 #define STM32MP13_IPIDR_NUMBER		0x00110006
 
+=======
+>>>>>>> master
 /**
  * struct stm32_adc_common - stm32 ADC driver common data (for all instances)
  * @base:		control registers base cpu addr

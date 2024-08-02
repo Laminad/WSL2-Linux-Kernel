@@ -76,7 +76,22 @@ static void __get_inode_rdev(struct inode *inode, struct page *node_page)
 
 static void __set_inode_rdev(struct inode *inode, struct page *node_page)
 {
+<<<<<<< HEAD
 	__le32 *addr = get_dnode_addr(inode, node_page);
+=======
+	block_t addr = le32_to_cpu(ri->i_addr[offset_in_addr(ri)]);
+
+	if (!__is_valid_data_blkaddr(addr))
+		return 1;
+	if (!f2fs_is_valid_blkaddr(sbi, addr, DATA_GENERIC))
+		return -EFSCORRUPTED;
+	return 0;
+}
+
+static void __set_inode_rdev(struct inode *inode, struct f2fs_inode *ri)
+{
+	int extra_size = get_extra_isize(inode);
+>>>>>>> master
 
 	if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode)) {
 		if (old_valid_dev(inode->i_rdev)) {
@@ -170,8 +185,14 @@ bool f2fs_inode_chksum_verify(struct f2fs_sb_info *sbi, struct page *page)
 	calculated = f2fs_inode_chksum(sbi, page);
 
 	if (provided != calculated)
+<<<<<<< HEAD
 		f2fs_warn(sbi, "checksum invalid, nid = %lu, ino_of_node = %x, %x vs. %x",
 			  page->index, ino_of_node(page), provided, calculated);
+=======
+		f2fs_msg(sbi->sb, KERN_WARNING,
+			"checksum invalid, nid = %lu, ino_of_node = %x, %x vs. %x",
+			page->index, ino_of_node(page), provided, calculated);
+>>>>>>> master
 
 	return provided == calculated;
 }
@@ -448,8 +469,11 @@ static int do_read_inode(struct inode *inode)
 
 	if (!sanity_check_inode(inode, node_page)) {
 		f2fs_put_page(node_page, 1);
+<<<<<<< HEAD
 		set_sbi_flag(sbi, SBI_NEED_FSCK);
 		f2fs_handle_error(sbi, ERROR_CORRUPTED_INODE);
+=======
+>>>>>>> master
 		return -EFSCORRUPTED;
 	}
 
@@ -459,9 +483,27 @@ static int do_read_inode(struct inode *inode)
 
 	/* try to recover cold bit for non-dir inode */
 	if (!S_ISDIR(inode->i_mode) && !is_cold_node(node_page)) {
+<<<<<<< HEAD
 		f2fs_wait_on_page_writeback(node_page, NODE, true, true);
 		set_cold_node(node_page, false);
 		set_page_dirty(node_page);
+=======
+		set_cold_node(node_page, false);
+		set_page_dirty(node_page);
+	}
+
+	/* get rdev by using inline_info */
+	__get_inode_rdev(inode, ri);
+
+	if (S_ISREG(inode->i_mode)) {
+		err = __written_first_block(sbi, ri);
+		if (err < 0) {
+			f2fs_put_page(node_page, 1);
+			return err;
+		}
+		if (!err)
+			set_inode_flag(inode, FI_FIRST_BLOCK_WRITTEN);
+>>>>>>> master
 	}
 
 	/* get rdev by using inline_info */

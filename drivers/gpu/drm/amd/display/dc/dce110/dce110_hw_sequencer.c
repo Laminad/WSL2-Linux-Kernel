@@ -1099,7 +1099,11 @@ void dce110_enable_audio_stream(struct pipe_ctx *pipe_ctx)
 
 		pipe_ctx->stream_res.audio->funcs->az_enable(pipe_ctx->stream_res.audio);
 
+<<<<<<< HEAD
 		if (num_audio >= 1 && clk_mgr->funcs->enable_pme_wa)
+=======
+		if (num_audio >= 1 && pp_smu != NULL && pp_smu->set_pme_wa_enable != NULL)
+>>>>>>> master
 			/*this is the first audio. apply the PME w/a in order to wake AZ from D3*/
 			clk_mgr->funcs->enable_pme_wa(clk_mgr);
 
@@ -1129,11 +1133,38 @@ void dce110_disable_audio_stream(struct pipe_ctx *pipe_ctx)
 	link_hwss->disable_audio_packet(pipe_ctx);
 
 	if (pipe_ctx->stream_res.audio) {
+<<<<<<< HEAD
 		pipe_ctx->stream_res.audio->enabled = false;
 
 		if (clk_mgr->funcs->enable_pme_wa)
 			/*this is the first audio. apply the PME w/a in order to wake AZ from D3*/
 			clk_mgr->funcs->enable_pme_wa(clk_mgr);
+=======
+		struct pp_smu_funcs_rv *pp_smu = dc->res_pool->pp_smu;
+
+		if (option != KEEP_ACQUIRED_RESOURCE ||
+				!dc->debug.az_endpoint_mute_only) {
+			/*only disalbe az_endpoint if power down or free*/
+			pipe_ctx->stream_res.audio->funcs->az_disable(pipe_ctx->stream_res.audio);
+		}
+
+		if (dc_is_dp_signal(pipe_ctx->stream->signal))
+			pipe_ctx->stream_res.stream_enc->funcs->dp_audio_disable(
+					pipe_ctx->stream_res.stream_enc);
+		else
+			pipe_ctx->stream_res.stream_enc->funcs->hdmi_audio_disable(
+					pipe_ctx->stream_res.stream_enc);
+		/*don't free audio if it is from retrain or internal disable stream*/
+		if (option == FREE_ACQUIRED_RESOURCE && dc->caps.dynamic_audio == true) {
+			/*we have to dynamic arbitrate the audio endpoints*/
+			/*we free the resource, need reset is_audio_acquired*/
+			update_audio_usage(&dc->current_state->res_ctx, dc->res_pool, pipe_ctx->stream_res.audio, false);
+			pipe_ctx->stream_res.audio = NULL;
+		}
+		if (pp_smu != NULL && pp_smu->set_pme_wa_enable != NULL)
+			/*this is the first audio. apply the PME w/a in order to wake AZ from D3*/
+			pp_smu->set_pme_wa_enable(&pp_smu->pp_smu);
+>>>>>>> master
 
 		/* TODO: notify audio driver for if audio modes list changed
 		 * add audio mode list change flag */
@@ -2656,7 +2687,163 @@ static void init_hw(struct dc *dc)
 }
 
 
+<<<<<<< HEAD
 void dce110_prepare_bandwidth(
+=======
+	for (j = 0; j < context->stream_count; j++) {
+		int k;
+
+		const struct dc_stream_state *stream = context->streams[j];
+		struct dm_pp_single_disp_config *cfg =
+			&pp_display_cfg->disp_configs[num_cfgs];
+		const struct pipe_ctx *pipe_ctx = NULL;
+
+		for (k = 0; k < MAX_PIPES; k++)
+			if (stream == context->res_ctx.pipe_ctx[k].stream) {
+				pipe_ctx = &context->res_ctx.pipe_ctx[k];
+				break;
+			}
+
+		ASSERT(pipe_ctx != NULL);
+
+		/* only notify active stream */
+		if (stream->dpms_off)
+			continue;
+
+		num_cfgs++;
+		cfg->signal = pipe_ctx->stream->signal;
+		cfg->pipe_idx = pipe_ctx->stream_res.tg->inst;
+		cfg->src_height = stream->src.height;
+		cfg->src_width = stream->src.width;
+		cfg->ddi_channel_mapping =
+			stream->sink->link->ddi_channel_mapping.raw;
+		cfg->transmitter =
+			stream->sink->link->link_enc->transmitter;
+		cfg->link_settings.lane_count =
+			stream->sink->link->cur_link_settings.lane_count;
+		cfg->link_settings.link_rate =
+			stream->sink->link->cur_link_settings.link_rate;
+		cfg->link_settings.link_spread =
+			stream->sink->link->cur_link_settings.link_spread;
+		cfg->sym_clock = stream->phy_pix_clk;
+		/* Round v_refresh*/
+		cfg->v_refresh = stream->timing.pix_clk_khz * 1000;
+		cfg->v_refresh /= stream->timing.h_total;
+		cfg->v_refresh = (cfg->v_refresh + stream->timing.v_total / 2)
+							/ stream->timing.v_total;
+	}
+
+	pp_display_cfg->display_count = num_cfgs;
+}
+
+uint32_t dce110_get_min_vblank_time_us(const struct dc_state *context)
+{
+	uint8_t j;
+	uint32_t min_vertical_blank_time = -1;
+
+	for (j = 0; j < context->stream_count; j++) {
+		struct dc_stream_state *stream = context->streams[j];
+		uint32_t vertical_blank_in_pixels = 0;
+		uint32_t vertical_blank_time = 0;
+
+		vertical_blank_in_pixels = stream->timing.h_total *
+			(stream->timing.v_total
+			 - stream->timing.v_addressable);
+
+		vertical_blank_time = vertical_blank_in_pixels
+			* 1000 / stream->timing.pix_clk_khz;
+
+		if (min_vertical_blank_time > vertical_blank_time)
+			min_vertical_blank_time = vertical_blank_time;
+	}
+
+	return min_vertical_blank_time;
+}
+
+static int determine_sclk_from_bounding_box(
+		const struct dc *dc,
+		int required_sclk)
+{
+	int i;
+
+	/*
+	 * Some asics do not give us sclk levels, so we just report the actual
+	 * required sclk
+	 */
+	if (dc->sclk_lvls.num_levels == 0)
+		return required_sclk;
+
+	for (i = 0; i < dc->sclk_lvls.num_levels; i++) {
+		if (dc->sclk_lvls.clocks_in_khz[i] >= required_sclk)
+			return dc->sclk_lvls.clocks_in_khz[i];
+	}
+	/*
+	 * even maximum level could not satisfy requirement, this
+	 * is unexpected at this stage, should have been caught at
+	 * validation time
+	 */
+	ASSERT(0);
+	return dc->sclk_lvls.clocks_in_khz[dc->sclk_lvls.num_levels - 1];
+}
+
+static void pplib_apply_display_requirements(
+	struct dc *dc,
+	struct dc_state *context)
+{
+	struct dm_pp_display_configuration *pp_display_cfg = &context->pp_display_cfg;
+
+	pp_display_cfg->all_displays_in_sync =
+		context->bw.dce.all_displays_in_sync;
+	pp_display_cfg->nb_pstate_switch_disable =
+			context->bw.dce.nbp_state_change_enable == false;
+	pp_display_cfg->cpu_cc6_disable =
+			context->bw.dce.cpuc_state_change_enable == false;
+	pp_display_cfg->cpu_pstate_disable =
+			context->bw.dce.cpup_state_change_enable == false;
+	pp_display_cfg->cpu_pstate_separation_time =
+			context->bw.dce.blackout_recovery_time_us;
+
+	pp_display_cfg->min_memory_clock_khz = context->bw.dce.yclk_khz
+		/ MEMORY_TYPE_MULTIPLIER;
+
+	pp_display_cfg->min_engine_clock_khz = determine_sclk_from_bounding_box(
+			dc,
+			context->bw.dce.sclk_khz);
+
+	pp_display_cfg->min_dcfclock_khz = pp_display_cfg->min_engine_clock_khz;
+
+	pp_display_cfg->min_engine_clock_deep_sleep_khz
+			= context->bw.dce.sclk_deep_sleep_khz;
+
+	pp_display_cfg->avail_mclk_switch_time_us =
+						dce110_get_min_vblank_time_us(context);
+	/* TODO: dce11.2*/
+	pp_display_cfg->avail_mclk_switch_time_in_disp_active_us = 0;
+
+	pp_display_cfg->disp_clk_khz = dc->res_pool->dccg->clks.dispclk_khz;
+
+	dce110_fill_display_configs(context, pp_display_cfg);
+
+	/* TODO: is this still applicable?*/
+	if (pp_display_cfg->display_count == 1) {
+		const struct dc_crtc_timing *timing =
+			&context->streams[0]->timing;
+
+		pp_display_cfg->crtc_index =
+			pp_display_cfg->disp_configs[0].pipe_idx;
+		pp_display_cfg->line_time_in_us = timing->h_total * 1000
+							/ timing->pix_clk_khz;
+	}
+
+	if (memcmp(&dc->prev_display_config, pp_display_cfg, sizeof(
+			struct dm_pp_display_configuration)) !=  0)
+		dm_pp_apply_display_requirements(dc->ctx, pp_display_cfg);
+
+	dc->prev_display_config = *pp_display_cfg;
+}
+
+static void dce110_set_bandwidth(
+>>>>>>> master
 		struct dc *dc,
 		struct dc_state *context)
 {

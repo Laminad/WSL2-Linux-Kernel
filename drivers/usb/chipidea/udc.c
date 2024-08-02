@@ -1824,7 +1824,11 @@ static struct usb_ep *ci_udc_match_ep(struct usb_gadget *gadget,
 	return NULL;
 }
 
+<<<<<<< HEAD
 /*
+=======
+/**
+>>>>>>> master
  * Device operations part of the API to the USB controller hardware,
  * which don't involve endpoints (or i/o)
  * Check  "usb_gadget.h" for details

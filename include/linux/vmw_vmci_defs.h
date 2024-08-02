@@ -82,7 +82,11 @@ enum {
  * consists of at least two pages, the memory limit also dictates the
  * number of queue pairs a guest can create.
  */
+<<<<<<< HEAD
 #define VMCI_MAX_GUEST_QP_MEMORY ((size_t)(128 * 1024 * 1024))
+=======
+#define VMCI_MAX_GUEST_QP_MEMORY (128 * 1024 * 1024)
+>>>>>>> master
 #define VMCI_MAX_GUEST_QP_COUNT  (VMCI_MAX_GUEST_QP_MEMORY / PAGE_SIZE / 2)
 
 /*

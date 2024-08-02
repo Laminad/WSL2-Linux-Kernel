@@ -5105,7 +5105,11 @@ EXPORT_SYMBOL_GPL(ring_buffer_consume);
  * This overall must be paired with ring_buffer_read_finish.
  */
 struct ring_buffer_iter *
+<<<<<<< HEAD
 ring_buffer_read_prepare(struct trace_buffer *buffer, int cpu, gfp_t flags)
+=======
+ring_buffer_read_prepare(struct ring_buffer *buffer, int cpu, gfp_t flags)
+>>>>>>> master
 {
 	struct ring_buffer_per_cpu *cpu_buffer;
 	struct ring_buffer_iter *iter;
@@ -5113,7 +5117,11 @@ ring_buffer_read_prepare(struct trace_buffer *buffer, int cpu, gfp_t flags)
 	if (!cpumask_test_cpu(cpu, buffer->cpumask))
 		return NULL;
 
+<<<<<<< HEAD
 	iter = kzalloc(sizeof(*iter), flags);
+=======
+	iter = kmalloc(sizeof(*iter), flags);
+>>>>>>> master
 	if (!iter)
 		return NULL;
 

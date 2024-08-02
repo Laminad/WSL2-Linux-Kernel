@@ -491,8 +491,14 @@ static ssize_t remove_store(struct device *dev, struct device_attribute *attr,
 		pci_stop_and_remove_bus_device_locked(to_pci_dev(dev));
 	return count;
 }
+<<<<<<< HEAD
 static DEVICE_ATTR_IGNORE_LOCKDEP(remove, 0220, NULL,
 				  remove_store);
+=======
+static struct device_attribute dev_remove_attr = __ATTR_IGNORE_LOCKDEP(remove,
+							(S_IWUSR|S_IWGRP),
+							NULL, remove_store);
+>>>>>>> master
 
 static ssize_t bus_rescan_store(struct device *dev,
 				struct device_attribute *attr,

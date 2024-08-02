@@ -374,11 +374,26 @@ static int nvmem_sysfs_setup_compat(struct nvmem_device *nvmem,
 	if (!config->base_dev)
 		return -EINVAL;
 
+<<<<<<< HEAD
 	if (config->type == NVMEM_TYPE_FRAM)
 		bin_attr_nvmem_eeprom_compat.attr.name = "fram";
 
 	nvmem->eeprom = bin_attr_nvmem_eeprom_compat;
 	nvmem->eeprom.attr.mode = nvmem_bin_attr_get_umode(nvmem);
+=======
+	if (nvmem->read_only) {
+		if (config->root_only)
+			nvmem->eeprom = bin_attr_ro_root_nvmem;
+		else
+			nvmem->eeprom = bin_attr_ro_nvmem;
+	} else {
+		if (config->root_only)
+			nvmem->eeprom = bin_attr_rw_root_nvmem;
+		else
+			nvmem->eeprom = bin_attr_rw_nvmem;
+	}
+	nvmem->eeprom.attr.name = "eeprom";
+>>>>>>> master
 	nvmem->eeprom.size = nvmem->size;
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 	nvmem->eeprom.attr.key = &eeprom_lock_key;
@@ -1023,6 +1038,7 @@ struct nvmem_device *nvmem_register(const struct nvmem_config *config)
 	if (rval)
 		goto err_remove_cells;
 
+<<<<<<< HEAD
 	blocking_notifier_call_chain(&nvmem_notifier, NVMEM_ADD, nvmem);
 
 	return nvmem;
@@ -1033,6 +1049,27 @@ err_remove_cells:
 err_teardown_compat:
 	if (config->compat)
 		nvmem_sysfs_remove_compat(nvmem, config);
+=======
+	if (config->compat) {
+		rval = nvmem_setup_compat(nvmem, config);
+		if (rval)
+			goto err_device_del;
+	}
+
+	if (config->cells) {
+		rval = nvmem_add_cells(nvmem, config->cells, config->ncells);
+		if (rval)
+			goto err_teardown_compat;
+	}
+
+	return nvmem;
+
+err_teardown_compat:
+	if (config->compat)
+		device_remove_bin_file(nvmem->base_dev, &nvmem->eeprom);
+err_device_del:
+	device_del(&nvmem->dev);
+>>>>>>> master
 err_put_device:
 	put_device(&nvmem->dev);
 

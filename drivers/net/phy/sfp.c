@@ -245,6 +245,7 @@ struct sfp {
 	struct gpio_desc *gpio[GPIO_MAX];
 	int gpio_irq[GPIO_MAX];
 
+<<<<<<< HEAD
 	bool need_poll;
 
 	/* Access rules:
@@ -257,6 +258,10 @@ struct sfp {
 	unsigned int state_hw_drive;
 	unsigned int state_hw_mask;
 	unsigned int state_soft_mask;
+=======
+	bool attached;
+	struct mutex st_mutex;			/* Protects state */
+>>>>>>> master
 	unsigned int state;
 
 	struct delayed_work poll;
@@ -597,7 +602,10 @@ static int sfp_i2c_read(struct sfp *sfp, bool a2, u8 dev_addr, void *buf,
 {
 	struct i2c_msg msgs[2];
 	u8 bus_addr = a2 ? 0x51 : 0x50;
+<<<<<<< HEAD
 	size_t block_size = sfp->i2c_block_size;
+=======
+>>>>>>> master
 	size_t this_len;
 	int ret;
 
@@ -612,8 +620,13 @@ static int sfp_i2c_read(struct sfp *sfp, bool a2, u8 dev_addr, void *buf,
 
 	while (len) {
 		this_len = len;
+<<<<<<< HEAD
 		if (this_len > block_size)
 			this_len = block_size;
+=======
+		if (this_len > 16)
+			this_len = 16;
+>>>>>>> master
 
 		msgs[1].len = this_len;
 
@@ -2366,6 +2379,61 @@ static void sfp_sm_mod_remove(struct sfp *sfp)
 /* This state machine tracks the upstream's state */
 static void sfp_sm_device(struct sfp *sfp, unsigned int event)
 {
+<<<<<<< HEAD
+=======
+	mutex_lock(&sfp->sm_mutex);
+
+	dev_dbg(sfp->dev, "SM: enter %s:%s:%s event %s\n",
+		mod_state_to_str(sfp->sm_mod_state),
+		dev_state_to_str(sfp->sm_dev_state),
+		sm_state_to_str(sfp->sm_state),
+		event_to_str(event));
+
+	/* This state machine tracks the insert/remove state of
+	 * the module, and handles probing the on-board EEPROM.
+	 */
+	switch (sfp->sm_mod_state) {
+	default:
+		if (event == SFP_E_INSERT && sfp->attached) {
+			sfp_module_tx_disable(sfp);
+			sfp_sm_ins_next(sfp, SFP_MOD_PROBE, T_PROBE_INIT);
+		}
+		break;
+
+	case SFP_MOD_PROBE:
+		if (event == SFP_E_REMOVE) {
+			sfp_sm_ins_next(sfp, SFP_MOD_EMPTY, 0);
+		} else if (event == SFP_E_TIMEOUT) {
+			int val = sfp_sm_mod_probe(sfp);
+
+			if (val == 0)
+				sfp_sm_ins_next(sfp, SFP_MOD_PRESENT, 0);
+			else if (val > 0)
+				sfp_sm_ins_next(sfp, SFP_MOD_HPOWER, val);
+			else if (val != -EAGAIN)
+				sfp_sm_ins_next(sfp, SFP_MOD_ERROR, 0);
+			else
+				sfp_sm_set_timer(sfp, T_PROBE_RETRY);
+		}
+		break;
+
+	case SFP_MOD_HPOWER:
+		if (event == SFP_E_TIMEOUT) {
+			sfp_sm_ins_next(sfp, SFP_MOD_PRESENT, 0);
+			break;
+		}
+		/* fallthrough */
+	case SFP_MOD_PRESENT:
+	case SFP_MOD_ERROR:
+		if (event == SFP_E_REMOVE) {
+			sfp_sm_mod_remove(sfp);
+			sfp_sm_ins_next(sfp, SFP_MOD_EMPTY, 0);
+		}
+		break;
+	}
+
+	/* This state machine tracks the netdev up/down state */
+>>>>>>> master
 	switch (sfp->sm_dev_state) {
 	default:
 		if (event == SFP_E_DEV_ATTACH)
@@ -2704,12 +2772,23 @@ static void sfp_sm_event(struct sfp *sfp, unsigned int event)
 
 static void sfp_attach(struct sfp *sfp)
 {
+<<<<<<< HEAD
 	sfp_sm_event(sfp, SFP_E_DEV_ATTACH);
+=======
+	sfp->attached = true;
+	if (sfp->state & SFP_F_PRESENT)
+		sfp_sm_event(sfp, SFP_E_INSERT);
+>>>>>>> master
 }
 
 static void sfp_detach(struct sfp *sfp)
 {
+<<<<<<< HEAD
 	sfp_sm_event(sfp, SFP_E_DEV_DETACH);
+=======
+	sfp->attached = false;
+	sfp_sm_event(sfp, SFP_E_REMOVE);
+>>>>>>> master
 }
 
 static void sfp_start(struct sfp *sfp)
@@ -2839,7 +2918,10 @@ static void sfp_check_state(struct sfp *sfp)
 {
 	unsigned int state, i, changed;
 
+<<<<<<< HEAD
 	rtnl_lock();
+=======
+>>>>>>> master
 	mutex_lock(&sfp->st_mutex);
 	state = sfp_get_state(sfp);
 	changed = state ^ sfp->state;
@@ -2871,6 +2953,7 @@ static void sfp_check_state(struct sfp *sfp)
 				    SFP_E_LOS_HIGH : SFP_E_LOS_LOW);
 	mutex_unlock(&sfp->sm_mutex);
 	rtnl_unlock();
+	mutex_unlock(&sfp->st_mutex);
 }
 
 static irqreturn_t sfp_irq(int irq, void *data)
@@ -3026,11 +3109,14 @@ static int sfp_probe(struct platform_device *pdev)
 		sfp->state |= SFP_F_RS0;
 	sfp_set_state(sfp, sfp->state);
 	sfp_module_tx_disable(sfp);
+<<<<<<< HEAD
 	if (sfp->state & SFP_F_PRESENT) {
 		rtnl_lock();
 		sfp_sm_event(sfp, SFP_E_INSERT);
 		rtnl_unlock();
 	}
+=======
+>>>>>>> master
 
 	for (i = 0; i < GPIO_MAX; i++) {
 		if (gpio_flags[i] != GPIOD_IN || !sfp->gpio[i])
@@ -3078,8 +3164,11 @@ static int sfp_probe(struct platform_device *pdev)
 	if (!sfp->sfp_bus)
 		return -ENOMEM;
 
+<<<<<<< HEAD
 	sfp_debugfs_init(sfp);
 
+=======
+>>>>>>> master
 	return 0;
 }
 

@@ -324,6 +324,30 @@ static inline int l2tp_v3_ensure_opt_in_linear(struct l2tp_session *session, str
 					       unsigned char **ptr, unsigned char **optr)
 {
 	int opt_len = session->peer_cookie_len + l2tp_get_l2specific_len(session);
+<<<<<<< HEAD
+=======
+
+	if (opt_len > 0) {
+		int off = *ptr - *optr;
+
+		if (!pskb_may_pull(skb, off + opt_len))
+			return -1;
+
+		if (skb->data != *optr) {
+			*optr = skb->data;
+			*ptr = skb->data + off;
+		}
+	}
+
+	return 0;
+}
+
+#define l2tp_printk(ptr, type, func, fmt, ...)				\
+do {									\
+	if (((ptr)->debug) & (type))					\
+		func(fmt, ##__VA_ARGS__);				\
+} while (0)
+>>>>>>> master
 
 	if (opt_len > 0) {
 		int off = *ptr - *optr;

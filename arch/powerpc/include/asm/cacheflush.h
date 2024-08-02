@@ -26,8 +26,14 @@ static inline void flush_cache_vmap(unsigned long start, unsigned long end)
 {
 	asm volatile("ptesync" ::: "memory");
 }
+<<<<<<< HEAD
 #define flush_cache_vmap flush_cache_vmap
 #endif /* CONFIG_PPC_BOOK3S_64 */
+=======
+#else
+static inline void flush_cache_vmap(unsigned long start, unsigned long end) { }
+#endif
+>>>>>>> master
 
 #define ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE 1
 /*

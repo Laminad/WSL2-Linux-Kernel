@@ -215,6 +215,43 @@ static void brcmu_d11ac_decchspec(struct brcmu_chan *ch)
 			break;
 		}
 		break;
+<<<<<<< HEAD
+=======
+	case BRCMU_CHSPEC_D11AC_BW_160:
+		ch->bw = BRCMU_CHAN_BW_160;
+		ch->sb = brcmu_maskget16(ch->chspec, BRCMU_CHSPEC_D11AC_SB_MASK,
+					 BRCMU_CHSPEC_D11AC_SB_SHIFT);
+		switch (ch->sb) {
+		case BRCMU_CHAN_SB_LLL:
+			ch->control_ch_num -= CH_70MHZ_APART;
+			break;
+		case BRCMU_CHAN_SB_LLU:
+			ch->control_ch_num -= CH_50MHZ_APART;
+			break;
+		case BRCMU_CHAN_SB_LUL:
+			ch->control_ch_num -= CH_30MHZ_APART;
+			break;
+		case BRCMU_CHAN_SB_LUU:
+			ch->control_ch_num -= CH_10MHZ_APART;
+			break;
+		case BRCMU_CHAN_SB_ULL:
+			ch->control_ch_num += CH_10MHZ_APART;
+			break;
+		case BRCMU_CHAN_SB_ULU:
+			ch->control_ch_num += CH_30MHZ_APART;
+			break;
+		case BRCMU_CHAN_SB_UUL:
+			ch->control_ch_num += CH_50MHZ_APART;
+			break;
+		case BRCMU_CHAN_SB_UUU:
+			ch->control_ch_num += CH_70MHZ_APART;
+			break;
+		default:
+			WARN_ON_ONCE(1);
+			break;
+		}
+		break;
+>>>>>>> master
 	case BRCMU_CHSPEC_D11AC_BW_8080:
 	default:
 		WARN_ONCE(1, "Invalid chanspec 0x%04x\n", ch->chspec);

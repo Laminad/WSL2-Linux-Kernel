@@ -359,8 +359,11 @@ static void update_cache_properties(struct cacheinfo *this_leaf,
 				    struct acpi_pptt_processor *cpu_node,
 				    u8 revision)
 {
+<<<<<<< HEAD
 	struct acpi_pptt_cache_v1* found_cache_v1;
 
+=======
+>>>>>>> master
 	this_leaf->fw_token = cpu_node;
 	if (found_cache->flags & ACPI_PPTT_SIZE_PROPERTY_VALID)
 		this_leaf->size = found_cache->size;
@@ -575,6 +578,45 @@ static int find_acpi_cpu_topology_tag(unsigned int cpu, int level, int flag)
  * @cpu: Kernel logical CPU number
  * @rev: The minimum PPTT revision defining the flag
  * @flag: The flag itself
+<<<<<<< HEAD
+=======
+ *
+ * Check the node representing a CPU for a given flag.
+ *
+ * Return: -ENOENT if the PPTT doesn't exist, the CPU cannot be found or
+ *	   the table revision isn't new enough.
+ *	   1, any passed flag set
+ *	   0, flag unset
+ */
+static int check_acpi_cpu_flag(unsigned int cpu, int rev, u32 flag)
+{
+	struct acpi_table_header *table;
+	acpi_status status;
+	u32 acpi_cpu_id = get_acpi_id_for_cpu(cpu);
+	struct acpi_pptt_processor *cpu_node = NULL;
+	int ret = -ENOENT;
+
+	status = acpi_get_table(ACPI_SIG_PPTT, 0, &table);
+	if (ACPI_FAILURE(status)) {
+		pr_warn_once("No PPTT table found, cpu topology may be inaccurate\n");
+		return ret;
+	}
+
+	if (table->revision >= rev)
+		cpu_node = acpi_find_processor_node(table, acpi_cpu_id);
+
+	if (cpu_node)
+		ret = (cpu_node->flags & flag) != 0;
+
+	acpi_put_table(table);
+
+	return ret;
+}
+
+/**
+ * acpi_find_last_cache_level() - Determines the number of cache levels for a PE
+ * @cpu: Kernel logical cpu number
+>>>>>>> master
  *
  * Check the node representing a CPU for a given flag.
  *
@@ -691,8 +733,13 @@ int acpi_pptt_cpu_is_thread(unsigned int cpu)
 }
 
 /**
+<<<<<<< HEAD
  * find_acpi_cpu_topology() - Determine a unique topology value for a given CPU
  * @cpu: Kernel logical CPU number
+=======
+ * find_acpi_cpu_topology() - Determine a unique topology value for a given cpu
+ * @cpu: Kernel logical cpu number
+>>>>>>> master
  * @level: The topological level for which we would like a unique ID
  *
  * Determine a topology unique ID for each thread/core/cluster/mc_grouping

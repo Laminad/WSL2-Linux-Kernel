@@ -229,6 +229,8 @@ static int __init arc_cs_setup_timer1(struct device_node *node)
 
 	sched_clock_register(arc_timer1_clock_read, 32, arc_timer_freq);
 
+	sched_clock_register(arc_timer1_clock_read, 32, arc_timer_freq);
+
 	return clocksource_register_hz(&arc_counter_timer1, arc_timer_freq);
 }
 

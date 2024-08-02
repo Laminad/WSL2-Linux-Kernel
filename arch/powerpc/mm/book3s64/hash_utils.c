@@ -33,6 +33,7 @@
 #include <linux/context_tracking.h>
 #include <linux/libfdt.h>
 #include <linux/pkeys.h>
+<<<<<<< HEAD:arch/powerpc/mm/book3s64/hash_utils.c
 #include <linux/hugetlb.h>
 #include <linux/cpu.h>
 #include <linux/pgtable.h>
@@ -40,6 +41,9 @@
 #include <linux/random.h>
 #include <linux/elf-randomize.h>
 #include <linux/of_fdt.h>
+=======
+#include <linux/cpu.h>
+>>>>>>> master:arch/powerpc/mm/hash_utils_64.c
 
 #include <asm/interrupt.h>
 #include <asm/processor.h>

@@ -4294,6 +4294,26 @@ static void usb_enable_link_state(struct usb_hcd *hcd, struct usb_device *udev,
 		 */
 		hcd->driver->disable_usb3_lpm_timeout(hcd, udev, state);
 		return;
+<<<<<<< HEAD
+=======
+	}
+
+	/* Only a configured device will accept the Set Feature
+	 * U1/U2_ENABLE
+	 */
+	if (udev->actconfig &&
+	    usb_set_device_initiated_lpm(udev, state, true) == 0) {
+		if (state == USB3_LPM_U1)
+			udev->usb3_lpm_u1_enabled = 1;
+		else if (state == USB3_LPM_U2)
+			udev->usb3_lpm_u2_enabled = 1;
+	} else {
+		/* Don't request U1/U2 entry if the device
+		 * cannot transition to U1/U2.
+		 */
+		usb_set_lpm_timeout(udev, state, 0);
+		hcd->driver->disable_usb3_lpm_timeout(hcd, udev, state);
+>>>>>>> master
 	}
 
 	/* Only a configured device will accept the Set Feature
@@ -6081,6 +6101,19 @@ static int usb_reset_and_verify_device(struct usb_device *udev)
 	 * It will be re-enabled by the enumeration process.
 	 */
 	usb_disable_usb2_hardware_lpm(udev);
+<<<<<<< HEAD
+=======
+
+	/* Disable LPM while we reset the device and reinstall the alt settings.
+	 * Device-initiated LPM, and system exit latency settings are cleared
+	 * when the device is reset, so we have to set them up again.
+	 */
+	ret = usb_unlocked_disable_lpm(udev);
+	if (ret) {
+		dev_err(&udev->dev, "%s Failed to disable LPM\n", __func__);
+		goto re_enumerate_no_bos;
+	}
+>>>>>>> master
 
 	bos = udev->bos;
 	udev->bos = NULL;

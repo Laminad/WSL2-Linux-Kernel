@@ -254,6 +254,7 @@ static int xen_mcfg_late(void)
 	}
 	return 0;
 }
+<<<<<<< HEAD
 #endif
 
 #ifdef CONFIG_XEN_DOM0
@@ -329,4 +330,6 @@ int xen_unregister_device_domain_owner(struct pci_dev *dev)
 	return 0;
 }
 EXPORT_SYMBOL_GPL(xen_unregister_device_domain_owner);
+=======
+>>>>>>> master
 #endif

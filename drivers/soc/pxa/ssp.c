@@ -178,7 +178,21 @@ static int pxa_ssp_probe(struct platform_device *pdev)
 
 static int pxa_ssp_remove(struct platform_device *pdev)
 {
+<<<<<<< HEAD:drivers/soc/pxa/ssp.c
 	struct ssp_device *ssp = platform_get_drvdata(pdev);
+=======
+	struct resource *res;
+	struct ssp_device *ssp;
+
+	ssp = platform_get_drvdata(pdev);
+	if (ssp == NULL)
+		return -ENODEV;
+
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	release_mem_region(res->start, resource_size(res));
+
+	clk_put(ssp->clk);
+>>>>>>> master:arch/arm/plat-pxa/ssp.c
 
 	mutex_lock(&ssp_lock);
 	list_del(&ssp->node);

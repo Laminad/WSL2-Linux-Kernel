@@ -1790,9 +1790,22 @@ void hfi1_rc_send_complete(struct rvt_qp *qp, struct hfi1_opa_header *opah)
 		if (cmp_psn(wqe->lpsn, qp->s_sending_psn) >= 0 &&
 		    cmp_psn(qp->s_sending_psn, qp->s_sending_hpsn) <= 0)
 			break;
+<<<<<<< HEAD
 		trdma_clean_swqe(qp, wqe);
 		trace_hfi1_qp_send_completion(qp, wqe, qp->s_last);
 		rvt_qp_complete_swqe(qp,
+=======
+		rvt_qp_wqe_unreserve(qp, wqe);
+		s_last = qp->s_last;
+		trace_hfi1_qp_send_completion(qp, wqe, s_last);
+		if (++s_last >= qp->s_size)
+			s_last = 0;
+		qp->s_last = s_last;
+		/* see post_send() */
+		barrier();
+		rvt_put_swqe(wqe);
+		rvt_qp_swqe_complete(qp,
+>>>>>>> master
 				     wqe,
 				     ib_hfi1_wc_opcode[wqe->wr.opcode],
 				     IB_WC_SUCCESS);
@@ -1836,9 +1849,24 @@ struct rvt_swqe *do_rc_completion(struct rvt_qp *qp,
 	trace_hfi1_rc_completion(qp, wqe->lpsn);
 	if (cmp_psn(wqe->lpsn, qp->s_sending_psn) < 0 ||
 	    cmp_psn(qp->s_sending_psn, qp->s_sending_hpsn) > 0) {
+<<<<<<< HEAD
 		trdma_clean_swqe(qp, wqe);
 		trace_hfi1_qp_send_completion(qp, wqe, qp->s_last);
 		rvt_qp_complete_swqe(qp,
+=======
+		u32 s_last;
+
+		rvt_put_swqe(wqe);
+		rvt_qp_wqe_unreserve(qp, wqe);
+		s_last = qp->s_last;
+		trace_hfi1_qp_send_completion(qp, wqe, s_last);
+		if (++s_last >= qp->s_size)
+			s_last = 0;
+		qp->s_last = s_last;
+		/* see post_send() */
+		barrier();
+		rvt_qp_swqe_complete(qp,
+>>>>>>> master
 				     wqe,
 				     ib_hfi1_wc_opcode[wqe->wr.opcode],
 				     IB_WC_SUCCESS);
@@ -3030,7 +3058,14 @@ send_last:
 			update_ack_queue(qp, next);
 		}
 		e = &qp->s_ack_queue[qp->r_head_ack_queue];
+<<<<<<< HEAD
 		release_rdma_sge_mr(e);
+=======
+		if (e->rdma_sge.mr) {
+			rvt_put_mr(e->rdma_sge.mr);
+			e->rdma_sge.mr = NULL;
+		}
+>>>>>>> master
 		reth = &ohdr->u.rc.reth;
 		len = be32_to_cpu(reth->length);
 		if (len) {
@@ -3105,11 +3140,17 @@ send_last:
 			update_ack_queue(qp, next);
 		}
 		e = &qp->s_ack_queue[qp->r_head_ack_queue];
+<<<<<<< HEAD
 		release_rdma_sge_mr(e);
 		/* Process OPFN special virtual address */
 		if (opfn) {
 			opfn_conn_response(qp, e, ateth);
 			goto ack;
+=======
+		if (e->rdma_sge.mr) {
+			rvt_put_mr(e->rdma_sge.mr);
+			e->rdma_sge.mr = NULL;
+>>>>>>> master
 		}
 		if (unlikely(vaddr & (sizeof(u64) - 1)))
 			goto nack_inv_unlck;

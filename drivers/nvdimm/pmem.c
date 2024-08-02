@@ -150,7 +150,11 @@ static blk_status_t read_pmem(struct page *page, unsigned int off,
 	while (len) {
 		mem = kmap_atomic(page);
 		chunk = min_t(unsigned int, len, PAGE_SIZE - off);
+<<<<<<< HEAD
 		rem = copy_mc_to_kernel(mem + off, pmem_addr, chunk);
+=======
+		rem = memcpy_mcsafe(mem + off, pmem_addr, chunk);
+>>>>>>> master
 		kunmap_atomic(mem);
 		if (rem)
 			return BLK_STS_IOERR;
@@ -301,6 +305,7 @@ static int pmem_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
 				   PAGE_SIZE));
 }
 
+<<<<<<< HEAD
 static long pmem_dax_direct_access(struct dax_device *dax_dev,
 		pgoff_t pgoff, long nr_pages, enum dax_access_mode mode,
 		void **kaddr, pfn_t *pfn)
@@ -308,6 +313,18 @@ static long pmem_dax_direct_access(struct dax_device *dax_dev,
 	struct pmem_device *pmem = dax_get_private(dax_dev);
 
 	return __pmem_direct_access(pmem, pgoff, nr_pages, mode, kaddr, pfn);
+=======
+/*
+ * Use the 'no check' versions of copy_from_iter_flushcache() and
+ * copy_to_iter_mcsafe() to bypass HARDENED_USERCOPY overhead. Bounds
+ * checking, both file offset and device offset, is handled by
+ * dax_iomap_actor()
+ */
+static size_t pmem_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff,
+		void *addr, size_t bytes, struct iov_iter *i)
+{
+	return _copy_from_iter_flushcache(addr, bytes, i);
+>>>>>>> master
 }
 
 /*
@@ -326,6 +343,7 @@ static long pmem_dax_direct_access(struct dax_device *dax_dev,
 static size_t pmem_recovery_write(struct dax_device *dax_dev, pgoff_t pgoff,
 		void *addr, size_t bytes, struct iov_iter *i)
 {
+<<<<<<< HEAD
 	struct pmem_device *pmem = dax_get_private(dax_dev);
 	size_t olen, len, off;
 	phys_addr_t pmem_off;
@@ -363,6 +381,9 @@ static size_t pmem_recovery_write(struct dax_device *dax_dev, pgoff_t pgoff,
 	pmem_clear_bb(pmem, to_sect(pmem, pmem_off), cleared >> SECTOR_SHIFT);
 
 	return olen;
+=======
+	return _copy_to_iter_mcsafe(addr, bytes, i);
+>>>>>>> master
 }
 
 static const struct dax_operations pmem_dax_ops = {
@@ -419,6 +440,22 @@ static const struct attribute_group *pmem_attribute_groups[] = {
 	NULL,
 };
 
+<<<<<<< HEAD
+=======
+static void pmem_release_queue(void *q)
+{
+	blk_cleanup_queue(q);
+}
+
+static void pmem_freeze_queue(struct percpu_ref *ref)
+{
+	struct request_queue *q;
+
+	q = container_of(ref, typeof(*q), q_usage_counter);
+	blk_freeze_queue_start(q);
+}
+
+>>>>>>> master
 static void pmem_release_disk(void *__pmem)
 {
 	struct pmem_device *pmem = __pmem;
@@ -505,6 +542,11 @@ static int pmem_attach_disk(struct device *dev,
 	pmem->disk = disk;
 	pmem->pgmap.owner = pmem;
 	pmem->pfn_flags = PFN_DEV;
+<<<<<<< HEAD
+=======
+	pmem->pgmap.ref = &q->q_usage_counter;
+	pmem->pgmap.kill = pmem_freeze_queue;
+>>>>>>> master
 	if (is_nd_pfn(dev)) {
 		pmem->pgmap.type = MEMORY_DEVICE_FS_DAX;
 		pmem->pgmap.ops = &fsdax_pagemap_ops;
@@ -524,6 +566,7 @@ static int pmem_attach_disk(struct device *dev,
 		pmem->pgmap.ops = &fsdax_pagemap_ops;
 		addr = devm_memremap_pages(dev, &pmem->pgmap);
 		pmem->pfn_flags |= PFN_MAP;
+<<<<<<< HEAD
 		bb_range = pmem->pgmap.range;
 	} else {
 		addr = devm_memremap(dev, pmem->phys_addr,
@@ -536,6 +579,17 @@ static int pmem_attach_disk(struct device *dev,
 		rc = PTR_ERR(addr);
 		goto out;
 	}
+=======
+		memcpy(&bb_res, &pmem->pgmap.res, sizeof(bb_res));
+	} else {
+		addr = devm_memremap(dev, pmem->phys_addr,
+				pmem->size, ARCH_MEMREMAP_PMEM);
+		memcpy(&bb_res, &nsio->res, sizeof(bb_res));
+	}
+
+	if (IS_ERR(addr))
+		return PTR_ERR(addr);
+>>>>>>> master
 	pmem->virt_addr = addr;
 
 	blk_queue_write_cache(q, true, fua);

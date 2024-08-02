@@ -64,11 +64,16 @@ static int vmw_gmrid_man_get_node(struct ttm_resource_manager *man,
 	ttm_resource_init(bo, place, *res);
 
 	id = ida_alloc_max(&gman->gmr_ida, gman->max_gmr_ids - 1, GFP_KERNEL);
+<<<<<<< HEAD
 	if (id < 0) {
 		ttm_resource_fini(man, *res);
 		kfree(*res);
 		return id;
 	}
+=======
+	if (id < 0)
+		return (id != -ENOMEM ? 0 : id);
+>>>>>>> master
 
 	spin_lock(&gman->lock);
 

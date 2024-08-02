@@ -1053,13 +1053,21 @@ static int __init at91_pm_backup_init(void)
 
 	np = of_find_compatible_node(NULL, NULL, "atmel,sama5d2-securam");
 	if (!np)
+<<<<<<< HEAD
 		return ret;
+=======
+		goto securam_fail_no_ref_dev;
+>>>>>>> master
 
 	pdev = of_find_device_by_node(np);
 	of_node_put(np);
 	if (!pdev) {
 		pr_warn("%s: failed to find securam device!\n", __func__);
+<<<<<<< HEAD
 		return ret;
+=======
+		goto securam_fail_no_ref_dev;
+>>>>>>> master
 	}
 
 	sram_pool = gen_pool_get(&pdev->dev, NULL);
@@ -1088,6 +1096,12 @@ static int __init at91_pm_backup_init(void)
 
 securam_fail:
 	put_device(&pdev->dev);
+<<<<<<< HEAD
+=======
+securam_fail_no_ref_dev:
+	iounmap(pm_data.sfrbu);
+	pm_data.sfrbu = NULL;
+>>>>>>> master
 	return ret;
 }
 

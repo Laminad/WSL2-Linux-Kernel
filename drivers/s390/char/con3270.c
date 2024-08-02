@@ -2165,6 +2165,7 @@ con3270_init(void)
 	if (IS_ERR(rp))
 		return PTR_ERR(rp);
 
+<<<<<<< HEAD
 	/* Check if the tty3270 is already there. */
 	view = raw3270_find_view(&tty3270_fn, RAW3270_FIRSTMINOR);
 	if (IS_ERR(view)) {
@@ -2174,6 +2175,32 @@ con3270_init(void)
 	} else {
 		tp = container_of(view, struct tty3270, view);
 		tp->inattr = TF_INPUT;
+=======
+	condev = kzalloc(sizeof(struct con3270), GFP_KERNEL | GFP_DMA);
+	if (!condev)
+		return -ENOMEM;
+	condev->view.dev = rp;
+
+	condev->read = raw3270_request_alloc(0);
+	condev->read->callback = con3270_read_callback;
+	condev->read->callback_data = condev;
+	condev->write = raw3270_request_alloc(CON3270_OUTPUT_BUFFER_SIZE);
+	condev->kreset = raw3270_request_alloc(1);
+
+	INIT_LIST_HEAD(&condev->lines);
+	INIT_LIST_HEAD(&condev->update);
+	timer_setup(&condev->timer, con3270_update, 0);
+	tasklet_init(&condev->readlet, 
+		     (void (*)(unsigned long)) con3270_read_tasklet,
+		     (unsigned long) condev->read);
+
+	raw3270_add_view(&condev->view, &con3270_fn, 1, RAW3270_VIEW_LOCK_IRQ);
+
+	INIT_LIST_HEAD(&condev->freemem);
+	for (i = 0; i < CON3270_STRING_PAGES; i++) {
+		cbuf = (void *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
+		add_string_memory(&condev->freemem, cbuf, PAGE_SIZE);
+>>>>>>> master
 	}
 	con3270.data = tp;
 	condev = tp;

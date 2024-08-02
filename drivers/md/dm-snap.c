@@ -107,7 +107,11 @@ struct dm_snapshot {
 	/* The on disk metadata handler */
 	struct dm_exception_store *store;
 
+<<<<<<< HEAD
 	unsigned int in_progress;
+=======
+	unsigned in_progress;
+>>>>>>> master
 	struct wait_queue_head in_progress_wait;
 
 	struct dm_kcopyd_client *kcopyd_client;
@@ -162,7 +166,11 @@ struct dm_snapshot {
  */
 #define DEFAULT_COW_THRESHOLD 2048
 
+<<<<<<< HEAD
 static unsigned int cow_threshold = DEFAULT_COW_THRESHOLD;
+=======
+static unsigned cow_threshold = DEFAULT_COW_THRESHOLD;
+>>>>>>> master
 module_param_named(snapshot_cow_threshold, cow_threshold, uint, 0644);
 MODULE_PARM_DESC(snapshot_cow_threshold, "Maximum number of chunks being copied on write");
 
@@ -1550,7 +1558,10 @@ static bool wait_for_in_progress(struct dm_snapshot *s, bool unlock_origins)
 			 * throttling is unlikely to negatively impact performance.
 			 */
 			DECLARE_WAITQUEUE(wait, current);
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 			__add_wait_queue(&s->in_progress_wait, &wait);
 			__set_current_state(TASK_UNINTERRUPTIBLE);
 			spin_unlock(&s->in_progress_wait.lock);
@@ -1974,8 +1985,12 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio)
 			; /* wait_for_in_progress() has slept */
 	}
 
+<<<<<<< HEAD
 	down_read(&s->lock);
 	dm_exception_table_lock(&lock);
+=======
+	mutex_lock(&s->lock);
+>>>>>>> master
 
 	if (!s->valid || (unlikely(s->snapshot_overflowed) &&
 	    bio_data_dir(bio) == WRITE)) {
@@ -2169,7 +2184,11 @@ redirect_to_origin:
 	bio_set_dev(bio, s->origin->bdev);
 
 	if (bio_data_dir(bio) == WRITE) {
+<<<<<<< HEAD
 		up_write(&s->lock);
+=======
+		mutex_unlock(&s->lock);
+>>>>>>> master
 		return do_origin(s->origin, bio, false);
 	}
 
@@ -2564,7 +2583,10 @@ again:
 	if (o) {
 		if (limit) {
 			struct dm_snapshot *s;
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 			list_for_each_entry(s, &o->snapshots, list)
 				if (unlikely(!wait_for_in_progress(s, true)))
 					goto again;
@@ -2685,6 +2707,16 @@ static int origin_map(struct dm_target *ti, struct bio *bio)
 
 	/* Only tell snapshots if this is a write */
 	return do_origin(o->dev, bio, true);
+<<<<<<< HEAD
+=======
+}
+
+static long origin_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
+		long nr_pages, void **kaddr, pfn_t *pfn)
+{
+	DMWARN("device does not support dax.");
+	return -EIO;
+>>>>>>> master
 }
 
 /*

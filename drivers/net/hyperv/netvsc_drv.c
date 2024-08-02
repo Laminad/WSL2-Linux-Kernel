@@ -757,8 +757,24 @@ void netvsc_linkstatus_callback(struct net_device *net,
 	schedule_delayed_work(&ndev_ctx->dwork, 0);
 }
 
+<<<<<<< HEAD
 /* This function should only be called after skb_record_rx_queue() */
 void netvsc_xdp_xmit(struct sk_buff *skb, struct net_device *ndev)
+=======
+static void netvsc_comp_ipcsum(struct sk_buff *skb)
+{
+	struct iphdr *iph = (struct iphdr *)skb->data;
+
+	iph->check = 0;
+	iph->check = ip_fast_csum(iph, iph->ihl);
+}
+
+static struct sk_buff *netvsc_alloc_recv_skb(struct net_device *net,
+					     struct napi_struct *napi,
+					     const struct ndis_tcp_ip_checksum_info *csum_info,
+					     const struct ndis_pkt_8021q_info *vlan,
+					     void *data, u32 buflen)
+>>>>>>> master
 {
 	int rc;
 
@@ -834,6 +850,16 @@ static struct sk_buff *netvsc_alloc_recv_skb(struct net_device *net,
 	 * They may not have IP header checksum computed after coalescing.
 	 * We compute it here if the flags are set, because on Linux, the IP
 	 * checksum is always checked.
+<<<<<<< HEAD
+=======
+	 */
+	if (csum_info && csum_info->receive.ip_checksum_value_invalid &&
+	    csum_info->receive.ip_checksum_succeeded &&
+	    skb->protocol == htons(ETH_P_IP))
+		netvsc_comp_ipcsum(skb);
+
+	/* Do L4 checksum offload if enabled and present.
+>>>>>>> master
 	 */
 	if ((ppi_flags & NVSC_RSC_CSUM_INFO) && csum_info->receive.ip_checksum_value_invalid &&
 	    csum_info->receive.ip_checksum_succeeded &&
@@ -958,11 +984,18 @@ static void netvsc_get_channels(struct net_device *net,
 /* Alloc struct netvsc_device_info, and initialize it from either existing
  * struct netvsc_device, or from default values.
  */
+<<<<<<< HEAD
 static
 struct netvsc_device_info *netvsc_devinfo_get(struct netvsc_device *nvdev)
 {
 	struct netvsc_device_info *dev_info;
 	struct bpf_prog *prog;
+=======
+static struct netvsc_device_info *netvsc_devinfo_get
+			(struct netvsc_device *nvdev)
+{
+	struct netvsc_device_info *dev_info;
+>>>>>>> master
 
 	dev_info = kzalloc(sizeof(*dev_info), GFP_ATOMIC);
 
@@ -970,8 +1003,11 @@ struct netvsc_device_info *netvsc_devinfo_get(struct netvsc_device *nvdev)
 		return NULL;
 
 	if (nvdev) {
+<<<<<<< HEAD
 		ASSERT_RTNL();
 
+=======
+>>>>>>> master
 		dev_info->num_chn = nvdev->num_chn;
 		dev_info->send_sections = nvdev->send_section_cnt;
 		dev_info->send_section_size = nvdev->send_section_size;
@@ -980,12 +1016,15 @@ struct netvsc_device_info *netvsc_devinfo_get(struct netvsc_device *nvdev)
 
 		memcpy(dev_info->rss_key, nvdev->extension->rss_key,
 		       NETVSC_HASH_KEYLEN);
+<<<<<<< HEAD
 
 		prog = netvsc_xdp_get(nvdev);
 		if (prog) {
 			bpf_prog_inc(prog);
 			dev_info->bprog = prog;
 		}
+=======
+>>>>>>> master
 	} else {
 		dev_info->num_chn = VRSS_CHANNEL_DEFAULT;
 		dev_info->send_sections = NETVSC_DEFAULT_TX;
@@ -997,6 +1036,7 @@ struct netvsc_device_info *netvsc_devinfo_get(struct netvsc_device *nvdev)
 	return dev_info;
 }
 
+<<<<<<< HEAD
 /* Free struct netvsc_device_info */
 static void netvsc_devinfo_put(struct netvsc_device_info *dev_info)
 {
@@ -1008,6 +1048,8 @@ static void netvsc_devinfo_put(struct netvsc_device_info *dev_info)
 	kfree(dev_info);
 }
 
+=======
+>>>>>>> master
 static int netvsc_detach(struct net_device *ndev,
 			 struct netvsc_device *nvdev)
 {
@@ -1091,7 +1133,11 @@ static int netvsc_attach(struct net_device *ndev,
 	if (netif_running(ndev)) {
 		ret = rndis_filter_open(nvdev);
 		if (ret)
+<<<<<<< HEAD
 			goto err2;
+=======
+			goto err;
+>>>>>>> master
 
 		rdev = nvdev->extension;
 		if (!rdev->link_state)
@@ -1100,10 +1146,16 @@ static int netvsc_attach(struct net_device *ndev,
 
 	return 0;
 
+<<<<<<< HEAD
 err2:
 	netif_device_detach(ndev);
 
 err1:
+=======
+err:
+	netif_device_detach(ndev);
+
+>>>>>>> master
 	rndis_filter_device_remove(hdev, nvdev);
 
 	return ret;
@@ -1153,7 +1205,11 @@ static int netvsc_set_channels(struct net_device *net,
 	}
 
 out:
+<<<<<<< HEAD
 	netvsc_devinfo_put(device_info);
+=======
+	kfree(device_info);
+>>>>>>> master
 	return ret;
 }
 
@@ -1249,7 +1305,11 @@ rollback_vf:
 		dev_set_mtu(vf_netdev, orig_mtu);
 
 out:
+<<<<<<< HEAD
 	netvsc_devinfo_put(device_info);
+=======
+	kfree(device_info);
+>>>>>>> master
 	return ret;
 }
 
@@ -1900,7 +1960,11 @@ static int netvsc_set_ringparam(struct net_device *ndev,
 	}
 
 out:
+<<<<<<< HEAD
 	netvsc_devinfo_put(device_info);
+=======
+	kfree(device_info);
+>>>>>>> master
 	return ret;
 }
 
@@ -2307,6 +2371,7 @@ static struct net_device *get_netvsc_byslot(const struct net_device *vf_netdev)
 		if (!ndev_ctx->vf_alloc)
 			continue;
 
+<<<<<<< HEAD
 		if (ndev_ctx->vf_serial != serial)
 			continue;
 
@@ -2332,6 +2397,10 @@ static struct net_device *get_netvsc_byslot(const struct net_device *vf_netdev)
 		if (ether_addr_equal(vf_netdev->perm_addr, ndev->perm_addr) ||
 		    ether_addr_equal(vf_netdev->dev_addr, ndev->perm_addr))
 			return ndev;
+=======
+		if (ndev_ctx->vf_serial == serial)
+			return hv_get_drvdata(ndev_ctx->device_ctx);
+>>>>>>> master
 	}
 
 	netdev_notice(vf_netdev,
@@ -2570,8 +2639,22 @@ static int netvsc_probe(struct hv_device *dev,
 	if (!device_info) {
 		ret = -ENOMEM;
 		goto devinfo_failed;
+<<<<<<< HEAD
 	}
 
+=======
+	}
+
+	nvdev = rndis_filter_device_add(dev, device_info);
+	if (IS_ERR(nvdev)) {
+		ret = PTR_ERR(nvdev);
+		netdev_err(net, "unable to add netvsc device (ret %d)\n", ret);
+		goto rndis_failed;
+	}
+
+	memcpy(net->dev_addr, device_info->mac_adr, ETH_ALEN);
+
+>>>>>>> master
 	/* We must get rtnl lock before scheduling nvdev->subchan_work,
 	 * otherwise netvsc_subchan_work() can get rtnl lock first and wait
 	 * all subchannels to show up, but that may not happen because
@@ -2652,14 +2735,22 @@ static int netvsc_probe(struct hv_device *dev,
 	}
 	rtnl_unlock();
 
+<<<<<<< HEAD
 	netvsc_devinfo_put(device_info);
+=======
+	kfree(device_info);
+>>>>>>> master
 	return 0;
 
 register_failed:
 	rndis_filter_device_remove(dev, nvdev);
 rndis_failed:
+<<<<<<< HEAD
 	rtnl_unlock();
 	netvsc_devinfo_put(device_info);
+=======
+	kfree(device_info);
+>>>>>>> master
 devinfo_failed:
 	free_percpu(net_device_ctx->vf_stats);
 no_stats:

@@ -169,8 +169,13 @@ static int e1000e_phc_gettimex(struct ptp_clock_info *ptp,
 
 	spin_lock_irqsave(&adapter->systim_lock, flags);
 
+<<<<<<< HEAD
 	/* NOTE: Non-monotonic SYSTIM readings may be returned */
 	cycles = e1000e_read_systim(adapter, sts);
+=======
+	/* Use timecounter_cyc2time() to allow non-monotonic SYSTIM readings */
+	cycles = adapter->cc.read(&adapter->cc);
+>>>>>>> master
 	ns = timecounter_cyc2time(&adapter->tc, cycles);
 
 	spin_unlock_irqrestore(&adapter->systim_lock, flags);

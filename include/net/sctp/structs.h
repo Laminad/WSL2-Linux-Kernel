@@ -2103,6 +2103,7 @@ struct sctp_association {
 	__u64 abandoned_unsent[SCTP_PR_INDEX(MAX) + 1];
 	__u64 abandoned_sent[SCTP_PR_INDEX(MAX) + 1];
 
+<<<<<<< HEAD
 	/* Security identifiers from incoming (INIT). These are set by
 	 * security_sctp_assoc_request(). These will only be used by
 	 * SCTP TCP type sockets and peeled off connections as they
@@ -2113,6 +2114,8 @@ struct sctp_association {
 	u32 secid;
 	u32 peer_secid;
 
+=======
+>>>>>>> master
 	struct rcu_head rcu;
 };
 

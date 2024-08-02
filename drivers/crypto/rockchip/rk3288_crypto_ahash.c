@@ -276,6 +276,18 @@ static int rk_hash_run(struct crypto_engine *engine, void *breq)
 	if (err)
 		goto theend;
 
+<<<<<<< HEAD
+=======
+	dev->total = req->nbytes;
+	dev->left_bytes = req->nbytes;
+	dev->aligned = 0;
+	dev->align_size = 4;
+	dev->sg_dst = NULL;
+	dev->sg_src = req->src;
+	dev->first = req->src;
+	dev->src_nents = sg_nents(req->src);
+	rctx = ahash_request_ctx(req);
+>>>>>>> master
 	rctx->mode = 0;
 
 	algt->stat_req++;

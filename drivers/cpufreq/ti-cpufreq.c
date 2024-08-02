@@ -345,10 +345,28 @@ static const struct of_device_id ti_cpufreq_of_match[] = {
 };
 
 static const struct of_device_id *ti_cpufreq_match_node(void)
+<<<<<<< HEAD
+{
+	struct device_node *np;
+=======
 {
 	struct device_node *np;
 	const struct of_device_id *match;
 
+	np = of_find_node_by_path("/");
+	match = of_match_node(ti_cpufreq_of_match, np);
+	of_node_put(np);
+
+	return match;
+}
+
+static int ti_cpufreq_probe(struct platform_device *pdev)
+{
+	u32 version[VERSION_COUNT];
+>>>>>>> master
+	const struct of_device_id *match;
+
+<<<<<<< HEAD
 	np = of_find_node_by_path("/");
 	match = of_match_node(ti_cpufreq_of_match, np);
 	of_node_put(np);
@@ -368,6 +386,8 @@ static int ti_cpufreq_probe(struct platform_device *pdev)
 		.supported_hw_count = ARRAY_SIZE(version),
 	};
 
+=======
+>>>>>>> master
 	match = dev_get_platdata(&pdev->dev);
 	if (!match)
 		return -ENODEV;

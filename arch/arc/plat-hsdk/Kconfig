@@ -7,7 +7,10 @@ menuconfig ARC_SOC_HSDK
 	depends on ISA_ARCV2
 	select ARC_HAS_ACCL_REGS
 	select ARC_IRQ_NO_AUTOSAVE
+<<<<<<< HEAD
 	select ARC_FPU_SAVE_RESTORE
+=======
+>>>>>>> master
 	select CLK_HSDK
 	select RESET_CONTROLLER
 	select RESET_HSDK

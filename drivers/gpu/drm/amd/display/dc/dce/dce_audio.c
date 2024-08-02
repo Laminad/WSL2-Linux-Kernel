@@ -1023,6 +1023,7 @@ static const struct audio_funcs funcs = {
 	.az_configure = dce_aud_az_configure,
 	.destroy = dce_aud_destroy,
 };
+<<<<<<< HEAD
 
 #if defined(CONFIG_DRM_AMD_DC_SI)
 static const struct audio_funcs dce60_funcs = {
@@ -1036,6 +1037,8 @@ static const struct audio_funcs dce60_funcs = {
 };
 #endif
 
+=======
+>>>>>>> master
 void dce_aud_destroy(struct audio **audio)
 {
 	struct dce_audio *aud = DCE_AUD(*audio);

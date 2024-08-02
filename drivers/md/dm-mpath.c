@@ -581,11 +581,18 @@ static void multipath_release_clone(struct request *clone,
 		if (pgpath && pgpath->pg->ps.type->end_io)
 			pgpath->pg->ps.type->end_io(&pgpath->pg->ps,
 						    &pgpath->path,
+<<<<<<< HEAD
 						    mpio->nr_bytes,
 						    clone->io_start_time_ns);
 	}
 
 	blk_mq_free_request(clone);
+=======
+						    mpio->nr_bytes);
+	}
+
+	blk_put_request(clone);
+>>>>>>> master
 }
 
 /*

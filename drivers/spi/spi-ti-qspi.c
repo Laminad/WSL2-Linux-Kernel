@@ -532,7 +532,11 @@ static void ti_qspi_enable_memory_map(struct spi_device *spi)
 	if (qspi->ctrl_base) {
 		regmap_update_bits(qspi->ctrl_base, qspi->ctrl_reg,
 				   MEM_CS_MASK,
+<<<<<<< HEAD
 				   MEM_CS_EN(spi_get_chipselect(spi, 0)));
+=======
+				   MEM_CS_EN(spi->chip_select));
+>>>>>>> master
 	}
 	qspi->mmap_enabled = true;
 	qspi->current_cs = spi_get_chipselect(spi, 0);

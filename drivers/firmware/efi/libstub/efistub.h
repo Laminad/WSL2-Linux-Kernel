@@ -29,9 +29,15 @@
 #define EFI_ALLOC_ALIGN		EFI_PAGE_SIZE
 #endif
 
+<<<<<<< HEAD
 #ifndef EFI_ALLOC_LIMIT
 #define EFI_ALLOC_LIMIT		ULONG_MAX
 #endif
+=======
+extern int __pure nokaslr(void);
+extern int __pure is_quiet(void);
+extern int __pure novamap(void);
+>>>>>>> master
 
 extern bool efi_no5lvl;
 extern bool efi_nochunk;

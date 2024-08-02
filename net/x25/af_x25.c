@@ -677,8 +677,12 @@ static int x25_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	int len, i, rc = 0;
 
 	if (addr_len != sizeof(struct sockaddr_x25) ||
+<<<<<<< HEAD
 	    addr->sx25_family != AF_X25 ||
 	    strnlen(addr->sx25_addr.x25_addr, X25_ADDR_LEN) == X25_ADDR_LEN) {
+=======
+	    addr->sx25_family != AF_X25) {
+>>>>>>> master
 		rc = -EINVAL;
 		goto out;
 	}
@@ -828,7 +832,11 @@ static int x25_connect(struct socket *sock, struct sockaddr *uaddr,
 	sock->state = SS_CONNECTED;
 	rc = 0;
 out_put_neigh:
+<<<<<<< HEAD
 	if (rc && x25->neighbour) {
+=======
+	if (rc) {
+>>>>>>> master
 		read_lock_bh(&x25_list_lock);
 		x25_neigh_put(x25->neighbour);
 		x25->neighbour = NULL;

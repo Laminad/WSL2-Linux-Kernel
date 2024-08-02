@@ -360,6 +360,7 @@ static inline bool pskb_inet_may_pull(struct sk_buff *skb)
 	return pskb_network_may_pull(skb, nhlen);
 }
 
+<<<<<<< HEAD
 /* Variant of pskb_inet_may_pull().
  */
 static inline bool skb_vlan_inet_prepare(struct sk_buff *skb,
@@ -394,6 +395,8 @@ static inline bool skb_vlan_inet_prepare(struct sk_buff *skb,
 	return true;
 }
 
+=======
+>>>>>>> master
 static inline int ip_encap_hlen(struct ip_tunnel_encap *e)
 {
 	const struct ip_tunnel_encap_ops *ops;

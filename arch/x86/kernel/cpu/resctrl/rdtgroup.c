@@ -912,14 +912,21 @@ static int rdt_shareable_bits_show(struct kernfs_open_file *of,
 static int rdt_bit_usage_show(struct kernfs_open_file *of,
 			      struct seq_file *seq, void *v)
 {
+<<<<<<< HEAD:arch/x86/kernel/cpu/resctrl/rdtgroup.c
 	struct resctrl_schema *s = of->kn->parent->priv;
+=======
+	struct rdt_resource *r = of->kn->parent->priv;
+>>>>>>> master:arch/x86/kernel/cpu/intel_rdt_rdtgroup.c
 	/*
 	 * Use unsigned long even though only 32 bits are used to ensure
 	 * test_bit() is used safely.
 	 */
 	unsigned long sw_shareable = 0, hw_shareable = 0;
 	unsigned long exclusive = 0, pseudo_locked = 0;
+<<<<<<< HEAD:arch/x86/kernel/cpu/resctrl/rdtgroup.c
 	struct rdt_resource *r = s->res;
+=======
+>>>>>>> master:arch/x86/kernel/cpu/intel_rdt_rdtgroup.c
 	struct rdt_domain *dom;
 	int i, hwb, swb, excl, psl;
 	enum rdtgrp_mode mode;
@@ -2999,19 +3006,32 @@ out_destroy:
  */
 static u32 cbm_ensure_valid(u32 _val, struct rdt_resource *r)
 {
+<<<<<<< HEAD:arch/x86/kernel/cpu/resctrl/rdtgroup.c
+=======
+	unsigned long val = *_val;
+>>>>>>> master:arch/x86/kernel/cpu/intel_rdt_rdtgroup.c
 	unsigned int cbm_len = r->cache.cbm_len;
 	unsigned long first_bit, zero_bit;
 	unsigned long val = _val;
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/resctrl/rdtgroup.c
 	if (!val)
 		return 0;
+=======
+	if (val == 0)
+		return;
+>>>>>>> master:arch/x86/kernel/cpu/intel_rdt_rdtgroup.c
 
 	first_bit = find_first_bit(&val, cbm_len);
 	zero_bit = find_next_zero_bit(&val, cbm_len, first_bit);
 
 	/* Clear any remaining bits to ensure contiguous region */
 	bitmap_clear(&val, zero_bit, cbm_len - zero_bit);
+<<<<<<< HEAD:arch/x86/kernel/cpu/resctrl/rdtgroup.c
 	return (u32)val;
+=======
+	*_val = (u32)val;
+>>>>>>> master:arch/x86/kernel/cpu/intel_rdt_rdtgroup.c
 }
 
 /*
@@ -3103,9 +3123,70 @@ static int rdtgroup_init_cat(struct resctrl_schema *s, u32 closid)
 	struct rdt_domain *d;
 	int ret;
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/resctrl/rdtgroup.c
 	list_for_each_entry(d, &s->res->domains, list) {
 		ret = __init_one_rdt_domain(d, s, closid);
 		if (ret < 0)
+=======
+	for_each_alloc_enabled_rdt_resource(r) {
+		/*
+		 * Only initialize default allocations for CBM cache
+		 * resources
+		 */
+		if (r->rid == RDT_RESOURCE_MBA)
+			continue;
+		list_for_each_entry(d, &r->domains, list) {
+			d->have_new_ctrl = false;
+			d->new_ctrl = r->cache.shareable_bits;
+			used_b = r->cache.shareable_bits;
+			ctrl = d->ctrl_val;
+			for (i = 0; i < closids_supported(); i++, ctrl++) {
+				if (closid_allocated(i) && i != closid) {
+					mode = rdtgroup_mode_by_closid(i);
+					if (mode == RDT_MODE_PSEUDO_LOCKSETUP)
+						continue;
+					used_b |= *ctrl;
+					if (mode == RDT_MODE_SHAREABLE)
+						d->new_ctrl |= *ctrl;
+				}
+			}
+			if (d->plr && d->plr->cbm > 0)
+				used_b |= d->plr->cbm;
+			unused_b = used_b ^ (BIT_MASK(r->cache.cbm_len) - 1);
+			unused_b &= BIT_MASK(r->cache.cbm_len) - 1;
+			d->new_ctrl |= unused_b;
+			/*
+			 * Force the initial CBM to be valid, user can
+			 * modify the CBM based on system availability.
+			 */
+			cbm_ensure_valid(&d->new_ctrl, r);
+			/*
+			 * Assign the u32 CBM to an unsigned long to ensure
+			 * that bitmap_weight() does not access out-of-bound
+			 * memory.
+			 */
+			tmp_cbm = d->new_ctrl;
+			if (bitmap_weight(&tmp_cbm, r->cache.cbm_len) <
+			    r->cache.min_cbm_bits) {
+				rdt_last_cmd_printf("no space on %s:%d\n",
+						    r->name, d->id);
+				return -ENOSPC;
+			}
+			d->have_new_ctrl = true;
+		}
+	}
+
+	for_each_alloc_enabled_rdt_resource(r) {
+		/*
+		 * Only initialize default allocations for CBM cache
+		 * resources
+		 */
+		if (r->rid == RDT_RESOURCE_MBA)
+			continue;
+		ret = update_domains(r, rdtgrp->closid);
+		if (ret < 0) {
+			rdt_last_cmd_puts("failed to initialize allocations\n");
+>>>>>>> master:arch/x86/kernel/cpu/intel_rdt_rdtgroup.c
 			return ret;
 	}
 
@@ -3652,10 +3733,17 @@ static int rdtgroup_show_options(struct seq_file *seq, struct kernfs_root *kf)
 	if (resctrl_arch_get_cdp_enabled(RDT_RESOURCE_L3))
 		seq_puts(seq, ",cdp");
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/resctrl/rdtgroup.c
 	if (resctrl_arch_get_cdp_enabled(RDT_RESOURCE_L2))
 		seq_puts(seq, ",cdpl2");
 
 	if (is_mba_sc(&rdt_resources_all[RDT_RESOURCE_MBA].r_resctrl))
+=======
+	if (rdt_resources_all[RDT_RESOURCE_L2DATA].alloc_enabled)
+		seq_puts(seq, ",cdpl2");
+
+	if (is_mba_sc(&rdt_resources_all[RDT_RESOURCE_MBA]))
+>>>>>>> master:arch/x86/kernel/cpu/intel_rdt_rdtgroup.c
 		seq_puts(seq, ",mba_MBps");
 
 	return 0;

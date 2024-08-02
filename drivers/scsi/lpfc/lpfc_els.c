@@ -241,6 +241,7 @@ lpfc_prep_els_iocb(struct lpfc_vport *vport, u8 expect_rsp,
 
 	INIT_LIST_HEAD(&pbuflist->list);
 
+<<<<<<< HEAD
 	if (expect_rsp) {
 		switch (elscmd) {
 		case ELS_CMD_FLOGI:
@@ -251,6 +252,48 @@ lpfc_prep_els_iocb(struct lpfc_vport *vport, u8 expect_rsp,
 			break;
 		default:
 			timeout = phba->fc_ratov * 2;
+=======
+	if (expectRsp) {
+		icmd->un.elsreq64.bdl.addrHigh = putPaddrHigh(pbuflist->phys);
+		icmd->un.elsreq64.bdl.addrLow = putPaddrLow(pbuflist->phys);
+		icmd->un.elsreq64.bdl.bdeFlags = BUFF_TYPE_BLP_64;
+		icmd->un.elsreq64.bdl.bdeSize = (2 * sizeof(struct ulp_bde64));
+
+		icmd->un.elsreq64.remoteID = did;		/* DID */
+		icmd->ulpCommand = CMD_ELS_REQUEST64_CR;
+		if (elscmd == ELS_CMD_FLOGI)
+			icmd->ulpTimeout = FF_DEF_RATOV * 2;
+		else if (elscmd == ELS_CMD_LOGO)
+			icmd->ulpTimeout = phba->fc_ratov;
+		else
+			icmd->ulpTimeout = phba->fc_ratov * 2;
+	} else {
+		icmd->un.xseq64.bdl.addrHigh = putPaddrHigh(pbuflist->phys);
+		icmd->un.xseq64.bdl.addrLow = putPaddrLow(pbuflist->phys);
+		icmd->un.xseq64.bdl.bdeFlags = BUFF_TYPE_BLP_64;
+		icmd->un.xseq64.bdl.bdeSize = sizeof(struct ulp_bde64);
+		icmd->un.xseq64.xmit_els_remoteID = did;	/* DID */
+		icmd->ulpCommand = CMD_XMIT_ELS_RSP64_CX;
+	}
+	icmd->ulpBdeCount = 1;
+	icmd->ulpLe = 1;
+	icmd->ulpClass = CLASS3;
+
+	/*
+	 * If we have NPIV enabled, we want to send ELS traffic by VPI.
+	 * For SLI4, since the driver controls VPIs we also want to include
+	 * all ELS pt2pt protocol traffic as well.
+	 */
+	if ((phba->sli3_options & LPFC_SLI3_NPIV_ENABLED) ||
+		((phba->sli_rev == LPFC_SLI_REV4) &&
+		    (vport->fc_flag & FC_PT2PT))) {
+
+		if (expectRsp) {
+			icmd->un.elsreq64.myID = vport->fc_myDID;
+
+			/* For ELS_REQUEST64_CR, use the VPI by default */
+			icmd->ulpContext = phba->vpi_ids[vport->vpi];
+>>>>>>> master
 		}
 
 		/* Fill SGE for the num bde count */
@@ -3027,11 +3070,26 @@ lpfc_cmpl_els_logo(struct lpfc_hba *phba, struct lpfc_iocbq *cmdiocb,
 		goto out;
 	}
 
+<<<<<<< HEAD
+=======
+	/* Check to see if link went down during discovery */
+	if (ndlp->nlp_flag & NLP_TARGET_REMOVE) {
+	        /* NLP_EVT_DEVICE_RM should unregister the RPI
+		 * which should abort all outstanding IOs.
+		 */
+		lpfc_disc_state_machine(vport, ndlp, cmdiocb,
+					NLP_EVT_DEVICE_RM);
+		skip_recovery = 1;
+		goto out;
+	}
+
+>>>>>>> master
 	/* The LOGO will not be retried on failure.  A LOGO was
 	 * issued to the remote rport and a ACC or RJT or no Answer are
 	 * all acceptable.  Note the failure and move forward with
 	 * discovery.  The PLOGI will retry.
 	 */
+<<<<<<< HEAD
 	if (ulp_status) {
 		/* LOGO failed */
 		lpfc_printf_vlog(vport, KERN_ERR, LOG_TRACE_EVENT,
@@ -3041,6 +3099,16 @@ lpfc_cmpl_els_logo(struct lpfc_hba *phba, struct lpfc_iocbq *cmdiocb,
 				 ulp_word4);
 
 		if (lpfc_error_lost_link(vport, ulp_status, ulp_word4))
+=======
+	if (irsp->ulpStatus) {
+		/* LOGO failed */
+		lpfc_printf_vlog(vport, KERN_ERR, LOG_ELS,
+				 "2756 LOGO failure, No Retry DID:%06X Status:x%x/x%x\n",
+				 ndlp->nlp_DID, irsp->ulpStatus,
+				 irsp->un.ulpWord[4]);
+		/* Do not call DSM for lpfc_els_abort'ed ELS cmds */
+		if (lpfc_error_lost_link(irsp)) {
+>>>>>>> master
 			skip_recovery = 1;
 	}
 
@@ -3134,6 +3202,8 @@ out_rsrc_free:
  *
  * Callers of this routine are expected to unregister the RPI first
  *
+ * Callers of this routine are expected to unregister the RPI first
+ *
  * Return code
  *   0 - successfully issued logo
  *   1 - failed to issue logo
@@ -3170,18 +3240,35 @@ lpfc_issue_els_logo(struct lpfc_vport *vport, struct lpfc_nodelist *ndlp,
 	pcmd += sizeof(uint32_t);
 	memcpy(pcmd, &vport->fc_portname, sizeof(struct lpfc_name));
 
+<<<<<<< HEAD
+=======
+	lpfc_debugfs_disc_trc(vport, LPFC_DISC_TRC_ELS_CMD,
+		"Issue LOGO:      did:x%x",
+		ndlp->nlp_DID, 0, 0);
+
+>>>>>>> master
 	phba->fc_stat.elsXmitLOGO++;
 	elsiocb->cmd_cmpl = lpfc_cmpl_els_logo;
 	spin_lock_irq(&ndlp->lock);
 	ndlp->nlp_flag |= NLP_LOGO_SND;
 	ndlp->nlp_flag &= ~NLP_ISSUE_LOGO;
+<<<<<<< HEAD
 	spin_unlock_irq(&ndlp->lock);
 	elsiocb->ndlp = lpfc_nlp_get(ndlp);
 	if (!elsiocb->ndlp) {
+=======
+	spin_unlock_irq(shost->host_lock);
+	rc = lpfc_sli_issue_iocb(phba, LPFC_ELS_RING, elsiocb, 0);
+	if (rc == IOCB_ERROR) {
+		spin_lock_irq(shost->host_lock);
+		ndlp->nlp_flag &= ~NLP_LOGO_SND;
+		spin_unlock_irq(shost->host_lock);
+>>>>>>> master
 		lpfc_els_free_iocb(phba, elsiocb);
 		goto err;
 	}
 
+<<<<<<< HEAD
 	lpfc_debugfs_disc_trc(vport, LPFC_DISC_TRC_ELS_CMD,
 			      "Issue LOGO:      did:x%x refcnt %d",
 			      ndlp->nlp_DID, kref_read(&ndlp->kref), 0);
@@ -3196,6 +3283,11 @@ lpfc_issue_els_logo(struct lpfc_vport *vport, struct lpfc_nodelist *ndlp,
 	spin_lock_irq(&ndlp->lock);
 	ndlp->nlp_prev_state = ndlp->nlp_state;
 	spin_unlock_irq(&ndlp->lock);
+=======
+	spin_lock_irq(shost->host_lock);
+	ndlp->nlp_prev_state = ndlp->nlp_state;
+	spin_unlock_irq(shost->host_lock);
+>>>>>>> master
 	lpfc_nlp_set_state(vport, ndlp, NLP_STE_LOGO_ISSUE);
 	return 0;
 
@@ -7609,7 +7701,11 @@ error:
 	if (shdr_add_status == ADD_STATUS_OPERATION_ALREADY_ACTIVE)
 		stat->un.b.lsRjtRsnCodeExp = LSEXP_CMD_IN_PROGRESS;
 
+<<<<<<< HEAD
 	elsiocb->cmd_cmpl = lpfc_cmpl_els_rsp;
+=======
+	elsiocb->iocb_cmpl = lpfc_cmpl_els_rsp;
+>>>>>>> master
 	phba->fc_stat.elsXmitLSRJT++;
 	elsiocb->ndlp = lpfc_nlp_get(ndlp);
 	if (!elsiocb->ndlp) {
@@ -12143,7 +12239,12 @@ lpfc_sli_abts_recover_port(struct lpfc_vport *vport,
 				"rport in state 0x%x\n", ndlp->nlp_state);
 		return;
 	}
+<<<<<<< HEAD
 	lpfc_printf_log(phba, KERN_ERR, LOG_TRACE_EVENT,
+=======
+	lpfc_printf_log(phba, KERN_ERR,
+			LOG_ELS | LOG_FCP_ERROR | LOG_NVME_IOERR,
+>>>>>>> master
 			"3094 Start rport recovery on shost id 0x%x "
 			"fc_id 0x%06x vpi 0x%x rpi 0x%x state 0x%x "
 			"flags 0x%x\n",
@@ -12157,7 +12258,11 @@ lpfc_sli_abts_recover_port(struct lpfc_vport *vport,
 	spin_lock_irqsave(&ndlp->lock, flags);
 	ndlp->nlp_fcp_info &= ~NLP_FCP_2_DEVICE;
 	ndlp->nlp_flag |= NLP_ISSUE_LOGO;
+<<<<<<< HEAD
 	spin_unlock_irqrestore(&ndlp->lock, flags);
+=======
+	spin_unlock_irqrestore(shost->host_lock, flags);
+>>>>>>> master
 	lpfc_unreg_rpi(vport, ndlp);
 }
 

@@ -726,11 +726,24 @@ static int imx_ldb_probe(struct platform_device *pdev)
 		}
 		channel->bus_format = bus_format;
 		channel->child = child;
+<<<<<<< HEAD:drivers/gpu/drm/imx/ipuv3/imx-ldb.c
+=======
+
+		ret = imx_ldb_register(drm, channel);
+		if (ret) {
+			channel->child = NULL;
+			goto free_child;
+		}
+>>>>>>> master:drivers/gpu/drm/imx/imx-ldb.c
 	}
 
 	platform_set_drvdata(pdev, imx_ldb);
 
+<<<<<<< HEAD:drivers/gpu/drm/imx/ipuv3/imx-ldb.c
 	return component_add(&pdev->dev, &imx_ldb_ops);
+=======
+	return 0;
+>>>>>>> master:drivers/gpu/drm/imx/imx-ldb.c
 
 free_child:
 	of_node_put(child);

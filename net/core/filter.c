@@ -2144,6 +2144,7 @@ static int __bpf_redirect_no_mac(struct sk_buff *skb, struct net_device *dev,
 {
 	unsigned int mlen = skb_network_offset(skb);
 
+<<<<<<< HEAD
 	if (unlikely(skb->len <= mlen)) {
 		kfree_skb(skb);
 		return -ERANGE;
@@ -2152,6 +2153,11 @@ static int __bpf_redirect_no_mac(struct sk_buff *skb, struct net_device *dev,
 	if (mlen) {
 		__skb_pull(skb, mlen);
 
+=======
+	if (mlen) {
+		__skb_pull(skb, mlen);
+
+>>>>>>> master
 		/* At ingress, the mac header has already been pulled once.
 		 * At egress, skb_pospull_rcsum has to be done in case that
 		 * the skb is originated from ingress (i.e. a forwarded skb)
@@ -3282,6 +3288,12 @@ static int bpf_skb_proto_4_to_6(struct sk_buff *skb)
 	u32 off = skb_mac_header_len(skb);
 	int ret;
 
+<<<<<<< HEAD
+=======
+	if (skb_is_gso(skb) && !skb_is_gso_tcp(skb))
+		return -ENOTSUPP;
+
+>>>>>>> master
 	ret = skb_cow(skb, len_diff);
 	if (unlikely(ret < 0))
 		return ret;
@@ -3312,6 +3324,12 @@ static int bpf_skb_proto_6_to_4(struct sk_buff *skb)
 	u32 off = skb_mac_header_len(skb);
 	int ret;
 
+<<<<<<< HEAD
+=======
+	if (skb_is_gso(skb) && !skb_is_gso_tcp(skb))
+		return -ENOTSUPP;
+
+>>>>>>> master
 	ret = skb_unclone(skb, GFP_ATOMIC);
 	if (unlikely(ret < 0))
 		return ret;
@@ -3445,12 +3463,17 @@ static int bpf_skb_net_grow(struct sk_buff *skb, u32 off, u32 len_diff,
 	unsigned int gso_type = SKB_GSO_DODGY;
 	int ret;
 
+<<<<<<< HEAD
 	if (skb_is_gso(skb) && !skb_is_gso_tcp(skb)) {
 		/* udp gso_size delineates datagrams, only allow if fixed */
 		if (!(skb_shinfo(skb)->gso_type & SKB_GSO_UDP_L4) ||
 		    !(flags & BPF_F_ADJ_ROOM_FIXED_GSO))
 			return -ENOTSUPP;
 	}
+=======
+	if (skb_is_gso(skb) && !skb_is_gso_tcp(skb))
+		return -ENOTSUPP;
+>>>>>>> master
 
 	ret = skb_cow_head(skb, len_diff);
 	if (unlikely(ret < 0))
@@ -3547,6 +3570,7 @@ static int bpf_skb_net_shrink(struct sk_buff *skb, u32 off, u32 len_diff,
 {
 	int ret;
 
+<<<<<<< HEAD
 	if (unlikely(flags & ~(BPF_F_ADJ_ROOM_FIXED_GSO |
 			       BPF_F_ADJ_ROOM_DECAP_L3_MASK |
 			       BPF_F_ADJ_ROOM_NO_CSUM_RESET)))
@@ -3558,6 +3582,10 @@ static int bpf_skb_net_shrink(struct sk_buff *skb, u32 off, u32 len_diff,
 		    !(flags & BPF_F_ADJ_ROOM_FIXED_GSO))
 			return -ENOTSUPP;
 	}
+=======
+	if (skb_is_gso(skb) && !skb_is_gso_tcp(skb))
+		return -ENOTSUPP;
+>>>>>>> master
 
 	ret = skb_unclone(skb, GFP_ATOMIC);
 	if (unlikely(ret < 0))
@@ -5215,10 +5243,52 @@ static int bpf_sol_tcp_setsockopt(struct sock *sk, int optname,
 	case TCP_BPF_IW:
 		if (val <= 0 || tp->data_segs_out > tp->syn_data)
 			return -EINVAL;
+<<<<<<< HEAD
 		tcp_snd_cwnd_set(tp, val);
 		break;
 	case TCP_BPF_SNDCWND_CLAMP:
 		if (val <= 0)
+=======
+		val = *((int *)optval);
+
+		/* Only some socketops are supported */
+		switch (optname) {
+		case SO_RCVBUF:
+			val = min_t(u32, val, sysctl_rmem_max);
+			sk->sk_userlocks |= SOCK_RCVBUF_LOCK;
+			sk->sk_rcvbuf = max_t(int, val * 2, SOCK_MIN_RCVBUF);
+			break;
+		case SO_SNDBUF:
+			val = min_t(u32, val, sysctl_wmem_max);
+			sk->sk_userlocks |= SOCK_SNDBUF_LOCK;
+			sk->sk_sndbuf = max_t(int, val * 2, SOCK_MIN_SNDBUF);
+			break;
+		case SO_MAX_PACING_RATE:
+			sk->sk_max_pacing_rate = val;
+			sk->sk_pacing_rate = min(sk->sk_pacing_rate,
+						 sk->sk_max_pacing_rate);
+			break;
+		case SO_PRIORITY:
+			sk->sk_priority = val;
+			break;
+		case SO_RCVLOWAT:
+			if (val < 0)
+				val = INT_MAX;
+			sk->sk_rcvlowat = val ? : 1;
+			break;
+		case SO_MARK:
+			if (sk->sk_mark != val) {
+				sk->sk_mark = val;
+				sk_dst_reset(sk);
+			}
+			break;
+		default:
+			ret = -EINVAL;
+		}
+#ifdef CONFIG_INET
+	} else if (level == SOL_IP) {
+		if (optlen != sizeof(int) || sk->sk_family != AF_INET)
+>>>>>>> master
 			return -EINVAL;
 		tp->snd_cwnd_clamp = val;
 		tp->snd_ssthresh = val;
@@ -5228,6 +5298,7 @@ static int bpf_sol_tcp_setsockopt(struct sock *sk, int optname,
 		if (timeout > TCP_DELACK_MAX ||
 		    timeout < TCP_TIMEOUT_MIN)
 			return -EINVAL;
+<<<<<<< HEAD
 		inet_csk(sk)->icsk_delack_max = timeout;
 		break;
 	case TCP_BPF_RTO_MIN:
@@ -5239,6 +5310,68 @@ static int bpf_sol_tcp_setsockopt(struct sock *sk, int optname,
 		break;
 	default:
 		return -EINVAL;
+=======
+
+		val = *((int *)optval);
+		/* Only some options are supported */
+		switch (optname) {
+		case IPV6_TCLASS:
+			if (val < -1 || val > 0xff) {
+				ret = -EINVAL;
+			} else {
+				struct ipv6_pinfo *np = inet6_sk(sk);
+
+				if (val == -1)
+					val = 0;
+				np->tclass = val;
+			}
+			break;
+		default:
+			ret = -EINVAL;
+		}
+#endif
+	} else if (level == SOL_TCP &&
+		   sk->sk_prot->setsockopt == tcp_setsockopt) {
+		if (optname == TCP_CONGESTION) {
+			char name[TCP_CA_NAME_MAX];
+			bool reinit = bpf_sock->op > BPF_SOCK_OPS_NEEDS_ECN;
+
+			strncpy(name, optval, min_t(long, optlen,
+						    TCP_CA_NAME_MAX-1));
+			name[TCP_CA_NAME_MAX-1] = 0;
+			ret = tcp_set_congestion_control(sk, name, false,
+							 reinit, true);
+		} else {
+			struct tcp_sock *tp = tcp_sk(sk);
+
+			if (optlen != sizeof(int))
+				return -EINVAL;
+
+			val = *((int *)optval);
+			/* Only some options are supported */
+			switch (optname) {
+			case TCP_BPF_IW:
+				if (val <= 0 || tp->data_segs_out > tp->syn_data)
+					ret = -EINVAL;
+				else
+					tp->snd_cwnd = val;
+				break;
+			case TCP_BPF_SNDCWND_CLAMP:
+				if (val <= 0) {
+					ret = -EINVAL;
+				} else {
+					tp->snd_cwnd_clamp = val;
+					tp->snd_ssthresh = val;
+				}
+				break;
+			default:
+				ret = -EINVAL;
+			}
+		}
+#endif
+	} else {
+		ret = -EINVAL;
+>>>>>>> master
 	}
 
 	return 0;
@@ -11304,9 +11437,15 @@ sk_reuseport_is_valid_access(int off, int size,
 
 	/* Fields that allow narrowing */
 	case bpf_ctx_range(struct sk_reuseport_md, eth_protocol):
+<<<<<<< HEAD
 		if (size < sizeof_field(struct sk_buff, protocol))
 			return false;
 		fallthrough;
+=======
+		if (size < FIELD_SIZEOF(struct sk_buff, protocol))
+			return false;
+		/* fall through */
+>>>>>>> master
 	case bpf_ctx_range(struct sk_reuseport_md, ip_protocol):
 	case bpf_ctx_range(struct sk_reuseport_md, bind_inany):
 	case bpf_ctx_range(struct sk_reuseport_md, len):

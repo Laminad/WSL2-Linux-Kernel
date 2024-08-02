@@ -148,6 +148,7 @@ static struct _balloon_info_ bl_info;
 static void vgt_deballoon_space(struct i915_ggtt *ggtt,
 				struct drm_mm_node *node)
 {
+<<<<<<< HEAD
 	struct drm_i915_private *dev_priv = ggtt->vm.i915;
 	if (!drm_mm_node_allocated(node))
 		return;
@@ -157,6 +158,15 @@ static void vgt_deballoon_space(struct i915_ggtt *ggtt,
 		node->start,
 		node->start + node->size,
 		node->size / 1024);
+=======
+	if (!drm_mm_node_allocated(node))
+		return;
+
+	DRM_DEBUG_DRIVER("deballoon space: range [0x%llx - 0x%llx] %llu KiB.\n",
+			 node->start,
+			 node->start + node->size,
+			 node->size / 1024);
+>>>>>>> master
 
 	ggtt->vm.reserved -= node->size;
 	drm_mm_remove_node(node);

@@ -2398,8 +2398,14 @@ int write_cache_pages(struct address_space *mapping,
 	int ret = 0;
 	int done = 0;
 	int error;
+<<<<<<< HEAD
 	struct folio_batch fbatch;
 	int nr_folios;
+=======
+	struct pagevec pvec;
+	int nr_pages;
+	pgoff_t uninitialized_var(writeback_index);
+>>>>>>> master
 	pgoff_t index;
 	pgoff_t end;		/* Inclusive */
 	pgoff_t done_index;
@@ -2471,8 +2477,12 @@ continue_unlock:
 				goto continue_unlock;
 
 			trace_wbc_writepage(wbc, inode_to_bdi(mapping->host));
+<<<<<<< HEAD
 			error = writepage(folio, wbc, data);
 			nr = folio_nr_pages(folio);
+=======
+			error = (*writepage)(page, wbc, data);
+>>>>>>> master
 			if (unlikely(error)) {
 				/*
 				 * Handle errors according to the type of
@@ -2487,11 +2497,19 @@ continue_unlock:
 				 * the first error.
 				 */
 				if (error == AOP_WRITEPAGE_ACTIVATE) {
+<<<<<<< HEAD
 					folio_unlock(folio);
 					error = 0;
 				} else if (wbc->sync_mode != WB_SYNC_ALL) {
 					ret = error;
 					done_index = folio->index + nr;
+=======
+					unlock_page(page);
+					error = 0;
+				} else if (wbc->sync_mode != WB_SYNC_ALL) {
+					ret = error;
+					done_index = page->index + 1;
+>>>>>>> master
 					done = 1;
 					break;
 				}

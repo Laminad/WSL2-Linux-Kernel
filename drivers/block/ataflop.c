@@ -2077,6 +2077,7 @@ static int __init atari_floppy_init (void)
 		return -ENODEV;
 
 	for (i = 0; i < FD_MAX_UNITS; i++) {
+<<<<<<< HEAD
 		memset(&unit[i].tag_set, 0, sizeof(unit[i].tag_set));
 		unit[i].tag_set.ops = &ataflop_mq_ops;
 		unit[i].tag_set.nr_hw_queues = 1;
@@ -2093,6 +2094,16 @@ static int __init atari_floppy_init (void)
 			blk_mq_free_tag_set(&unit[i].tag_set);
 			goto err;
 		}
+=======
+		unit[i].disk = alloc_disk(1);
+		if (!unit[i].disk)
+			goto Enomem;
+
+		unit[i].disk->queue = blk_init_queue(do_fd_request,
+						     &ataflop_lock);
+		if (!unit[i].disk->queue)
+			goto Enomem;
+>>>>>>> master
 	}
 
 	if (UseTrackbuffer < 0)
@@ -2120,10 +2131,20 @@ static int __init atari_floppy_init (void)
 	for (i = 0; i < FD_MAX_UNITS; i++) {
 		unit[i].track = -1;
 		unit[i].flags = 0;
+<<<<<<< HEAD
 		ret = add_disk(unit[i].disk[0]);
 		if (ret)
 			goto err_out_dma;
 		unit[i].registered[0] = true;
+=======
+		unit[i].disk->major = FLOPPY_MAJOR;
+		unit[i].disk->first_minor = i;
+		sprintf(unit[i].disk->disk_name, "fd%d", i);
+		unit[i].disk->fops = &floppy_fops;
+		unit[i].disk->private_data = &unit[i];
+		set_capacity(unit[i].disk, MAX_DISK_SIZE * 2);
+		add_disk(unit[i].disk);
+>>>>>>> master
 	}
 
 	printk(KERN_INFO "Atari floppy driver: max. %cD, %strack buffering\n",
@@ -2131,12 +2152,28 @@ static int __init atari_floppy_init (void)
 	       UseTrackbuffer ? "" : "no ");
 	config_types();
 
+<<<<<<< HEAD
 	ret = __register_blkdev(FLOPPY_MAJOR, "fd", ataflop_probe);
 	if (ret) {
 		printk(KERN_ERR "atari_floppy_init: cannot register block device\n");
 		atari_floppy_cleanup();
 	}
 	return ret;
+=======
+	return 0;
+Enomem:
+	do {
+		struct gendisk *disk = unit[i].disk;
+
+		if (disk) {
+			if (disk->queue) {
+				blk_cleanup_queue(disk->queue);
+				disk->queue = NULL;
+			}
+			put_disk(unit[i].disk);
+		}
+	} while (i--);
+>>>>>>> master
 
 err_out_dma:
 	atari_stram_free(DMABuffer);

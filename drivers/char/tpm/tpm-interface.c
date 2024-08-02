@@ -82,12 +82,53 @@ static ssize_t tpm_try_transmit(struct tpm_chip *chip, void *buf, size_t bufsiz)
 		return -E2BIG;
 	}
 
+<<<<<<< HEAD
+=======
+	if (!(flags & TPM_TRANSMIT_UNLOCKED) && !(flags & TPM_TRANSMIT_NESTED))
+		mutex_lock(&chip->tpm_mutex);
+
+	if (chip->ops->clk_enable != NULL)
+		chip->ops->clk_enable(chip, true);
+
+	/* Store the decision as chip->locality will be changed. */
+	need_locality = chip->locality == -1;
+
+	if (need_locality) {
+		rc = tpm_request_locality(chip, flags);
+		if (rc < 0) {
+			need_locality = false;
+			goto out_locality;
+		}
+	}
+
+	rc = tpm_cmd_ready(chip, flags);
+	if (rc)
+		goto out_locality;
+
+	rc = tpm2_prepare_space(chip, space, ordinal, buf);
+	if (rc)
+		goto out;
+
+>>>>>>> master
 	rc = chip->ops->send(chip, buf, count);
 	if (rc < 0) {
 		if (rc != -EPIPE)
 			dev_err(&chip->dev,
 				"%s: send(): error %d\n", __func__, rc);
+<<<<<<< HEAD
 		return rc;
+	}
+
+	/* A sanity check. send() should just return zero on success e.g.
+	 * not the command length.
+	 */
+	if (rc > 0) {
+		dev_warn(&chip->dev,
+			 "%s: send(): invalid value %d\n", __func__, rc);
+		rc = 0;
+=======
+		goto out;
+>>>>>>> master
 	}
 
 	/* A sanity check. send() should just return zero on success e.g.
@@ -130,6 +171,31 @@ out_recv:
 	} else if (len < TPM_HEADER_SIZE || len != be32_to_cpu(header->length))
 		rc = -EFAULT;
 
+<<<<<<< HEAD
+=======
+	if (len != be32_to_cpu(header->length)) {
+		rc = -EFAULT;
+		goto out;
+	}
+
+	rc = tpm2_commit_space(chip, space, ordinal, buf, &len);
+	if (rc)
+		dev_err(&chip->dev, "tpm2_commit_space: error %d\n", rc);
+
+out:
+	/* may fail but do not override previous error value in rc */
+	tpm_go_idle(chip, flags);
+
+out_locality:
+	if (need_locality)
+		tpm_relinquish_locality(chip, flags);
+
+	if (chip->ops->clk_enable != NULL)
+		chip->ops->clk_enable(chip, false);
+
+	if (!(flags & TPM_TRANSMIT_UNLOCKED) && !(flags & TPM_TRANSMIT_NESTED))
+		mutex_unlock(&chip->tpm_mutex);
+>>>>>>> master
 	return rc ? rc : len;
 }
 
@@ -223,7 +289,11 @@ ssize_t tpm_transmit_cmd(struct tpm_chip *chip, struct tpm_buf *buf,
 
 	err = be32_to_cpu(header->return_code);
 	if (err != 0 && err != TPM_ERR_DISABLED && err != TPM_ERR_DEACTIVATED
+<<<<<<< HEAD
 	    && err != TPM2_RC_TESTING && desc)
+=======
+	    && desc)
+>>>>>>> master
 		dev_err(&chip->dev, "A TPM error (%d) occurred %s\n", err,
 			desc);
 	if (err)
@@ -462,10 +532,50 @@ int tpm_get_random(struct tpm_chip *chip, u8 *out, size_t max)
 	if (!chip)
 		return -ENODEV;
 
+<<<<<<< HEAD
 	if (chip->flags & TPM_CHIP_FLAG_TPM2)
 		rc = tpm2_get_random(chip, out, max);
 	else
 		rc = tpm1_get_random(chip, out, max);
+=======
+	if (chip->flags & TPM_CHIP_FLAG_TPM2) {
+		err = tpm2_get_random(chip, out, max);
+		tpm_put_ops(chip);
+		return err;
+	}
+
+	do {
+		tpm_cmd.header.in = tpm_getrandom_header;
+		tpm_cmd.params.getrandom_in.num_bytes = cpu_to_be32(num_bytes);
+
+		err = tpm_transmit_cmd(chip, NULL, &tpm_cmd,
+				       TPM_GETRANDOM_RESULT_SIZE + num_bytes,
+				       offsetof(struct tpm_getrandom_out,
+						rng_data),
+				       0, "attempting get random");
+		if (err)
+			break;
+
+		recd = be32_to_cpu(tpm_cmd.params.getrandom_out.rng_data_len);
+		if (recd > num_bytes) {
+			total = -EFAULT;
+			break;
+		}
+
+		rlength = be32_to_cpu(tpm_cmd.header.out.length);
+		if (rlength < TPM_HEADER_SIZE +
+			      offsetof(struct tpm_getrandom_out, rng_data) +
+			      recd) {
+			total = -EFAULT;
+			break;
+		}
+		memcpy(dest, tpm_cmd.params.getrandom_out.rng_data, recd);
+
+		dest += recd;
+		total += recd;
+		num_bytes -= recd;
+	} while (retries-- && total < max);
+>>>>>>> master
 
 	tpm_put_ops(chip);
 	return rc;

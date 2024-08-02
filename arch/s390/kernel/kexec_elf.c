@@ -20,7 +20,10 @@ static int kexec_file_add_kernel_elf(struct kimage *image,
 	const Elf_Ehdr *ehdr;
 	const Elf_Phdr *phdr;
 	Elf_Addr entry;
+<<<<<<< HEAD
 	void *kernel;
+=======
+>>>>>>> master
 	int i, ret;
 
 	kernel = image->kernel_buf;
@@ -40,6 +43,22 @@ static int kexec_file_add_kernel_elf(struct kimage *image,
 		buf.bufsz = phdr->p_filesz;
 
 		buf.mem = ALIGN(phdr->p_paddr, phdr->p_align);
+<<<<<<< HEAD
+=======
+		buf.memsz = phdr->p_memsz;
+
+		if (entry - phdr->p_paddr < phdr->p_memsz) {
+			data->kernel_buf = buf.buffer;
+			data->memsz += STARTUP_NORMAL_OFFSET;
+
+			buf.buffer += STARTUP_NORMAL_OFFSET;
+			buf.bufsz -= STARTUP_NORMAL_OFFSET;
+
+			buf.mem += STARTUP_NORMAL_OFFSET;
+			buf.memsz -= STARTUP_NORMAL_OFFSET;
+		}
+
+>>>>>>> master
 		if (image->type == KEXEC_TYPE_CRASH)
 			buf.mem += crashk_res.start;
 		buf.memsz = phdr->p_memsz;

@@ -1629,7 +1629,11 @@ intel_vgpu_create_workload(struct intel_vgpu *vgpu,
 			   struct execlist_ctx_descriptor_format *desc)
 {
 	struct intel_vgpu_submission *s = &vgpu->submission;
+<<<<<<< HEAD
 	struct list_head *q = workload_q_head(vgpu, engine);
+=======
+	struct list_head *q = workload_q_head(vgpu, ring_id);
+>>>>>>> master
 	struct intel_vgpu_workload *last_workload = NULL;
 	struct intel_vgpu_workload *workload = NULL;
 	u64 ring_context_gpa;
@@ -1658,10 +1662,17 @@ intel_vgpu_create_workload(struct intel_vgpu *vgpu,
 	list_for_each_entry_reverse(last_workload, q, list) {
 
 		if (same_context(&last_workload->ctx_desc, desc)) {
+<<<<<<< HEAD
 			gvt_dbg_el("ring %s cur workload == last\n",
 				   engine->name);
 			gvt_dbg_el("ctx head %x real head %lx\n", head,
 				   last_workload->rb_tail);
+=======
+			gvt_dbg_el("ring id %d cur workload == last\n",
+					ring_id);
+			gvt_dbg_el("ctx head %x real head %lx\n", head,
+					last_workload->rb_tail);
+>>>>>>> master
 			/*
 			 * cannot use guest context head pointer here,
 			 * as it might not be updated at this time
@@ -1760,12 +1771,15 @@ intel_vgpu_create_workload(struct intel_vgpu *vgpu,
 	if (ret) {
 		if (vgpu_is_vm_unhealthy(ret))
 			enter_failsafe_mode(vgpu, GVT_FAILSAFE_GUEST_ERR);
+<<<<<<< HEAD
 		intel_vgpu_destroy_workload(workload);
 		return ERR_PTR(ret);
 	}
 
 	ret = intel_context_pin(s->shadow[engine->id]);
 	if (ret) {
+=======
+>>>>>>> master
 		intel_vgpu_destroy_workload(workload);
 		return ERR_PTR(ret);
 	}

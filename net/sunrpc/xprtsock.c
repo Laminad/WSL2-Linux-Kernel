@@ -2439,10 +2439,17 @@ static void xs_tcp_setup_socket(struct work_struct *work)
 			__func__, status);
 		status = -EAGAIN;
 	}
+<<<<<<< HEAD
 
 	/* xs_tcp_force_close() wakes tasks with a fixed error code.
 	 * We need to wake them first to ensure the correct error code.
 	 */
+=======
+	status = -EAGAIN;
+out:
+	xprt_clear_connecting(xprt);
+	xprt_unlock_connect(xprt, transport);
+>>>>>>> master
 	xprt_wake_pending_tasks(xprt, status);
 	xs_tcp_force_close(xprt);
 out:

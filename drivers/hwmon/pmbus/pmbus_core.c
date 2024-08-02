@@ -1498,7 +1498,11 @@ static int pmbus_add_sensor_attrs_one(struct i2c_client *client,
 				      struct pmbus_data *data,
 				      const struct pmbus_driver_info *info,
 				      const char *name,
+<<<<<<< HEAD
 				      int index, int page, int phase,
+=======
+				      int index, int page,
+>>>>>>> master
 				      const struct pmbus_sensor_attr *attr,
 				      bool paged)
 {
@@ -1508,7 +1512,11 @@ static int pmbus_add_sensor_attrs_one(struct i2c_client *client,
 
 	if (attr->label) {
 		ret = pmbus_add_label(data, name, index, attr->label,
+<<<<<<< HEAD
 				      paged ? page + 1 : 0, phase);
+=======
+				      paged ? page + 1 : 0);
+>>>>>>> master
 		if (ret)
 			return ret;
 	}
@@ -1583,6 +1591,7 @@ static int pmbus_add_sensor_attrs(struct i2c_client *client,
 
 		pages = paged ? info->pages : 1;
 		for (page = 0; page < pages; page++) {
+<<<<<<< HEAD
 			if (info->func[page] & attrs->func) {
 				ret = pmbus_add_sensor_attrs_one(client, data, info,
 								 name, index, page,
@@ -1606,6 +1615,16 @@ static int pmbus_add_sensor_attrs(struct i2c_client *client,
 					index++;
 				}
 			}
+=======
+			if (!(info->func[page] & attrs->func))
+				continue;
+			ret = pmbus_add_sensor_attrs_one(client, data, info,
+							 name, index, page,
+							 attrs, paged);
+			if (ret)
+				return ret;
+			index++;
+>>>>>>> master
 		}
 		attrs++;
 	}

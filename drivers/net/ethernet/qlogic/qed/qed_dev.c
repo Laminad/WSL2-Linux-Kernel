@@ -1387,6 +1387,7 @@ void qed_resc_free(struct qed_dev *cdev)
 			qed_ooo_free(p_hwfn);
 		}
 
+<<<<<<< HEAD
 		if (p_hwfn->hw_info.personality == QED_PCI_NVMETCP) {
 			qed_nvmetcp_free(p_hwfn);
 			qed_ooo_free(p_hwfn);
@@ -1398,6 +1399,11 @@ void qed_resc_free(struct qed_dev *cdev)
 		}
 
 		qed_spq_unregister_async_cb(p_hwfn, PROTOCOLID_COMMON);
+=======
+		if (QED_IS_RDMA_PERSONALITY(p_hwfn))
+			qed_rdma_info_free(p_hwfn);
+
+>>>>>>> master
 		qed_iov_free(p_hwfn);
 		qed_l2_free(p_hwfn);
 		qed_dmae_info_free(p_hwfn);
@@ -2327,6 +2333,7 @@ int qed_resc_alloc(struct qed_dev *cdev)
 				goto alloc_err;
 		}
 
+<<<<<<< HEAD
 		if (p_hwfn->hw_info.personality == QED_PCI_NVMETCP) {
 			rc = qed_nvmetcp_alloc(p_hwfn);
 			if (rc)
@@ -2336,6 +2343,8 @@ int qed_resc_alloc(struct qed_dev *cdev)
 				goto alloc_err;
 		}
 
+=======
+>>>>>>> master
 		if (QED_IS_RDMA_PERSONALITY(p_hwfn)) {
 			rc = qed_rdma_info_alloc(p_hwfn);
 			if (rc)

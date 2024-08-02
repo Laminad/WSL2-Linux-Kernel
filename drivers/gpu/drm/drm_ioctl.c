@@ -30,6 +30,7 @@
 
 #include <linux/export.h>
 #include <linux/nospec.h>
+<<<<<<< HEAD
 #include <linux/pci.h>
 #include <linux/uaccess.h>
 
@@ -43,6 +44,8 @@
 #include "drm_crtc_internal.h"
 #include "drm_internal.h"
 #include "drm_legacy.h"
+=======
+>>>>>>> master
 
 /**
  * DOC: getunique and setversion story

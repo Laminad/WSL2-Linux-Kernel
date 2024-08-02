@@ -473,7 +473,15 @@ static int ravb_ring_init(struct net_device *ndev, int q)
 	unsigned int num_tx_desc = priv->num_tx_desc;
 	unsigned int ring_size;
 	struct sk_buff *skb;
+<<<<<<< HEAD
 	unsigned int i;
+=======
+	int ring_size;
+	int i;
+
+	priv->rx_buf_sz = (ndev->mtu <= 1492 ? PKT_BUF_SZ : ndev->mtu) +
+		ETH_HLEN + VLAN_HLEN + sizeof(__sum16);
+>>>>>>> master
 
 	/* Allocate RX and TX skb rings */
 	priv->rx_skb[q] = kcalloc(priv->num_rx_ring[q],
@@ -747,6 +755,7 @@ static void ravb_rx_csum(struct sk_buff *skb)
 	skb->csum = csum_unfold((__force __sum16)get_unaligned_le16(hw_csum));
 	skb->ip_summed = CHECKSUM_COMPLETE;
 	skb_trim(skb, skb->len - sizeof(__sum16));
+<<<<<<< HEAD
 }
 
 static struct sk_buff *ravb_get_skb_gbeth(struct net_device *ndev, int entry,
@@ -890,6 +899,8 @@ static bool ravb_rx_gbeth(struct net_device *ndev, int *quota, int q)
 	*quota -= limit - (++boguscnt);
 
 	return boguscnt <= 0;
+=======
+>>>>>>> master
 }
 
 /* Packet receive function for Ethernet AVB */
@@ -2036,6 +2047,13 @@ static netdev_tx_t ravb_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 			desc->tagh_tsr = (ts_skb->tag >> 4) | TX_TSR;
 			desc->ds_tagl |= cpu_to_le16(ts_skb->tag << 12);
 		}
+<<<<<<< HEAD
+=======
+		ts_skb->skb = skb_get(skb);
+		ts_skb->tag = priv->ts_skb_tag++;
+		priv->ts_skb_tag &= 0x3ff;
+		list_add_tail(&ts_skb->list, &priv->ts_skb_list);
+>>>>>>> master
 
 		skb_tx_timestamp(skb);
 	}
@@ -2166,12 +2184,19 @@ static int ravb_close(struct net_device *ndev)
 			   "device will be stopped after h/w processes are done.\n");
 
 	/* Clear the timestamp list */
+<<<<<<< HEAD
 	if (info->gptp || info->ccc_gac) {
 		list_for_each_entry_safe(ts_skb, ts_skb2, &priv->ts_skb_list, list) {
 			list_del(&ts_skb->list);
 			kfree_skb(ts_skb->skb);
 			kfree(ts_skb);
 		}
+=======
+	list_for_each_entry_safe(ts_skb, ts_skb2, &priv->ts_skb_list, list) {
+		list_del(&ts_skb->list);
+		kfree_skb(ts_skb->skb);
+		kfree(ts_skb);
+>>>>>>> master
 	}
 
 	/* PHY disconnect */

@@ -25,7 +25,11 @@ static void poison_page(struct page *page)
 
 	/* KASAN still think the page is in-use, so skip it. */
 	kasan_disable_current();
+<<<<<<< HEAD
 	memset(kasan_reset_tag(addr), PAGE_POISON, PAGE_SIZE);
+=======
+	memset(addr, PAGE_POISON, PAGE_SIZE);
+>>>>>>> master
 	kasan_enable_current();
 	kunmap_atomic(addr);
 }

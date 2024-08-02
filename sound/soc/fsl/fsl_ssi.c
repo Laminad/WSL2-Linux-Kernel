@@ -814,7 +814,11 @@ static int fsl_ssi_hw_params(struct snd_pcm_substream *substream,
 	u32 wl = SSI_SxCCR_WL(sample_size);
 	int ret;
 
+<<<<<<< HEAD
 	if (fsl_ssi_is_i2s_clock_provider(ssi)) {
+=======
+	if (fsl_ssi_is_i2s_master(ssi)) {
+>>>>>>> master
 		ret = fsl_ssi_set_bclk(substream, dai, hw_params);
 		if (ret)
 			return ret;

@@ -281,10 +281,17 @@ static void omap_mcpdm_dai_shutdown(struct snd_pcm_substream *substream,
 	}
 
 	if (mcpdm->latency[stream2])
+<<<<<<< HEAD:sound/soc/ti/omap-mcpdm.c
 		cpu_latency_qos_update_request(&mcpdm->pm_qos_req,
 					       mcpdm->latency[stream2]);
 	else if (mcpdm->latency[stream1])
 		cpu_latency_qos_remove_request(&mcpdm->pm_qos_req);
+=======
+		pm_qos_update_request(&mcpdm->pm_qos_req,
+				      mcpdm->latency[stream2]);
+	else if (mcpdm->latency[stream1])
+		pm_qos_remove_request(&mcpdm->pm_qos_req);
+>>>>>>> master:sound/soc/omap/omap-mcpdm.c
 
 	mcpdm->latency[stream1] = 0;
 
@@ -386,10 +393,17 @@ static int omap_mcpdm_prepare(struct snd_pcm_substream *substream,
 	if (!latency || mcpdm->latency[stream1] < latency)
 		latency = mcpdm->latency[stream1];
 
+<<<<<<< HEAD:sound/soc/ti/omap-mcpdm.c
 	if (cpu_latency_qos_request_active(pm_qos_req))
 		cpu_latency_qos_update_request(pm_qos_req, latency);
 	else if (latency)
 		cpu_latency_qos_add_request(pm_qos_req, latency);
+=======
+	if (pm_qos_request_active(pm_qos_req))
+		pm_qos_update_request(pm_qos_req, latency);
+	else if (latency)
+		pm_qos_add_request(pm_qos_req, PM_QOS_CPU_DMA_LATENCY, latency);
+>>>>>>> master:sound/soc/omap/omap-mcpdm.c
 
 	if (!omap_mcpdm_active(mcpdm)) {
 		omap_mcpdm_start(mcpdm);
@@ -444,8 +458,13 @@ static int omap_mcpdm_remove(struct snd_soc_dai *dai)
 	free_irq(mcpdm->irq, (void *)mcpdm);
 	pm_runtime_disable(mcpdm->dev);
 
+<<<<<<< HEAD:sound/soc/ti/omap-mcpdm.c
 	if (cpu_latency_qos_request_active(&mcpdm->pm_qos_req))
 		cpu_latency_qos_remove_request(&mcpdm->pm_qos_req);
+=======
+	if (pm_qos_request_active(&mcpdm->pm_qos_req))
+		pm_qos_remove_request(&mcpdm->pm_qos_req);
+>>>>>>> master:sound/soc/omap/omap-mcpdm.c
 
 	return 0;
 }

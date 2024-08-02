@@ -77,7 +77,11 @@
 		};
 	};
 
+<<<<<<< HEAD:arch/arm/boot/dts/samsung/exynos5250.dtsi
 	cpu0_opp_table: opp-table-0 {
+=======
+	cpu0_opp_table: opp_table0 {
+>>>>>>> master:arch/arm/boot/dts/exynos5250.dtsi
 		compatible = "operating-points-v2";
 		opp-shared;
 
@@ -164,12 +168,15 @@
 		};
 	};
 
+<<<<<<< HEAD:arch/arm/boot/dts/samsung/exynos5250.dtsi
 	pmu {
 		compatible = "arm,cortex-a15-pmu";
 		interrupt-parent = <&combiner>;
 		interrupts = <1 2>, <22 4>;
 	};
 
+=======
+>>>>>>> master:arch/arm/boot/dts/exynos5250.dtsi
 	soc: soc {
 		sram@2020000 {
 			compatible = "mmio-sram";

@@ -353,6 +353,7 @@ void __lockfunc queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
 	val = queued_fetch_set_pending_acquire(lock);
 
 	/*
+<<<<<<< HEAD
 	 * If we observe contention, there is a concurrent locker.
 	 *
 	 * Undo and queue; our setting of PENDING might have made the
@@ -365,13 +366,24 @@ void __lockfunc queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
 		if (!(val & _Q_PENDING_MASK))
 			clear_pending(lock);
 
+=======
+	 * If we observe any contention; undo and queue.
+	 */
+	if (unlikely(val & ~_Q_LOCKED_MASK)) {
+		if (!(val & _Q_PENDING_MASK))
+			clear_pending(lock);
+>>>>>>> master
 		goto queue;
 	}
 
 	/*
 	 * We're pending, wait for the owner to go away.
 	 *
+<<<<<<< HEAD
 	 * 0,1,1 -> *,1,0
+=======
+	 * 0,1,1 -> 0,1,0
+>>>>>>> master
 	 *
 	 * this wait loop must be a load-acquire such that we match the
 	 * store-release that clears the locked bit and create lock
@@ -380,7 +392,11 @@ void __lockfunc queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
 	 * barriers.
 	 */
 	if (val & _Q_LOCKED_MASK)
+<<<<<<< HEAD
 		smp_cond_load_acquire(&lock->locked, !VAL);
+=======
+		atomic_cond_read_acquire(&lock->val, !(VAL & _Q_LOCKED_MASK));
+>>>>>>> master
 
 	/*
 	 * take ownership and clear the pending bit.
@@ -388,7 +404,11 @@ void __lockfunc queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
 	 * 0,1,0 -> 0,0,1
 	 */
 	clear_pending_set_locked(lock);
+<<<<<<< HEAD
 	lockevent_inc(lock_pending);
+=======
+	qstat_inc(qstat_lock_pending, true);
+>>>>>>> master
 	return;
 
 	/*

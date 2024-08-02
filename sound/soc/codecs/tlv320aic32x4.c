@@ -910,6 +910,13 @@ static int aic32x4_set_bias_level(struct snd_soc_component *component,
 		/* Initial cold start */
 		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF)
 			break;
+<<<<<<< HEAD
+=======
+
+		/* Switch off BCLK_N Divider */
+		snd_soc_component_update_bits(component, AIC32X4_BCLKN,
+				    AIC32X4_BCLKEN, 0);
+>>>>>>> master
 
 		clk_bulk_disable_unprepare(ARRAY_SIZE(clocks), clocks);
 		break;

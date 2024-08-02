@@ -94,6 +94,10 @@ out_pagefault_enable:
  * 0 - On success
  * -EFAULT - User access resulted in a page fault
  * -EAGAIN - Atomic operation was unable to complete due to contention
+<<<<<<< HEAD
+=======
+ * -ENOSYS - Function not implemented (only if !HAVE_FUTEX_CMPXCHG)
+>>>>>>> master
  */
 static inline int
 futex_atomic_cmpxchg_inatomic_local(u32 *uval, u32 __user *uaddr,

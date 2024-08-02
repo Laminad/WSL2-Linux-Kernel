@@ -13,6 +13,7 @@ are configurable at compile, boot or run time.
    l1tf
    mds
    tsx_async_abort
+<<<<<<< HEAD
    multihit
    special-register-buffer-data-sampling
    core-scheduling
@@ -22,3 +23,6 @@ are configurable at compile, boot or run time.
    srso
    gather_data_sampling
    reg-file-data-sampling
+=======
+   multihit.rst
+>>>>>>> master

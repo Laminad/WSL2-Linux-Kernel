@@ -477,6 +477,7 @@ struct hisi_lpc_acpi_cell {
 
 static void hisi_lpc_acpi_remove(struct device *hostdev)
 {
+<<<<<<< HEAD
 	device_for_each_child(hostdev, NULL, hisi_lpc_acpi_remove_subdev);
 	acpi_dev_for_each_child(ACPI_COMPANION(hostdev),
 				hisi_lpc_acpi_clear_enumerated, NULL);
@@ -561,6 +562,15 @@ static int hisi_lpc_acpi_add_child(struct acpi_device *child, void *data)
 
 	acpi_device_set_enumerated(child);
 	return 0;
+=======
+	struct acpi_device *adev = ACPI_COMPANION(hostdev);
+	struct acpi_device *child;
+
+	device_for_each_child(hostdev, NULL, hisi_lpc_acpi_remove_subdev);
+
+	list_for_each_entry(child, &adev->children, node)
+		acpi_device_clear_enumerated(child);
+>>>>>>> master
 }
 
 /*
@@ -583,6 +593,85 @@ static int hisi_lpc_acpi_probe(struct device *hostdev)
 	if (ret)
 		hisi_lpc_acpi_remove(hostdev);
 
+<<<<<<< HEAD
+=======
+		ret = hisi_lpc_acpi_set_io_res(&child->dev, &adev->dev, &res,
+					       &num_res);
+		if (ret) {
+			dev_warn(hostdev, "set resource fail (%d)\n", ret);
+			goto fail;
+		}
+
+		cell = (struct hisi_lpc_acpi_cell []){
+			/* ipmi */
+			{
+				.hid = "IPI0001",
+				.name = "hisi-lpc-ipmi",
+			},
+			/* 8250-compatible uart */
+			{
+				.hid = "HISI1031",
+				.name = "serial8250",
+				.pdata = (struct plat_serial8250_port []) {
+					{
+						.iobase = res->start,
+						.uartclk = 1843200,
+						.iotype = UPIO_PORT,
+						.flags = UPF_BOOT_AUTOCONF,
+					},
+					{}
+				},
+				.pdata_size = 2 *
+					sizeof(struct plat_serial8250_port),
+			},
+			{}
+		};
+
+		for (; cell && cell->name; cell++) {
+			if (!strcmp(cell->hid, hid)) {
+				found = true;
+				break;
+			}
+		}
+
+		if (!found) {
+			dev_warn(hostdev,
+				 "could not find cell for child device (%s)\n",
+				 hid);
+			ret = -ENODEV;
+			goto fail;
+		}
+
+		pdev = platform_device_alloc(cell->name, PLATFORM_DEVID_AUTO);
+		if (!pdev) {
+			ret = -ENOMEM;
+			goto fail;
+		}
+
+		pdev->dev.parent = hostdev;
+		ACPI_COMPANION_SET(&pdev->dev, child);
+
+		ret = platform_device_add_resources(pdev, res, num_res);
+		if (ret)
+			goto fail;
+
+		ret = platform_device_add_data(pdev, cell->pdata,
+					       cell->pdata_size);
+		if (ret)
+			goto fail;
+
+		ret = platform_device_add(pdev);
+		if (ret)
+			goto fail;
+
+		acpi_device_set_enumerated(child);
+	}
+
+	return 0;
+
+fail:
+	hisi_lpc_acpi_remove(hostdev);
+>>>>>>> master
 	return ret;
 }
 #else
@@ -660,10 +749,18 @@ static int hisi_lpc_probe(struct platform_device *pdev)
 static int hisi_lpc_remove(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
+<<<<<<< HEAD
 	struct hisi_lpc_dev *lpcdev = dev_get_drvdata(dev);
 	struct logic_pio_hwaddr *range = lpcdev->io_host;
 
 	if (is_acpi_device_node(range->fwnode))
+=======
+	struct acpi_device *acpi_device = ACPI_COMPANION(dev);
+	struct hisi_lpc_dev *lpcdev = dev_get_drvdata(dev);
+	struct logic_pio_hwaddr *range = lpcdev->io_host;
+
+	if (acpi_device)
+>>>>>>> master
 		hisi_lpc_acpi_remove(dev);
 	else
 		of_platform_depopulate(dev);

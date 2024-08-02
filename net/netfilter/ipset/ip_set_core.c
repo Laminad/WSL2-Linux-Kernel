@@ -53,6 +53,7 @@ MODULE_DESCRIPTION("core IP set support");
 MODULE_ALIAS_NFNL_SUBSYS(NFNL_SUBSYS_IPSET);
 
 /* When the nfnl mutex or ip_set_ref_lock is held: */
+<<<<<<< HEAD
 #define ip_set_dereference(inst)	\
 	rcu_dereference_protected((inst)->ip_set_list,	\
 		lockdep_nfnl_is_held(NFNL_SUBSYS_IPSET) || \
@@ -64,6 +65,16 @@ MODULE_ALIAS_NFNL_SUBSYS(NFNL_SUBSYS_IPSET);
 	rcu_dereference_raw((inst)->ip_set_list)[id]
 #define ip_set_dereference_nfnl(p)	\
 	rcu_dereference_check(p, lockdep_nfnl_is_held(NFNL_SUBSYS_IPSET))
+=======
+#define ip_set_dereference(p)		\
+	rcu_dereference_protected(p,	\
+		lockdep_nfnl_is_held(NFNL_SUBSYS_IPSET) || \
+		lockdep_is_held(&ip_set_ref_lock))
+#define ip_set(inst, id)		\
+	ip_set_dereference((inst)->ip_set_list)[id]
+#define ip_set_ref_netlink(inst,id)	\
+	rcu_dereference_raw((inst)->ip_set_list)[id]
+>>>>>>> master
 
 /* The set types are implemented in modules and registered set types
  * can be found in ip_set_type_list. Adding/deleting types is
@@ -878,7 +889,11 @@ ip_set_name_byindex(struct net *net, ip_set_id_t index, char *name)
 	BUG_ON(!set);
 
 	read_lock_bh(&ip_set_ref_lock);
+<<<<<<< HEAD
 	strscpy_pad(name, set->name, IPSET_MAXNAMELEN);
+=======
+	strncpy(name, set->name, IPSET_MAXNAMELEN);
+>>>>>>> master
 	read_unlock_bh(&ip_set_ref_lock);
 }
 EXPORT_SYMBOL_GPL(ip_set_name_byindex);
@@ -2394,7 +2409,24 @@ ip_set_net_exit(struct net *net)
 {
 	struct ip_set_net *inst = ip_set_pernet(net);
 
+<<<<<<< HEAD
 	_destroy_all_sets(inst);
+=======
+	struct ip_set *set = NULL;
+	ip_set_id_t i;
+
+	inst->is_deleted = true; /* flag for ip_set_nfnl_put */
+
+	nfnl_lock(NFNL_SUBSYS_IPSET);
+	for (i = 0; i < inst->ip_set_max; i++) {
+		set = ip_set(inst, i);
+		if (set) {
+			ip_set(inst, i) = NULL;
+			ip_set_destroy_set(set);
+		}
+	}
+	nfnl_unlock(NFNL_SUBSYS_IPSET);
+>>>>>>> master
 	kvfree(rcu_dereference_protected(inst->ip_set_list, 1));
 }
 

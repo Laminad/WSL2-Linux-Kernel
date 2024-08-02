@@ -368,6 +368,7 @@ static inline void folio_activate_drain(int cpu)
 {
 }
 
+<<<<<<< HEAD
 void folio_activate(struct folio *folio)
 {
 	struct lruvec *lruvec;
@@ -378,6 +379,16 @@ void folio_activate(struct folio *folio)
 		unlock_page_lruvec_irq(lruvec);
 		folio_set_lru(folio);
 	}
+=======
+void activate_page(struct page *page)
+{
+	struct zone *zone = page_zone(page);
+
+	page = compound_head(page);
+	spin_lock_irq(zone_lru_lock(zone));
+	__activate_page(page, mem_cgroup_page_lruvec(page, zone->zone_pgdat), NULL);
+	spin_unlock_irq(zone_lru_lock(zone));
+>>>>>>> master
 }
 #endif
 
@@ -754,6 +765,7 @@ void lru_add_drain(void)
 	mlock_drain_local();
 }
 
+<<<<<<< HEAD
 /*
  * It's called from per-cpu workqueue context in SMP case so
  * lru_add_drain_cpu and invalidate_bh_lrus_cpu should run on
@@ -778,6 +790,8 @@ void lru_add_drain_cpu_zone(struct zone *zone)
 	mlock_drain_local();
 }
 
+=======
+>>>>>>> master
 #ifdef CONFIG_SMP
 
 static DEFINE_PER_CPU(struct work_struct, lru_add_drain_work);
@@ -787,6 +801,7 @@ static void lru_add_drain_per_cpu(struct work_struct *dummy)
 	lru_add_and_bh_lrus_drain();
 }
 
+<<<<<<< HEAD
 static bool cpu_needs_drain(unsigned int cpu)
 {
 	struct cpu_fbatches *fbatches = &per_cpu(cpu_fbatches, cpu);
@@ -802,6 +817,8 @@ static bool cpu_needs_drain(unsigned int cpu)
 		has_bh_in_lru(cpu, NULL);
 }
 
+=======
+>>>>>>> master
 /*
  * Doesn't need any cpu hotplug locking because we do rely on per-cpu
  * kworkers being shut down before our page_alloc_cpu_dead callback is
@@ -899,6 +916,12 @@ static inline void __lru_add_drain_all(bool force_all_cpus)
 done:
 	mutex_unlock(&lock);
 }
+#else
+void lru_add_drain_all(void)
+{
+	lru_add_drain();
+}
+#endif
 
 void lru_add_drain_all(void)
 {
@@ -985,6 +1008,7 @@ void release_pages(release_pages_arg arg, int nr)
 		if (is_huge_zero_page(&folio->page))
 			continue;
 
+<<<<<<< HEAD
 		if (folio_is_zone_device(folio)) {
 			if (lruvec) {
 				unlock_page_lruvec_irqrestore(lruvec, flags);
@@ -995,6 +1019,22 @@ void release_pages(release_pages_arg arg, int nr)
 			if (folio_put_testzero(folio))
 				free_zone_device_page(&folio->page);
 			continue;
+=======
+		if (is_zone_device_page(page)) {
+			if (locked_pgdat) {
+				spin_unlock_irqrestore(&locked_pgdat->lru_lock,
+						       flags);
+				locked_pgdat = NULL;
+			}
+			/*
+			 * ZONE_DEVICE pages that return 'false' from
+			 * put_devmap_managed_page() do not require special
+			 * processing, and instead, expect a call to
+			 * put_page_testzero().
+			 */
+			if (put_devmap_managed_page(page))
+				continue;
+>>>>>>> master
 		}
 
 		if (!folio_put_testzero(folio))

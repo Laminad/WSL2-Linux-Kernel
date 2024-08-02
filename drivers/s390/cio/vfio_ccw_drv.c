@@ -84,7 +84,10 @@ void vfio_ccw_sch_io_todo(struct work_struct *work)
 	struct vfio_ccw_private *private;
 	struct irb *irb;
 	bool is_final;
+<<<<<<< HEAD
 	bool cp_is_finished = false;
+=======
+>>>>>>> master
 
 	private = container_of(work, struct vfio_ccw_private, io_work);
 	irb = &private->irb;
@@ -93,10 +96,15 @@ void vfio_ccw_sch_io_todo(struct work_struct *work)
 		     (SCSW_ACTL_DEVACT | SCSW_ACTL_SCHACT));
 	if (scsw_is_solicited(&irb->scsw)) {
 		cp_update_scsw(&private->cp, &irb->scsw);
+<<<<<<< HEAD
 		if (is_final && private->state == VFIO_CCW_STATE_CP_PENDING) {
 			cp_free(&private->cp);
 			cp_is_finished = true;
 		}
+=======
+		if (is_final)
+			cp_free(&private->cp);
+>>>>>>> master
 	}
 	mutex_lock(&private->io_mutex);
 	memcpy(private->io_region->irb_area, irb, sizeof(*irb));
@@ -115,6 +123,7 @@ void vfio_ccw_sch_io_todo(struct work_struct *work)
 		eventfd_signal(private->io_trigger, 1);
 }
 
+<<<<<<< HEAD
 void vfio_ccw_crw_todo(struct work_struct *work)
 {
 	struct vfio_ccw_private *private;
@@ -123,6 +132,10 @@ void vfio_ccw_crw_todo(struct work_struct *work)
 
 	if (!list_empty(&private->crw) && private->crw_trigger)
 		eventfd_signal(private->crw_trigger, 1);
+=======
+	if (private->mdev && is_final)
+		private->state = VFIO_CCW_STATE_IDLE;
+>>>>>>> master
 }
 
 /*

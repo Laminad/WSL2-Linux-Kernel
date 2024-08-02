@@ -2750,10 +2750,41 @@ static int aead_authenc_setkey(struct crypto_aead *cipher,
 		if (verify_aead_des_key(cipher, keys.enckey, keys.enckeylen))
 			return -EINVAL;
 
+<<<<<<< HEAD
 		ctx->cipher_type = CIPHER_TYPE_DES;
 		break;
 	case CIPHER_ALG_3DES:
 		if (verify_aead_des3_key(cipher, keys.enckey, keys.enckeylen))
+=======
+			if (des_ekey(tmp, keys.enckey) == 0) {
+				if (crypto_aead_get_flags(cipher) &
+				    CRYPTO_TFM_REQ_WEAK_KEY) {
+					crypto_aead_set_flags(cipher, flags);
+					return -EINVAL;
+				}
+			}
+
+			ctx->cipher_type = CIPHER_TYPE_DES;
+		} else {
+			goto badkey;
+		}
+		break;
+	case CIPHER_ALG_3DES:
+		if (ctx->enckeylen == (DES_KEY_SIZE * 3)) {
+			const u32 *K = (const u32 *)keys.enckey;
+			u32 flags = CRYPTO_TFM_RES_BAD_KEY_SCHED;
+
+			if (!((K[0] ^ K[2]) | (K[1] ^ K[3])) ||
+			    !((K[2] ^ K[4]) | (K[3] ^ K[5]))) {
+				crypto_aead_set_flags(cipher, flags);
+				return -EINVAL;
+			}
+
+			ctx->cipher_type = CIPHER_TYPE_3DES;
+		} else {
+			crypto_aead_set_flags(cipher,
+					      CRYPTO_TFM_RES_BAD_KEY_LEN);
+>>>>>>> master
 			return -EINVAL;
 
 		ctx->cipher_type = CIPHER_TYPE_3DES;
@@ -2791,7 +2822,11 @@ static int aead_authenc_setkey(struct crypto_aead *cipher,
 		ctx->fallback_cipher->base.crt_flags |=
 		    tfm->crt_flags & CRYPTO_TFM_REQ_MASK;
 		ret = crypto_aead_setkey(ctx->fallback_cipher, key, keylen);
+<<<<<<< HEAD
 		if (ret)
+=======
+		if (ret) {
+>>>>>>> master
 			flow_log("  fallback setkey() returned:%d\n", ret);
 	}
 

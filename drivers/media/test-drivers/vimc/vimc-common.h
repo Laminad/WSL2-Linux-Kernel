@@ -108,6 +108,10 @@ struct vimc_pix_map {
 struct vimc_ent_device {
 	struct device *dev;
 	struct media_entity *ent;
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-common.h
+=======
+	struct media_pad *pads;
+>>>>>>> master:drivers/media/platform/vimc/vimc-common.h
 	void * (*process_frame)(struct vimc_ent_device *ved,
 				const void *frame);
 	void (*vdev_get_format)(struct vimc_ent_device *ved,
@@ -115,6 +119,7 @@ struct vimc_ent_device {
 };
 
 /**
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-common.h
  * struct vimc_device - main device for vimc driver
  *
  * @pipe_cfg:	pointer to the vimc pipeline configuration structure
@@ -131,6 +136,9 @@ struct vimc_device {
 
 /**
  * struct vimc_ent_type		Structure for the callbacks of the entity types
+=======
+ * vimc_pads_init - initialize pads
+>>>>>>> master:drivers/media/platform/vimc/vimc-common.h
  *
  *
  * @add:			initializes and registers

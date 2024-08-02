@@ -1116,6 +1116,7 @@ void pci_update_current_state(struct pci_dev *dev, pci_power_t state)
 }
 
 /**
+<<<<<<< HEAD
  * pci_refresh_power_state - Refresh the given device's power state data
  * @dev: Target PCI device.
  *
@@ -1129,6 +1130,8 @@ void pci_refresh_power_state(struct pci_dev *dev)
 }
 
 /**
+=======
+>>>>>>> master
  * pci_platform_power_transition - Use platform to change device power state
  * @dev: PCI device to handle.
  * @state: State to put the device into.
@@ -1535,7 +1538,32 @@ int pci_set_power_state(struct pci_dev *dev, pci_power_t state)
 }
 EXPORT_SYMBOL(pci_set_power_state);
 
+<<<<<<< HEAD
 int pci_set_power_state_locked(struct pci_dev *dev, pci_power_t state)
+=======
+/**
+ * pci_power_up - Put the given device into D0 forcibly
+ * @dev: PCI device to power up
+ */
+void pci_power_up(struct pci_dev *dev)
+{
+	__pci_start_power_transition(dev, PCI_D0);
+	pci_raw_set_power_state(dev, PCI_D0);
+	pci_update_current_state(dev, PCI_D0);
+}
+
+/**
+ * pci_choose_state - Choose the power state of a PCI device
+ * @dev: PCI device to be suspended
+ * @state: target sleep state for the whole system. This is the value
+ *	that is passed to suspend() function.
+ *
+ * Returns PCI power state suitable for given device and given system
+ * message.
+ */
+
+pci_power_t pci_choose_state(struct pci_dev *dev, pm_message_t state)
+>>>>>>> master
 {
 	lockdep_assert_held(&pci_bus_sem);
 
@@ -1825,7 +1853,11 @@ static void pci_restore_rebar_state(struct pci_dev *pdev)
 		pci_read_config_dword(pdev, pos + PCI_REBAR_CTRL, &ctrl);
 		bar_idx = ctrl & PCI_REBAR_CTRL_BAR_IDX;
 		res = pdev->resource + bar_idx;
+<<<<<<< HEAD
 		size = pci_rebar_bytes_to_size(resource_size(res));
+=======
+		size = ilog2(resource_size(res)) - 20;
+>>>>>>> master
 		ctrl &= ~PCI_REBAR_CTRL_BAR_SIZE;
 		ctrl |= size << PCI_REBAR_CTRL_BAR_SHIFT;
 		pci_write_config_dword(pdev, pos + PCI_REBAR_CTRL, ctrl);
@@ -2474,6 +2506,7 @@ static void pci_pme_list_scan(struct work_struct *work)
 			 * devices may not be accessible or stable over the
 			 * course of the call.
 			 */
+<<<<<<< HEAD
 			if (bdev) {
 				bref = pm_runtime_get_if_active(bdev, true);
 				if (!bref)
@@ -2495,6 +2528,18 @@ static void pci_pme_list_scan(struct work_struct *work)
 put_bridge:
 			if (bref > 0)
 				pm_runtime_put(bdev);
+=======
+			if (bridge && bridge->current_state != PCI_D0)
+				continue;
+			/*
+			 * If the device is in D3cold it should not be
+			 * polled either.
+			 */
+			if (pme_dev->dev->current_state == PCI_D3cold)
+				continue;
+
+			pci_pme_wakeup(pme_dev->dev, NULL);
+>>>>>>> master
 		} else {
 			list_del(&pme_dev->list);
 			kfree(pme_dev);
@@ -3033,6 +3078,7 @@ static const struct dmi_system_id bridge_d3_blacklist[] = {
 			DMI_MATCH(DMI_BOARD_NAME, "X299 DESIGNARE EX-CF"),
 		},
 	},
+<<<<<<< HEAD
 	{
 		/*
 		 * Downstream device is not accessible after putting a root port
@@ -3057,6 +3103,8 @@ static const struct dmi_system_id bridge_d3_blacklist[] = {
 			DMI_MATCH(DMI_BOARD_VERSION, "95.33"),
 		},
 	},
+=======
+>>>>>>> master
 #endif
 	{ }
 };
@@ -7090,6 +7138,7 @@ static int __init pci_setup(char *str)
 early_param("pci", pci_setup);
 
 /*
+<<<<<<< HEAD
  * 'resource_alignment_param' and 'disable_acs_redir_param' are initialized
  * in pci_setup(), above, to point to data in the __initdata section which
  * will be freed after the init sequence is complete. We can't allocate memory
@@ -7102,6 +7151,17 @@ static int __init pci_realloc_setup_params(void)
 {
 	resource_alignment_param = kstrdup(resource_alignment_param,
 					   GFP_KERNEL);
+=======
+ * 'disable_acs_redir_param' is initialized in pci_setup(), above, to point
+ * to data in the __initdata section which will be freed after the init
+ * sequence is complete. We can't allocate memory in pci_setup() because some
+ * architectures do not have any memory allocation service available during
+ * an early_param() call. So we allocate memory and copy the variable here
+ * before the init section is freed.
+ */
+static int __init pci_realloc_setup_params(void)
+{
+>>>>>>> master
 	disable_acs_redir_param = kstrdup(disable_acs_redir_param, GFP_KERNEL);
 
 	return 0;

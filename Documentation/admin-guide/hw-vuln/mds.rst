@@ -58,14 +58,23 @@ Because the buffers are potentially shared between Hyper-Threads cross
 Hyper-Thread attacks are possible.
 
 Deeper technical information is available in the MDS specific x86
+<<<<<<< HEAD
 architecture section: :ref:`Documentation/arch/x86/mds.rst <mds>`.
+=======
+architecture section: :ref:`Documentation/x86/mds.rst <mds>`.
+>>>>>>> master
 
 
 Attack scenarios
 ----------------
 
+<<<<<<< HEAD
 Attacks against the MDS vulnerabilities can be mounted from malicious non-
 privileged user space applications running on hosts or guest. Malicious
+=======
+Attacks against the MDS vulnerabilities can be mounted from malicious non
+priviledged user space applications running on hosts or guest. Malicious
+>>>>>>> master
 guest OSes can obviously mount attacks as well.
 
 Contrary to other speculation based vulnerabilities the MDS vulnerability
@@ -265,11 +274,16 @@ time with the option "mds=". The valid arguments for this option are:
 
   ============  =============================================================
 
+<<<<<<< HEAD
 Not specifying this option is equivalent to "mds=full". For processors
 that are affected by both TAA (TSX Asynchronous Abort) and MDS,
 specifying just "mds=off" without an accompanying "tsx_async_abort=off"
 will have no effect as the same mitigation is used for both
 vulnerabilities.
+=======
+Not specifying this option is equivalent to "mds=full".
+
+>>>>>>> master
 
 Mitigation selection guide
 --------------------------

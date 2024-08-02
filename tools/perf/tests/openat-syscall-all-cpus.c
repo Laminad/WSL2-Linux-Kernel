@@ -49,7 +49,10 @@ static int test__openat_syscall_event_on_all_cpus(struct test_suite *test __mayb
 	if (IS_ERR(evsel)) {
 		tracing_path__strerror_open_tp(errno, errbuf, sizeof(errbuf), "syscalls", "sys_enter_openat");
 		pr_debug("%s\n", errbuf);
+<<<<<<< HEAD
 		err = TEST_SKIP;
+=======
+>>>>>>> master
 		goto out_cpu_map_delete;
 	}
 
@@ -116,9 +119,15 @@ static int test__openat_syscall_event_on_all_cpus(struct test_suite *test __mayb
 out_close_fd:
 	perf_evsel__close_fd(&evsel->core);
 out_evsel_delete:
+<<<<<<< HEAD
 	evsel__delete(evsel);
 out_cpu_map_delete:
 	perf_cpu_map__put(cpus);
+=======
+	perf_evsel__delete(evsel);
+out_cpu_map_delete:
+	cpu_map__put(cpus);
+>>>>>>> master
 out_thread_map_delete:
 	perf_thread_map__put(threads);
 	return err;

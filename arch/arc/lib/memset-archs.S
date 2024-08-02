@@ -27,15 +27,26 @@
 
 #else
 
+<<<<<<< HEAD
 .macro PREALLOC_INSTR	reg, off
 .endm
 
 .macro PREFETCHW_INSTR	reg, off
+=======
+.macro PREALLOC_INSTR
+.endm
+
+.macro PREFETCHW_INSTR
+>>>>>>> master
 .endm
 
 #endif
 
 ENTRY_CFI(memset)
+<<<<<<< HEAD
+=======
+	PREFETCHW_INSTR	r0, 0	; Prefetch the first write location
+>>>>>>> master
 	mov.f	0, r2
 ;;; if size is zero
 	jz.d	[blink]

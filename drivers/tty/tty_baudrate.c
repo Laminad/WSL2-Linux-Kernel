@@ -101,6 +101,12 @@ speed_t tty_termios_input_baud_rate(const struct ktermios *termios)
 		cbaud += 15;
 	}
 	return cbaud >= n_baud_table ? 0 : baud_table[cbaud];
+<<<<<<< HEAD
+=======
+#else	/* IBSHIFT */
+	return tty_termios_baud_rate(termios);
+#endif	/* IBSHIFT */
+>>>>>>> master
 }
 EXPORT_SYMBOL(tty_termios_input_baud_rate);
 

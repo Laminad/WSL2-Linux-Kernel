@@ -868,7 +868,10 @@ static int add_missing_keys(struct btrfs_fs_info *fs_info,
 			free_extent_buffer(eb);
 			return -EIO;
 		}
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 		if (lock)
 			btrfs_tree_read_lock(eb);
 		if (btrfs_header_level(eb) == 0)
@@ -1567,7 +1570,11 @@ again:
 
 	btrfs_release_path(path);
 
+<<<<<<< HEAD
 	ret = add_missing_keys(ctx->fs_info, &preftrees, path->skip_locking == 0);
+=======
+	ret = add_missing_keys(fs_info, &preftrees, path->skip_locking == 0);
+>>>>>>> master
 	if (ret)
 		goto out;
 
@@ -1625,12 +1632,23 @@ again:
 					ret = -EIO;
 					goto out;
 				}
+<<<<<<< HEAD
 
 				if (!path->skip_locking)
 					btrfs_tree_read_lock(eb);
 				ret = find_extent_in_eb(ctx, eb, &eie);
 				if (!path->skip_locking)
 					btrfs_tree_read_unlock(eb);
+=======
+				if (!path->skip_locking) {
+					btrfs_tree_read_lock(eb);
+					btrfs_set_lock_blocking_rw(eb, BTRFS_READ_LOCK);
+				}
+				ret = find_extent_in_eb(eb, bytenr,
+							*extent_item_pos, &eie, ignore_offset);
+				if (!path->skip_locking)
+					btrfs_tree_read_unlock_blocking(eb);
+>>>>>>> master
 				free_extent_buffer(eb);
 				if (ret == BTRFS_ITERATE_EXTENT_INODES_STOP ||
 				    ret < 0)
@@ -1876,6 +1894,7 @@ int btrfs_is_data_extent_shared(struct btrfs_inode *inode, u64 bytenr,
 	bool leaf_cached;
 	bool leaf_is_shared;
 
+<<<<<<< HEAD
 	for (int i = 0; i < BTRFS_BACKREF_CTX_PREV_EXTENTS_SIZE; i++) {
 		if (ctx->prev_extents_cache[i].bytenr == bytenr)
 			return ctx->prev_extents_cache[i].is_shared;
@@ -1883,6 +1902,15 @@ int btrfs_is_data_extent_shared(struct btrfs_inode *inode, u64 bytenr,
 
 	ulist_init(&ctx->refs);
 
+=======
+	tmp = ulist_alloc(GFP_NOFS);
+	roots = ulist_alloc(GFP_NOFS);
+	if (!tmp || !roots) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+>>>>>>> master
 	trans = btrfs_join_transaction_nostart(root);
 	if (IS_ERR(trans)) {
 		if (PTR_ERR(trans) != -ENOENT && PTR_ERR(trans) != -EROFS) {
@@ -2040,9 +2068,14 @@ out_trans:
 		up_read(&fs_info->commit_root_sem);
 	}
 out:
+<<<<<<< HEAD
 	ulist_release(&ctx->refs);
 	ctx->prev_leaf_bytenr = ctx->curr_leaf_bytenr;
 
+=======
+	ulist_free(tmp);
+	ulist_free(roots);
+>>>>>>> master
 	return ret;
 }
 
@@ -2423,15 +2456,20 @@ int iterate_extent_inodes(struct btrfs_backref_walk_ctx *ctx,
 	ASSERT(ctx->roots == NULL);
 
 	if (!search_commit_root) {
+<<<<<<< HEAD
 		struct btrfs_trans_handle *trans;
 
 		trans = btrfs_attach_transaction(ctx->fs_info->tree_root);
+=======
+		trans = btrfs_attach_transaction(fs_info->extent_root);
+>>>>>>> master
 		if (IS_ERR(trans)) {
 			if (PTR_ERR(trans) != -ENOENT &&
 			    PTR_ERR(trans) != -EROFS)
 				return PTR_ERR(trans);
 			trans = NULL;
 		}
+<<<<<<< HEAD
 		ctx->trans = trans;
 	}
 
@@ -2443,6 +2481,18 @@ int iterate_extent_inodes(struct btrfs_backref_walk_ctx *ctx,
 	}
 
 	ret = btrfs_find_all_leafs(ctx);
+=======
+	}
+
+	if (trans)
+		btrfs_get_tree_mod_seq(fs_info, &tree_mod_seq_elem);
+	else
+		down_read(&fs_info->commit_root_sem);
+
+	ret = btrfs_find_all_leafs(trans, fs_info, extent_item_objectid,
+				   tree_mod_seq_elem.seq, &refs,
+				   &extent_item_pos, ignore_offset);
+>>>>>>> master
 	if (ret)
 		goto out;
 	refs = ctx->refs;
@@ -2510,10 +2560,16 @@ int iterate_extent_inodes(struct btrfs_backref_walk_ctx *ctx,
 
 	free_leaf_list(refs);
 out:
+<<<<<<< HEAD
 	if (ctx->trans) {
 		btrfs_put_tree_mod_seq(ctx->fs_info, &seq_elem);
 		btrfs_end_transaction(ctx->trans);
 		ctx->trans = NULL;
+=======
+	if (trans) {
+		btrfs_put_tree_mod_seq(fs_info, &tree_mod_seq_elem);
+		btrfs_end_transaction(trans);
+>>>>>>> master
 	} else {
 		up_read(&ctx->fs_info->commit_root_sem);
 	}

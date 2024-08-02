@@ -74,6 +74,7 @@ static bool test_intel(int idx, void *data)
 	case INTEL_FAM6_GRANITERAPIDS_D:
 
 	case INTEL_FAM6_ATOM_SILVERMONT:
+<<<<<<< HEAD
 	case INTEL_FAM6_ATOM_SILVERMONT_D:
 	case INTEL_FAM6_ATOM_AIRMONT:
 
@@ -83,6 +84,15 @@ static bool test_intel(int idx, void *data)
 	case INTEL_FAM6_ATOM_TREMONT_D:
 	case INTEL_FAM6_ATOM_TREMONT:
 	case INTEL_FAM6_ATOM_TREMONT_L:
+=======
+	case INTEL_FAM6_ATOM_SILVERMONT_X:
+	case INTEL_FAM6_ATOM_AIRMONT:
+
+	case INTEL_FAM6_ATOM_GOLDMONT:
+	case INTEL_FAM6_ATOM_GOLDMONT_X:
+
+	case INTEL_FAM6_ATOM_GOLDMONT_PLUS:
+>>>>>>> master
 
 	case INTEL_FAM6_XEON_PHI_KNL:
 	case INTEL_FAM6_XEON_PHI_KNM:
@@ -93,6 +103,7 @@ static bool test_intel(int idx, void *data)
 	case INTEL_FAM6_SKYLAKE_L:
 	case INTEL_FAM6_SKYLAKE:
 	case INTEL_FAM6_SKYLAKE_X:
+<<<<<<< HEAD
 	case INTEL_FAM6_KABYLAKE_L:
 	case INTEL_FAM6_KABYLAKE:
 	case INTEL_FAM6_COMETLAKE_L:
@@ -112,6 +123,11 @@ static bool test_intel(int idx, void *data)
 	case INTEL_FAM6_RAPTORLAKE_S:
 	case INTEL_FAM6_METEORLAKE:
 	case INTEL_FAM6_METEORLAKE_L:
+=======
+	case INTEL_FAM6_KABYLAKE_MOBILE:
+	case INTEL_FAM6_KABYLAKE_DESKTOP:
+	case INTEL_FAM6_ICELAKE_MOBILE:
+>>>>>>> master
 		if (idx == PERF_MSR_SMI || idx == PERF_MSR_PPERF)
 			return true;
 		break;

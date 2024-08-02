@@ -1916,6 +1916,7 @@ int serial8250_handle_irq(struct uart_port *port, unsigned int iir)
 
 	status = serial_lsr_in(up);
 
+<<<<<<< HEAD
 	/*
 	 * If port is stopped and there are no error conditions in the
 	 * FIFO, then don't drain the FIFO, as this may lead to TTY buffer
@@ -1935,10 +1936,14 @@ int serial8250_handle_irq(struct uart_port *port, unsigned int iir)
 		d = irq_get_irq_data(port->irq);
 		if (d && irqd_is_wakeup_set(d))
 			pm_wakeup_event(tport->tty->dev, 0);
+=======
+	if (status & (UART_LSR_DR | UART_LSR_BI)) {
+>>>>>>> master
 		if (!up->dma || handle_rx_dma(up, iir))
 			status = serial8250_rx_chars(up, status);
 	}
 	serial8250_modem_status(up);
+<<<<<<< HEAD
 	if ((status & UART_LSR_THRE) && (up->ier & UART_IER_THRI)) {
 		if (!up->dma || up->dma->tx_err)
 			serial8250_tx_chars(up);
@@ -1947,6 +1952,11 @@ int serial8250_handle_irq(struct uart_port *port, unsigned int iir)
 	}
 
 	uart_unlock_and_check_sysrq_irqrestore(port, flags);
+=======
+	if ((!up->dma || up->dma->tx_err) && (status & UART_LSR_THRE) &&
+		(up->ier & UART_IER_THRI))
+		serial8250_tx_chars(up);
+>>>>>>> master
 
 	return 1;
 }

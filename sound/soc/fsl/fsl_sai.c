@@ -358,14 +358,22 @@ static int fsl_sai_set_dai_fmt_tr(struct snd_soc_dai *cpu_dai,
 	case SND_SOC_DAIFMT_BP_FP:
 		val_cr2 |= FSL_SAI_CR2_BCD_MSTR;
 		val_cr4 |= FSL_SAI_CR4_FSD_MSTR;
+<<<<<<< HEAD
 		sai->is_consumer_mode = false;
+=======
+		sai->is_slave_mode = false;
+>>>>>>> master
 		break;
 	case SND_SOC_DAIFMT_BC_FC:
 		sai->is_consumer_mode = true;
 		break;
 	case SND_SOC_DAIFMT_BP_FC:
 		val_cr2 |= FSL_SAI_CR2_BCD_MSTR;
+<<<<<<< HEAD
 		sai->is_consumer_mode = false;
+=======
+		sai->is_slave_mode = false;
+>>>>>>> master
 		break;
 	case SND_SOC_DAIFMT_BC_FP:
 		val_cr4 |= FSL_SAI_CR4_FSD_MSTR;

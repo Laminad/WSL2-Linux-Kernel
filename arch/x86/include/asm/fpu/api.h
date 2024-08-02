@@ -18,6 +18,7 @@
  * Use kernel_fpu_begin/end() if you intend to use FPU in kernel context. It
  * disables preemption so be careful if you intend to use it for long periods
  * of time.
+<<<<<<< HEAD
  * If you intend to use the FPU in irq/softirq you need to check first with
  * irq_fpu_usable() if it is possible.
  */
@@ -27,6 +28,12 @@
 #define KFPU_MXCSR	_BITUL(1)	/* MXCSR will be initialized */
 
 extern void kernel_fpu_begin_mask(unsigned int kfpu_mask);
+=======
+ * If you intend to use the FPU in softirq you need to check first with
+ * irq_fpu_usable() if it is possible.
+ */
+extern void kernel_fpu_begin(void);
+>>>>>>> master
 extern void kernel_fpu_end(void);
 extern bool irq_fpu_usable(void);
 extern void fpregs_mark_activate(void);

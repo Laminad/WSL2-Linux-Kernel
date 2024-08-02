@@ -9,9 +9,14 @@ ifeq ("$(origin O)", "command line")
 endif
 
 x86_energy_perf_policy : x86_energy_perf_policy.c
+<<<<<<< HEAD
 override CFLAGS +=	-O2 -Wall -I../../../include
 override CFLAGS +=	-DMSRHEADER='"../../../../arch/x86/include/asm/msr-index.h"'
 override CFLAGS +=	-D_FORTIFY_SOURCE=2
+=======
+CFLAGS +=	-Wall -I../../../include
+CFLAGS +=	-DMSRHEADER='"../../../../arch/x86/include/asm/msr-index.h"'
+>>>>>>> master
 
 %: %.c
 	@mkdir -p $(BUILD_OUTPUT)

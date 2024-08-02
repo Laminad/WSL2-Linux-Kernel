@@ -2674,7 +2674,11 @@ static void ena_config_host_info(struct ena_com_dev *ena_dev, struct pci_dev *pd
 	host_info->bdf = pci_dev_id(pdev);
 	host_info->os_type = ENA_ADMIN_OS_LINUX;
 	host_info->kernel_ver = LINUX_VERSION_CODE;
+<<<<<<< HEAD
 	strscpy(host_info->kernel_ver_str, utsname()->version,
+=======
+	strlcpy(host_info->kernel_ver_str, utsname()->version,
+>>>>>>> master
 		sizeof(host_info->kernel_ver_str) - 1);
 	host_info->os_dist = 0;
 	strncpy(host_info->os_dist_str, utsname()->release,
@@ -3245,7 +3249,12 @@ static int ena_restore_device(struct ena_adapter *adapter)
 		goto err_device_destroy;
 	}
 
+<<<<<<< HEAD
 	rc = ena_enable_msix_and_set_admin_interrupts(adapter);
+=======
+	rc = ena_enable_msix_and_set_admin_interrupts(adapter,
+						      adapter->num_queues);
+>>>>>>> master
 	if (rc) {
 		dev_err(&pdev->dev, "Enable MSI-X failed\n");
 		goto err_device_destroy;

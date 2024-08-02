@@ -157,6 +157,14 @@
 #define ARM_V7S_TABLE_SLAB_FLAGS SLAB_CACHE_DMA
 #endif
 
+#ifdef CONFIG_ZONE_DMA32
+#define ARM_V7S_TABLE_GFP_DMA GFP_DMA32
+#define ARM_V7S_TABLE_SLAB_FLAGS SLAB_CACHE_DMA32
+#else
+#define ARM_V7S_TABLE_GFP_DMA GFP_DMA
+#define ARM_V7S_TABLE_SLAB_FLAGS SLAB_CACHE_DMA
+#endif
+
 typedef u32 arm_v7s_iopte;
 
 static bool selftest_running;
@@ -255,6 +263,7 @@ static void *__arm_v7s_alloc_table(int lvl, gfp_t gfp,
 		 GFP_KERNEL : ARM_V7S_TABLE_GFP_DMA;
 
 	if (lvl == 1)
+<<<<<<< HEAD
 		table = (void *)__get_free_pages(gfp_l1 | __GFP_ZERO, get_order(size));
 	else if (lvl == 2)
 		table = kmem_cache_zalloc(data->l2_tables, gfp);
@@ -265,11 +274,23 @@ static void *__arm_v7s_alloc_table(int lvl, gfp_t gfp,
 	phys = virt_to_phys(table);
 	if (cfg->quirks & IO_PGTABLE_QUIRK_ARM_MTK_TTBR_EXT ?
 	    phys >= (1ULL << cfg->oas) : phys != (arm_v7s_iopte)phys) {
+=======
+		table = (void *)__get_free_pages(
+			__GFP_ZERO | ARM_V7S_TABLE_GFP_DMA, get_order(size));
+	else if (lvl == 2)
+		table = kmem_cache_zalloc(data->l2_tables, gfp);
+	phys = virt_to_phys(table);
+	if (phys != (arm_v7s_iopte)phys) {
+>>>>>>> master
 		/* Doesn't fit in PTE */
 		dev_err(dev, "Page table does not fit in PTE: %pa", &phys);
 		goto out_free;
 	}
+<<<<<<< HEAD
 	if (!cfg->coherent_walk) {
+=======
+	if (table && !(cfg->quirks & IO_PGTABLE_QUIRK_NO_DMA)) {
+>>>>>>> master
 		dma = dma_map_single(dev, table, size, DMA_TO_DEVICE);
 		if (dma_mapping_error(dev, dma))
 			goto out_free;
@@ -822,9 +843,15 @@ static struct io_pgtable *arm_v7s_alloc_pgtable(struct io_pgtable_cfg *cfg,
 		    0 : ARM_V7S_TABLE_SLAB_FLAGS;
 
 	data->l2_tables = kmem_cache_create("io-pgtable_armv7s_l2",
+<<<<<<< HEAD
 					    ARM_V7S_TABLE_SIZE(2, cfg),
 					    ARM_V7S_TABLE_SIZE(2, cfg),
 					    slab_flag, NULL);
+=======
+					    ARM_V7S_TABLE_SIZE(2),
+					    ARM_V7S_TABLE_SIZE(2),
+					    ARM_V7S_TABLE_SLAB_FLAGS, NULL);
+>>>>>>> master
 	if (!data->l2_tables)
 		goto out_free_data;
 

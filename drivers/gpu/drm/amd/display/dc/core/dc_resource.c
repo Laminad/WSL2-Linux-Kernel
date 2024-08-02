@@ -1988,9 +1988,18 @@ bool dc_remove_plane_from_context(
 			 * For head pipe detach surfaces from pipe for tail
 			 * pipe just zero it out
 			 */
+<<<<<<< HEAD
 			if (!pipe_ctx->top_pipe)
 				pipe_ctx->plane_state = NULL;
 			else
+=======
+			if (!pipe_ctx->top_pipe || (!pipe_ctx->top_pipe->top_pipe &&
+					pipe_ctx->top_pipe->stream_res.opp != pipe_ctx->stream_res.opp)) {
+				pipe_ctx->top_pipe = NULL;
+				pipe_ctx->plane_state = NULL;
+				pipe_ctx->bottom_pipe = NULL;
+			} else {
+>>>>>>> master
 				memset(pipe_ctx, 0, sizeof(*pipe_ctx));
 		}
 	}
@@ -2446,8 +2455,43 @@ enum dc_status dc_remove_stream_from_ctx(
 {
 	int i;
 	struct dc_context *dc_ctx = dc->ctx;
+<<<<<<< HEAD
 	struct pipe_ctx *del_pipe = resource_get_otg_master_for_stream(&new_ctx->res_ctx, stream);
 	struct pipe_ctx *odm_pipe;
+=======
+	struct pipe_ctx *del_pipe = NULL;
+
+	/* Release primary pipe */
+	for (i = 0; i < MAX_PIPES; i++) {
+		if (new_ctx->res_ctx.pipe_ctx[i].stream == stream &&
+				!new_ctx->res_ctx.pipe_ctx[i].top_pipe) {
+			del_pipe = &new_ctx->res_ctx.pipe_ctx[i];
+
+			ASSERT(del_pipe->stream_res.stream_enc);
+			update_stream_engine_usage(
+					&new_ctx->res_ctx,
+						dc->res_pool,
+					del_pipe->stream_res.stream_enc,
+					false);
+
+			if (del_pipe->stream_res.audio)
+				update_audio_usage(
+					&new_ctx->res_ctx,
+					dc->res_pool,
+					del_pipe->stream_res.audio,
+					false);
+
+			resource_unreference_clock_source(&new_ctx->res_ctx,
+							  dc->res_pool,
+							  del_pipe->clock_source);
+
+			if (dc->res_pool->funcs->remove_stream_from_ctx)
+				dc->res_pool->funcs->remove_stream_from_ctx(dc, new_ctx, stream);
+
+			memset(del_pipe, 0, sizeof(*del_pipe));
+		}
+	}
+>>>>>>> master
 
 	if (!del_pipe) {
 		DC_ERROR("Pipe not found for stream %p !\n", stream);
@@ -2724,6 +2768,7 @@ enum dc_status resource_map_pool_resources(
 
 	calculate_phy_pix_clks(stream);
 
+<<<<<<< HEAD
 	mark_seamless_boot_stream(dc, stream);
 
 	if (stream->apply_seamless_boot_optimization) {
@@ -2739,6 +2784,12 @@ enum dc_status resource_map_pool_resources(
 	if (pipe_idx < 0)
 		/* acquire new resources */
 		pipe_idx = acquire_first_free_pipe(&context->res_ctx, pool, stream);
+=======
+	calculate_phy_pix_clks(stream);
+
+	/* acquire new resources */
+	pipe_idx = acquire_first_free_pipe(&context->res_ctx, pool, stream);
+>>>>>>> master
 
 	if (pipe_idx < 0)
 		pipe_idx = acquire_first_split_pipe(&context->res_ctx, pool, stream);

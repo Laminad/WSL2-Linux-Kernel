@@ -641,8 +641,17 @@ void mt76_stop_tx_queues(struct mt76_phy *phy, struct ieee80211_sta *sta,
 
 	for (i = 0; i < ARRAY_SIZE(sta->txq); i++) {
 		struct ieee80211_txq *txq = sta->txq[i];
+<<<<<<< HEAD
 		struct mt76_queue *hwq;
 		struct mt76_txq *mtxq;
+=======
+		struct mt76_txq *mtxq;
+
+		if (!txq)
+			continue;
+
+		mtxq = (struct mt76_txq *)txq->drv_priv;
+>>>>>>> master
 
 		if (!txq)
 			continue;

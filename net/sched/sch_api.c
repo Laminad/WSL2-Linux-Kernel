@@ -1457,7 +1457,12 @@ check_loop_fn(struct Qdisc *q, unsigned long cl, struct qdisc_walker *w)
 }
 
 const struct nla_policy rtm_tca_policy[TCA_MAX + 1] = {
+<<<<<<< HEAD
 	[TCA_KIND]		= { .type = NLA_STRING },
+=======
+	[TCA_KIND]		= { .type = NLA_NUL_STRING,
+				    .len = IFNAMSIZ - 1 },
+>>>>>>> master
 	[TCA_RATE]		= { .type = NLA_BINARY,
 				    .len = sizeof(struct tc_estimator) },
 	[TCA_STAB]		= { .type = NLA_NESTED },
@@ -2053,11 +2058,32 @@ static void tc_bind_tclass(struct Qdisc *q, u32 portid, u32 clid,
 
 	if (!cops->tcf_block)
 		return;
+<<<<<<< HEAD
 	args.portid = portid;
 	args.clid = clid;
 	args.new_cl = new_cl;
 	args.w.fn = tc_bind_class_walker;
 	q->ops->cl_ops->walk(q, &args.w);
+=======
+	if (!cops->tcf_block)
+		return;
+	block = cops->tcf_block(q, cl, NULL);
+	if (!block)
+		return;
+	list_for_each_entry(chain, &block->chain_list, list) {
+		struct tcf_proto *tp;
+
+		for (tp = rtnl_dereference(chain->filter_chain);
+		     tp; tp = rtnl_dereference(tp->next)) {
+			struct tcf_bind_args arg = {};
+
+			arg.w.fn = tcf_node_bind;
+			arg.classid = clid;
+			arg.cl = new_cl;
+			tp->ops->walk(tp, &arg.w);
+		}
+	}
+>>>>>>> master
 }
 
 #else

@@ -451,9 +451,19 @@ bool shmem_charge(struct inode *inode, long pages)
 		return false;
 
 	/* nrpages adjustment first, then shmem_recalc_inode() when balanced */
+<<<<<<< HEAD
 	xa_lock_irq(&mapping->i_pages);
 	mapping->nrpages += pages;
 	xa_unlock_irq(&mapping->i_pages);
+=======
+	inode->i_mapping->nrpages += pages;
+
+	spin_lock_irqsave(&info->lock, flags);
+	info->alloced += pages;
+	inode->i_blocks += pages * BLOCKS_PER_PAGE;
+	shmem_recalc_inode(inode);
+	spin_unlock_irqrestore(&info->lock, flags);
+>>>>>>> master
 
 	shmem_recalc_inode(inode, pages, 0);
 	return true;
@@ -464,7 +474,19 @@ void shmem_uncharge(struct inode *inode, long pages)
 	/* pages argument is currently unused: keep it to help debugging */
 	/* nrpages adjustment done by __filemap_remove_folio() or caller */
 
+<<<<<<< HEAD
 	shmem_recalc_inode(inode, 0, 0);
+=======
+	/* nrpages adjustment done by __delete_from_page_cache() or caller */
+
+	spin_lock_irqsave(&info->lock, flags);
+	info->alloced -= pages;
+	inode->i_blocks -= pages * BLOCKS_PER_PAGE;
+	shmem_recalc_inode(inode);
+	spin_unlock_irqrestore(&info->lock, flags);
+
+	shmem_inode_unacct_blocks(inode, pages);
+>>>>>>> master
 }
 
 /*
@@ -1730,10 +1752,17 @@ static int shmem_replace_folio(struct folio **foliop, gfp_t gfp,
 	pgoff_t swap_index;
 	int error;
 
+<<<<<<< HEAD
 	old = *foliop;
 	entry = old->swap;
 	swap_index = swp_offset(entry);
 	swap_mapping = swap_address_space(entry);
+=======
+	oldpage = *pagep;
+	entry.val = page_private(oldpage);
+	swap_index = swp_offset(entry);
+	swap_mapping = page_mapping(oldpage);
+>>>>>>> master
 
 	/*
 	 * We have arrived here because our zones are constrained, so don't
@@ -1749,11 +1778,19 @@ static int shmem_replace_folio(struct folio **foliop, gfp_t gfp,
 	folio_copy(new, old);
 	flush_dcache_folio(new);
 
+<<<<<<< HEAD
 	__folio_set_locked(new);
 	__folio_set_swapbacked(new);
 	folio_mark_uptodate(new);
 	new->swap = entry;
 	folio_set_swapcache(new);
+=======
+	__SetPageLocked(newpage);
+	__SetPageSwapBacked(newpage);
+	SetPageUptodate(newpage);
+	set_page_private(newpage, entry.val);
+	SetPageSwapCache(newpage);
+>>>>>>> master
 
 	/*
 	 * Our caller will very soon move newpage out of swapcache, but it's
@@ -2574,7 +2611,11 @@ int shmem_mfill_atomic_pte(pmd_t *dst_pmd,
 	void *page_kaddr;
 	struct folio *folio;
 	int ret;
+<<<<<<< HEAD
 	pgoff_t max_off;
+=======
+	pgoff_t offset, max_off;
+>>>>>>> master
 
 	if (shmem_inode_acct_block(inode, 1)) {
 		/*
@@ -2624,7 +2665,11 @@ int shmem_mfill_atomic_pte(pmd_t *dst_pmd,
 				*foliop = folio;
 				ret = -ENOENT;
 				/* don't free the page */
+<<<<<<< HEAD
 				goto out_unacct_blocks;
+=======
+				return -ENOENT;
+>>>>>>> master
 			}
 
 			flush_dcache_folio(folio);
@@ -2644,12 +2689,21 @@ int shmem_mfill_atomic_pte(pmd_t *dst_pmd,
 	__folio_mark_uptodate(folio);
 
 	ret = -EFAULT;
+<<<<<<< HEAD
 	max_off = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
 	if (unlikely(pgoff >= max_off))
 		goto out_release;
 
 	ret = shmem_add_to_page_cache(folio, mapping, pgoff, NULL,
 				      gfp & GFP_RECLAIM_MASK, dst_vma->vm_mm);
+=======
+	offset = linear_page_index(dst_vma, dst_addr);
+	max_off = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
+	if (unlikely(offset >= max_off))
+		goto out_release;
+
+	ret = mem_cgroup_try_charge_delay(page, dst_mm, gfp, &memcg, false);
+>>>>>>> master
 	if (ret)
 		goto out_release;
 
@@ -2658,11 +2712,66 @@ int shmem_mfill_atomic_pte(pmd_t *dst_pmd,
 	if (ret)
 		goto out_delete_from_cache;
 
+<<<<<<< HEAD
 	shmem_recalc_inode(inode, 1, 0);
 	folio_unlock(folio);
 	return 0;
 out_delete_from_cache:
 	filemap_remove_folio(folio);
+=======
+	mem_cgroup_commit_charge(page, memcg, false, false);
+
+	_dst_pte = mk_pte(page, dst_vma->vm_page_prot);
+	if (dst_vma->vm_flags & VM_WRITE)
+		_dst_pte = pte_mkwrite(pte_mkdirty(_dst_pte));
+	else {
+		/*
+		 * We don't set the pte dirty if the vma has no
+		 * VM_WRITE permission, so mark the page dirty or it
+		 * could be freed from under us. We could do it
+		 * unconditionally before unlock_page(), but doing it
+		 * only if VM_WRITE is not set is faster.
+		 */
+		set_page_dirty(page);
+	}
+
+	dst_pte = pte_offset_map_lock(dst_mm, dst_pmd, dst_addr, &ptl);
+
+	ret = -EFAULT;
+	max_off = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
+	if (unlikely(offset >= max_off))
+		goto out_release_uncharge_unlock;
+
+	ret = -EEXIST;
+	if (!pte_none(*dst_pte))
+		goto out_release_uncharge_unlock;
+
+	lru_cache_add_anon(page);
+
+	spin_lock(&info->lock);
+	info->alloced++;
+	inode->i_blocks += BLOCKS_PER_PAGE;
+	shmem_recalc_inode(inode);
+	spin_unlock(&info->lock);
+
+	inc_mm_counter(dst_mm, mm_counter_file(page));
+	page_add_file_rmap(page, false);
+	set_pte_at(dst_mm, dst_addr, dst_pte, _dst_pte);
+
+	/* No need to invalidate - it was non-present before */
+	update_mmu_cache(dst_vma, dst_addr, dst_pte);
+	pte_unmap_unlock(dst_pte, ptl);
+	unlock_page(page);
+	ret = 0;
+out:
+	return ret;
+out_release_uncharge_unlock:
+	pte_unmap_unlock(dst_pte, ptl);
+	ClearPageDirty(page);
+	delete_from_page_cache(page);
+out_release_uncharge:
+	mem_cgroup_cancel_charge(page, memcg, false);
+>>>>>>> master
 out_release:
 	folio_unlock(folio);
 	folio_put(folio);
@@ -3022,8 +3131,30 @@ static loff_t shmem_file_llseek(struct file *file, loff_t offset, int whence)
 	if (whence != SEEK_DATA && whence != SEEK_HOLE)
 		return generic_file_llseek_size(file, offset, whence,
 					MAX_LFS_FILESIZE, i_size_read(inode));
+<<<<<<< HEAD
 	if (offset < 0)
 		return -ENXIO;
+=======
+	inode_lock(inode);
+	/* We're holding i_mutex so we can access i_size directly */
+
+	if (offset < 0 || offset >= inode->i_size)
+		offset = -ENXIO;
+	else {
+		start = offset >> PAGE_SHIFT;
+		end = (inode->i_size + PAGE_SIZE - 1) >> PAGE_SHIFT;
+		new_offset = shmem_seek_hole_data(mapping, start, end, whence);
+		new_offset <<= PAGE_SHIFT;
+		if (new_offset > offset) {
+			if (new_offset < inode->i_size)
+				offset = new_offset;
+			else if (whence == SEEK_DATA)
+				offset = -ENXIO;
+			else
+				offset = inode->i_size;
+		}
+	}
+>>>>>>> master
 
 	inode_lock(inode);
 	/* We're holding i_rwsem so we can access i_size directly */
@@ -3316,6 +3447,7 @@ static int shmem_link(struct dentry *old_dentry, struct inode *dir, struct dentr
 	 * first link must skip that, to get the accounting right.
 	 */
 	if (inode->i_nlink) {
+<<<<<<< HEAD
 		ret = shmem_reserve_inode(inode->i_sb, NULL);
 		if (ret)
 			goto out;
@@ -3327,6 +3459,12 @@ static int shmem_link(struct dentry *old_dentry, struct inode *dir, struct dentr
 			shmem_free_inode(inode->i_sb, 0);
 		goto out;
 	}
+=======
+		ret = shmem_reserve_inode(inode->i_sb);
+		if (ret)
+			goto out;
+	}
+>>>>>>> master
 
 	dir->i_size += BOGO_DIRENT_SIZE;
 	dir->i_mtime = inode_set_ctime_to_ts(dir,

@@ -122,6 +122,15 @@ static int __maybe_unused mt76x2u_resume(struct usb_interface *intf)
 
 	return 0;
 
+<<<<<<< HEAD:drivers/net/wireless/mediatek/mt76/mt76x2/usb.c
+=======
+	err = mt76x2u_init_hardware(dev);
+	if (err < 0)
+		goto err;
+
+	return 0;
+
+>>>>>>> master:drivers/net/wireless/mediatek/mt76/mt76x2_usb.c
 err:
 	mt76x2u_cleanup(dev);
 	return err;

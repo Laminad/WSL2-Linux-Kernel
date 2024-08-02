@@ -1328,6 +1328,7 @@ int main(int argc, char **argv)
 		if (cg_write(root, "cgroup.subtree_control", "+memory"))
 			ksft_exit_skip("Failed to set memory controller\n");
 
+<<<<<<< HEAD
 	proc_status = proc_mount_contains("memory_recursiveprot");
 	if (proc_status < 0)
 		ksft_exit_skip("Failed to query cgroup mount option\n");
@@ -1338,6 +1339,8 @@ int main(int argc, char **argv)
 		ksft_exit_skip("Failed to query cgroup mount option\n");
 	has_localevents = proc_status;
 
+=======
+>>>>>>> master
 	for (i = 0; i < ARRAY_SIZE(tests); i++) {
 		switch (tests[i].fn(root)) {
 		case KSFT_PASS:

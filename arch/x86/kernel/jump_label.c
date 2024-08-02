@@ -17,7 +17,19 @@
 #include <asm/text-patching.h>
 #include <asm/insn.h>
 
+<<<<<<< HEAD
 int arch_jump_entry_size(struct jump_entry *entry)
+=======
+union jump_code_union {
+	char code[JUMP_LABEL_NOP_SIZE];
+	struct {
+		char jump;
+		int offset;
+	} __attribute__((packed));
+};
+
+static void bug_at(unsigned char *ip, int line)
+>>>>>>> master
 {
 	struct insn insn = {};
 
@@ -146,3 +158,35 @@ void arch_jump_label_transform_apply(void)
 	text_poke_finish();
 	mutex_unlock(&text_mutex);
 }
+<<<<<<< HEAD
+=======
+
+static enum {
+	JL_STATE_START,
+	JL_STATE_NO_UPDATE,
+	JL_STATE_UPDATE,
+} jlstate __initdata_or_module = JL_STATE_START;
+
+__init_or_module void arch_jump_label_transform_static(struct jump_entry *entry,
+				      enum jump_label_type type)
+{
+	/*
+	 * This function is called at boot up and when modules are
+	 * first loaded. Check if the default nop, the one that is
+	 * inserted at compile time, is the ideal nop. If it is, then
+	 * we do not need to update the nop, and we can leave it as is.
+	 * If it is not, then we need to update the nop to the ideal nop.
+	 */
+	if (jlstate == JL_STATE_START) {
+		const unsigned char default_nop[] = { STATIC_KEY_INIT_NOP };
+		const unsigned char *ideal_nop = ideal_nops[NOP_ATOMIC5];
+
+		if (memcmp(ideal_nop, default_nop, 5) != 0)
+			jlstate = JL_STATE_UPDATE;
+		else
+			jlstate = JL_STATE_NO_UPDATE;
+	}
+	if (jlstate == JL_STATE_UPDATE)
+		__jump_label_transform(entry, type, text_poke_early, 1);
+}
+>>>>>>> master

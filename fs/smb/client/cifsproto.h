@@ -189,10 +189,18 @@ extern int cifs_unlock_range(struct cifsFileInfo *cfile,
 extern int cifs_push_mandatory_locks(struct cifsFileInfo *cfile);
 
 extern void cifs_down_write(struct rw_semaphore *sem);
+<<<<<<< HEAD:fs/smb/client/cifsproto.h
 struct cifsFileInfo *cifs_new_fileinfo(struct cifs_fid *fid, struct file *file,
 				       struct tcon_link *tlink, __u32 oplock,
 				       const char *symlink_target);
 extern int cifs_posix_open(const char *full_path, struct inode **inode,
+=======
+extern struct cifsFileInfo *cifs_new_fileinfo(struct cifs_fid *fid,
+					      struct file *file,
+					      struct tcon_link *tlink,
+					      __u32 oplock);
+extern int cifs_posix_open(char *full_path, struct inode **inode,
+>>>>>>> master:fs/cifs/cifsproto.h
 			   struct super_block *sb, int mode,
 			   unsigned int f_flags, __u32 *oplock, __u16 *netfid,
 			   unsigned int xid);

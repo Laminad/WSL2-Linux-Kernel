@@ -36,6 +36,23 @@ static s64 __uv_bios_call(enum uv_bios_cmd which, u64 a1, u64 a2, u64 a3,
 
 	return ret;
 }
+<<<<<<< HEAD
+=======
+
+s64 uv_bios_call(enum uv_bios_cmd which, u64 a1, u64 a2, u64 a3, u64 a4, u64 a5)
+{
+	s64 ret;
+
+	if (down_interruptible(&__efi_uv_runtime_lock))
+		return BIOS_STATUS_ABORT;
+
+	ret = __uv_bios_call(which, a1, a2, a3, a4, a5);
+	up(&__efi_uv_runtime_lock);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(uv_bios_call);
+>>>>>>> master
 
 static s64 uv_bios_call(enum uv_bios_cmd which, u64 a1, u64 a2, u64 a3, u64 a4,
 		u64 a5)
@@ -65,6 +82,21 @@ static s64 uv_bios_call_irqsave(enum uv_bios_cmd which, u64 a1, u64 a2, u64 a3,
 	local_irq_restore(bios_flags);
 
 	up(&__efi_uv_runtime_lock);
+<<<<<<< HEAD
+=======
+
+	return ret;
+}
+
+s64 uv_bios_call_reentrant(enum uv_bios_cmd which, u64 a1, u64 a2, u64 a3,
+					u64 a4, u64 a5)
+{
+	s64 ret;
+
+	preempt_disable();
+	ret = uv_bios_call(which, a1, a2, a3, a4, a5);
+	preempt_enable();
+>>>>>>> master
 
 	return ret;
 }

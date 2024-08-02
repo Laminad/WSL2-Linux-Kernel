@@ -19,7 +19,10 @@
 #include <linux/kref.h>
 #include <linux/limits.h>
 #include <linux/list.h>
+<<<<<<< HEAD
 #include <linux/minmax.h>
+=======
+>>>>>>> master
 #include <linux/mutex.h>
 #include <linux/netdevice.h>
 #include <linux/printk.h>
@@ -164,9 +167,19 @@ static bool batadv_is_on_batman_iface(const struct net_device *net_dev)
 
 	parent_net = batadv_getlink_net(net_dev, net);
 
+<<<<<<< HEAD
 	/* iflink to itself, most likely physical device */
 	if (net == parent_net && iflink == net_dev->ifindex)
+=======
+	/* recurse over the parent device */
+	parent_dev = __dev_get_by_index((struct net *)parent_net,
+					dev_get_iflink(net_dev));
+	/* if we got a NULL parent_dev there is something broken.. */
+	if (!parent_dev) {
+		pr_err("Cannot find parent device\n");
+>>>>>>> master
 		return false;
+	}
 
 	/* recurse over the parent device */
 	parent_dev = __dev_get_by_index((struct net *)parent_net, iflink);

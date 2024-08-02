@@ -2076,6 +2076,17 @@ int fib_table_flush(struct net *net, struct fib_table *tb, bool flush_all)
 			if (!fi || tb->tb_id != fa->tb_id ||
 			    (!(fi->fib_flags & RTNH_F_DEAD) &&
 			     !fib_props[fa->fa_type].error)) {
+<<<<<<< HEAD
+=======
+				slen = fa->fa_slen;
+				continue;
+			}
+
+			/* Do not flush error routes if network namespace is
+			 * not being dismantled
+			 */
+			if (!flush_all && fib_props[fa->fa_type].error) {
+>>>>>>> master
 				slen = fa->fa_slen;
 				continue;
 			}

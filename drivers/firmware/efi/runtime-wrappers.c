@@ -128,9 +128,37 @@ struct efi_runtime_work efi_rts_work;
  * finished, hence _only_ one work is queued at a time and the caller
  * thread waits for completion.
  */
+<<<<<<< HEAD
 #define efi_queue_work(_rts, _args...)					\
 	__efi_queue_work(EFI_ ## _rts,					\
 			 &(union efi_rts_args){ ._rts = { _args }})
+=======
+#define efi_queue_work(_rts, _arg1, _arg2, _arg3, _arg4, _arg5)		\
+({									\
+	struct efi_runtime_work efi_rts_work;				\
+	efi_rts_work.status = EFI_ABORTED;				\
+									\
+	init_completion(&efi_rts_work.efi_rts_comp);			\
+	INIT_WORK(&efi_rts_work.work, efi_call_rts);			\
+	efi_rts_work.arg1 = _arg1;					\
+	efi_rts_work.arg2 = _arg2;					\
+	efi_rts_work.arg3 = _arg3;					\
+	efi_rts_work.arg4 = _arg4;					\
+	efi_rts_work.arg5 = _arg5;					\
+	efi_rts_work.efi_rts_id = _rts;					\
+									\
+	/*								\
+	 * queue_work() returns 0 if work was already on queue,         \
+	 * _ideally_ this should never happen.                          \
+	 */								\
+	if (queue_work(efi_rts_wq, &efi_rts_work.work))			\
+		wait_for_completion(&efi_rts_work.efi_rts_comp);	\
+	else								\
+		pr_err("Failed to queue work to efi_rts_wq.\n");	\
+									\
+	efi_rts_work.status;						\
+})
+>>>>>>> master
 
 #ifndef arch_efi_save_flags
 #define arch_efi_save_flags(state_flags)	local_save_flags(state_flags)
@@ -201,6 +229,13 @@ void efi_call_virt_check_flags(unsigned long flags, const void *caller)
  * So let's just use a single lock to serialize all Runtime Services calls.
  */
 static DEFINE_SEMAPHORE(efi_runtime_lock, 1);
+
+/*
+ * Expose the EFI runtime lock to the UV platform
+ */
+#ifdef CONFIG_X86_UV
+extern struct semaphore __efi_uv_runtime_lock __alias(efi_runtime_lock);
+#endif
 
 /*
  * Expose the EFI runtime lock to the UV platform

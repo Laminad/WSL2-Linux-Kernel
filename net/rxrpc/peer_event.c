@@ -275,8 +275,21 @@ static void rxrpc_peer_keepalive_dispatch(struct rxrpc_net *rxnet,
 			spin_unlock(&rxnet->peer_hash_lock);
 			rxrpc_unuse_local(peer->local, rxrpc_local_unuse_peer_keepalive);
 		}
+<<<<<<< HEAD
 		rxrpc_put_peer(peer, rxrpc_peer_put_keepalive);
 		spin_lock(&rxnet->peer_hash_lock);
+=======
+
+		/* A transmission to this peer occurred since last we examined
+		 * it so put it into the appropriate future bucket.
+		 */
+		slot += cursor;
+		slot &= mask;
+		spin_lock_bh(&rxnet->peer_hash_lock);
+		list_add_tail(&peer->keepalive_link,
+			      &rxnet->peer_keepalive[slot & mask]);
+		rxrpc_put_peer_locked(peer);
+>>>>>>> master
 	}
 
 	spin_unlock(&rxnet->peer_hash_lock);

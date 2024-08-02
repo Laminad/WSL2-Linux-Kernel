@@ -96,8 +96,11 @@ static int amx3_common_init(int (*idle)(u32 wfi_flags))
 		pr_info("PM: Leaving EFUSE power domain active\n");
 	else
 		omap_set_pwrdm_state(cefuse_pwrdm, PWRDM_POWER_OFF);
+<<<<<<< HEAD
 
 	idle_fn = idle;
+=======
+>>>>>>> master
 
 	return 0;
 }

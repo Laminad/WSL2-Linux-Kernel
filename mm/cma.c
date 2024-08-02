@@ -99,9 +99,18 @@ static void __init cma_activate_area(struct cma *cma)
 	unsigned long base_pfn = cma->base_pfn, pfn;
 	struct zone *zone;
 
+<<<<<<< HEAD
 	cma->bitmap = bitmap_zalloc(cma_bitmap_maxno(cma), GFP_KERNEL);
 	if (!cma->bitmap)
 		goto out_error;
+=======
+	cma->bitmap = kzalloc(bitmap_size, GFP_KERNEL);
+
+	if (!cma->bitmap) {
+		cma->count = 0;
+		return -ENOMEM;
+	}
+>>>>>>> master
 
 	/*
 	 * alloc_contig_range() requires the pfn range specified to be in the
@@ -263,11 +272,22 @@ int __init cma_declare_contiguous_nid(phys_addr_t base,
 	if (alignment && !is_power_of_2(alignment))
 		return -EINVAL;
 
+<<<<<<< HEAD
 	if (!IS_ENABLED(CONFIG_NUMA))
 		nid = NUMA_NO_NODE;
 
 	/* Sanitise input arguments. */
 	alignment = max_t(phys_addr_t, alignment, CMA_MIN_ALIGNMENT_BYTES);
+=======
+	/*
+	 * Sanitise input arguments.
+	 * Pages both ends in CMA area could be merged into adjacent unmovable
+	 * migratetype page by page allocator's buddy algorithm. In the case,
+	 * you couldn't get a contiguous memory, which is not what we want.
+	 */
+	alignment = max(alignment,  (phys_addr_t)PAGE_SIZE <<
+			  max_t(unsigned long, MAX_ORDER - 1, pageblock_order));
+>>>>>>> master
 	if (fixed && base & (alignment - 1)) {
 		ret = -EINVAL;
 		pr_err("Region at %pa must be aligned to %pa bytes\n",
@@ -376,7 +396,11 @@ int __init cma_declare_contiguous_nid(phys_addr_t base,
 	return 0;
 
 free_mem:
+<<<<<<< HEAD
 	memblock_phys_free(base, size);
+=======
+	memblock_free(base, size);
+>>>>>>> master
 err:
 	pr_err("Failed to reserve %ld MiB on node %d\n", (unsigned long)size / SZ_1M,
 	       nid);
@@ -406,7 +430,11 @@ static void cma_debug_show_areas(struct cma *cma)
 		start = next_zero_bit + nr_zero;
 	}
 	pr_cont("=> %lu free of %lu total pages\n", nr_total, cma->count);
+<<<<<<< HEAD
 	spin_unlock_irq(&cma->lock);
+=======
+	mutex_unlock(&cma->lock);
+>>>>>>> master
 }
 #else
 static inline void cma_debug_show_areas(struct cma *cma) { }

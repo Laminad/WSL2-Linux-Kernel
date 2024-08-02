@@ -346,6 +346,7 @@ static inline void __set_pte_at(struct mm_struct *mm, unsigned long addr,
 	set_pte(ptep, pte);
 }
 
+<<<<<<< HEAD
 static inline void set_ptes(struct mm_struct *mm, unsigned long addr,
 			      pte_t *ptep, pte_t pte, unsigned int nr)
 {
@@ -362,6 +363,8 @@ static inline void set_ptes(struct mm_struct *mm, unsigned long addr,
 }
 #define set_ptes set_ptes
 
+=======
+>>>>>>> master
 /*
  * Huge pte definitions.
  */
@@ -633,11 +636,16 @@ static inline void set_pmd(pmd_t *pmdp, pmd_t pmd)
 #endif /* __PAGETABLE_PMD_FOLDED */
 
 	WRITE_ONCE(*pmdp, pmd);
+<<<<<<< HEAD
 
 	if (pmd_valid(pmd)) {
 		dsb(ishst);
 		isb();
 	}
+=======
+	dsb(ishst);
+	isb();
+>>>>>>> master
 }
 
 static inline void pmd_clear(pmd_t *pmdp)
@@ -650,13 +658,25 @@ static inline phys_addr_t pmd_page_paddr(pmd_t pmd)
 	return __pmd_to_phys(pmd);
 }
 
+<<<<<<< HEAD
 static inline unsigned long pmd_page_vaddr(pmd_t pmd)
 {
 	return (unsigned long)__va(pmd_page_paddr(pmd));
 }
+=======
+static inline void pte_unmap(pte_t *pte) { }
+>>>>>>> master
 
 /* Find an entry in the third-level page table. */
 #define pte_offset_phys(dir,addr)	(pmd_page_paddr(READ_ONCE(*(dir))) + pte_index(addr) * sizeof(pte_t))
+<<<<<<< HEAD
+=======
+#define pte_offset_kernel(dir,addr)	((pte_t *)__va(pte_offset_phys((dir), (addr))))
+
+#define pte_offset_map(dir,addr)	pte_offset_kernel((dir), (addr))
+#define pte_offset_map_nested(dir,addr)	pte_offset_kernel((dir), (addr))
+#define pte_unmap_nested(pte)		do { } while (0)
+>>>>>>> master
 
 #define pte_set_fixmap(addr)		((pte_t *)set_fixmap_offset(FIX_PTE, addr))
 #define pte_set_fixmap_offset(pmd, addr)	pte_set_fixmap(pte_offset_phys(pmd, addr))
@@ -696,11 +716,16 @@ static inline void set_pud(pud_t *pudp, pud_t pud)
 #endif /* __PAGETABLE_PUD_FOLDED */
 
 	WRITE_ONCE(*pudp, pud);
+<<<<<<< HEAD
 
 	if (pud_valid(pud)) {
 		dsb(ishst);
 		isb();
 	}
+=======
+	dsb(ishst);
+	isb();
+>>>>>>> master
 }
 
 static inline void pud_clear(pud_t *pudp)

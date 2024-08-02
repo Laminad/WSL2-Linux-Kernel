@@ -11,7 +11,10 @@
 #include <linux/io.h>
 #include <linux/mailbox_controller.h>
 #include <linux/module.h>
+<<<<<<< HEAD
 #include <linux/of.h>
+=======
+>>>>>>> master
 #include <linux/platform_device.h>
 #include <linux/pm_wakeirq.h>
 
@@ -256,6 +259,12 @@ static int stm32_ipcc_probe(struct platform_device *pdev)
 	for (i = 0; i < IPCC_IRQ_NUM; i++) {
 		ipcc->irqs[i] = platform_get_irq_byname(pdev, irq_name[i]);
 		if (ipcc->irqs[i] < 0) {
+<<<<<<< HEAD
+=======
+			if (ipcc->irqs[i] != -EPROBE_DEFER)
+				dev_err(dev, "no IRQ specified %s\n",
+					irq_name[i]);
+>>>>>>> master
 			ret = ipcc->irqs[i];
 			goto err_clk;
 		}
@@ -277,7 +286,17 @@ static int stm32_ipcc_probe(struct platform_device *pdev)
 
 	/* wakeup */
 	if (of_property_read_bool(np, "wakeup-source")) {
+<<<<<<< HEAD
 		device_set_wakeup_capable(dev, true);
+=======
+		ipcc->wkp = platform_get_irq_byname(pdev, "wakeup");
+		if (ipcc->wkp < 0) {
+			if (ipcc->wkp != -EPROBE_DEFER)
+				dev_err(dev, "could not get wakeup IRQ\n");
+			ret = ipcc->wkp;
+			goto err_clk;
+		}
+>>>>>>> master
 
 		ret = dev_pm_set_wake_irq(dev, ipcc->irqs[IPCC_IRQ_RX]);
 		if (ret) {

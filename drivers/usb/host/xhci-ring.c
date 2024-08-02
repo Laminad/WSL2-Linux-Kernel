@@ -822,6 +822,7 @@ static void xhci_unmap_td_bounce_buffer(struct xhci_hcd *xhci,
 	dma_unmap_single(dev, seg->bounce_dma, ring->bounce_buf_len,
 			 DMA_FROM_DEVICE);
 	/* for in tranfers we need to copy the data from bounce to sg */
+<<<<<<< HEAD
 	if (urb->num_sgs) {
 		len = sg_pcopy_from_buffer(urb->sg, urb->num_sgs, seg->bounce_buf,
 					   seg->bounce_len, seg->bounce_offs);
@@ -832,6 +833,13 @@ static void xhci_unmap_td_bounce_buffer(struct xhci_hcd *xhci,
 		memcpy(urb->transfer_buffer + seg->bounce_offs, seg->bounce_buf,
 		       seg->bounce_len);
 	}
+=======
+	len = sg_pcopy_from_buffer(urb->sg, urb->num_sgs, seg->bounce_buf,
+			     seg->bounce_len, seg->bounce_offs);
+	if (len != seg->bounce_len)
+		xhci_warn(xhci, "WARN Wrong bounce buffer read length: %zu != %d\n",
+				len, seg->bounce_len);
+>>>>>>> master
 	seg->bounce_len = 0;
 	seg->bounce_offs = 0;
 }
@@ -1937,6 +1945,13 @@ static void handle_port_status(struct xhci_hcd *xhci,
 		goto cleanup;
 	}
 
+	/* We might get interrupts after shared_hcd is removed */
+	if (port->rhub == &xhci->usb3_rhub && xhci->shared_hcd == NULL) {
+		xhci_dbg(xhci, "ignore port event for removed USB3 hcd\n");
+		bogus_port_status = true;
+		goto cleanup;
+	}
+
 	hcd = port->rhub->hcd;
 	bus_state = &port->rhub->bus_state;
 	hcd_portnum = port->hcd_portnum;
@@ -1957,6 +1972,10 @@ static void handle_port_status(struct xhci_hcd *xhci,
 		slot_id = xhci_find_slot_id_by_port(hcd, xhci, hcd_portnum + 1);
 		if (slot_id && xhci->devs[slot_id])
 			xhci->devs[slot_id]->flags |= VDEV_PORT_ERROR;
+<<<<<<< HEAD
+=======
+		bus_state->port_remote_wakeup &= ~(1 << hcd_portnum);
+>>>>>>> master
 	}
 
 	if ((portsc & PORT_PLC) && (portsc & PORT_PLS_MASK) == XDEV_RESUME) {
@@ -1994,7 +2013,11 @@ static void handle_port_status(struct xhci_hcd *xhci,
 			 */
 			set_bit(HCD_FLAG_POLL_RH, &hcd->flags);
 			mod_timer(&hcd->rh_timer,
+<<<<<<< HEAD
 				  port->resume_timestamp);
+=======
+				  bus_state->resume_done[hcd_portnum]);
+>>>>>>> master
 			usb_hcd_start_port_resume(&hcd->self, hcd_portnum);
 			bogus_port_status = true;
 		}
@@ -2006,7 +2029,10 @@ static void handle_port_status(struct xhci_hcd *xhci,
 	     (portsc & PORT_PLS_MASK) == XDEV_U1 ||
 	     (portsc & PORT_PLS_MASK) == XDEV_U2)) {
 		xhci_dbg(xhci, "resume SS port %d finished\n", port_id);
+<<<<<<< HEAD
 		complete(&port->u3exit_done);
+=======
+>>>>>>> master
 		/* We've just brought the device into U0/1/2 through either the
 		 * Resume state after a device remote wakeup, or through the
 		 * U3Exit state after a host-initiated resume.  If it's a device
@@ -2031,9 +2057,16 @@ static void handle_port_status(struct xhci_hcd *xhci,
 	 * RExit to a disconnect state).  If so, let the driver know it's
 	 * out of the RExit state.
 	 */
+<<<<<<< HEAD
 	if (hcd->speed < HCD_USB3 && port->rexit_active) {
 		complete(&port->rexit_done);
 		port->rexit_active = false;
+=======
+	if (!DEV_SUPERSPEED_ANY(portsc) && hcd->speed < HCD_USB3 &&
+			test_and_clear_bit(hcd_portnum,
+				&bus_state->rexit_ports)) {
+		complete(&bus_state->rexit_done[hcd_portnum]);
+>>>>>>> master
 		bogus_port_status = true;
 		goto cleanup;
 	}
@@ -2142,6 +2175,7 @@ struct xhci_segment *trb_in_td(struct xhci_hcd *xhci,
 static void xhci_clear_hub_tt_buffer(struct xhci_hcd *xhci, struct xhci_td *td,
 		struct xhci_virt_ep *ep)
 {
+<<<<<<< HEAD
 	/*
 	 * As part of low/full-speed endpoint-halt processing
 	 * we must clear the TT buffer (USB 2.0 specification 11.17.5).
@@ -2153,6 +2187,29 @@ static void xhci_clear_hub_tt_buffer(struct xhci_hcd *xhci, struct xhci_td *td,
 		td->urb->ep->hcpriv = td->urb->dev;
 		if (usb_hub_clear_tt_buffer(td->urb))
 			ep->ep_state &= ~EP_CLEARING_TT;
+=======
+	struct xhci_virt_ep *ep = &xhci->devs[slot_id]->eps[ep_index];
+	struct xhci_command *command;
+
+	/*
+	 * Avoid resetting endpoint if link is inactive. Can cause host hang.
+	 * Device will be reset soon to recover the link so don't do anything
+	 */
+	if (xhci->devs[slot_id]->flags & VDEV_PORT_ERROR)
+		return;
+
+	command = xhci_alloc_command(xhci, false, GFP_ATOMIC);
+	if (!command)
+		return;
+
+	ep->ep_state |= EP_HALTED;
+
+	xhci_queue_reset_ep(xhci, command, slot_id, ep_index, reset_type);
+
+	if (reset_type == EP_HARD_RESET) {
+		ep->ep_state |= EP_HARD_CLEAR_TOGGLE;
+		xhci_cleanup_stalled_ring(xhci, ep_index, stream_id, td);
+>>>>>>> master
 	}
 }
 
@@ -3594,6 +3651,7 @@ static int xhci_align_td(struct xhci_hcd *xhci, struct urb *urb, u32 enqd_len,
 
 	/* create a max max_pkt sized bounce buffer pointed to by last trb */
 	if (usb_urb_dir_out(urb)) {
+<<<<<<< HEAD
 		if (urb->num_sgs) {
 			len = sg_pcopy_to_buffer(urb->sg, urb->num_sgs,
 						 seg->bounce_buf, new_buff_len, enqd_len);
@@ -3604,6 +3662,14 @@ static int xhci_align_td(struct xhci_hcd *xhci, struct urb *urb, u32 enqd_len,
 			memcpy(seg->bounce_buf, urb->transfer_buffer + enqd_len, new_buff_len);
 		}
 
+=======
+		len = sg_pcopy_to_buffer(urb->sg, urb->num_sgs,
+				   seg->bounce_buf, new_buff_len, enqd_len);
+		if (len != new_buff_len)
+			xhci_warn(xhci,
+				"WARN Wrong bounce buffer write length: %zu != %d\n",
+				len, new_buff_len);
+>>>>>>> master
 		seg->bounce_dma = dma_map_single(dev, seg->bounce_buf,
 						 max_pkt, DMA_TO_DEVICE);
 	} else {

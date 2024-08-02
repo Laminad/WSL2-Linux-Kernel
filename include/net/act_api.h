@@ -156,7 +156,11 @@ int tc_action_net_init(struct net *net, struct tc_action_net *tn,
 		return -ENOMEM;
 	tn->ops = ops;
 	tn->idrinfo->net = net;
+<<<<<<< HEAD
 	mutex_init(&tn->idrinfo->lock);
+=======
+	spin_lock_init(&tn->idrinfo->lock);
+>>>>>>> master
 	idr_init(&tn->idrinfo->action_idr);
 	return err;
 }

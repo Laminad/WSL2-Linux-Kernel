@@ -12,7 +12,11 @@
 #define NODE_ADDRSPACE_SHIFT 44
 
 #define pa_to_nid(addr)  (((addr) & 0xf00000000000) >> NODE_ADDRSPACE_SHIFT)
+<<<<<<< HEAD
 #define nid_to_addrbase(nid) ((unsigned long)(nid) << NODE_ADDRSPACE_SHIFT)
+=======
+#define nid_to_addrbase(nid) ((nid) << NODE_ADDRSPACE_SHIFT)
+>>>>>>> master
 
 extern struct pglist_data *__node_data[];
 

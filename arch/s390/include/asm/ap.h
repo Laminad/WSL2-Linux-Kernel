@@ -296,13 +296,26 @@ static inline struct ap_queue_status ap_aqic(ap_qid_t qid,
 					     union ap_qirq_ctrl qirqctrl,
 					     phys_addr_t pa_ind)
 {
+<<<<<<< HEAD
 	unsigned long reg0 = qid | (3UL << 24);  /* fc 3UL is AQIC */
 	union ap_queue_status_reg reg1;
 	unsigned long reg2 = pa_ind;
 
 	reg1.value = qirqctrl.value;
+=======
+	register unsigned long reg0 asm ("0") = qid | (3UL << 24);
+	register union {
+		unsigned long value;
+		struct ap_qirq_ctrl qirqctrl;
+		struct ap_queue_status status;
+	} reg1 asm ("1");
+	register void *reg2 asm ("2") = ind;
+>>>>>>> master
+
+	reg1.qirqctrl = qirqctrl;
 
 	asm volatile(
+<<<<<<< HEAD
 		"	lgr	0,%[reg0]\n"		/* qid param into gr0 */
 		"	lgr	1,%[reg1]\n"		/* irq ctrl into gr1 */
 		"	lgr	2,%[reg2]\n"		/* ni addr into gr2 */
@@ -311,6 +324,12 @@ static inline struct ap_queue_status ap_aqic(ap_qid_t qid,
 		: [reg1] "+&d" (reg1.value)
 		: [reg0] "d" (reg0), [reg2] "d" (reg2)
 		: "cc", "memory", "0", "1", "2");
+=======
+		".long 0xb2af0000"		/* PQAP(AQIC) */
+		: "+d" (reg1)
+		: "d" (reg0), "d" (reg2)
+		: "cc");
+>>>>>>> master
 
 	return reg1.status;
 }
@@ -344,13 +363,26 @@ union ap_qact_ap_info {
 static inline struct ap_queue_status ap_qact(ap_qid_t qid, int ifbit,
 					     union ap_qact_ap_info *apinfo)
 {
+<<<<<<< HEAD
 	unsigned long reg0 = qid | (5UL << 24) | ((ifbit & 0x01) << 22);
 	union ap_queue_status_reg reg1;
 	unsigned long reg2;
 
 	reg1.value = apinfo->val;
+=======
+	register unsigned long reg0 asm ("0") = qid | (5UL << 24)
+		| ((ifbit & 0x01) << 22);
+	register union {
+		unsigned long value;
+		struct ap_queue_status status;
+	} reg1 asm ("1");
+	register unsigned long reg2 asm ("2");
+>>>>>>> master
+
+	reg1.value = apinfo->val;
 
 	asm volatile(
+<<<<<<< HEAD
 		"	lgr	0,%[reg0]\n"		/* qid param into gr0 */
 		"	lgr	1,%[reg1]\n"		/* qact in info into gr1 */
 		"	.insn	rre,0xb2af0000,0,0\n"	/* PQAP(QACT) */
@@ -414,6 +446,14 @@ static inline struct ap_queue_status ap_aapq(ap_qid_t qid, unsigned int sec_idx)
 		: "cc", "0", "1", "2");
 
 	return reg1.status;
+=======
+		".long 0xb2af0000"		/* PQAP(QACT) */
+		: "+d" (reg1), "=d" (reg2)
+		: "d" (reg0)
+		: "cc");
+	apinfo->val = reg2;
+	return reg1.status;
+>>>>>>> master
 }
 
 /**

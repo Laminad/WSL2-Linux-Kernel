@@ -406,6 +406,15 @@ const struct pipe_buf_operations default_pipe_buf_ops = {
 	.get		= generic_pipe_buf_get,
 };
 
+<<<<<<< HEAD
+=======
+int generic_pipe_buf_nosteal(struct pipe_inode_info *pipe,
+			     struct pipe_buffer *buf)
+{
+	return 1;
+}
+
+>>>>>>> master
 /* Pipe buffer operations for a socket and similar. */
 const struct pipe_buf_operations nosteal_pipe_buf_ops = {
 	.release	= generic_pipe_buf_release,
@@ -1778,6 +1787,8 @@ retry:
 			obuf->flags &= ~PIPE_BUF_FLAG_GIFT;
 			obuf->flags &= ~PIPE_BUF_FLAG_CAN_MERGE;
 
+			pipe_buf_mark_unmergeable(obuf);
+
 			obuf->len = len;
 			ibuf->offset += len;
 			ibuf->len -= len;
@@ -1869,6 +1880,8 @@ static int link_pipe(struct pipe_inode_info *ipipe,
 		 */
 		obuf->flags &= ~PIPE_BUF_FLAG_GIFT;
 		obuf->flags &= ~PIPE_BUF_FLAG_CAN_MERGE;
+
+		pipe_buf_mark_unmergeable(obuf);
 
 		if (obuf->len > len)
 			obuf->len = len;

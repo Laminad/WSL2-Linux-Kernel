@@ -215,16 +215,20 @@ static const struct pci_device_id intel_th_pci_id_table[] = {
 		.driver_data = (kernel_ulong_t)&intel_th_2x,
 	},
 	{
+<<<<<<< HEAD
 		/* Comet Lake PCH-V */
 		PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0xa3a6),
 		.driver_data = (kernel_ulong_t)&intel_th_1x_multi_is_broken,
 	},
 	{
+=======
+>>>>>>> master
 		/* Ice Lake NNPI */
 		PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x45c5),
 		.driver_data = (kernel_ulong_t)&intel_th_2x,
 	},
 	{
+<<<<<<< HEAD
 		/* Ice Lake CPU */
 		PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x8a29),
 		.driver_data = (kernel_ulong_t)&intel_th_2x,
@@ -235,20 +239,26 @@ static const struct pci_device_id intel_th_pci_id_table[] = {
 		.driver_data = (kernel_ulong_t)&intel_th_2x,
 	},
 	{
+=======
+>>>>>>> master
 		/* Tiger Lake PCH */
 		PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0xa0a6),
 		.driver_data = (kernel_ulong_t)&intel_th_2x,
 	},
 	{
+<<<<<<< HEAD
 		/* Tiger Lake PCH-H */
 		PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x43a6),
 		.driver_data = (kernel_ulong_t)&intel_th_2x,
 	},
 	{
+=======
+>>>>>>> master
 		/* Jasper Lake PCH */
 		PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x4da6),
 		.driver_data = (kernel_ulong_t)&intel_th_2x,
 	},
+<<<<<<< HEAD
 	{
 		/* Jasper Lake CPU */
 		PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x4e29),
@@ -339,6 +349,8 @@ static const struct pci_device_id intel_th_pci_id_table[] = {
 		PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x4c19),
 		.driver_data = (kernel_ulong_t)&intel_th_2x,
 	},
+=======
+>>>>>>> master
 	{ 0 },
 };
 

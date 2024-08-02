@@ -183,7 +183,11 @@ EXPORT_SYMBOL_GPL(local_apic_timer_c2_ok);
 /*
  * Debug level, exported for io_apic.c
  */
+<<<<<<< HEAD
 int apic_verbosity __ro_after_init;
+=======
+int apic_verbosity;
+>>>>>>> master
 
 int pic_mode __ro_after_init;
 
@@ -1481,7 +1485,11 @@ static bool apic_check_and_ack(union apic_ir *irr, union apic_ir *isr)
 		 * per set bit.
 		 */
 		for_each_set_bit(bit, isr->map, APIC_IR_BITS)
+<<<<<<< HEAD
 			apic_eoi();
+=======
+			ack_APIC_irq();
+>>>>>>> master
 		return true;
 	}
 
@@ -1493,9 +1501,15 @@ static bool apic_check_and_ack(union apic_ir *irr, union apic_ir *isr)
  * interrupt from previous kernel might still have ISR bit set.
  *
  * Most probably by now the CPU has serviced that pending interrupt and it
+<<<<<<< HEAD
  * might not have done the apic_eoi() because it thought, interrupt
  * came from i8259 as ExtInt. LAPIC did not get EOI so it does not clear
  * the ISR bit and cpu thinks it has already serviced the interrupt. Hence
+=======
+ * might not have done the ack_APIC_irq() because it thought, interrupt
+ * came from i8259 as ExtInt. LAPIC did not get EOI so it does not clear
+ * the ISR bit and cpu thinks it has already serivced the interrupt. Hence
+>>>>>>> master
  * a vector might get locked. It was noticed for timer irq (vector
  * 0x31). Issue an extra EOI to clear ISR.
  *
@@ -1559,8 +1573,30 @@ static void setup_local_APIC(void)
 	 *
 	 * Except for APICs which operate in physical destination mode.
 	 */
+<<<<<<< HEAD
 	if (apic->init_apic_ldr)
 		apic->init_apic_ldr();
+=======
+	apic->init_apic_ldr();
+
+#ifdef CONFIG_X86_32
+	if (apic->dest_logical) {
+		int logical_apicid, ldr_apicid;
+
+		/*
+		 * APIC LDR is initialized.  If logical_apicid mapping was
+		 * initialized during get_smp_config(), make sure it matches
+		 * the actual value.
+		 */
+		logical_apicid = early_per_cpu(x86_cpu_to_logical_apicid, cpu);
+		ldr_apicid = GET_APIC_LOGICAL_ID(apic_read(APIC_LDR));
+		if (logical_apicid != BAD_APICID)
+			WARN_ON(logical_apicid != ldr_apicid);
+		/* Always use the value from LDR. */
+		early_per_cpu(x86_cpu_to_logical_apicid, cpu) = ldr_apicid;
+	}
+#endif
+>>>>>>> master
 
 	/*
 	 * Set Task Priority to 'accept all except vectors 0-31'.  An APIC
@@ -2154,7 +2190,11 @@ static noinline void handle_spurious_interrupt(u8 vector)
 	if (v & (1 << (vector & 0x1f))) {
 		pr_info("Spurious interrupt (vector 0x%02x) on CPU#%d. Acked\n",
 			vector, smp_processor_id());
+<<<<<<< HEAD
 		apic_eoi();
+=======
+		ack_APIC_irq();
+>>>>>>> master
 	} else {
 		pr_info("Spurious interrupt (vector 0x%02x) on CPU#%d. Not pending!\n",
 			vector, smp_processor_id());

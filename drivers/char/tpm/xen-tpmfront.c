@@ -254,8 +254,18 @@ static int setup_ring(struct xenbus_device *dev, struct tpm_private *priv)
 	const char *message = NULL;
 	int rv;
 
+<<<<<<< HEAD
 	rv = xenbus_setup_ring(dev, GFP_KERNEL, (void **)&priv->shr, 1,
 			       &priv->ring_ref);
+=======
+	priv->shr = (void *)__get_free_page(GFP_KERNEL|__GFP_ZERO);
+	if (!priv->shr) {
+		xenbus_dev_fatal(dev, -ENOMEM, "allocating shared ring");
+		return -ENOMEM;
+	}
+
+	rv = xenbus_grant_ring(dev, priv->shr, 1, &gref);
+>>>>>>> master
 	if (rv < 0)
 		return rv;
 

@@ -243,6 +243,7 @@ static inline void gpiod_put(struct gpio_desc *desc)
 
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
+<<<<<<< HEAD
 }
 
 static inline void devm_gpiod_unhinge(struct device *dev,
@@ -252,6 +253,8 @@ static inline void devm_gpiod_unhinge(struct device *dev,
 
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
+=======
+>>>>>>> master
 }
 
 static inline void gpiod_put_array(struct gpio_descs *descs)
@@ -347,6 +350,7 @@ static inline int gpiod_direction_output_raw(struct gpio_desc *desc, int value)
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
+<<<<<<< HEAD
 	return -ENOSYS;
 }
 static inline int gpiod_enable_hw_timestamp_ns(struct gpio_desc *desc,
@@ -359,6 +363,8 @@ static inline int gpiod_disable_hw_timestamp_ns(struct gpio_desc *desc,
 						unsigned long flags)
 {
 	WARN_ON(desc);
+=======
+>>>>>>> master
 	return -ENOSYS;
 }
 static inline int gpiod_get_value(const struct gpio_desc *desc)
@@ -388,7 +394,10 @@ static inline int gpiod_set_array_value(unsigned int array_size,
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc_array);
+<<<<<<< HEAD
 	return 0;
+=======
+>>>>>>> master
 }
 static inline int gpiod_get_raw_value(const struct gpio_desc *desc)
 {
@@ -447,7 +456,10 @@ static inline int gpiod_set_array_value_cansleep(unsigned int array_size,
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc_array);
+<<<<<<< HEAD
 	return 0;
+=======
+>>>>>>> master
 }
 static inline int gpiod_get_raw_value_cansleep(const struct gpio_desc *desc)
 {
@@ -484,6 +496,7 @@ static inline int gpiod_set_config(struct gpio_desc *desc, unsigned long config)
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
+<<<<<<< HEAD
 	return -ENOSYS;
 }
 
@@ -491,6 +504,8 @@ static inline int gpiod_set_debounce(struct gpio_desc *desc, unsigned int deboun
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
+=======
+>>>>>>> master
 	return -ENOSYS;
 }
 

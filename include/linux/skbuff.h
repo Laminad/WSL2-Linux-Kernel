@@ -1738,14 +1738,41 @@ static inline void net_zcopy_put_abort(struct ubuf_info *uarg, bool have_uref)
 	}
 }
 
+static inline void skb_zcopy_set_nouarg(struct sk_buff *skb, void *val)
+{
+	skb_shinfo(skb)->destructor_arg = (void *)((uintptr_t) val | 0x1UL);
+	skb_shinfo(skb)->tx_flags |= SKBTX_ZEROCOPY_FRAG;
+}
+
+static inline bool skb_zcopy_is_nouarg(struct sk_buff *skb)
+{
+	return (uintptr_t) skb_shinfo(skb)->destructor_arg & 0x1UL;
+}
+
+static inline void *skb_zcopy_get_nouarg(struct sk_buff *skb)
+{
+	return (void *)((uintptr_t) skb_shinfo(skb)->destructor_arg & ~0x1UL);
+}
+
 /* Release a reference on a zerocopy structure */
 static inline void skb_zcopy_clear(struct sk_buff *skb, bool zerocopy_success)
 {
 	struct ubuf_info *uarg = skb_zcopy(skb);
 
 	if (uarg) {
+<<<<<<< HEAD
 		if (!skb_zcopy_is_nouarg(skb))
 			uarg->callback(skb, uarg, zerocopy_success);
+=======
+		if (skb_zcopy_is_nouarg(skb)) {
+			/* no notification callback */
+		} else if (uarg->callback == sock_zerocopy_callback) {
+			uarg->zerocopy = uarg->zerocopy && zerocopy;
+			sock_zerocopy_put(uarg);
+		} else {
+			uarg->callback(uarg, zerocopy);
+		}
+>>>>>>> master
 
 		skb_shinfo(skb)->flags &= ~SKBFL_ALL_ZEROCOPY;
 	}
@@ -1775,6 +1802,17 @@ static inline void skb_poison_list(struct sk_buff *skb)
 #define skb_list_walk_safe(first, skb, next_skb)                               \
 	for ((skb) = (first), (next_skb) = (skb) ? (skb)->next : NULL; (skb);  \
 	     (skb) = (next_skb), (next_skb) = (skb) ? (skb)->next : NULL)
+
+static inline void skb_list_del_init(struct sk_buff *skb)
+{
+	__list_del_entry(&skb->list);
+	skb_mark_not_on_list(skb);
+}
+
+static inline void skb_mark_not_on_list(struct sk_buff *skb)
+{
+	skb->next = NULL;
+}
 
 static inline void skb_list_del_init(struct sk_buff *skb)
 {
@@ -2189,6 +2227,7 @@ static inline void __skb_insert(struct sk_buff *newsk,
 				struct sk_buff *prev, struct sk_buff *next,
 				struct sk_buff_head *list)
 {
+<<<<<<< HEAD
 	/* See skb_queue_empty_lockless() and skb_peek_tail()
 	 * for the opposite READ_ONCE()
 	 */
@@ -2197,6 +2236,14 @@ static inline void __skb_insert(struct sk_buff *newsk,
 	WRITE_ONCE(((struct sk_buff_list *)next)->prev, newsk);
 	WRITE_ONCE(((struct sk_buff_list *)prev)->next, newsk);
 	WRITE_ONCE(list->qlen, list->qlen + 1);
+=======
+	/* see skb_queue_empty_lockless() for the opposite READ_ONCE() */
+	WRITE_ONCE(newsk->next, next);
+	WRITE_ONCE(newsk->prev, prev);
+	WRITE_ONCE(next->prev, newsk);
+	WRITE_ONCE(prev->next, newsk);
+	list->qlen++;
+>>>>>>> master
 }
 
 static inline void __skb_queue_splice(const struct sk_buff_head *list,
@@ -2950,6 +2997,11 @@ static inline void skb_probe_transport_header(struct sk_buff *skb)
 	if (skb_flow_dissect_flow_keys_basic(NULL, skb, &keys,
 					     NULL, 0, 0, 0, 0))
 		skb_set_transport_header(skb, keys.control.thoff);
+<<<<<<< HEAD
+=======
+	else if (offset_hint >= 0)
+		skb_set_transport_header(skb, offset_hint);
+>>>>>>> master
 }
 
 static inline void skb_mac_header_rebuild(struct sk_buff *skb)
@@ -3156,7 +3208,12 @@ static inline int skb_orphan_frags(struct sk_buff *skb, gfp_t gfp_mask)
 {
 	if (likely(!skb_zcopy(skb)))
 		return 0;
+<<<<<<< HEAD
 	if (skb_shinfo(skb)->flags & SKBFL_DONT_ORPHAN)
+=======
+	if (!skb_zcopy_is_nouarg(skb) &&
+	    skb_uarg(skb)->callback == sock_zerocopy_callback)
+>>>>>>> master
 		return 0;
 	return skb_copy_ubufs(skb, gfp_mask);
 }

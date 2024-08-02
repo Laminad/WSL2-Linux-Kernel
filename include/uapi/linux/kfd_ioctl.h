@@ -319,11 +319,14 @@ struct kfd_hsa_hw_exception_data {
 	__u32 reset_cause;
 	__u32 memory_lost;
 	__u32 gpu_id;
+<<<<<<< HEAD
 };
 
 /* hsa signal event data */
 struct kfd_hsa_signal_event_data {
 	__u64 last_event_age;	/* to and from KFD */
+=======
+>>>>>>> master
 };
 
 /* Event data */

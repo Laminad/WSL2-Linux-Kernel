@@ -2110,13 +2110,17 @@ static void srpt_release_channel_work(struct work_struct *w)
 	list_del_rcu(&ch->list);
 	mutex_unlock(&sport->mutex);
 
+<<<<<<< HEAD
 	if (ch->closed)
 		complete(ch->closed);
 
+=======
+>>>>>>> master
 	srpt_destroy_ch_ib(ch);
 
 	srpt_free_ioctx_ring((struct srpt_ioctx **)ch->ioctx_ring,
 			     ch->sport->sdev, ch->rq_size,
+<<<<<<< HEAD
 			     ch->rsp_buf_cache, DMA_TO_DEVICE);
 
 	kmem_cache_destroy(ch->rsp_buf_cache);
@@ -2126,6 +2130,15 @@ static void srpt_release_channel_work(struct work_struct *w)
 			     ch->req_buf_cache, DMA_FROM_DEVICE);
 
 	kmem_cache_destroy(ch->req_buf_cache);
+=======
+			     ch->max_rsp_size, DMA_TO_DEVICE);
+
+	srpt_free_ioctx_ring((struct srpt_ioctx **)ch->ioctx_recv_ring,
+			     sdev, ch->rq_size,
+			     srp_max_req_size, DMA_FROM_DEVICE);
+
+	wake_up(&sport->ch_releaseQ);
+>>>>>>> master
 
 	kref_put(&ch->kref, srpt_free_ch);
 }

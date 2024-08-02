@@ -1328,8 +1328,13 @@ wrp_alu32_imm(struct nfp_prog *nfp_prog, struct nfp_insn_meta *meta,
 	const struct bpf_insn *insn = &meta->insn;
 	u8 dst = insn->dst_reg * 2;
 
+<<<<<<< HEAD
 	wrp_alu_imm(nfp_prog, dst, alu_op, insn->imm);
 	wrp_zext(nfp_prog, meta, dst);
+=======
+	wrp_alu_imm(nfp_prog, insn->dst_reg * 2, alu_op, insn->imm);
+	wrp_immed(nfp_prog, reg_both(insn->dst_reg * 2 + 1), 0);
+>>>>>>> master
 
 	return 0;
 }

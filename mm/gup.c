@@ -644,8 +644,16 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
 		goto out;
 	}
 
+<<<<<<< HEAD
 	VM_BUG_ON_PAGE((flags & FOLL_PIN) && PageAnon(page) &&
 		       !PageAnonExclusive(page), page);
+=======
+	if (flags & FOLL_GET) {
+		if (unlikely(!try_get_page(page))) {
+			page = ERR_PTR(-ENOMEM);
+			goto out;
+		}
+>>>>>>> master
 
 	/* try_grab_page() does nothing unless FOLL_GET or FOLL_PIN is set. */
 	ret = try_grab_page(page, flags);
@@ -726,12 +734,40 @@ static struct page *follow_pmd_mask(struct vm_area_struct *vma,
 		spin_unlock(ptl);
 		return follow_page_pte(vma, address, pmd, flags, &ctx->pgmap);
 	}
+<<<<<<< HEAD
 	if (flags & FOLL_SPLIT_PMD) {
 		spin_unlock(ptl);
 		split_huge_pmd(vma, pmd, address);
 		/* If pmd was left empty, stuff a page table in there quickly */
 		return pte_alloc(mm, pmd) ? ERR_PTR(-ENOMEM) :
 			follow_page_pte(vma, address, pmd, flags, &ctx->pgmap);
+=======
+	if (flags & FOLL_SPLIT) {
+		int ret;
+		page = pmd_page(*pmd);
+		if (is_huge_zero_page(page)) {
+			spin_unlock(ptl);
+			ret = 0;
+			split_huge_pmd(vma, pmd, address);
+			if (pmd_trans_unstable(pmd))
+				ret = -EBUSY;
+		} else {
+			if (unlikely(!try_get_page(page))) {
+				spin_unlock(ptl);
+				return ERR_PTR(-ENOMEM);
+			}
+			spin_unlock(ptl);
+			lock_page(page);
+			ret = split_huge_page(page);
+			unlock_page(page);
+			put_page(page);
+			if (pmd_none(*pmd))
+				return no_page_table(vma, flags);
+		}
+
+		return ret ? ERR_PTR(ret) :
+			follow_page_pte(vma, address, pmd, flags);
+>>>>>>> master
 	}
 	page = follow_trans_huge_pmd(vma, address, pmd, flags);
 	spin_unlock(ptl);
@@ -899,9 +935,16 @@ static int get_gate_page(struct mm_struct *mm, unsigned long address,
 			goto unmap;
 		*page = pte_page(entry);
 	}
+<<<<<<< HEAD
 	ret = try_grab_page(*page, gup_flags);
 	if (unlikely(ret))
 		goto unmap;
+=======
+	if (unlikely(!try_get_page(*page))) {
+		ret = -ENOMEM;
+		goto unmap;
+	}
+>>>>>>> master
 out:
 	ret = 0;
 unmap:
@@ -2471,6 +2514,7 @@ static bool folio_fast_pin_allowed(struct folio *folio, unsigned int flags)
 	struct address_space *mapping;
 	unsigned long mapping_flags;
 
+<<<<<<< HEAD
 	/*
 	 * If we aren't pinning then no problematic write can occur. A long term
 	 * pin is the most egregious case so this is the one we disallow.
@@ -2528,6 +2572,9 @@ static bool folio_fast_pin_allowed(struct folio *folio, unsigned int flags)
 
 static void __maybe_unused undo_dev_pagemap(int *nr, int nr_start,
 					    unsigned int flags,
+=======
+static void __maybe_unused undo_dev_pagemap(int *nr, int nr_start,
+>>>>>>> master
 					    struct page **pages)
 {
 	while ((*nr) - nr_start) {
@@ -2539,6 +2586,20 @@ static void __maybe_unused undo_dev_pagemap(int *nr, int nr_start,
 		else
 			put_page(page);
 	}
+}
+
+/*
+ * Return the compund head page with ref appropriately incremented,
+ * or NULL if that failed.
+ */
+static inline struct page *try_get_compound_head(struct page *page, int refs)
+{
+	struct page *head = compound_head(page);
+	if (WARN_ON_ONCE(page_ref_count(head) < 0))
+		return NULL;
+	if (unlikely(!page_cache_add_speculative(head, refs)))
+		return NULL;
+	return head;
 }
 
 #ifdef CONFIG_ARCH_HAS_PTE_SPECIAL
@@ -2605,8 +2666,13 @@ static int gup_pte_range(pmd_t pmd, pmd_t *pmdp, unsigned long addr,
 		VM_BUG_ON(!pfn_valid(pte_pfn(pte)));
 		page = pte_page(pte);
 
+<<<<<<< HEAD
 		folio = try_grab_folio(page, 1, flags);
 		if (!folio)
+=======
+		head = try_get_compound_head(page, 1);
+		if (!head)
+>>>>>>> master
 			goto pte_unmap;
 
 		if (unlikely(folio_is_secretmem(folio))) {
@@ -2808,12 +2874,18 @@ static int gup_hugepte(pte_t *ptep, unsigned long sz, unsigned long addr,
 	page = nth_page(pte_page(pte), (addr & (sz - 1)) >> PAGE_SHIFT);
 	refs = record_subpages(page, addr, end, pages + *nr);
 
+<<<<<<< HEAD
 	folio = try_grab_folio(page, refs, flags);
 	if (!folio)
 		return 0;
 
 	if (unlikely(pte_val(pte) != pte_val(ptep_get(ptep)))) {
 		gup_put_folio(folio, refs, flags);
+=======
+	head = try_get_compound_head(pmd_page(orig), refs);
+	if (!head) {
+		*nr -= refs;
+>>>>>>> master
 		return 0;
 	}
 
@@ -2913,11 +2985,30 @@ static int gup_huge_pud(pud_t orig, pud_t *pudp, unsigned long addr,
 	if (!pud_access_permitted(orig, flags & FOLL_WRITE))
 		return 0;
 
+<<<<<<< HEAD
 	if (pud_devmap(orig)) {
 		if (unlikely(flags & FOLL_LONGTERM))
 			return 0;
 		return __gup_device_huge_pud(orig, pudp, addr, end, flags,
 					     pages, nr);
+=======
+	if (pud_devmap(orig))
+		return __gup_device_huge_pud(orig, pudp, addr, end, pages, nr);
+
+	refs = 0;
+	page = pud_page(orig) + ((addr & ~PUD_MASK) >> PAGE_SHIFT);
+	do {
+		pages[*nr] = page;
+		(*nr)++;
+		page++;
+		refs++;
+	} while (addr += PAGE_SIZE, addr != end);
+
+	head = try_get_compound_head(pud_page(orig), refs);
+	if (!head) {
+		*nr -= refs;
+		return 0;
+>>>>>>> master
 	}
 
 	page = nth_page(pud_page(orig), (addr & ~PUD_MASK) >> PAGE_SHIFT);
@@ -2960,11 +3051,17 @@ static int gup_huge_pgd(pgd_t orig, pgd_t *pgdp, unsigned long addr,
 
 	BUILD_BUG_ON(pgd_devmap(orig));
 
+<<<<<<< HEAD
 	page = nth_page(pgd_page(orig), (addr & ~PGDIR_MASK) >> PAGE_SHIFT);
 	refs = record_subpages(page, addr, end, pages + *nr);
 
 	folio = try_grab_folio(page, refs, flags);
 	if (!folio)
+=======
+	head = try_get_compound_head(pgd_page(orig), refs);
+	if (!head) {
+		*nr -= refs;
+>>>>>>> master
 		return 0;
 
 	if (unlikely(pgd_val(orig) != pgd_val(*pgdp))) {
@@ -3003,7 +3100,15 @@ static int gup_pmd_range(pud_t *pudp, pud_t pud, unsigned long addr, unsigned lo
 
 		if (unlikely(pmd_trans_huge(pmd) || pmd_huge(pmd) ||
 			     pmd_devmap(pmd))) {
+<<<<<<< HEAD
 			/* See gup_pte_range() */
+=======
+			/*
+			 * NUMA hinting faults need to be handled in the GUP
+			 * slowpath for accounting purposes and so that they
+			 * can be serialised against THP migration.
+			 */
+>>>>>>> master
 			if (pmd_protnone(pmd))
 				return 0;
 

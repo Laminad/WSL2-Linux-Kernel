@@ -418,12 +418,21 @@ void xhci_plat_remove(struct platform_device *dev)
 		xhci->shared_hcd = NULL;
 	}
 
+<<<<<<< HEAD
 	usb_phy_shutdown(hcd->usb_phy);
 
 	usb_remove_hcd(hcd);
 
 	if (shared_hcd)
 		usb_put_hcd(shared_hcd);
+=======
+	usb_remove_hcd(shared_hcd);
+	xhci->shared_hcd = NULL;
+	usb_phy_shutdown(hcd->usb_phy);
+
+	usb_remove_hcd(hcd);
+	usb_put_hcd(shared_hcd);
+>>>>>>> master
 
 	clk_disable_unprepare(clk);
 	clk_disable_unprepare(reg_clk);

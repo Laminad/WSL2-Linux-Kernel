@@ -166,10 +166,15 @@ static unsigned long vmw_port_hb_out(struct rpc_channel *channel,
 	unsigned long si, di, eax, ebx, ecx, edx;
 	unsigned long msg_len = strlen(msg);
 
+<<<<<<< HEAD
 	/* HB port can't access encrypted memory. */
 	if (hb && !cc_platform_has(CC_ATTR_MEM_ENCRYPT)) {
 		unsigned long bp = channel->cookie_high;
 		u32 channel_id = (channel->channel_id << 16);
+=======
+	if (hb) {
+		unsigned long bp = channel->cookie_high;
+>>>>>>> master
 
 		si = (uintptr_t) msg;
 		di = channel->cookie_low;
@@ -177,8 +182,12 @@ static unsigned long vmw_port_hb_out(struct rpc_channel *channel,
 		VMW_PORT_HB_OUT(
 			(MESSAGE_STATUS_SUCCESS << 16) | VMW_PORT_CMD_HB_MSG,
 			msg_len, si, di,
+<<<<<<< HEAD
 			VMWARE_HYPERVISOR_HB | channel_id |
 			VMWARE_HYPERVISOR_OUT,
+=======
+			VMW_HYPERVISOR_HB_PORT | (channel->channel_id << 16),
+>>>>>>> master
 			VMW_HYPERVISOR_MAGIC, bp,
 			eax, ebx, ecx, edx, si, di);
 
@@ -199,7 +208,11 @@ static unsigned long vmw_port_hb_out(struct rpc_channel *channel,
 
 		VMW_PORT(VMW_PORT_CMD_MSG | (MSG_TYPE_SENDPAYLOAD << 16),
 			 word, si, di,
+<<<<<<< HEAD
 			 channel->channel_id << 16,
+=======
+			 VMW_HYPERVISOR_PORT | (channel->channel_id << 16),
+>>>>>>> master
 			 VMW_HYPERVISOR_MAGIC,
 			 eax, ebx, ecx, edx, si, di);
 	}
@@ -222,10 +235,15 @@ static unsigned long vmw_port_hb_in(struct rpc_channel *channel, char *reply,
 {
 	unsigned long si, di, eax, ebx, ecx, edx;
 
+<<<<<<< HEAD
 	/* HB port can't access encrypted memory */
 	if (hb && !cc_platform_has(CC_ATTR_MEM_ENCRYPT)) {
 		unsigned long bp = channel->cookie_low;
 		u32 channel_id = (channel->channel_id << 16);
+=======
+	if (hb) {
+		unsigned long bp = channel->cookie_low;
+>>>>>>> master
 
 		si = channel->cookie_high;
 		di = (uintptr_t) reply;
@@ -233,7 +251,11 @@ static unsigned long vmw_port_hb_in(struct rpc_channel *channel, char *reply,
 		VMW_PORT_HB_IN(
 			(MESSAGE_STATUS_SUCCESS << 16) | VMW_PORT_CMD_HB_MSG,
 			reply_len, si, di,
+<<<<<<< HEAD
 			VMWARE_HYPERVISOR_HB | channel_id,
+=======
+			VMW_HYPERVISOR_HB_PORT | (channel->channel_id << 16),
+>>>>>>> master
 			VMW_HYPERVISOR_MAGIC, bp,
 			eax, ebx, ecx, edx, si, di);
 
@@ -250,7 +272,11 @@ static unsigned long vmw_port_hb_in(struct rpc_channel *channel, char *reply,
 
 		VMW_PORT(VMW_PORT_CMD_MSG | (MSG_TYPE_RECVPAYLOAD << 16),
 			 MESSAGE_STATUS_SUCCESS, si, di,
+<<<<<<< HEAD
 			 channel->channel_id << 16,
+=======
+			 VMW_HYPERVISOR_PORT | (channel->channel_id << 16),
+>>>>>>> master
 			 VMW_HYPERVISOR_MAGIC,
 			 eax, ebx, ecx, edx, si, di);
 

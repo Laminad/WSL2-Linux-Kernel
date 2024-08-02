@@ -602,6 +602,120 @@ out:
 	return ret;
 }
 
+<<<<<<< HEAD
+=======
+/* Called every time the controller might need to be made
+ * aware of new link state.  The PHY code conveys this
+ * information through variables in the phydev structure, and this
+ * function converts those variables into the appropriate
+ * register values, and can bring down the device if needed.
+ */
+static void altera_tse_adjust_link(struct net_device *dev)
+{
+	struct altera_tse_private *priv = netdev_priv(dev);
+	struct phy_device *phydev = dev->phydev;
+	int new_state = 0;
+
+	/* only change config if there is a link */
+	spin_lock(&priv->mac_cfg_lock);
+	if (phydev->link) {
+		/* Read old config */
+		u32 cfg_reg = ioread32(&priv->mac_dev->command_config);
+
+		/* Check duplex */
+		if (phydev->duplex != priv->oldduplex) {
+			new_state = 1;
+			if (!(phydev->duplex))
+				cfg_reg |= MAC_CMDCFG_HD_ENA;
+			else
+				cfg_reg &= ~MAC_CMDCFG_HD_ENA;
+
+			netdev_dbg(priv->dev, "%s: Link duplex = 0x%x\n",
+				   dev->name, phydev->duplex);
+
+			priv->oldduplex = phydev->duplex;
+		}
+
+		/* Check speed */
+		if (phydev->speed != priv->oldspeed) {
+			new_state = 1;
+			switch (phydev->speed) {
+			case 1000:
+				cfg_reg |= MAC_CMDCFG_ETH_SPEED;
+				cfg_reg &= ~MAC_CMDCFG_ENA_10;
+				break;
+			case 100:
+				cfg_reg &= ~MAC_CMDCFG_ETH_SPEED;
+				cfg_reg &= ~MAC_CMDCFG_ENA_10;
+				break;
+			case 10:
+				cfg_reg &= ~MAC_CMDCFG_ETH_SPEED;
+				cfg_reg |= MAC_CMDCFG_ENA_10;
+				break;
+			default:
+				if (netif_msg_link(priv))
+					netdev_warn(dev, "Speed (%d) is not 10/100/1000!\n",
+						    phydev->speed);
+				break;
+			}
+			priv->oldspeed = phydev->speed;
+		}
+		iowrite32(cfg_reg, &priv->mac_dev->command_config);
+
+		if (!priv->oldlink) {
+			new_state = 1;
+			priv->oldlink = 1;
+		}
+	} else if (priv->oldlink) {
+		new_state = 1;
+		priv->oldlink = 0;
+		priv->oldspeed = 0;
+		priv->oldduplex = -1;
+	}
+
+	if (new_state && netif_msg_link(priv))
+		phy_print_status(phydev);
+
+	spin_unlock(&priv->mac_cfg_lock);
+}
+static struct phy_device *connect_local_phy(struct net_device *dev)
+{
+	struct altera_tse_private *priv = netdev_priv(dev);
+	struct phy_device *phydev = NULL;
+	char phy_id_fmt[MII_BUS_ID_SIZE + 3];
+
+	if (priv->phy_addr != POLL_PHY) {
+		snprintf(phy_id_fmt, MII_BUS_ID_SIZE + 3, PHY_ID_FMT,
+			 priv->mdio->id, priv->phy_addr);
+
+		netdev_dbg(dev, "trying to attach to %s\n", phy_id_fmt);
+
+		phydev = phy_connect(dev, phy_id_fmt, &altera_tse_adjust_link,
+				     priv->phy_iface);
+		if (IS_ERR(phydev)) {
+			netdev_err(dev, "Could not attach to PHY\n");
+			phydev = NULL;
+		}
+
+	} else {
+		int ret;
+		phydev = phy_find_first(priv->mdio);
+		if (phydev == NULL) {
+			netdev_err(dev, "No PHY found\n");
+			return phydev;
+		}
+
+		ret = phy_connect_direct(dev, phydev, &altera_tse_adjust_link,
+				priv->phy_iface);
+		if (ret != 0) {
+			netdev_err(dev, "Could not attach to PHY\n");
+			phydev = NULL;
+		}
+	}
+	return phydev;
+}
+
+>>>>>>> master
 static int altera_tse_phy_get_addr_mdio_create(struct net_device *dev)
 {
 	struct altera_tse_private *priv = netdev_priv(dev);

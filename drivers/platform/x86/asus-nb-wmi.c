@@ -83,6 +83,10 @@ static struct quirk_entry quirk_asus_q500a = {
  */
 static struct quirk_entry quirk_asus_x55u = {
 	.wapf = 4,
+<<<<<<< HEAD
+=======
+	.wmi_backlight_power = true,
+>>>>>>> master
 	.wmi_backlight_set_devstate = true,
 	.no_display_toggle = true,
 };
@@ -95,6 +99,14 @@ static struct quirk_entry quirk_asus_wapf4 = {
 static struct quirk_entry quirk_asus_x200ca = {
 	.wapf = 2,
 	.wmi_backlight_set_devstate = true,
+<<<<<<< HEAD
+=======
+};
+
+static struct quirk_entry quirk_asus_ux303ub = {
+	.wmi_backlight_native = true,
+	.wmi_backlight_set_devstate = true,
+>>>>>>> master
 };
 
 static struct quirk_entry quirk_asus_x550lb = {
@@ -526,9 +538,13 @@ static const struct key_entry asus_nb_wmi_keymap[] = {
 	{ KE_KEY, 0x30, { KEY_VOLUMEUP } },
 	{ KE_KEY, 0x31, { KEY_VOLUMEDOWN } },
 	{ KE_KEY, 0x32, { KEY_MUTE } },
+<<<<<<< HEAD
 	{ KE_KEY, 0x33, { KEY_SCREENLOCK } },
 	{ KE_KEY, 0x35, { KEY_SCREENLOCK } },
 	{ KE_KEY, 0x38, { KEY_PROG3 } }, /* Armoury Crate */
+=======
+	{ KE_KEY, 0x35, { KEY_SCREENLOCK } },
+>>>>>>> master
 	{ KE_KEY, 0x40, { KEY_PREVIOUSSONG } },
 	{ KE_KEY, 0x41, { KEY_NEXTSONG } },
 	{ KE_KEY, 0x43, { KEY_STOPCD } }, /* Stop/Eject */

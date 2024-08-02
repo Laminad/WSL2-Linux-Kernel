@@ -586,9 +586,16 @@ if __name__ == "__main__":
         # Free the memory
         free_trace_buffer()
 
+<<<<<<< HEAD
     if graph_data_present == False:
         print('No valid data to plot')
         sys.exit(2)
+=======
+if interval:
+    clear_trace_file()
+    # Free the memory
+    free_trace_buffer()
+>>>>>>> master
 
     for cpu_no in range(0, current_max_cpu + 1):
         plot_perf_busy_with_sample(cpu_no)

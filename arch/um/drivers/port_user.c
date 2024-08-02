@@ -168,8 +168,12 @@ static void port_pre_exec(void *arg)
 int port_connection(int fd, int *socket, int *pid_out)
 {
 	int new, err;
+<<<<<<< HEAD
 	char *env;
 	char *argv[] = { "in.telnetd", "-L",
+=======
+	char *argv[] = { "/usr/sbin/in.telnetd", "-L",
+>>>>>>> master
 			 OS_LIB_PATH "/uml/port-helper", NULL };
 	struct port_pre_exec_data data;
 

@@ -14,6 +14,219 @@
 #include <linux/errqueue.h>
 
 /*
+<<<<<<< HEAD
+=======
+ * Define enums for tracing information.
+ *
+ * These should all be kept sorted, making it easier to match the string
+ * mapping tables further on.
+ */
+#ifndef __RXRPC_DECLARE_TRACE_ENUMS_ONCE_ONLY
+#define __RXRPC_DECLARE_TRACE_ENUMS_ONCE_ONLY
+
+enum rxrpc_skb_trace {
+	rxrpc_skb_rx_cleaned,
+	rxrpc_skb_rx_freed,
+	rxrpc_skb_rx_got,
+	rxrpc_skb_rx_lost,
+	rxrpc_skb_rx_purged,
+	rxrpc_skb_rx_received,
+	rxrpc_skb_rx_rotated,
+	rxrpc_skb_rx_seen,
+	rxrpc_skb_tx_cleaned,
+	rxrpc_skb_tx_freed,
+	rxrpc_skb_tx_got,
+	rxrpc_skb_tx_new,
+	rxrpc_skb_tx_rotated,
+	rxrpc_skb_tx_seen,
+};
+
+enum rxrpc_local_trace {
+	rxrpc_local_got,
+	rxrpc_local_new,
+	rxrpc_local_processing,
+	rxrpc_local_put,
+	rxrpc_local_queued,
+};
+
+enum rxrpc_peer_trace {
+	rxrpc_peer_got,
+	rxrpc_peer_new,
+	rxrpc_peer_processing,
+	rxrpc_peer_put,
+};
+
+enum rxrpc_conn_trace {
+	rxrpc_conn_got,
+	rxrpc_conn_new_client,
+	rxrpc_conn_new_service,
+	rxrpc_conn_put_client,
+	rxrpc_conn_put_service,
+	rxrpc_conn_queued,
+	rxrpc_conn_reap_service,
+	rxrpc_conn_seen,
+};
+
+enum rxrpc_client_trace {
+	rxrpc_client_activate_chans,
+	rxrpc_client_alloc,
+	rxrpc_client_chan_activate,
+	rxrpc_client_chan_disconnect,
+	rxrpc_client_chan_pass,
+	rxrpc_client_chan_unstarted,
+	rxrpc_client_chan_wait_failed,
+	rxrpc_client_cleanup,
+	rxrpc_client_count,
+	rxrpc_client_discard,
+	rxrpc_client_duplicate,
+	rxrpc_client_exposed,
+	rxrpc_client_replace,
+	rxrpc_client_to_active,
+	rxrpc_client_to_culled,
+	rxrpc_client_to_idle,
+	rxrpc_client_to_inactive,
+	rxrpc_client_to_upgrade,
+	rxrpc_client_to_waiting,
+	rxrpc_client_uncount,
+};
+
+enum rxrpc_call_trace {
+	rxrpc_call_connected,
+	rxrpc_call_error,
+	rxrpc_call_got,
+	rxrpc_call_got_kernel,
+	rxrpc_call_got_userid,
+	rxrpc_call_new_client,
+	rxrpc_call_new_service,
+	rxrpc_call_put,
+	rxrpc_call_put_kernel,
+	rxrpc_call_put_noqueue,
+	rxrpc_call_put_userid,
+	rxrpc_call_queued,
+	rxrpc_call_queued_ref,
+	rxrpc_call_release,
+	rxrpc_call_seen,
+};
+
+enum rxrpc_transmit_trace {
+	rxrpc_transmit_await_reply,
+	rxrpc_transmit_end,
+	rxrpc_transmit_queue,
+	rxrpc_transmit_queue_last,
+	rxrpc_transmit_rotate,
+	rxrpc_transmit_rotate_last,
+	rxrpc_transmit_wait,
+};
+
+enum rxrpc_receive_trace {
+	rxrpc_receive_end,
+	rxrpc_receive_front,
+	rxrpc_receive_incoming,
+	rxrpc_receive_queue,
+	rxrpc_receive_queue_last,
+	rxrpc_receive_rotate,
+};
+
+enum rxrpc_recvmsg_trace {
+	rxrpc_recvmsg_cont,
+	rxrpc_recvmsg_data_return,
+	rxrpc_recvmsg_dequeue,
+	rxrpc_recvmsg_enter,
+	rxrpc_recvmsg_full,
+	rxrpc_recvmsg_hole,
+	rxrpc_recvmsg_next,
+	rxrpc_recvmsg_requeue,
+	rxrpc_recvmsg_return,
+	rxrpc_recvmsg_terminal,
+	rxrpc_recvmsg_to_be_accepted,
+	rxrpc_recvmsg_wait,
+};
+
+enum rxrpc_rtt_tx_trace {
+	rxrpc_rtt_tx_data,
+	rxrpc_rtt_tx_ping,
+};
+
+enum rxrpc_rtt_rx_trace {
+	rxrpc_rtt_rx_ping_response,
+	rxrpc_rtt_rx_requested_ack,
+};
+
+enum rxrpc_timer_trace {
+	rxrpc_timer_begin,
+	rxrpc_timer_exp_ack,
+	rxrpc_timer_exp_hard,
+	rxrpc_timer_exp_idle,
+	rxrpc_timer_exp_keepalive,
+	rxrpc_timer_exp_lost_ack,
+	rxrpc_timer_exp_normal,
+	rxrpc_timer_exp_ping,
+	rxrpc_timer_exp_resend,
+	rxrpc_timer_expired,
+	rxrpc_timer_init_for_reply,
+	rxrpc_timer_init_for_send_reply,
+	rxrpc_timer_restart,
+	rxrpc_timer_set_for_ack,
+	rxrpc_timer_set_for_hard,
+	rxrpc_timer_set_for_idle,
+	rxrpc_timer_set_for_keepalive,
+	rxrpc_timer_set_for_lost_ack,
+	rxrpc_timer_set_for_normal,
+	rxrpc_timer_set_for_ping,
+	rxrpc_timer_set_for_resend,
+	rxrpc_timer_set_for_send,
+};
+
+enum rxrpc_propose_ack_trace {
+	rxrpc_propose_ack_client_tx_end,
+	rxrpc_propose_ack_input_data,
+	rxrpc_propose_ack_ping_for_keepalive,
+	rxrpc_propose_ack_ping_for_lost_ack,
+	rxrpc_propose_ack_ping_for_lost_reply,
+	rxrpc_propose_ack_ping_for_params,
+	rxrpc_propose_ack_processing_op,
+	rxrpc_propose_ack_respond_to_ack,
+	rxrpc_propose_ack_respond_to_ping,
+	rxrpc_propose_ack_retry_tx,
+	rxrpc_propose_ack_rotate_rx,
+	rxrpc_propose_ack_terminal_ack,
+};
+
+enum rxrpc_propose_ack_outcome {
+	rxrpc_propose_ack_subsume,
+	rxrpc_propose_ack_update,
+	rxrpc_propose_ack_use,
+};
+
+enum rxrpc_congest_change {
+	rxrpc_cong_begin_retransmission,
+	rxrpc_cong_cleared_nacks,
+	rxrpc_cong_new_low_nack,
+	rxrpc_cong_no_change,
+	rxrpc_cong_progress,
+	rxrpc_cong_retransmit_again,
+	rxrpc_cong_rtt_window_end,
+	rxrpc_cong_saw_nack,
+};
+
+enum rxrpc_tx_point {
+	rxrpc_tx_point_call_abort,
+	rxrpc_tx_point_call_ack,
+	rxrpc_tx_point_call_data_frag,
+	rxrpc_tx_point_call_data_nofrag,
+	rxrpc_tx_point_call_final_resend,
+	rxrpc_tx_point_conn_abort,
+	rxrpc_tx_point_rxkad_challenge,
+	rxrpc_tx_point_rxkad_response,
+	rxrpc_tx_point_reject,
+	rxrpc_tx_point_version_keepalive,
+	rxrpc_tx_point_version_reply,
+};
+
+#endif /* end __RXRPC_DECLARE_TRACE_ENUMS_ONCE_ONLY */
+
+/*
+>>>>>>> master
  * Declare tracing information enums and their string mappings for display.
  */
 #define rxrpc_abort_reasons \
@@ -241,6 +454,11 @@
 	EM(rxrpc_client_chan_activate,		"ChActv") \
 	EM(rxrpc_client_chan_disconnect,	"ChDisc") \
 	EM(rxrpc_client_chan_pass,		"ChPass") \
+<<<<<<< HEAD
+=======
+	EM(rxrpc_client_chan_unstarted,		"ChUnst") \
+	EM(rxrpc_client_chan_wait_failed,	"ChWtFl") \
+>>>>>>> master
 	EM(rxrpc_client_cleanup,		"Clean ") \
 	EM(rxrpc_client_discard,		"Discar") \
 	EM(rxrpc_client_exposed,		"Expose") \
@@ -560,9 +778,15 @@ rxrpc_txqueue_traces;
 
 TRACE_EVENT(rxrpc_local,
 	    TP_PROTO(unsigned int local_debug_id, enum rxrpc_local_trace op,
+<<<<<<< HEAD
 		     int ref, int usage),
 
 	    TP_ARGS(local_debug_id, op, ref, usage),
+=======
+		     int usage, const void *where),
+
+	    TP_ARGS(local_debug_id, op, usage, where),
+>>>>>>> master
 
 	    TP_STRUCT__entry(
 		    __field(unsigned int,	local)
@@ -586,9 +810,16 @@ TRACE_EVENT(rxrpc_local,
 	    );
 
 TRACE_EVENT(rxrpc_peer,
+<<<<<<< HEAD
 	    TP_PROTO(unsigned int peer_debug_id, int ref, enum rxrpc_peer_trace why),
 
 	    TP_ARGS(peer_debug_id, ref, why),
+=======
+	    TP_PROTO(unsigned int peer_debug_id, enum rxrpc_peer_trace op,
+		     int usage, const void *where),
+
+	    TP_ARGS(peer_debug_id, op, usage, where),
+>>>>>>> master
 
 	    TP_STRUCT__entry(
 		    __field(unsigned int,	peer)
@@ -598,8 +829,14 @@ TRACE_EVENT(rxrpc_peer,
 
 	    TP_fast_assign(
 		    __entry->peer = peer_debug_id;
+<<<<<<< HEAD
 		    __entry->ref = ref;
 		    __entry->why = why;
+=======
+		    __entry->op = op;
+		    __entry->usage = usage;
+		    __entry->where = where;
+>>>>>>> master
 			   ),
 
 	    TP_printk("P=%08x %s r=%d",
@@ -1648,6 +1885,33 @@ TRACE_EVENT(rxrpc_improper_term,
 		      __entry->abort_code)
 	    );
 
+<<<<<<< HEAD
+=======
+TRACE_EVENT(rxrpc_rx_eproto,
+	    TP_PROTO(struct rxrpc_call *call, rxrpc_serial_t serial,
+		     const char *why),
+
+	    TP_ARGS(call, serial, why),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		call		)
+		    __field(rxrpc_serial_t,		serial		)
+		    __field(const char *,		why		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->call = call ? call->debug_id : 0;
+		    __entry->serial = serial;
+		    __entry->why = why;
+			   ),
+
+	    TP_printk("c=%08x EPROTO %08x %s",
+		      __entry->call,
+		      __entry->serial,
+		      __entry->why)
+	    );
+
+>>>>>>> master
 TRACE_EVENT(rxrpc_connect_call,
 	    TP_PROTO(struct rxrpc_call *call),
 

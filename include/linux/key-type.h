@@ -13,9 +13,12 @@
 
 #ifdef CONFIG_KEYS
 
+<<<<<<< HEAD
 struct kernel_pkey_query;
 struct kernel_pkey_params;
 
+=======
+>>>>>>> master
 /*
  * Pre-parsed payload, used by key add, update and instantiate.
  *

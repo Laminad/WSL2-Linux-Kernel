@@ -20,6 +20,13 @@ static int inv_mpu_i2c_disable(struct iio_dev *indio_dev)
 	struct inv_mpu6050_state *st = iio_priv(indio_dev);
 	int ret = 0;
 
+<<<<<<< HEAD
+=======
+	ret = inv_mpu6050_set_power_itg(st, true);
+	if (ret)
+		return ret;
+
+>>>>>>> master
 	if (st->reg->i2c_if) {
 		ret = regmap_write(st->map, st->reg->i2c_if,
 				   INV_ICM20602_BIT_I2C_IF_DIS);
@@ -27,6 +34,13 @@ static int inv_mpu_i2c_disable(struct iio_dev *indio_dev)
 		st->chip_config.user_ctrl |= INV_MPU6050_BIT_I2C_IF_DIS;
 		ret = regmap_write(st->map, st->reg->user_ctrl,
 				   st->chip_config.user_ctrl);
+<<<<<<< HEAD
+=======
+	}
+	if (ret) {
+		inv_mpu6050_set_power_itg(st, false);
+		return ret;
+>>>>>>> master
 	}
 
 	return ret;
@@ -73,6 +87,7 @@ static const struct spi_device_id inv_mpu_id[] = {
 	{"mpu9250", INV_MPU9250},
 	{"mpu9255", INV_MPU9255},
 	{"icm20608", INV_ICM20608},
+<<<<<<< HEAD
 	{"icm20608d", INV_ICM20608D},
 	{"icm20609", INV_ICM20609},
 	{"icm20689", INV_ICM20689},
@@ -80,6 +95,9 @@ static const struct spi_device_id inv_mpu_id[] = {
 	{"icm20602", INV_ICM20602},
 	{"icm20690", INV_ICM20690},
 	{"iam20680", INV_IAM20680},
+=======
+	{"icm20602", INV_ICM20602},
+>>>>>>> master
 	{}
 };
 

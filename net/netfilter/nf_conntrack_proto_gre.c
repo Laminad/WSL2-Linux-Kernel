@@ -47,8 +47,12 @@ static const unsigned int gre_timeouts[GRE_CT_MAX] = {
 	[GRE_CT_REPLIED]	= 180*HZ,
 };
 
+<<<<<<< HEAD
 /* used when expectation is added */
 static DEFINE_SPINLOCK(keymap_lock);
+=======
+static unsigned int proto_gre_net_id __read_mostly;
+>>>>>>> master
 
 static inline struct nf_gre_net *gre_pernet(struct net *net)
 {
@@ -324,3 +328,61 @@ const struct nf_conntrack_l4proto nf_conntrack_l4proto_gre = {
 	},
 #endif /* CONFIG_NF_CONNTRACK_TIMEOUT */
 };
+<<<<<<< HEAD
+=======
+
+static int proto_gre_net_init(struct net *net)
+{
+	int ret = 0;
+
+	ret = nf_ct_l4proto_pernet_register_one(net,
+						&nf_conntrack_l4proto_gre4);
+	if (ret < 0)
+		pr_err("nf_conntrack_gre4: pernet registration failed.\n");
+	return ret;
+}
+
+static void proto_gre_net_exit(struct net *net)
+{
+	nf_ct_l4proto_pernet_unregister_one(net, &nf_conntrack_l4proto_gre4);
+	nf_ct_gre_keymap_flush(net);
+}
+
+static struct pernet_operations proto_gre_net_ops = {
+	.init = proto_gre_net_init,
+	.exit = proto_gre_net_exit,
+	.id   = &proto_gre_net_id,
+	.size = sizeof(struct netns_proto_gre),
+};
+
+static int __init nf_ct_proto_gre_init(void)
+{
+	int ret;
+
+	BUILD_BUG_ON(offsetof(struct netns_proto_gre, nf) != 0);
+
+	ret = register_pernet_subsys(&proto_gre_net_ops);
+	if (ret < 0)
+		goto out_pernet;
+	ret = nf_ct_l4proto_register_one(&nf_conntrack_l4proto_gre4);
+	if (ret < 0)
+		goto out_gre4;
+
+	return 0;
+out_gre4:
+	unregister_pernet_subsys(&proto_gre_net_ops);
+out_pernet:
+	return ret;
+}
+
+static void __exit nf_ct_proto_gre_fini(void)
+{
+	nf_ct_l4proto_unregister_one(&nf_conntrack_l4proto_gre4);
+	unregister_pernet_subsys(&proto_gre_net_ops);
+}
+
+module_init(nf_ct_proto_gre_init);
+module_exit(nf_ct_proto_gre_fini);
+
+MODULE_LICENSE("GPL");
+>>>>>>> master

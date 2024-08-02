@@ -18,5 +18,8 @@
 /read
 /self
 /setns-dcache
+<<<<<<< HEAD
 /setns-sysvipc
+=======
+>>>>>>> master
 /thread-self

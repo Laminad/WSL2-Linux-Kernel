@@ -1890,9 +1890,12 @@ struct dentry *d_alloc_cursor(struct dentry * parent)
  * never be anyone's children or parents.  Unlike all other
  * dentries, these will not have RCU delay between dropping the
  * last reference and freeing them.
+<<<<<<< HEAD
  *
  * The only user is alloc_file_pseudo() and that's what should
  * be considered a public interface.  Don't use directly.
+=======
+>>>>>>> master
  */
 struct dentry *d_alloc_pseudo(struct super_block *sb, const struct qstr *name)
 {

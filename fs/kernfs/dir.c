@@ -637,9 +637,17 @@ static struct kernfs_node *__kernfs_new_node(struct kernfs_root *root,
 	if (ret < 0)
 		goto err_out2;
 
+<<<<<<< HEAD
 	kn->id = (u64)id_highbits << 32 | ret;
 
 	atomic_set(&kn->count, 1);
+=======
+	/*
+	 * set ino first. This RELEASE is paired with atomic_inc_not_zero in
+	 * kernfs_find_and_get_node_by_ino
+	 */
+	atomic_set_release(&kn->count, 1);
+>>>>>>> master
 	atomic_set(&kn->active, KN_DEACTIVATED_BIAS);
 	RB_CLEAR_NODE(&kn->rb);
 

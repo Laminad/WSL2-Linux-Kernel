@@ -51,7 +51,11 @@ static struct {
 	seqcount_raw_spinlock_t	seq;
 	struct timekeeper	timekeeper;
 } tk_core ____cacheline_aligned = {
+<<<<<<< HEAD
 	.seq = SEQCNT_RAW_SPINLOCK_ZERO(tk_core.seq, &timekeeper_lock),
+=======
+	.seq = SEQCNT_ZERO(tk_core.seq),
+>>>>>>> master
 };
 
 static struct timekeeper shadow_timekeeper;

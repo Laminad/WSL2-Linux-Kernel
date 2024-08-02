@@ -48,8 +48,13 @@ struct mtk_drm_private {
 	struct mtk_ddp_comp ddp_comp[DDP_COMPONENT_DRM_ID_MAX];
 	const struct mtk_mmsys_driver_data *data;
 	struct drm_atomic_state *suspend_state;
+<<<<<<< HEAD
 	unsigned int mbox_index;
 	struct mtk_drm_private **all_drm_private;
+=======
+
+	bool dma_parms_allocated;
+>>>>>>> master
 };
 
 extern struct platform_driver mtk_disp_aal_driver;

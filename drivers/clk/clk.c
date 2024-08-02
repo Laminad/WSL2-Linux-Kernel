@@ -3366,6 +3366,7 @@ static void clk_dump_one(struct seq_file *s, struct clk_core *c, int level)
 	seq_printf(s, "\"enable_count\": %d,", c->enable_count);
 	seq_printf(s, "\"prepare_count\": %d,", c->prepare_count);
 	seq_printf(s, "\"protect_count\": %d,", c->protect_count);
+<<<<<<< HEAD
 	seq_printf(s, "\"rate\": %lu,", clk_core_get_rate_recalc(c));
 	seq_printf(s, "\"min_rate\": %lu,", min_rate);
 	seq_printf(s, "\"max_rate\": %lu,", max_rate);
@@ -3373,6 +3374,11 @@ static void clk_dump_one(struct seq_file *s, struct clk_core *c, int level)
 	phase = clk_core_get_phase(c);
 	if (phase >= 0)
 		seq_printf(s, "\"phase\": %d,", phase);
+=======
+	seq_printf(s, "\"rate\": %lu,", clk_core_get_rate(c));
+	seq_printf(s, "\"accuracy\": %lu,", clk_core_get_accuracy(c));
+	seq_printf(s, "\"phase\": %d,", clk_core_get_phase(c));
+>>>>>>> master
 	seq_printf(s, "\"duty_cycle\": %u",
 		   clk_core_get_scaled_duty_cycle(c, 100000));
 }

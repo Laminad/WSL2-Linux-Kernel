@@ -210,7 +210,13 @@ static int rds_ib_add_one(struct ib_device *device)
 		 device->attrs.max_mr, rds_ibdev->max_wrs, rds_ibdev->max_sge,
 		 rds_ibdev->max_1m_mrs, rds_ibdev->max_8k_mrs);
 
+<<<<<<< HEAD
 	pr_info("RDS/IB: %s: added\n", device->name);
+=======
+	pr_info("RDS/IB: %s: %s supported and preferred\n",
+		device->name,
+		rds_ibdev->use_fastreg ? "FRMR" : "FMR");
+>>>>>>> master
 
 	down_write(&rds_ib_devices_lock);
 	list_add_tail_rcu(&rds_ibdev->list, &rds_ib_devices);

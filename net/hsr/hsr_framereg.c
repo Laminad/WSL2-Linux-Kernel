@@ -97,9 +97,24 @@ int hsr_create_self_node(struct hsr_priv *hsr,
 	return 0;
 }
 
+<<<<<<< HEAD
 void hsr_del_self_node(struct hsr_priv *hsr)
 {
 	struct hsr_self_node *old;
+=======
+void hsr_del_node(struct list_head *self_node_db)
+{
+	struct hsr_node *node;
+
+	rcu_read_lock();
+	node = list_first_or_null_rcu(self_node_db, struct hsr_node, mac_list);
+	rcu_read_unlock();
+	if (node) {
+		list_del_rcu(&node->mac_list);
+		kfree(node);
+	}
+}
+>>>>>>> master
 
 	spin_lock_bh(&hsr->list_lock);
 	old = rcu_replace_pointer(hsr->self_node, NULL,

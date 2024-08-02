@@ -573,7 +573,11 @@ static long restore_tm_sigcontexts(struct task_struct *tsk,
 	preempt_disable();
 
 	/* pull in MSR TS bits from user context */
+<<<<<<< HEAD
 	regs_set_return_msr(regs, regs->msr | (msr & MSR_TS_MASK));
+=======
+	regs->msr = (regs->msr & ~MSR_TS_MASK) | (msr & MSR_TS_MASK);
+>>>>>>> master
 
 	/*
 	 * Ensure that TM is enabled in regs->msr before we leave the signal
@@ -591,7 +595,11 @@ static long restore_tm_sigcontexts(struct task_struct *tsk,
 	 * to be de-scheduled with MSR[TS] set but without calling
 	 * tm_recheckpoint(). This can cause a bug.
 	 */
+<<<<<<< HEAD
 	regs_set_return_msr(regs, regs->msr | MSR_TM);
+=======
+	regs->msr |= MSR_TM;
+>>>>>>> master
 
 	/* This loads the checkpointed FP/VEC state, if used */
 	tm_recheckpoint(&tsk->thread);
@@ -814,7 +822,13 @@ SYSCALL_DEFINE0(rt_sigreturn)
 		if (restore_tm_sigcontexts(current, &uc->uc_mcontext,
 					   &uc_transact->uc_mcontext))
 			goto badframe;
+<<<<<<< HEAD
 	} else {
+=======
+	} else
+#endif
+	{
+>>>>>>> master
 		/*
 		 * Fall through, for non-TM restore
 		 *
@@ -827,6 +841,7 @@ SYSCALL_DEFINE0(rt_sigreturn)
 		 * MSR[TS] set, but without CPU in the proper state,
 		 * causing a TM bad thing.
 		 */
+<<<<<<< HEAD
 		regs_set_return_msr(current->thread.regs,
 				current->thread.regs->msr & ~MSR_TS_MASK);
 		if (!user_read_access_begin(&uc->uc_mcontext, sizeof(uc->uc_mcontext)))
@@ -836,6 +851,11 @@ SYSCALL_DEFINE0(rt_sigreturn)
 					  badframe_block);
 
 		user_read_access_end();
+=======
+		current->thread.regs->msr &= ~MSR_TS_MASK;
+		if (restore_sigcontext(current, NULL, 1, &uc->uc_mcontext))
+			goto badframe;
+>>>>>>> master
 	}
 
 	if (restore_altstack(&uc->uc_stack))

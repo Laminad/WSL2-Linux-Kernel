@@ -258,6 +258,14 @@ static inline void enter_lazy_tlb(struct mm_struct *mm,
 }
 #endif
 
+<<<<<<< HEAD
+=======
+#ifndef CONFIG_PPC_BOOK3S_64
+static inline void arch_exit_mmap(struct mm_struct *mm)
+{
+}
+#else
+>>>>>>> master
 extern void arch_exit_mmap(struct mm_struct *mm);
 
 static inline void arch_unmap(struct mm_struct *mm,
@@ -282,6 +290,12 @@ static inline bool arch_vma_access_permitted(struct vm_area_struct *vma,
 }
 
 #define pkey_mm_init(mm)
+<<<<<<< HEAD
+=======
+#define thread_pkey_regs_save(thread)
+#define thread_pkey_regs_restore(new_thread, old_thread)
+#define thread_pkey_regs_init(thread)
+>>>>>>> master
 #define arch_dup_pkeys(oldmm, mm)
 
 static inline u64 pte_to_hpte_pkey_bits(u64 pteflags, unsigned long flags)
@@ -298,7 +312,10 @@ static inline int arch_dup_mmap(struct mm_struct *oldmm,
 	return 0;
 }
 
+<<<<<<< HEAD
 #include <asm-generic/mmu_context.h>
 
+=======
+>>>>>>> master
 #endif /* __KERNEL__ */
 #endif /* __ASM_POWERPC_MMU_CONTEXT_H */

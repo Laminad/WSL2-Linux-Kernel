@@ -530,6 +530,7 @@ bool mce_is_memory_error(struct mce *m)
 }
 EXPORT_SYMBOL_GPL(mce_is_memory_error);
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/mce/core.c
 static bool whole_page(struct mce *m)
 {
 	if (!mca_cfg.ser || !(m->status & MCI_STATUS_MISCV))
@@ -538,6 +539,8 @@ static bool whole_page(struct mce *m)
 	return MCI_MISC_ADDR_LSB(m->misc) >= PAGE_SHIFT;
 }
 
+=======
+>>>>>>> master:arch/x86/kernel/cpu/mcheck/mce.c
 bool mce_is_correctable(struct mce *m)
 {
 	if (m->cpuvendor == X86_VENDOR_AMD && m->status & MCI_STATUS_DEFERRED)
@@ -694,7 +697,11 @@ bool machine_check_poll(enum mcp_flags flags, mce_banks_t *b)
 		m.bank = i;
 
 		barrier();
+<<<<<<< HEAD:arch/x86/kernel/cpu/mce/core.c
 		m.status = mce_rdmsrl(mca_msr_reg(i, MCA_STATUS));
+=======
+		m.status = mce_rdmsrl(msr_ops.status(i));
+>>>>>>> master:arch/x86/kernel/cpu/mcheck/mce.c
 
 		/* If this entry is not valid, ignore it */
 		if (!(m.status & MCI_STATUS_VAL))
@@ -897,11 +904,16 @@ static __always_inline int mce_no_way_out(struct mce *m, char **msg, unsigned lo
 		if (mce_flags.snb_ifu_quirk)
 			quirk_sandybridge_ifu(i, m, regs);
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/mce/core.c
 		if (mce_flags.zen_ifu_quirk)
 			quirk_zen_ifu(i, m, regs);
 
 		m->bank = i;
 		if (mce_severity(m, regs, &tmp, true) >= MCE_PANIC_SEVERITY) {
+=======
+		if (mce_severity(m, mca_cfg.tolerant, &tmp, true) >= MCE_PANIC_SEVERITY) {
+			m->bank = i;
+>>>>>>> master:arch/x86/kernel/cpu/mcheck/mce.c
 			mce_read_aux(m, i);
 			*msg = tmp;
 			return 1;
@@ -1737,7 +1749,15 @@ static void __mcheck_cpu_mce_banks_init(void)
 	u8 n_banks = this_cpu_read(mce_num_banks);
 	int i;
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/mce/core.c
 	for (i = 0; i < n_banks; i++) {
+=======
+	mce_banks = kcalloc(MAX_NR_BANKS, sizeof(struct mce_bank), GFP_KERNEL);
+	if (!mce_banks)
+		return -ENOMEM;
+
+	for (i = 0; i < MAX_NR_BANKS; i++) {
+>>>>>>> master:arch/x86/kernel/cpu/mcheck/mce.c
 		struct mce_bank *b = &mce_banks[i];
 
 		/*
@@ -1761,16 +1781,29 @@ static void __mcheck_cpu_cap_init(void)
 	rdmsrl(MSR_IA32_MCG_CAP, cap);
 
 	b = cap & MCG_BANKCNT_MASK;
+<<<<<<< HEAD:arch/x86/kernel/cpu/mce/core.c
 
 	if (b > MAX_NR_BANKS) {
 		pr_warn("CPU%d: Using only %u machine check banks out of %u\n",
 			smp_processor_id(), MAX_NR_BANKS, b);
+=======
+	if (WARN_ON_ONCE(b > MAX_NR_BANKS))
+>>>>>>> master:arch/x86/kernel/cpu/mcheck/mce.c
 		b = MAX_NR_BANKS;
-	}
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/mce/core.c
 	this_cpu_write(mce_num_banks, b);
 
 	__mcheck_cpu_mce_banks_init();
+=======
+	mca_cfg.banks = max(mca_cfg.banks, b);
+
+	if (!mce_banks) {
+		int err = __mcheck_cpu_mce_banks_init();
+		if (err)
+			return err;
+	}
+>>>>>>> master:arch/x86/kernel/cpu/mcheck/mce.c
 
 	/* Use accurate RIP reporting if available. */
 	if ((cap & MCG_EXT_P) && MCG_EXT_CNT(cap) >= 9)
@@ -2873,6 +2906,8 @@ static void __init mcheck_debugfs_init(void) { }
 
 static int __init mcheck_late_init(void)
 {
+	pr_info("Using %d MCE banks\n", mca_cfg.banks);
+
 	if (mca_cfg.recovery)
 		enable_copy_mc_fragile();
 

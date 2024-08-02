@@ -258,7 +258,12 @@ static int hypfs_fill_super(struct super_block *sb, struct fs_context *fc)
 	struct hypfs_sb_info *sbi = sb->s_fs_info;
 	struct inode *root_inode;
 	struct dentry *root_dentry, *update_file;
+<<<<<<< HEAD
 	int rc;
+=======
+	int rc = 0;
+	struct hypfs_sb_info *sbi;
+>>>>>>> master
 
 	sb->s_blocksize = PAGE_SIZE;
 	sb->s_blocksize_bits = PAGE_SHIFT;

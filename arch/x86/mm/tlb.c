@@ -47,6 +47,7 @@
  */
 
 /*
+<<<<<<< HEAD
  * Bits to mangle the TIF_SPEC_* state into the mm pointer which is
  * stored in cpu_tlb_state.last_user_mm_spec.
  */
@@ -180,6 +181,12 @@ static inline unsigned long build_cr3_noflush(pgd_t *pgd, u16 asid,
 	VM_WARN_ON_ONCE(!boot_cpu_has(X86_FEATURE_PCID));
 	return build_cr3(pgd, asid, lam) | CR3_NOFLUSH;
 }
+=======
+ * Use bit 0 to mangle the TIF_SPEC_IB state into the mm pointer which is
+ * stored in cpu_tlb_state.last_user_mm_ibpb.
+ */
+#define LAST_USER_MM_IBPB	0x1UL
+>>>>>>> master
 
 /*
  * We get here when we do something requiring a TLB invalidation
@@ -366,6 +373,7 @@ static void l1d_flush_evaluate(unsigned long prev_mm, unsigned long next_mm,
 	}
 }
 
+<<<<<<< HEAD
 static unsigned long mm_mangle_tif_spec_bits(struct task_struct *next)
 {
 	unsigned long next_tif = read_task_thread_flags(next);
@@ -395,6 +403,22 @@ static void cond_mitigation(struct task_struct *next)
 	 * when switching between processes. This stops one process from
 	 * doing Spectre-v2 attacks on another.
 	 *
+=======
+static inline unsigned long mm_mangle_tif_spec_ib(struct task_struct *next)
+{
+	unsigned long next_tif = task_thread_info(next)->flags;
+	unsigned long ibpb = (next_tif >> TIF_SPEC_IB) & LAST_USER_MM_IBPB;
+
+	return (unsigned long)next->mm | ibpb;
+}
+
+static void cond_ibpb(struct task_struct *next)
+{
+	if (!next || !next->mm)
+		return;
+
+	/*
+>>>>>>> master
 	 * Both, the conditional and the always IBPB mode use the mm
 	 * pointer to avoid the IBPB when switching between tasks of the
 	 * same process. Using the mm pointer instead of mm->context.ctx_id
@@ -404,6 +428,11 @@ static void cond_mitigation(struct task_struct *next)
 	 * exposed data is not really interesting.
 	 */
 	if (static_branch_likely(&switch_mm_cond_ibpb)) {
+<<<<<<< HEAD
+=======
+		unsigned long prev_mm, next_mm;
+
+>>>>>>> master
 		/*
 		 * This is a bit more complex than the always mode because
 		 * it has to handle two cases:
@@ -433,14 +462,28 @@ static void cond_mitigation(struct task_struct *next)
 		 * Optimize this with reasonably small overhead for the
 		 * above cases. Mangle the TIF_SPEC_IB bit into the mm
 		 * pointer of the incoming task which is stored in
+<<<<<<< HEAD
 		 * cpu_tlbstate.last_user_mm_spec for comparison.
 		 *
+=======
+		 * cpu_tlbstate.last_user_mm_ibpb for comparison.
+		 */
+		next_mm = mm_mangle_tif_spec_ib(next);
+		prev_mm = this_cpu_read(cpu_tlbstate.last_user_mm_ibpb);
+
+		/*
+>>>>>>> master
 		 * Issue IBPB only if the mm's are different and one or
 		 * both have the IBPB bit set.
 		 */
 		if (next_mm != prev_mm &&
 		    (next_mm | prev_mm) & LAST_USER_MM_IBPB)
 			indirect_branch_prediction_barrier();
+<<<<<<< HEAD
+=======
+
+		this_cpu_write(cpu_tlbstate.last_user_mm_ibpb, next_mm);
+>>>>>>> master
 	}
 
 	if (static_branch_unlikely(&switch_mm_always_ibpb)) {
@@ -449,6 +492,7 @@ static void cond_mitigation(struct task_struct *next)
 		 * different context than the user space task which ran
 		 * last on this CPU.
 		 */
+<<<<<<< HEAD
 		if ((prev_mm & ~LAST_USER_MM_SPEC_MASK) !=
 					(unsigned long)next->mm)
 			indirect_branch_prediction_barrier();
@@ -492,6 +536,15 @@ void cr4_update_pce(void *ignored)
 static inline void cr4_update_pce_mm(struct mm_struct *mm) { }
 #endif
 
+=======
+		if (this_cpu_read(cpu_tlbstate.last_user_mm) != next->mm) {
+			indirect_branch_prediction_barrier();
+			this_cpu_write(cpu_tlbstate.last_user_mm, next->mm);
+		}
+	}
+}
+
+>>>>>>> master
 void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
 			struct task_struct *tsk)
 {
@@ -578,6 +631,7 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
 				 !cpumask_test_cpu(cpu, mm_cpumask(next))))
 			cpumask_set_cpu(cpu, mm_cpumask(next));
 
+<<<<<<< HEAD
 		/*
 		 * If the CPU is not in lazy TLB mode, we are just switching
 		 * from one thread in a process to another thread in the same
@@ -597,6 +651,19 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
 		if (this_cpu_read(cpu_tlbstate.ctxs[prev_asid].tlb_gen) ==
 				next_tlb_gen)
 			return;
+=======
+		return;
+	} else {
+		u16 new_asid;
+		bool need_flush;
+
+		/*
+		 * Avoid user/user BTB poisoning by flushing the branch
+		 * predictor when switching between processes. This stops
+		 * one process from doing Spectre-v2 attacks on another.
+		 */
+		cond_ibpb(tsk);
+>>>>>>> master
 
 		/*
 		 * TLB contents went out of date while we were in lazy
@@ -634,6 +701,37 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
 		/* Let nmi_uaccess_okay() know that we're changing CR3. */
 		this_cpu_write(cpu_tlbstate.loaded_mm, LOADED_MM_SWITCHING);
 		barrier();
+<<<<<<< HEAD
+=======
+
+		if (need_flush) {
+			this_cpu_write(cpu_tlbstate.ctxs[new_asid].ctx_id, next->context.ctx_id);
+			this_cpu_write(cpu_tlbstate.ctxs[new_asid].tlb_gen, next_tlb_gen);
+			load_new_mm_cr3(next->pgd, new_asid, true);
+
+			/*
+			 * NB: This gets called via leave_mm() in the idle path
+			 * where RCU functions differently.  Tracing normally
+			 * uses RCU, so we need to use the _rcuidle variant.
+			 *
+			 * (There is no good reason for this.  The idle code should
+			 *  be rearranged to call this before rcu_idle_enter().)
+			 */
+			trace_tlb_flush_rcuidle(TLB_FLUSH_ON_TASK_SWITCH, TLB_FLUSH_ALL);
+		} else {
+			/* The new ASID is already up to date. */
+			load_new_mm_cr3(next->pgd, new_asid, false);
+
+			/* See above wrt _rcuidle. */
+			trace_tlb_flush_rcuidle(TLB_FLUSH_ON_TASK_SWITCH, 0);
+		}
+
+		/* Make sure we write CR3 before loaded_mm. */
+		barrier();
+
+		this_cpu_write(cpu_tlbstate.loaded_mm, next);
+		this_cpu_write(cpu_tlbstate.loaded_mm_asid, new_asid);
+>>>>>>> master
 	}
 
 	set_tlbstate_lam_mode(next);
@@ -722,7 +820,11 @@ void initialize_tlbstate_and_flush(void)
 	write_cr3(build_cr3(mm->pgd, 0, 0));
 
 	/* Reinitialize tlbstate. */
+<<<<<<< HEAD
 	this_cpu_write(cpu_tlbstate.last_user_mm_spec, LAST_USER_MM_INIT);
+=======
+	this_cpu_write(cpu_tlbstate.last_user_mm_ibpb, LAST_USER_MM_IBPB);
+>>>>>>> master
 	this_cpu_write(cpu_tlbstate.loaded_mm_asid, 0);
 	this_cpu_write(cpu_tlbstate.next_asid, 1);
 	this_cpu_write(cpu_tlbstate.ctxs[0].ctx_id, mm->context.ctx_id);
@@ -1006,6 +1108,13 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
 	u64 new_tlb_gen;
 	int cpu;
 
+<<<<<<< HEAD
+=======
+	struct flush_tlb_info info = {
+		.mm = mm,
+	};
+
+>>>>>>> master
 	cpu = get_cpu();
 
 	/* Should we flush just the requested range? */

@@ -3646,7 +3646,11 @@ static int igb_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		}
 	}
 
+<<<<<<< HEAD
 	dev_pm_set_driver_flags(&pdev->dev, DPM_FLAG_NO_DIRECT_COMPLETE);
+=======
+	dev_pm_set_driver_flags(&pdev->dev, DPM_FLAG_NEVER_SKIP);
+>>>>>>> master
 
 	pm_runtime_put_noidle(&pdev->dev);
 	return 0;
@@ -5970,8 +5974,13 @@ static void igb_tx_ctxtdesc(struct igb_ring *tx_ring,
 	 * should have been handled by the upper layers.
 	 */
 	if (tx_ring->launchtime_enable) {
+<<<<<<< HEAD
 		ts = ktime_to_timespec64(first->skb->tstamp);
 		skb_txtime_consumed(first->skb);
+=======
+		ts = ns_to_timespec64(first->skb->tstamp);
+		first->skb->tstamp = 0;
+>>>>>>> master
 		context_desc->seqnum_seed = cpu_to_le32(ts.tv_nsec / 32);
 	} else {
 		context_desc->seqnum_seed = 0;

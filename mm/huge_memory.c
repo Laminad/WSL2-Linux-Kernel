@@ -33,10 +33,14 @@
 #include <linux/page_idle.h>
 #include <linux/shmem_fs.h>
 #include <linux/oom.h>
+<<<<<<< HEAD
 #include <linux/numa.h>
 #include <linux/page_owner.h>
 #include <linux/sched/sysctl.h>
 #include <linux/memory-tiers.h>
+=======
+#include <linux/page_owner.h>
+>>>>>>> master
 
 #include <asm/tlb.h>
 #include <asm/pgalloc.h>
@@ -879,6 +883,7 @@ out_unlock:
 		pte_free(mm, pgtable);
 }
 
+<<<<<<< HEAD
 /**
  * vmf_insert_pfn_pmd - insert a pmd size pfn
  * @vmf: Structure describing the fault
@@ -889,6 +894,8 @@ out_unlock:
  *
  * Return: vm_fault_t value.
  */
+=======
+>>>>>>> master
 vm_fault_t vmf_insert_pfn_pmd(struct vm_fault *vmf, pfn_t pfn, bool write)
 {
 	unsigned long addr = vmf->address & PMD_MASK;
@@ -968,6 +975,7 @@ out_unlock:
 	spin_unlock(ptl);
 }
 
+<<<<<<< HEAD
 /**
  * vmf_insert_pfn_pud - insert a pud size pfn
  * @vmf: Structure describing the fault
@@ -978,6 +986,8 @@ out_unlock:
  *
  * Return: vm_fault_t value.
  */
+=======
+>>>>>>> master
 vm_fault_t vmf_insert_pfn_pud(struct vm_fault *vmf, pfn_t pfn, bool write)
 {
 	unsigned long addr = vmf->address & PUD_MASK;
@@ -1000,7 +1010,11 @@ vm_fault_t vmf_insert_pfn_pud(struct vm_fault *vmf, pfn_t pfn, bool write)
 
 	track_pfn_insert(vma, &pgprot, pfn);
 
+<<<<<<< HEAD
 	insert_pfn_pud(vma, addr, vmf->pud, pfn, write);
+=======
+	insert_pfn_pud(vma, addr, vmf->pud, pfn, pgprot, write);
+>>>>>>> master
 	return VM_FAULT_NOPAGE;
 }
 EXPORT_SYMBOL_GPL(vmf_insert_pfn_pud);
@@ -2125,12 +2139,39 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
 		return __split_huge_zero_page_pmd(vma, haddr, pmd);
 	}
 
+<<<<<<< HEAD
 	pmd_migration = is_pmd_migration_entry(*pmd);
+=======
+	/*
+	 * Up to this point the pmd is present and huge and userland has the
+	 * whole access to the hugepage during the split (which happens in
+	 * place). If we overwrite the pmd with the not-huge version pointing
+	 * to the pte here (which of course we could if all CPUs were bug
+	 * free), userland could trigger a small page size TLB miss on the
+	 * small sized TLB while the hugepage TLB entry is still established in
+	 * the huge TLB. Some CPU doesn't like that.
+	 * See http://support.amd.com/us/Processor_TechDocs/41322.pdf, Erratum
+	 * 383 on page 93. Intel should be safe but is also warns that it's
+	 * only safe if the permission and cache attributes of the two entries
+	 * loaded in the two TLB is identical (which should be the case here).
+	 * But it is generally safer to never allow small and huge TLB entries
+	 * for the same virtual address to be loaded simultaneously. So instead
+	 * of doing "pmd_populate(); flush_pmd_tlb_range();" we first mark the
+	 * current pmd notpresent (atomically because here the pmd_trans_huge
+	 * must remain set at all times on the pmd until the split is complete
+	 * for this pmd), then we flush the SMP TLB and finally we write the
+	 * non-huge version of the pmd entry with pmd_populate.
+	 */
+	old_pmd = pmdp_invalidate(vma, haddr, pmd);
+
+	pmd_migration = is_pmd_migration_entry(old_pmd);
+>>>>>>> master
 	if (unlikely(pmd_migration)) {
 		swp_entry_t entry;
 
 		old_pmd = *pmd;
 		entry = pmd_to_swp_entry(old_pmd);
+<<<<<<< HEAD
 		page = pfn_swap_entry_to_page(entry);
 		write = is_writable_migration_entry(entry);
 		if (PageAnon(page))
@@ -2197,6 +2238,22 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
 		if (!freeze)
 			page_ref_add(page, HPAGE_PMD_NR - 1);
 	}
+=======
+		page = pfn_to_page(swp_offset(entry));
+		write = is_write_migration_entry(entry);
+		young = false;
+		soft_dirty = pmd_swp_soft_dirty(old_pmd);
+	} else {
+		page = pmd_page(old_pmd);
+		if (pmd_dirty(old_pmd))
+			SetPageDirty(page);
+		write = pmd_write(old_pmd);
+		young = pmd_young(old_pmd);
+		soft_dirty = pmd_soft_dirty(old_pmd);
+	}
+	VM_BUG_ON_PAGE(!page_count(page), page);
+	page_ref_add(page, HPAGE_PMD_NR - 1);
+>>>>>>> master
 
 	/*
 	 * Withdraw the table only after we mark the pmd entry invalid.
@@ -2347,7 +2404,11 @@ void vma_adjust_trans_huge(struct vm_area_struct *vma,
 	}
 }
 
+<<<<<<< HEAD
 static void unmap_folio(struct folio *folio)
+=======
+static void unmap_page(struct page *page)
+>>>>>>> master
 {
 	enum ttu_flags ttu_flags = TTU_RMAP_LOCKED | TTU_SPLIT_HUGE_PMD |
 		TTU_SYNC;
@@ -2365,7 +2426,11 @@ static void unmap_folio(struct folio *folio)
 		try_to_unmap(folio, ttu_flags | TTU_IGNORE_MLOCK);
 }
 
+<<<<<<< HEAD
 static void remap_page(struct folio *folio, unsigned long nr)
+=======
+static void remap_page(struct page *page)
+>>>>>>> master
 {
 	int i = 0;
 
@@ -2466,6 +2531,12 @@ static void __split_huge_page_tail(struct folio *folio, int tail,
 	if (folio_test_swapcache(folio))
 		new_folio->swap.val = folio->swap.val + tail;
 
+	/* ->mapping in first tail page is compound_mapcount */
+	VM_BUG_ON_PAGE(tail > 2 && page_tail->mapping != TAIL_MAPPING,
+			page_tail);
+	page_tail->mapping = head->mapping;
+	page_tail->index = head->index + tail;
+
 	/* Page flags must be visible before we make the page non-compound. */
 	smp_wmb();
 
@@ -2497,19 +2568,30 @@ static void __split_huge_page_tail(struct folio *folio, int tail,
 }
 
 static void __split_huge_page(struct page *page, struct list_head *list,
+<<<<<<< HEAD
 		pgoff_t end)
+=======
+		pgoff_t end, unsigned long flags)
+>>>>>>> master
 {
 	struct folio *folio = page_folio(page);
 	struct page *head = &folio->page;
 	struct lruvec *lruvec;
+<<<<<<< HEAD
 	struct address_space *swap_cache = NULL;
 	unsigned long offset = 0;
 	unsigned int nr = thp_nr_pages(head);
 	int i, nr_dropped = 0;
+=======
+	int i;
+
+	lruvec = mem_cgroup_page_lruvec(head, zone->zone_pgdat);
+>>>>>>> master
 
 	/* complete memcg works before add pages to LRU */
 	split_page_memcg(head, nr);
 
+<<<<<<< HEAD
 	if (folio_test_anon(folio) && folio_test_swapcache(folio)) {
 		offset = swp_offset(folio->swap);
 		swap_cache = swap_address_space(folio->swap);
@@ -2524,6 +2606,11 @@ static void __split_huge_page(struct page *page, struct list_head *list,
 	for (i = nr - 1; i >= 1; i--) {
 		__split_huge_page_tail(folio, i, lruvec, list);
 		/* Some pages can be beyond EOF: drop them from page cache */
+=======
+	for (i = HPAGE_PMD_NR - 1; i >= 1; i--) {
+		__split_huge_page_tail(head, i, lruvec, list);
+		/* Some pages can be beyond i_size: drop them from page cache */
+>>>>>>> master
 		if (head[i].index >= end) {
 			struct folio *tail = page_folio(head + i);
 
@@ -2544,10 +2631,15 @@ static void __split_huge_page(struct page *page, struct list_head *list,
 	}
 
 	ClearPageCompound(head);
+<<<<<<< HEAD
 	unlock_page_lruvec(lruvec);
 	/* Caller disabled irqs, so they are still disabled here */
 
 	split_page_owner(head, nr);
+=======
+
+	split_page_owner(head, HPAGE_PMD_ORDER);
+>>>>>>> master
 
 	/* See comment in __split_huge_page_tail() */
 	if (PageAnon(head)) {
@@ -2569,8 +2661,12 @@ static void __split_huge_page(struct page *page, struct list_head *list,
 		shmem_uncharge(head->mapping->host, nr_dropped);
 	remap_page(folio, nr);
 
+<<<<<<< HEAD
 	if (folio_test_swapcache(folio))
 		split_swap_cluster(folio->swap);
+=======
+	remap_page(head);
+>>>>>>> master
 
 	for (i = 0; i < nr; i++) {
 		struct page *subpage = head + i;
@@ -2631,9 +2727,16 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 	XA_STATE(xas, &folio->mapping->i_pages, folio->index);
 	struct anon_vma *anon_vma = NULL;
 	struct address_space *mapping = NULL;
+<<<<<<< HEAD
 	int extra_pins, ret;
 	pgoff_t end;
 	bool is_hzp;
+=======
+	int count, mapcount, extra_pins, ret;
+	bool mlocked;
+	unsigned long flags;
+	pgoff_t end;
+>>>>>>> master
 
 	VM_BUG_ON_FOLIO(!folio_test_locked(folio), folio);
 	VM_BUG_ON_FOLIO(!folio_test_large(folio), folio);
@@ -2697,6 +2800,7 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 		 * but on 32-bit, i_size_read() takes an irq-unsafe seqlock,
 		 * which cannot be nested inside the page tree lock. So note
 		 * end now: i_size itself may be changed at any moment, but
+<<<<<<< HEAD
 		 * folio lock is good enough to serialize the trimming.
 		 */
 		end = DIV_ROUND_UP(i_size_read(mapping->host), PAGE_SIZE);
@@ -2706,6 +2810,15 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 
 	/*
 	 * Racy check if we can split the page, before unmap_folio() will
+=======
+		 * head page lock is good enough to serialize the trimming.
+		 */
+		end = DIV_ROUND_UP(i_size_read(mapping->host), PAGE_SIZE);
+	}
+
+	/*
+	 * Racy check if we can split the page, before unmap_page() will
+>>>>>>> master
 	 * split PMDs
 	 */
 	if (!can_split_folio(folio, &extra_pins)) {
@@ -2713,7 +2826,20 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 		goto out_unlock;
 	}
 
+<<<<<<< HEAD
 	unmap_folio(folio);
+=======
+	mlocked = PageMlocked(page);
+	unmap_page(head);
+	VM_BUG_ON_PAGE(compound_mapcount(head), head);
+
+	/* Make sure the page is not on per-CPU pagevec as it takes pin */
+	if (mlocked)
+		lru_add_drain();
+
+	/* prevent PageLRU to go away from under us, and freeze lru stats */
+	spin_lock_irqsave(zone_lru_lock(page_zone(head)), flags);
+>>>>>>> master
 
 	/* block interrupt reentry in xa_lock and spinlock */
 	local_irq_disable();
@@ -2735,9 +2861,18 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 			ds_queue->split_queue_len--;
 			list_del(&folio->_deferred_list);
 		}
+<<<<<<< HEAD
 		spin_unlock(&ds_queue->split_queue_lock);
 		if (mapping) {
 			int nr = folio_nr_pages(folio);
+=======
+		if (mapping)
+			__dec_node_page_state(page, NR_SHMEM_THPS);
+		spin_unlock(&pgdata->split_queue_lock);
+		__split_huge_page(page, list, end, flags);
+		if (PageSwapCache(head)) {
+			swp_entry_t entry = { .val = page_private(head) };
+>>>>>>> master
 
 			xas_split(&xas, folio, folio_order(folio));
 			if (folio_test_pmd_mappable(folio)) {
@@ -2751,6 +2886,7 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 				}
 			}
 		}
+<<<<<<< HEAD
 
 		__split_huge_page(page, list, end);
 		ret = 0;
@@ -2762,6 +2898,14 @@ fail:
 		local_irq_enable();
 		remap_page(folio, folio_nr_pages(folio));
 		ret = -EAGAIN;
+=======
+		spin_unlock(&pgdata->split_queue_lock);
+fail:		if (mapping)
+			xa_unlock(&mapping->i_pages);
+		spin_unlock_irqrestore(zone_lru_lock(page_zone(head)), flags);
+		remap_page(head);
+		ret = -EBUSY;
+>>>>>>> master
 	}
 
 out_unlock:

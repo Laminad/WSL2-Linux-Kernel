@@ -701,6 +701,21 @@ static void __init kvm_use_magic_page(void)
 			 kvm_patching_worked ? "worked" : "failed");
 }
 
+<<<<<<< HEAD
+=======
+static __init void kvm_free_tmp(void)
+{
+	/*
+	 * Inform kmemleak about the hole in the .bss section since the
+	 * corresponding pages will be unmapped with DEBUG_PAGEALLOC=y.
+	 */
+	kmemleak_free_part(&kvm_tmp[kvm_tmp_index],
+			   ARRAY_SIZE(kvm_tmp) - kvm_tmp_index);
+	free_reserved_area(&kvm_tmp[kvm_tmp_index],
+			   &kvm_tmp[ARRAY_SIZE(kvm_tmp)], -1, NULL);
+}
+
+>>>>>>> master
 static int __init kvm_guest_init(void)
 {
 	if (!kvm_para_available())

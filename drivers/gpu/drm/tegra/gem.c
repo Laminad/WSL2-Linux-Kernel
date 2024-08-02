@@ -321,7 +321,12 @@ free:
 static void tegra_bo_free(struct drm_device *drm, struct tegra_bo *bo)
 {
 	if (bo->pages) {
+<<<<<<< HEAD
 		dma_unmap_sgtable(drm->dev, bo->sgt, DMA_FROM_DEVICE, 0);
+=======
+		dma_unmap_sg(drm->dev, bo->sgt->sgl, bo->sgt->nents,
+			     DMA_FROM_DEVICE);
+>>>>>>> master
 		drm_gem_put_pages(&bo->gem, bo->pages, true, true);
 		sg_free_table(bo->sgt);
 		kfree(bo->sgt);
@@ -346,8 +351,15 @@ static int tegra_bo_get_pages(struct drm_device *drm, struct tegra_bo *bo)
 		goto put_pages;
 	}
 
+<<<<<<< HEAD
 	err = dma_map_sgtable(drm->dev, bo->sgt, DMA_FROM_DEVICE, 0);
 	if (err)
+=======
+	err = dma_map_sg(drm->dev, bo->sgt->sgl, bo->sgt->nents,
+			 DMA_FROM_DEVICE);
+	if (err == 0) {
+		err = -EFAULT;
+>>>>>>> master
 		goto free_sgt;
 
 	return 0;

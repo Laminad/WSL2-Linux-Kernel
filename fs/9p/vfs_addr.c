@@ -29,10 +29,18 @@
  * v9fs_issue_read - Issue a read from 9P
  * @subreq: The read to make
  */
+<<<<<<< HEAD
 static void v9fs_issue_read(struct netfs_io_subrequest *subreq)
 {
 	struct netfs_io_request *rreq = subreq->rreq;
 	struct p9_fid *fid = rreq->netfs_priv;
+=======
+static int v9fs_fid_readpage(void *data, struct page *page)
+{
+	struct p9_fid *fid = data;
+	struct inode *inode = page->mapping->host;
+	struct bio_vec bvec = {.bv_page = page, .bv_len = PAGE_SIZE};
+>>>>>>> master
 	struct iov_iter to;
 	loff_t pos = subreq->start + subreq->transferred;
 	size_t len = subreq->len   - subreq->transferred;
@@ -195,6 +203,101 @@ static int v9fs_vfs_write_folio_locked(struct folio *folio)
 	folio_end_writeback(folio);
 	p9_fid_put(writeback_fid);
 
+<<<<<<< HEAD
+=======
+static int v9fs_vfs_readpage(struct file *filp, struct page *page)
+{
+	return v9fs_fid_readpage(filp->private_data, page);
+}
+
+/**
+ * v9fs_vfs_readpages - read a set of pages from 9P
+ *
+ * @filp: file being read
+ * @mapping: the address space
+ * @pages: list of pages to read
+ * @nr_pages: count of pages to read
+ *
+ */
+
+static int v9fs_vfs_readpages(struct file *filp, struct address_space *mapping,
+			     struct list_head *pages, unsigned nr_pages)
+{
+	int ret = 0;
+	struct inode *inode;
+
+	inode = mapping->host;
+	p9_debug(P9_DEBUG_VFS, "inode: %p file: %p\n", inode, filp);
+
+	ret = v9fs_readpages_from_fscache(inode, mapping, pages, &nr_pages);
+	if (ret == 0)
+		return ret;
+
+	ret = read_cache_pages(mapping, pages, v9fs_fid_readpage,
+			filp->private_data);
+	p9_debug(P9_DEBUG_VFS, "  = %d\n", ret);
+	return ret;
+}
+
+/**
+ * v9fs_release_page - release the private state associated with a page
+ *
+ * Returns 1 if the page can be released, false otherwise.
+ */
+
+static int v9fs_release_page(struct page *page, gfp_t gfp)
+{
+	if (PagePrivate(page))
+		return 0;
+	return v9fs_fscache_release_page(page, gfp);
+}
+
+/**
+ * v9fs_invalidate_page - Invalidate a page completely or partially
+ *
+ * @page: structure to page
+ * @offset: offset in the page
+ */
+
+static void v9fs_invalidate_page(struct page *page, unsigned int offset,
+				 unsigned int length)
+{
+	/*
+	 * If called with zero offset, we should release
+	 * the private state assocated with the page
+	 */
+	if (offset == 0 && length == PAGE_SIZE)
+		v9fs_fscache_invalidate_page(page);
+}
+
+static int v9fs_vfs_writepage_locked(struct page *page)
+{
+	struct inode *inode = page->mapping->host;
+	struct v9fs_inode *v9inode = V9FS_I(inode);
+	loff_t size = i_size_read(inode);
+	struct iov_iter from;
+	struct bio_vec bvec;
+	int err, len;
+
+	if (page->index == size >> PAGE_SHIFT)
+		len = size & ~PAGE_MASK;
+	else
+		len = PAGE_SIZE;
+
+	bvec.bv_page = page;
+	bvec.bv_offset = 0;
+	bvec.bv_len = len;
+	iov_iter_bvec(&from, ITER_BVEC | WRITE, &bvec, 1, len);
+
+	/* We should have writeback_fid always set */
+	BUG_ON(!v9inode->writeback_fid);
+
+	set_page_writeback(page);
+
+	p9_client_write(v9inode->writeback_fid, page_offset(page), &from, &err);
+
+	end_page_writeback(page);
+>>>>>>> master
 	return err;
 }
 

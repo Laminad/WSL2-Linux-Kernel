@@ -1292,6 +1292,7 @@ void cfg80211_bss_expire(struct cfg80211_registered_device *rdev)
 
 void cfg80211_bss_flush(struct wiphy *wiphy)
 {
+<<<<<<< HEAD
 	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wiphy);
 
 	spin_lock_bh(&rdev->bss_lock);
@@ -1311,6 +1312,21 @@ cfg80211_find_elem_match(u8 eid, const u8 *ies, unsigned int len,
 		if (elem->datalen >= match_offset + match_len &&
 		    !memcmp(elem->data + match_offset, match, match_len))
 			return elem;
+=======
+	const struct element *elem;
+
+	/* match_offset can't be smaller than 2, unless match_len is
+	 * zero, in which case match_offset must be zero as well.
+	 */
+	if (WARN_ON((match_len && match_offset < 2) ||
+		    (!match_len && match_offset)))
+		return NULL;
+
+	for_each_element_id(elem, eid, ies, len) {
+		if (elem->datalen >= match_offset - 2 + match_len &&
+		    !memcmp(elem->data + match_offset - 2, match, match_len))
+			return (void *)elem;
+>>>>>>> master
 	}
 
 	return NULL;

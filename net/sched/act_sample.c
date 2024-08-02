@@ -43,7 +43,10 @@ static int tcf_sample_init(struct net *net, struct nlattr *nla,
 	struct nlattr *tb[TCA_SAMPLE_MAX + 1];
 	struct psample_group *psample_group;
 	u32 psample_group_num, rate, index;
+<<<<<<< HEAD
 	struct tcf_chain *goto_ch = NULL;
+=======
+>>>>>>> master
 	struct tc_sample *parm;
 	struct tcf_sample *s;
 	bool exists = false;
@@ -70,7 +73,11 @@ static int tcf_sample_init(struct net *net, struct nlattr *nla,
 
 	if (!exists) {
 		ret = tcf_idr_create(tn, index, est, a,
+<<<<<<< HEAD
 				     &act_sample_ops, bind, true, flags);
+=======
+				     &act_sample_ops, bind, true);
+>>>>>>> master
 		if (ret) {
 			tcf_idr_cleanup(tn, index);
 			return ret;
@@ -81,6 +88,7 @@ static int tcf_sample_init(struct net *net, struct nlattr *nla,
 		return -EEXIST;
 	}
 
+<<<<<<< HEAD
 	if (!tb[TCA_SAMPLE_RATE] || !tb[TCA_SAMPLE_PSAMPLE_GROUP]) {
 		NL_SET_ERR_MSG(extack, "sample rate and group are required");
 		err = -EINVAL;
@@ -96,6 +104,13 @@ static int tcf_sample_init(struct net *net, struct nlattr *nla,
 		NL_SET_ERR_MSG(extack, "invalid sample rate");
 		err = -EINVAL;
 		goto put_chain;
+=======
+	rate = nla_get_u32(tb[TCA_SAMPLE_RATE]);
+	if (!rate) {
+		NL_SET_ERR_MSG(extack, "invalid sample rate");
+		tcf_idr_release(*a, bind);
+		return -EINVAL;
+>>>>>>> master
 	}
 	psample_group_num = nla_get_u32(tb[TCA_SAMPLE_PSAMPLE_GROUP]);
 	psample_group = psample_group_get(net, psample_group_num);
@@ -107,11 +122,19 @@ static int tcf_sample_init(struct net *net, struct nlattr *nla,
 	s = to_sample(*a);
 
 	spin_lock_bh(&s->tcf_lock);
+<<<<<<< HEAD
 	goto_ch = tcf_action_set_ctrlact(*a, parm->action, goto_ch);
 	s->rate = rate;
 	s->psample_group_num = psample_group_num;
 	psample_group = rcu_replace_pointer(s->psample_group, psample_group,
 					    lockdep_is_held(&s->tcf_lock));
+=======
+	s->tcf_action = parm->action;
+	s->rate = rate;
+	s->psample_group_num = psample_group_num;
+	rcu_swap_protected(s->psample_group, psample_group,
+			   lockdep_is_held(&s->tcf_lock));
+>>>>>>> master
 
 	if (tb[TCA_SAMPLE_TRUNC_SIZE]) {
 		s->truncate = true;
@@ -121,9 +144,14 @@ static int tcf_sample_init(struct net *net, struct nlattr *nla,
 
 	if (psample_group)
 		psample_group_put(psample_group);
+<<<<<<< HEAD
 	if (goto_ch)
 		tcf_chain_put_by_act(goto_ch);
 
+=======
+	if (ret == ACT_P_CREATED)
+		tcf_idr_insert(tn, *a);
+>>>>>>> master
 	return ret;
 put_chain:
 	if (goto_ch)

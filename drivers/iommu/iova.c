@@ -73,6 +73,68 @@ init_iova_domain(struct iova_domain *iovad, unsigned long granule,
 }
 EXPORT_SYMBOL_GPL(init_iova_domain);
 
+<<<<<<< HEAD
+=======
+bool has_iova_flush_queue(struct iova_domain *iovad)
+{
+	return !!iovad->fq;
+}
+
+static void free_iova_flush_queue(struct iova_domain *iovad)
+{
+	if (!has_iova_flush_queue(iovad))
+		return;
+
+	if (timer_pending(&iovad->fq_timer))
+		del_timer(&iovad->fq_timer);
+
+	fq_destroy_all_entries(iovad);
+
+	free_percpu(iovad->fq);
+
+	iovad->fq         = NULL;
+	iovad->flush_cb   = NULL;
+	iovad->entry_dtor = NULL;
+}
+
+int init_iova_flush_queue(struct iova_domain *iovad,
+			  iova_flush_cb flush_cb, iova_entry_dtor entry_dtor)
+{
+	struct iova_fq __percpu *queue;
+	int cpu;
+
+	atomic64_set(&iovad->fq_flush_start_cnt,  0);
+	atomic64_set(&iovad->fq_flush_finish_cnt, 0);
+
+	queue = alloc_percpu(struct iova_fq);
+	if (!queue)
+		return -ENOMEM;
+
+	iovad->flush_cb   = flush_cb;
+	iovad->entry_dtor = entry_dtor;
+
+	for_each_possible_cpu(cpu) {
+		struct iova_fq *fq;
+
+		fq = per_cpu_ptr(queue, cpu);
+		fq->head = 0;
+		fq->tail = 0;
+
+		spin_lock_init(&fq->lock);
+	}
+
+	smp_wmb();
+
+	iovad->fq = queue;
+
+	timer_setup(&iovad->fq_timer, fq_flush_timeout, 0);
+	atomic_set(&iovad->fq_timer_on, 0);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(init_iova_flush_queue);
+
+>>>>>>> master
 static struct rb_node *
 __get_cached_rbnode(struct iova_domain *iovad, unsigned long limit_pfn)
 {
@@ -96,7 +158,11 @@ __cached_rbnode_delete_update(struct iova_domain *iovad, struct iova *free)
 {
 	struct iova *cached_iova;
 
+<<<<<<< HEAD
 	cached_iova = to_iova(iovad->cached32_node);
+=======
+	cached_iova = rb_entry(iovad->cached32_node, struct iova, node);
+>>>>>>> master
 	if (free == cached_iova ||
 	    (free->pfn_hi < iovad->dma_32bit_pfn &&
 	     free->pfn_lo >= cached_iova->pfn_lo))
@@ -500,6 +566,129 @@ static void iova_domain_free_rcaches(struct iova_domain *iovad)
 	free_iova_rcaches(iovad);
 }
 
+<<<<<<< HEAD
+=======
+static inline unsigned fq_ring_add(struct iova_fq *fq)
+{
+	unsigned idx = fq->tail;
+
+	assert_spin_locked(&fq->lock);
+
+	fq->tail = (idx + 1) % IOVA_FQ_SIZE;
+
+	return idx;
+}
+
+static void fq_ring_free(struct iova_domain *iovad, struct iova_fq *fq)
+{
+	u64 counter = atomic64_read(&iovad->fq_flush_finish_cnt);
+	unsigned idx;
+
+	assert_spin_locked(&fq->lock);
+
+	fq_ring_for_each(idx, fq) {
+
+		if (fq->entries[idx].counter >= counter)
+			break;
+
+		if (iovad->entry_dtor)
+			iovad->entry_dtor(fq->entries[idx].data);
+
+		free_iova_fast(iovad,
+			       fq->entries[idx].iova_pfn,
+			       fq->entries[idx].pages);
+
+		fq->head = (fq->head + 1) % IOVA_FQ_SIZE;
+	}
+}
+
+static void iova_domain_flush(struct iova_domain *iovad)
+{
+	atomic64_inc(&iovad->fq_flush_start_cnt);
+	iovad->flush_cb(iovad);
+	atomic64_inc(&iovad->fq_flush_finish_cnt);
+}
+
+static void fq_destroy_all_entries(struct iova_domain *iovad)
+{
+	int cpu;
+
+	/*
+	 * This code runs when the iova_domain is being detroyed, so don't
+	 * bother to free iovas, just call the entry_dtor on all remaining
+	 * entries.
+	 */
+	if (!iovad->entry_dtor)
+		return;
+
+	for_each_possible_cpu(cpu) {
+		struct iova_fq *fq = per_cpu_ptr(iovad->fq, cpu);
+		int idx;
+
+		fq_ring_for_each(idx, fq)
+			iovad->entry_dtor(fq->entries[idx].data);
+	}
+}
+
+static void fq_flush_timeout(struct timer_list *t)
+{
+	struct iova_domain *iovad = from_timer(iovad, t, fq_timer);
+	int cpu;
+
+	atomic_set(&iovad->fq_timer_on, 0);
+	iova_domain_flush(iovad);
+
+	for_each_possible_cpu(cpu) {
+		unsigned long flags;
+		struct iova_fq *fq;
+
+		fq = per_cpu_ptr(iovad->fq, cpu);
+		spin_lock_irqsave(&fq->lock, flags);
+		fq_ring_free(iovad, fq);
+		spin_unlock_irqrestore(&fq->lock, flags);
+	}
+}
+
+void queue_iova(struct iova_domain *iovad,
+		unsigned long pfn, unsigned long pages,
+		unsigned long data)
+{
+	struct iova_fq *fq = raw_cpu_ptr(iovad->fq);
+	unsigned long flags;
+	unsigned idx;
+
+	spin_lock_irqsave(&fq->lock, flags);
+
+	/*
+	 * First remove all entries from the flush queue that have already been
+	 * flushed out on another CPU. This makes the fq_full() check below less
+	 * likely to be true.
+	 */
+	fq_ring_free(iovad, fq);
+
+	if (fq_full(fq)) {
+		iova_domain_flush(iovad);
+		fq_ring_free(iovad, fq);
+	}
+
+	idx = fq_ring_add(fq);
+
+	fq->entries[idx].iova_pfn = pfn;
+	fq->entries[idx].pages    = pages;
+	fq->entries[idx].data     = data;
+	fq->entries[idx].counter  = atomic64_read(&iovad->fq_flush_start_cnt);
+
+	spin_unlock_irqrestore(&fq->lock, flags);
+
+	/* Avoid false sharing as much as possible. */
+	if (!atomic_read(&iovad->fq_timer_on) &&
+	    !atomic_cmpxchg(&iovad->fq_timer_on, 0, 1))
+		mod_timer(&iovad->fq_timer,
+			  jiffies + msecs_to_jiffies(IOVA_FQ_TIMEOUT));
+}
+EXPORT_SYMBOL_GPL(queue_iova);
+
+>>>>>>> master
 /**
  * put_iova_domain - destroys the iova domain
  * @iovad: - iova domain in question.

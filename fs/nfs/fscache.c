@@ -92,10 +92,20 @@ int nfs_fscache_get_super_cookie(struct super_block *sb, const char *uniq, int u
 	unsigned int len = 3;
 	char *key;
 
+<<<<<<< HEAD
 	if (uniq) {
 		nfss->fscache_uniq = kmemdup_nul(uniq, ulen, GFP_KERNEL);
 		if (!nfss->fscache_uniq)
 			return -ENOMEM;
+=======
+	nfss->fscache_key = NULL;
+	nfss->fscache = NULL;
+	if (!(nfss->options & NFS_OPTION_FSCACHE))
+		return;
+	if (!uniq) {
+		uniq = "";
+		ulen = 1;
+>>>>>>> master
 	}
 
 	key = kmalloc(NFS_MAX_KEY_LEN + 24, GFP_KERNEL);
@@ -166,7 +176,11 @@ void nfs_fscache_init_inode(struct inode *inode)
 	struct nfs_server *nfss = NFS_SERVER(inode);
 	struct nfs_inode *nfsi = NFS_I(inode);
 
+<<<<<<< HEAD
 	netfs_inode(inode)->cache = NULL;
+=======
+	nfsi->fscache = NULL;
+>>>>>>> master
 	if (!(nfss->fscache && S_ISREG(inode->i_mode)))
 		return;
 

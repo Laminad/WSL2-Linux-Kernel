@@ -122,6 +122,7 @@ static nokprobe_inline bool trace_kprobe_module_exist(struct trace_kprobe *tk)
 	if (!p)
 		return true;
 	*p = '\0';
+<<<<<<< HEAD
 	rcu_read_lock_sched();
 	ret = !!find_module(tk->symbol);
 	rcu_read_unlock_sched();
@@ -168,6 +169,14 @@ static bool trace_kprobe_match(const char *system, const char *event,
 		strcmp(trace_probe_name(&tk->tp), event) == 0) &&
 	    (!system || strcmp(trace_probe_group_name(&tk->tp), system) == 0) &&
 	    trace_kprobe_match_command_head(tk, argc, argv);
+=======
+	mutex_lock(&module_mutex);
+	ret = !!find_module(tk->symbol);
+	mutex_unlock(&module_mutex);
+	*p = ':';
+
+	return ret;
+>>>>>>> master
 }
 
 static nokprobe_inline unsigned long trace_kprobe_nhit(struct trace_kprobe *tk)
@@ -509,6 +518,16 @@ static int __register_trace_kprobe(struct trace_kprobe *tk)
 	else
 		ret = register_kprobe(&tk->rp.kp);
 
+<<<<<<< HEAD
+=======
+	if (ret == 0) {
+		tk->tp.flags |= TP_FLAG_REGISTERED;
+	} else if (ret == -EILSEQ) {
+		pr_warn("Probing address(0x%p) is not an instruction boundary.\n",
+			tk->rp.kp.addr);
+		ret = -EINVAL;
+	}
+>>>>>>> master
 	return ret;
 }
 

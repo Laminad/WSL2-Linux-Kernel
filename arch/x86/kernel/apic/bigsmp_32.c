@@ -23,6 +23,38 @@ static bool bigsmp_check_apicid_used(physid_mask_t *map, int apicid)
 	return false;
 }
 
+<<<<<<< HEAD
+=======
+static int bigsmp_early_logical_apicid(int cpu)
+{
+	/* on bigsmp, logical apicid is the same as physical */
+	return early_per_cpu(x86_cpu_to_apicid, cpu);
+}
+
+/*
+ * bigsmp enables physical destination mode
+ * and doesn't use LDR and DFR
+ */
+static void bigsmp_init_apic_ldr(void)
+{
+}
+
+static void bigsmp_setup_apic_routing(void)
+{
+	printk(KERN_INFO
+		"Enabling APIC mode:  Physflat.  Using %d I/O APICs\n",
+		nr_ioapics);
+}
+
+static int bigsmp_cpu_present_to_apicid(int mps_cpu)
+{
+	if (mps_cpu < nr_cpu_ids)
+		return (int) per_cpu(x86_bios_cpu_apicid, mps_cpu);
+
+	return BAD_APICID;
+}
+
+>>>>>>> master
 static void bigsmp_ioapic_phys_id_map(physid_mask_t *phys_map, physid_mask_t *retmap)
 {
 	/* For clustered we don't have a good way to do this yet - hack */

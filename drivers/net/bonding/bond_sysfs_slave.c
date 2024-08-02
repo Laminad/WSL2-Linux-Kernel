@@ -45,7 +45,11 @@ static SLAVE_ATTR_RO(link_failure_count);
 
 static ssize_t perm_hwaddr_show(struct slave *slave, char *buf)
 {
+<<<<<<< HEAD
 	return sysfs_emit(buf, "%*phC\n",
+=======
+	return sprintf(buf, "%*phC\n",
+>>>>>>> master
 		       slave->dev->addr_len,
 		       slave->perm_hwaddr);
 }

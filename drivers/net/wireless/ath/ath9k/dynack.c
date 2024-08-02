@@ -28,6 +28,7 @@
  * @ah: ath hw
  *
  */
+<<<<<<< HEAD
 static u32 ath_dynack_get_max_to(struct ath_hw *ah)
 {
 	const struct ath9k_channel *chan = ah->curchan;
@@ -49,6 +50,10 @@ static u32 ath_dynack_get_max_to(struct ath_hw *ah)
  */
 static inline int ath_dynack_ewma(int old, int new)
 {
+=======
+static inline int ath_dynack_ewma(int old, int new)
+{
+>>>>>>> master
 	if (old > 0)
 		return (new * (EWMA_DIV - EWMA_LEVEL) +
 			old * EWMA_LEVEL) / EWMA_DIV;
@@ -122,6 +127,10 @@ static void ath_dynack_set_timeout(struct ath_hw *ah, int to)
  */
 static void ath_dynack_compute_ackto(struct ath_hw *ah)
 {
+<<<<<<< HEAD
+=======
+	struct ath_common *common = ath9k_hw_common(ah);
+>>>>>>> master
 	struct ath_dynack *da = &ah->dynack;
 	struct ath_node *an;
 	int to = 0;
@@ -226,10 +235,18 @@ void ath_dynack_sample_tx_ts(struct ath_hw *ah, struct sk_buff *skb,
 		if (ieee80211_is_assoc_req(hdr->frame_control) ||
 		    ieee80211_is_assoc_resp(hdr->frame_control) ||
 		    ieee80211_is_auth(hdr->frame_control)) {
+<<<<<<< HEAD
 			u32 max_to = ath_dynack_get_max_to(ah);
 
 			ath_dbg(common, DYNACK, "late ack\n");
 			ath_dynack_set_timeout(ah, max_to);
+=======
+			ath_dbg(common, DYNACK, "late ack\n");
+
+			ath9k_hw_setslottime(ah, (LATEACK_TO - 3) / 2);
+			ath9k_hw_set_ack_timeout(ah, LATEACK_TO);
+			ath9k_hw_set_cts_timeout(ah, LATEACK_TO);
+>>>>>>> master
 			if (sta) {
 				struct ath_node *an;
 

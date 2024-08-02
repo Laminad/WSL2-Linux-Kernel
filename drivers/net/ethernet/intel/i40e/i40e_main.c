@@ -482,6 +482,7 @@ static void i40e_get_netdev_stats_struct(struct net_device *netdev,
 		i40e_get_netdev_stats_struct_tx(ring, stats);
 
 		if (i40e_enabled_xdp_vsi(vsi)) {
+<<<<<<< HEAD
 			ring = READ_ONCE(vsi->xdp_rings[i]);
 			if (!ring)
 				continue;
@@ -496,6 +497,18 @@ static void i40e_get_netdev_stats_struct(struct net_device *netdev,
 			packets = ring->stats.packets;
 			bytes   = ring->stats.bytes;
 		} while (u64_stats_fetch_retry(&ring->syncp, start));
+=======
+			ring++;
+			i40e_get_netdev_stats_struct_tx(ring, stats);
+		}
+
+		ring++;
+		do {
+			start   = u64_stats_fetch_begin_irq(&ring->syncp);
+			packets = ring->stats.packets;
+			bytes   = ring->stats.bytes;
+		} while (u64_stats_fetch_retry_irq(&ring->syncp, start));
+>>>>>>> master
 
 		stats->rx_packets += packets;
 		stats->rx_bytes   += bytes;
@@ -1829,9 +1842,18 @@ static int i40e_set_mac(struct net_device *netdev, void *p)
 	 */
 	spin_lock_bh(&vsi->mac_filter_hash_lock);
 	i40e_del_mac_filter(vsi, netdev->dev_addr);
+<<<<<<< HEAD
 	eth_hw_addr_set(netdev, addr->sa_data);
 	i40e_add_mac_filter(vsi, netdev->dev_addr);
 	spin_unlock_bh(&vsi->mac_filter_hash_lock);
+=======
+	ether_addr_copy(netdev->dev_addr, addr->sa_data);
+	i40e_add_mac_filter(vsi, netdev->dev_addr);
+	spin_unlock_bh(&vsi->mac_filter_hash_lock);
+
+	if (vsi->type == I40E_VSI_MAIN) {
+		i40e_status ret;
+>>>>>>> master
 
 	if (vsi->type == I40E_VSI_MAIN) {
 		int ret;
@@ -2892,7 +2914,11 @@ static void i40e_sync_filters_subtask(struct i40e_pf *pf)
 		return;
 	if (!test_and_clear_bit(__I40E_MACVLAN_SYNC_PENDING, pf->state))
 		return;
+<<<<<<< HEAD
 	if (test_bit(__I40E_VF_DISABLE, pf->state)) {
+=======
+	if (test_and_set_bit(__I40E_VF_DISABLE, pf->state)) {
+>>>>>>> master
 		set_bit(__I40E_MACVLAN_SYNC_PENDING, pf->state);
 		return;
 	}
@@ -2911,6 +2937,7 @@ static void i40e_sync_filters_subtask(struct i40e_pf *pf)
 			}
 		}
 	}
+	clear_bit(__I40E_VF_DISABLE, pf->state);
 }
 
 /**
@@ -3010,6 +3037,10 @@ void i40e_vlan_stripping_enable(struct i40e_vsi *vsi)
 	if (vsi->info.pvid)
 		return;
 
+	/* Don't modify stripping options if a port VLAN is active */
+	if (vsi->info.pvid)
+		return;
+
 	if ((vsi->info.valid_sections &
 	     cpu_to_le16(I40E_AQ_VSI_PROP_VLAN_VALID)) &&
 	    ((vsi->info.port_vlan_flags & I40E_AQ_VSI_PVLAN_MODE_MASK) == 0))
@@ -3039,6 +3070,10 @@ void i40e_vlan_stripping_disable(struct i40e_vsi *vsi)
 {
 	struct i40e_vsi_context ctxt;
 	int ret;
+
+	/* Don't modify stripping options if a port VLAN is active */
+	if (vsi->info.pvid)
+		return;
 
 	/* Don't modify stripping options if a port VLAN is active */
 	if (vsi->info.pvid)

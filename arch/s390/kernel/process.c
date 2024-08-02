@@ -201,6 +201,7 @@ unsigned long __get_wchan(struct task_struct *p)
 	if (!try_get_task_stack(p))
 		return 0;
 
+<<<<<<< HEAD
 	unwind_for_each_frame(&state, p, NULL, 0) {
 		if (state.stack_info.type != STACK_TYPE_TASK) {
 			ip = 0;
@@ -217,6 +218,31 @@ unsigned long __get_wchan(struct task_struct *p)
 
 	put_task_stack(p);
 	return ip;
+=======
+	if (!try_get_task_stack(p))
+		return 0;
+
+	low = task_stack_page(p);
+	high = (struct stack_frame *) task_pt_regs(p);
+	sf = (struct stack_frame *) p->thread.ksp;
+	if (sf <= low || sf > high) {
+		return_address = 0;
+		goto out;
+	}
+	for (count = 0; count < 16; count++) {
+		sf = (struct stack_frame *) sf->back_chain;
+		if (sf <= low || sf > high) {
+			return_address = 0;
+			goto out;
+		}
+		return_address = sf->gprs[8];
+		if (!in_sched_functions(return_address))
+			goto out;
+	}
+out:
+	put_task_stack(p);
+	return return_address;
+>>>>>>> master
 }
 
 unsigned long arch_align_stack(unsigned long sp)

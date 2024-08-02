@@ -23,6 +23,12 @@ static inline void activate_mm(struct mm_struct *old, struct mm_struct *new)
 	 * when the new ->mm is used for the first time.
 	 */
 	__switch_mm(&new->context.id);
+<<<<<<< HEAD
+=======
+	down_write_nested(&new->mmap_sem, 1);
+	uml_setup_stubs(new);
+	up_write(&new->mmap_sem);
+>>>>>>> master
 }
 
 static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next, 

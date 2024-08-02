@@ -15,11 +15,16 @@
 #include "hardware.h"
 
 static int num_idle_cpus = 0;
+<<<<<<< HEAD
 static DEFINE_RAW_SPINLOCK(cpuidle_lock);
+=======
+static DEFINE_SPINLOCK(cpuidle_lock);
+>>>>>>> master
 
 static __cpuidle int imx6q_enter_wait(struct cpuidle_device *dev,
 				      struct cpuidle_driver *drv, int index)
 {
+<<<<<<< HEAD
 	raw_spin_lock(&cpuidle_lock);
 	if (++num_idle_cpus == num_online_cpus())
 		imx6_set_lpm(WAIT_UNCLOCKED);
@@ -33,6 +38,19 @@ static __cpuidle int imx6q_enter_wait(struct cpuidle_device *dev,
 	if (num_idle_cpus-- == num_online_cpus())
 		imx6_set_lpm(WAIT_CLOCKED);
 	raw_spin_unlock(&cpuidle_lock);
+=======
+	spin_lock(&cpuidle_lock);
+	if (++num_idle_cpus == num_online_cpus())
+		imx6_set_lpm(WAIT_UNCLOCKED);
+	spin_unlock(&cpuidle_lock);
+
+	cpu_do_idle();
+
+	spin_lock(&cpuidle_lock);
+	if (num_idle_cpus-- == num_online_cpus())
+		imx6_set_lpm(WAIT_CLOCKED);
+	spin_unlock(&cpuidle_lock);
+>>>>>>> master
 
 	return index;
 }

@@ -281,12 +281,41 @@ static int vega10_ih_irq_init(struct amdgpu_device *adev)
 		WREG32_SOC15(OSSSYS, 0, mmIH_CHICKEN, ih_chicken);
 	}
 
+<<<<<<< HEAD
 	for (i = 0; i < ARRAY_SIZE(ih); i++) {
 		if (ih[i]->ring_size) {
 			ret = vega10_ih_enable_ring(adev, ih[i]);
 			if (ret)
 				return ret;
 		}
+=======
+	if (adev->irq.msi_enabled)
+		ih_rb_cntl = REG_SET_FIELD(ih_rb_cntl, IH_RB_CNTL, RPTR_REARM, 1);
+
+	WREG32_SOC15(OSSSYS, 0, mmIH_RB_CNTL, ih_rb_cntl);
+
+	/* set the writeback address whether it's enabled or not */
+	if (adev->irq.ih.use_bus_addr)
+		wptr_off = adev->irq.ih.rb_dma_addr + (adev->irq.ih.wptr_offs * 4);
+	else
+		wptr_off = adev->wb.gpu_addr + (adev->irq.ih.wptr_offs * 4);
+	WREG32_SOC15(OSSSYS, 0, mmIH_RB_WPTR_ADDR_LO, lower_32_bits(wptr_off));
+	WREG32_SOC15(OSSSYS, 0, mmIH_RB_WPTR_ADDR_HI, upper_32_bits(wptr_off) & 0xFFFF);
+
+	/* set rptr, wptr to 0 */
+	WREG32_SOC15(OSSSYS, 0, mmIH_RB_RPTR, 0);
+	WREG32_SOC15(OSSSYS, 0, mmIH_RB_WPTR, 0);
+
+	ih_doorbell_rtpr = RREG32_SOC15(OSSSYS, 0, mmIH_DOORBELL_RPTR);
+	if (adev->irq.ih.use_doorbell) {
+		ih_doorbell_rtpr = REG_SET_FIELD(ih_doorbell_rtpr, IH_DOORBELL_RPTR,
+						 OFFSET, adev->irq.ih.doorbell_index);
+		ih_doorbell_rtpr = REG_SET_FIELD(ih_doorbell_rtpr, IH_DOORBELL_RPTR,
+						 ENABLE, 1);
+	} else {
+		ih_doorbell_rtpr = REG_SET_FIELD(ih_doorbell_rtpr, IH_DOORBELL_RPTR,
+						 ENABLE, 0);
+>>>>>>> master
 	}
 
 	if (!amdgpu_sriov_vf(adev))

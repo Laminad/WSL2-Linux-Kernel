@@ -11,6 +11,12 @@
 #define MIPS_CPU_IRQ_BASE 	NR_IRQS_LEGACY
 #define GSI_MIN_CPU_IRQ		0
 
+<<<<<<< HEAD
 #include <asm/mach-generic/irq.h>
+=======
+#define LOONGSON_UART_IRQ   (MIPS_CPU_IRQ_BASE + 2) /* UART */
+#define LOONGSON_BRIDGE_IRQ (MIPS_CPU_IRQ_BASE + 3) /* CASCADE */
+#define LOONGSON_TIMER_IRQ  (MIPS_CPU_IRQ_BASE + 7) /* CPU Timer */
+>>>>>>> master
 
 #endif /* __ASM_MACH_LOONGSON64_IRQ_H_ */

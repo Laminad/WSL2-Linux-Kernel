@@ -18,7 +18,16 @@
 
 #define ARC_PATH_MAX	256
 
+<<<<<<< HEAD
 static noinline void print_regs_scratch(struct pt_regs *regs)
+=======
+/*
+ * Common routine to print scratch regs (r0-r12) or callee regs (r13-r25)
+ *   -Prints 3 regs per line and a CR.
+ *   -To continue, callee regs right after scratch, special handling of CR
+ */
+static noinline void print_reg_file(long *reg_rev, int start_num)
+>>>>>>> master
 {
 	pr_cont("BTA: 0x%08lx\n SP: 0x%08lx  FP: 0x%08lx BLK: %pS\n",
 		regs->bta, regs->sp, regs->fp, (void *)regs->blink);
@@ -88,7 +97,11 @@ static void show_faulting_vma(unsigned long address)
 	/* Lookup the vma at the address and report if the container VMA is not
 	 * found
 	 */
+<<<<<<< HEAD
 	if (vma) {
+=======
+	if (vma && (vma->vm_start <= address)) {
+>>>>>>> master
 		char buf[ARC_PATH_MAX];
 		char *nm = "?";
 
@@ -168,7 +181,11 @@ static void show_ecr_verbose(struct pt_regs *regs)
 void show_regs(struct pt_regs *regs)
 {
 	struct task_struct *tsk = current;
+<<<<<<< HEAD
 	struct callee_regs *cregs = (struct callee_regs *)tsk->thread.callee_reg;
+=======
+	struct callee_regs *cregs;
+>>>>>>> master
 
 	/*
 	 * generic code calls us with preemption disabled, but some calls

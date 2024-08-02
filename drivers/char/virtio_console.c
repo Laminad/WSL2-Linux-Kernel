@@ -49,8 +49,12 @@ struct ports_driver_data {
 	/* All the console devices handled by this driver */
 	struct list_head consoles;
 };
+<<<<<<< HEAD
 
 static struct ports_driver_data pdrvdata;
+=======
+static struct ports_driver_data pdrvdata = { .next_vtermno = 1};
+>>>>>>> master
 
 static const struct class port_class = {
 	.name = "virtio-ports",

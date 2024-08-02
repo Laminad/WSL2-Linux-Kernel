@@ -668,8 +668,13 @@ static int check_block_group_item(struct extent_buffer *leaf,
 	 * Here we don't really care about alignment since extent allocator can
 	 * handle it.  We care more about the size.
 	 */
+<<<<<<< HEAD
 	if (unlikely(key->offset == 0)) {
 		block_group_err(leaf, slot,
+=======
+	if (key->offset == 0) {
+		block_group_err(fs_info, leaf, slot,
+>>>>>>> master
 				"invalid block group size 0");
 		return -EUCLEAN;
 	}
@@ -724,12 +729,21 @@ static int check_block_group_item(struct extent_buffer *leaf,
 	}
 
 	type = flags & BTRFS_BLOCK_GROUP_TYPE_MASK;
+<<<<<<< HEAD
 	if (unlikely(type != BTRFS_BLOCK_GROUP_DATA &&
 		     type != BTRFS_BLOCK_GROUP_METADATA &&
 		     type != BTRFS_BLOCK_GROUP_SYSTEM &&
 		     type != (BTRFS_BLOCK_GROUP_METADATA |
 			      BTRFS_BLOCK_GROUP_DATA))) {
 		block_group_err(leaf, slot,
+=======
+	if (type != BTRFS_BLOCK_GROUP_DATA &&
+	    type != BTRFS_BLOCK_GROUP_METADATA &&
+	    type != BTRFS_BLOCK_GROUP_SYSTEM &&
+	    type != (BTRFS_BLOCK_GROUP_METADATA |
+			   BTRFS_BLOCK_GROUP_DATA)) {
+		block_group_err(fs_info, leaf, slot,
+>>>>>>> master
 "invalid type, have 0x%llx (%lu bits set) expect either 0x%llx, 0x%llx, 0x%llx or 0x%llx",
 			type, hweight64(type),
 			BTRFS_BLOCK_GROUP_DATA, BTRFS_BLOCK_GROUP_METADATA,

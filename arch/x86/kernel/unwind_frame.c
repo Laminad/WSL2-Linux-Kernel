@@ -396,9 +396,16 @@ void __unwind_start(struct unwind_state *state, struct task_struct *task,
 	 * Pretend that the frame is complete and that BP points to it, but save
 	 * the real BP so that we can use it when looking for the next frame.
 	 */
+<<<<<<< HEAD
 	if (regs && regs->ip == 0 && (unsigned long *)regs->sp >= first_frame) {
 		state->next_bp = bp;
 		bp = ((unsigned long *)regs->sp) - 1;
+=======
+	if (regs && regs->ip == 0 &&
+	    (unsigned long *)kernel_stack_pointer(regs) >= first_frame) {
+		state->next_bp = bp;
+		bp = ((unsigned long *)kernel_stack_pointer(regs)) - 1;
+>>>>>>> master
 	}
 
 	/* Initialize stack info and make sure the frame data is accessible: */

@@ -2528,7 +2528,12 @@ static void tpacket_destruct_skb(struct sk_buff *skb)
 		ts = __packet_set_timestamp(po, ph, skb);
 		__packet_set_status(po, ph, TP_STATUS_AVAILABLE | ts);
 
+<<<<<<< HEAD
 		complete(&po->skb_completion);
+=======
+		if (!packet_read_pending(&po->tx_ring))
+			complete(&po->skb_completion);
+>>>>>>> master
 	}
 
 	sock_wfree(skb);
@@ -2591,7 +2596,11 @@ static int tpacket_fill_skb(struct packet_sock *po, struct sk_buff *skb,
 	skb->priority = READ_ONCE(po->sk.sk_priority);
 	skb->mark = READ_ONCE(po->sk.sk_mark);
 	skb->tstamp = sockc->transmit_time;
+<<<<<<< HEAD
 	skb_setup_tx_timestamp(skb, sockc->tsflags);
+=======
+	sock_tx_timestamp(&po->sk, sockc->tsflags, &skb_shinfo(skb)->tx_flags);
+>>>>>>> master
 	skb_zcopy_set_nouarg(skb, ph.raw);
 
 	skb_reserve(skb, hlen);
@@ -2732,7 +2741,10 @@ static int tpacket_snd(struct packet_sock *po, struct msghdr *msg)
 	void *ph;
 	DECLARE_SOCKADDR(struct sockaddr_ll *, saddr, msg->msg_name);
 	bool need_wait = !(msg->msg_flags & MSG_DONTWAIT);
+<<<<<<< HEAD
 	int vnet_hdr_sz = READ_ONCE(po->vnet_hdr_sz);
+=======
+>>>>>>> master
 	unsigned char *addr = NULL;
 	int tp_len, size_max;
 	void *data;
@@ -2752,7 +2764,11 @@ static int tpacket_snd(struct packet_sock *po, struct msghdr *msg)
 	}
 	if (likely(saddr == NULL)) {
 		dev	= packet_cached_dev_get(po);
+<<<<<<< HEAD
 		proto	= READ_ONCE(po->num);
+=======
+		proto	= po->num;
+>>>>>>> master
 	} else {
 		err = -EINVAL;
 		if (msg->msg_namelen < sizeof(struct sockaddr_ll))
@@ -2968,7 +2984,11 @@ static int packet_snd(struct socket *sock, struct msghdr *msg, size_t len)
 
 	if (likely(saddr == NULL)) {
 		dev	= packet_cached_dev_get(po);
+<<<<<<< HEAD
 		proto	= READ_ONCE(po->num);
+=======
+		proto	= po->num;
+>>>>>>> master
 	} else {
 		err = -EINVAL;
 		if (msg->msg_namelen < sizeof(struct sockaddr_ll))
@@ -4546,8 +4566,12 @@ static int packet_set_ring(struct sock *sk, union tpacket_req_u *req_u,
 	}
 
 out_free_pg_vec:
+<<<<<<< HEAD
 	if (pg_vec) {
 		bitmap_free(rx_owner_map);
+=======
+	if (pg_vec)
+>>>>>>> master
 		free_pg_vec(pg_vec, order, req->tp_block_nr);
 	}
 out:
@@ -4761,6 +4785,7 @@ static int __init packet_init(void)
 {
 	int rc;
 
+<<<<<<< HEAD
 	rc = register_pernet_subsys(&packet_net_ops);
 	if (rc)
 		goto out;
@@ -4782,6 +4807,29 @@ out_notifier:
 	unregister_netdevice_notifier(&packet_netdev_notifier);
 out_pernet:
 	unregister_pernet_subsys(&packet_net_ops);
+=======
+	rc = proto_register(&packet_proto, 0);
+	if (rc)
+		goto out;
+	rc = sock_register(&packet_family_ops);
+	if (rc)
+		goto out_proto;
+	rc = register_pernet_subsys(&packet_net_ops);
+	if (rc)
+		goto out_sock;
+	rc = register_netdevice_notifier(&packet_netdev_notifier);
+	if (rc)
+		goto out_pernet;
+
+	return 0;
+
+out_pernet:
+	unregister_pernet_subsys(&packet_net_ops);
+out_sock:
+	sock_unregister(PF_PACKET);
+out_proto:
+	proto_unregister(&packet_proto);
+>>>>>>> master
 out:
 	return rc;
 }

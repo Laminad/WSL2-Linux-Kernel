@@ -146,12 +146,17 @@ hv_get_ringbuffer_availbytes(const struct hv_ring_buffer_info *rbi,
 }
 
 /* Get various debug metrics for the specified ring buffer. */
+<<<<<<< HEAD
 int hv_ringbuffer_get_debuginfo(struct hv_ring_buffer_info *ring_info,
+=======
+int hv_ringbuffer_get_debuginfo(const struct hv_ring_buffer_info *ring_info,
+>>>>>>> master
 				struct hv_ring_buffer_debug_info *debug_info)
 {
 	u32 bytes_avail_towrite;
 	u32 bytes_avail_toread;
 
+<<<<<<< HEAD
 	mutex_lock(&ring_info->ring_buffer_mutex);
 
 	if (!ring_info->ring_buffer) {
@@ -159,6 +164,11 @@ int hv_ringbuffer_get_debuginfo(struct hv_ring_buffer_info *ring_info,
 		return -EINVAL;
 	}
 
+=======
+	if (!ring_info->ring_buffer)
+		return -EINVAL;
+
+>>>>>>> master
 	hv_get_ringbuffer_availbytes(ring_info,
 				     &bytes_avail_toread,
 				     &bytes_avail_towrite);
@@ -168,8 +178,11 @@ int hv_ringbuffer_get_debuginfo(struct hv_ring_buffer_info *ring_info,
 	debug_info->current_write_index = ring_info->ring_buffer->write_index;
 	debug_info->current_interrupt_mask
 		= ring_info->ring_buffer->interrupt_mask;
+<<<<<<< HEAD
 	mutex_unlock(&ring_info->ring_buffer_mutex);
 
+=======
+>>>>>>> master
 	return 0;
 }
 EXPORT_SYMBOL_GPL(hv_ringbuffer_get_debuginfo);

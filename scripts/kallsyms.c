@@ -138,6 +138,7 @@ static struct sym_entry *read_symbol(FILE *in, char **buf, size_t *buf_len)
 		}
 		return NULL;
 	}
+<<<<<<< HEAD
 
 	if ((*buf)[readlen - 1] == '\n')
 		(*buf)[readlen - 1] = 0;
@@ -153,6 +154,9 @@ static struct sym_entry *read_symbol(FILE *in, char **buf, size_t *buf_len)
 	len = strlen(name);
 
 	if (len >= KSYM_NAME_LEN) {
+=======
+	if (strlen(sym) >= KSYM_NAME_LEN) {
+>>>>>>> master
 		fprintf(stderr, "Symbol %s too long for kallsyms (%zu >= %d).\n"
 				"Please increase KSYM_NAME_LEN both in kernel and kallsyms.c\n",
 			name, len, KSYM_NAME_LEN);
@@ -166,8 +170,24 @@ static struct sym_entry *read_symbol(FILE *in, char **buf, size_t *buf_len)
 	if (is_ignored_symbol(name, type))
 		return NULL;
 
+<<<<<<< HEAD
 	check_symbol_range(name, addr, text_ranges, ARRAY_SIZE(text_ranges));
 	check_symbol_range(name, addr, &percpu_range, 1);
+=======
+	}
+	else if (toupper(stype) == 'U' ||
+		 is_arm_mapping_symbol(sym))
+		return -1;
+	/* exclude also MIPS ELF local symbols ($L123 instead of .L123) */
+	else if (sym[0] == '$')
+		return -1;
+	/* exclude debugging symbols */
+	else if (stype == 'N' || stype == 'n')
+		return -1;
+	/* exclude s390 kasan local symbols */
+	else if (!strncmp(sym, ".LASANPC", 8))
+		return -1;
+>>>>>>> master
 
 	/* include the type field in the symbol name, so that it gets
 	 * compressed together */

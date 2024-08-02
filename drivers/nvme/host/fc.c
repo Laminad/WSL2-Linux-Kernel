@@ -159,6 +159,11 @@ struct nvme_fc_ctrl {
 	u32			cnum;
 
 	bool			ioq_live;
+<<<<<<< HEAD
+=======
+	bool			assoc_active;
+	atomic_t		err_work_active;
+>>>>>>> master
 	u64			association_id;
 	struct nvmefc_ls_rcv_op	*rcv_disconn;
 
@@ -169,6 +174,7 @@ struct nvme_fc_ctrl {
 
 	struct work_struct	ioerr_work;
 	struct delayed_work	connect_work;
+	struct work_struct	err_work;
 
 	struct kref		ref;
 	unsigned long		flags;
@@ -221,6 +227,11 @@ static LIST_HEAD(nvme_fc_lport_list);
 static DEFINE_IDA(nvme_fc_local_port_cnt);
 static DEFINE_IDA(nvme_fc_ctrl_cnt);
 
+<<<<<<< HEAD
+=======
+static struct workqueue_struct *nvme_fc_wq;
+
+>>>>>>> master
 /*
  * These items are short-term. They will eventually be moved into
  * a generic FC class. See comments in module init.
@@ -2534,6 +2545,7 @@ __nvme_fc_abort_outstanding_ios(struct nvme_fc_ctrl *ctrl, bool start_queues)
 static void
 nvme_fc_error_recovery(struct nvme_fc_ctrl *ctrl, char *errmsg)
 {
+<<<<<<< HEAD
 	/*
 	 * if an error (io timeout, etc) while (re)connecting, the remote
 	 * port requested terminating of the association (disconnect_ls)
@@ -2547,6 +2559,23 @@ nvme_fc_error_recovery(struct nvme_fc_ctrl *ctrl, char *errmsg)
 		dev_warn(ctrl->ctrl.device,
 			"NVME-FC{%d}: transport error during (re)connect\n",
 			ctrl->cnum);
+=======
+	int active;
+
+	/*
+	 * if an error (io timeout, etc) while (re)connecting,
+	 * it's an error on creating the new association.
+	 * Start the error recovery thread if it hasn't already
+	 * been started. It is expected there could be multiple
+	 * ios hitting this path before things are cleaned up.
+	 */
+	if (ctrl->ctrl.state == NVME_CTRL_CONNECTING) {
+		active = atomic_xchg(&ctrl->err_work_active, 1);
+		if (!active && !queue_work(nvme_fc_wq, &ctrl->err_work)) {
+			atomic_set(&ctrl->err_work_active, 0);
+			WARN_ON(1);
+		}
+>>>>>>> master
 		return;
 	}
 
@@ -3281,7 +3310,11 @@ nvme_fc_delete_ctrl(struct nvme_ctrl *nctrl)
 {
 	struct nvme_fc_ctrl *ctrl = to_fc_ctrl(nctrl);
 
+<<<<<<< HEAD
 	cancel_work_sync(&ctrl->ioerr_work);
+=======
+	cancel_work_sync(&ctrl->err_work);
+>>>>>>> master
 	cancel_delayed_work_sync(&ctrl->connect_work);
 	/*
 	 * kill the association on the link side.  this will block
@@ -3343,13 +3376,31 @@ nvme_fc_reconnect_or_delete(struct nvme_fc_ctrl *ctrl, int status)
 }
 
 static void
+__nvme_fc_terminate_io(struct nvme_fc_ctrl *ctrl)
+{
+	nvme_stop_keep_alive(&ctrl->ctrl);
+
+	/* will block will waiting for io to terminate */
+	nvme_fc_delete_association(ctrl);
+
+	if (ctrl->ctrl.state != NVME_CTRL_CONNECTING &&
+	    !nvme_change_ctrl_state(&ctrl->ctrl, NVME_CTRL_CONNECTING))
+		dev_err(ctrl->ctrl.device,
+			"NVME-FC{%d}: error_recovery: Couldn't change state "
+			"to CONNECTING\n", ctrl->cnum);
+}
+
+static void
 nvme_fc_reset_ctrl_work(struct work_struct *work)
 {
 	struct nvme_fc_ctrl *ctrl =
 		container_of(work, struct nvme_fc_ctrl, ctrl.reset_work);
 
+	__nvme_fc_terminate_io(ctrl);
+
 	nvme_stop_ctrl(&ctrl->ctrl);
 
+<<<<<<< HEAD
 	/* will block will waiting for io to terminate */
 	nvme_fc_delete_association(ctrl);
 
@@ -3371,6 +3422,38 @@ nvme_fc_reset_ctrl_work(struct work_struct *work)
 	}
 }
 
+=======
+	if (ctrl->rport->remoteport.port_state == FC_OBJSTATE_ONLINE)
+		ret = nvme_fc_create_association(ctrl);
+	else
+		ret = -ENOTCONN;
+
+	if (ret)
+		nvme_fc_reconnect_or_delete(ctrl, ret);
+	else
+		dev_info(ctrl->ctrl.device,
+			"NVME-FC{%d}: controller reset complete\n",
+			ctrl->cnum);
+}
+
+static void
+nvme_fc_connect_err_work(struct work_struct *work)
+{
+	struct nvme_fc_ctrl *ctrl =
+			container_of(work, struct nvme_fc_ctrl, err_work);
+
+	__nvme_fc_terminate_io(ctrl);
+
+	atomic_set(&ctrl->err_work_active, 0);
+
+	/*
+	 * Rescheduling the connection after recovering
+	 * from the io error is left to the reconnect work
+	 * item, which is what should have stalled waiting on
+	 * the io that had the error that scheduled this work.
+	 */
+}
+>>>>>>> master
 
 static const struct nvme_ctrl_ops nvme_fc_ctrl_ops = {
 	.name			= "fc",
@@ -3498,6 +3581,11 @@ nvme_fc_init_ctrl(struct device *dev, struct nvmf_ctrl_options *opts,
 	ctrl->dev = lport->dev;
 	ctrl->cnum = idx;
 	ctrl->ioq_live = false;
+<<<<<<< HEAD
+=======
+	ctrl->assoc_active = false;
+	atomic_set(&ctrl->err_work_active, 0);
+>>>>>>> master
 	init_waitqueue_head(&ctrl->ioabort_wait);
 
 	get_device(ctrl->dev);
@@ -3505,7 +3593,11 @@ nvme_fc_init_ctrl(struct device *dev, struct nvmf_ctrl_options *opts,
 
 	INIT_WORK(&ctrl->ctrl.reset_work, nvme_fc_reset_ctrl_work);
 	INIT_DELAYED_WORK(&ctrl->connect_work, nvme_fc_connect_ctrl_work);
+<<<<<<< HEAD
 	INIT_WORK(&ctrl->ioerr_work, nvme_fc_ctrl_ioerr_work);
+=======
+	INIT_WORK(&ctrl->err_work, nvme_fc_connect_err_work);
+>>>>>>> master
 	spin_lock_init(&ctrl->lock);
 
 	/* io queue count */
@@ -3576,6 +3668,7 @@ fail_ctrl:
 	nvme_change_ctrl_state(&ctrl->ctrl, NVME_CTRL_DELETING);
 	cancel_work_sync(&ctrl->ioerr_work);
 	cancel_work_sync(&ctrl->ctrl.reset_work);
+	cancel_work_sync(&ctrl->err_work);
 	cancel_delayed_work_sync(&ctrl->connect_work);
 
 	ctrl->ctrl.opts = NULL;
@@ -3886,6 +3979,10 @@ static int __init nvme_fc_init_module(void)
 {
 	int ret;
 
+	nvme_fc_wq = alloc_workqueue("nvme_fc_wq", WQ_MEM_RECLAIM, 0);
+	if (!nvme_fc_wq)
+		return -ENOMEM;
+
 	/*
 	 * NOTE:
 	 * It is expected that in the future the kernel will combine
@@ -3903,7 +4000,12 @@ static int __init nvme_fc_init_module(void)
 	ret = class_register(&fc_class);
 	if (ret) {
 		pr_err("couldn't register class fc\n");
+<<<<<<< HEAD
 		return ret;
+=======
+		ret = PTR_ERR(fc_class);
+		goto out_destroy_wq;
+>>>>>>> master
 	}
 
 	/*
@@ -3926,7 +4028,13 @@ static int __init nvme_fc_init_module(void)
 out_destroy_device:
 	device_destroy(&fc_class, MKDEV(0, 0));
 out_destroy_class:
+<<<<<<< HEAD
 	class_unregister(&fc_class);
+=======
+	class_destroy(fc_class);
+out_destroy_wq:
+	destroy_workqueue(nvme_fc_wq);
+>>>>>>> master
 
 	return ret;
 }
@@ -3961,8 +4069,17 @@ static void __exit nvme_fc_exit_module(void)
 
 	nvmf_unregister_transport(&nvme_fc_transport);
 
+<<<<<<< HEAD
 	device_destroy(&fc_class, MKDEV(0, 0));
 	class_unregister(&fc_class);
+=======
+	ida_destroy(&nvme_fc_local_port_cnt);
+	ida_destroy(&nvme_fc_ctrl_cnt);
+
+	device_destroy(fc_class, MKDEV(0, 0));
+	class_destroy(fc_class);
+	destroy_workqueue(nvme_fc_wq);
+>>>>>>> master
 }
 
 module_init(nvme_fc_init_module);

@@ -296,6 +296,7 @@ out:
 /* A writeback failed: mark the page as bad, and invalidate the page cache */
 static void nfs_set_pageerror(struct address_space *mapping)
 {
+<<<<<<< HEAD
 	struct inode *inode = mapping->host;
 
 	nfs_zap_mapping(mapping->host, mapping);
@@ -317,6 +318,9 @@ static void nfs_mapping_set_error(struct folio *folio, int error)
 		errseq_set(&mapping->host->i_sb->s_wb_err,
 			   error == -ENOSPC ? -ENOSPC : -EIO);
 	nfs_set_pageerror(mapping);
+=======
+	nfs_zap_mapping(mapping->host, mapping);
+>>>>>>> master
 }
 
 /*
@@ -622,8 +626,13 @@ static int nfs_page_async_flush(struct folio *folio,
 	nfs_folio_set_writeback(folio);
 	WARN_ON_ONCE(test_bit(PG_CLEAN, &req->wb_flags));
 
+<<<<<<< HEAD
 	/* If there is a fatal error that covers this write, just exit */
 	ret = pgio->pg_error;
+=======
+	ret = req->wb_context->error;
+	/* If there is a fatal error that covers this write, just exit */
+>>>>>>> master
 	if (nfs_error_is_fatal_on_server(ret))
 		goto out_launder;
 
@@ -633,6 +642,7 @@ static int nfs_page_async_flush(struct folio *folio,
 		/*
 		 * Remove the problematic req upon fatal errors on the server
 		 */
+<<<<<<< HEAD
 		if (nfs_error_is_fatal_on_server(ret))
 			goto out_launder;
 		if (wbc->sync_mode == WB_SYNC_NONE)
@@ -640,6 +650,15 @@ static int nfs_page_async_flush(struct folio *folio,
 		folio_redirty_for_writepage(wbc, folio);
 		nfs_redirty_request(req);
 		pgio->pg_error = 0;
+=======
+		if (nfs_error_is_fatal(ret)) {
+			nfs_context_set_write_error(req->wb_context, ret);
+			if (nfs_error_is_fatal_on_server(ret))
+				goto out_launder;
+		} else
+			ret = -EAGAIN;
+		nfs_redirty_request(req);
+>>>>>>> master
 	} else
 		nfs_add_stats(folio_file_mapping(folio)->host,
 			      NFSIOS_WRITEPAGES, 1);
@@ -806,8 +825,13 @@ static void nfs_inode_remove_request(struct nfs_page *req)
 	}
 
 	if (test_and_clear_bit(PG_INODE_REF, &req->wb_flags)) {
+<<<<<<< HEAD
 		atomic_long_dec(&nfsi->nrequests);
 		nfs_release_request(req);
+=======
+		nfs_release_request(req);
+		atomic_long_dec(&nfsi->nrequests);
+>>>>>>> master
 	}
 }
 
@@ -1005,9 +1029,14 @@ static void nfs_write_completion(struct nfs_pgio_header *hdr)
 		nfs_list_remove_request(req);
 		if (test_bit(NFS_IOHDR_ERROR, &hdr->flags) &&
 		    (hdr->good_bytes < bytes)) {
+<<<<<<< HEAD
 			trace_nfs_comp_error(hdr->inode, req, hdr->error);
 			nfs_mapping_set_error(nfs_page_to_folio(req),
 					      hdr->error);
+=======
+			nfs_set_pageerror(page_file_mapping(req->wb_page));
+			nfs_context_set_write_error(req->wb_context, hdr->error);
+>>>>>>> master
 			goto remove_req;
 		}
 		if (nfs_write_need_commit(hdr)) {
@@ -1369,9 +1398,14 @@ int nfs_update_folio(struct file *file, struct folio *folio,
 		     unsigned int offset, unsigned int count)
 {
 	struct nfs_open_context *ctx = nfs_file_open_context(file);
+<<<<<<< HEAD
 	struct address_space *mapping = folio_file_mapping(folio);
 	struct inode *inode = mapping->host;
 	unsigned int pagelen = nfs_folio_length(folio);
+=======
+	struct address_space *mapping = page_file_mapping(page);
+	struct inode	*inode = mapping->host;
+>>>>>>> master
 	int		status = 0;
 
 	nfs_inc_stats(inode, NFSIOS_VFSUPDATEPAGE);
@@ -1390,6 +1424,11 @@ int nfs_update_folio(struct file *file, struct folio *folio,
 	status = nfs_writepage_setup(ctx, folio, offset, count);
 	if (status < 0)
 		nfs_set_pageerror(mapping);
+<<<<<<< HEAD
+=======
+	else
+		__set_page_dirty_nobuffers(page);
+>>>>>>> master
 out:
 	dprintk("NFS:       nfs_update_folio returns %d (isize %lld)\n",
 			status, (long long)i_size_read(inode));
@@ -1444,16 +1483,32 @@ static void nfs_async_write_error(struct list_head *head, int error)
 	while (!list_empty(head)) {
 		req = nfs_list_entry(head->next);
 		nfs_list_remove_request(req);
+<<<<<<< HEAD
 		if (nfs_error_is_fatal_on_server(error))
 			nfs_write_error(req, error);
 		else
 			nfs_redirty_request(req);
+=======
+		if (nfs_error_is_fatal(error)) {
+			nfs_context_set_write_error(req->wb_context, error);
+			if (nfs_error_is_fatal_on_server(error)) {
+				nfs_write_error_remove_page(req);
+				continue;
+			}
+		}
+		nfs_redirty_request(req);
+>>>>>>> master
 	}
 }
 
 static void nfs_async_write_reschedule_io(struct nfs_pgio_header *hdr)
 {
 	nfs_async_write_error(&hdr->pages, 0);
+<<<<<<< HEAD
+=======
+	filemap_fdatawrite_range(hdr->inode->i_mapping, hdr->args.offset,
+			hdr->args.offset + hdr->args.count - 1);
+>>>>>>> master
 }
 
 static const struct nfs_pgio_completion_ops nfs_async_write_completion_ops = {

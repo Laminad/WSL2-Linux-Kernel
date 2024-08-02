@@ -1585,9 +1585,12 @@ typedef unsigned int pgtbl_mod_mask;
 #define has_transparent_hugepage() IS_BUILTIN(CONFIG_TRANSPARENT_HUGEPAGE)
 #endif
 
+<<<<<<< HEAD:include/linux/pgtable.h
 #ifndef has_transparent_pud_hugepage
 #define has_transparent_pud_hugepage() IS_BUILTIN(CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD)
 #endif
+=======
+>>>>>>> master:include/asm-generic/pgtable.h
 /*
  * On some architectures it depends on the mm if the p4d/pud or pmd
  * layer of the page table hierarchy is folded or not.
@@ -1604,6 +1607,7 @@ typedef unsigned int pgtbl_mod_mask;
 #define mm_pmd_folded(mm)	__is_defined(__PAGETABLE_PMD_FOLDED)
 #endif
 
+<<<<<<< HEAD:include/linux/pgtable.h
 #ifndef p4d_offset_lockless
 #define p4d_offset_lockless(pgdp, pgd, address) p4d_offset(&(pgd), address)
 #endif
@@ -1701,3 +1705,6 @@ pgprot_t vm_get_page_prot(unsigned long vm_flags)			\
 EXPORT_SYMBOL(vm_get_page_prot);
 
 #endif /* _LINUX_PGTABLE_H */
+=======
+#endif /* _ASM_GENERIC_PGTABLE_H */
+>>>>>>> master:include/asm-generic/pgtable.h

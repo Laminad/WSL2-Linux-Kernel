@@ -90,6 +90,10 @@ struct smp_dev {
 	u8			local_rand[16];
 	bool			debug_key;
 
+<<<<<<< HEAD
+=======
+	struct crypto_cipher	*tfm_aes;
+>>>>>>> master
 	struct crypto_shash	*tfm_cmac;
 	struct crypto_kpp	*tfm_ecdh;
 };
@@ -727,10 +731,13 @@ static u8 check_enc_key_size(struct l2cap_conn *conn, __u8 max_key_size)
 	struct hci_dev *hdev = conn->hcon->hdev;
 	struct smp_chan *smp = chan->data;
 
+<<<<<<< HEAD
 	if (conn->hcon->pending_sec_level == BT_SECURITY_FIPS &&
 	    max_key_size != SMP_MAX_ENC_KEY_SIZE)
 		return SMP_ENC_KEY_SIZE;
 
+=======
+>>>>>>> master
 	if (max_key_size > hdev->le_max_key_size ||
 	    max_key_size < SMP_MIN_ENC_KEY_SIZE)
 		return SMP_ENC_KEY_SIZE;
@@ -3409,6 +3416,104 @@ int smp_force_bredr(struct hci_dev *hdev, bool enable)
 	return 0;
 }
 
+<<<<<<< HEAD
+=======
+static const struct file_operations force_bredr_smp_fops = {
+	.open		= simple_open,
+	.read		= force_bredr_smp_read,
+	.write		= force_bredr_smp_write,
+	.llseek		= default_llseek,
+};
+
+static ssize_t le_min_key_size_read(struct file *file,
+				     char __user *user_buf,
+				     size_t count, loff_t *ppos)
+{
+	struct hci_dev *hdev = file->private_data;
+	char buf[4];
+
+	snprintf(buf, sizeof(buf), "%2u\n", hdev->le_min_key_size);
+
+	return simple_read_from_buffer(user_buf, count, ppos, buf, strlen(buf));
+}
+
+static ssize_t le_min_key_size_write(struct file *file,
+				      const char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct hci_dev *hdev = file->private_data;
+	char buf[32];
+	size_t buf_size = min(count, (sizeof(buf) - 1));
+	u8 key_size;
+
+	if (copy_from_user(buf, user_buf, buf_size))
+		return -EFAULT;
+
+	buf[buf_size] = '\0';
+
+	sscanf(buf, "%hhu", &key_size);
+
+	if (key_size > hdev->le_max_key_size ||
+	    key_size < SMP_MIN_ENC_KEY_SIZE)
+		return -EINVAL;
+
+	hdev->le_min_key_size = key_size;
+
+	return count;
+}
+
+static const struct file_operations le_min_key_size_fops = {
+	.open		= simple_open,
+	.read		= le_min_key_size_read,
+	.write		= le_min_key_size_write,
+	.llseek		= default_llseek,
+};
+
+static ssize_t le_max_key_size_read(struct file *file,
+				     char __user *user_buf,
+				     size_t count, loff_t *ppos)
+{
+	struct hci_dev *hdev = file->private_data;
+	char buf[4];
+
+	snprintf(buf, sizeof(buf), "%2u\n", hdev->le_max_key_size);
+
+	return simple_read_from_buffer(user_buf, count, ppos, buf, strlen(buf));
+}
+
+static ssize_t le_max_key_size_write(struct file *file,
+				      const char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct hci_dev *hdev = file->private_data;
+	char buf[32];
+	size_t buf_size = min(count, (sizeof(buf) - 1));
+	u8 key_size;
+
+	if (copy_from_user(buf, user_buf, buf_size))
+		return -EFAULT;
+
+	buf[buf_size] = '\0';
+
+	sscanf(buf, "%hhu", &key_size);
+
+	if (key_size > SMP_MAX_ENC_KEY_SIZE ||
+	    key_size < hdev->le_min_key_size)
+		return -EINVAL;
+
+	hdev->le_max_key_size = key_size;
+
+	return count;
+}
+
+static const struct file_operations le_max_key_size_fops = {
+	.open		= simple_open,
+	.read		= le_max_key_size_read,
+	.write		= le_max_key_size_write,
+	.llseek		= default_llseek,
+};
+
+>>>>>>> master
 int smp_register(struct hci_dev *hdev)
 {
 	struct l2cap_chan *chan;

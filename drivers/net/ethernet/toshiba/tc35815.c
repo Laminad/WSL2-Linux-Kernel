@@ -1509,7 +1509,11 @@ tc35815_rx(struct net_device *dev, int limit)
 			lp->rx_skbs[cur_bd].skb = NULL;
 			dma_unmap_single(&lp->pci_dev->dev,
 					 lp->rx_skbs[cur_bd].skb_dma,
+<<<<<<< HEAD
 					 RX_BUF_SIZE, DMA_FROM_DEVICE);
+=======
+					 RX_BUF_SIZE, PCI_DMA_FROMDEVICE);
+>>>>>>> master
 			if (!HAVE_DMA_RXALIGN(lp) && NET_IP_ALIGN != 0)
 				memmove(skb->data, skb->data - NET_IP_ALIGN,
 					pkt_len);

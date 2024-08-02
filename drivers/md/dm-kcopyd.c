@@ -569,7 +569,11 @@ static int run_io_job(struct kcopyd_job *job)
 	 * If we need to write sequentially and some reads or writes failed,
 	 * no point in continuing.
 	 */
+<<<<<<< HEAD
 	if (job->flags & BIT(DM_KCOPYD_WRITE_SEQ) &&
+=======
+	if (test_bit(DM_KCOPYD_WRITE_SEQ, &job->flags) &&
+>>>>>>> master
 	    job->master_job->write_err) {
 		job->write_err = job->master_job->write_err;
 		return -EIO;
@@ -652,6 +656,7 @@ static void do_work(struct work_struct *work)
 	struct dm_kcopyd_client *kc = container_of(work,
 					struct dm_kcopyd_client, kcopyd_work);
 	struct blk_plug plug;
+	unsigned long flags;
 
 	/*
 	 * The order that these are called is *very* important.
@@ -660,9 +665,15 @@ static void do_work(struct work_struct *work)
 	 * list.  io jobs call wake when they complete and it all
 	 * starts again.
 	 */
+<<<<<<< HEAD
 	spin_lock_irq(&kc->job_lock);
 	list_splice_tail_init(&kc->callback_jobs, &kc->complete_jobs);
 	spin_unlock_irq(&kc->job_lock);
+=======
+	spin_lock_irqsave(&kc->job_lock, flags);
+	list_splice_tail_init(&kc->callback_jobs, &kc->complete_jobs);
+	spin_unlock_irqrestore(&kc->job_lock, flags);
+>>>>>>> master
 
 	blk_start_plug(&plug);
 	process_jobs(&kc->complete_jobs, kc, run_complete_job);

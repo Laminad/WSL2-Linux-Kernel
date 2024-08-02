@@ -27,8 +27,101 @@ struct blk_flush_queue {
 
 bool is_flush_rq(struct request *req);
 
+<<<<<<< HEAD
 struct blk_flush_queue *blk_alloc_flush_queue(int node, int cmd_size,
 					      gfp_t flags);
+=======
+/*
+ * @q->queue_lock is set while a queue is being initialized. Since we know
+ * that no other threads access the queue object before @q->queue_lock has
+ * been set, it is safe to manipulate queue flags without holding the
+ * queue_lock if @q->queue_lock == NULL. See also blk_alloc_queue_node() and
+ * blk_init_allocated_queue().
+ */
+static inline void queue_lockdep_assert_held(struct request_queue *q)
+{
+	if (q->queue_lock)
+		lockdep_assert_held(q->queue_lock);
+}
+
+static inline void queue_flag_set_unlocked(unsigned int flag,
+					   struct request_queue *q)
+{
+	if (test_bit(QUEUE_FLAG_INIT_DONE, &q->queue_flags) &&
+	    kref_read(&q->kobj.kref))
+		lockdep_assert_held(q->queue_lock);
+	__set_bit(flag, &q->queue_flags);
+}
+
+static inline void queue_flag_clear_unlocked(unsigned int flag,
+					     struct request_queue *q)
+{
+	if (test_bit(QUEUE_FLAG_INIT_DONE, &q->queue_flags) &&
+	    kref_read(&q->kobj.kref))
+		lockdep_assert_held(q->queue_lock);
+	__clear_bit(flag, &q->queue_flags);
+}
+
+static inline int queue_flag_test_and_clear(unsigned int flag,
+					    struct request_queue *q)
+{
+	queue_lockdep_assert_held(q);
+
+	if (test_bit(flag, &q->queue_flags)) {
+		__clear_bit(flag, &q->queue_flags);
+		return 1;
+	}
+
+	return 0;
+}
+
+static inline int queue_flag_test_and_set(unsigned int flag,
+					  struct request_queue *q)
+{
+	queue_lockdep_assert_held(q);
+
+	if (!test_bit(flag, &q->queue_flags)) {
+		__set_bit(flag, &q->queue_flags);
+		return 0;
+	}
+
+	return 1;
+}
+
+static inline void queue_flag_set(unsigned int flag, struct request_queue *q)
+{
+	queue_lockdep_assert_held(q);
+	__set_bit(flag, &q->queue_flags);
+}
+
+static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
+{
+	queue_lockdep_assert_held(q);
+	__clear_bit(flag, &q->queue_flags);
+}
+
+static inline struct blk_flush_queue *blk_get_flush_queue(
+		struct request_queue *q, struct blk_mq_ctx *ctx)
+{
+	if (q->mq_ops)
+		return blk_mq_map_queue(q, ctx->cpu)->fq;
+	return q->fq;
+}
+
+static inline void __blk_get_queue(struct request_queue *q)
+{
+	kobject_get(&q->kobj);
+}
+
+static inline bool
+is_flush_rq(struct request *req, struct blk_mq_hw_ctx *hctx)
+{
+	return hctx->fq->flush_rq == req;
+}
+
+struct blk_flush_queue *blk_alloc_flush_queue(struct request_queue *q,
+		int node, int cmd_size, gfp_t flags);
+>>>>>>> master
 void blk_free_flush_queue(struct blk_flush_queue *q);
 
 void blk_freeze_queue(struct request_queue *q);
@@ -354,6 +447,34 @@ static inline void req_set_nomerge(struct request_queue *q, struct request *req)
 }
 
 /*
+<<<<<<< HEAD
+=======
+ * Steal a bit from this field for legacy IO path atomic IO marking. Note that
+ * setting the deadline clears the bottom bit, potentially clearing the
+ * completed bit. The user has to be OK with this (current ones are fine).
+ */
+static inline void blk_rq_set_deadline(struct request *rq, unsigned long time)
+{
+	rq->__deadline = time & ~0x1UL;
+}
+
+static inline unsigned long blk_rq_deadline(struct request *rq)
+{
+	return rq->__deadline & ~0x1UL;
+}
+
+/*
+ * The max size one bio can handle is UINT_MAX becasue bvec_iter.bi_size
+ * is defined as 'unsigned int', meantime it has to aligned to with logical
+ * block size which is the minimum accepted unit by hardware.
+ */
+static inline unsigned int bio_allowed_max_sectors(struct request_queue *q)
+{
+	return round_down(UINT_MAX, queue_logical_block_size(q)) >> 9;
+}
+
+/*
+>>>>>>> master
  * Internal io_context interface
  */
 struct io_cq *ioc_find_get_icq(struct request_queue *q);

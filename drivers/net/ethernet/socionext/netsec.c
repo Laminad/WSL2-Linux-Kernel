@@ -1232,6 +1232,10 @@ static void netsec_uninit_pkt_dring(struct netsec_priv *priv, int id)
 
 	dring->head = 0;
 	dring->tail = 0;
+<<<<<<< HEAD
+=======
+	dring->pkt_cnt = 0;
+>>>>>>> master
 
 	if (id == NETSEC_RING_TX)
 		netdev_reset_queue(priv->ndev);

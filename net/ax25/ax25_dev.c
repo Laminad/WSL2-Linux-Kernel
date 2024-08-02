@@ -115,10 +115,30 @@ void ax25_dev_device_down(struct net_device *dev)
 		if (s->forward == dev)
 			s->forward = NULL;
 
+<<<<<<< HEAD
 	list_for_each_entry(s, &ax25_dev_list, list) {
 		if (s == ax25_dev) {
 			list_del(&s->list);
 			break;
+=======
+	if ((s = ax25_dev_list) == ax25_dev) {
+		ax25_dev_list = s->next;
+		spin_unlock_bh(&ax25_dev_lock);
+		dev->ax25_ptr = NULL;
+		dev_put(dev);
+		kfree(ax25_dev);
+		return;
+	}
+
+	while (s != NULL && s->next != NULL) {
+		if (s->next == ax25_dev) {
+			s->next = ax25_dev->next;
+			spin_unlock_bh(&ax25_dev_lock);
+			dev->ax25_ptr = NULL;
+			dev_put(dev);
+			kfree(ax25_dev);
+			return;
+>>>>>>> master
 		}
 	}
 

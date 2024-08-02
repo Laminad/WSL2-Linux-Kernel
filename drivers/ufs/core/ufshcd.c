@@ -131,6 +131,12 @@ int ufshcd_dump_regs(struct ufs_hba *hba, size_t offset, size_t len,
 {
 	u32 *regs;
 	size_t pos;
+<<<<<<< HEAD:drivers/ufs/core/ufshcd.c
+=======
+
+	if (offset % 4 != 0 || len % 4 != 0) /* keep readl happy */
+		return -EINVAL;
+>>>>>>> master:drivers/scsi/ufs/ufshcd.c
 
 	if (offset % 4 != 0 || len % 4 != 0) /* keep readl happy */
 		return -EINVAL;
@@ -139,6 +145,7 @@ int ufshcd_dump_regs(struct ufs_hba *hba, size_t offset, size_t len,
 	if (!regs)
 		return -ENOMEM;
 
+<<<<<<< HEAD:drivers/ufs/core/ufshcd.c
 	for (pos = 0; pos < len; pos += 4) {
 		if (offset == 0 &&
 		    pos >= REG_UIC_ERROR_CODE_PHY_ADAPTER_LAYER &&
@@ -146,6 +153,10 @@ int ufshcd_dump_regs(struct ufs_hba *hba, size_t offset, size_t len,
 			continue;
 		regs[pos / 4] = ufshcd_readl(hba, offset + pos);
 	}
+=======
+	for (pos = 0; pos < len; pos += 4)
+		regs[pos / 4] = ufshcd_readl(hba, offset + pos);
+>>>>>>> master:drivers/scsi/ufs/ufshcd.c
 
 	ufshcd_hex_dump(prefix, regs, len);
 	kfree(regs);
@@ -236,6 +247,7 @@ ufs_get_desired_pm_lvl_for_dev_link_state(enum ufs_dev_pwr_mode dev_state,
 
 static const struct ufs_dev_quirk ufs_fixups[] = {
 	/* UFS cards deviations table */
+<<<<<<< HEAD:drivers/ufs/core/ufshcd.c
 	{ .wmanufacturerid = UFS_VENDOR_MICRON,
 	  .model = UFS_ANY_MODEL,
 	  .quirk = UFS_DEVICE_QUIRK_DELAY_BEFORE_LPM },
@@ -260,6 +272,30 @@ static const struct ufs_dev_quirk ufs_fixups[] = {
 	  .model = "THGLF2G9D8KBADG",
 	  .quirk = UFS_DEVICE_QUIRK_PA_TACTIVATE },
 	{}
+=======
+	UFS_FIX(UFS_VENDOR_SAMSUNG, UFS_ANY_MODEL,
+		UFS_DEVICE_QUIRK_DELAY_BEFORE_LPM),
+	UFS_FIX(UFS_VENDOR_SAMSUNG, UFS_ANY_MODEL, UFS_DEVICE_NO_VCCQ),
+	UFS_FIX(UFS_VENDOR_SAMSUNG, UFS_ANY_MODEL,
+		UFS_DEVICE_QUIRK_RECOVERY_FROM_DL_NAC_ERRORS),
+	UFS_FIX(UFS_VENDOR_SAMSUNG, UFS_ANY_MODEL,
+		UFS_DEVICE_NO_FASTAUTO),
+	UFS_FIX(UFS_VENDOR_SAMSUNG, UFS_ANY_MODEL,
+		UFS_DEVICE_QUIRK_HOST_PA_TACTIVATE),
+	UFS_FIX(UFS_VENDOR_TOSHIBA, UFS_ANY_MODEL,
+		UFS_DEVICE_QUIRK_DELAY_BEFORE_LPM),
+	UFS_FIX(UFS_VENDOR_TOSHIBA, "THGLF2G9C8KBADG",
+		UFS_DEVICE_QUIRK_PA_TACTIVATE),
+	UFS_FIX(UFS_VENDOR_TOSHIBA, "THGLF2G9D8KBADG",
+		UFS_DEVICE_QUIRK_PA_TACTIVATE),
+	UFS_FIX(UFS_VENDOR_SKHYNIX, UFS_ANY_MODEL, UFS_DEVICE_NO_VCCQ),
+	UFS_FIX(UFS_VENDOR_SKHYNIX, UFS_ANY_MODEL,
+		UFS_DEVICE_QUIRK_HOST_PA_SAVECONFIGTIME),
+	UFS_FIX(UFS_VENDOR_SKHYNIX, "hB8aL1" /*H28U62301AMR*/,
+		UFS_DEVICE_QUIRK_HOST_VS_DEBUGSAVECONFIGTIME),
+
+	END_FIX
+>>>>>>> master:drivers/scsi/ufs/ufshcd.c
 };
 
 static irqreturn_t ufshcd_tmc_handler(struct ufs_hba *hba);
@@ -7822,19 +7858,31 @@ static u32 ufshcd_find_max_sup_active_icc_level(struct ufs_hba *hba,
 		goto out;
 	}
 
+<<<<<<< HEAD:drivers/ufs/core/ufshcd.c
 	if (hba->vreg_info.vcc->max_uA)
+=======
+	if (hba->vreg_info.vcc && hba->vreg_info.vcc->max_uA)
+>>>>>>> master:drivers/scsi/ufs/ufshcd.c
 		icc_level = ufshcd_get_max_icc_level(
 				hba->vreg_info.vcc->max_uA,
 				POWER_DESC_MAX_ACTV_ICC_LVLS - 1,
 				&desc_buf[PWR_DESC_ACTIVE_LVLS_VCC_0]);
 
+<<<<<<< HEAD:drivers/ufs/core/ufshcd.c
 	if (hba->vreg_info.vccq->max_uA)
+=======
+	if (hba->vreg_info.vccq && hba->vreg_info.vccq->max_uA)
+>>>>>>> master:drivers/scsi/ufs/ufshcd.c
 		icc_level = ufshcd_get_max_icc_level(
 				hba->vreg_info.vccq->max_uA,
 				icc_level,
 				&desc_buf[PWR_DESC_ACTIVE_LVLS_VCCQ_0]);
 
+<<<<<<< HEAD:drivers/ufs/core/ufshcd.c
 	if (hba->vreg_info.vccq2->max_uA)
+=======
+	if (hba->vreg_info.vccq2 && hba->vreg_info.vccq2->max_uA)
+>>>>>>> master:drivers/scsi/ufs/ufshcd.c
 		icc_level = ufshcd_get_max_icc_level(
 				hba->vreg_info.vccq2->max_uA,
 				icc_level,
@@ -8932,7 +8980,34 @@ static int ufshcd_config_vreg(struct device *dev,
 	if (regulator_count_voltages(vreg->reg) <= 0)
 		return 0;
 
+<<<<<<< HEAD:drivers/ufs/core/ufshcd.c
 	return ufshcd_config_vreg_load(dev, vreg, on ? vreg->max_uA : 0);
+=======
+	BUG_ON(!vreg);
+
+	reg = vreg->reg;
+	name = vreg->name;
+
+	if (regulator_count_voltages(reg) > 0) {
+		if (vreg->min_uV && vreg->max_uV) {
+			min_uV = on ? vreg->min_uV : 0;
+			ret = regulator_set_voltage(reg, min_uV, vreg->max_uV);
+			if (ret) {
+				dev_err(dev,
+					"%s: %s set voltage failed, err=%d\n",
+					__func__, name, ret);
+				goto out;
+			}
+		}
+
+		uA_load = on ? vreg->max_uA : 0;
+		ret = ufshcd_config_vreg_load(dev, vreg, uA_load);
+		if (ret)
+			goto out;
+	}
+out:
+	return ret;
+>>>>>>> master:drivers/scsi/ufs/ufshcd.c
 }
 
 static int ufshcd_enable_vreg(struct device *dev, struct ufs_vreg *vreg)
@@ -10010,7 +10085,12 @@ out:
 	trace_ufshcd_system_resume(dev_name(hba->dev), ret,
 		ktime_to_us(ktime_sub(ktime_get(), start)),
 		hba->curr_dev_pwr_mode, hba->uic_link_state);
+<<<<<<< HEAD:drivers/ufs/core/ufshcd.c
 
+=======
+	if (!ret)
+		hba->is_sys_suspended = false;
+>>>>>>> master:drivers/scsi/ufs/ufshcd.c
 	return ret;
 }
 EXPORT_SYMBOL(ufshcd_system_resume);
@@ -10077,6 +10157,7 @@ static void ufshcd_wl_shutdown(struct device *dev)
 	hba->shutting_down = true;
 	up(&hba->host_sem);
 
+<<<<<<< HEAD:drivers/ufs/core/ufshcd.c
 	/* Turn on everything while shutting down */
 	ufshcd_rpm_get_sync(hba);
 	scsi_device_quiesce(sdev);
@@ -10084,6 +10165,18 @@ static void ufshcd_wl_shutdown(struct device *dev)
 		if (sdev == hba->ufs_device_wlun)
 			continue;
 		scsi_device_quiesce(sdev);
+=======
+	if (!hba->is_powered)
+		goto out;
+
+	if (ufshcd_is_ufs_dev_poweroff(hba) && ufshcd_is_link_off(hba))
+		goto out;
+
+	if (pm_runtime_suspended(hba->dev)) {
+		ret = ufshcd_runtime_resume(hba);
+		if (ret)
+			goto out;
+>>>>>>> master:drivers/scsi/ufs/ufshcd.c
 	}
 	__ufshcd_wl_suspend(hba, UFS_SHUTDOWN_PM);
 

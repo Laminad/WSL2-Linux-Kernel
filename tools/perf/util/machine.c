@@ -1706,6 +1706,20 @@ static int machine__update_kernel_mmap(struct machine *machine,
 	return err;
 }
 
+static void machine__update_kernel_mmap(struct machine *machine,
+				     u64 start, u64 end)
+{
+	struct map *map = machine__kernel_map(machine);
+
+	map__get(map);
+	map_groups__remove(&machine->kmaps, map);
+
+	machine__set_kernel_mmap(machine, start, end);
+
+	map_groups__insert(&machine->kmaps, map);
+	map__put(map);
+}
+
 int machine__create_kernel_maps(struct machine *machine)
 {
 	struct dso *kernel = machine__get_kernel(machine);
@@ -1741,9 +1755,13 @@ int machine__create_kernel_maps(struct machine *machine)
 		 * we have a real start address now, so re-order the kmaps
 		 * assume it's the last in the kmaps
 		 */
+<<<<<<< HEAD
 		ret = machine__update_kernel_mmap(machine, start, end);
 		if (ret < 0)
 			goto out_put;
+=======
+		machine__update_kernel_mmap(machine, addr, ~0ULL);
+>>>>>>> master
 	}
 
 	if (machine__create_extra_kernel_maps(machine, kernel))
@@ -1889,6 +1907,7 @@ static int machine__process_kernel_mmap_event(struct machine *machine,
 		if (strstr(kernel->long_name, "vmlinux"))
 			dso__set_short_name(kernel, "[kernel.vmlinux]", false);
 
+<<<<<<< HEAD
 		if (machine__update_kernel_mmap(machine, xm->start, xm->end) < 0) {
 			dso__put(kernel);
 			goto out_problem;
@@ -1896,6 +1915,10 @@ static int machine__process_kernel_mmap_event(struct machine *machine,
 
 		if (build_id__is_defined(bid))
 			dso__set_build_id(kernel, bid);
+=======
+		machine__update_kernel_mmap(machine, event->mmap.start,
+					 event->mmap.start + event->mmap.len);
+>>>>>>> master
 
 		/*
 		 * Avoid using a zero address (kptr_restrict) for the ref reloc
@@ -2905,6 +2928,27 @@ static u64 get_leaf_frame_caller(struct perf_sample *sample,
 		return 0;
 }
 
+static int find_prev_cpumode(struct ip_callchain *chain, struct thread *thread,
+			     struct callchain_cursor *cursor,
+			     struct symbol **parent,
+			     struct addr_location *root_al,
+			     u8 *cpumode, int ent)
+{
+	int err = 0;
+
+	while (--ent >= 0) {
+		u64 ip = chain->ips[ent];
+
+		if (ip >= PERF_CONTEXT_MAX) {
+			err = add_callchain_ip(thread, cursor, parent,
+					       root_al, cpumode, ip,
+					       false, NULL, NULL, 0);
+			break;
+		}
+	}
+	return err;
+}
+
 static int thread__resolve_callchain_sample(struct thread *thread,
 					    struct callchain_cursor *cursor,
 					    struct evsel *evsel,
@@ -3016,7 +3060,11 @@ static int thread__resolve_callchain_sample(struct thread *thread,
 	}
 
 check_calls:
+<<<<<<< HEAD
 	if (chain && callchain_param.order != ORDER_CALLEE) {
+=======
+	if (callchain_param.order != ORDER_CALLEE) {
+>>>>>>> master
 		err = find_prev_cpumode(chain, thread, cursor, parent, root_al,
 					&cpumode, chain->nr - first_call);
 		if (err)
@@ -3045,6 +3093,7 @@ check_calls:
 				return (err < 0) ? err : 0;
 			continue;
 		}
+<<<<<<< HEAD
 
 		/*
 		 * PERF_CONTEXT_USER allows us to locate where the user stack ends.
@@ -3073,6 +3122,8 @@ check_calls:
 					return (err < 0) ? err : 0;
 			}
 		}
+=======
+>>>>>>> master
 
 		err = add_callchain_ip(thread, cursor, parent,
 				       root_al, &cpumode, ip,
@@ -3365,11 +3416,14 @@ out:
 	return addr_cpumode;
 }
 
+<<<<<<< HEAD
 struct dso *machine__findnew_dso_id(struct machine *machine, const char *filename, struct dso_id *id)
 {
 	return dsos__findnew_id(&machine->dsos, filename, id);
 }
 
+=======
+>>>>>>> master
 struct dso *machine__findnew_dso(struct machine *machine, const char *filename)
 {
 	return machine__findnew_dso_id(machine, filename, NULL);

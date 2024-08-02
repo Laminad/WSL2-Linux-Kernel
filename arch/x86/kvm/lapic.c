@@ -52,6 +52,17 @@
 #define mod_64(x, y) ((x) % (y))
 #endif
 
+<<<<<<< HEAD
+=======
+#define PRId64 "d"
+#define PRIx64 "llx"
+#define PRIu64 "u"
+#define PRIo64 "o"
+
+/* #define apic_debug(fmt,arg...) printk(KERN_WARNING fmt,##arg) */
+#define apic_debug(fmt, arg...) do {} while (0)
+
+>>>>>>> master
 /* 14 is the version for Xeon and Pentium 8.4.8*/
 #define APIC_VERSION			0x14UL
 #define LAPIC_MMIO_LENGTH		(1 << 12)
@@ -440,7 +451,34 @@ retry:
 				goto retry;
 			}
 
+<<<<<<< HEAD
 			goto out;
+=======
+		/* Hotplug hack: see kvm_apic_match_physical_addr(), ... */
+		if ((apic_x2apic_mode(apic) || x2apic_id > 0xff) &&
+				x2apic_id <= new->max_apic_id)
+			new->phys_map[x2apic_id] = apic;
+		/*
+		 * ... xAPIC ID of VCPUs with APIC ID > 0xff will wrap-around,
+		 * prevent them from masking VCPUs with APIC ID <= 0xff.
+		 */
+		if (!apic_x2apic_mode(apic) && !new->phys_map[xapic_id])
+			new->phys_map[xapic_id] = apic;
+
+		if (!kvm_apic_sw_enabled(apic))
+			continue;
+
+		ldr = kvm_lapic_get_reg(apic, APIC_LDR);
+
+		if (apic_x2apic_mode(apic)) {
+			new->mode |= KVM_APIC_MODE_X2APIC;
+		} else if (ldr) {
+			ldr = GET_APIC_LOGICAL_ID(ldr);
+			if (kvm_lapic_get_reg(apic, APIC_DFR) == APIC_DFR_FLAT)
+				new->mode |= KVM_APIC_MODE_XAPIC_FLAT;
+			else
+				new->mode |= KVM_APIC_MODE_XAPIC_CLUSTER;
+>>>>>>> master
 		}
 
 		kvm_recalculate_logical_map(new, vcpu);
@@ -491,6 +529,7 @@ static inline void apic_set_spiv(struct kvm_lapic *apic, u32 val)
 
 	if (enabled != apic->sw_enabled) {
 		apic->sw_enabled = enabled;
+<<<<<<< HEAD
 		if (enabled)
 			static_branch_slow_dec_deferred(&apic_sw_disabled);
 		else
@@ -503,6 +542,15 @@ static inline void apic_set_spiv(struct kvm_lapic *apic, u32 val)
 	if (enabled) {
 		kvm_make_request(KVM_REQ_APF_READY, apic->vcpu);
 		kvm_xen_sw_enable_lapic(apic->vcpu);
+=======
+		if (enabled) {
+			static_key_slow_dec_deferred(&apic_sw_disabled);
+			recalculate_apic_map(apic->vcpu->kvm);
+		} else
+			static_key_slow_inc(&apic_sw_disabled.key);
+
+		recalculate_apic_map(apic->vcpu->kvm);
+>>>>>>> master
 	}
 }
 
@@ -869,11 +917,28 @@ int kvm_pv_send_ipi(struct kvm *kvm, unsigned long ipi_bitmap_low,
 	rcu_read_lock();
 	map = rcu_dereference(kvm->arch.apic_map);
 
+<<<<<<< HEAD
 	count = -EOPNOTSUPP;
 	if (likely(map)) {
 		count = __pv_send_ipi(&ipi_bitmap_low, map, &irq, min);
 		min += cluster_size;
 		count += __pv_send_ipi(&ipi_bitmap_high, map, &irq, min);
+=======
+	if (unlikely(!map)) {
+		count = -EOPNOTSUPP;
+		goto out;
+	}
+
+	if (min > map->max_apic_id)
+		goto out;
+	/* Bits above cluster_size are masked in the caller.  */
+	for_each_set_bit(i, &ipi_bitmap_low,
+		min((u32)BITS_PER_LONG, (map->max_apic_id - min + 1))) {
+		if (map->phys_map[min + i]) {
+			vcpu = map->phys_map[min + i]->vcpu;
+			count += kvm_apic_set_irq(vcpu, &irq, NULL);
+		}
+>>>>>>> master
 	}
 
 	rcu_read_unlock();
@@ -1770,6 +1835,32 @@ static void apic_update_lvtt(struct kvm_lapic *apic)
 	}
 }
 
+<<<<<<< HEAD
+=======
+static void apic_timer_expired(struct kvm_lapic *apic)
+{
+	struct kvm_vcpu *vcpu = apic->vcpu;
+	struct swait_queue_head *q = &vcpu->wq;
+	struct kvm_timer *ktimer = &apic->lapic_timer;
+
+	if (atomic_read(&apic->lapic_timer.pending))
+		return;
+
+	atomic_inc(&apic->lapic_timer.pending);
+	kvm_set_pending_timer(vcpu);
+
+	/*
+	 * For x86, the atomic_inc() is serialized, thus
+	 * using swait_active() is safe.
+	 */
+	if (swait_active(q))
+		swake_up_one(q);
+
+	if (apic_lvtt_tscdeadline(apic) || ktimer->hv_timer_in_use)
+		ktimer->expired_tscdeadline = ktimer->tscdeadline;
+}
+
+>>>>>>> master
 /*
  * On APICv, this test will cause a busy wait
  * during a higher-priority task.
@@ -2862,7 +2953,11 @@ int kvm_apic_has_interrupt(struct kvm_vcpu *vcpu)
 	struct kvm_lapic *apic = vcpu->arch.apic;
 	u32 ppr;
 
+<<<<<<< HEAD
 	if (!kvm_apic_present(vcpu))
+=======
+	if (!kvm_apic_hw_enabled(apic))
+>>>>>>> master
 		return -1;
 
 	__apic_update_ppr(apic, &ppr);
@@ -3261,7 +3356,32 @@ int kvm_lapic_set_pv_eoi(struct kvm_vcpu *vcpu, u64 data, unsigned long len)
 	return 0;
 }
 
+<<<<<<< HEAD
 int kvm_apic_accept_events(struct kvm_vcpu *vcpu)
+=======
+int kvm_lapic_enable_pv_eoi(struct kvm_vcpu *vcpu, u64 data, unsigned long len)
+{
+	u64 addr = data & ~KVM_MSR_ENABLED;
+	struct gfn_to_hva_cache *ghc = &vcpu->arch.pv_eoi.data;
+	unsigned long new_len;
+
+	if (!IS_ALIGNED(addr, 4))
+		return 1;
+
+	vcpu->arch.pv_eoi.msr_val = data;
+	if (!pv_eoi_enabled(vcpu))
+		return 0;
+
+	if (addr == ghc->gpa && len <= ghc->len)
+		new_len = ghc->len;
+	else
+		new_len = len;
+
+	return kvm_gfn_to_hva_cache_init(vcpu->kvm, ghc, addr, new_len);
+}
+
+void kvm_apic_accept_events(struct kvm_vcpu *vcpu)
+>>>>>>> master
 {
 	struct kvm_lapic *apic = vcpu->arch.apic;
 	u8 sipi_vector;

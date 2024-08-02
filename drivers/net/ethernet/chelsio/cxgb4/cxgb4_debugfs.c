@@ -3435,7 +3435,11 @@ static ssize_t blocked_fl_write(struct file *filp, const char __user *ubuf,
 
 	err = bitmap_parse_user(ubuf, count, t, adap->sge.egr_sz);
 	if (err) {
+<<<<<<< HEAD
 		bitmap_free(t);
+=======
+		kvfree(t);
+>>>>>>> master
 		return err;
 	}
 

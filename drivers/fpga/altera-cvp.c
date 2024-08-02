@@ -581,6 +581,7 @@ static int altera_cvp_probe(struct pci_dev *pdev,
 	int ret, offset;
 	u16 cmd, val;
 	u32 regval;
+<<<<<<< HEAD
 
 	/* Discover the Vendor Specific Offset for this device */
 	offset = pci_find_next_ext_capability(pdev, 0, PCI_EXT_CAP_ID_VNDR);
@@ -588,6 +589,9 @@ static int altera_cvp_probe(struct pci_dev *pdev,
 		dev_err(&pdev->dev, "No Vendor Specific Offset.\n");
 		return -ENODEV;
 	}
+=======
+	int ret;
+>>>>>>> master
 
 	/*
 	 * First check if this is the expected FPGA device. PCI config
@@ -600,7 +604,11 @@ static int altera_cvp_probe(struct pci_dev *pdev,
 		return -ENODEV;
 	}
 
+<<<<<<< HEAD
 	pci_read_config_dword(pdev, offset + VSE_CVP_STATUS, &regval);
+=======
+	pci_read_config_dword(pdev, VSE_CVP_STATUS, &regval);
+>>>>>>> master
 	if (!(regval & VSE_CVP_STATUS_CVP_EN)) {
 		dev_err(&pdev->dev,
 			"CVP is disabled for this device: CVP_STATUS Reg 0x%x\n",
@@ -661,6 +669,15 @@ static int altera_cvp_probe(struct pci_dev *pdev,
 
 	pci_set_drvdata(pdev, mgr);
 
+<<<<<<< HEAD
+=======
+	ret = fpga_mgr_register(mgr);
+	if (ret) {
+		fpga_mgr_free(mgr);
+		goto err_unmap;
+	}
+
+>>>>>>> master
 	return 0;
 
 err_unmap:

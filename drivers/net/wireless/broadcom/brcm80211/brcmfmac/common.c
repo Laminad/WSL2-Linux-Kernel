@@ -132,8 +132,26 @@ static int brcmf_c_download_blob(struct brcmf_if *ifp,
 
 	brcmf_dbg(TRACE, "Enter\n");
 
+<<<<<<< HEAD
 	chunk_buf = kzalloc(struct_size(chunk_buf, data, MAX_CHUNK_LEN),
 			    GFP_KERNEL);
+=======
+	memset(clm_name, 0, sizeof(clm_name));
+	err = brcmf_bus_get_fwname(bus, ".clm_blob", clm_name);
+	if (err) {
+		brcmf_err("get CLM blob file name failed (%d)\n", err);
+		return err;
+	}
+
+	err = firmware_request_nowarn(&clm, clm_name, bus->dev);
+	if (err) {
+		brcmf_info("no clm_blob available (err=%d), device may have limited channels available\n",
+			   err);
+		return 0;
+	}
+
+	chunk_buf = kzalloc(sizeof(*chunk_buf) + MAX_CHUNK_LEN - 1, GFP_KERNEL);
+>>>>>>> master
 	if (!chunk_buf) {
 		err = -ENOMEM;
 		return -ENOMEM;

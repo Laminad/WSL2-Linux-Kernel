@@ -164,17 +164,36 @@ static int raw_v4_input(struct net *net, struct sk_buff *skb,
 			const struct iphdr *iph, int hash)
 {
 	int sdif = inet_sdif(skb);
+<<<<<<< HEAD
 	struct hlist_head *hlist;
 	int dif = inet_iif(skb);
+=======
+	int dif = inet_iif(skb);
+	struct sock *sk;
+	struct hlist_head *head;
+>>>>>>> master
 	int delivered = 0;
 	struct sock *sk;
 
+<<<<<<< HEAD
 	hlist = &raw_v4_hashinfo.ht[hash];
 	rcu_read_lock();
 	sk_for_each_rcu(sk, hlist) {
 		if (!raw_v4_match(net, sk, iph->protocol,
 				  iph->saddr, iph->daddr, dif, sdif))
 			continue;
+=======
+	read_lock(&raw_v4_hashinfo.lock);
+	head = &raw_v4_hashinfo.ht[hash];
+	if (hlist_empty(head))
+		goto out;
+
+	net = dev_net(skb->dev);
+	sk = __raw_v4_lookup(net, __sk_head(head), iph->protocol,
+			     iph->saddr, iph->daddr, dif, sdif);
+
+	while (sk) {
+>>>>>>> master
 		delivered = 1;
 		if ((iph->protocol != IPPROTO_ICMP || !icmp_filter(sk, skb)) &&
 		    ip_mc_sf_allow(sk, iph->daddr, iph->saddr,
@@ -185,6 +204,12 @@ static int raw_v4_input(struct net *net, struct sk_buff *skb,
 			if (clone)
 				raw_rcv(sk, clone);
 		}
+<<<<<<< HEAD
+=======
+		sk = __raw_v4_lookup(net, sk_next(sk), iph->protocol,
+				     iph->saddr, iph->daddr,
+				     dif, sdif);
+>>>>>>> master
 	}
 	rcu_read_unlock();
 	return delivered;

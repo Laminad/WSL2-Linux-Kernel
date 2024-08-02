@@ -98,8 +98,16 @@ static inline void __rcu_read_lock(void)
 static inline void __rcu_read_unlock(void)
 {
 	preempt_enable();
+<<<<<<< HEAD
 	if (IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD))
 		rcu_read_unlock_strict();
+=======
+}
+
+static inline void synchronize_rcu(void)
+{
+	synchronize_sched();
+>>>>>>> master
 }
 
 static inline int rcu_preempt_depth(void)

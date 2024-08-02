@@ -10348,6 +10348,27 @@ sp_rtnl_not_reset:
 
 	if (test_and_clear_bit(BNX2X_SP_RTNL_UPDATE_SVID, &bp->sp_rtnl_state))
 		bnx2x_handle_update_svid_cmd(bp);
+<<<<<<< HEAD
+=======
+
+	if (test_and_clear_bit(BNX2X_SP_RTNL_CHANGE_UDP_PORT,
+			       &bp->sp_rtnl_state)) {
+		if (bnx2x_udp_port_update(bp)) {
+			/* On error, forget configuration */
+			memset(bp->udp_tunnel_ports, 0,
+			       sizeof(struct bnx2x_udp_tunnel) *
+			       BNX2X_UDP_PORT_MAX);
+		} else {
+			/* Since we don't store additional port information,
+			 * if no ports are configured for any feature ask for
+			 * information about currently configured ports.
+			 */
+			if (!bp->udp_tunnel_ports[BNX2X_UDP_PORT_VXLAN].count &&
+			    !bp->udp_tunnel_ports[BNX2X_UDP_PORT_GENEVE].count)
+				udp_tunnel_get_rx_info(bp->dev);
+		}
+	}
+>>>>>>> master
 
 	/* work which needs rtnl lock not-taken (as it takes the lock itself and
 	 * can be called from other contexts as well)

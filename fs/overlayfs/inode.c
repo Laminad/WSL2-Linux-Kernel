@@ -425,8 +425,14 @@ static bool ovl_can_list(struct super_block *sb, const char *s)
 	if (strncmp(s, XATTR_TRUSTED_PREFIX, XATTR_TRUSTED_PREFIX_LEN) != 0)
 		return true;
 
+<<<<<<< HEAD
 	/* list other trusted for superuser only */
 	return ns_capable_noaudit(&init_user_ns, CAP_SYS_ADMIN);
+=======
+	/* Never list trusted.overlay, list other trusted for superuser only */
+	return !ovl_is_private_xattr(s) &&
+	       ns_capable_noaudit(&init_user_ns, CAP_SYS_ADMIN);
+>>>>>>> master
 }
 
 ssize_t ovl_listxattr(struct dentry *dentry, char *list, size_t size)
@@ -980,6 +986,7 @@ static void ovl_map_ino(struct inode *inode, unsigned long ino, int fsid)
 	 * bits to encode layer), set the same value used for st_ino to i_ino,
 	 * so inode number exposed via /proc/locks and a like will be
 	 * consistent with d_ino and st_ino values. An i_ino value inconsistent
+<<<<<<< HEAD
 	 * with d_ino also causes nfsd readdirplus to fail.
 	 */
 	inode->i_ino = ino;
@@ -988,6 +995,18 @@ static void ovl_map_ino(struct inode *inode, unsigned long ino, int fsid)
 	} else if (xinobits && likely(!(ino >> xinoshift))) {
 		inode->i_ino |= (unsigned long)fsid << (xinoshift + 1);
 		return;
+=======
+	 * with d_ino also causes nfsd readdirplus to fail.  When called from
+	 * ovl_new_inode(), ino arg is 0, so i_ino will be updated to real
+	 * upper inode i_ino on ovl_inode_init() or ovl_inode_update().
+	 */
+	if (ovl_same_sb(inode->i_sb) || xinobits) {
+		inode->i_ino = ino;
+		if (xinobits && fsid && !(ino >> (64 - xinobits)))
+			inode->i_ino |= (unsigned long)fsid << (64 - xinobits);
+	} else {
+		inode->i_ino = get_next_ino();
+>>>>>>> master
 	}
 
 	/*
@@ -1428,7 +1447,11 @@ out:
 	return inode;
 
 out_err:
+<<<<<<< HEAD
 	pr_warn_ratelimited("failed to get inode (%i)\n", err);
+=======
+	pr_warn_ratelimited("overlayfs: failed to get inode (%i)\n", err);
+>>>>>>> master
 	inode = ERR_PTR(err);
 	goto out;
 }

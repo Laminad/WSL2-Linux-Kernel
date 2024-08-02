@@ -95,12 +95,15 @@
 
 &hdmi {
 	hpd-gpios = <&gpio 46 GPIO_ACTIVE_HIGH>;
+<<<<<<< HEAD:arch/arm/boot/dts/broadcom/bcm2835-rpi-b-rev2.dts
 	power-domains = <&power RPI_POWER_DOMAIN_HDMI>;
 	status = "okay";
 };
 
 &led_act {
 	gpios = <&gpio 16 GPIO_ACTIVE_LOW>;
+=======
+>>>>>>> master:arch/arm/boot/dts/bcm2835-rpi-b-rev2.dts
 };
 
 &pwm {

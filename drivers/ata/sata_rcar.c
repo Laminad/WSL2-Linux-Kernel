@@ -866,6 +866,11 @@ static int sata_rcar_probe(struct platform_device *pdev)
 	irq = platform_get_irq(pdev, 0);
 	if (irq < 0)
 		return irq;
+<<<<<<< HEAD
+=======
+	if (!irq)
+		return -EINVAL;
+>>>>>>> master
 
 	priv = devm_kzalloc(dev, sizeof(struct sata_rcar_priv), GFP_KERNEL);
 	if (!priv)

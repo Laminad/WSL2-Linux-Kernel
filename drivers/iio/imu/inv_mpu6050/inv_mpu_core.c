@@ -145,22 +145,31 @@ static const struct inv_mpu6050_hw hw_info[] = {
 		.reg = &reg_set_6050,
 		.config = &chip_config_6050,
 		.fifo_size = 1024,
+<<<<<<< HEAD
 		.temp = {INV_MPU6050_TEMP_OFFSET, INV_MPU6050_TEMP_SCALE},
 		.startup_time = {INV_MPU6050_GYRO_STARTUP_TIME, INV_MPU6050_ACCEL_STARTUP_TIME},
+=======
+>>>>>>> master
 	},
 	{
 		.whoami = INV_MPU6500_WHOAMI_VALUE,
 		.name = "MPU6500",
 		.reg = &reg_set_6500,
+<<<<<<< HEAD
 		.config = &chip_config_6500,
 		.fifo_size = 512,
 		.temp = {INV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALE},
 		.startup_time = {INV_MPU6500_GYRO_STARTUP_TIME, INV_MPU6500_ACCEL_STARTUP_TIME},
+=======
+		.config = &chip_config_6050,
+		.fifo_size = 512,
+>>>>>>> master
 	},
 	{
 		.whoami = INV_MPU6515_WHOAMI_VALUE,
 		.name = "MPU6515",
 		.reg = &reg_set_6500,
+<<<<<<< HEAD
 		.config = &chip_config_6500,
 		.fifo_size = 512,
 		.temp = {INV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALE},
@@ -174,6 +183,10 @@ static const struct inv_mpu6050_hw hw_info[] = {
 		.fifo_size = 4096,
 		.temp = {INV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALE},
 		.startup_time = {INV_MPU6500_GYRO_STARTUP_TIME, INV_MPU6500_ACCEL_STARTUP_TIME},
+=======
+		.config = &chip_config_6050,
+		.fifo_size = 512,
+>>>>>>> master
 	},
 	{
 		.whoami = INV_MPU6000_WHOAMI_VALUE,
@@ -181,8 +194,11 @@ static const struct inv_mpu6050_hw hw_info[] = {
 		.reg = &reg_set_6050,
 		.config = &chip_config_6050,
 		.fifo_size = 1024,
+<<<<<<< HEAD
 		.temp = {INV_MPU6050_TEMP_OFFSET, INV_MPU6050_TEMP_SCALE},
 		.startup_time = {INV_MPU6050_GYRO_STARTUP_TIME, INV_MPU6050_ACCEL_STARTUP_TIME},
+=======
+>>>>>>> master
 	},
 	{
 		.whoami = INV_MPU9150_WHOAMI_VALUE,
@@ -190,31 +206,45 @@ static const struct inv_mpu6050_hw hw_info[] = {
 		.reg = &reg_set_6050,
 		.config = &chip_config_6050,
 		.fifo_size = 1024,
+<<<<<<< HEAD
 		.temp = {INV_MPU6050_TEMP_OFFSET, INV_MPU6050_TEMP_SCALE},
 		.startup_time = {INV_MPU6050_GYRO_STARTUP_TIME, INV_MPU6050_ACCEL_STARTUP_TIME},
+=======
+>>>>>>> master
 	},
 	{
 		.whoami = INV_MPU9250_WHOAMI_VALUE,
 		.name = "MPU9250",
 		.reg = &reg_set_6500,
+<<<<<<< HEAD
 		.config = &chip_config_6500,
 		.fifo_size = 512,
 		.temp = {INV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALE},
 		.startup_time = {INV_MPU6500_GYRO_STARTUP_TIME, INV_MPU6500_ACCEL_STARTUP_TIME},
+=======
+		.config = &chip_config_6050,
+		.fifo_size = 512,
+>>>>>>> master
 	},
 	{
 		.whoami = INV_MPU9255_WHOAMI_VALUE,
 		.name = "MPU9255",
 		.reg = &reg_set_6500,
+<<<<<<< HEAD
 		.config = &chip_config_6500,
 		.fifo_size = 512,
 		.temp = {INV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALE},
 		.startup_time = {INV_MPU6500_GYRO_STARTUP_TIME, INV_MPU6500_ACCEL_STARTUP_TIME},
+=======
+		.config = &chip_config_6050,
+		.fifo_size = 512,
+>>>>>>> master
 	},
 	{
 		.whoami = INV_ICM20608_WHOAMI_VALUE,
 		.name = "ICM20608",
 		.reg = &reg_set_6500,
+<<<<<<< HEAD
 		.config = &chip_config_6500,
 		.fifo_size = 512,
 		.temp = {INV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALE},
@@ -255,11 +285,16 @@ static const struct inv_mpu6050_hw hw_info[] = {
 		.fifo_size = 1008,
 		.temp = {INV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALE},
 		.startup_time = {INV_ICM20602_GYRO_STARTUP_TIME, INV_ICM20602_ACCEL_STARTUP_TIME},
+=======
+		.config = &chip_config_6050,
+		.fifo_size = 512,
+>>>>>>> master
 	},
 	{
 		.whoami = INV_ICM20602_WHOAMI_VALUE,
 		.name = "ICM20602",
 		.reg = &reg_set_icm20602,
+<<<<<<< HEAD
 		.config = &chip_config_6500,
 		.fifo_size = 1008,
 		.temp = {INV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALE},
@@ -282,6 +317,10 @@ static const struct inv_mpu6050_hw hw_info[] = {
 		.fifo_size = 512,
 		.temp = {INV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALE},
 		.startup_time = {INV_MPU6500_GYRO_STARTUP_TIME, INV_MPU6500_ACCEL_STARTUP_TIME},
+=======
+		.config = &chip_config_6050,
+		.fifo_size = 1008,
+>>>>>>> master
 	},
 };
 
@@ -726,8 +765,17 @@ inv_mpu6050_read_raw(struct iio_dev *indio_dev,
 
 			return IIO_VAL_INT_PLUS_MICRO;
 		case IIO_TEMP:
+<<<<<<< HEAD
 			*val = st->hw->temp.scale / 1000000;
 			*val2 = st->hw->temp.scale % 1000000;
+=======
+			*val = 0;
+			if (st->chip_type == INV_ICM20602)
+				*val2 = INV_ICM20602_TEMP_SCALE;
+			else
+				*val2 = INV_MPU6050_TEMP_SCALE;
+
+>>>>>>> master
 			return IIO_VAL_INT_PLUS_MICRO;
 		case IIO_MAGN:
 			return inv_mpu_magn_get_scale(st, chan, val, val2);
@@ -737,7 +785,15 @@ inv_mpu6050_read_raw(struct iio_dev *indio_dev,
 	case IIO_CHAN_INFO_OFFSET:
 		switch (chan->type) {
 		case IIO_TEMP:
+<<<<<<< HEAD
 			*val = st->hw->temp.offset;
+=======
+			if (st->chip_type == INV_ICM20602)
+				*val = INV_ICM20602_TEMP_OFFSET;
+			else
+				*val = INV_MPU6050_TEMP_OFFSET;
+
+>>>>>>> master
 			return IIO_VAL_INT;
 		default:
 			return -EINVAL;
@@ -1140,6 +1196,7 @@ static const struct iio_chan_spec inv_mpu_channels[] = {
 	INV_MPU6050_CHAN(IIO_ACCEL, IIO_MOD_Z, INV_MPU6050_SCAN_ACCL_Z),
 };
 
+<<<<<<< HEAD
 #define INV_MPU6050_SCAN_MASK_3AXIS_ACCEL	\
 	(BIT(INV_MPU6050_SCAN_ACCL_X)		\
 	| BIT(INV_MPU6050_SCAN_ACCL_Y)		\
@@ -1267,6 +1324,32 @@ static const unsigned long inv_icm20602_scan_masks[] = {
 	INV_MPU6050_SCAN_MASK_3AXIS_ACCEL | INV_MPU6050_SCAN_MASK_3AXIS_GYRO
 		| INV_MPU6050_SCAN_MASK_TEMP,
 	0,
+=======
+static const struct iio_chan_spec inv_icm20602_channels[] = {
+	IIO_CHAN_SOFT_TIMESTAMP(INV_ICM20602_SCAN_TIMESTAMP),
+	{
+		.type = IIO_TEMP,
+		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW)
+				| BIT(IIO_CHAN_INFO_OFFSET)
+				| BIT(IIO_CHAN_INFO_SCALE),
+		.scan_index = INV_ICM20602_SCAN_TEMP,
+		.scan_type = {
+				.sign = 's',
+				.realbits = 16,
+				.storagebits = 16,
+				.shift = 0,
+				.endianness = IIO_BE,
+			     },
+	},
+
+	INV_MPU6050_CHAN(IIO_ANGL_VEL, IIO_MOD_X, INV_ICM20602_SCAN_GYRO_X),
+	INV_MPU6050_CHAN(IIO_ANGL_VEL, IIO_MOD_Y, INV_ICM20602_SCAN_GYRO_Y),
+	INV_MPU6050_CHAN(IIO_ANGL_VEL, IIO_MOD_Z, INV_ICM20602_SCAN_GYRO_Z),
+
+	INV_MPU6050_CHAN(IIO_ACCEL, IIO_MOD_Y, INV_ICM20602_SCAN_ACCL_Y),
+	INV_MPU6050_CHAN(IIO_ACCEL, IIO_MOD_X, INV_ICM20602_SCAN_ACCL_X),
+	INV_MPU6050_CHAN(IIO_ACCEL, IIO_MOD_Z, INV_ICM20602_SCAN_ACCL_Z),
+>>>>>>> master
 };
 
 /*
@@ -1592,6 +1675,7 @@ int inv_mpu_core_probe(struct regmap *regmap, int irq, const char *name,
 	else
 		indio_dev->name = dev_name(dev);
 
+<<<<<<< HEAD
 	/* requires parent device set in indio_dev */
 	if (inv_mpu_bus_setup) {
 		result = inv_mpu_bus_setup(indio_dev);
@@ -1644,6 +1728,14 @@ int inv_mpu_core_probe(struct regmap *regmap, int irq, const char *name,
 		indio_dev->channels = inv_mpu_channels;
 		indio_dev->num_channels = ARRAY_SIZE(inv_mpu_channels);
 		indio_dev->available_scan_masks = inv_mpu_scan_masks;
+=======
+	if (chip_type == INV_ICM20602) {
+		indio_dev->channels = inv_icm20602_channels;
+		indio_dev->num_channels = ARRAY_SIZE(inv_icm20602_channels);
+	} else {
+		indio_dev->channels = inv_mpu_channels;
+		indio_dev->num_channels = ARRAY_SIZE(inv_mpu_channels);
+>>>>>>> master
 	}
 
 	indio_dev->info = &mpu_info;

@@ -194,7 +194,34 @@ int mv88e6xxx_port_sync_link(struct mv88e6xxx_chip *chip, int port, unsigned int
 	if (ops->port_set_link)
 		err = ops->port_set_link(chip, port, link);
 
+<<<<<<< HEAD
 	return err;
+=======
+	switch (dup) {
+	case DUPLEX_HALF:
+		reg |= MV88E6XXX_PORT_MAC_CTL_FORCE_DUPLEX;
+		break;
+	case DUPLEX_FULL:
+		reg |= MV88E6XXX_PORT_MAC_CTL_FORCE_DUPLEX |
+			MV88E6XXX_PORT_MAC_CTL_DUPLEX_FULL;
+		break;
+	case DUPLEX_UNFORCED:
+		/* normal duplex detection */
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
+
+	err = mv88e6xxx_port_write(chip, port, MV88E6XXX_PORT_MAC_CTL, reg);
+	if (err)
+		return err;
+
+	dev_dbg(chip->dev, "p%d: %s %s duplex\n", port,
+		reg & MV88E6XXX_PORT_MAC_CTL_FORCE_DUPLEX ? "Force" : "Unforce",
+		reg & MV88E6XXX_PORT_MAC_CTL_DUPLEX_FULL ? "full" : "half");
+
+	return 0;
+>>>>>>> master
 }
 
 int mv88e6185_port_sync_link(struct mv88e6xxx_chip *chip, int port, unsigned int mode, bool isup)
@@ -572,10 +599,33 @@ static int mv88e6xxx_port_set_cmode(struct mv88e6xxx_chip *chip, int port,
 		cmode = 0;
 	}
 
+<<<<<<< HEAD
 	/* cmode doesn't change, nothing to do for us unless forced */
 	if (cmode == chip->ports[port].cmode && !force)
 		return 0;
 
+=======
+	/* cmode doesn't change, nothing to do for us */
+	if (cmode == chip->ports[port].cmode)
+		return 0;
+
+	lane = mv88e6390x_serdes_get_lane(chip, port);
+	if (lane < 0 && lane != -ENODEV)
+		return lane;
+
+	if (lane >= 0) {
+		if (chip->ports[port].serdes_irq) {
+			err = mv88e6390_serdes_irq_disable(chip, port, lane);
+			if (err)
+				return err;
+		}
+
+		err = mv88e6390x_serdes_power(chip, port, false);
+		if (err)
+			return err;
+	}
+
+>>>>>>> master
 	chip->ports[port].cmode = 0;
 
 	if (cmode) {
@@ -591,7 +641,18 @@ static int mv88e6xxx_port_set_cmode(struct mv88e6xxx_chip *chip, int port,
 			return err;
 
 		chip->ports[port].cmode = cmode;
+<<<<<<< HEAD
 	}
+=======
+
+		lane = mv88e6390x_serdes_get_lane(chip, port);
+		if (lane < 0)
+			return lane;
+
+		err = mv88e6390x_serdes_power(chip, port, true);
+		if (err)
+			return err;
+>>>>>>> master
 
 	return 0;
 }
@@ -647,6 +708,7 @@ int mv88e6393x_port_set_cmode(struct mv88e6xxx_chip *chip, int port,
 		}
 	}
 
+<<<<<<< HEAD
 	/* mv88e6393x errata 4.5: EEE should be disabled on SERDES ports */
 	err = mv88e6xxx_port_read(chip, port, MV88E6XXX_PORT_MAC_CTL, &reg);
 	if (err)
@@ -710,6 +772,9 @@ int mv88e6341_port_set_cmode(struct mv88e6xxx_chip *chip, int port,
 		return err;
 
 	return mv88e6xxx_port_set_cmode(chip, port, mode, true);
+=======
+	return 0;
+>>>>>>> master
 }
 
 int mv88e6185_port_get_cmode(struct mv88e6xxx_chip *chip, int port, u8 *cmode)

@@ -65,6 +65,7 @@
 #define KERNEL_END		_end
 
 /*
+<<<<<<< HEAD
  * Generic and tag-based KASAN require 1/8th and 1/16th of the kernel virtual
  * address space for the shadow region respectively. They can bloat the stack
  * significantly, so double the (minimum) stack size when they are in use.
@@ -74,7 +75,21 @@
 #define KASAN_SHADOW_END	((UL(1) << (64 - KASAN_SHADOW_SCALE_SHIFT)) \
 					+ KASAN_SHADOW_OFFSET)
 #define PAGE_END		(KASAN_SHADOW_END - (1UL << (vabits_actual - KASAN_SHADOW_SCALE_SHIFT)))
+=======
+ * KASAN requires 1/8th of the kernel virtual address space for the shadow
+ * region. KASAN can bloat the stack significantly, so double the (minimum)
+ * stack size when KASAN is in use, and then double it again if KASAN_EXTRA is
+ * on.
+ */
+#ifdef CONFIG_KASAN
+#define KASAN_SHADOW_SCALE_SHIFT 3
+#define KASAN_SHADOW_SIZE	(UL(1) << (VA_BITS - KASAN_SHADOW_SCALE_SHIFT))
+#ifdef CONFIG_KASAN_EXTRA
+#define KASAN_THREAD_SHIFT	2
+#else
+>>>>>>> master
 #define KASAN_THREAD_SHIFT	1
+#endif /* CONFIG_KASAN_EXTRA */
 #else
 #define KASAN_THREAD_SHIFT	0
 #define PAGE_END		(_PAGE_END(VA_BITS_MIN))

@@ -761,7 +761,52 @@ int hist_browser__run(struct hist_browser *browser, const char *help,
 	while (1) {
 		key = ui_browser__run(&browser->b, delay_secs);
 
+<<<<<<< HEAD
 		if (hist_browser__handle_hotkey(browser, warn_lost_event, title, sizeof(title), key))
+=======
+		switch (key) {
+		case K_TIMER: {
+			u64 nr_entries;
+
+			WARN_ON_ONCE(!hbt);
+
+			if (hbt)
+				hbt->timer(hbt->arg);
+
+			if (hist_browser__has_filter(browser) ||
+			    symbol_conf.report_hierarchy)
+				hist_browser__update_nr_entries(browser);
+
+			nr_entries = hist_browser__nr_entries(browser);
+			ui_browser__update_nr_entries(&browser->b, nr_entries);
+
+			if (warn_lost_event &&
+			    (browser->hists->stats.nr_lost_warned !=
+			    browser->hists->stats.nr_events[PERF_RECORD_LOST])) {
+				browser->hists->stats.nr_lost_warned =
+					browser->hists->stats.nr_events[PERF_RECORD_LOST];
+				ui_browser__warn_lost_events(&browser->b);
+			}
+
+			hist_browser__title(browser, title, sizeof(title));
+			ui_browser__show_title(&browser->b, title);
+			continue;
+		}
+		case 'D': { /* Debug */
+			static int seq;
+			struct hist_entry *h = rb_entry(browser->b.top,
+							struct hist_entry, rb_node);
+			ui_helpline__pop();
+			ui_helpline__fpush("%d: nr_ent=(%d,%d), etl: %d, rows=%d, idx=%d, fve: idx=%d, row_off=%d, nrows=%d",
+					   seq++, browser->b.nr_entries,
+					   browser->hists->nr_entries,
+					   browser->b.extra_title_lines,
+					   browser->b.rows,
+					   browser->b.index,
+					   browser->b.top_idx,
+					   h->row_offset, h->nr_rows);
+		}
+>>>>>>> master
 			break;
 	}
 out:

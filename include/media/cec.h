@@ -230,8 +230,11 @@ struct cec_adapter {
 	struct list_head wait_queue;
 	struct cec_data *transmitting;
 	bool transmit_in_progress;
+<<<<<<< HEAD
 	bool transmit_in_progress_aborted;
 	unsigned int xfer_timeout_ms;
+=======
+>>>>>>> master
 
 	struct task_struct *kthread_config;
 	struct completion config_completion;
@@ -252,7 +255,10 @@ struct cec_adapter {
 	bool must_reconfigure;
 	bool is_configured;
 	bool cec_pin_is_high;
+<<<<<<< HEAD
 	bool adap_controls_phys_addr;
+=======
+>>>>>>> master
 	u8 last_initiator;
 	u32 monitor_all_cnt;
 	u32 monitor_pin_cnt;
@@ -411,9 +417,12 @@ void cec_queue_pin_5v_event(struct cec_adapter *adap, bool is_high, ktime_t ts);
 u16 cec_get_edid_phys_addr(const u8 *edid, unsigned int size,
 			   unsigned int *offset);
 
+<<<<<<< HEAD
 void cec_fill_conn_info_from_drm(struct cec_connector_info *conn_info,
 				 const struct drm_connector *connector);
 
+=======
+>>>>>>> master
 #else
 
 static inline int cec_register_adapter(struct cec_adapter *adap,
@@ -448,6 +457,7 @@ static inline u16 cec_get_edid_phys_addr(const u8 *edid, unsigned int size,
 	return CEC_PHYS_ADDR_INVALID;
 }
 
+<<<<<<< HEAD
 static inline void cec_s_conn_info(struct cec_adapter *adap,
 				   const struct cec_connector_info *conn_info)
 {
@@ -460,6 +470,8 @@ cec_fill_conn_info_from_drm(struct cec_connector_info *conn_info,
 	memset(conn_info, 0, sizeof(*conn_info));
 }
 
+=======
+>>>>>>> master
 #endif
 
 /**

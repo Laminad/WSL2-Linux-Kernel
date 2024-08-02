@@ -167,6 +167,7 @@ static inline bool can_do_mincore(struct vm_area_struct *vma)
 	 * for writing; otherwise we'd be including shared non-exclusive
 	 * mappings, which opens a side channel.
 	 */
+<<<<<<< HEAD
 	return inode_owner_or_capable(&nop_mnt_idmap,
 				      file_inode(vma->vm_file)) ||
 	       file_permission(vma->vm_file, MAY_WRITE) == 0;
@@ -179,6 +180,12 @@ static const struct mm_walk_ops mincore_walk_ops = {
 	.walk_lock		= PGWALK_RDLOCK,
 };
 
+=======
+	return inode_owner_or_capable(file_inode(vma->vm_file)) ||
+		inode_permission(file_inode(vma->vm_file), MAY_WRITE) == 0;
+}
+
+>>>>>>> master
 /*
  * Do a chunk of "sys_mincore()". We've already checked
  * all the arguments, we hold the mmap semaphore: we should
@@ -199,7 +206,12 @@ static long do_mincore(unsigned long addr, unsigned long pages, unsigned char *v
 		memset(vec, 1, pages);
 		return pages;
 	}
+<<<<<<< HEAD
 	err = walk_page_range(vma->vm_mm, addr, end, &mincore_walk_ops, vec);
+=======
+	mincore_walk.mm = vma->vm_mm;
+	err = walk_page_range(addr, end, &mincore_walk);
+>>>>>>> master
 	if (err < 0)
 		return err;
 	return (end - addr) >> PAGE_SHIFT;

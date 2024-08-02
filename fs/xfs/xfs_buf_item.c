@@ -1079,6 +1079,7 @@ xfs_buf_item_done(
 	 * xfs_trans_ail_delete() takes care of these.
 	 *
 	 * Either way, AIL is useless if we're forcing a shutdown.
+<<<<<<< HEAD
 	 *
 	 * Note that log recovery writes might have buffer items that are not on
 	 * the AIL even when the file system is not shut down.
@@ -1087,4 +1088,49 @@ xfs_buf_item_done(
 			     (bp->b_flags & _XBF_LOGRECOVERY) ? 0 :
 			     SHUTDOWN_CORRUPT_INCORE);
 	xfs_buf_item_relse(bp);
+=======
+	 */
+	spin_lock(&ailp->ail_lock);
+	xfs_trans_ail_delete(ailp, lip, SHUTDOWN_CORRUPT_INCORE);
+	xfs_buf_item_free(BUF_ITEM(lip));
+}
+
+/*
+ * Requeue a failed buffer for writeback.
+ *
+ * We clear the log item failed state here as well, but we have to be careful
+ * about reference counts because the only active reference counts on the buffer
+ * may be the failed log items. Hence if we clear the log item failed state
+ * before queuing the buffer for IO we can release all active references to
+ * the buffer and free it, leading to use after free problems in
+ * xfs_buf_delwri_queue. It makes no difference to the buffer or log items which
+ * order we process them in - the buffer is locked, and we own the buffer list
+ * so nothing on them is going to change while we are performing this action.
+ *
+ * Hence we can safely queue the buffer for IO before we clear the failed log
+ * item state, therefore  always having an active reference to the buffer and
+ * avoiding the transient zero-reference state that leads to use-after-free.
+ *
+ * Return true if the buffer was added to the buffer list, false if it was
+ * already on the buffer list.
+ */
+bool
+xfs_buf_resubmit_failed_buffers(
+	struct xfs_buf		*bp,
+	struct list_head	*buffer_list)
+{
+	struct xfs_log_item	*lip;
+	bool			ret;
+
+	ret = xfs_buf_delwri_queue(bp, buffer_list);
+
+	/*
+	 * XFS_LI_FAILED set/clear is protected by ail_lock, caller of this
+	 * function already have it acquired
+	 */
+	list_for_each_entry(lip, &bp->b_li_list, li_bio_list)
+		xfs_clear_li_failed(lip);
+
+	return ret;
+>>>>>>> master
 }

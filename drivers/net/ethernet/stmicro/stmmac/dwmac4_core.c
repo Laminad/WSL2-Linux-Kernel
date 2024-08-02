@@ -99,8 +99,14 @@ static void dwmac4_rx_queue_priority(struct mac_device_info *hw,
 	u32 ctrl2, ctrl3;
 	int i;
 
+<<<<<<< HEAD
 	ctrl2 = readl(ioaddr + GMAC_RXQ_CTRL2);
 	ctrl3 = readl(ioaddr + GMAC_RXQ_CTRL3);
+=======
+	base_register = (queue < 4) ? GMAC_RXQ_CTRL2 : GMAC_RXQ_CTRL3;
+	if (queue >= 4)
+		queue -= 4;
+>>>>>>> master
 
 	/* The software must ensure that the same priority
 	 * is not mapped to multiple Rx queues
@@ -698,7 +704,11 @@ static void dwmac4_set_filter(struct mac_device_info *hw,
 			reg++;
 		}
 
+<<<<<<< HEAD
 		while (reg < GMAC_MAX_PERFECT_ADDRESSES) {
+=======
+		while (reg <= GMAC_MAX_PERFECT_ADDRESSES) {
+>>>>>>> master
 			writel(0, ioaddr + GMAC_ADDR_HIGH(reg));
 			writel(0, ioaddr + GMAC_ADDR_LOW(reg));
 			reg++;
@@ -726,8 +736,11 @@ static void dwmac4_flow_ctrl(struct mac_device_info *hw, unsigned int duplex,
 	if (fc & FLOW_RX) {
 		pr_debug("\tReceive Flow-Control ON\n");
 		flow |= GMAC_RX_FLOW_CTRL_RFE;
+<<<<<<< HEAD
 	} else {
 		pr_debug("\tReceive Flow-Control OFF\n");
+=======
+>>>>>>> master
 	}
 	writel(flow, ioaddr + GMAC_RX_FLOW_CTRL);
 

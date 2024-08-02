@@ -2471,6 +2471,7 @@ static int accept_cr(struct c4iw_ep *ep, struct sk_buff *skb,
 			opt2 |= CCTRL_ECN_V(1);
 	}
 
+<<<<<<< HEAD
 	if (!is_t4(adapter_type)) {
 		u32 isn = (get_random_u32() & ~7UL) - 1;
 
@@ -2478,6 +2479,23 @@ static int accept_cr(struct c4iw_ep *ep, struct sk_buff *skb,
 		rpl5 = __skb_put_zero(skb, roundup(sizeof(*rpl5), 16));
 		rpl = (void *)rpl5;
 		INIT_TP_WR_CPL(rpl5, CPL_PASS_ACCEPT_RPL, ep->hwtid);
+=======
+	skb_get(skb);
+	rpl = cplhdr(skb);
+	if (!is_t4(adapter_type)) {
+		skb_trim(skb, roundup(sizeof(*rpl5), 16));
+		rpl5 = (void *)rpl;
+		INIT_TP_WR(rpl5, ep->hwtid);
+	} else {
+		skb_trim(skb, sizeof(*rpl));
+		INIT_TP_WR(rpl, ep->hwtid);
+	}
+	OPCODE_TID(rpl) = cpu_to_be32(MK_OPCODE_TID(CPL_PASS_ACCEPT_RPL,
+						    ep->hwtid));
+
+	if (CHELSIO_CHIP_VERSION(adapter_type) > CHELSIO_T4) {
+		u32 isn = (prandom_u32() & ~7UL) - 1;
+>>>>>>> master
 		opt2 |= T5_OPT_2_VALID_F;
 		opt2 |= CONG_CNTRL_V(CONG_ALG_TAHOE);
 		opt2 |= T5_ISS_F;

@@ -43,8 +43,12 @@ choice
 	config SOC_MT7620
 		bool "MT7620/8"
 		select CPU_MIPSR2_IRQ_VI
+<<<<<<< HEAD
 		select HAVE_PCI
 		select SOC_BUS
+=======
+		select HW_HAS_PCI
+>>>>>>> master
 
 	config SOC_MT7621
 		bool "MT7621"

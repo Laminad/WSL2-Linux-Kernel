@@ -1373,9 +1373,12 @@ int jbd2_journal_get_undo_access(handle_t *handle, struct buffer_head *bh)
 	struct journal_head *jh;
 	char *committed_data = NULL;
 
+<<<<<<< HEAD
 	if (is_handle_aborted(handle))
 		return -EROFS;
 
+=======
+>>>>>>> master
 	if (jbd2_write_access_granted(handle, bh, true))
 		return 0;
 
@@ -1490,6 +1493,11 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 	struct journal_head *jh;
 	int ret = 0;
 
+<<<<<<< HEAD
+=======
+	if (is_handle_aborted(handle))
+		return -EROFS;
+>>>>>>> master
 	if (!buffer_jbd(bh))
 		return -EUCLEAN;
 
@@ -1498,7 +1506,11 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 	 * of the running transaction.
 	 */
 	jh = bh2jh(bh);
+<<<<<<< HEAD
 	jbd2_debug(5, "journal_head %p\n", jh);
+=======
+	jbd_debug(5, "journal_head %p\n", jh);
+>>>>>>> master
 	JBUFFER_TRACE(jh, "entry");
 
 	/*
@@ -1534,6 +1546,7 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 	}
 
 	journal = transaction->t_journal;
+<<<<<<< HEAD
 	spin_lock(&jh->b_state_lock);
 
 	if (is_handle_aborted(handle)) {
@@ -1547,6 +1560,9 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 		ret = -EROFS;
 		goto out_unlock_bh;
 	}
+=======
+	jbd_lock_bh_state(bh);
+>>>>>>> master
 
 	if (jh->b_modified == 0) {
 		/*
@@ -2704,6 +2720,27 @@ int jbd2_journal_inode_ranged_write(handle_t *handle,
 		struct jbd2_inode *jinode, loff_t start_byte, loff_t length)
 {
 	return jbd2_journal_file_inode(handle, jinode,
+<<<<<<< HEAD
+			JI_WRITE_DATA | JI_WAIT_DATA, start_byte,
+			start_byte + length - 1);
+=======
+			JI_WRITE_DATA | JI_WAIT_DATA, 0, LLONG_MAX);
+>>>>>>> master
+}
+
+int jbd2_journal_inode_ranged_wait(handle_t *handle, struct jbd2_inode *jinode,
+		loff_t start_byte, loff_t length)
+{
+<<<<<<< HEAD
+=======
+	return jbd2_journal_file_inode(handle, jinode, JI_WAIT_DATA, 0,
+			LLONG_MAX);
+}
+
+int jbd2_journal_inode_ranged_write(handle_t *handle,
+		struct jbd2_inode *jinode, loff_t start_byte, loff_t length)
+{
+	return jbd2_journal_file_inode(handle, jinode,
 			JI_WRITE_DATA | JI_WAIT_DATA, start_byte,
 			start_byte + length - 1);
 }
@@ -2711,6 +2748,7 @@ int jbd2_journal_inode_ranged_write(handle_t *handle,
 int jbd2_journal_inode_ranged_wait(handle_t *handle, struct jbd2_inode *jinode,
 		loff_t start_byte, loff_t length)
 {
+>>>>>>> master
 	return jbd2_journal_file_inode(handle, jinode, JI_WAIT_DATA,
 			start_byte, start_byte + length - 1);
 }

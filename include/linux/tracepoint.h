@@ -194,6 +194,12 @@ static inline struct tracepoint *tracepoint_ptr_deref(tracepoint_ptr_t *p)
  */
 #define __DO_TRACE(name, args, cond, rcuidle)				\
 	do {								\
+<<<<<<< HEAD
+=======
+		struct tracepoint_func *it_func_ptr;			\
+		void *it_func;						\
+		void *__data;						\
+>>>>>>> master
 		int __maybe_unused __idx = 0;				\
 									\
 		if (!(cond))						\
@@ -211,13 +217,21 @@ static inline struct tracepoint *tracepoint_ptr_deref(tracepoint_ptr_t *p)
 		 */							\
 		if (rcuidle) {						\
 			__idx = srcu_read_lock_notrace(&tracepoint_srcu);\
+<<<<<<< HEAD
 			ct_irq_enter_irqson();				\
+=======
+			rcu_irq_enter_irqson();				\
+>>>>>>> master
 		}							\
 									\
 		__DO_TRACE_CALL(name, TP_ARGS(args));			\
 									\
 		if (rcuidle) {						\
+<<<<<<< HEAD
 			ct_irq_exit_irqson();				\
+=======
+			rcu_irq_exit_irqson();				\
+>>>>>>> master
 			srcu_read_unlock_notrace(&tracepoint_srcu, __idx);\
 		}							\
 									\

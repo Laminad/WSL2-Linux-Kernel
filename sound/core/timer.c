@@ -279,8 +279,13 @@ static int snd_timer_check_master(struct snd_timer_instance *master)
 	return err < 0 ? err : 0;
 }
 
+<<<<<<< HEAD
 static void snd_timer_close_locked(struct snd_timer_instance *timeri,
 				   struct device **card_devp_to_put);
+=======
+static int snd_timer_close_locked(struct snd_timer_instance *timeri,
+				  struct device **card_devp_to_put);
+>>>>>>> master
 
 /*
  * open a timer instance
@@ -291,6 +296,10 @@ int snd_timer_open(struct snd_timer_instance *timeri,
 		   unsigned int slave_id)
 {
 	struct snd_timer *timer;
+<<<<<<< HEAD
+=======
+	struct snd_timer_instance *timeri = NULL;
+>>>>>>> master
 	struct device *card_dev_to_put = NULL;
 	int err;
 
@@ -304,8 +313,14 @@ int snd_timer_open(struct snd_timer_instance *timeri,
 			err = -EINVAL;
 			goto unlock;
 		}
+<<<<<<< HEAD
 		if (num_slaves >= MAX_SLAVE_INSTANCES) {
 			err = -EBUSY;
+=======
+		timeri = snd_timer_instance_new(owner, NULL);
+		if (!timeri) {
+			err = -ENOMEM;
+>>>>>>> master
 			goto unlock;
 		}
 		timeri->slave_class = tid->dev_sclass;
@@ -314,7 +329,15 @@ int snd_timer_open(struct snd_timer_instance *timeri,
 		list_add_tail(&timeri->open_list, &snd_timer_slave_list);
 		num_slaves++;
 		err = snd_timer_check_slave(timeri);
+<<<<<<< HEAD
 		goto list_added;
+=======
+		if (err < 0) {
+			snd_timer_close_locked(timeri, &card_dev_to_put);
+			timeri = NULL;
+		}
+		goto unlock;
+>>>>>>> master
 	}
 
 	/* open a master instance */
@@ -344,8 +367,14 @@ int snd_timer_open(struct snd_timer_instance *timeri,
 		err = -EBUSY;
 		goto unlock;
 	}
+<<<<<<< HEAD
 	if (!try_module_get(timer->module)) {
 		err = -EBUSY;
+=======
+	timeri = snd_timer_instance_new(owner, timer);
+	if (!timeri) {
+		err = -ENOMEM;
+>>>>>>> master
 		goto unlock;
 	}
 	/* take a card refcount for safe disconnection */
@@ -357,6 +386,15 @@ int snd_timer_open(struct snd_timer_instance *timeri,
 	if (list_empty(&timer->open_list_head) && timer->hw.open) {
 		err = timer->hw.open(timer);
 		if (err) {
+<<<<<<< HEAD
+=======
+			kfree(timeri->owner);
+			kfree(timeri);
+			timeri = NULL;
+
+			if (timer->card)
+				card_dev_to_put = &timer->card->card_dev;
+>>>>>>> master
 			module_put(timer->module);
 			goto unlock;
 		}
@@ -369,15 +407,28 @@ int snd_timer_open(struct snd_timer_instance *timeri,
 	list_add_tail(&timeri->open_list, &timer->open_list_head);
 	timer->num_instances++;
 	err = snd_timer_check_master(timeri);
+<<<<<<< HEAD
 list_added:
 	if (err < 0)
 		snd_timer_close_locked(timeri, &card_dev_to_put);
+=======
+	if (err < 0) {
+		snd_timer_close_locked(timeri, &card_dev_to_put);
+		timeri = NULL;
+	}
+>>>>>>> master
 
  unlock:
 	mutex_unlock(&register_mutex);
 	/* put_device() is called after unlock for avoiding deadlock */
+<<<<<<< HEAD
 	if (err < 0 && card_dev_to_put)
 		put_device(card_dev_to_put);
+=======
+	if (card_dev_to_put)
+		put_device(card_dev_to_put);
+	*ti = timeri;
+>>>>>>> master
 	return err;
 }
 EXPORT_SYMBOL(snd_timer_open);
@@ -386,8 +437,13 @@ EXPORT_SYMBOL(snd_timer_open);
  * close a timer instance
  * call this with register_mutex down.
  */
+<<<<<<< HEAD
 static void snd_timer_close_locked(struct snd_timer_instance *timeri,
 				   struct device **card_devp_to_put)
+=======
+static int snd_timer_close_locked(struct snd_timer_instance *timeri,
+				  struct device **card_devp_to_put)
+>>>>>>> master
 {
 	struct snd_timer *timer = timeri->timer;
 	struct snd_timer_instance *slave, *tmp;
@@ -455,16 +511,28 @@ static void snd_timer_close_locked(struct snd_timer_instance *timeri,
 void snd_timer_close(struct snd_timer_instance *timeri)
 {
 	struct device *card_dev_to_put = NULL;
+<<<<<<< HEAD
+=======
+	int err;
+>>>>>>> master
 
 	if (snd_BUG_ON(!timeri))
 		return;
 
 	mutex_lock(&register_mutex);
+<<<<<<< HEAD
 	snd_timer_close_locked(timeri, &card_dev_to_put);
+=======
+	err = snd_timer_close_locked(timeri, &card_dev_to_put);
+>>>>>>> master
 	mutex_unlock(&register_mutex);
 	/* put_device() is called after unlock for avoiding deadlock */
 	if (card_dev_to_put)
 		put_device(card_dev_to_put);
+<<<<<<< HEAD
+=======
+	return err;
+>>>>>>> master
 }
 EXPORT_SYMBOL(snd_timer_close);
 

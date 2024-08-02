@@ -62,6 +62,11 @@ static int zram_slot_trylock(struct zram *zram, u32 index)
 	return bit_spin_trylock(ZRAM_LOCK, &zram->table[index].flags);
 }
 
+static int zram_slot_trylock(struct zram *zram, u32 index)
+{
+	return bit_spin_trylock(ZRAM_LOCK, &zram->table[index].value);
+}
+
 static void zram_slot_lock(struct zram *zram, u32 index)
 {
 	bit_spin_lock(ZRAM_LOCK, &zram->table[index].flags);
@@ -507,10 +512,16 @@ static ssize_t backing_dev_store(struct device *dev,
 		goto out;
 	}
 
+<<<<<<< HEAD
 	bdev = blkdev_get_by_dev(inode->i_rdev, BLK_OPEN_READ | BLK_OPEN_WRITE,
 				 zram, NULL);
 	if (IS_ERR(bdev)) {
 		err = PTR_ERR(bdev);
+=======
+	bdev = bdgrab(I_BDEV(inode));
+	err = blkdev_get(bdev, FMODE_READ | FMODE_WRITE | FMODE_EXCL, zram);
+	if (err < 0) {
+>>>>>>> master
 		bdev = NULL;
 		goto out;
 	}
@@ -563,7 +574,10 @@ retry:
 	if (test_and_set_bit(blk_idx, zram->bitmap))
 		goto retry;
 
+<<<<<<< HEAD
 	atomic64_inc(&zram->stats.bd_count);
+=======
+>>>>>>> master
 	return blk_idx;
 }
 
@@ -571,7 +585,11 @@ static void free_block_bdev(struct zram *zram, unsigned long blk_idx)
 {
 	int was_set;
 
+<<<<<<< HEAD
 	was_set = test_and_clear_bit(blk_idx, zram->bitmap);
+=======
+	was_set = test_and_clear_bit(entry, zram->bitmap);
+>>>>>>> master
 	WARN_ON_ONCE(!was_set);
 	atomic64_dec(&zram->stats.bd_count);
 }
@@ -769,8 +787,13 @@ struct zram_work {
 	struct work_struct work;
 	struct zram *zram;
 	unsigned long entry;
+<<<<<<< HEAD
 	struct page *page;
 	int error;
+=======
+	struct bio *bio;
+	struct bio_vec bvec;
+>>>>>>> master
 };
 
 static void zram_sync_read(struct work_struct *work)
@@ -779,10 +802,14 @@ static void zram_sync_read(struct work_struct *work)
 	struct bio_vec bv;
 	struct bio bio;
 
+<<<<<<< HEAD
 	bio_init(&bio, zw->zram->bdev, &bv, 1, REQ_OP_READ);
 	bio.bi_iter.bi_sector = zw->entry * (PAGE_SIZE >> 9);
 	__bio_add_page(&bio, zw->page, PAGE_SIZE, 0);
 	zw->error = submit_bio_wait(&bio);
+=======
+	read_from_bdev_async(zram, &zw->bvec, entry, bio);
+>>>>>>> master
 }
 
 /*
@@ -795,7 +822,11 @@ static int read_from_bdev_sync(struct zram *zram, struct page *page,
 {
 	struct zram_work work;
 
+<<<<<<< HEAD
 	work.page = page;
+=======
+	work.bvec = *bvec;
+>>>>>>> master
 	work.zram = zram;
 	work.entry = entry;
 
@@ -2175,6 +2206,11 @@ static struct attribute *zram_disk_attrs[] = {
 
 ATTRIBUTE_GROUPS(zram_disk);
 
+static const struct attribute_group *zram_disk_attr_groups[] = {
+	&zram_disk_attr_group,
+	NULL,
+};
+
 /*
  * Allocate and initialize new zram device. the function returns
  * '>= 0' device_id upon success, and negative value otherwise.
@@ -2244,19 +2280,33 @@ static int zram_add(void)
 	if (ZRAM_LOGICAL_BLOCK_SIZE == PAGE_SIZE)
 		blk_queue_max_write_zeroes_sectors(zram->disk->queue, UINT_MAX);
 
+<<<<<<< HEAD
 	blk_queue_flag_set(QUEUE_FLAG_STABLE_WRITES, zram->disk->queue);
 	ret = device_add_disk(NULL, zram->disk, zram_disk_groups);
 	if (ret)
 		goto out_cleanup_disk;
 
 	comp_algorithm_set(zram, ZRAM_PRIMARY_COMP, default_compressor);
+=======
+	zram->disk->queue->backing_dev_info->capabilities |=
+			(BDI_CAP_STABLE_WRITES | BDI_CAP_SYNCHRONOUS_IO);
+	disk_to_dev(zram->disk)->groups = zram_disk_attr_groups;
+	add_disk(zram->disk);
+
+	strlcpy(zram->compressor, default_compressor, sizeof(zram->compressor));
+>>>>>>> master
 
 	zram_debugfs_register(zram);
 	pr_info("Added device: %s\n", zram->disk->disk_name);
 	return device_id;
 
+<<<<<<< HEAD
 out_cleanup_disk:
 	put_disk(zram->disk);
+=======
+out_free_queue:
+	blk_cleanup_queue(queue);
+>>>>>>> master
 out_free_idr:
 	idr_remove(&zram_index_idr, device_id);
 out_free_dev:
@@ -2280,6 +2330,7 @@ static int zram_remove(struct zram *zram)
 	mutex_unlock(&zram->disk->open_mutex);
 
 	zram_debugfs_unregister(zram);
+<<<<<<< HEAD
 
 	if (claimed) {
 		/*
@@ -2292,6 +2343,12 @@ static int zram_remove(struct zram *zram)
 		sync_blockdev(zram->disk->part0);
 		zram_reset_device(zram);
 	}
+=======
+	/* Make sure all the pending I/O are finished */
+	fsync_bdev(bdev);
+	zram_reset_device(zram);
+	bdput(bdev);
+>>>>>>> master
 
 	pr_info("Removed device: %s\n", zram->disk->disk_name);
 

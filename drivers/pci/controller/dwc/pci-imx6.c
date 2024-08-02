@@ -104,10 +104,30 @@ struct imx6_pcie {
 
 /* Parameters for the waiting for PCIe PHY PLL to lock on i.MX7 */
 #define PHY_PLL_LOCK_WAIT_USLEEP_MAX	200
+<<<<<<< HEAD
 #define PHY_PLL_LOCK_WAIT_TIMEOUT	(2000 * PHY_PLL_LOCK_WAIT_USLEEP_MAX)
 
 /* PCIe Port Logic registers (memory-mapped) */
 #define PL_OFFSET 0x700
+=======
+
+/* PCIe Root Complex registers (memory-mapped) */
+#define PCIE_RC_IMX6_MSI_CAP			0x50
+#define PCIE_RC_LCR				0x7c
+#define PCIE_RC_LCR_MAX_LINK_SPEEDS_GEN1	0x1
+#define PCIE_RC_LCR_MAX_LINK_SPEEDS_GEN2	0x2
+#define PCIE_RC_LCR_MAX_LINK_SPEEDS_MASK	0xf
+
+#define PCIE_RC_LCSR				0x80
+
+/* PCIe Port Logic registers (memory-mapped) */
+#define PL_OFFSET 0x700
+#define PCIE_PL_PFLR (PL_OFFSET + 0x08)
+#define PCIE_PL_PFLR_LINK_STATE_MASK		(0x3f << 16)
+#define PCIE_PL_PFLR_FORCE_LINK			(1 << 15)
+#define PCIE_PHY_DEBUG_R0 (PL_OFFSET + 0x28)
+#define PCIE_PHY_DEBUG_R1 (PL_OFFSET + 0x2c)
+>>>>>>> master
 
 #define PCIE_PHY_CTRL (PL_OFFSET + 0x114)
 #define PCIE_PHY_CTRL_DATA(x)		FIELD_PREP(GENMASK(15, 0), (x))
@@ -1034,8 +1054,15 @@ static void imx6_pcie_host_exit(struct dw_pcie_rp *pp)
 	}
 	imx6_pcie_clk_disable(imx6_pcie);
 
+<<<<<<< HEAD
 	if (imx6_pcie->vpcie)
 		regulator_disable(imx6_pcie->vpcie);
+=======
+	if (IS_ENABLED(CONFIG_PCI_MSI))
+		dw_pcie_msi_init(pp);
+
+	return 0;
+>>>>>>> master
 }
 
 static const struct dw_pcie_host_ops imx6_pcie_host_ops = {
@@ -1078,6 +1105,7 @@ static int imx6_pcie_ep_raise_irq(struct dw_pcie_ep *ep, u8 func_no,
 	return 0;
 }
 
+<<<<<<< HEAD
 static const struct pci_epc_features imx8m_pcie_epc_features = {
 	.linkup_notifier = false,
 	.msi_capable = true,
@@ -1240,6 +1268,10 @@ static int imx6_pcie_resume_noirq(struct device *dev)
 static const struct dev_pm_ops imx6_pcie_pm_ops = {
 	NOIRQ_SYSTEM_SLEEP_PM_OPS(imx6_pcie_suspend_noirq,
 				  imx6_pcie_resume_noirq)
+=======
+static const struct dw_pcie_ops dw_pcie_ops = {
+	/* No special ops needed, but pcie-designware still expects this struct */
+>>>>>>> master
 };
 
 static int imx6_pcie_probe(struct platform_device *pdev)
@@ -1441,6 +1473,7 @@ static int imx6_pcie_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
+<<<<<<< HEAD
 	if (imx6_pcie->drvdata->mode == DW_PCIE_EP_TYPE) {
 		ret = imx6_add_pcie_ep(imx6_pcie, pdev);
 		if (ret < 0)
@@ -1457,6 +1490,14 @@ static int imx6_pcie_probe(struct platform_device *pdev)
 			val |= PCI_MSI_FLAGS_ENABLE;
 			dw_pcie_writew_dbi(pci, offset + PCI_MSI_FLAGS, val);
 		}
+=======
+	if (pci_msi_enabled()) {
+		val = dw_pcie_readw_dbi(pci, PCIE_RC_IMX6_MSI_CAP +
+					PCI_MSI_FLAGS);
+		val |= PCI_MSI_FLAGS_ENABLE;
+		dw_pcie_writew_dbi(pci, PCIE_RC_IMX6_MSI_CAP + PCI_MSI_FLAGS,
+				   val);
+>>>>>>> master
 	}
 
 	return 0;

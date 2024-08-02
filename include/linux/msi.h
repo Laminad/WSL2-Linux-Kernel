@@ -305,6 +305,16 @@ struct msi_desc *msi_next_desc(struct device *dev, unsigned int domid,
 	msi_domain_for_each_desc((desc), (dev), MSI_DEFAULT_DOMAIN, (filter))
 
 #define msi_desc_to_dev(desc)		((desc)->dev)
+<<<<<<< HEAD
+=======
+#define dev_to_msi_list(dev)		(&(dev)->msi_list)
+#define first_msi_entry(dev)		\
+	list_first_entry(dev_to_msi_list((dev)), struct msi_desc, list)
+#define for_each_msi_entry(desc, dev)	\
+	list_for_each_entry((desc), dev_to_msi_list((dev)), list)
+#define for_each_msi_entry_safe(desc, tmp, dev)	\
+	list_for_each_entry_safe((desc), (tmp), dev_to_msi_list((dev)), list)
+>>>>>>> master
 
 #ifdef CONFIG_IRQ_MSI_IOMMU
 static inline const void *msi_desc_get_iommu_cookie(struct msi_desc *desc)

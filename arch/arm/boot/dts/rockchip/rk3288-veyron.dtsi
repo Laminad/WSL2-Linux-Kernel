@@ -10,6 +10,7 @@
 #include "rk3288.dtsi"
 
 / {
+<<<<<<< HEAD:arch/arm/boot/dts/rockchip/rk3288-veyron.dtsi
 	aliases {
 		mmc0 = &emmc;
 	};
@@ -18,6 +19,8 @@
 		stdout-path = "serial2:115200n8";
 	};
 
+=======
+>>>>>>> master:arch/arm/boot/dts/rk3288-veyron.dtsi
 	/*
 	 * The default coreboot on veyron devices ignores memory@0 nodes
 	 * and would instead create another memory node.

@@ -1955,6 +1955,7 @@ int smbd_send(struct TCP_Server_Info *server,
 	int num_rqst, struct smb_rqst *rqst_array)
 {
 	struct smbd_connection *info = server->smbd_conn;
+<<<<<<< HEAD:fs/smb/client/smbdirect.c
 	struct smb_rqst *rqst;
 	struct iov_iter iter;
 	unsigned int remaining_data_length, klen;
@@ -1962,6 +1963,25 @@ int smbd_send(struct TCP_Server_Info *server,
 
 	if (info->transport_status != SMBD_CONNECTED)
 		return -EAGAIN;
+=======
+	struct kvec vec;
+	int nvecs;
+	int size;
+	unsigned int buflen, remaining_data_length;
+	int start, i, j;
+	int max_iov_size =
+		info->max_send_size - sizeof(struct smbd_data_transfer);
+	struct kvec *iov;
+	int rc;
+	struct smb_rqst *rqst;
+	int rqst_idx;
+
+	info->smbd_send_pending++;
+	if (info->transport_status != SMBD_CONNECTED) {
+		rc = -ENODEV;
+		goto done;
+	}
+>>>>>>> master:fs/cifs/smbdirect.c
 
 	/*
 	 * Add in the page array if there is one. The caller needs to set
@@ -1972,6 +1992,7 @@ int smbd_send(struct TCP_Server_Info *server,
 	for (i = 0; i < num_rqst; i++)
 		remaining_data_length += smb_rqst_len(server, &rqst_array[i]);
 
+<<<<<<< HEAD:fs/smb/client/smbdirect.c
 	if (unlikely(remaining_data_length > info->max_fragmented_send_size)) {
 		/* assertion: payload never exceeds negotiated maximum */
 		log_write(ERR, "payload size %d > max size %d\n",
@@ -2010,11 +2031,135 @@ int smbd_send(struct TCP_Server_Info *server,
 			rc = smbd_post_send_iter(info, &rqst->rq_iter,
 						 &remaining_data_length);
 			if (rc < 0)
+=======
+	if (remaining_data_length + sizeof(struct smbd_data_transfer) >
+		info->max_fragmented_send_size) {
+		log_write(ERR, "payload size %d > max size %d\n",
+			remaining_data_length, info->max_fragmented_send_size);
+		rc = -EINVAL;
+		goto done;
+	}
+
+	rqst_idx = 0;
+
+next_rqst:
+	rqst = &rqst_array[rqst_idx];
+	iov = rqst->rq_iov;
+
+	cifs_dbg(FYI, "Sending smb (RDMA): idx=%d smb_len=%lu\n",
+		rqst_idx, smb_rqst_len(server, rqst));
+	for (i = 0; i < rqst->rq_nvec; i++)
+		dump_smb(iov[i].iov_base, iov[i].iov_len);
+
+
+	log_write(INFO, "rqst_idx=%d nvec=%d rqst->rq_npages=%d rq_pagesz=%d "
+		"rq_tailsz=%d buflen=%lu\n",
+		rqst_idx, rqst->rq_nvec, rqst->rq_npages, rqst->rq_pagesz,
+		rqst->rq_tailsz, smb_rqst_len(server, rqst));
+
+	start = i = 0;
+	buflen = 0;
+	while (true) {
+		buflen += iov[i].iov_len;
+		if (buflen > max_iov_size) {
+			if (i > start) {
+				remaining_data_length -=
+					(buflen-iov[i].iov_len);
+				log_write(INFO, "sending iov[] from start=%d "
+					"i=%d nvecs=%d "
+					"remaining_data_length=%d\n",
+					start, i, i-start,
+					remaining_data_length);
+				rc = smbd_post_send_data(
+					info, &iov[start], i-start,
+					remaining_data_length);
+				if (rc)
+					goto done;
+			} else {
+				/* iov[start] is too big, break it */
+				nvecs = (buflen+max_iov_size-1)/max_iov_size;
+				log_write(INFO, "iov[%d] iov_base=%p buflen=%d"
+					" break to %d vectors\n",
+					start, iov[start].iov_base,
+					buflen, nvecs);
+				for (j = 0; j < nvecs; j++) {
+					vec.iov_base =
+						(char *)iov[start].iov_base +
+						j*max_iov_size;
+					vec.iov_len = max_iov_size;
+					if (j == nvecs-1)
+						vec.iov_len =
+							buflen -
+							max_iov_size*(nvecs-1);
+					remaining_data_length -= vec.iov_len;
+					log_write(INFO,
+						"sending vec j=%d iov_base=%p"
+						" iov_len=%zu "
+						"remaining_data_length=%d\n",
+						j, vec.iov_base, vec.iov_len,
+						remaining_data_length);
+					rc = smbd_post_send_data(
+						info, &vec, 1,
+						remaining_data_length);
+					if (rc)
+						goto done;
+				}
+				i++;
+				if (i == rqst->rq_nvec)
+					break;
+			}
+			start = i;
+			buflen = 0;
+		} else {
+			i++;
+			if (i == rqst->rq_nvec) {
+				/* send out all remaining vecs */
+				remaining_data_length -= buflen;
+				log_write(INFO,
+					"sending iov[] from start=%d i=%d "
+					"nvecs=%d remaining_data_length=%d\n",
+					start, i, i-start,
+					remaining_data_length);
+				rc = smbd_post_send_data(info, &iov[start],
+					i-start, remaining_data_length);
+				if (rc)
+					goto done;
+>>>>>>> master:fs/cifs/smbdirect.c
 				break;
 		}
 
 	} while (++rqst_idx < num_rqst);
 
+<<<<<<< HEAD:fs/smb/client/smbdirect.c
+=======
+		rqst_page_get_length(rqst, i, &buflen, &offset);
+		nvecs = (buflen + max_iov_size - 1) / max_iov_size;
+		log_write(INFO, "sending pages buflen=%d nvecs=%d\n",
+			buflen, nvecs);
+		for (j = 0; j < nvecs; j++) {
+			size = max_iov_size;
+			if (j == nvecs-1)
+				size = buflen - j*max_iov_size;
+			remaining_data_length -= size;
+			log_write(INFO, "sending pages i=%d offset=%d size=%d"
+				" remaining_data_length=%d\n",
+				i, j*max_iov_size+offset, size,
+				remaining_data_length);
+			rc = smbd_post_send_page(
+				info, rqst->rq_pages[i],
+				j*max_iov_size + offset,
+				size, remaining_data_length);
+			if (rc)
+				goto done;
+		}
+	}
+
+	rqst_idx++;
+	if (rqst_idx < num_rqst)
+		goto next_rqst;
+
+done:
+>>>>>>> master:fs/cifs/smbdirect.c
 	/*
 	 * As an optimization, we don't wait for individual I/O to finish
 	 * before sending the next one.

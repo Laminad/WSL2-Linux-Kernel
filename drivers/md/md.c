@@ -126,6 +126,7 @@ static inline int speed_max(struct mddev *mddev)
 		mddev->sync_speed_max : sysctl_speed_limit_max;
 }
 
+<<<<<<< HEAD
 static void rdev_uninit_serial(struct md_rdev *rdev)
 {
 	if (!test_and_clear_bit(CollisionCheck, &rdev->flags))
@@ -288,6 +289,8 @@ void mddev_destroy_serial_pool(struct mddev *mddev, struct md_rdev *rdev,
 	}
 }
 
+=======
+>>>>>>> master
 static struct ctl_table_header *raid_table_header;
 
 static struct ctl_table raid_table[] = {
@@ -488,18 +491,28 @@ static void md_end_flush(struct bio *bio)
 {
 	struct md_rdev *rdev = bio->bi_private;
 	struct mddev *mddev = rdev->mddev;
+<<<<<<< HEAD
 
 	bio_put(bio);
+=======
+>>>>>>> master
 
 	rdev_dec_pending(rdev, mddev);
 
 	if (atomic_dec_and_test(&mddev->flush_pending)) {
+<<<<<<< HEAD
 		/* The pair is percpu_ref_get() from md_flush_request() */
 		percpu_ref_put(&mddev->active_io);
 
 		/* The pre-request flush has finished */
 		queue_work(md_wq, &mddev->flush_work);
 	}
+=======
+		/* The pre-request flush has finished */
+		queue_work(md_wq, &mddev->flush_work);
+	}
+	bio_put(bio);
+>>>>>>> master
 }
 
 static void md_submit_flush_data(struct work_struct *ws);
@@ -517,6 +530,7 @@ static void submit_flushes(struct work_struct *ws)
 		if (rdev->raid_disk >= 0 &&
 		    !test_bit(Faulty, &rdev->flags)) {
 			struct bio *bi;
+<<<<<<< HEAD
 
 			atomic_inc(&rdev->nr_pending);
 			rcu_read_unlock();
@@ -525,11 +539,22 @@ static void submit_flushes(struct work_struct *ws)
 					      GFP_NOIO, &mddev->bio_set);
 			bi->bi_end_io = md_end_flush;
 			bi->bi_private = rdev;
+=======
+			atomic_inc(&rdev->nr_pending);
+			atomic_inc(&rdev->nr_pending);
+			rcu_read_unlock();
+			bi = bio_alloc_mddev(GFP_NOIO, 0, mddev);
+			bi->bi_end_io = md_end_flush;
+			bi->bi_private = rdev;
+			bio_set_dev(bi, rdev->bdev);
+			bi->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
+>>>>>>> master
 			atomic_inc(&mddev->flush_pending);
 			submit_bio(bi);
 			rcu_read_lock();
 		}
 	rcu_read_unlock();
+<<<<<<< HEAD
 	if (atomic_dec_and_test(&mddev->flush_pending)) {
 		/* The pair is percpu_ref_get() from md_flush_request() */
 		percpu_ref_put(&mddev->active_io);
@@ -538,6 +563,12 @@ static void submit_flushes(struct work_struct *ws)
 	}
 }
 
+=======
+	if (atomic_dec_and_test(&mddev->flush_pending))
+		queue_work(md_wq, &mddev->flush_work);
+}
+
+>>>>>>> master
 static void md_submit_flush_data(struct work_struct *ws)
 {
 	struct mddev *mddev = container_of(ws, struct mddev, flush_work);
@@ -549,10 +580,15 @@ static void md_submit_flush_data(struct work_struct *ws)
 	 * could wait for this and below md_handle_request could wait for those
 	 * bios because of suspend check
 	 */
+<<<<<<< HEAD
 	spin_lock_irq(&mddev->lock);
 	mddev->prev_flush_start = mddev->start_flush;
 	mddev->flush_bio = NULL;
 	spin_unlock_irq(&mddev->lock);
+=======
+	mddev->last_flush = mddev->start_flush;
+	mddev->flush_bio = NULL;
+>>>>>>> master
 	wake_up(&mddev->sb_wait);
 
 	if (bio->bi_iter.bi_size == 0) {
@@ -564,6 +600,7 @@ static void md_submit_flush_data(struct work_struct *ws)
 	}
 }
 
+<<<<<<< HEAD
 /*
  * Manages consolidation of flushes and submitting any flushes needed for
  * a bio with REQ_PREFLUSH.  Returns true if the bio is finished or is
@@ -596,6 +633,18 @@ bool md_flush_request(struct mddev *mddev, struct bio *bio)
 		 */
 		WARN_ON(percpu_ref_is_zero(&mddev->active_io));
 		percpu_ref_get(&mddev->active_io);
+=======
+void md_flush_request(struct mddev *mddev, struct bio *bio)
+{
+	ktime_t start = ktime_get_boottime();
+	spin_lock_irq(&mddev->lock);
+	wait_event_lock_irq(mddev->sb_wait,
+			    !mddev->flush_bio ||
+			    ktime_after(mddev->last_flush, start),
+			    mddev->lock);
+	if (!ktime_after(mddev->last_flush, start)) {
+		WARN_ON(mddev->flush_bio);
+>>>>>>> master
 		mddev->flush_bio = bio;
 		bio = NULL;
 	}
@@ -611,7 +660,11 @@ bool md_flush_request(struct mddev *mddev, struct bio *bio)
 			bio_endio(bio);
 		else {
 			bio->bi_opf &= ~REQ_PREFLUSH;
+<<<<<<< HEAD
 			return false;
+=======
+			mddev->pers->make_request(mddev, bio);
+>>>>>>> master
 		}
 	}
 	return true;
@@ -4374,7 +4427,11 @@ array_state_show(struct mddev *mddev, char *page)
 {
 	enum array_state st = inactive;
 
+<<<<<<< HEAD
 	if (mddev->pers && !test_bit(MD_NOT_READY, &mddev->flags)) {
+=======
+	if (mddev->pers && !test_bit(MD_NOT_READY, &mddev->flags))
+>>>>>>> master
 		switch(mddev->ro) {
 		case MD_RDONLY:
 			st = readonly;
@@ -5934,6 +5991,7 @@ int md_run(struct mddev *mddev)
 		if (err)
 			goto exit_bio_set;
 	}
+<<<<<<< HEAD
 
 	if (!bioset_initialized(&mddev->io_clone_set)) {
 		err = bioset_init(&mddev->io_clone_set, BIO_POOL_SIZE,
@@ -5941,6 +5999,8 @@ int md_run(struct mddev *mddev)
 		if (err)
 			goto exit_sync_set;
 	}
+=======
+>>>>>>> master
 
 	spin_lock(&pers_lock);
 	pers = find_pers(mddev->level, mddev->clevel);
@@ -6108,7 +6168,11 @@ int md_run(struct mddev *mddev)
 	if (mddev->sb_flags)
 		md_update_sb(mddev, 0);
 
+<<<<<<< HEAD
 	md_new_event();
+=======
+	md_new_event(mddev);
+>>>>>>> master
 	return 0;
 
 bitmap_abort:
@@ -6119,6 +6183,7 @@ bitmap_abort:
 	module_put(pers->owner);
 	md_bitmap_destroy(mddev);
 abort:
+<<<<<<< HEAD
 	bioset_exit(&mddev->io_clone_set);
 exit_sync_set:
 	bioset_exit(&mddev->sync_set);
@@ -6126,6 +6191,10 @@ exit_bio_set:
 	bioset_exit(&mddev->bio_set);
 exit_active_io:
 	percpu_ref_exit(&mddev->active_io);
+=======
+	bioset_exit(&mddev->bio_set);
+	bioset_exit(&mddev->sync_set);
+>>>>>>> master
 	return err;
 }
 EXPORT_SYMBOL_GPL(md_run);
@@ -6153,13 +6222,22 @@ int do_md_run(struct mddev *mddev)
 	md_wakeup_thread(mddev->thread);
 	md_wakeup_thread(mddev->sync_thread); /* possibly kick off a reshape */
 
+<<<<<<< HEAD
 	set_capacity_and_notify(mddev->gendisk, mddev->array_sectors);
+=======
+	set_capacity(mddev->gendisk, mddev->array_sectors);
+	revalidate_disk(mddev->gendisk);
+>>>>>>> master
 	clear_bit(MD_NOT_READY, &mddev->flags);
 	mddev->changed = 1;
 	kobject_uevent(&disk_to_dev(mddev->gendisk)->kobj, KOBJ_CHANGE);
 	sysfs_notify_dirent_safe(mddev->sysfs_state);
 	sysfs_notify_dirent_safe(mddev->sysfs_action);
+<<<<<<< HEAD
 	sysfs_notify_dirent_safe(mddev->sysfs_degraded);
+=======
+	sysfs_notify(&mddev->kobj, NULL, "degraded");
+>>>>>>> master
 out:
 	clear_bit(MD_NOT_READY, &mddev->flags);
 	return err;
@@ -6364,7 +6442,12 @@ void md_stop(struct mddev *mddev)
 	 */
 	__md_stop_writes(mddev);
 	__md_stop(mddev);
+<<<<<<< HEAD
 	percpu_ref_exit(&mddev->writes_pending);
+=======
+	bioset_exit(&mddev->bio_set);
+	bioset_exit(&mddev->sync_set);
+>>>>>>> master
 }
 
 EXPORT_SYMBOL_GPL(md_stop);

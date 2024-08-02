@@ -1627,12 +1627,21 @@ err:
 	return ret;
 }
 
+<<<<<<< HEAD
 static void cs35l35_i2c_remove(struct i2c_client *i2c_client)
+=======
+static int cs35l35_i2c_remove(struct i2c_client *i2c_client)
+>>>>>>> master
 {
 	struct cs35l35_private *cs35l35 = i2c_get_clientdata(i2c_client);
 
 	regulator_bulk_disable(cs35l35->num_supplies, cs35l35->supplies);
 	gpiod_set_value_cansleep(cs35l35->reset_gpio, 0);
+<<<<<<< HEAD
+=======
+
+	return 0;
+>>>>>>> master
 }
 
 static const struct of_device_id cs35l35_of_match[] = {

@@ -1309,11 +1309,20 @@ out_free_interp:
 		 * growing down), and into the unused ELF_ET_DYN_BASE region.
 		 */
 		if (IS_ENABLED(CONFIG_ARCH_HAS_ELF_RANDOMIZE) &&
+<<<<<<< HEAD
 		    elf_ex->e_type == ET_DYN && !interpreter) {
 			mm->brk = mm->start_brk = ELF_ET_DYN_BASE;
 		}
 
 		mm->brk = mm->start_brk = arch_randomize_brk(mm);
+=======
+		    loc->elf_ex.e_type == ET_DYN && !interpreter)
+			current->mm->brk = current->mm->start_brk =
+				ELF_ET_DYN_BASE;
+
+		current->mm->brk = current->mm->start_brk =
+			arch_randomize_brk(current->mm);
+>>>>>>> master
 #ifdef compat_brk_randomized
 		current->brk_randomized = 1;
 #endif

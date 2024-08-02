@@ -454,7 +454,11 @@ static inline pmd_t pmdp_flush_lazy(struct mm_struct *mm,
 }
 
 #ifdef CONFIG_PGSTE
+<<<<<<< HEAD
 static int pmd_lookup(struct mm_struct *mm, unsigned long addr, pmd_t **pmdp)
+=======
+static pmd_t *pmd_alloc_map(struct mm_struct *mm, unsigned long addr)
+>>>>>>> master
 {
 	struct vm_area_struct *vma;
 	pgd_t *pgd;

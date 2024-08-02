@@ -102,7 +102,11 @@ $(obj)/zoffset.h: $(obj)/compressed/vmlinux FORCE
 AFLAGS_header.o += -I$(objtree)/$(obj)
 $(obj)/header.o: $(obj)/zoffset.h
 
+<<<<<<< HEAD
 LDFLAGS_setup.elf	:= -m elf_i386 -z noexecstack -T
+=======
+LDFLAGS_setup.elf	:= -m elf_i386 -T
+>>>>>>> master
 $(obj)/setup.elf: $(src)/setup.ld $(SETUP_OBJS) FORCE
 	$(call if_changed,ld)
 

@@ -173,7 +173,11 @@
 				  0x1 0x0 0x60000000 0x10000000
 				  0x2 0x0 0x70000000 0x10000000
 				  0x3 0x0 0x80000000 0x10000000>;
+<<<<<<< HEAD:arch/arm/boot/dts/microchip/sama5d2.dtsi
 			clocks = <&pmc PMC_TYPE_CORE PMC_MCK2>;
+=======
+			clocks = <&h32ck>;
+>>>>>>> master:arch/arm/boot/dts/sama5d2.dtsi
 			status = "disabled";
 
 			nand_controller: nand-controller {

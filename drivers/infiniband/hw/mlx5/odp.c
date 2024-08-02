@@ -536,6 +536,7 @@ void mlx5_ib_free_odp_mr(struct mlx5_ib_mr *mr)
 	struct mlx5_ib_mr *mtt;
 	unsigned long idx;
 
+<<<<<<< HEAD
 	/*
 	 * If this is an implicit MR it is already invalidated so we can just
 	 * delete the children mkeys.
@@ -543,6 +544,57 @@ void mlx5_ib_free_odp_mr(struct mlx5_ib_mr *mr)
 	xa_for_each(&mr->implicit_children, idx, mtt) {
 		xa_erase(&mr->implicit_children, idx);
 		mlx5_ib_dereg_mr(&mtt->ibmr, NULL);
+=======
+	if (mr->parent != imr)
+		return 0;
+
+	ib_umem_odp_unmap_dma_pages(umem,
+				    ib_umem_start(umem),
+				    ib_umem_end(umem));
+
+	if (umem->odp_data->dying)
+		return 0;
+
+	WRITE_ONCE(umem->odp_data->dying, 1);
+	atomic_inc(&imr->num_leaf_free);
+	schedule_work(&umem->odp_data->work);
+
+	return 0;
+}
+
+void mlx5_ib_free_implicit_mr(struct mlx5_ib_mr *imr)
+{
+	struct ib_ucontext *ctx = imr->ibmr.pd->uobject->context;
+
+	down_read(&ctx->umem_rwsem);
+	rbt_ib_umem_for_each_in_range(&ctx->umem_tree, 0, ULLONG_MAX,
+				      mr_leaf_free, true, imr);
+	up_read(&ctx->umem_rwsem);
+
+	wait_event(imr->q_leaf_free, !atomic_read(&imr->num_leaf_free));
+}
+
+static int pagefault_mr(struct mlx5_ib_dev *dev, struct mlx5_ib_mr *mr,
+			u64 io_virt, size_t bcnt, u32 *bytes_mapped)
+{
+	u64 access_mask;
+	int npages = 0, page_shift, np;
+	u64 start_idx, page_mask;
+	struct ib_umem_odp *odp;
+	int current_seq;
+	size_t size;
+	int ret;
+
+	if (!mr->umem->odp_data->page_list) {
+		odp = implicit_mr_get_data(mr, io_virt, bcnt);
+
+		if (IS_ERR(odp))
+			return PTR_ERR(odp);
+		mr = odp->private;
+
+	} else {
+		odp = mr->umem->odp_data;
+>>>>>>> master
 	}
 }
 
@@ -560,8 +612,15 @@ static int pagefault_real_mr(struct mlx5_ib_mr *mr, struct ib_umem_odp *odp,
 	bool fault = !(flags & MLX5_PF_FLAGS_SNAPSHOT);
 	u32 xlt_flags = MLX5_IB_UPD_XLT_ATOMIC;
 
+<<<<<<< HEAD
 	if (flags & MLX5_PF_FLAGS_ENABLE)
 		xlt_flags |= MLX5_IB_UPD_XLT_ENABLE;
+=======
+	page_shift = mr->umem->page_shift;
+	page_mask = ~(BIT(page_shift) - 1);
+	start_idx = (io_virt - (mr->mmkey.iova & page_mask)) >> page_shift;
+	access_mask = ODP_READ_ALLOWED_BIT;
+>>>>>>> master
 
 	page_shift = odp->page_shift;
 	start_idx = (user_va - ib_umem_start(odp)) >> page_shift;

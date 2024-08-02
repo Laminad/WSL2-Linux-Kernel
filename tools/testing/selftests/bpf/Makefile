@@ -368,6 +368,7 @@ ifneq ($(CROSS_COMPILE),)
 CLANG_TARGET_ARCH = --target=$(notdir $(CROSS_COMPILE:%-=%))
 endif
 
+<<<<<<< HEAD
 CLANG_SYS_INCLUDES = $(call get_sys_includes,$(CLANG),$(CLANG_TARGET_ARCH))
 BPF_CFLAGS = -g -Wall -Werror -D__TARGET_ARCH_$(SRCARCH) $(MENDIAN)	\
 	     -I$(INCLUDE_DIR) -I$(CURDIR) -I$(APIDIR)			\
@@ -478,6 +479,24 @@ $(TRUNNER_OUTPUT)-dir := y
 $(TRUNNER_OUTPUT):
 	$$(call msg,MKDIR,,$$@)
 	$(Q)mkdir -p $$@
+=======
+# Have one program compiled without "-target bpf" to test whether libbpf loads
+# it successfully
+$(OUTPUT)/test_xdp.o: test_xdp.c
+	$(CLANG) $(CLANG_FLAGS) \
+		-O2 -emit-llvm -c $< -o - | \
+	$(LLC) -march=bpf -mcpu=$(CPU) $(LLC_FLAGS) -filetype=obj -o $@
+ifeq ($(DWARF2BTF),y)
+	$(BTF_PAHOLE) -J $@
+endif
+
+$(OUTPUT)/%.o: %.c
+	$(CLANG) $(CLANG_FLAGS) \
+		 -O2 -target bpf -emit-llvm -c $< -o - |      \
+	$(LLC) -march=bpf -mcpu=$(CPU) $(LLC_FLAGS) -filetype=obj -o $@
+ifeq ($(DWARF2BTF),y)
+	$(BTF_PAHOLE) -J $@
+>>>>>>> master
 endif
 
 # ensure we set up BPF objects generation rule just once for a given

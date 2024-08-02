@@ -6011,7 +6011,11 @@ static int megasas_init_fw(struct megasas_instance *instance)
 {
 	u32 max_sectors_1;
 	u32 max_sectors_2, tmp_sectors, msix_enable;
+<<<<<<< HEAD
 	u32 scratch_pad_1, scratch_pad_2, scratch_pad_3, status_reg;
+=======
+	u32 scratch_pad_2, scratch_pad_3, scratch_pad_4, status_reg;
+>>>>>>> master
 	resource_size_t base_addr;
 	void *base_addr_phys;
 	struct megasas_ctrl_info *ctrl_info = NULL;
@@ -6019,9 +6023,13 @@ static int megasas_init_fw(struct megasas_instance *instance)
 	int i, j, loop;
 	struct IOV_111 *iovPtr;
 	struct fusion_context *fusion;
+<<<<<<< HEAD
 	bool intr_coalescing;
 	unsigned int num_msix_req;
 	u16 lnksta, speed;
+=======
+	bool do_adp_reset = true;
+>>>>>>> master
 
 	fusion = instance->ctrl_context;
 
@@ -6073,6 +6081,7 @@ static int megasas_init_fw(struct megasas_instance *instance)
 	}
 
 	if (megasas_transition_to_ready(instance, 0)) {
+<<<<<<< HEAD
 		dev_info(&instance->pdev->dev,
 			 "Failed to transition controller to ready from %s!\n",
 			 __func__);
@@ -6102,6 +6111,31 @@ static int megasas_init_fw(struct megasas_instance *instance)
 		dev_info(&instance->pdev->dev,
 			 "FW restarted successfully from %s!\n",
 			 __func__);
+=======
+		if (instance->adapter_type >= INVADER_SERIES) {
+			status_reg = instance->instancet->read_fw_status_reg(
+					instance->reg_set);
+			do_adp_reset = status_reg & MFI_RESET_ADAPTER;
+		}
+
+		if (do_adp_reset) {
+			atomic_set(&instance->fw_reset_no_pci_access, 1);
+			instance->instancet->adp_reset
+				(instance, instance->reg_set);
+			atomic_set(&instance->fw_reset_no_pci_access, 0);
+			dev_info(&instance->pdev->dev,
+				 "FW restarted successfully from %s!\n",
+				 __func__);
+
+			/*waiting for about 30 second before retry*/
+			ssleep(30);
+
+			if (megasas_transition_to_ready(instance, 0))
+				goto fail_ready_state;
+		} else {
+			goto fail_ready_state;
+		}
+>>>>>>> master
 	}
 
 	megasas_init_ctrl_params(instance);
@@ -6152,8 +6186,14 @@ static int megasas_init_fw(struct megasas_instance *instance)
 				/* Thunderbolt Series*/
 				instance->msix_vectors = (scratch_pad_1
 					& MR_MAX_REPLY_QUEUES_OFFSET) + 1;
+<<<<<<< HEAD
 			} else {
 				instance->msix_vectors = ((scratch_pad_1
+=======
+				fw_msix_count = instance->msix_vectors;
+			} else {
+				instance->msix_vectors = ((scratch_pad_2
+>>>>>>> master
 					& MR_MAX_REPLY_QUEUES_EXT_OFFSET)
 					>> MR_MAX_REPLY_QUEUES_EXT_OFFSET_SHIFT) + 1;
 
@@ -6170,7 +6210,10 @@ static int megasas_init_fw(struct megasas_instance *instance)
 					if (instance->msix_vectors > 8)
 						instance->msix_combined = true;
 					break;
+<<<<<<< HEAD
 				case AERO_SERIES:
+=======
+>>>>>>> master
 				case VENTURA_SERIES:
 					if (instance->msix_vectors > 16)
 						instance->msix_combined = true;
@@ -7038,7 +7081,11 @@ megasas_set_dma_mask(struct megasas_instance *instance)
 		instance->consistent_mask_64bit = true;
 
 	dev_info(&pdev->dev, "%s bit DMA mask and %s bit consistent mask\n",
+<<<<<<< HEAD
 		 ((*pdev->dev.dma_mask == DMA_BIT_MASK(63)) ? "63" : "32"),
+=======
+		 ((*pdev->dev.dma_mask == DMA_BIT_MASK(64)) ? "63" : "32"),
+>>>>>>> master
 		 (instance->consistent_mask_64bit ? "63" : "32"));
 
 	return 0;
@@ -8622,6 +8669,74 @@ megasas_mgmt_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 }
 
 #ifdef CONFIG_COMPAT
+<<<<<<< HEAD
+=======
+static int megasas_mgmt_compat_ioctl_fw(struct file *file, unsigned long arg)
+{
+	struct compat_megasas_iocpacket __user *cioc =
+	    (struct compat_megasas_iocpacket __user *)arg;
+	struct megasas_iocpacket __user *ioc =
+	    compat_alloc_user_space(sizeof(struct megasas_iocpacket));
+	int i;
+	int error = 0;
+	compat_uptr_t ptr;
+	u32 local_sense_off;
+	u32 local_sense_len;
+	u32 user_sense_off;
+
+	if (clear_user(ioc, sizeof(*ioc)))
+		return -EFAULT;
+
+	if (copy_in_user(&ioc->host_no, &cioc->host_no, sizeof(u16)) ||
+	    copy_in_user(&ioc->sgl_off, &cioc->sgl_off, sizeof(u32)) ||
+	    copy_in_user(&ioc->sense_off, &cioc->sense_off, sizeof(u32)) ||
+	    copy_in_user(&ioc->sense_len, &cioc->sense_len, sizeof(u32)) ||
+	    copy_in_user(ioc->frame.raw, cioc->frame.raw, 128) ||
+	    copy_in_user(&ioc->sge_count, &cioc->sge_count, sizeof(u32)))
+		return -EFAULT;
+
+	/*
+	 * The sense_ptr is used in megasas_mgmt_fw_ioctl only when
+	 * sense_len is not null, so prepare the 64bit value under
+	 * the same condition.
+	 */
+	if (get_user(local_sense_off, &ioc->sense_off) ||
+		get_user(local_sense_len, &ioc->sense_len) ||
+		get_user(user_sense_off, &cioc->sense_off))
+		return -EFAULT;
+
+	if (local_sense_off != user_sense_off)
+		return -EINVAL;
+
+	if (local_sense_len) {
+		void __user **sense_ioc_ptr =
+			(void __user **)((u8 *)((unsigned long)&ioc->frame.raw) + local_sense_off);
+		compat_uptr_t *sense_cioc_ptr =
+			(compat_uptr_t *)(((unsigned long)&cioc->frame.raw) + user_sense_off);
+		if (get_user(ptr, sense_cioc_ptr) ||
+		    put_user(compat_ptr(ptr), sense_ioc_ptr))
+			return -EFAULT;
+	}
+
+	for (i = 0; i < MAX_IOCTL_SGE; i++) {
+		if (get_user(ptr, &cioc->sgl[i].iov_base) ||
+		    put_user(compat_ptr(ptr), &ioc->sgl[i].iov_base) ||
+		    copy_in_user(&ioc->sgl[i].iov_len,
+				 &cioc->sgl[i].iov_len, sizeof(compat_size_t)))
+			return -EFAULT;
+	}
+
+	error = megasas_mgmt_ioctl_fw(file, (unsigned long)ioc);
+
+	if (copy_in_user(&cioc->frame.hdr.cmd_status,
+			 &ioc->frame.hdr.cmd_status, sizeof(u8))) {
+		printk(KERN_DEBUG "megasas: error copy_in_user cmd_status\n");
+		return -EFAULT;
+	}
+	return error;
+}
+
+>>>>>>> master
 static long
 megasas_mgmt_compat_ioctl(struct file *file, unsigned int cmd,
 			  unsigned long arg)

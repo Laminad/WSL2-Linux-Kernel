@@ -61,11 +61,19 @@
  * This decides where the kernel will search for a free chunk of vm
  * space during mmap's.
  */
+<<<<<<< HEAD
 #ifdef CONFIG_64BIT
 #define TASK_UNMAPPED_BASE	PAGE_ALIGN((UL(1) << MMAP_MIN_VA_BITS) / 3)
 #else
 #define TASK_UNMAPPED_BASE	PAGE_ALIGN(TASK_SIZE / 3)
 #endif
+=======
+#define TASK_UNMAPPED_BASE	PAGE_ALIGN(TASK_SIZE / 3)
+
+#define STACK_TOP		TASK_SIZE
+#define STACK_TOP_MAX		STACK_TOP
+#define STACK_ALIGN		16
+>>>>>>> master
 
 #ifndef __ASSEMBLY__
 

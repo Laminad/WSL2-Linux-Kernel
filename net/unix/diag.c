@@ -13,7 +13,11 @@
 
 static int sk_diag_dump_name(struct sock *sk, struct sk_buff *nlskb)
 {
+<<<<<<< HEAD
 	/* might or might not have a hash table lock */
+=======
+	/* might or might not have unix_table_lock */
+>>>>>>> master
 	struct unix_address *addr = smp_load_acquire(&unix_sk(sk)->addr);
 
 	if (!addr)

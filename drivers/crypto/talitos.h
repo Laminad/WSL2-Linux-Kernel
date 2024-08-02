@@ -46,6 +46,10 @@ struct talitos_desc {
  * talitos_edesc - s/w-extended descriptor
  * @src_nents: number of segments in input scatterlist
  * @dst_nents: number of segments in output scatterlist
+<<<<<<< HEAD
+=======
+ * @icv_ool: whether ICV is out-of-line
+>>>>>>> master
  * @iv_dma: dma address of iv for checking continuity and link table
  * @dma_len: length of dma mapped link_tbl space
  * @dma_link_tbl: bus physical address of link_tbl/buf
@@ -60,13 +64,22 @@ struct talitos_desc {
 struct talitos_edesc {
 	int src_nents;
 	int dst_nents;
+<<<<<<< HEAD
+=======
+	bool icv_ool;
+>>>>>>> master
 	dma_addr_t iv_dma;
 	int dma_len;
 	dma_addr_t dma_link_tbl;
 	struct talitos_desc desc;
 	union {
+<<<<<<< HEAD
 		DECLARE_FLEX_ARRAY(struct talitos_ptr, link_tbl);
 		DECLARE_FLEX_ARRAY(u8, buf);
+=======
+		struct talitos_ptr link_tbl[0];
+		u8 buf[0];
+>>>>>>> master
 	};
 };
 

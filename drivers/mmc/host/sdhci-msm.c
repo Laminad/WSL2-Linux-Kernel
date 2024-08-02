@@ -285,11 +285,14 @@ struct sdhci_msm_host {
 	const struct sdhci_msm_offset *offset;
 	bool use_cdr;
 	u32 transfer_mode;
+<<<<<<< HEAD
 	bool updated_ddr_cfg;
 	bool uses_tassadar_dll;
 	u32 dll_config;
 	u32 ddr_config;
 	bool vqmmc_enabled;
+=======
+>>>>>>> master
 };
 
 static const struct sdhci_msm_offset *sdhci_priv_msm_offset(struct sdhci_host *host)
@@ -1120,7 +1123,31 @@ out:
 	return ret;
 }
 
+<<<<<<< HEAD
 static bool sdhci_msm_is_tuning_needed(struct sdhci_host *host)
+=======
+static void sdhci_msm_set_cdr(struct sdhci_host *host, bool enable)
+{
+	const struct sdhci_msm_offset *msm_offset = sdhci_priv_msm_offset(host);
+	u32 config, oldconfig = readl_relaxed(host->ioaddr +
+					      msm_offset->core_dll_config);
+
+	config = oldconfig;
+	if (enable) {
+		config |= CORE_CDR_EN;
+		config &= ~CORE_CDR_EXT_EN;
+	} else {
+		config &= ~CORE_CDR_EN;
+		config |= CORE_CDR_EXT_EN;
+	}
+
+	if (config != oldconfig)
+		writel_relaxed(config, host->ioaddr +
+			       msm_offset->core_dll_config);
+}
+
+static int sdhci_msm_execute_tuning(struct mmc_host *mmc, u32 opcode)
+>>>>>>> master
 {
 	struct mmc_ios *ios = &host->mmc->ios;
 
@@ -1129,6 +1156,7 @@ static bool sdhci_msm_is_tuning_needed(struct sdhci_host *host)
 	 * if clock frequency is greater than 100MHz in these modes.
 	 */
 	if (host->clock <= CORE_FREQ_100MHZ ||
+<<<<<<< HEAD
 	    !(ios->timing == MMC_TIMING_MMC_HS400 ||
 	    ios->timing == MMC_TIMING_MMC_HS200 ||
 	    ios->timing == MMC_TIMING_UHS_SDR104) ||
@@ -1149,7 +1177,18 @@ static int sdhci_msm_restore_sdr_dll_config(struct sdhci_host *host)
 	 * tuning.
 	 */
 	if (!sdhci_msm_is_tuning_needed(host))
+=======
+	    !(ios.timing == MMC_TIMING_MMC_HS400 ||
+	    ios.timing == MMC_TIMING_MMC_HS200 ||
+	    ios.timing == MMC_TIMING_UHS_SDR104)) {
+		msm_host->use_cdr = false;
+		sdhci_msm_set_cdr(host, false);
+>>>>>>> master
 		return 0;
+	}
+
+	/* Clock-Data-Recovery used to dynamically adjust RX sampling point */
+	msm_host->use_cdr = true;
 
 	/* Reset the tuning block */
 	ret = msm_init_cm_dll(host);
@@ -2095,7 +2134,12 @@ static int __sdhci_msm_check_write(struct sdhci_host *host, u16 val, int reg)
 		if (!msm_host->use_cdr)
 			break;
 		if ((msm_host->transfer_mode & SDHCI_TRNS_READ) &&
+<<<<<<< HEAD
 		    !mmc_op_tuning(SDHCI_GET_CMD(val)))
+=======
+		    SDHCI_GET_CMD(val) != MMC_SEND_TUNING_BLOCK_HS200 &&
+		    SDHCI_GET_CMD(val) != MMC_SEND_TUNING_BLOCK)
+>>>>>>> master
 			sdhci_msm_set_cdr(host, true);
 		else
 			sdhci_msm_set_cdr(host, false);

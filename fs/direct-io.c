@@ -310,9 +310,15 @@ static ssize_t dio_complete(struct dio *dio, ssize_t ret, unsigned int flags)
 		 */
 		dio->iocb->ki_pos += transferred;
 
+<<<<<<< HEAD
 		if (ret > 0 && dio_op == REQ_OP_WRITE)
 			ret = generic_write_sync(dio->iocb, ret);
 		dio->iocb->ki_complete(dio->iocb, ret);
+=======
+		if (ret > 0 && dio->op == REQ_OP_WRITE)
+			ret = generic_write_sync(dio->iocb, ret);
+		dio->iocb->ki_complete(dio->iocb, ret, 0);
+>>>>>>> master
 	}
 
 	kmem_cache_free(dio_cache, dio);

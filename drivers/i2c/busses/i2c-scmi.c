@@ -357,6 +357,10 @@ static int smbus_cmi_probe(struct platform_device *device)
 {
 	struct device *dev = &device->dev;
 	struct acpi_smbus_cmi *smbus_cmi;
+<<<<<<< HEAD
+=======
+	const struct acpi_device_id *id;
+>>>>>>> master
 	int ret;
 
 	smbus_cmi = kzalloc(sizeof(struct acpi_smbus_cmi), GFP_KERNEL);
@@ -398,6 +402,10 @@ static int smbus_cmi_probe(struct platform_device *device)
 
 err:
 	kfree(smbus_cmi);
+<<<<<<< HEAD
+=======
+	device->driver_data = NULL;
+>>>>>>> master
 	return ret;
 }
 

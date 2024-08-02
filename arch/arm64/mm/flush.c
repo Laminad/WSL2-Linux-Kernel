@@ -25,7 +25,11 @@ void sync_icache_aliases(unsigned long start, unsigned long end)
 		 * Don't issue kick_all_cpus_sync() after I-cache invalidation
 		 * for user mappings.
 		 */
+<<<<<<< HEAD
 		caches_clean_inval_pou(start, end);
+=======
+		__flush_icache_range(addr, addr + len);
+>>>>>>> master
 	}
 }
 

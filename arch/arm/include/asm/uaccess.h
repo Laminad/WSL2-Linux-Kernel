@@ -55,6 +55,38 @@ extern int __put_user_bad(void);
 
 #ifdef CONFIG_MMU
 
+<<<<<<< HEAD
+=======
+#define USER_DS		TASK_SIZE
+#define get_fs()	(current_thread_info()->addr_limit)
+
+static inline void set_fs(mm_segment_t fs)
+{
+	current_thread_info()->addr_limit = fs;
+
+	/*
+	 * Prevent a mispredicted conditional call to set_fs from forwarding
+	 * the wrong address limit to access_ok under speculation.
+	 */
+	dsb(nsh);
+	isb();
+
+	modify_domain(DOMAIN_KERNEL, fs ? DOMAIN_CLIENT : DOMAIN_MANAGER);
+}
+
+#define segment_eq(a, b)	((a) == (b))
+
+/* We use 33-bit arithmetic here... */
+#define __range_ok(addr, size) ({ \
+	unsigned long flag, roksum; \
+	__chk_user_ptr(addr);	\
+	__asm__("adds %1, %2, %3; sbcccs %1, %1, %0; movcc %0, #0" \
+		: "=&r" (flag), "=&r" (roksum) \
+		: "r" (addr), "Ir" (size), "0" (current_thread_info()->addr_limit) \
+		: "cc"); \
+	flag; })
+
+>>>>>>> master
 /*
  * This is a type: either unsigned long, if the argument fits into
  * that type, or otherwise unsigned long long.
@@ -75,6 +107,7 @@ static inline void __user *__uaccess_mask_range_ptr(const void __user *ptr,
 	unsigned long tmp;
 
 	asm volatile(
+<<<<<<< HEAD
 	"	.syntax unified\n"
 	"	sub	%1, %3, #1\n"
 	"	subs	%1, %1, %0\n"
@@ -83,6 +116,15 @@ static inline void __user *__uaccess_mask_range_ptr(const void __user *ptr,
 	"	movlo	%0, #0\n"
 	: "+r" (safe_ptr), "=&r" (tmp)
 	: "r" (size), "r" (TASK_SIZE)
+=======
+	"	sub	%1, %3, #1\n"
+	"	subs	%1, %1, %0\n"
+	"	addhs	%1, %1, #1\n"
+	"	subhss	%1, %1, %2\n"
+	"	movlo	%0, #0\n"
+	: "+r" (safe_ptr), "=&r" (tmp)
+	: "r" (size), "r" (current_thread_info()->addr_limit)
+>>>>>>> master
 	: "cc");
 
 	csdb();
@@ -458,6 +500,7 @@ do {									\
 	: "r" (x), "i" (-EFAULT)				\
 	: "cc")
 
+<<<<<<< HEAD
 #define __get_kernel_nofault(dst, src, type, err_label)			\
 do {									\
 	const type *__pk_ptr = (src);					\
@@ -504,6 +547,9 @@ do {									\
 	if (__err)							\
 		goto err_label;						\
 } while (0)
+=======
+#endif /* !CONFIG_CPU_SPECTRE */
+>>>>>>> master
 
 #ifdef CONFIG_MMU
 extern unsigned long __must_check

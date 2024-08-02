@@ -808,9 +808,12 @@ int usbip_recv_xbuff(struct usbip_device *ud, struct urb *urb)
 
 			copy -= recv;
 			ret += recv;
+<<<<<<< HEAD
 
 			if (!copy)
 				break;
+=======
+>>>>>>> master
 		}
 
 		if (ret != size)

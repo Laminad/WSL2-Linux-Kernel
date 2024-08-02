@@ -321,6 +321,14 @@ static int spi_gpio_request(struct device *dev, struct spi_gpio *spi_gpio)
 	spi_gpio->miso = devm_gpiod_get_optional(dev, "miso", GPIOD_IN);
 	if (IS_ERR(spi_gpio->miso))
 		return PTR_ERR(spi_gpio->miso);
+<<<<<<< HEAD
+=======
+	/*
+	 * No setting SPI_MASTER_NO_RX here - if there is only a MOSI
+	 * pin connected the host can still do RX by changing the
+	 * direction of the line.
+	 */
+>>>>>>> master
 
 	spi_gpio->sck = devm_gpiod_get(dev, "sck", GPIOD_OUT_LOW);
 	return PTR_ERR_OR_ZERO(spi_gpio->sck);
@@ -403,12 +411,27 @@ static int spi_gpio_probe(struct platform_device *pdev)
 	if (status)
 		return status;
 
+<<<<<<< HEAD
 	spi_gpio = spi_controller_get_devdata(host);
+=======
+	master->bits_per_word_mask = SPI_BPW_RANGE_MASK(1, 32);
+	master->mode_bits = SPI_3WIRE | SPI_CPHA | SPI_CPOL | SPI_CS_HIGH;
+	master->flags = master_flags;
+	master->bus_num = pdev->id;
+	/* The master needs to think there is a chipselect even if not connected */
+	master->num_chipselect = spi_gpio->has_cs ? pdata->num_chipselect : 1;
+	master->setup = spi_gpio_setup;
+	master->cleanup = spi_gpio_cleanup;
+#ifdef CONFIG_OF
+	master->dev.of_node = pdev->dev.of_node;
+#endif
+>>>>>>> master
 
 	status = spi_gpio_request(dev, spi_gpio);
 	if (status)
 		return status;
 
+<<<<<<< HEAD
 	host->bits_per_word_mask = SPI_BPW_RANGE_MASK(1, 32);
 	host->mode_bits = SPI_3WIRE | SPI_3WIRE_HIZ | SPI_CPHA | SPI_CPOL |
 			    SPI_CS_HIGH | SPI_LSB_FIRST;
@@ -421,6 +444,20 @@ static int spi_gpio_probe(struct platform_device *pdev)
 		 */
 		host->flags = SPI_CONTROLLER_NO_TX;
 	}
+=======
+	if ((master_flags & SPI_MASTER_NO_TX) == 0) {
+		spi_gpio->bitbang.txrx_word[SPI_MODE_0] = spi_gpio_txrx_word_mode0;
+		spi_gpio->bitbang.txrx_word[SPI_MODE_1] = spi_gpio_txrx_word_mode1;
+		spi_gpio->bitbang.txrx_word[SPI_MODE_2] = spi_gpio_txrx_word_mode2;
+		spi_gpio->bitbang.txrx_word[SPI_MODE_3] = spi_gpio_txrx_word_mode3;
+	} else {
+		spi_gpio->bitbang.txrx_word[SPI_MODE_0] = spi_gpio_spec_txrx_word_mode0;
+		spi_gpio->bitbang.txrx_word[SPI_MODE_1] = spi_gpio_spec_txrx_word_mode1;
+		spi_gpio->bitbang.txrx_word[SPI_MODE_2] = spi_gpio_spec_txrx_word_mode2;
+		spi_gpio->bitbang.txrx_word[SPI_MODE_3] = spi_gpio_spec_txrx_word_mode3;
+	}
+	spi_gpio->bitbang.setup_transfer = spi_bitbang_setup_transfer;
+>>>>>>> master
 
 	host->bus_num = pdev->id;
 	host->setup = spi_gpio_setup;

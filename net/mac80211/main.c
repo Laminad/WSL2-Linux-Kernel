@@ -1442,7 +1442,12 @@ int ieee80211_register_hw(struct ieee80211_hw *hw)
 	rate_control_deinitialize(local);
 	ieee80211_remove_interfaces(local);
 	rtnl_unlock();
+<<<<<<< HEAD
  fail_rate:
+=======
+	ieee80211_led_exit(local);
+	ieee80211_wep_free(local);
+>>>>>>> master
  fail_flows:
 	ieee80211_led_exit(local);
 	destroy_workqueue(local->workqueue);

@@ -35,8 +35,26 @@
 	(typeof(ptr)) (__ptr + (off));					\
 })
 
+<<<<<<< HEAD
 #ifdef CONFIG_RETPOLINE
 #define __noretpoline __attribute__((__indirect_branch__("keep")))
+=======
+/*
+ * A trick to suppress uninitialized variable warning without generating any
+ * code
+ */
+#define uninitialized_var(x) x = x
+
+#ifdef __CHECKER__
+#define __must_be_array(a)	0
+#else
+/* &a[0] degrades to a pointer: a different type from an array */
+#define __must_be_array(a)	BUILD_BUG_ON_ZERO(__same_type((a), &(a)[0]))
+#endif
+
+#ifdef CONFIG_RETPOLINE
+#define __noretpoline __attribute__((indirect_branch("keep")))
+>>>>>>> master
 #endif
 
 #define __UNIQUE_ID(prefix) __PASTE(__PASTE(__UNIQUE_ID_, prefix), __COUNTER__)
@@ -129,11 +147,25 @@
 #define __SANITIZE_ADDRESS__
 #endif
 
+<<<<<<< HEAD
 /*
  * GCC does not support KMSAN.
  */
 #define __no_sanitize_memory
 #define __no_kmsan_checks
+=======
+#if GCC_VERSION >= 90100
+#define __copy(symbol)                 __attribute__((__copy__(symbol)))
+#endif
+
+#if !defined(__noclone)
+#define __noclone	/* not needed */
+#endif
+
+#if !defined(__no_sanitize_address)
+#define __no_sanitize_address
+#endif
+>>>>>>> master
 
 /*
  * Turn individual warnings and errors on and off locally, depending

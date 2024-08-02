@@ -63,7 +63,22 @@ int scsi_init_sense_cache(struct Scsi_Host *shost)
 	int ret = 0;
 
 	mutex_lock(&scsi_sense_cache_mutex);
+<<<<<<< HEAD
 	if (!scsi_sense_cache) {
+=======
+	cache = scsi_select_sense_cache(shost->unchecked_isa_dma);
+	if (cache)
+		goto exit;
+
+	if (shost->unchecked_isa_dma) {
+		scsi_sense_isadma_cache =
+			kmem_cache_create("scsi_sense_cache(DMA)",
+				SCSI_SENSE_BUFFERSIZE, 0,
+				SLAB_HWCACHE_ALIGN | SLAB_CACHE_DMA, NULL);
+		if (!scsi_sense_isadma_cache)
+			ret = -ENOMEM;
+	} else {
+>>>>>>> master
 		scsi_sense_cache =
 			kmem_cache_create_usercopy("scsi_sense_cache",
 				SCSI_SENSE_BUFFERSIZE, 0, SLAB_HWCACHE_ALIGN,
@@ -71,6 +86,10 @@ int scsi_init_sense_cache(struct Scsi_Host *shost)
 		if (!scsi_sense_cache)
 			ret = -ENOMEM;
 	}
+<<<<<<< HEAD
+=======
+ exit:
+>>>>>>> master
 	mutex_unlock(&scsi_sense_cache_mutex);
 	return ret;
 }
@@ -555,6 +574,7 @@ static bool scsi_end_request(struct request *req, blk_status_t error,
 	 */
 	destroy_rcu_head(&cmd->rcu);
 
+<<<<<<< HEAD
 	/*
 	 * In the MQ case the command gets freed by __blk_mq_end_request,
 	 * so we have to do all cleanup that depends on it earlier.
@@ -569,6 +589,25 @@ static bool scsi_end_request(struct request *req, blk_status_t error,
 	 * from being cleaned up during running queue.
 	 */
 	percpu_ref_get(&q->q_usage_counter);
+=======
+		/*
+		 * queue is still alive, so grab the ref for preventing it
+		 * from being cleaned up during running queue.
+		 */
+		percpu_ref_get(&q->q_usage_counter);
+
+		__blk_mq_end_request(req, error);
+
+		if (scsi_target(sdev)->single_lun ||
+		    !list_empty(&sdev->host->starved_list))
+			kblockd_schedule_work(&sdev->requeue_work);
+		else
+			blk_mq_run_hw_queues(q, true);
+
+		percpu_ref_put(&q->q_usage_counter);
+	} else {
+		unsigned long flags;
+>>>>>>> master
 
 	__blk_mq_end_request(req, error);
 
@@ -613,6 +652,21 @@ static blk_status_t scsi_result_to_blk_status(int result)
 	case DID_TRANSPORT_FAILFAST:
 	case DID_TRANSPORT_MARGINAL:
 		return BLK_STS_TRANSPORT;
+<<<<<<< HEAD
+=======
+	case DID_TARGET_FAILURE:
+		set_host_byte(cmd, DID_OK);
+		return BLK_STS_TARGET;
+	case DID_NEXUS_FAILURE:
+		set_host_byte(cmd, DID_OK);
+		return BLK_STS_NEXUS;
+	case DID_ALLOC_FAILURE:
+		set_host_byte(cmd, DID_OK);
+		return BLK_STS_NOSPC;
+	case DID_MEDIUM_ERROR:
+		set_host_byte(cmd, DID_OK);
+		return BLK_STS_MEDIUM;
+>>>>>>> master
 	default:
 		return BLK_STS_IOERR;
 	}
@@ -1128,8 +1182,25 @@ static void scsi_initialize_rq(struct request *rq)
 	cmd->retries = 0;
 }
 
+<<<<<<< HEAD
 struct request *scsi_alloc_request(struct request_queue *q, blk_opf_t opf,
 				   blk_mq_req_flags_t flags)
+=======
+/*
+ * Only called when the request isn't completed by SCSI, and not freed by
+ * SCSI
+ */
+static void scsi_cleanup_rq(struct request *rq)
+{
+	if (rq->rq_flags & RQF_DONTPREP) {
+		scsi_mq_uninit_cmd(blk_mq_rq_to_pdu(rq));
+		rq->rq_flags &= ~RQF_DONTPREP;
+	}
+}
+
+/* Add a command to the list used by the aacraid and dpt_i2o drivers */
+void scsi_add_cmd_to_list(struct scsi_cmnd *cmd)
+>>>>>>> master
 {
 	struct request *rq;
 
@@ -1789,9 +1860,15 @@ out_put_budget:
 		break;
 	default:
 		if (unlikely(!scsi_device_online(sdev)))
+<<<<<<< HEAD
 			cmd->result = DID_NO_CONNECT << 16;
 		else
 			cmd->result = DID_ERROR << 16;
+=======
+			scsi_req(req)->result = DID_NO_CONNECT << 16;
+		else
+			scsi_req(req)->result = DID_ERROR << 16;
+>>>>>>> master
 		/*
 		 * Make sure to release all allocated resources when
 		 * we hit an error, as we will never see this command
@@ -1921,8 +1998,13 @@ static const struct blk_mq_ops scsi_mq_ops_no_commit = {
 #endif
 	.init_request	= scsi_mq_init_request,
 	.exit_request	= scsi_mq_exit_request,
+<<<<<<< HEAD
 	.cleanup_rq	= scsi_cleanup_rq,
 	.busy		= scsi_mq_lld_busy,
+=======
+	.initialize_rq_fn = scsi_initialize_rq,
+	.cleanup_rq	= scsi_cleanup_rq,
+>>>>>>> master
 	.map_queues	= scsi_map_queues,
 	.init_hctx	= scsi_init_hctx,
 	.poll		= scsi_mq_poll,
@@ -2681,6 +2763,13 @@ void scsi_device_resume(struct scsi_device *sdev)
 	 * device deleted during suspend)
 	 */
 	mutex_lock(&sdev->state_mutex);
+<<<<<<< HEAD
+=======
+	if (sdev->quiesced_by) {
+		sdev->quiesced_by = NULL;
+		blk_clear_pm_only(sdev->request_queue);
+	}
+>>>>>>> master
 	if (sdev->sdev_state == SDEV_QUIESCE)
 		scsi_device_set_state(sdev, SDEV_RUNNING);
 	if (sdev->quiesced_by) {

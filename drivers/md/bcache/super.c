@@ -1301,6 +1301,7 @@ int bch_cached_dev_attach(struct cached_dev *dc, struct cache_set *c,
 
 	bch_sectors_dirty_init(&dc->disk);
 
+<<<<<<< HEAD
 	ret = bch_cached_dev_run(dc);
 	if (ret && (ret != -EBUSY)) {
 		up_write(&dc->writeback_lock);
@@ -1316,6 +1317,9 @@ int bch_cached_dev_attach(struct cached_dev *dc, struct cache_set *c,
 		return ret;
 	}
 
+=======
+	bch_cached_dev_run(dc);
+>>>>>>> master
 	bcache_device_link(&dc->disk, c, "bdev");
 	atomic_inc(&c->attached_dev_nr);
 
@@ -1358,7 +1362,11 @@ static void cached_dev_free(struct closure *cl)
 
 	mutex_lock(&bch_register_lock);
 
+<<<<<<< HEAD
 	if (atomic_read(&dc->running)) {
+=======
+	if (atomic_read(&dc->running))
+>>>>>>> master
 		bd_unlink_disk_holder(dc->bdev, dc->disk.disk);
 		del_gendisk(dc->disk.disk);
 	}
@@ -1616,8 +1624,13 @@ bool bch_cached_dev_error(struct cached_dev *dc)
 	/* make others know io_disable is true earlier */
 	smp_mb();
 
+<<<<<<< HEAD
 	pr_err("stop %s: too many IO errors on backing device %pg\n",
 	       dc->disk.disk->disk_name, dc->bdev);
+=======
+	pr_err("stop %s: too many IO errors on backing device %s\n",
+		dc->disk.disk->disk_name, dc->backing_dev_name);
+>>>>>>> master
 
 	bcache_device_stop(&dc->disk);
 	return true;
@@ -1681,6 +1694,16 @@ static void cache_set_free(struct closure *cl)
 	bch_journal_free(c);
 
 	mutex_lock(&bch_register_lock);
+<<<<<<< HEAD
+=======
+	for_each_cache(ca, c, i)
+		if (ca) {
+			ca->set = NULL;
+			c->cache[ca->sb.nr_this_dev] = NULL;
+			kobject_put(&ca->kobj);
+		}
+
+>>>>>>> master
 	bch_bset_sort_state_free(&c->sort);
 	free_pages((unsigned long) c->uuids, ilog2(meta_bucket_pages(&c->cache->sb)));
 
@@ -1974,6 +1997,10 @@ static int run_cache_set(struct cache_set *c)
 	struct cached_dev *dc, *t;
 	struct cache *ca = c->cache;
 	struct closure cl;
+<<<<<<< HEAD
+=======
+	unsigned int i;
+>>>>>>> master
 	LIST_HEAD(journal);
 	struct journal_replay *l;
 
@@ -1982,7 +2009,11 @@ static int run_cache_set(struct cache_set *c)
 	c->nbuckets = ca->sb.nbuckets;
 	set_gc_sectors(c);
 
+<<<<<<< HEAD
 	if (CACHE_SYNC(&c->cache->sb)) {
+=======
+	if (CACHE_SYNC(&c->sb)) {
+>>>>>>> master
 		struct bkey *k;
 		struct jset *j;
 
@@ -2136,6 +2167,16 @@ err:
 		list_del(&l->list);
 		kfree(l);
 	}
+<<<<<<< HEAD
+=======
+
+	closure_sync(&cl);
+	/* XXX: test this, it's broken */
+	bch_cache_set_error(c, "%s", err);
+
+	return -EIO;
+}
+>>>>>>> master
 
 	closure_sync(&cl);
 
@@ -2183,9 +2224,17 @@ found:
 	ca->set = c;
 	ca->set->cache = ca;
 
+<<<<<<< HEAD
 	err = "failed to run cache set";
 	if (run_cache_set(c) < 0)
 		goto err;
+=======
+	if (c->caches_loaded == c->sb.nr_in_set) {
+		err = "failed to run cache set";
+		if (run_cache_set(c) < 0)
+			goto err;
+	}
+>>>>>>> master
 
 	return NULL;
 err:

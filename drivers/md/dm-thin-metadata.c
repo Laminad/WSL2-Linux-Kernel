@@ -1776,11 +1776,17 @@ int dm_pool_block_is_shared(struct dm_pool_metadata *pmd, dm_block_t b, bool *re
 	uint32_t ref_count;
 
 	down_read(&pmd->root_lock);
+<<<<<<< HEAD
 	if (!pmd->fail_io) {
 		r = dm_sm_get_count(pmd->data_sm, b, &ref_count);
 		if (!r)
 			*result = (ref_count > 1);
 	}
+=======
+	r = dm_sm_get_count(pmd->data_sm, b, &ref_count);
+	if (!r)
+		*result = (ref_count > 1);
+>>>>>>> master
 	up_read(&pmd->root_lock);
 
 	return r;
@@ -2119,7 +2125,11 @@ int dm_pool_metadata_set_needs_check(struct dm_pool_metadata *pmd)
 	struct dm_block *sblock;
 	struct thin_disk_superblock *disk_super;
 
+<<<<<<< HEAD
 	pmd_write_lock(pmd);
+=======
+	down_write(&pmd->root_lock);
+>>>>>>> master
 	if (pmd->fail_io)
 		goto out;
 

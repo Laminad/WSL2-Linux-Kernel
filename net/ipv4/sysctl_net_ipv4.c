@@ -25,7 +25,10 @@ static int ip_local_port_range_min[] = { 1, 1 };
 static int ip_local_port_range_max[] = { 65535, 65535 };
 static int tcp_adv_win_scale_min = -31;
 static int tcp_adv_win_scale_max = 31;
+<<<<<<< HEAD
 static int tcp_app_win_max = 31;
+=======
+>>>>>>> master
 static int tcp_min_snd_mss_min = TCP_MIN_SND_MSS;
 static int tcp_min_snd_mss_max = 65535;
 static int ip_privileged_port_min;
@@ -39,12 +42,15 @@ static unsigned long ip_ping_group_range_min[] = { 0, 0 };
 static unsigned long ip_ping_group_range_max[] = { GID_T_MAX, GID_T_MAX };
 static u32 u32_max_div_HZ = UINT_MAX / HZ;
 static int one_day_secs = 24 * 3600;
+<<<<<<< HEAD
 static u32 fib_multipath_hash_fields_all_mask __maybe_unused =
 	FIB_MULTIPATH_HASH_FIELD_ALL_MASK;
 static unsigned int tcp_child_ehash_entries_max = 16 * 1024 * 1024;
 static unsigned int udp_child_hash_entries_max = UDP_HTABLE_SIZE_MAX;
 static int tcp_plb_max_rounds = 31;
 static int tcp_plb_max_cong_thresh = 256;
+=======
+>>>>>>> master
 
 /* obsolete */
 static int sysctl_tcp_low_latency __read_mostly;
@@ -833,6 +839,7 @@ static struct ctl_table ipv4_net_table[] = {
 		.extra2		= &tcp_min_snd_mss_max,
 	},
 	{
+<<<<<<< HEAD
 		.procname	= "tcp_mtu_probe_floor",
 		.data		= &init_net.ipv4.sysctl_tcp_mtu_probe_floor,
 		.maxlen		= sizeof(int),
@@ -842,6 +849,8 @@ static struct ctl_table ipv4_net_table[] = {
 		.extra2		= &tcp_min_snd_mss_max,
 	},
 	{
+=======
+>>>>>>> master
 		.procname	= "tcp_probe_threshold",
 		.data		= &init_net.ipv4.sysctl_tcp_probe_threshold,
 		.maxlen		= sizeof(int),
@@ -1291,7 +1300,11 @@ static struct ctl_table ipv4_net_table[] = {
 		.maxlen		= sizeof(int),
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec_minmax,
+<<<<<<< HEAD
 		.extra1		= SYSCTL_ZERO,
+=======
+		.extra1		= &zero,
+>>>>>>> master
 		.extra2		= &one_day_secs
 	},
 	{

@@ -1142,12 +1142,26 @@ static int coda_encoder_cmd(struct file *file, void *fh,
 		/* Set the stream-end flag on this context */
 		ctx->bit_stream_param |= CODA_BIT_STREAM_END_FLAG;
 
+<<<<<<< HEAD:drivers/media/platform/chips-media/coda-common.c
 		/*
 		 * If the last output buffer has already been taken from the
 		 * queue, wake up the capture queue and signal end of stream
 		 * via the -EPIPE mechanism.
 		 */
 		coda_wake_up_capture_queue(ctx);
+=======
+	/* Set the stream-end flag on this context */
+	ctx->bit_stream_param |= CODA_BIT_STREAM_END_FLAG;
+
+	flush_work(&ctx->pic_run_work);
+
+	/* If there is no buffer in flight, wake up */
+	if (!ctx->streamon_out || ctx->qsequence == ctx->osequence) {
+		dst_vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx,
+					 V4L2_BUF_TYPE_VIDEO_CAPTURE);
+		dst_vq->last_buffer_dequeued = true;
+		wake_up(&dst_vq->done_wq);
+>>>>>>> master:drivers/media/platform/coda/coda-common.c
 	}
 	mutex_unlock(&ctx->wakeup_mutex);
 
@@ -2229,6 +2243,7 @@ static int coda_s_ctrl(struct v4l2_ctrl *ctrl)
 		break;
 	case V4L2_CID_MPEG_VIDEO_H264_LOOP_FILTER_MODE:
 		ctx->params.h264_disable_deblocking_filter_idc = ctrl->val;
+<<<<<<< HEAD:drivers/media/platform/chips-media/coda-common.c
 		break;
 	case V4L2_CID_MPEG_VIDEO_H264_CONSTRAINED_INTRA_PREDICTION:
 		ctx->params.h264_constrained_intra_pred_flag = ctrl->val;
@@ -2241,6 +2256,8 @@ static int coda_s_ctrl(struct v4l2_ctrl *ctrl)
 		break;
 	case V4L2_CID_MPEG_VIDEO_H264_CHROMA_QP_INDEX_OFFSET:
 		ctx->params.h264_chroma_qp_index_offset = ctrl->val;
+=======
+>>>>>>> master:drivers/media/platform/coda/coda-common.c
 		break;
 	case V4L2_CID_MPEG_VIDEO_H264_PROFILE:
 		/* TODO: switch between baseline and constrained baseline */
@@ -2334,6 +2351,7 @@ static void coda_encode_ctrls(struct coda_ctx *ctx)
 		V4L2_CID_MPEG_VIDEO_H264_LOOP_FILTER_MODE,
 		V4L2_MPEG_VIDEO_H264_LOOP_FILTER_MODE_DISABLED_AT_SLICE_BOUNDARY,
 		0x0, V4L2_MPEG_VIDEO_H264_LOOP_FILTER_MODE_ENABLED);
+<<<<<<< HEAD:drivers/media/platform/chips-media/coda-common.c
 	v4l2_ctrl_new_std(&ctx->ctrls, &coda_ctrl_ops,
 		V4L2_CID_MPEG_VIDEO_H264_CONSTRAINED_INTRA_PREDICTION, 0, 1, 1,
 		0);
@@ -2343,6 +2361,8 @@ static void coda_encode_ctrls(struct coda_ctx *ctx)
 		V4L2_CID_MPEG_VIDEO_MB_RC_ENABLE, 0, 1, 1, 1);
 	v4l2_ctrl_new_std(&ctx->ctrls, &coda_ctrl_ops,
 		V4L2_CID_MPEG_VIDEO_H264_CHROMA_QP_INDEX_OFFSET, -12, 12, 1, 0);
+=======
+>>>>>>> master:drivers/media/platform/coda/coda-common.c
 	v4l2_ctrl_new_std_menu(&ctx->ctrls, &coda_ctrl_ops,
 		V4L2_CID_MPEG_VIDEO_H264_PROFILE,
 		V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_BASELINE, 0x0,

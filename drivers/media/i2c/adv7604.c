@@ -2348,9 +2348,14 @@ static int adv76xx_set_edid(struct v4l2_subdev *sd, struct v4l2_edid *edid)
 		edid->blocks = ADV76XX_MAX_EDID_BLOCKS;
 		return -E2BIG;
 	}
+<<<<<<< HEAD
 
 	pa = v4l2_get_edid_phys_addr(edid->edid, edid->blocks * 128, &spa_loc);
 	err = v4l2_phys_addr_validate(pa, &parent_pa, NULL);
+=======
+	pa = v4l2_get_edid_phys_addr(edid->edid, edid->blocks * 128, &spa_loc);
+	err = v4l2_phys_addr_validate(pa, &pa, NULL);
+>>>>>>> master
 	if (err)
 		return err;
 

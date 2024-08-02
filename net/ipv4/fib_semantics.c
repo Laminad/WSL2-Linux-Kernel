@@ -1875,9 +1875,17 @@ nla_put_failure:
  */
 int fib_sync_down_addr(struct net_device *dev, __be32 local)
 {
+<<<<<<< HEAD
 	int tb_id = l3mdev_fib_table(dev) ? : RT_TABLE_MAIN;
 	struct net *net = dev_net(dev);
 	struct hlist_head *head;
+=======
+	int ret = 0;
+	unsigned int hash = fib_laddr_hashfn(local);
+	struct hlist_head *head = &fib_info_laddrhash[hash];
+	int tb_id = l3mdev_fib_table(dev) ? : RT_TABLE_MAIN;
+	struct net *net = dev_net(dev);
+>>>>>>> master
 	struct fib_info *fi;
 	int ret = 0;
 

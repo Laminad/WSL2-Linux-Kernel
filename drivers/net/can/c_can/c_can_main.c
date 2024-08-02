@@ -1065,8 +1065,12 @@ static int c_can_poll(struct napi_struct *napi, int quota)
 
 	/* Only read the status register if a status interrupt was pending */
 	if (atomic_xchg(&priv->sie_pending, 0)) {
+<<<<<<< HEAD:drivers/net/can/c_can/c_can_main.c
 		priv->last_status = priv->read_reg(priv, C_CAN_STS_REG);
 		curr = priv->last_status;
+=======
+		priv->last_status = curr = priv->read_reg(priv, C_CAN_STS_REG);
+>>>>>>> master:drivers/net/can/c_can/c_can.c
 		/* Ack status on C_CAN. D_CAN is self clearing */
 		if (priv->type != BOSCH_D_CAN)
 			priv->write_reg(priv, C_CAN_STS_REG, LEC_UNUSED);

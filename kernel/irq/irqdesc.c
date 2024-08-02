@@ -336,12 +336,21 @@ static void irq_sysfs_add(int irq, struct irq_desc *desc)
 static void irq_sysfs_del(struct irq_desc *desc)
 {
 	/*
+<<<<<<< HEAD
 	 * Only invoke kobject_del() when kobject_add() was successfully
 	 * invoked for the descriptor. This covers both early boot, where
 	 * sysfs is not initialized yet, and the case of a failed
 	 * kobject_add() invocation.
 	 */
 	if (desc->istate & IRQS_SYSFS)
+=======
+	 * If irq_sysfs_init() has not yet been invoked (early boot), then
+	 * irq_kobj_base is NULL and the descriptor was never added.
+	 * kobject_del() complains about a object with no parent, so make
+	 * it conditional.
+	 */
+	if (irq_kobj_base)
+>>>>>>> master
 		kobject_del(&desc->kobj);
 }
 
@@ -601,7 +610,10 @@ int __init early_irq_init(void)
 		raw_spin_lock_init(&desc[i].lock);
 		lockdep_set_class(&desc[i].lock, &irq_desc_lock_class);
 		mutex_init(&desc[i].request_mutex);
+<<<<<<< HEAD
 		init_waitqueue_head(&desc[i].wait_for_threads);
+=======
+>>>>>>> master
 		desc_set_defaults(i, &desc[i], node, NULL, NULL);
 		irq_resend_init(&desc[i]);
 	}
@@ -973,9 +985,14 @@ static unsigned int kstat_irqs(unsigned int irq)
 	if (!desc || !desc->kstat_irqs)
 		return 0;
 	if (!irq_settings_is_per_cpu_devid(desc) &&
+<<<<<<< HEAD
 	    !irq_settings_is_per_cpu(desc) &&
 	    !irq_is_nmi(desc))
 		return data_race(desc->tot_count);
+=======
+	    !irq_settings_is_per_cpu(desc))
+	    return desc->tot_count;
+>>>>>>> master
 
 	for_each_possible_cpu(cpu)
 		sum += data_race(*per_cpu_ptr(desc->kstat_irqs, cpu));

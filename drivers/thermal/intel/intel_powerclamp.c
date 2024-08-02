@@ -68,7 +68,15 @@ struct powerclamp_data {
 	bool clamping;
 };
 
+<<<<<<< HEAD:drivers/thermal/intel/intel_powerclamp.c
 static struct powerclamp_data powerclamp_data;
+=======
+static struct powerclamp_worker_data __percpu *worker_data;
+static struct thermal_cooling_device *cooling_dev;
+static unsigned long *cpu_clamping_mask;  /* bit map for tracking per cpu
+					   * clamping kthread worker
+					   */
+>>>>>>> master:drivers/thermal/intel_powerclamp.c
 
 static struct thermal_cooling_device *cooling_dev;
 
@@ -559,6 +567,7 @@ static void poll_pkg_cstate(struct work_struct *dummy)
 
 static struct idle_inject_device *ii_dev;
 
+<<<<<<< HEAD:drivers/thermal/intel/intel_powerclamp.c
 /*
  * This function is called from idle injection core on timer expiry
  * for the run duration. This allows powerclamp to readjust or skip
@@ -640,6 +649,10 @@ static int powerclamp_idle_injection_register(void)
 static void remove_idle_injection(void)
 {
 	if (!powerclamp_data.clamping)
+=======
+	worker = kthread_create_worker_on_cpu(cpu, 0, "kidle_inj/%ld", cpu);
+	if (IS_ERR(worker))
+>>>>>>> master:drivers/thermal/intel_powerclamp.c
 		return;
 
 	powerclamp_data.clamping = false;

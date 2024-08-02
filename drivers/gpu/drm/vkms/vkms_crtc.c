@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0+
+<<<<<<< HEAD
 
 #include <linux/dma-fence.h>
 
@@ -6,6 +7,8 @@
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_probe_helper.h>
 #include <drm/drm_vblank.h>
+=======
+>>>>>>> master
 
 #include "vkms_drv.h"
 
@@ -111,6 +114,9 @@ static bool vkms_get_vblank_timestamp(struct drm_crtc *crtc,
 	 * timestampe by one frame.
 	 */
 	*vblank_time -= output->period_ns;
+
+	if (!in_vblank_irq)
+		*vblank_time -= output->period_ns;
 
 	return true;
 }

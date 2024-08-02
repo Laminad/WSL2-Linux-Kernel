@@ -476,9 +476,26 @@ config GOLDFISH
 	def_bool y
 	depends on X86_GOLDFISH
 
+<<<<<<< HEAD
 config X86_CPU_RESCTRL
 	bool "x86 CPU resource control support"
 	depends on X86 && (CPU_SUP_INTEL || CPU_SUP_AMD)
+=======
+config RETPOLINE
+	bool "Avoid speculative indirect branches in kernel"
+	default y
+	select STACK_VALIDATION if HAVE_STACK_VALIDATION
+	help
+	  Compile kernel with the retpoline compiler options to guard against
+	  kernel-to-user data leaks by avoiding speculative indirect
+	  branches. Requires a compiler with -mindirect-branch=thunk-extern
+	  support for full protection. The kernel may run slower.
+
+config INTEL_RDT
+	bool "Intel Resource Director Technology support"
+	default n
+	depends on X86 && CPU_SUP_INTEL
+>>>>>>> master
 	select KERNFS
 	select PROC_CPU_RESCTRL		if PROC_FS
 	help
@@ -1030,6 +1047,7 @@ config NR_CPUS
 	  This is purely to save memory: each supported CPU adds about 8KB
 	  to the kernel image.
 
+<<<<<<< HEAD
 config SCHED_CLUSTER
 	bool "Cluster scheduler support"
 	depends on SMP
@@ -1041,6 +1059,8 @@ config SCHED_CLUSTER
 	  by sharing mid-level caches, last-level cache tags or internal
 	  busses.
 
+=======
+>>>>>>> master
 config SCHED_SMT
 	def_bool y if SMP
 
@@ -1891,6 +1911,7 @@ config X86_INTEL_TSX_MODE_AUTO
 	  side channel attacks- equals the tsx=auto command line parameter.
 endchoice
 
+<<<<<<< HEAD
 config X86_SGX
 	bool "Software Guard eXtensions (SGX)"
 	depends on X86_64 && CPU_SUP_INTEL && X86_X2APIC
@@ -1927,6 +1948,8 @@ config X86_USER_SHADOW_STACK
 
 	  If unsure, say N.
 
+=======
+>>>>>>> master
 config EFI
 	bool "EFI runtime service support"
 	depends on ACPI
@@ -2228,6 +2251,53 @@ config ADDRESS_MASKING
 config HOTPLUG_CPU
 	def_bool y
 	depends on SMP
+<<<<<<< HEAD
+=======
+
+config BOOTPARAM_HOTPLUG_CPU0
+	bool "Set default setting of cpu0_hotpluggable"
+	default n
+	depends on HOTPLUG_CPU
+	---help---
+	  Set whether default state of cpu0_hotpluggable is on or off.
+
+	  Say Y here to enable CPU0 hotplug by default. If this switch
+	  is turned on, there is no need to give cpu0_hotplug kernel
+	  parameter and the CPU0 hotplug feature is enabled by default.
+
+	  Please note: there are two known CPU0 dependencies if you want
+	  to enable the CPU0 hotplug feature either by this switch or by
+	  cpu0_hotplug kernel parameter.
+
+	  First, resume from hibernate or suspend always starts from CPU0.
+	  So hibernate and suspend are prevented if CPU0 is offline.
+
+	  Second dependency is PIC interrupts always go to CPU0. CPU0 can not
+	  offline if any interrupt can not migrate out of CPU0. There may
+	  be other CPU0 dependencies.
+
+	  Please make sure the dependencies are under your control before
+	  you enable this feature.
+
+	  Say N if you don't want to enable CPU0 hotplug feature by default.
+	  You still can enable the CPU0 hotplug feature at boot by kernel
+	  parameter cpu0_hotplug.
+
+config DEBUG_HOTPLUG_CPU0
+	def_bool n
+	prompt "Debug CPU0 hotplug"
+	depends on HOTPLUG_CPU
+	---help---
+	  Enabling this option offlines CPU0 (if CPU0 can be offlined) as
+	  soon as possible and boots up userspace with CPU0 offlined. User
+	  can online CPU0 back after boot time.
+
+	  To debug CPU0 hotplug, you need to enable CPU0 offline/online
+	  feature by either turning on CONFIG_BOOTPARAM_HOTPLUG_CPU0 during
+	  compilation or giving cpu0_hotplug kernel parameter at boot.
+
+	  If unsure, say N.
+>>>>>>> master
 
 config COMPAT_VDSO
 	def_bool n

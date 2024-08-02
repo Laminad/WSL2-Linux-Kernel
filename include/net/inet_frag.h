@@ -91,7 +91,12 @@ struct inet_frag_queue {
 	struct timer_list	timer;
 	spinlock_t		lock;
 	refcount_t		refcnt;
+<<<<<<< HEAD
 	struct rb_root		rb_fragments;
+=======
+	struct sk_buff		*fragments;  /* used in 6lopwpan IPv6. */
+	struct rb_root		rb_fragments; /* Used in IPv4/IPv6. */
+>>>>>>> master
 	struct sk_buff		*fragments_tail;
 	struct sk_buff		*last_run_head;
 	ktime_t			stamp;
@@ -188,7 +193,11 @@ int inet_frag_queue_insert(struct inet_frag_queue *q, struct sk_buff *skb,
 void *inet_frag_reasm_prepare(struct inet_frag_queue *q, struct sk_buff *skb,
 			      struct sk_buff *parent);
 void inet_frag_reasm_finish(struct inet_frag_queue *q, struct sk_buff *head,
+<<<<<<< HEAD
 			    void *reasm_data, bool try_coalesce);
+=======
+			    void *reasm_data);
+>>>>>>> master
 struct sk_buff *inet_frag_pull_head(struct inet_frag_queue *q);
 
 #endif

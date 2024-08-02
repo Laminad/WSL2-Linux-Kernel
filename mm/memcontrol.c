@@ -230,7 +230,11 @@ enum res_type {
 	     iter != NULL;				\
 	     iter = mem_cgroup_iter(NULL, iter, NULL))
 
+<<<<<<< HEAD
 static inline bool task_is_dying(void)
+=======
+static inline bool should_force_charge(void)
+>>>>>>> master
 {
 	return tsk_is_oom_victim(current) || fatal_signal_pending(current) ||
 		(current->flags & PF_EXITING);
@@ -1221,9 +1225,18 @@ static void __invalidate_reclaim_iterators(struct mem_cgroup *from,
 	int nid;
 
 	for_each_node(nid) {
+<<<<<<< HEAD
 		mz = from->nodeinfo[nid];
 		iter = &mz->iter;
 		cmpxchg(&iter->position, dead_memcg, NULL);
+=======
+		mz = mem_cgroup_nodeinfo(from, nid);
+		for (i = 0; i <= DEF_PRIORITY; i++) {
+			iter = &mz->iter[i];
+			cmpxchg(&iter->position,
+				dead_memcg, NULL);
+		}
+>>>>>>> master
 	}
 }
 
@@ -1238,12 +1251,20 @@ static void invalidate_reclaim_iterators(struct mem_cgroup *dead_memcg)
 	} while ((memcg = parent_mem_cgroup(memcg)));
 
 	/*
+<<<<<<< HEAD
 	 * When cgroup1 non-hierarchy mode is used,
+=======
+	 * When cgruop1 non-hierarchy mode is used,
+>>>>>>> master
 	 * parent_mem_cgroup() does not walk all the way up to the
 	 * cgroup root (root_mem_cgroup). So we have to handle
 	 * dead_memcg from cgroup root separately.
 	 */
+<<<<<<< HEAD
 	if (!mem_cgroup_is_root(last))
+=======
+	if (last != root_mem_cgroup)
+>>>>>>> master
 		__invalidate_reclaim_iterators(root_mem_cgroup,
 						dead_memcg);
 }
@@ -1729,17 +1750,24 @@ static bool mem_cgroup_out_of_memory(struct mem_cgroup *memcg, gfp_t gfp_mask,
 
 	if (mutex_lock_killable(&oom_lock))
 		return true;
+<<<<<<< HEAD
 
 	if (mem_cgroup_margin(memcg) >= (1 << order))
 		goto unlock;
 
+=======
+>>>>>>> master
 	/*
 	 * A few threads which were not waiting at mutex_lock_killable() can
 	 * fail to bail out. Therefore, check again after holding oom_lock.
 	 */
+<<<<<<< HEAD
 	ret = task_is_dying() || out_of_memory(&oc);
 
 unlock:
+=======
+	ret = should_force_charge() || out_of_memory(&oc);
+>>>>>>> master
 	mutex_unlock(&oom_lock);
 	return ret;
 }
@@ -1924,7 +1952,12 @@ static void memcg_oom_recover(struct mem_cgroup *memcg)
  */
 static bool mem_cgroup_oom(struct mem_cgroup *memcg, gfp_t mask, int order)
 {
+<<<<<<< HEAD
 	bool locked, ret;
+=======
+	enum oom_status ret;
+	bool locked;
+>>>>>>> master
 
 	if (order > PAGE_ALLOC_COSTLY_ORDER)
 		return false;
@@ -1967,7 +2000,14 @@ static bool mem_cgroup_oom(struct mem_cgroup *memcg, gfp_t mask, int order)
 		mem_cgroup_oom_notify(memcg);
 
 	mem_cgroup_unmark_under_oom(memcg);
+<<<<<<< HEAD
 	ret = mem_cgroup_out_of_memory(memcg, mask, order);
+=======
+	if (mem_cgroup_out_of_memory(memcg, mask, order))
+		ret = OOM_SUCCESS;
+	else
+		ret = OOM_FAILED;
+>>>>>>> master
 
 	if (locked)
 		mem_cgroup_oom_unlock(memcg);
@@ -2670,6 +2710,27 @@ retry:
 	}
 
 	/*
+<<<<<<< HEAD
+=======
+	 * Memcg doesn't have a dedicated reserve for atomic
+	 * allocations. But like the global atomic pool, we need to
+	 * put the burden of reclaim on regular allocation requests
+	 * and let these go through as privileged allocations.
+	 */
+	if (gfp_mask & __GFP_ATOMIC)
+		goto force;
+
+	/*
+	 * Unlike in global OOM situations, memcg is not in a physical
+	 * memory shortage.  Allow dying and OOM-killed tasks to
+	 * bypass the last charges so that they can exit quickly and
+	 * free their memory.
+	 */
+	if (unlikely(should_force_charge()))
+		goto force;
+
+	/*
+>>>>>>> master
 	 * Prevent unbounded recursion when reclaim operations need to
 	 * allocate memory. This might exceed the limits temporarily,
 	 * but we prefer facilitating memory reclaim and getting back
@@ -2892,10 +2953,46 @@ int memcg_alloc_slab_cgroups(struct slab *slab, struct kmem_cache *s,
 	unsigned long memcg_data;
 	void *vec;
 
+<<<<<<< HEAD
 	gfp &= ~OBJCGS_CLEAR_MASK;
 	vec = kcalloc_node(objects, sizeof(struct obj_cgroup *), gfp,
 			   slab_nid(slab));
 	if (!vec)
+=======
+/**
+ * memcg_kmem_charge_memcg: charge a kmem page
+ * @page: page to charge
+ * @gfp: reclaim mode
+ * @order: allocation order
+ * @memcg: memory cgroup to charge
+ *
+ * Returns 0 on success, an error code on failure.
+ */
+int memcg_kmem_charge_memcg(struct page *page, gfp_t gfp, int order,
+			    struct mem_cgroup *memcg)
+{
+	unsigned int nr_pages = 1 << order;
+	struct page_counter *counter;
+	int ret;
+
+	ret = try_charge(memcg, gfp, nr_pages);
+	if (ret)
+		return ret;
+
+	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys) &&
+	    !page_counter_try_charge(&memcg->kmem, nr_pages, &counter)) {
+
+		/*
+		 * Enforce __GFP_NOFAIL allocation because callers are not
+		 * prepared to see failures and likely do not have any failure
+		 * handling code.
+		 */
+		if (gfp & __GFP_NOFAIL) {
+			page_counter_charge(&memcg->kmem, nr_pages);
+			return 0;
+		}
+		cancel_charge(memcg, nr_pages);
+>>>>>>> master
 		return -ENOMEM;
 
 	memcg_data = (unsigned long) vec | MEMCG_DATA_OBJCGS;
@@ -4578,6 +4675,22 @@ struct wb_domain *mem_cgroup_wb_domain(struct bdi_writeback *wb)
 	return &memcg->cgwb_domain;
 }
 
+/*
+ * idx can be of type enum memcg_stat_item or node_stat_item.
+ * Keep in sync with memcg_exact_page().
+ */
+static unsigned long memcg_exact_page_state(struct mem_cgroup *memcg, int idx)
+{
+	long x = atomic_long_read(&memcg->stat[idx]);
+	int cpu;
+
+	for_each_online_cpu(cpu)
+		x += per_cpu_ptr(memcg->stat_cpu, cpu)->count[idx];
+	if (x < 0)
+		x = 0;
+	return x;
+}
+
 /**
  * mem_cgroup_wb_stats - retrieve writeback related stats from its memcg
  * @wb: bdi_writeback in question
@@ -4603,12 +4716,22 @@ void mem_cgroup_wb_stats(struct bdi_writeback *wb, unsigned long *pfilepages,
 	struct mem_cgroup *memcg = mem_cgroup_from_css(wb->memcg_css);
 	struct mem_cgroup *parent;
 
+<<<<<<< HEAD
 	mem_cgroup_flush_stats();
 
 	*pdirty = memcg_page_state(memcg, NR_FILE_DIRTY);
 	*pwriteback = memcg_page_state(memcg, NR_WRITEBACK);
 	*pfilepages = memcg_page_state(memcg, NR_INACTIVE_FILE) +
 			memcg_page_state(memcg, NR_ACTIVE_FILE);
+=======
+	*pdirty = memcg_exact_page_state(memcg, NR_FILE_DIRTY);
+
+	/* this should eventually include NR_UNSTABLE_NFS */
+	*pwriteback = memcg_exact_page_state(memcg, NR_WRITEBACK);
+	*pfilepages = mem_cgroup_nr_lru_pages(memcg, (1 << LRU_INACTIVE_FILE) |
+						     (1 << LRU_ACTIVE_FILE));
+	*pheadroom = PAGE_COUNTER_MAX;
+>>>>>>> master
 
 	*pheadroom = PAGE_COUNTER_MAX;
 	while ((parent = parent_mem_cgroup(memcg))) {

@@ -682,6 +682,7 @@ struct amdgpu_dm_connector {
 	struct mutex hpd_lock;
 
 	bool fake_enable;
+<<<<<<< HEAD
 	bool force_yuv420_output;
 	struct dsc_preferred_settings dsc_settings;
 	union dp_downstream_port_present mst_downstream_port_present;
@@ -701,6 +702,8 @@ struct amdgpu_dm_connector {
 	bool pack_sdp_v1_3;
 	enum adaptive_sync_type as_type;
 	struct amdgpu_hdmi_vsdb_info vsdb_info;
+=======
+>>>>>>> master
 };
 
 static inline void amdgpu_dm_set_mst_status(uint8_t *status,
@@ -761,6 +764,7 @@ struct dm_connector_state {
 	enum amdgpu_rmx_type scaling;
 	uint8_t underscan_vborder;
 	uint8_t underscan_hborder;
+	uint8_t max_bpc;
 	bool underscan_enable;
 	bool freesync_capable;
 	bool update_hdcp;

@@ -159,10 +159,19 @@ static inline bool requires_passthrough(struct v4l2_mbus_config *mbus_cfg,
 }
 
 /*
+<<<<<<< HEAD
  * Queries the media bus config of the upstream entity that provides data to
  * the CSI. This will either be the entity directly upstream from the CSI-2
  * receiver, directly upstream from a video mux, or directly upstream from
  * the CSI itself.
+=======
+ * Parses the fwnode endpoint from the source pad of the entity
+ * connected to this CSI. This will either be the entity directly
+ * upstream from the CSI-2 receiver, directly upstream from the
+ * video mux, or directly upstream from the CSI itself. The endpoint
+ * is needed to determine the bus type and bus config coming into
+ * the CSI.
+>>>>>>> master
  */
 static int csi_get_upstream_mbus_config(struct csi_priv *priv,
 					struct v4l2_mbus_config *mbus_cfg)
@@ -175,6 +184,10 @@ static int csi_get_upstream_mbus_config(struct csi_priv *priv,
 		return -EPIPE;
 
 	sd = priv->src_sd;
+<<<<<<< HEAD
+=======
+	src = &sd->entity;
+>>>>>>> master
 
 	switch (sd->grp_id) {
 	case IMX_MEDIA_GRP_ID_CSI_MUX:
@@ -200,11 +213,26 @@ static int csi_get_upstream_mbus_config(struct csi_priv *priv,
 		break;
 	}
 
+<<<<<<< HEAD
 	/* get source pad of entity directly upstream from sd */
 	remote_pad = media_entity_remote_pad_unique(&sd->entity,
 						    MEDIA_PAD_FL_SOURCE);
 	if (IS_ERR(remote_pad))
 		return PTR_ERR(remote_pad);
+=======
+	/*
+	 * If the source is neither the video mux nor the CSI-2 receiver,
+	 * get the source pad directly upstream from CSI itself.
+	 */
+	if (src->function != MEDIA_ENT_F_VID_MUX &&
+	    sd->grp_id != IMX_MEDIA_GRP_ID_CSI2)
+		src = &priv->sd.entity;
+
+	/* get source pad of entity directly upstream from src */
+	pad = imx_media_find_upstream_pad(priv->md, src, 0);
+	if (IS_ERR(pad))
+		return PTR_ERR(pad);
+>>>>>>> master
 
 	remote_sd = media_entity_to_v4l2_subdev(remote_pad->entity);
 
@@ -757,6 +785,7 @@ static int csi_start(struct csi_priv *priv)
 	if (ret)
 		return ret;
 
+<<<<<<< HEAD
 	/* Skip first few frames from a BT.656 source */
 	if (priv->mbus_cfg.type == V4L2_MBUS_BT656) {
 		u32 delay_usec, bad_frames = 20;
@@ -768,6 +797,8 @@ static int csi_start(struct csi_priv *priv)
 		usleep_range(delay_usec, delay_usec + 1000);
 	}
 
+=======
+>>>>>>> master
 	if (priv->dest == IPU_CSI_DEST_IDMAC) {
 		ret = csi_idmac_start(priv);
 		if (ret)

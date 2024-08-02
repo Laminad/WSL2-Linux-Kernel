@@ -813,8 +813,12 @@ static int __usbhsf_dma_map_ctrl(struct usbhs_pkt *pkt, int map)
 	return info->dma_map_ctrl(chan->device->dev, pkt, map);
 }
 
+<<<<<<< HEAD
 static void usbhsf_dma_complete(void *arg,
 				const struct dmaengine_result *result);
+=======
+static void usbhsf_dma_complete(void *arg);
+>>>>>>> master
 static void usbhsf_dma_xfer_preparing(struct usbhs_pkt *pkt)
 {
 	struct usbhs_pipe *pipe = pkt->pipe;
@@ -824,7 +828,10 @@ static void usbhsf_dma_xfer_preparing(struct usbhs_pkt *pkt)
 	struct dma_chan *chan;
 	struct device *dev = usbhs_priv_to_dev(priv);
 	enum dma_transfer_direction dir;
+<<<<<<< HEAD
 	dma_cookie_t cookie;
+=======
+>>>>>>> master
 
 	fifo = usbhs_pipe_to_fifo(pipe);
 	if (!fifo)

@@ -776,15 +776,21 @@ int mei_cldev_enable(struct mei_cl_device *cldev)
 		goto out;
 	}
 
+<<<<<<< HEAD
 	ret = mei_cl_bus_vtag_alloc(cldev);
 	if (ret)
 		goto out;
 
+=======
+>>>>>>> master
 	ret = mei_cl_connect(cl, cldev->me_cl, NULL);
-	if (ret < 0) {
+	if (ret < 0)
 		dev_err(&cldev->dev, "cannot connect\n");
+<<<<<<< HEAD
 		mei_cl_bus_vtag_free(cldev);
 	}
+=======
+>>>>>>> master
 
 out:
 	if (ret)

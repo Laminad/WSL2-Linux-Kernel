@@ -844,6 +844,52 @@ err:
 
 
 /****************************************************************************/
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_BINFMT_SHARED_FLAT
+
+/*
+ * Load a shared library into memory.  The library gets its own data
+ * segment (including bss) but not argv/argc/environ.
+ */
+
+static int load_flat_shared_library(int id, struct lib_info *libs)
+{
+	/*
+	 * This is a fake bprm struct; only the members "buf", "file" and
+	 * "filename" are actually used.
+	 */
+	struct linux_binprm bprm;
+	int res;
+	char buf[16];
+	loff_t pos = 0;
+
+	memset(&bprm, 0, sizeof(bprm));
+
+	/* Create the file name */
+	sprintf(buf, "/lib/lib%d.so", id);
+
+	/* Open the file up */
+	bprm.filename = buf;
+	bprm.file = open_exec(bprm.filename);
+	res = PTR_ERR(bprm.file);
+	if (IS_ERR(bprm.file))
+		return res;
+
+	res = kernel_read(bprm.file, bprm.buf, BINPRM_BUF_SIZE, &pos);
+
+	if (res >= 0)
+		res = load_flat_file(&bprm, libs, id, NULL);
+
+	allow_write_access(bprm.file);
+	fput(bprm.file);
+
+	return res;
+}
+
+#endif /* CONFIG_BINFMT_SHARED_FLAT */
+/****************************************************************************/
+>>>>>>> master
 
 /*
  * These are the functions used to load flat style executables and shared

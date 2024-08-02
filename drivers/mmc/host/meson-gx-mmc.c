@@ -174,9 +174,13 @@ struct meson_host {
 
 	int irq;
 
+<<<<<<< HEAD
 	bool needs_pre_post_req;
 
 	spinlock_t lock;
+=======
+	bool vqmmc_enabled;
+>>>>>>> master
 };
 
 #define CMD_CFG_LENGTH_MASK GENMASK(8, 0)
@@ -1140,8 +1144,12 @@ static int meson_mmc_probe(struct platform_device *pdev)
 	struct resource *res;
 	struct meson_host *host;
 	struct mmc_host *mmc;
+<<<<<<< HEAD
 	struct clk *core_clk;
 	int cd_irq, ret;
+=======
+	int ret;
+>>>>>>> master
 
 	mmc = devm_mmc_alloc_host(&pdev->dev, sizeof(struct meson_host));
 	if (!mmc)
@@ -1185,8 +1193,17 @@ static int meson_mmc_probe(struct platform_device *pdev)
 	if (host->irq < 0)
 		return host->irq;
 
+<<<<<<< HEAD
 	cd_irq = platform_get_irq_optional(pdev, 1);
 	mmc_gpio_set_cd_irq(mmc, cd_irq);
+=======
+	host->irq = platform_get_irq(pdev, 0);
+	if (host->irq <= 0) {
+		dev_err(&pdev->dev, "failed to get interrupt resource.\n");
+		ret = -EINVAL;
+		goto free_host;
+	}
+>>>>>>> master
 
 	host->pinctrl = devm_pinctrl_get(&pdev->dev);
 	if (IS_ERR(host->pinctrl))
@@ -1220,7 +1237,11 @@ static int meson_mmc_probe(struct platform_device *pdev)
 	writel(IRQ_EN_MASK, host->regs + SD_EMMC_IRQ_EN);
 
 	ret = request_threaded_irq(host->irq, meson_mmc_irq,
+<<<<<<< HEAD
 				   meson_mmc_irq_thread, IRQF_ONESHOT,
+=======
+				   meson_mmc_irq_thread, IRQF_SHARED,
+>>>>>>> master
 				   dev_name(&pdev->dev), host);
 	if (ret)
 		goto err_init_clk;
@@ -1241,6 +1262,7 @@ static int meson_mmc_probe(struct platform_device *pdev)
 	mmc->max_req_size = mmc->max_blk_count * mmc->max_blk_size;
 	mmc->max_seg_size = mmc->max_req_size;
 
+<<<<<<< HEAD
 	/*
 	 * At the moment, we don't know how to reliably enable HS400.
 	 * From the different datasheets, it is not even clear if this mode
@@ -1269,6 +1291,17 @@ static int meson_mmc_probe(struct platform_device *pdev)
 			ret = -ENOMEM;
 			goto err_free_irq;
 		}
+=======
+	/* data bounce buffer */
+	host->bounce_buf_size = mmc->max_req_size;
+	host->bounce_buf =
+		dma_alloc_coherent(host->dev, host->bounce_buf_size,
+				   &host->bounce_dma_addr, GFP_KERNEL);
+	if (host->bounce_buf == NULL) {
+		dev_err(host->dev, "Unable to map allocate DMA bounce buffer.\n");
+		ret = -ENOMEM;
+		goto err_free_irq;
+>>>>>>> master
 	}
 
 	host->descs = dmam_alloc_coherent(host->dev, SD_EMMC_DESC_BUF_LEN,
@@ -1286,6 +1319,12 @@ static int meson_mmc_probe(struct platform_device *pdev)
 
 	return 0;
 
+<<<<<<< HEAD
+=======
+err_bounce_buf:
+	dma_free_coherent(host->dev, host->bounce_buf_size,
+			  host->bounce_buf, host->bounce_dma_addr);
+>>>>>>> master
 err_free_irq:
 	free_irq(host->irq, host);
 err_init_clk:
@@ -1302,6 +1341,14 @@ static void meson_mmc_remove(struct platform_device *pdev)
 	/* disable interrupts */
 	writel(0, host->regs + SD_EMMC_IRQ_EN);
 	free_irq(host->irq, host);
+<<<<<<< HEAD
+=======
+
+	dma_free_coherent(host->dev, SD_EMMC_DESC_BUF_LEN,
+			  host->descs, host->descs_dma_addr);
+	dma_free_coherent(host->dev, host->bounce_buf_size,
+			  host->bounce_buf, host->bounce_dma_addr);
+>>>>>>> master
 
 	clk_disable_unprepare(host->mmc_clk);
 }

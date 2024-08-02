@@ -741,12 +741,20 @@ __cmd_probe(int argc, const char **argv)
 			/*
 			 * When perf_add_probe_events() fails it calls
 			 * cleanup_perf_probe_events(pevs, npevs), i.e.
+<<<<<<< HEAD
 			 * cleanup_perf_probe_events(params->events, params->nevents), which
+=======
+			 * cleanup_perf_probe_events(params.events, params.nevents), which
+>>>>>>> master
 			 * will call clear_perf_probe_event(), so set nevents to zero
 			 * to avoid cleanup_params() to call clear_perf_probe_event() again
 			 * on the same pevs.
 			 */
+<<<<<<< HEAD
 			params->nevents = 0;
+=======
+			params.nevents = 0;
+>>>>>>> master
 			pr_err_with_code("  Error: Failed to add events.", ret);
 			return ret;
 		}

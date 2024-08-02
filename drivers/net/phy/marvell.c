@@ -1424,7 +1424,51 @@ static int m88e1145_config_init(struct phy_device *phydev)
 	return 0;
 }
 
+<<<<<<< HEAD
 static int m88e1540_get_fld(struct phy_device *phydev, u8 *msecs)
+=======
+/* The VOD can be out of specification on link up. Poke an
+ * undocumented register, in an undocumented page, with a magic value
+ * to fix this.
+ */
+static int m88e6390_errata(struct phy_device *phydev)
+{
+	int err;
+
+	err = phy_write(phydev, MII_BMCR,
+			BMCR_ANENABLE | BMCR_SPEED1000 | BMCR_FULLDPLX);
+	if (err)
+		return err;
+
+	usleep_range(300, 400);
+
+	err = phy_write_paged(phydev, 0xf8, 0x08, 0x36);
+	if (err)
+		return err;
+
+	return genphy_soft_reset(phydev);
+}
+
+static int m88e6390_config_aneg(struct phy_device *phydev)
+{
+	int err;
+
+	err = m88e6390_errata(phydev);
+	if (err)
+		return err;
+
+	return m88e1510_config_aneg(phydev);
+}
+
+/**
+ * fiber_lpa_to_ethtool_lpa_t
+ * @lpa: value of the MII_LPA register for fiber link
+ *
+ * A small helper function that translates MII_LPA
+ * bits to ethtool LP advertisement settings.
+ */
+static u32 fiber_lpa_to_ethtool_lpa_t(u32 lpa)
+>>>>>>> master
 {
 	int val;
 
@@ -1956,7 +2000,11 @@ static void marvell_get_strings(struct phy_device *phydev, u8 *data)
 	int i;
 
 	for (i = 0; i < count; i++) {
+<<<<<<< HEAD
 		strscpy(data + i * ETH_GSTRING_LEN,
+=======
+		strlcpy(data + i * ETH_GSTRING_LEN,
+>>>>>>> master
 			marvell_hw_stats[i].string, ETH_GSTRING_LEN);
 	}
 }
@@ -3609,6 +3657,7 @@ static struct phy_driver marvell_drivers[] = {
 	{
 		.phy_id = MARVELL_PHY_ID_88E6341_FAMILY,
 		.phy_id_mask = MARVELL_PHY_ID_MASK,
+<<<<<<< HEAD
 		.name = "Marvell 88E6341 Family",
 		.driver_data = DEF_MARVELL_HWMON_OPS(m88e1510_hwmon_ops),
 		/* PHY_GBIT_FEATURES */
@@ -3621,6 +3670,20 @@ static struct phy_driver marvell_drivers[] = {
 		.handle_interrupt = marvell_handle_interrupt,
 		.resume = genphy_resume,
 		.suspend = genphy_suspend,
+=======
+		.name = "Marvell 88E6390",
+		.features = PHY_GBIT_FEATURES,
+		.flags = PHY_HAS_INTERRUPT,
+		.probe = m88e6390_probe,
+		.config_init = &marvell_config_init,
+		.config_aneg = &m88e6390_config_aneg,
+		.read_status = &marvell_read_status,
+		.ack_interrupt = &marvell_ack_interrupt,
+		.config_intr = &marvell_config_intr,
+		.did_interrupt = &m88e1121_did_interrupt,
+		.resume = &genphy_resume,
+		.suspend = &genphy_suspend,
+>>>>>>> master
 		.read_page = marvell_read_page,
 		.write_page = marvell_write_page,
 		.get_sset_count = marvell_get_sset_count,

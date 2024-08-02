@@ -786,6 +786,14 @@ static void __init kexec_enter_virtual_mode(void)
 
 	efi_sync_low_kernel_mappings();
 	efi_native_runtime_setup();
+<<<<<<< HEAD
+=======
+
+	efi.set_virtual_address_map = NULL;
+
+	if (efi_enabled(EFI_OLD_MEMMAP) && (__supported_pte_mask & _PAGE_NX))
+		runtime_code_page_mkexec();
+>>>>>>> master
 #endif
 }
 

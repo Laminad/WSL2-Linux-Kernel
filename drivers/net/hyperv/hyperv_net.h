@@ -180,8 +180,11 @@ struct netvsc_device_info {
 	u32  send_section_size;
 	u32  recv_section_size;
 
+<<<<<<< HEAD
 	struct bpf_prog *bprog;
 
+=======
+>>>>>>> master
 	u8 rss_key[NETVSC_HASH_KEYLEN];
 };
 
@@ -240,6 +243,7 @@ int netvsc_recv_callback(struct net_device *net,
 void netvsc_channel_cb(void *context);
 int netvsc_poll(struct napi_struct *napi, int budget);
 
+<<<<<<< HEAD
 void netvsc_xdp_xmit(struct sk_buff *skb, struct net_device *ndev);
 u32 netvsc_run_xdp(struct net_device *ndev, struct netvsc_channel *nvchan,
 		   struct xdp_buff *xdp);
@@ -253,6 +257,8 @@ int netvsc_bpf(struct net_device *dev, struct netdev_bpf *bpf);
 int netvsc_ndoxdp_xmit(struct net_device *ndev, int n,
 		       struct xdp_frame **frames, u32 flags);
 
+=======
+>>>>>>> master
 int rndis_set_subchannel(struct net_device *ndev,
 			 struct netvsc_device *nvdev,
 			 struct netvsc_device_info *dev_info);

@@ -1174,7 +1174,11 @@ static irqreturn_t portal_isr(int irq, void *ptr)
 
 	/* DQRR-handling if it's interrupt-driven */
 	if (is & QM_PIRQ_DQRI) {
+<<<<<<< HEAD
 		__poll_portal_fast(p, QMAN_POLL_LIMIT, true);
+=======
+		__poll_portal_fast(p, QMAN_POLL_LIMIT);
+>>>>>>> master
 		clear = QM_DQAVAIL_MASK | QM_PIRQ_DQRI;
 	}
 	/* Handling of anything else that's interrupt-driven */

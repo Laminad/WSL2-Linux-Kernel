@@ -1024,6 +1024,72 @@ static const struct mmc_host_ops jz4740_mmc_ops = {
 	.start_signal_voltage_switch = jz4740_voltage_switch,
 };
 
+<<<<<<< HEAD
+=======
+static int jz4740_mmc_request_gpio(struct device *dev, int gpio,
+	const char *name, bool output, int value)
+{
+	int ret;
+
+	if (!gpio_is_valid(gpio))
+		return 0;
+
+	ret = gpio_request(gpio, name);
+	if (ret) {
+		dev_err(dev, "Failed to request %s gpio: %d\n", name, ret);
+		return ret;
+	}
+
+	if (output)
+		gpio_direction_output(gpio, value);
+	else
+		gpio_direction_input(gpio);
+
+	return 0;
+}
+
+static int jz4740_mmc_request_gpios(struct mmc_host *mmc,
+	struct platform_device *pdev)
+{
+	struct jz4740_mmc_platform_data *pdata = dev_get_platdata(&pdev->dev);
+	int ret = 0;
+
+	if (!pdata)
+		return 0;
+
+	if (!pdata->card_detect_active_low)
+		mmc->caps2 |= MMC_CAP2_CD_ACTIVE_HIGH;
+	if (!pdata->read_only_active_low)
+		mmc->caps2 |= MMC_CAP2_RO_ACTIVE_HIGH;
+
+	/*
+	 * Get optional card detect and write protect GPIOs,
+	 * only back out on probe deferral.
+	 */
+	ret = mmc_gpiod_request_cd(mmc, "cd", 0, false, 0, NULL);
+	if (ret == -EPROBE_DEFER)
+		return ret;
+
+	ret = mmc_gpiod_request_ro(mmc, "wp", 0, false, 0, NULL);
+	if (ret == -EPROBE_DEFER)
+		return ret;
+
+	return jz4740_mmc_request_gpio(&pdev->dev, pdata->gpio_power,
+			"MMC read only", true, pdata->power_active_low);
+}
+
+static void jz4740_mmc_free_gpios(struct platform_device *pdev)
+{
+	struct jz4740_mmc_platform_data *pdata = dev_get_platdata(&pdev->dev);
+
+	if (!pdata)
+		return;
+
+	if (gpio_is_valid(pdata->gpio_power))
+		gpio_free(pdata->gpio_power);
+}
+
+>>>>>>> master
 static const struct of_device_id jz4740_mmc_of_match[] = {
 	{ .compatible = "ingenic,jz4740-mmc", .data = (void *) JZ_MMC_JZ4740 },
 	{ .compatible = "ingenic,jz4725b-mmc", .data = (void *)JZ_MMC_JZ4725B },

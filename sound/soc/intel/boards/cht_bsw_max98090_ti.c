@@ -12,7 +12,10 @@
  */
 
 #include <linux/dmi.h>
+<<<<<<< HEAD
 #include <linux/gpio/consumer.h>
+=======
+>>>>>>> master
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
@@ -405,6 +408,7 @@ static struct snd_soc_card snd_soc_card_cht = {
 
 static const struct dmi_system_id cht_max98090_quirk_table[] = {
 	{
+<<<<<<< HEAD
 		/* Banjo model Chromebook */
 		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "Banjo"),
@@ -419,6 +423,8 @@ static const struct dmi_system_id cht_max98090_quirk_table[] = {
 		.driver_data = (void *)QUIRK_PMC_PLT_CLK_0,
 	},
 	{
+=======
+>>>>>>> master
 		/* Clapper model Chromebook */
 		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "Clapper"),
@@ -426,6 +432,7 @@ static const struct dmi_system_id cht_max98090_quirk_table[] = {
 		.driver_data = (void *)QUIRK_PMC_PLT_CLK_0,
 	},
 	{
+<<<<<<< HEAD
 		/* Cyan model Chromebook */
 		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "Cyan"),
@@ -447,6 +454,8 @@ static const struct dmi_system_id cht_max98090_quirk_table[] = {
 		.driver_data = (void *)QUIRK_PMC_PLT_CLK_0,
 	},
 	{
+=======
+>>>>>>> master
 		/* Gnawty model Chromebook (Acer Chromebook CB3-111) */
 		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "Gnawty"),
@@ -454,6 +463,7 @@ static const struct dmi_system_id cht_max98090_quirk_table[] = {
 		.driver_data = (void *)QUIRK_PMC_PLT_CLK_0,
 	},
 	{
+<<<<<<< HEAD
 		/* Heli model Chromebook */
 		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "Heli"),
@@ -510,12 +520,15 @@ static const struct dmi_system_id cht_max98090_quirk_table[] = {
 		.driver_data = (void *)QUIRK_PMC_PLT_CLK_0,
 	},
 	{
+=======
+>>>>>>> master
 		/* Swanky model Chromebook (Toshiba Chromebook 2) */
 		.matches = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "Swanky"),
 		},
 		.driver_data = (void *)QUIRK_PMC_PLT_CLK_0,
 	},
+<<<<<<< HEAD
 	{
 		/* Winky model Chromebook */
 		.matches = {
@@ -523,6 +536,8 @@ static const struct dmi_system_id cht_max98090_quirk_table[] = {
 		},
 		.driver_data = (void *)QUIRK_PMC_PLT_CLK_0,
 	},
+=======
+>>>>>>> master
 	{}
 };
 
@@ -533,9 +548,12 @@ static int snd_cht_mc_probe(struct platform_device *pdev)
 	int ret_val = 0;
 	struct cht_mc_private *drv;
 	const char *mclk_name;
+<<<<<<< HEAD
 	struct snd_soc_acpi_mach *mach;
 	const char *platform_name;
 	bool sof_parent;
+=======
+>>>>>>> master
 
 	drv = devm_kzalloc(dev, sizeof(*drv), GFP_KERNEL);
 	if (!drv)
@@ -575,9 +593,15 @@ static int snd_cht_mc_probe(struct platform_device *pdev)
 	else
 		mclk_name = "pmc_plt_clk_3";
 
+<<<<<<< HEAD
 	drv->mclk = devm_clk_get(dev, mclk_name);
 	if (IS_ERR(drv->mclk)) {
 		dev_err(dev,
+=======
+	drv->mclk = devm_clk_get(&pdev->dev, mclk_name);
+	if (IS_ERR(drv->mclk)) {
+		dev_err(&pdev->dev,
+>>>>>>> master
 			"Failed to get MCLK from %s: %ld\n",
 			mclk_name, PTR_ERR(drv->mclk));
 		return PTR_ERR(drv->mclk);
@@ -593,11 +617,16 @@ static int snd_cht_mc_probe(struct platform_device *pdev)
 	if (drv->quirks & QUIRK_PMC_PLT_CLK_0) {
 		ret_val = clk_prepare_enable(drv->mclk);
 		if (ret_val < 0) {
+<<<<<<< HEAD
 			dev_err(dev, "MCLK enable error: %d\n", ret_val);
+=======
+			dev_err(&pdev->dev, "MCLK enable error: %d\n", ret_val);
+>>>>>>> master
 			return ret_val;
 		}
 	}
 
+<<<<<<< HEAD
 	sof_parent = snd_soc_acpi_sof_parent(dev);
 
 	/* set card and driver name */
@@ -614,6 +643,9 @@ static int snd_cht_mc_probe(struct platform_device *pdev)
 		dev->driver->pm = &snd_soc_pm_ops;
 
 	ret_val = devm_snd_soc_register_card(dev, &snd_soc_card_cht);
+=======
+	ret_val = devm_snd_soc_register_card(&pdev->dev, &snd_soc_card_cht);
+>>>>>>> master
 	if (ret_val) {
 		dev_err(dev,
 			"snd_soc_register_card failed %d\n", ret_val);
@@ -623,13 +655,22 @@ static int snd_cht_mc_probe(struct platform_device *pdev)
 	return ret_val;
 }
 
+<<<<<<< HEAD
 static void snd_cht_mc_remove(struct platform_device *pdev)
+=======
+static int snd_cht_mc_remove(struct platform_device *pdev)
+>>>>>>> master
 {
 	struct snd_soc_card *card = platform_get_drvdata(pdev);
 	struct cht_mc_private *ctx = snd_soc_card_get_drvdata(card);
 
 	if (ctx->quirks & QUIRK_PMC_PLT_CLK_0)
 		clk_disable_unprepare(ctx->mclk);
+<<<<<<< HEAD
+=======
+
+	return 0;
+>>>>>>> master
 }
 
 static struct platform_driver snd_cht_mc_driver = {
@@ -637,7 +678,11 @@ static struct platform_driver snd_cht_mc_driver = {
 		.name = "cht-bsw-max98090",
 	},
 	.probe = snd_cht_mc_probe,
+<<<<<<< HEAD
 	.remove_new = snd_cht_mc_remove,
+=======
+	.remove = snd_cht_mc_remove,
+>>>>>>> master
 };
 
 module_platform_driver(snd_cht_mc_driver)

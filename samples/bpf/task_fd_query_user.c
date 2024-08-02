@@ -229,6 +229,10 @@ static int test_debug_fs_uprobe(char *binary_path, long offset, bool is_return)
 	char buf[256], event_alias[sizeof("test_1234567890")];
 	const char *event_type = "uprobe";
 	struct perf_event_attr attr = {};
+<<<<<<< HEAD
+=======
+	char buf[256], event_alias[sizeof("test_1234567890")];
+>>>>>>> master
 	__u64 probe_offset, probe_addr;
 	__u32 len, prog_id, fd_type;
 	int err = -1, res, kfd, efd;

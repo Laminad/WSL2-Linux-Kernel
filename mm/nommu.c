@@ -1657,7 +1657,11 @@ int __access_remote_vm(struct mm_struct *mm, unsigned long addr, void *buf,
 	struct vm_area_struct *vma;
 	int write = gup_flags & FOLL_WRITE;
 
+<<<<<<< HEAD
 	if (mmap_read_lock_killable(mm))
+=======
+	if (down_read_killable(&mm->mmap_sem))
+>>>>>>> master
 		return 0;
 
 	/* the access must start within one of the target process's mappings */

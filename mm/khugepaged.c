@@ -1136,10 +1136,20 @@ static int collapse_huge_page(struct mm_struct *mm, unsigned long address,
 	 * gup_fast later handled by the ptep_clear_flush and the VM
 	 * handled by the anon_vma lock + PG_lock.
 	 */
+<<<<<<< HEAD
 	mmap_write_lock(mm);
 	result = hugepage_vma_revalidate(mm, address, true, &vma, cc);
 	if (result != SCAN_SUCCEED)
 		goto out_up_write;
+=======
+	down_write(&mm->mmap_sem);
+	result = SCAN_ANY_PROCESS;
+	if (!mmget_still_valid(mm))
+		goto out;
+	result = hugepage_vma_revalidate(mm, address, &vma);
+	if (result)
+		goto out;
+>>>>>>> master
 	/* check if the pmd is still valid */
 	result = check_pmd_still_valid(mm, address, pmd);
 	if (result != SCAN_SUCCEED)
@@ -1458,6 +1468,7 @@ static int set_huge_pmd(struct vm_area_struct *vma, unsigned long addr,
  * collapse_pte_mapped_thp - Try to collapse a pte-mapped THP for mm at
  * address haddr.
  *
+<<<<<<< HEAD
  * @mm: process address space where collapse happens
  * @addr: THP collapse address
  * @install_pmd: If a huge PMD should be installed
@@ -1465,6 +1476,22 @@ static int set_huge_pmd(struct vm_area_struct *vma, unsigned long addr,
  * This function checks whether all the PTEs in the PMD are pointing to the
  * right THP. If so, retract the page table so the THP can refault in with
  * as pmd-mapped. Possibly install a huge PMD mapping the THP.
+=======
+ * Basic scheme is simple, details are more complex:
+ *  - allocate and lock a new huge page;
+ *  - scan over radix tree replacing old pages the new one
+ *    + swap in pages if necessary;
+ *    + fill in gaps;
+ *    + keep old pages around in case if rollback is required;
+ *  - if replacing succeed:
+ *    + copy data over;
+ *    + free old pages;
+ *    + unlock huge page;
+ *  - if replacing failed;
+ *    + put all pages back and unfreeze them;
+ *    + restore gaps in the radix-tree;
+ *    + unlock and free huge page;
+>>>>>>> master
  */
 int collapse_pte_mapped_thp(struct mm_struct *mm, unsigned long addr,
 			    bool install_pmd)
@@ -1482,6 +1509,7 @@ int collapse_pte_mapped_thp(struct mm_struct *mm, unsigned long addr,
 
 	mmap_assert_locked(mm);
 
+<<<<<<< HEAD
 	/* First check VMA found, in case page tables are being torn down */
 	if (!vma || !vma->vm_file ||
 	    !range_in_vma(vma, haddr, haddr + HPAGE_PMD_SIZE))
@@ -1498,6 +1526,31 @@ int collapse_pte_mapped_thp(struct mm_struct *mm, unsigned long addr,
 	 * this memory (mapped by a suitably aligned VMA), we'd get the hugepage
 	 * and map it by a PMD, regardless of sysfs THP settings. As such, let's
 	 * analogously elide sysfs THP settings here.
+=======
+	/* Only allocate from the target node */
+	gfp = alloc_hugepage_khugepaged_gfpmask() | __GFP_THISNODE;
+
+	new_page = khugepaged_alloc_page(hpage, gfp, node);
+	if (!new_page) {
+		result = SCAN_ALLOC_HUGE_PAGE_FAIL;
+		goto out;
+	}
+
+	if (unlikely(mem_cgroup_try_charge(new_page, mm, gfp, &memcg, true))) {
+		result = SCAN_CGROUP_CHARGE_FAIL;
+		goto out;
+	}
+
+	__SetPageLocked(new_page);
+	__SetPageSwapBacked(new_page);
+	new_page->index = start;
+	new_page->mapping = mapping;
+
+	/*
+	 * At this point the new_page is locked and not up-to-date.
+	 * It's safe to insert it into the page cache, because nobody would
+	 * be able to map it or use it in another way until we unlock it.
+>>>>>>> master
 	 */
 	if (!hugepage_vma_check(vma, vma->vm_flags, false, false, false))
 		return SCAN_VMA_CHECK;
@@ -1615,6 +1668,7 @@ int collapse_pte_mapped_thp(struct mm_struct *mm, unsigned long addr,
 			goto abort;
 
 		/*
+<<<<<<< HEAD
 		 * Must clear entry, or a racing truncate may re-remove it.
 		 * TLB flush can be left until pmdp_collapse_flush() does it.
 		 * PTE dirty? Shmem page is already dirty; file is read-only.
@@ -1623,11 +1677,36 @@ int collapse_pte_mapped_thp(struct mm_struct *mm, unsigned long addr,
 		page_remove_rmap(page, vma, false);
 		nr_ptes++;
 	}
+=======
+		 * Stop if extent has been hole-punched, and is now completely
+		 * empty (the more obvious i_size_read() check would take an
+		 * irq-unsafe seqlock on 32-bit).
+		 */
+		if (n >= HPAGE_PMD_NR) {
+			result = SCAN_TRUNCATED;
+			goto tree_locked;
+		}
+
+		/*
+		 * Handle holes in the radix tree: charge it from shmem and
+		 * insert relevant subpage of new_page into the radix-tree.
+		 */
+		if (n && !shmem_charge(mapping->host, n)) {
+			result = SCAN_FAIL;
+			goto tree_locked;
+		}
+		for (; index < min(iter.index, end); index++) {
+			radix_tree_insert(&mapping->i_pages, index,
+					new_page + (index % HPAGE_PMD_NR));
+		}
+		nr_none += n;
+>>>>>>> master
 
 	pte_unmap(start_pte);
 	if (!pml)
 		spin_unlock(ptl);
 
+<<<<<<< HEAD
 	/* step 3: set proper refcount and mm_counters. */
 	if (nr_ptes) {
 		page_ref_sub(hpage, nr_ptes);
@@ -1912,6 +1991,24 @@ static int collapse_file(struct mm_struct *mm, unsigned long addr,
 				result = SCAN_PAGE_LOCK;
 				goto xa_locked;
 			}
+=======
+		page = radix_tree_deref_slot_protected(slot,
+				&mapping->i_pages.xa_lock);
+		if (radix_tree_exceptional_entry(page) || !PageUptodate(page)) {
+			xa_unlock_irq(&mapping->i_pages);
+			/* swap in or instantiate fallocated page */
+			if (shmem_getpage(mapping->host, index, &page,
+						SGP_NOHUGE)) {
+				result = SCAN_FAIL;
+				goto tree_unlocked;
+			}
+		} else if (trylock_page(page)) {
+			get_page(page);
+			xa_unlock_irq(&mapping->i_pages);
+		} else {
+			result = SCAN_PAGE_LOCK;
+			goto tree_locked;
+>>>>>>> master
 		}
 
 		/*
@@ -1919,6 +2016,19 @@ static int collapse_file(struct mm_struct *mm, unsigned long addr,
 		 * without racing with truncate.
 		 */
 		VM_BUG_ON_PAGE(!PageLocked(page), page);
+<<<<<<< HEAD
+=======
+		VM_BUG_ON_PAGE(!PageUptodate(page), page);
+
+		/*
+		 * If file was truncated then extended, or hole-punched, before
+		 * we locked the first page, then a THP might be there already.
+		 */
+		if (PageTransCompound(page)) {
+			result = SCAN_PAGE_COMPOUND;
+			goto out_unlock;
+		}
+>>>>>>> master
 
 		/* make sure the page is up to date */
 		if (unlikely(!PageUptodate(page))) {
@@ -1991,7 +2101,11 @@ static int collapse_file(struct mm_struct *mm, unsigned long addr,
 		 */
 		if (page_count(page) != 3) {
 			result = SCAN_PAGE_COUNT;
+<<<<<<< HEAD
 			xas_unlock_irq(&xas);
+=======
+			xa_unlock_irq(&mapping->i_pages);
+>>>>>>> master
 			putback_lru_page(page);
 			goto out_unlock;
 		}
@@ -2004,6 +2118,7 @@ static int collapse_file(struct mm_struct *mm, unsigned long addr,
 out_unlock:
 		unlock_page(page);
 		put_page(page);
+<<<<<<< HEAD
 		goto xa_unlocked;
 	}
 
@@ -2039,11 +2154,15 @@ xa_unlocked:
 	if (result != SCAN_SUCCEED) {
 		nr_none = 0;
 		goto rollback;
+=======
+		goto tree_unlocked;
+>>>>>>> master
 	}
 
 	/*
 	 * The old pages are locked, so they won't change anymore.
 	 */
+<<<<<<< HEAD
 	index = start;
 	list_for_each_entry(page, &pagelist, lru) {
 		while (index < page->index) {
@@ -2053,6 +2172,23 @@ xa_unlocked:
 		if (copy_mc_highpage(hpage + (page->index % HPAGE_PMD_NR), page) > 0) {
 			result = SCAN_COPY_MC;
 			goto rollback;
+=======
+	if (index < end) {
+		int n = end - index;
+
+		/* Stop if extent has been truncated, and is now empty */
+		if (n >= HPAGE_PMD_NR) {
+			result = SCAN_TRUNCATED;
+			goto tree_locked;
+		}
+		if (!shmem_charge(mapping->host, n)) {
+			result = SCAN_FAIL;
+			goto tree_locked;
+		}
+		for (; index < end; index++) {
+			radix_tree_insert(&mapping->i_pages, index,
+					new_page + (index % HPAGE_PMD_NR));
+>>>>>>> master
 		}
 		index++;
 	}
@@ -2061,6 +2197,7 @@ xa_unlocked:
 		index++;
 	}
 
+<<<<<<< HEAD
 	if (nr_none) {
 		struct vm_area_struct *vma;
 		int nr_none_check = 0;
@@ -2206,6 +2343,100 @@ rollback:
 
 	unlock_page(hpage);
 	put_page(hpage);
+=======
+	__inc_node_page_state(new_page, NR_SHMEM_THPS);
+	if (nr_none) {
+		struct zone *zone = page_zone(new_page);
+
+		__mod_node_page_state(zone->zone_pgdat, NR_FILE_PAGES, nr_none);
+		__mod_node_page_state(zone->zone_pgdat, NR_SHMEM, nr_none);
+	}
+
+tree_locked:
+	xa_unlock_irq(&mapping->i_pages);
+tree_unlocked:
+
+	if (result == SCAN_SUCCEED) {
+		/*
+		 * Replacing old pages with new one has succeed, now we need to
+		 * copy the content and free old pages.
+		 */
+		index = start;
+		list_for_each_entry_safe(page, tmp, &pagelist, lru) {
+			while (index < page->index) {
+				clear_highpage(new_page + (index % HPAGE_PMD_NR));
+				index++;
+			}
+			copy_highpage(new_page + (page->index % HPAGE_PMD_NR),
+					page);
+			list_del(&page->lru);
+			page->mapping = NULL;
+			page_ref_unfreeze(page, 1);
+			ClearPageActive(page);
+			ClearPageUnevictable(page);
+			unlock_page(page);
+			put_page(page);
+			index++;
+		}
+		while (index < end) {
+			clear_highpage(new_page + (index % HPAGE_PMD_NR));
+			index++;
+		}
+
+		SetPageUptodate(new_page);
+		page_ref_add(new_page, HPAGE_PMD_NR - 1);
+		set_page_dirty(new_page);
+		mem_cgroup_commit_charge(new_page, memcg, false, true);
+		lru_cache_add_anon(new_page);
+
+		/*
+		 * Remove pte page tables, so we can re-fault the page as huge.
+		 */
+		retract_page_tables(mapping, start);
+		*hpage = NULL;
+
+		khugepaged_pages_collapsed++;
+	} else {
+		/* Something went wrong: rollback changes to the radix-tree */
+		xa_lock_irq(&mapping->i_pages);
+		mapping->nrpages -= nr_none;
+		shmem_uncharge(mapping->host, nr_none);
+
+		radix_tree_for_each_slot(slot, &mapping->i_pages, &iter, start) {
+			if (iter.index >= end)
+				break;
+			page = list_first_entry_or_null(&pagelist,
+					struct page, lru);
+			if (!page || iter.index < page->index) {
+				if (!nr_none)
+					break;
+				nr_none--;
+				/* Put holes back where they were */
+				radix_tree_delete(&mapping->i_pages, iter.index);
+				continue;
+			}
+
+			VM_BUG_ON_PAGE(page->index != iter.index, page);
+
+			/* Unfreeze the page. */
+			list_del(&page->lru);
+			page_ref_unfreeze(page, 2);
+			radix_tree_replace_slot(&mapping->i_pages, slot, page);
+			slot = radix_tree_iter_resume(slot, &iter);
+			xa_unlock_irq(&mapping->i_pages);
+			unlock_page(page);
+			putback_lru_page(page);
+			xa_lock_irq(&mapping->i_pages);
+		}
+		VM_BUG_ON(nr_none);
+		xa_unlock_irq(&mapping->i_pages);
+
+		mem_cgroup_cancel_charge(new_page, memcg, true);
+		new_page->mapping = NULL;
+	}
+
+	unlock_page(new_page);
+>>>>>>> master
 out:
 	VM_BUG_ON(!list_empty(&pagelist));
 	trace_mm_khugepaged_collapse_file(mm, hpage, index, is_shmem, addr, file, nr, result);

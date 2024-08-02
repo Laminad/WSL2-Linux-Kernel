@@ -260,6 +260,7 @@ struct md_cluster_info;
  * change UNSUPPORTED_MDDEV_FLAGS for each array type if new flag is added
  */
 enum mddev_flags {
+<<<<<<< HEAD
 	MD_ARRAY_FIRST_USE,
 	MD_CLOSING,
 	MD_JOURNAL_CLEAN,
@@ -273,6 +274,31 @@ enum mddev_flags {
 	MD_NOT_READY,
 	MD_BROKEN,
 	MD_DELETED,
+=======
+	MD_ARRAY_FIRST_USE,	/* First use of array, needs initialization */
+	MD_CLOSING,		/* If set, we are closing the array, do not open
+				 * it then */
+	MD_JOURNAL_CLEAN,	/* A raid with journal is already clean */
+	MD_HAS_JOURNAL,		/* The raid array has journal feature set */
+	MD_CLUSTER_RESYNC_LOCKED, /* cluster raid only, which means node
+				   * already took resync lock, need to
+				   * release the lock */
+	MD_FAILFAST_SUPPORTED,	/* Using MD_FAILFAST on metadata writes is
+				 * supported as calls to md_error() will
+				 * never cause the array to become failed.
+				 */
+	MD_HAS_PPL,		/* The raid array has PPL feature set */
+	MD_HAS_MULTIPLE_PPLS,	/* The raid array has multiple PPLs feature set */
+	MD_ALLOW_SB_UPDATE,	/* md_check_recovery is allowed to update
+				 * the metadata without taking reconfig_mutex.
+				 */
+	MD_UPDATING_SB,		/* md_check_recovery is updating the metadata
+				 * without explicitly holding reconfig_mutex.
+				 */
+	MD_NOT_READY,		/* do_md_run() is active, so 'array_state'
+				 * must not report that array is ready yet
+				 */
+>>>>>>> master
 };
 
 enum mddev_sb_flags {
@@ -282,6 +308,7 @@ enum mddev_sb_flags {
 	MD_SB_NEED_REWRITE,	/* metadata write needs to be repeated */
 };
 
+<<<<<<< HEAD
 #define NR_SERIAL_INFOS		8
 /* record current range of serialize IOs */
 struct serial_info {
@@ -306,6 +333,8 @@ enum {
 	MD_RESYNC_ACTIVE = 3,
 };
 
+=======
+>>>>>>> master
 struct mddev {
 	void				*private;
 	struct md_personality		*pers;
@@ -521,9 +550,15 @@ struct mddev {
 	 */
 	struct bio *flush_bio;
 	atomic_t flush_pending;
+<<<<<<< HEAD
 	ktime_t start_flush, prev_flush_start; /* prev_flush_start is when the previous completed
 						* flush was started.
 						*/
+=======
+	ktime_t start_flush, last_flush; /* last_flush is when the last completed
+					  * flush was started.
+					  */
+>>>>>>> master
 	struct work_struct flush_work;
 	struct work_struct event_work;	/* used by dm to report failure event */
 	mempool_t *serial_info_pool;

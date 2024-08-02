@@ -147,7 +147,57 @@ int btrfs_check_super_csum(struct btrfs_fs_info *fs_info,
 	char result[BTRFS_CSUM_SIZE];
 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
 
+<<<<<<< HEAD
 	shash->tfm = fs_info->csum_shash;
+=======
+	if (csum_type == BTRFS_CSUM_TYPE_CRC32) {
+		u32 crc = ~(u32)0;
+		char result[sizeof(crc)];
+
+		/*
+		 * The super_block structure does not span the whole
+		 * BTRFS_SUPER_INFO_SIZE range, we expect that the unused space
+		 * is filled with zeros and is included in the checksum.
+		 */
+		crc = btrfs_csum_data(raw_disk_sb + BTRFS_CSUM_SIZE,
+				crc, BTRFS_SUPER_INFO_SIZE - BTRFS_CSUM_SIZE);
+		btrfs_csum_final(crc, result);
+
+		if (memcmp(raw_disk_sb, result, sizeof(result)))
+			ret = 1;
+	}
+
+	if (csum_type >= ARRAY_SIZE(btrfs_csum_sizes)) {
+		btrfs_err(fs_info, "unsupported checksum algorithm %u",
+				csum_type);
+		ret = 1;
+	}
+
+	return ret;
+}
+
+int btrfs_verify_level_key(struct btrfs_fs_info *fs_info,
+			   struct extent_buffer *eb, int level,
+			   struct btrfs_key *first_key, u64 parent_transid)
+{
+	int found_level;
+	struct btrfs_key found_key;
+	int ret;
+
+	found_level = btrfs_header_level(eb);
+	if (found_level != level) {
+#ifdef CONFIG_BTRFS_DEBUG
+		WARN_ON(1);
+		btrfs_err(fs_info,
+"tree level mismatch detected, bytenr=%llu level expected=%u has=%u",
+			  eb->start, level, found_level);
+#endif
+		return -EIO;
+	}
+
+	if (!first_key)
+		return 0;
+>>>>>>> master
 
 	/*
 	 * The super_block structure does not span the whole
@@ -205,6 +255,7 @@ int btrfs_read_extent_buffer(struct extent_buffer *eb,
 	int mirror_num = 0;
 	int failed_mirror = 0;
 
+<<<<<<< HEAD
 	ASSERT(check);
 
 	while (1) {
@@ -213,6 +264,24 @@ int btrfs_read_extent_buffer(struct extent_buffer *eb,
 		if (!ret)
 			break;
 
+=======
+	io_tree = &BTRFS_I(fs_info->btree_inode)->io_tree;
+	while (1) {
+		clear_bit(EXTENT_BUFFER_CORRUPT, &eb->bflags);
+		ret = read_extent_buffer_pages(io_tree, eb, WAIT_COMPLETE,
+					       mirror_num);
+		if (!ret) {
+			if (verify_parent_transid(io_tree, eb,
+						   parent_transid, 0))
+				ret = -EIO;
+			else if (btrfs_verify_level_key(fs_info, eb, level,
+						first_key, parent_transid))
+				ret = -EUCLEAN;
+			else
+				break;
+		}
+
+>>>>>>> master
 		num_copies = btrfs_num_copies(fs_info,
 					      eb->start, eb->len);
 		if (num_copies == 1)
@@ -575,6 +644,59 @@ static const struct address_space_operations btree_aops = {
 	.dirty_folio	= btree_dirty_folio,
 };
 
+<<<<<<< HEAD
+=======
+void readahead_tree_block(struct btrfs_fs_info *fs_info, u64 bytenr)
+{
+	struct extent_buffer *buf = NULL;
+	struct inode *btree_inode = fs_info->btree_inode;
+	int ret;
+
+	buf = btrfs_find_create_tree_block(fs_info, bytenr);
+	if (IS_ERR(buf))
+		return;
+
+	ret = read_extent_buffer_pages(&BTRFS_I(btree_inode)->io_tree, buf,
+			WAIT_NONE, 0);
+	if (ret < 0)
+		free_extent_buffer_stale(buf);
+	else
+		free_extent_buffer(buf);
+}
+
+int reada_tree_block_flagged(struct btrfs_fs_info *fs_info, u64 bytenr,
+			 int mirror_num, struct extent_buffer **eb)
+{
+	struct extent_buffer *buf = NULL;
+	struct inode *btree_inode = fs_info->btree_inode;
+	struct extent_io_tree *io_tree = &BTRFS_I(btree_inode)->io_tree;
+	int ret;
+
+	buf = btrfs_find_create_tree_block(fs_info, bytenr);
+	if (IS_ERR(buf))
+		return 0;
+
+	set_bit(EXTENT_BUFFER_READAHEAD, &buf->bflags);
+
+	ret = read_extent_buffer_pages(io_tree, buf, WAIT_PAGE_LOCK,
+				       mirror_num);
+	if (ret) {
+		free_extent_buffer_stale(buf);
+		return ret;
+	}
+
+	if (test_bit(EXTENT_BUFFER_CORRUPT, &buf->bflags)) {
+		free_extent_buffer_stale(buf);
+		return -EIO;
+	} else if (extent_buffer_uptodate(buf)) {
+		*eb = buf;
+	} else {
+		free_extent_buffer(buf);
+	}
+	return 0;
+}
+
+>>>>>>> master
 struct extent_buffer *btrfs_find_create_tree_block(
 						struct btrfs_fs_info *fs_info,
 						u64 bytenr, u64 owner_root,
@@ -849,7 +971,11 @@ struct btrfs_root *btrfs_create_tree(struct btrfs_trans_handle *trans,
 	 * context to avoid deadlock if reclaim happens.
 	 */
 	nofs_flag = memalloc_nofs_save();
+<<<<<<< HEAD
 	root = btrfs_alloc_root(fs_info, objectid, GFP_KERNEL);
+=======
+	root = btrfs_alloc_root(fs_info, GFP_KERNEL);
+>>>>>>> master
 	memalloc_nofs_restore(nofs_flag);
 	if (!root)
 		return ERR_PTR(-ENOMEM);
@@ -1520,7 +1646,10 @@ static int cleaner_kthread(void *arg)
 		 */
 		btrfs_reclaim_bgs(fs_info);
 sleep:
+<<<<<<< HEAD
 		clear_and_wake_up_bit(BTRFS_FS_CLEANER_RUNNING, &fs_info->flags);
+=======
+>>>>>>> master
 		if (kthread_should_park())
 			kthread_parkme();
 		if (kthread_should_stop())
@@ -4259,6 +4388,13 @@ void __cold close_ctree(struct btrfs_fs_info *fs_info)
 	int ret;
 
 	set_bit(BTRFS_FS_CLOSING_START, &fs_info->flags);
+	/*
+	 * We don't want the cleaner to start new transactions, add more delayed
+	 * iputs, etc. while we're closing. We can't use kthread_stop() yet
+	 * because that frees the task_struct, and the transaction kthread might
+	 * still try to wake up the cleaner.
+	 */
+	kthread_park(fs_info->cleaner_kthread);
 
 	/*
 	 * If we had UNFINISHED_DROPS we could still be processing them, so
@@ -4747,7 +4883,23 @@ static void btrfs_destroy_pinned_extent(struct btrfs_fs_info *fs_info,
 	u64 end;
 
 	while (1) {
+<<<<<<< HEAD
 		struct extent_state *cached_state = NULL;
+=======
+		/*
+		 * The btrfs_finish_extent_commit() may get the same range as
+		 * ours between find_first_extent_bit and clear_extent_dirty.
+		 * Hence, hold the unused_bg_unpin_mutex to avoid double unpin
+		 * the same extent range.
+		 */
+		mutex_lock(&fs_info->unused_bg_unpin_mutex);
+		ret = find_first_extent_bit(unpin, 0, &start, &end,
+					    EXTENT_DIRTY, NULL);
+		if (ret) {
+			mutex_unlock(&fs_info->unused_bg_unpin_mutex);
+			break;
+		}
+>>>>>>> master
 
 		/*
 		 * The btrfs_finish_extent_commit() may get the same range as

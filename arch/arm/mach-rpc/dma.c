@@ -124,10 +124,16 @@ static irqreturn_t iomd_dma_handle(int irq, void *dev_id)
 			break;
 	} while (1);
 
+<<<<<<< HEAD
 	state = ~DMA_ST_AB;
 	disable_irq_nosync(irq);
 out:
 	idma->state = state;
+=======
+	idma->state = ~DMA_ST_AB;
+	disable_irq_nosync(irq);
+
+>>>>>>> master
 	return IRQ_HANDLED;
 }
 
@@ -178,7 +184,11 @@ static void iomd_enable_dma(unsigned int chan, dma_t *dma)
 		idma->dma_addr = idma->dma.sg->dma_address;
 		idma->dma_len = idma->dma.sg->length;
 
+<<<<<<< HEAD
 		writeb(DMA_CR_C, base + CR);
+=======
+		iomd_writeb(DMA_CR_C, dma_base + CR);
+>>>>>>> master
 		idma->state = DMA_ST_AB;
 	}
 

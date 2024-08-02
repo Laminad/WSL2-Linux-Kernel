@@ -196,7 +196,14 @@ static bool
 ext4_unaligned_io(struct inode *inode, struct iov_iter *from, loff_t pos)
 {
 	struct super_block *sb = inode->i_sb;
+<<<<<<< HEAD
 	unsigned long blockmask = sb->s_blocksize - 1;
+=======
+	int blockmask = sb->s_blocksize - 1;
+
+	if (pos >= ALIGN(i_size_read(inode), sb->s_blocksize))
+		return 0;
+>>>>>>> master
 
 	if ((pos | iov_iter_alignment(from)) & blockmask)
 		return true;
@@ -253,6 +260,12 @@ static ssize_t ext4_generic_write_checks(struct kiocb *iocb,
 	if (ret <= 0)
 		return ret;
 
+<<<<<<< HEAD
+=======
+	if (unlikely(IS_IMMUTABLE(inode)))
+		return -EPERM;
+
+>>>>>>> master
 	/*
 	 * If we have encountered a bitmap-format file, the size limit
 	 * is smaller than s_maxbytes, which is for extent-mapped files.
@@ -692,10 +705,68 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	if (IS_DAX(inode))
 		return ext4_dax_write_iter(iocb, from);
 #endif
+<<<<<<< HEAD
 	if (iocb->ki_flags & IOCB_DIRECT)
 		return ext4_dio_write_iter(iocb, from);
 	else
 		return ext4_buffered_write_iter(iocb, from);
+=======
+	if (!o_direct && (iocb->ki_flags & IOCB_NOWAIT))
+		return -EOPNOTSUPP;
+
+	if (!inode_trylock(inode)) {
+		if (iocb->ki_flags & IOCB_NOWAIT)
+			return -EAGAIN;
+		inode_lock(inode);
+	}
+
+	ret = ext4_write_checks(iocb, from);
+	if (ret <= 0)
+		goto out;
+
+	/*
+	 * Unaligned direct AIO must be serialized among each other as zeroing
+	 * of partial blocks of two competing unaligned AIOs can result in data
+	 * corruption.
+	 */
+	if (o_direct && ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS) &&
+	    !is_sync_kiocb(iocb) &&
+	    ext4_unaligned_aio(inode, from, iocb->ki_pos)) {
+		unaligned_aio = 1;
+		ext4_unwritten_wait(inode);
+	}
+
+	iocb->private = &overwrite;
+	/* Check whether we do a DIO overwrite or not */
+	if (o_direct && !unaligned_aio) {
+		if (ext4_overwrite_io(inode, iocb->ki_pos, iov_iter_count(from))) {
+			if (ext4_should_dioread_nolock(inode))
+				overwrite = 1;
+		} else if (iocb->ki_flags & IOCB_NOWAIT) {
+			ret = -EAGAIN;
+			goto out;
+		}
+	}
+
+	ret = __generic_file_write_iter(iocb, from);
+	/*
+	 * Unaligned direct AIO must be the only IO in flight. Otherwise
+	 * overlapping aligned IO after unaligned might result in data
+	 * corruption.
+	 */
+	if (ret == -EIOCBQUEUED && unaligned_aio)
+		ext4_unwritten_wait(inode);
+	inode_unlock(inode);
+
+	if (ret > 0)
+		ret = generic_write_sync(iocb, ret);
+
+	return ret;
+
+out:
+	inode_unlock(inode);
+	return ret;
+>>>>>>> master
 }
 
 #ifdef CONFIG_FS_DAX

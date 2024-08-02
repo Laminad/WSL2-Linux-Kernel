@@ -1748,6 +1748,7 @@ static void qed_ll2_post_rx_buffer_notify_fw(struct qed_hwfn *p_hwfn,
 
 	bd_prod = qed_chain_get_prod_idx(&p_rx->rxq_chain);
 	cq_prod = qed_chain_get_prod_idx(&p_rx->rcq_chain);
+<<<<<<< HEAD
 	if (p_rx->ctx_based) {
 		/* update producer by giving a doorbell */
 		p_rx->db_data.prod.bd_prod = cpu_to_le16(bd_prod);
@@ -1769,6 +1770,15 @@ static void qed_ll2_post_rx_buffer_notify_fw(struct qed_hwfn *p_hwfn,
 
 		DIRECT_REG_WR(p_rx->set_prod_addr, *((u32 *)&rx_prod));
 	}
+=======
+	rx_prod.bd_prod = cpu_to_le16(bd_prod);
+	rx_prod.cqe_prod = cpu_to_le16(cq_prod);
+
+	/* Make sure chain element is updated before ringing the doorbell */
+	dma_wmb();
+
+	DIRECT_REG_WR(p_rx->set_prod_addr, *((u32 *)&rx_prod));
+>>>>>>> master
 }
 
 int qed_ll2_post_rx_buffer(void *cxt,
@@ -2694,7 +2704,11 @@ static int qed_ll2_start_xmit(struct qed_dev *cdev, struct sk_buff *skb,
 	 */
 	nr_frags = skb_shinfo(skb)->nr_frags;
 
+<<<<<<< HEAD
 	if (unlikely(1 + nr_frags > CORE_LL2_TX_MAX_BDS_PER_PACKET)) {
+=======
+	if (1 + nr_frags > CORE_LL2_TX_MAX_BDS_PER_PACKET) {
+>>>>>>> master
 		DP_ERR(cdev, "Cannot transmit a packet with %d fragments\n",
 		       1 + nr_frags);
 		return -EINVAL;
@@ -2734,7 +2748,11 @@ static int qed_ll2_start_xmit(struct qed_dev *cdev, struct sk_buff *skb,
 	 * routine may run and free the SKB, so no dereferencing the SKB
 	 * beyond this point unless skb has any fragments.
 	 */
+<<<<<<< HEAD
 	rc = qed_ll2_prepare_tx_packet(p_hwfn, cdev->ll2->handle,
+=======
+	rc = qed_ll2_prepare_tx_packet(&cdev->hwfns[0], cdev->ll2->handle,
+>>>>>>> master
 				       &pkt, 1);
 	if (unlikely(rc))
 		goto err;

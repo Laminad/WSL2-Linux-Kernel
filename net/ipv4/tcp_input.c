@@ -521,6 +521,7 @@ static void tcp_grow_window(struct sock *sk, const struct sk_buff *skb,
 	int room;
 
 	room = min_t(int, tp->window_clamp, tcp_space(sk)) - tp->rcv_ssthresh;
+<<<<<<< HEAD
 
 	if (room <= 0)
 		return;
@@ -528,6 +529,11 @@ static void tcp_grow_window(struct sock *sk, const struct sk_buff *skb,
 	/* Check #1 */
 	if (!tcp_under_memory_pressure(sk)) {
 		unsigned int truesize = truesize_adjust(adjust, skb);
+=======
+
+	/* Check #1 */
+	if (room > 0 && !tcp_under_memory_pressure(sk)) {
+>>>>>>> master
 		int incr;
 
 		/* Check #2. Increase window, if skb with such overhead
@@ -4623,6 +4629,11 @@ static void tcp_sack_new_ofo_skb(struct sock *sk, u32 seq, u32 end_seq)
 	 * If the sack array is full, forget about the last one.
 	 */
 	if (this_sack >= TCP_NUM_SACKS) {
+<<<<<<< HEAD
+=======
+		if (tp->compressed_ack > TCP_FASTRETRANS_THRESH)
+			tcp_send_ack(sk);
+>>>>>>> master
 		this_sack--;
 		tp->rx_opt.num_sacks--;
 		sp--;
@@ -5584,6 +5595,20 @@ send_now:
 	if (!tcp_is_sack(tp) ||
 	    tp->compressed_ack >= READ_ONCE(sock_net(sk)->ipv4.sysctl_tcp_comp_sack_nr))
 		goto send_now;
+<<<<<<< HEAD
+=======
+
+	if (tp->compressed_ack_rcv_nxt != tp->rcv_nxt) {
+		tp->compressed_ack_rcv_nxt = tp->rcv_nxt;
+		if (tp->compressed_ack > TCP_FASTRETRANS_THRESH)
+			NET_ADD_STATS(sock_net(sk), LINUX_MIB_TCPACKCOMPRESSED,
+				      tp->compressed_ack - TCP_FASTRETRANS_THRESH);
+		tp->compressed_ack = 0;
+	}
+
+	if (++tp->compressed_ack <= TCP_FASTRETRANS_THRESH)
+		goto send_now;
+>>>>>>> master
 
 	if (tp->compressed_ack_rcv_nxt != tp->rcv_nxt) {
 		tp->compressed_ack_rcv_nxt = tp->rcv_nxt;
@@ -7082,7 +7107,12 @@ int tcp_conn_request(struct request_sock_ops *rsk_ops,
 			reqsk_fastopen_remove(fastopen_sk, req, false);
 			bh_unlock_sock(fastopen_sk);
 			sock_put(fastopen_sk);
+<<<<<<< HEAD
 			goto drop_and_free;
+=======
+			reqsk_put(req);
+			goto drop;
+>>>>>>> master
 		}
 		sk->sk_data_ready(sk);
 		bh_unlock_sock(fastopen_sk);

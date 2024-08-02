@@ -1531,7 +1531,11 @@ static int vbg_ioctl_hgcm_call(struct vbg_dev *gdev,
 	}
 
 	if (IS_ENABLED(CONFIG_COMPAT) && f32bit)
+<<<<<<< HEAD
 		ret = vbg_hgcm_call32(gdev, session->requestor, client_id,
+=======
+		ret = vbg_hgcm_call32(gdev, client_id,
+>>>>>>> master
 				      call->function, call->timeout_ms,
 				      VBG_IOCTL_HGCM_CALL_PARMS32(call),
 				      call->parm_count, &call->hdr.rc);

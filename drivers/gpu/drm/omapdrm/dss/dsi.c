@@ -3497,8 +3497,15 @@ static void dsi_uninit_dsi(struct dsi_data *dsi)
 	dsi_cio_uninit(dsi);
 	dss_pll_disable(&dsi->pll);
 
+<<<<<<< HEAD
 	regulator_disable(dsi->vdds_dsi_reg);
 	dsi->vdds_dsi_enabled = false;
+=======
+	if (disconnect_lanes) {
+		regulator_disable(dsi->vdds_dsi_reg);
+		dsi->vdds_dsi_enabled = false;
+	}
+>>>>>>> master
 }
 
 static void dsi_enable(struct dsi_data *dsi)

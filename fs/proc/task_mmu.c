@@ -160,6 +160,7 @@ static void *m_start(struct seq_file *m, loff_t *ppos)
 		return NULL;
 	}
 
+<<<<<<< HEAD
 	if (mmap_read_lock_killable(mm)) {
 		mmput(mm);
 		put_task_struct(priv->task);
@@ -168,6 +169,13 @@ static void *m_start(struct seq_file *m, loff_t *ppos)
 	}
 
 	vma_iter_init(&priv->iter, mm, last_addr);
+=======
+	if (down_read_killable(&mm->mmap_sem)) {
+		mmput(mm);
+		return ERR_PTR(-EINTR);
+	}
+
+>>>>>>> master
 	hold_task_mempolicy(priv);
 	if (last_addr == -2UL)
 		return get_gate_vma(mm);
@@ -407,9 +415,14 @@ struct mem_size_stats {
 	u64 swap_pss;
 };
 
+<<<<<<< HEAD
 static void smaps_page_accumulate(struct mem_size_stats *mss,
 		struct page *page, unsigned long size, unsigned long pss,
 		bool dirty, bool locked, bool private)
+=======
+static void smaps_account(struct mem_size_stats *mss, struct page *page,
+		bool compound, bool young, bool dirty, bool locked)
+>>>>>>> master
 {
 	mss->pss += pss;
 
@@ -477,18 +490,51 @@ static void smaps_account(struct mem_size_stats *mss, struct page *page,
 	 * especially for migration entries.  Treat regular migration entries
 	 * as mapcount == 1.
 	 */
+<<<<<<< HEAD
 	if ((page_count(page) == 1) || migration) {
 		smaps_page_accumulate(mss, page, size, size << PSS_SHIFT, dirty,
 			locked, true);
+=======
+	if (page_count(page) == 1) {
+		if (dirty || PageDirty(page))
+			mss->private_dirty += size;
+		else
+			mss->private_clean += size;
+		mss->pss += (u64)size << PSS_SHIFT;
+		if (locked)
+			mss->pss_locked += (u64)size << PSS_SHIFT;
+>>>>>>> master
 		return;
 	}
 	for (i = 0; i < nr; i++, page++) {
 		int mapcount = page_mapcount(page);
+<<<<<<< HEAD
 		unsigned long pss = PAGE_SIZE << PSS_SHIFT;
 		if (mapcount >= 2)
 			pss /= mapcount;
 		smaps_page_accumulate(mss, page, PAGE_SIZE, pss, dirty, locked,
 				      mapcount < 2);
+=======
+		unsigned long pss = (PAGE_SIZE << PSS_SHIFT);
+
+		if (mapcount >= 2) {
+			if (dirty || PageDirty(page))
+				mss->shared_dirty += PAGE_SIZE;
+			else
+				mss->shared_clean += PAGE_SIZE;
+			mss->pss += pss / mapcount;
+			if (locked)
+				mss->pss_locked += pss / mapcount;
+		} else {
+			if (dirty || PageDirty(page))
+				mss->private_dirty += PAGE_SIZE;
+			else
+				mss->private_clean += PAGE_SIZE;
+			mss->pss += pss;
+			if (locked)
+				mss->pss_locked += pss;
+		}
+>>>>>>> master
 	}
 }
 
@@ -562,7 +608,11 @@ static void smaps_pte_entry(pte_t *pte, unsigned long addr,
 	if (!page)
 		return;
 
+<<<<<<< HEAD
 	smaps_account(mss, page, false, young, dirty, locked, migration);
+=======
+	smaps_account(mss, page, false, pte_young(*pte), pte_dirty(*pte), locked);
+>>>>>>> master
 }
 
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
@@ -572,8 +622,12 @@ static void smaps_pmd_entry(pmd_t *pmd, unsigned long addr,
 	struct mem_size_stats *mss = walk->private;
 	struct vm_area_struct *vma = walk->vma;
 	bool locked = !!(vma->vm_flags & VM_LOCKED);
+<<<<<<< HEAD
 	struct page *page = NULL;
 	bool migration = false;
+=======
+	struct page *page;
+>>>>>>> master
 
 	if (pmd_present(*pmd)) {
 		page = vm_normal_page_pmd(vma, addr, *pmd);
@@ -594,10 +648,15 @@ static void smaps_pmd_entry(pmd_t *pmd, unsigned long addr,
 	else if (is_zone_device_page(page))
 		/* pass */;
 	else
+<<<<<<< HEAD
 		mss->file_thp += HPAGE_PMD_SIZE;
 
 	smaps_account(mss, page, true, pmd_young(*pmd), pmd_dirty(*pmd),
 		      locked, migration);
+=======
+		VM_BUG_ON_PAGE(1, page);
+	smaps_account(mss, page, true, pmd_young(*pmd), pmd_dirty(*pmd), locked);
+>>>>>>> master
 }
 #else
 static void smaps_pmd_entry(pmd_t *pmd, unsigned long addr,
@@ -774,6 +833,12 @@ static void smap_gather_stats(struct vm_area_struct *vma,
 	if (start >= vma->vm_end)
 		return;
 
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_SHMEM
+	/* In case of smaps_rollup, reset the value from previous vma */
+	mss->check_shmem_swap = false;
+>>>>>>> master
 	if (vma->vm_file && shmem_mapping(vma->vm_file->f_mapping)) {
 		/*
 		 * For shared or readonly shmem mappings we know that all
@@ -787,19 +852,30 @@ static void smap_gather_stats(struct vm_area_struct *vma,
 		 */
 		unsigned long shmem_swapped = shmem_swap_usage(vma);
 
+<<<<<<< HEAD
 		if (!start && (!shmem_swapped || (vma->vm_flags & VM_SHARED) ||
 					!(vma->vm_flags & VM_WRITE))) {
+=======
+		if (!shmem_swapped || (vma->vm_flags & VM_SHARED) ||
+					!(vma->vm_flags & VM_WRITE)) {
+>>>>>>> master
 			mss->swap += shmem_swapped;
 		} else {
 			ops = &smaps_shmem_walk_ops;
 		}
 	}
+<<<<<<< HEAD
 
 	/* mmap_lock is held in m_start */
 	if (!start)
 		walk_page_vma(vma, ops, mss);
 	else
 		walk_page_range(vma->vm_mm, start, vma->vm_end, ops, mss);
+=======
+#endif
+	/* mmap_sem is held in m_start */
+	walk_page_vma(vma, &smaps_walk);
+>>>>>>> master
 }
 
 #define SEQ_PUT_DEC(str, val) \
@@ -895,7 +971,11 @@ static int show_smaps_rollup(struct seq_file *m, void *v)
 
 	memset(&mss, 0, sizeof(mss));
 
+<<<<<<< HEAD
 	ret = mmap_read_lock_killable(mm);
+=======
+	ret = down_read_killable(&mm->mmap_sem);
+>>>>>>> master
 	if (ret)
 		goto out_put_mm;
 
@@ -987,7 +1067,11 @@ empty_set:
 	__show_smap(m, &mss, true);
 
 	release_task_mempolicy(priv);
+<<<<<<< HEAD
 	mmap_read_unlock(mm);
+=======
+	up_read(&mm->mmap_sem);
+>>>>>>> master
 
 out_put_mm:
 	mmput(mm);
@@ -1294,12 +1378,52 @@ static ssize_t clear_refs_write(struct file *file, const char __user *buf,
 			goto out_unlock;
 		}
 
+<<<<<<< HEAD
+=======
+		if (down_read_killable(&mm->mmap_sem)) {
+			count = -EINTR;
+			goto out_mm;
+		}
+		tlb_gather_mmu(&tlb, mm, 0, -1);
+>>>>>>> master
 		if (type == CLEAR_REFS_SOFT_DIRTY) {
 			for_each_vma(vmi, vma) {
 				if (!(vma->vm_flags & VM_SOFTDIRTY))
 					continue;
+<<<<<<< HEAD
 				vm_flags_clear(vma, VM_SOFTDIRTY);
 				vma_set_page_prot(vma);
+=======
+				up_read(&mm->mmap_sem);
+				if (down_write_killable(&mm->mmap_sem)) {
+					count = -EINTR;
+					goto out_mm;
+				}
+				/*
+				 * Avoid to modify vma->vm_flags
+				 * without locked ops while the
+				 * coredump reads the vm_flags.
+				 */
+				if (!mmget_still_valid(mm)) {
+					/*
+					 * Silently return "count"
+					 * like if get_task_mm()
+					 * failed. FIXME: should this
+					 * function have returned
+					 * -ESRCH if get_task_mm()
+					 * failed like if
+					 * get_proc_task() fails?
+					 */
+					up_write(&mm->mmap_sem);
+					goto out_mm;
+				}
+				for (vma = mm->mmap; vma; vma = vma->vm_next) {
+					vma->vm_flags &= ~VM_SOFTDIRTY;
+					vma_set_page_prot(vma);
+				}
+				downgrade_write(&mm->mmap_sem);
+				break;
+>>>>>>> master
 			}
 
 			inc_tlb_flush_pending(mm);
@@ -1718,11 +1842,19 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
 		/* overflow ? */
 		if (end < start_vaddr || end > end_vaddr)
 			end = end_vaddr;
+<<<<<<< HEAD
 		ret = mmap_read_lock_killable(mm);
 		if (ret)
 			goto out_free;
 		ret = walk_page_range(mm, start_vaddr, end, &pagemap_ops, &pm);
 		mmap_read_unlock(mm);
+=======
+		ret = down_read_killable(&mm->mmap_sem);
+		if (ret)
+			goto out_free;
+		ret = walk_page_range(start_vaddr, end, &pagemap_walk);
+		up_read(&mm->mmap_sem);
+>>>>>>> master
 		start_vaddr = end;
 
 		len = min(count, PM_ENTRY_BYTES * pm.pos);

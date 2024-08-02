@@ -236,11 +236,14 @@ static int intel_xpower_pmic_get_raw_temp(struct regmap *regmap, int reg)
 		return ret;
 
 	if (adc_ts_pin_ctrl & AXP288_ADC_TS_CURRENT_ON_OFF_MASK) {
+<<<<<<< HEAD
 		/*
 		 * AXP288_ADC_TS_PIN_CTRL reads are cached by the regmap, so
 		 * this does to a single I2C-transfer, and thus there is no
 		 * need to explicitly call iosf_mbi_block_punit_i2c_access().
 		 */
+=======
+>>>>>>> master
 		ret = regmap_update_bits(regmap, AXP288_ADC_TS_PIN_CTRL,
 					 AXP288_ADC_TS_CURRENT_ON_OFF_MASK,
 					 AXP288_ADC_TS_CURRENT_ON_ONDEMAND);
@@ -250,10 +253,13 @@ static int intel_xpower_pmic_get_raw_temp(struct regmap *regmap, int reg)
 		/* Wait a bit after switching the current-source */
 		usleep_range(6000, 10000);
 	}
+<<<<<<< HEAD
 
 	ret = iosf_mbi_block_punit_i2c_access();
 	if (ret)
 		return ret;
+=======
+>>>>>>> master
 
 	ret = regmap_bulk_read(regmap, AXP288_GP_ADC_H, buf, 2);
 	if (ret == 0)
@@ -264,8 +270,11 @@ static int intel_xpower_pmic_get_raw_temp(struct regmap *regmap, int reg)
 				   AXP288_ADC_TS_CURRENT_ON_OFF_MASK,
 				   AXP288_ADC_TS_CURRENT_ON);
 	}
+<<<<<<< HEAD
 
 	iosf_mbi_unblock_punit_i2c_access();
+=======
+>>>>>>> master
 
 	return ret;
 }

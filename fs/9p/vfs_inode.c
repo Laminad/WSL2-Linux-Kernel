@@ -466,7 +466,10 @@ static struct inode *v9fs_qid_iget(struct super_block *sb,
 		goto error;
 
 	v9fs_stat2inode(st, inode, sb, 0);
+<<<<<<< HEAD
 	v9fs_set_netfs_context(inode);
+=======
+>>>>>>> master
 	v9fs_cache_inode_get_cookie(inode);
 	unlock_new_inode(inode);
 	return inode;
@@ -1035,7 +1038,11 @@ v9fs_vfs_getattr(struct mnt_idmap *idmap, const struct path *path,
 		return PTR_ERR(st);
 
 	v9fs_stat2inode(st, d_inode(dentry), dentry->d_sb, 0);
+<<<<<<< HEAD
 	generic_fillattr(&nop_mnt_idmap, request_mask, d_inode(dentry), stat);
+=======
+	generic_fillattr(d_inode(dentry), stat);
+>>>>>>> master
 
 	p9stat_free(st);
 	kfree(st);
@@ -1408,7 +1415,11 @@ int v9fs_refresh_inode(struct p9_fid *fid, struct inode *inode)
 	 * We don't want to refresh inode->i_size,
 	 * because we may have cached data
 	 */
+<<<<<<< HEAD
 	flags = (v9ses->cache & CACHE_LOOSE) ?
+=======
+	flags = (v9ses->cache == CACHE_LOOSE || v9ses->cache == CACHE_FSCACHE) ?
+>>>>>>> master
 		V9FS_STAT2INODE_KEEP_ISIZE : 0;
 	v9fs_stat2inode(st, inode, inode->i_sb, flags);
 out:

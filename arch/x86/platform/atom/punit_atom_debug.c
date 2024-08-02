@@ -122,9 +122,15 @@ static void punit_dbgfs_unregister(void)
 					   X86_FEATURE_MWAIT, data)
 
 static const struct x86_cpu_id intel_punit_cpu_ids[] = {
+<<<<<<< HEAD
 	X86_MATCH(ATOM_SILVERMONT,		&punit_device_byt),
 	X86_MATCH(ATOM_SILVERMONT_MID,		&punit_device_tng),
 	X86_MATCH(ATOM_AIRMONT,			&punit_device_cht),
+=======
+	ICPU(INTEL_FAM6_ATOM_SILVERMONT, punit_device_byt),
+	ICPU(INTEL_FAM6_ATOM_SILVERMONT_MID,  punit_device_tng),
+	ICPU(INTEL_FAM6_ATOM_AIRMONT,	  punit_device_cht),
+>>>>>>> master
 	{}
 };
 MODULE_DEVICE_TABLE(x86cpu, intel_punit_cpu_ids);

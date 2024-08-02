@@ -820,6 +820,7 @@ int etnaviv_gpu_init(struct etnaviv_gpu *gpu)
 	if (ret)
 		goto fail;
 
+<<<<<<< HEAD
 	/*
 	 * If the GPU is part of a system with DMA addressing limitations,
 	 * request pages for our SHM backend buffers from the DMA32 zone to
@@ -827,13 +828,25 @@ int etnaviv_gpu_init(struct etnaviv_gpu *gpu)
 	 */
 	if (dma_addressing_limited(gpu->dev))
 		priv->shm_gfp_mask |= GFP_DMA32;
+=======
+	gpu->cmdbuf_suballoc = etnaviv_cmdbuf_suballoc_new(gpu);
+	if (IS_ERR(gpu->cmdbuf_suballoc)) {
+		dev_err(gpu->dev, "Failed to create cmdbuf suballocator\n");
+		ret = PTR_ERR(gpu->cmdbuf_suballoc);
+		goto destroy_iommu;
+	}
+>>>>>>> master
 
 	/* Create buffer: */
 	ret = etnaviv_cmdbuf_init(priv->cmdbuf_suballoc, &gpu->buffer,
 				  PAGE_SIZE);
 	if (ret) {
 		dev_err(gpu->dev, "could not create command buffer\n");
+<<<<<<< HEAD
 		goto fail;
+=======
+		goto destroy_suballoc;
+>>>>>>> master
 	}
 
 	/*
@@ -878,6 +891,18 @@ int etnaviv_gpu_init(struct etnaviv_gpu *gpu)
 
 	return 0;
 
+<<<<<<< HEAD
+=======
+free_buffer:
+	etnaviv_cmdbuf_free(&gpu->buffer);
+	gpu->buffer.suballoc = NULL;
+destroy_suballoc:
+	etnaviv_cmdbuf_suballoc_destroy(gpu->cmdbuf_suballoc);
+	gpu->cmdbuf_suballoc = NULL;
+destroy_iommu:
+	etnaviv_iommu_destroy(gpu->mmu);
+	gpu->mmu = NULL;
+>>>>>>> master
 fail:
 	pm_runtime_mark_last_busy(gpu->dev);
 pm_put:

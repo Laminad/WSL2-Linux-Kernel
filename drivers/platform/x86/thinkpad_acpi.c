@@ -46,6 +46,7 @@
 #include <linux/init.h>
 #include <linux/input.h>
 #include <linux/jiffies.h>
+<<<<<<< HEAD
 #include <linux/kernel.h>
 #include <linux/kthread.h>
 #include <linux/leds.h>
@@ -57,6 +58,11 @@
 #include <linux/pci.h>
 #include <linux/platform_device.h>
 #include <linux/platform_profile.h>
+=======
+#include <linux/workqueue.h>
+#include <linux/acpi.h>
+#include <linux/pci.h>
+>>>>>>> master
 #include <linux/power_supply.h>
 #include <linux/proc_fs.h>
 #include <linux/rfkill.h>
@@ -4372,10 +4378,16 @@ static void bluetooth_exit(void)
 	bluetooth_shutdown();
 }
 
+<<<<<<< HEAD
 static const struct dmi_system_id fwbug_list[] __initconst = {
 	{
 		.ident = "ThinkPad E485",
 		.driver_data = &quirk_btusb_bug,
+=======
+static const struct dmi_system_id bt_fwbug_list[] __initconst = {
+	{
+		.ident = "ThinkPad E485",
+>>>>>>> master
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_BOARD_NAME, "20KU"),
@@ -4383,7 +4395,10 @@ static const struct dmi_system_id fwbug_list[] __initconst = {
 	},
 	{
 		.ident = "ThinkPad E585",
+<<<<<<< HEAD
 		.driver_data = &quirk_btusb_bug,
+=======
+>>>>>>> master
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_BOARD_NAME, "20KV"),
@@ -4391,7 +4406,10 @@ static const struct dmi_system_id fwbug_list[] __initconst = {
 	},
 	{
 		.ident = "ThinkPad A285 - 20MW",
+<<<<<<< HEAD
 		.driver_data = &quirk_btusb_bug,
+=======
+>>>>>>> master
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_BOARD_NAME, "20MW"),
@@ -4399,7 +4417,10 @@ static const struct dmi_system_id fwbug_list[] __initconst = {
 	},
 	{
 		.ident = "ThinkPad A285 - 20MX",
+<<<<<<< HEAD
 		.driver_data = &quirk_btusb_bug,
+=======
+>>>>>>> master
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_BOARD_NAME, "20MX"),
@@ -4407,7 +4428,10 @@ static const struct dmi_system_id fwbug_list[] __initconst = {
 	},
 	{
 		.ident = "ThinkPad A485 - 20MU",
+<<<<<<< HEAD
 		.driver_data = &quirk_btusb_bug,
+=======
+>>>>>>> master
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_BOARD_NAME, "20MU"),
@@ -4415,7 +4439,10 @@ static const struct dmi_system_id fwbug_list[] __initconst = {
 	},
 	{
 		.ident = "ThinkPad A485 - 20MV",
+<<<<<<< HEAD
 		.driver_data = &quirk_btusb_bug,
+=======
+>>>>>>> master
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_BOARD_NAME, "20MV"),
@@ -4438,8 +4465,12 @@ static int __init have_bt_fwbug(void)
 	 * Some AMD based ThinkPads have a firmware bug that calling
 	 * "GBDC" will cause bluetooth on Intel wireless cards blocked
 	 */
+<<<<<<< HEAD
 	if (tp_features.quirks && tp_features.quirks->btusb_bug &&
 	    pci_dev_present(fwbug_cards_ids)) {
+=======
+	if (dmi_check_system(bt_fwbug_list) && pci_dev_present(fwbug_cards_ids)) {
+>>>>>>> master
 		vdbg_printk(TPACPI_DBG_INIT | TPACPI_DBG_RFKILL,
 			FW_BUG "disable bluetooth subdriver for Intel cards\n");
 		return 1;

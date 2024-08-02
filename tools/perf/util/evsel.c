@@ -1173,8 +1173,17 @@ void evsel__config(struct evsel *evsel, struct record_opts *opts,
 	 * If attr->freq was set (here or earlier), ask for period
 	 * to be sampled.
 	 */
+<<<<<<< HEAD
 	if (attr->freq)
 		evsel__set_sample_bit(evsel, PERIOD);
+=======
+	if ((leader != evsel) && leader->sample_read) {
+		attr->freq           = 0;
+		attr->sample_freq    = 0;
+		attr->sample_period  = 0;
+		attr->write_backward = 0;
+	}
+>>>>>>> master
 
 	if (opts->no_samples)
 		attr->sample_freq = 0;
@@ -1332,8 +1341,13 @@ void evsel__config(struct evsel *evsel, struct record_opts *opts,
 		attr->exclude_user   = 1;
 	}
 
+<<<<<<< HEAD
 	if (evsel->core.own_cpus || evsel->unit)
 		evsel->core.attr.read_format |= PERF_FORMAT_ID;
+=======
+	if (evsel->own_cpus || evsel->unit)
+		evsel->attr.read_format |= PERF_FORMAT_ID;
+>>>>>>> master
 
 	/*
 	 * Apply event specific term settings,
@@ -1464,12 +1478,19 @@ void evsel__exit(struct evsel *evsel)
 {
 	assert(list_empty(&evsel->core.node));
 	assert(evsel->evlist == NULL);
+<<<<<<< HEAD
 	bpf_counter__destroy(evsel);
 	perf_bpf_filter__destroy(evsel);
 	evsel__free_counts(evsel);
 	perf_evsel__free_fd(&evsel->core);
 	perf_evsel__free_id(&evsel->core);
 	evsel__free_config_terms(evsel);
+=======
+	perf_evsel__free_counts(evsel);
+	perf_evsel__free_fd(evsel);
+	perf_evsel__free_id(evsel);
+	perf_evsel__free_config_terms(evsel);
+>>>>>>> master
 	cgroup__put(evsel->cgrp);
 	perf_cpu_map__put(evsel->core.cpus);
 	perf_cpu_map__put(evsel->core.own_cpus);

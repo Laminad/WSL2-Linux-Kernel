@@ -181,7 +181,11 @@ void usb_deregister_dev(struct usb_interface *intf,
 		return;
 
 	dev_dbg(&intf->dev, "removing %d minor\n", intf->minor);
+<<<<<<< HEAD
 	device_destroy(&usbmisc_class, MKDEV(USB_MAJOR, intf->minor));
+=======
+	device_destroy(usb_class->class, MKDEV(USB_MAJOR, intf->minor));
+>>>>>>> master
 
 	down_write(&minor_rwsem);
 	usb_minors[intf->minor] = NULL;

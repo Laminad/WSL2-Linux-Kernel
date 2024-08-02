@@ -341,7 +341,40 @@ static int tegra_mc_reset_setup(struct tegra_mc *mc)
 	return 0;
 }
 
+<<<<<<< HEAD
 int tegra_mc_write_emem_configuration(struct tegra_mc *mc, unsigned long rate)
+=======
+static int tegra_mc_setup_latency_allowance(struct tegra_mc *mc)
+{
+	unsigned long long tick;
+	unsigned int i;
+	u32 value;
+
+	/* compute the number of MC clock cycles per tick */
+	tick = (unsigned long long)mc->tick * clk_get_rate(mc->clk);
+	do_div(tick, NSEC_PER_SEC);
+
+	value = readl(mc->regs + MC_EMEM_ARB_CFG);
+	value &= ~MC_EMEM_ARB_CFG_CYCLES_PER_UPDATE_MASK;
+	value |= MC_EMEM_ARB_CFG_CYCLES_PER_UPDATE(tick);
+	writel(value, mc->regs + MC_EMEM_ARB_CFG);
+
+	/* write latency allowance defaults */
+	for (i = 0; i < mc->soc->num_clients; i++) {
+		const struct tegra_mc_la *la = &mc->soc->clients[i].la;
+		u32 value;
+
+		value = readl(mc->regs + la->reg);
+		value &= ~(la->mask << la->shift);
+		value |= (la->def & la->mask) << la->shift;
+		writel(value, mc->regs + la->reg);
+	}
+
+	return 0;
+}
+
+void tegra_mc_write_emem_configuration(struct tegra_mc *mc, unsigned long rate)
+>>>>>>> master
 {
 	unsigned int i;
 	struct tegra_mc_timing *timing = NULL;

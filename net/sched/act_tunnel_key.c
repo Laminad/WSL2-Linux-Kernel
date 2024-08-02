@@ -350,7 +350,10 @@ static void tunnel_key_release_params(struct tcf_tunnel_key_params *p)
 		return;
 	if (p->tcft_action == TCA_TUNNEL_KEY_ACT_SET)
 		dst_release(&p->tcft_enc_metadata->dst);
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 	kfree_rcu(p, rcu);
 }
 
@@ -499,9 +502,14 @@ static int tunnel_key_init(struct net *net, struct nlattr *nla,
 	}
 
 	if (!exists) {
+<<<<<<< HEAD
 		ret = tcf_idr_create_from_flags(tn, index, est, a,
 						&act_tunnel_key_ops, bind,
 						act_flags);
+=======
+		ret = tcf_idr_create(tn, index, est, a,
+				     &act_tunnel_key_ops, bind, true);
+>>>>>>> master
 		if (ret) {
 			NL_SET_ERR_MSG(extack, "Cannot create TC IDR");
 			goto release_tun_meta;
@@ -538,8 +546,14 @@ static int tunnel_key_init(struct net *net, struct nlattr *nla,
 					 lockdep_is_held(&t->tcf_lock));
 	spin_unlock_bh(&t->tcf_lock);
 	tunnel_key_release_params(params_new);
+<<<<<<< HEAD
 	if (goto_ch)
 		tcf_chain_put_by_act(goto_ch);
+=======
+
+	if (ret == ACT_P_CREATED)
+		tcf_idr_insert(tn, *a);
+>>>>>>> master
 
 	return ret;
 

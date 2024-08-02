@@ -268,7 +268,11 @@ static __init void early_pci_serial_init(char *s)
 	 */
 	if (((classcode >> 16 != PCI_CLASS_COMMUNICATION_MODEM) &&
 	     (classcode >> 16 != PCI_CLASS_COMMUNICATION_SERIAL)) ||
+<<<<<<< HEAD
 	    (((classcode >> 8) & 0xff) != PCI_SERIAL_16550_COMPATIBLE)) {
+=======
+	   (((classcode >> 8) & 0xff) != 0x02)) /* 16550 I/F at BAR0 */ {
+>>>>>>> master
 		if (!force)
 			return;
 	}

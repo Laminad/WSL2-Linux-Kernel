@@ -1005,6 +1005,13 @@ static int tls_sw_sendmsg_splice(struct sock *sk, struct msghdr *msg,
 static int tls_sw_sendmsg_locked(struct sock *sk, struct msghdr *msg,
 				 size_t size)
 {
+<<<<<<< HEAD
+=======
+	struct tls_context *tls_ctx = tls_get_ctx(sk);
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	int ret;
+	int required_size;
+>>>>>>> master
 	long timeo = sock_sndtimeo(sk, msg->msg_flags & MSG_DONTWAIT);
 	struct tls_context *tls_ctx = tls_get_ctx(sk);
 	struct tls_prot_info *prot = &tls_ctx->prot_info;
@@ -1025,8 +1032,19 @@ static int tls_sw_sendmsg_locked(struct sock *sk, struct msghdr *msg,
 	int orig_size;
 	int ret = 0;
 
+<<<<<<< HEAD
 	if (!eor && (msg->msg_flags & MSG_EOR))
 		return -EINVAL;
+=======
+	if (msg->msg_flags & ~(MSG_MORE | MSG_DONTWAIT | MSG_NOSIGNAL))
+		return -ENOTSUPP;
+
+	lock_sock(sk);
+
+	ret = tls_complete_pending_work(sk, tls_ctx, msg->msg_flags, &timeo);
+	if (ret)
+		goto send_end;
+>>>>>>> master
 
 	if (unlikely(msg->msg_controllen)) {
 		ret = tls_process_cmsg(sk, msg, &record_type);
@@ -1226,7 +1244,19 @@ send_end:
 int tls_sw_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
 {
 	struct tls_context *tls_ctx = tls_get_ctx(sk);
+<<<<<<< HEAD
 	int ret;
+=======
+	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	int ret;
+	long timeo = sock_sndtimeo(sk, flags & MSG_DONTWAIT);
+	bool eor;
+	size_t orig_size = size;
+	unsigned char record_type = TLS_RECORD_TYPE_DATA;
+	struct scatterlist *sg;
+	bool full_record;
+	int record_room;
+>>>>>>> master
 
 	if (msg->msg_flags & ~(MSG_MORE | MSG_DONTWAIT | MSG_NOSIGNAL |
 			       MSG_CMSG_COMPAT | MSG_SPLICE_PAGES | MSG_EOR |
@@ -1237,7 +1267,99 @@ int tls_sw_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
 	if (ret)
 		return ret;
 	lock_sock(sk);
+<<<<<<< HEAD
 	ret = tls_sw_sendmsg_locked(sk, msg, size);
+=======
+
+	sk_clear_bit(SOCKWQ_ASYNC_NOSPACE, sk);
+
+	ret = tls_complete_pending_work(sk, tls_ctx, flags, &timeo);
+	if (ret)
+		goto sendpage_end;
+
+	/* Call the sk_stream functions to manage the sndbuf mem. */
+	while (size > 0) {
+		size_t copy, required_size;
+
+		if (sk->sk_err) {
+			ret = -sk->sk_err;
+			goto sendpage_end;
+		}
+
+		full_record = false;
+		record_room = TLS_MAX_PAYLOAD_SIZE - ctx->sg_plaintext_size;
+		copy = size;
+		if (copy >= record_room) {
+			copy = record_room;
+			full_record = true;
+		}
+		required_size = ctx->sg_plaintext_size + copy +
+			      tls_ctx->tx.overhead_size;
+
+		if (!sk_stream_memory_free(sk))
+			goto wait_for_sndbuf;
+alloc_payload:
+		ret = alloc_encrypted_sg(sk, required_size);
+		if (ret) {
+			if (ret != -ENOSPC)
+				goto wait_for_memory;
+
+			/* Adjust copy according to the amount that was
+			 * actually allocated. The difference is due
+			 * to max sg elements limit
+			 */
+			copy -= required_size - ctx->sg_plaintext_size;
+			full_record = true;
+		}
+
+		get_page(page);
+		sg = ctx->sg_plaintext_data + ctx->sg_plaintext_num_elem;
+		sg_set_page(sg, page, copy, offset);
+		sg_unmark_end(sg);
+
+		ctx->sg_plaintext_num_elem++;
+
+		sk_mem_charge(sk, copy);
+		offset += copy;
+		size -= copy;
+		ctx->sg_plaintext_size += copy;
+		tls_ctx->pending_open_record_frags = ctx->sg_plaintext_num_elem;
+
+		if (full_record || eor ||
+		    ctx->sg_plaintext_num_elem ==
+		    ARRAY_SIZE(ctx->sg_plaintext_data)) {
+push_record:
+			ret = tls_push_record(sk, flags, record_type);
+			if (ret) {
+				if (ret == -ENOMEM)
+					goto wait_for_memory;
+
+				goto sendpage_end;
+			}
+		}
+		continue;
+wait_for_sndbuf:
+		set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
+wait_for_memory:
+		ret = sk_stream_wait_memory(sk, &timeo);
+		if (ret) {
+			trim_both_sgl(sk, ctx->sg_plaintext_size);
+			goto sendpage_end;
+		}
+
+		if (tls_is_pending_closed_record(tls_ctx))
+			goto push_record;
+
+		goto alloc_payload;
+	}
+
+sendpage_end:
+	if (orig_size > size)
+		ret = orig_size - size;
+	else
+		ret = sk_stream_error(sk, flags, ret);
+
+>>>>>>> master
 	release_sock(sk);
 	mutex_unlock(&tls_ctx->tx_lock);
 	return ret;

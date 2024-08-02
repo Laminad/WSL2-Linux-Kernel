@@ -125,12 +125,19 @@ static void cpu_v7_spectre_v2_init(void)
 	case ARM_CPU_PART_CORTEX_A17:
 	case ARM_CPU_PART_CORTEX_A73:
 	case ARM_CPU_PART_CORTEX_A75:
+<<<<<<< HEAD
 		state = SPECTRE_MITIGATED;
 		method = SPECTRE_V2_METHOD_BPIALL;
+=======
+		per_cpu(harden_branch_predictor_fn, cpu) =
+			harden_branch_predictor_bpiall;
+		spectre_v2_method = "BPIALL";
+>>>>>>> master
 		break;
 
 	case ARM_CPU_PART_CORTEX_A15:
 	case ARM_CPU_PART_BRAHMA_B15:
+<<<<<<< HEAD
 		state = SPECTRE_MITIGATED;
 		method = SPECTRE_V2_METHOD_ICIALLU;
 		break;
@@ -138,6 +145,11 @@ static void cpu_v7_spectre_v2_init(void)
 	case ARM_CPU_PART_BRAHMA_B53:
 		/* Requires no workaround */
 		state = SPECTRE_UNAFFECTED;
+=======
+		per_cpu(harden_branch_predictor_fn, cpu) =
+			harden_branch_predictor_iciallu;
+		spectre_v2_method = "ICIALLU";
+>>>>>>> master
 		break;
 
 	default:
@@ -156,6 +168,7 @@ static void cpu_v7_spectre_v2_init(void)
 		if (state != SPECTRE_MITIGATED)
 			break;
 
+<<<<<<< HEAD
 		switch (arm_smccc_1_1_get_conduit()) {
 		case SMCCC_CONDUIT_HVC:
 			method = SPECTRE_V2_METHOD_HVC;
@@ -163,6 +176,29 @@ static void cpu_v7_spectre_v2_init(void)
 
 		case SMCCC_CONDUIT_SMC:
 			method = SPECTRE_V2_METHOD_SMC;
+=======
+		switch (psci_ops.conduit) {
+		case PSCI_CONDUIT_HVC:
+			arm_smccc_1_1_hvc(ARM_SMCCC_ARCH_FEATURES_FUNC_ID,
+					  ARM_SMCCC_ARCH_WORKAROUND_1, &res);
+			if ((int)res.a0 != 0)
+				break;
+			per_cpu(harden_branch_predictor_fn, cpu) =
+				call_hvc_arch_workaround_1;
+			cpu_do_switch_mm = cpu_v7_hvc_switch_mm;
+			spectre_v2_method = "hypervisor";
+			break;
+
+		case PSCI_CONDUIT_SMC:
+			arm_smccc_1_1_smc(ARM_SMCCC_ARCH_FEATURES_FUNC_ID,
+					  ARM_SMCCC_ARCH_WORKAROUND_1, &res);
+			if ((int)res.a0 != 0)
+				break;
+			per_cpu(harden_branch_predictor_fn, cpu) =
+				call_smc_arch_workaround_1;
+			cpu_do_switch_mm = cpu_v7_smc_switch_mm;
+			spectre_v2_method = "firmware";
+>>>>>>> master
 			break;
 
 		default:
@@ -213,7 +249,13 @@ static int spectre_bhb_install_workaround(int method)
 			smp_processor_id(), spectre_bhb_method_name(method));
 	}
 
+<<<<<<< HEAD
 	return SPECTRE_MITIGATED;
+=======
+	if (spectre_v2_method)
+		pr_info("CPU%u: Spectre v2: using %s workaround\n",
+			smp_processor_id(), spectre_v2_method);
+>>>>>>> master
 }
 #else
 static int spectre_bhb_install_workaround(int method)

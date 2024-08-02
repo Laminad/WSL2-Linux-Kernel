@@ -759,10 +759,16 @@ void nfp_tunnel_request_route_v4(struct nfp_app *app, struct sk_buff *skb)
 	payload = nfp_flower_cmsg_get_data(skb);
 
 	rcu_read_lock();
+<<<<<<< HEAD
 	netdev = nfp_app_dev_get(app, be32_to_cpu(payload->ingress_port), NULL);
 	if (!netdev)
 		goto fail_rcu_unlock;
 	dev_hold(netdev);
+=======
+	netdev = nfp_app_repr_get(app, be32_to_cpu(payload->ingress_port));
+	if (!netdev)
+		goto fail_rcu_unlock;
+>>>>>>> master
 
 	flow.daddr = payload->ipv4_addr;
 	flow.flowi4_proto = IPPROTO_UDP;
@@ -782,16 +788,25 @@ void nfp_tunnel_request_route_v4(struct nfp_app *app, struct sk_buff *skb)
 	ip_rt_put(rt);
 	if (!n)
 		goto fail_rcu_unlock;
+<<<<<<< HEAD
 	rcu_read_unlock();
 
 	nfp_tun_write_neigh(n->dev, app, &flow, n, false, true);
 	neigh_release(n);
 	dev_put(netdev);
+=======
+	nfp_tun_write_neigh(n->dev, app, &flow, n, GFP_ATOMIC);
+	neigh_release(n);
+	rcu_read_unlock();
+>>>>>>> master
 	return;
 
 fail_rcu_unlock:
 	rcu_read_unlock();
+<<<<<<< HEAD
 	dev_put(netdev);
+=======
+>>>>>>> master
 	nfp_flower_cmsg_warn(app, "Requested route not found.\n");
 }
 

@@ -32,6 +32,10 @@
 #include <asm/cacheflush.h>
 #include <asm/processor.h>
 #include <asm/sigcontext.h>
+<<<<<<< HEAD
+=======
+#include <linux/uaccess.h>
+>>>>>>> master
 #include <asm/irq_regs.h>
 
 static struct hard_trap_info {
@@ -207,6 +211,28 @@ void arch_kgdb_breakpoint(void)
 		".set\treorder");
 }
 
+<<<<<<< HEAD
+=======
+static void kgdb_call_nmi_hook(void *ignored)
+{
+	mm_segment_t old_fs;
+
+	old_fs = get_fs();
+	set_fs(get_ds());
+
+	kgdb_nmicallback(raw_smp_processor_id(), get_irq_regs());
+
+	set_fs(old_fs);
+}
+
+void kgdb_roundup_cpus(unsigned long flags)
+{
+	local_irq_enable();
+	smp_call_function(kgdb_call_nmi_hook, NULL, 0);
+	local_irq_disable();
+}
+
+>>>>>>> master
 static int compute_signal(int tt)
 {
 	struct hard_trap_info *ht;

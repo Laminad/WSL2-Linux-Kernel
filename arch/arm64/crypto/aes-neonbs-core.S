@@ -860,7 +860,74 @@ CPU_LE(	rev		x8, x8		)
 	subs		x4, x4, #8
 	b.gt		0b
 
+<<<<<<< HEAD
 	st1		{v0.16b}, [x5]
 	frame_pop
 	ret
 SYM_FUNC_END(aesbs_ctr_encrypt)
+=======
+	ld1		{v11.16b}, [x20], #16
+	eor		v6.16b, v6.16b, v11.16b
+	st1		{v6.16b}, [x19], #16
+	tbnz		x9, #4, 4f
+
+	ld1		{v12.16b}, [x20], #16
+	eor		v3.16b, v3.16b, v12.16b
+	st1		{v3.16b}, [x19], #16
+	tbnz		x9, #5, 5f
+
+	ld1		{v13.16b}, [x20], #16
+	eor		v7.16b, v7.16b, v13.16b
+	st1		{v7.16b}, [x19], #16
+	tbnz		x9, #6, 6f
+
+	ld1		{v14.16b}, [x20], #16
+	eor		v2.16b, v2.16b, v14.16b
+	st1		{v2.16b}, [x19], #16
+	tbnz		x9, #7, 7f
+
+	ld1		{v15.16b}, [x20], #16
+	eor		v5.16b, v5.16b, v15.16b
+	st1		{v5.16b}, [x19], #16
+
+8:	next_ctr	v0
+	st1		{v0.16b}, [x24]
+	cbz		x23, .Lctr_done
+
+	cond_yield_neon	98b
+	b		99b
+
+.Lctr_done:
+	frame_pop
+	ret
+
+	/*
+	 * If we are handling the tail of the input (x6 != NULL), return the
+	 * final keystream block back to the caller.
+	 */
+0:	cbz		x25, 8b
+	st1		{v0.16b}, [x25]
+	b		8b
+1:	cbz		x25, 8b
+	st1		{v1.16b}, [x25]
+	b		8b
+2:	cbz		x25, 8b
+	st1		{v4.16b}, [x25]
+	b		8b
+3:	cbz		x25, 8b
+	st1		{v6.16b}, [x25]
+	b		8b
+4:	cbz		x25, 8b
+	st1		{v3.16b}, [x25]
+	b		8b
+5:	cbz		x25, 8b
+	st1		{v7.16b}, [x25]
+	b		8b
+6:	cbz		x25, 8b
+	st1		{v2.16b}, [x25]
+	b		8b
+7:	cbz		x25, 8b
+	st1		{v5.16b}, [x25]
+	b		8b
+ENDPROC(aesbs_ctr_encrypt)
+>>>>>>> master

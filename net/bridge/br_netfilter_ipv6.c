@@ -59,7 +59,25 @@ int br_validate_ipv6(struct net *net, struct sk_buff *skb)
 		goto inhdr_error;
 
 	pkt_len = ntohs(hdr->payload_len);
+<<<<<<< HEAD
 	if (hdr->nexthdr == NEXTHDR_HOP && nf_ip6_check_hbh_len(skb, &pkt_len))
+=======
+
+	if (pkt_len || hdr->nexthdr != NEXTHDR_HOP) {
+		if (pkt_len + ip6h_len > skb->len) {
+			__IP6_INC_STATS(net, idev,
+					IPSTATS_MIB_INTRUNCATEDPKTS);
+			goto drop;
+		}
+		if (pskb_trim_rcsum(skb, pkt_len + ip6h_len)) {
+			__IP6_INC_STATS(net, idev,
+					IPSTATS_MIB_INDISCARDS);
+			goto drop;
+		}
+		hdr = ipv6_hdr(skb);
+	}
+	if (hdr->nexthdr == NEXTHDR_HOP && br_nf_check_hbh_len(skb))
+>>>>>>> master
 		goto drop;
 
 	if (pkt_len + ip6h_len > skb->len) {

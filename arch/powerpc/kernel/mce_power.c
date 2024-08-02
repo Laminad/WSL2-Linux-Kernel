@@ -28,9 +28,15 @@
  */
 unsigned long addr_to_pfn(struct pt_regs *regs, unsigned long addr)
 {
+<<<<<<< HEAD
 	pte_t *ptep, pte;
 	unsigned int shift;
 	unsigned long pfn, flags;
+=======
+	pte_t *ptep;
+	unsigned int shift;
+	unsigned long flags;
+>>>>>>> master
 	struct mm_struct *mm;
 
 	if (user_mode(regs))
@@ -40,6 +46,7 @@ unsigned long addr_to_pfn(struct pt_regs *regs, unsigned long addr)
 
 	local_irq_save(flags);
 	ptep = __find_linux_pte(mm->pgd, addr, NULL, &shift);
+<<<<<<< HEAD
 	if (!ptep) {
 		pfn = ULONG_MAX;
 		goto out;
@@ -74,6 +81,20 @@ static bool mce_in_guest(void)
 		return true;
 #endif
 	return false;
+=======
+	local_irq_restore(flags);
+
+	if (!ptep || pte_special(*ptep))
+		return ULONG_MAX;
+
+	if (shift > PAGE_SHIFT) {
+		unsigned long rpnmask = (1ul << shift) - PAGE_SIZE;
+
+		return pte_pfn(__pte(pte_val(*ptep) | (addr & rpnmask)));
+	}
+
+	return pte_pfn(*ptep);
+>>>>>>> master
 }
 
 /* flush SLBs and reload */
@@ -99,13 +120,22 @@ void flush_and_reload_slb(void)
 
 void flush_erat(void)
 {
+<<<<<<< HEAD
 #ifdef CONFIG_PPC_64S_HASH_MMU
+=======
+#ifdef CONFIG_PPC_BOOK3S_64
+>>>>>>> master
 	if (!early_cpu_has_feature(CPU_FTR_ARCH_300)) {
 		flush_and_reload_slb();
 		return;
 	}
 #endif
+<<<<<<< HEAD
 	asm volatile(PPC_ISA_3_0_INVALIDATE_ERAT : : :"memory");
+=======
+	/* PPC_INVALIDATE_ERAT can only be used on ISA v3 and newer */
+	asm volatile(PPC_INVALIDATE_ERAT : : :"memory");
+>>>>>>> master
 }
 
 #define MCE_FLUSH_SLB 1
@@ -406,6 +436,7 @@ static const struct mce_derror_table mce_p9_derror_table[] = {
   MCE_INITIATOR_CPU,   MCE_SEV_SEVERE, true },
 { 0, false, 0, 0, 0, 0, 0 } };
 
+<<<<<<< HEAD
 static const struct mce_derror_table mce_p10_derror_table[] = {
 { 0x00008000, false,
   MCE_ERROR_TYPE_UE,   MCE_UE_ERROR_LOAD_STORE, MCE_ECLASS_HARDWARE,
@@ -446,6 +477,8 @@ static const struct mce_derror_table mce_p10_derror_table[] = {
   MCE_INITIATOR_CPU,   MCE_SEV_SEVERE, true },
 { 0, false, 0, 0, 0, 0, 0 } };
 
+=======
+>>>>>>> master
 static int mce_find_instr_ea_and_phys(struct pt_regs *regs, uint64_t *addr,
 					uint64_t *phys_addr)
 {

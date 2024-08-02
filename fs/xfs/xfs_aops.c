@@ -367,6 +367,7 @@ retry:
 		imap.br_state = XFS_EXT_NORM;
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Truncate to the next COW extent if there is one.  This is the only
 	 * opportunity to do this because we can skip COW fork lookups for the
@@ -384,6 +385,11 @@ retry:
 
 	xfs_bmbt_to_iomap(ip, &wpc->iomap, &imap, 0, 0, XFS_WPC(wpc)->data_seq);
 	trace_xfs_map_blocks_found(ip, offset, count, whichfork, &imap);
+=======
+	wpc->imap = imap;
+	xfs_trim_extent_eof(&wpc->imap, ip);
+	trace_xfs_map_blocks_found(ip, offset, count, wpc->io_type, &imap);
+>>>>>>> master
 	return 0;
 allocate_blocks:
 	error = xfs_convert_blocks(wpc, ip, whichfork, offset);
@@ -399,6 +405,7 @@ allocate_blocks:
 			goto retry;
 		ASSERT(error != -EAGAIN);
 		return error;
+<<<<<<< HEAD
 	}
 
 	/*
@@ -416,6 +423,13 @@ allocate_blocks:
 	ASSERT(wpc->iomap.offset <= offset);
 	ASSERT(wpc->iomap.offset + wpc->iomap.length > offset);
 	trace_xfs_map_blocks_alloc(ip, offset, count, whichfork, &imap);
+=======
+	ASSERT(whichfork == XFS_COW_FORK || cow_fsb == NULLFILEOFF ||
+	       imap.br_startoff + imap.br_blockcount <= cow_fsb);
+	wpc->imap = imap;
+	xfs_trim_extent_eof(&wpc->imap, ip);
+	trace_xfs_map_blocks_alloc(ip, offset, count, wpc->io_type, &imap);
+>>>>>>> master
 	return 0;
 }
 

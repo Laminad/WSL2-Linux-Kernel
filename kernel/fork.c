@@ -1985,6 +1985,7 @@ static inline void rcu_copy_process(struct task_struct *p)
 #endif /* #ifdef CONFIG_TASKS_TRACE_RCU */
 }
 
+<<<<<<< HEAD
 struct pid *pidfd_pid(const struct file *file)
 {
 	if (file->f_op == &pidfd_fops)
@@ -2183,6 +2184,8 @@ int pidfd_prepare(struct pid *pid, unsigned int flags, struct file **ret)
 	return __pidfd_prepare(pid, flags, ret);
 }
 
+=======
+>>>>>>> master
 static void __delayed_free_task(struct rcu_head *rhp)
 {
 	struct task_struct *tsk = container_of(rhp, struct task_struct, rcu);
@@ -2198,6 +2201,7 @@ static __always_inline void delayed_free_task(struct task_struct *tsk)
 		free_task(tsk);
 }
 
+<<<<<<< HEAD
 static void copy_oom_score_adj(u64 clone_flags, struct task_struct *tsk)
 {
 	/* Skip if kernel thread */
@@ -2229,6 +2233,8 @@ static void rv_task_fork(struct task_struct *p)
 #define rv_task_fork(p) do {} while (0)
 #endif
 
+=======
+>>>>>>> master
 /*
  * This creates a new process as a copy of the old one,
  * but does not actually start it yet.
@@ -2618,6 +2624,17 @@ __latent_entropy struct task_struct *copy_process(
 
 	p->start_time = ktime_get_ns();
 	p->start_boottime = ktime_get_boottime_ns();
+
+	/*
+	 * From this point on we must avoid any synchronous user-space
+	 * communication until we take the tasklist-lock. In particular, we do
+	 * not want user-space to be able to predict the process start-time by
+	 * stalling fork(2) after we recorded the start_time but before it is
+	 * visible to the system.
+	 */
+
+	p->start_time = ktime_get_ns();
+	p->real_start_time = ktime_get_boot_ns();
 
 	/*
 	 * Make it visible to the rest of the system, but dont wake it up yet.

@@ -6,7 +6,15 @@
  * Copyright 2007	Johannes Berg <johannes@sipsolutions.net>
  * Copyright 2013-2014  Intel Mobile Communications GmbH
  * Copyright (C) 2015-2017	Intel Deutschland GmbH
+<<<<<<< HEAD
  * Copyright (C) 2018-2023 Intel Corporation
+=======
+ * Copyright (C) 2018-2019 Intel Corporation
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+>>>>>>> master
  *
  * utilities for mac80211
  */
@@ -2700,9 +2708,15 @@ int ieee80211_reconfig(struct ieee80211_local *local)
 		case NL80211_IFTYPE_MONITOR:
 			break;
 		case NL80211_IFTYPE_ADHOC:
+<<<<<<< HEAD
 			if (sdata->vif.cfg.ibss_joined)
 				WARN_ON(drv_join_ibss(local, sdata));
 			fallthrough;
+=======
+			if (sdata->vif.bss_conf.ibss_joined)
+				WARN_ON(drv_join_ibss(local, sdata));
+			/* fall through */
+>>>>>>> master
 		default:
 			ieee80211_reconfig_stations(sdata);
 			fallthrough;
@@ -2932,7 +2946,11 @@ int ieee80211_reconfig(struct ieee80211_local *local)
 
 		/* Requeue all works */
 		list_for_each_entry(sdata, &local->interfaces, list)
+<<<<<<< HEAD
 			wiphy_work_queue(local->hw.wiphy, &sdata->work);
+=======
+			ieee80211_queue_work(&local->hw, &sdata->work);
+>>>>>>> master
 	}
 
 	ieee80211_wake_queues_by_reason(hw, IEEE80211_MAX_QUEUE_MAP,

@@ -248,6 +248,10 @@ repeat:
 	dec_rlimit_ucounts(task_ucounts(p), UCOUNT_RLIMIT_NPROC, 1);
 	rcu_read_unlock();
 
+<<<<<<< HEAD
+=======
+	proc_flush_task(p);
+>>>>>>> master
 	cgroup_release(p);
 
 	write_lock_irq(&tasklist_lock);
@@ -605,6 +609,14 @@ static struct task_struct *find_child_reaper(struct task_struct *father,
 		release_task(p);
 	}
 
+<<<<<<< HEAD
+=======
+	list_for_each_entry_safe(p, n, dead, ptrace_entry) {
+		list_del_init(&p->ptrace_entry);
+		release_task(p);
+	}
+
+>>>>>>> master
 	zap_pid_ns_processes(pid_ns);
 	write_lock_irq(&tasklist_lock);
 

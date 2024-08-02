@@ -681,7 +681,11 @@ void mwifiex_11n_delba(struct mwifiex_private *priv, int tid)
 		}
 	}
 exit:
+<<<<<<< HEAD
 	spin_unlock_bh(&priv->rx_reorder_tbl_lock);
+=======
+	spin_unlock_irqrestore(&priv->rx_reorder_tbl_lock, flags);
+>>>>>>> master
 }
 
 /*

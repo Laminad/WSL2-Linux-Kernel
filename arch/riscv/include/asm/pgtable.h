@@ -177,7 +177,11 @@ extern struct pt_alloc_ops pt_ops __initdata;
 /* Page protection bits */
 #define _PAGE_BASE	(_PAGE_PRESENT | _PAGE_ACCESSED | _PAGE_USER)
 
+<<<<<<< HEAD
 #define PAGE_NONE		__pgprot(_PAGE_PROT_NONE | _PAGE_READ)
+=======
+#define PAGE_NONE		__pgprot(_PAGE_PROT_NONE)
+>>>>>>> master
 #define PAGE_READ		__pgprot(_PAGE_BASE | _PAGE_READ)
 #define PAGE_WRITE		__pgprot(_PAGE_BASE | _PAGE_READ | _PAGE_WRITE)
 #define PAGE_EXEC		__pgprot(_PAGE_BASE | _PAGE_EXEC)
@@ -215,6 +219,7 @@ extern pgd_t early_pg_dir[];
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 static inline int pmd_present(pmd_t pmd)
 {
+<<<<<<< HEAD
 	/*
 	 * Checking for _PAGE_LEAF is needed too because:
 	 * When splitting a THP, split_huge_page() will temporarily clear
@@ -222,6 +227,9 @@ static inline int pmd_present(pmd_t pmd)
 	 * pmd_trans_huge() still needs to return true.
 	 */
 	return (pmd_val(pmd) & (_PAGE_PRESENT | _PAGE_PROT_NONE | _PAGE_LEAF));
+=======
+	return (pmd_val(pmd) & (_PAGE_PRESENT | _PAGE_PROT_NONE));
+>>>>>>> master
 }
 #else
 static inline int pmd_present(pmd_t pmd)
@@ -813,11 +821,17 @@ extern pmd_t pmdp_collapse_flush(struct vm_area_struct *vma,
  *
  * Format of swap PTE:
  *	bit            0:	_PAGE_PRESENT (zero)
+<<<<<<< HEAD
  *	bit       1 to 3:       _PAGE_LEAF (zero)
  *	bit            5:	_PAGE_PROT_NONE (zero)
  *	bit            6:	exclusive marker
  *	bits      7 to 11:	swap type
  *	bits 11 to XLEN-1:	swap offset
+=======
+ *	bit            1:	_PAGE_PROT_NONE (zero)
+ *	bits      2 to 6:	swap type
+ *	bits 7 to XLEN-1:	swap offset
+>>>>>>> master
  */
 #define __SWP_TYPE_SHIFT	7
 #define __SWP_TYPE_BITS		5

@@ -437,7 +437,52 @@ mlx5e_sq_xmit_wqe(struct mlx5e_txqsq *sq, struct sk_buff *skb,
 	struct mlx5e_sq_stats *stats = sq->stats;
 	int num_dma;
 
+<<<<<<< HEAD
 	stats->xmit_more += xmit_more;
+=======
+	/* Calc ihs and ds cnt, no writes to wqe yet */
+	ds_cnt = sizeof(*wqe) / MLX5_SEND_WQE_DS;
+	if (skb_is_gso(skb)) {
+		opcode    = MLX5_OPCODE_LSO;
+		mss       = cpu_to_be16(skb_shinfo(skb)->gso_size);
+		ihs       = mlx5e_tx_get_gso_ihs(sq, skb);
+		num_bytes = skb->len + (skb_shinfo(skb)->gso_segs - 1) * ihs;
+		stats->packets += skb_shinfo(skb)->gso_segs;
+	} else {
+		opcode    = MLX5_OPCODE_SEND;
+		mss       = 0;
+		ihs       = mlx5e_calc_min_inline(sq->min_inline_mode, skb);
+		num_bytes = max_t(unsigned int, skb->len, ETH_ZLEN);
+		stats->packets++;
+	}
+
+	stats->bytes     += num_bytes;
+	stats->xmit_more += skb->xmit_more;
+
+	headlen = skb->len - ihs - skb->data_len;
+	ds_cnt += !!headlen;
+	ds_cnt += skb_shinfo(skb)->nr_frags;
+
+	if (ihs) {
+		ihs += !!skb_vlan_tag_present(skb) * VLAN_HLEN;
+
+		ds_cnt_inl = DIV_ROUND_UP(ihs - INL_HDR_START_SZ, MLX5_SEND_WQE_DS);
+		ds_cnt += ds_cnt_inl;
+	}
+
+	num_wqebbs = DIV_ROUND_UP(ds_cnt, MLX5_SEND_WQEBB_NUM_DS);
+	contig_wqebbs_room = mlx5_wq_cyc_get_contig_wqebbs(wq, pi);
+	if (unlikely(contig_wqebbs_room < num_wqebbs)) {
+#ifdef CONFIG_MLX5_EN_IPSEC
+		struct mlx5_wqe_eth_seg cur_eth = wqe->eth;
+#endif
+		mlx5e_fill_sq_frag_edge(sq, wq, pi, contig_wqebbs_room);
+		mlx5e_sq_fetch_wqe(sq, &wqe, &pi);
+#ifdef CONFIG_MLX5_EN_IPSEC
+		wqe->eth = cur_eth;
+#endif
+	}
+>>>>>>> master
 
 	/* fill wqe */
 	wi   = &sq->db.wqe_info[pi];
@@ -736,7 +781,14 @@ netdev_tx_t mlx5e_xmit(struct sk_buff *skb, struct net_device *dev)
 static void mlx5e_tx_wi_dma_unmap(struct mlx5e_txqsq *sq, struct mlx5e_tx_wqe_info *wi,
 				  u32 *dma_fifo_cc)
 {
+<<<<<<< HEAD
 	int i;
+=======
+	struct mlx5_cqwq *wq = &sq->cq.wq;
+	u32 ci;
+
+	ci = mlx5_cqwq_ctr2ix(wq, wq->cc - 1);
+>>>>>>> master
 
 	for (i = 0; i < wi->num_dma; i++) {
 		struct mlx5e_sq_dma *dma = mlx5e_dma_get(sq, (*dma_fifo_cc)++);

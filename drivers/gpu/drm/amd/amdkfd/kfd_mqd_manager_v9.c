@@ -162,8 +162,36 @@ static void init_mqd(struct mqd_manager *mm, void **mqd,
 	uint64_t addr;
 	struct v9_mqd *m;
 
+<<<<<<< HEAD
 	m = (struct v9_mqd *) mqd_mem_obj->cpu_ptr;
 	addr = mqd_mem_obj->gpu_addr;
+=======
+	*mqd_mem_obj = NULL;
+	/* From V9,  for CWSR, the control stack is located on the next page
+	 * boundary after the mqd, we will use the gtt allocation function
+	 * instead of sub-allocation function.
+	 */
+	if (kfd->cwsr_enabled && (q->type == KFD_QUEUE_TYPE_COMPUTE)) {
+		*mqd_mem_obj = kzalloc(sizeof(struct kfd_mem_obj), GFP_KERNEL);
+		if (!*mqd_mem_obj)
+			return -ENOMEM;
+		retval = kfd->kfd2kgd->init_gtt_mem_allocation(kfd->kgd,
+			ALIGN(q->ctl_stack_size, PAGE_SIZE) +
+				ALIGN(sizeof(struct v9_mqd), PAGE_SIZE),
+			&((*mqd_mem_obj)->gtt_mem),
+			&((*mqd_mem_obj)->gpu_addr),
+			(void *)&((*mqd_mem_obj)->cpu_ptr), true);
+	} else
+		retval = kfd_gtt_sa_allocate(mm->dev, sizeof(struct v9_mqd),
+				mqd_mem_obj);
+	if (retval) {
+		kfree(*mqd_mem_obj);
+		return -ENOMEM;
+	}
+
+	m = (struct v9_mqd *) (*mqd_mem_obj)->cpu_ptr;
+	addr = (*mqd_mem_obj)->gpu_addr;
+>>>>>>> master
 
 	memset(m, 0, sizeof(struct v9_mqd));
 

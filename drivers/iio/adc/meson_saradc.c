@@ -743,7 +743,12 @@ static int meson_sar_adc_clk_init(struct iio_dev *indio_dev,
 	struct clk_init_data init;
 	const char *clk_parents[1];
 
+<<<<<<< HEAD
 	init.name = devm_kasprintf(dev, GFP_KERNEL, "%s#adc_div", dev_name(dev));
+=======
+	init.name = devm_kasprintf(&indio_dev->dev, GFP_KERNEL, "%s#adc_div",
+				   dev_name(indio_dev->dev.parent));
+>>>>>>> master
 	if (!init.name)
 		return -ENOMEM;
 
@@ -763,7 +768,12 @@ static int meson_sar_adc_clk_init(struct iio_dev *indio_dev,
 	if (WARN_ON(IS_ERR(priv->adc_div_clk)))
 		return PTR_ERR(priv->adc_div_clk);
 
+<<<<<<< HEAD
 	init.name = devm_kasprintf(dev, GFP_KERNEL, "%s#adc_en", dev_name(dev));
+=======
+	init.name = devm_kasprintf(&indio_dev->dev, GFP_KERNEL, "%s#adc_en",
+				   dev_name(indio_dev->dev.parent));
+>>>>>>> master
 	if (!init.name)
 		return -ENOMEM;
 
@@ -1366,6 +1376,7 @@ static int meson_sar_adc_probe(struct platform_device *pdev)
 	if (IS_ERR(base))
 		return PTR_ERR(base);
 
+<<<<<<< HEAD
 	priv->regmap = devm_regmap_init_mmio(dev, base, priv->param->regmap_config);
 	if (IS_ERR(priv->regmap))
 		return PTR_ERR(priv->regmap);
@@ -1373,6 +1384,27 @@ static int meson_sar_adc_probe(struct platform_device *pdev)
 	irq = irq_of_parse_and_map(dev->of_node, 0);
 	if (!irq)
 		return -EINVAL;
+=======
+	priv->regmap = devm_regmap_init_mmio(&pdev->dev, base,
+					     priv->data->param->regmap_config);
+	if (IS_ERR(priv->regmap))
+		return PTR_ERR(priv->regmap);
+
+	irq = irq_of_parse_and_map(pdev->dev.of_node, 0);
+	if (!irq)
+		return -EINVAL;
+
+	ret = devm_request_irq(&pdev->dev, irq, meson_sar_adc_irq, IRQF_SHARED,
+			       dev_name(&pdev->dev), indio_dev);
+	if (ret)
+		return ret;
+
+	priv->clkin = devm_clk_get(&pdev->dev, "clkin");
+	if (IS_ERR(priv->clkin)) {
+		dev_err(&pdev->dev, "failed to get clkin\n");
+		return PTR_ERR(priv->clkin);
+	}
+>>>>>>> master
 
 	ret = devm_request_irq(dev, irq, meson_sar_adc_irq, IRQF_SHARED, dev_name(dev), indio_dev);
 	if (ret)

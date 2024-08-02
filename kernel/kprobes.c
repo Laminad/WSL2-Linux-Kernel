@@ -558,7 +558,12 @@ static void do_unoptimize_kprobes(void)
 	if (!list_empty(&unoptimizing_list))
 		arch_unoptimize_kprobes(&unoptimizing_list, &freeing_list);
 
+<<<<<<< HEAD
 	/* Loop on 'freeing_list' for disarming and removing from kprobe hash list */
+=======
+	arch_unoptimize_kprobes(&unoptimizing_list, &freeing_list);
+	/* Loop free_list for disarming */
+>>>>>>> master
 	list_for_each_entry_safe(op, tmp, &freeing_list, list) {
 		/* Switching from detour code to origin */
 		op->kp.flags &= ~KPROBE_FLAG_OPTIMIZED;
@@ -607,6 +612,11 @@ static void kprobe_optimizer(struct work_struct *work)
 	mutex_lock(&kprobe_mutex);
 	cpus_read_lock();
 	mutex_lock(&text_mutex);
+<<<<<<< HEAD
+=======
+	/* Lock modules while optimizing kprobes */
+	mutex_lock(&module_mutex);
+>>>>>>> master
 
 	/*
 	 * Step 1: Unoptimize kprobes and collect cleaned (unused and disarmed)
@@ -631,6 +641,10 @@ static void kprobe_optimizer(struct work_struct *work)
 	/* Step 4: Free cleaned kprobes after quiesence period */
 	do_free_cleaned_kprobes();
 
+<<<<<<< HEAD
+=======
+	mutex_unlock(&module_mutex);
+>>>>>>> master
 	mutex_unlock(&text_mutex);
 	cpus_read_unlock();
 
@@ -775,7 +789,11 @@ static int reuse_unused_kprobe(struct kprobe *ap)
 	WARN_ON_ONCE(list_empty(&op->list));
 	/* Enable the probe again */
 	ap->flags &= ~KPROBE_FLAG_DISABLED;
+<<<<<<< HEAD
 	/* Optimize it again. (remove from 'op->list') */
+=======
+	/* Optimize it again (remove from op->list) */
+>>>>>>> master
 	if (!kprobe_optready(ap))
 		return -EINVAL;
 
@@ -1039,7 +1057,11 @@ static int reuse_unused_kprobe(struct kprobe *ap)
 	 * unregistered.
 	 * Thus there should be no chance to reuse unused kprobe.
 	 */
+<<<<<<< HEAD
 	WARN_ON_ONCE(1);
+=======
+	printk(KERN_ERR "Error: There should be no unused kprobe here.\n");
+>>>>>>> master
 	return -EINVAL;
 }
 
@@ -1586,9 +1608,13 @@ static int check_kprobe_address_safe(struct kprobe *p,
 	if (in_gate_area_no_mm((unsigned long) p->addr) ||
 	    within_kprobe_blacklist((unsigned long) p->addr) ||
 	    jump_label_text_reserved(p->addr, p->addr) ||
+<<<<<<< HEAD
 	    static_call_text_reserved(p->addr, p->addr) ||
 	    find_bug((unsigned long)p->addr) ||
 	    is_cfi_preamble_symbol((unsigned long)p->addr)) {
+=======
+	    find_bug((unsigned long)p->addr)) {
+>>>>>>> master
 		ret = -EINVAL;
 		goto out;
 	}

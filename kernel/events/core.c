@@ -2277,9 +2277,14 @@ event_sched_out(struct perf_event *event, struct perf_event_context *ctx)
 	event->pmu->del(event, 0);
 	event->oncpu = -1;
 
+<<<<<<< HEAD
 	if (event->pending_disable) {
 		event->pending_disable = 0;
 		perf_cgroup_event_disable(event, ctx);
+=======
+	if (READ_ONCE(event->pending_disable) >= 0) {
+		WRITE_ONCE(event->pending_disable, -1);
+>>>>>>> master
 		state = PERF_EVENT_STATE_OFF;
 	}
 
@@ -2503,8 +2508,48 @@ EXPORT_SYMBOL_GPL(perf_event_disable);
 
 void perf_event_disable_inatomic(struct perf_event *event)
 {
+<<<<<<< HEAD
 	event->pending_disable = 1;
 	irq_work_queue(&event->pending_irq);
+=======
+	WRITE_ONCE(event->pending_disable, smp_processor_id());
+	/* can fail, see perf_pending_event_disable() */
+	irq_work_queue(&event->pending);
+}
+
+static void perf_set_shadow_time(struct perf_event *event,
+				 struct perf_event_context *ctx)
+{
+	/*
+	 * use the correct time source for the time snapshot
+	 *
+	 * We could get by without this by leveraging the
+	 * fact that to get to this function, the caller
+	 * has most likely already called update_context_time()
+	 * and update_cgrp_time_xx() and thus both timestamp
+	 * are identical (or very close). Given that tstamp is,
+	 * already adjusted for cgroup, we could say that:
+	 *    tstamp - ctx->timestamp
+	 * is equivalent to
+	 *    tstamp - cgrp->timestamp.
+	 *
+	 * Then, in perf_output_read(), the calculation would
+	 * work with no changes because:
+	 * - event is guaranteed scheduled in
+	 * - no scheduled out in between
+	 * - thus the timestamp would be the same
+	 *
+	 * But this is a bit hairy.
+	 *
+	 * So instead, we have an explicit cgroup call to remain
+	 * within the time time source all along. We believe it
+	 * is cleaner and simpler to understand.
+	 */
+	if (is_cgroup_event(event))
+		perf_cgroup_set_shadow_time(event, event->tstamp);
+	else
+		event->shadow_ctx_time = event->tstamp - ctx->timestamp;
+>>>>>>> master
 }
 
 #define MAX_INTERRUPTS (~0ULL)
@@ -5217,9 +5262,12 @@ static void _free_event(struct perf_event *event)
 	if (event->hw.target)
 		put_task_struct(event->hw.target);
 
+<<<<<<< HEAD
 	if (event->pmu_ctx)
 		put_pmu_ctx(event->pmu_ctx);
 
+=======
+>>>>>>> master
 	/*
 	 * perf_event_free_task() relies on put_ctx() being 'last', in particular
 	 * all task references must be cleaned up.
@@ -5811,6 +5859,14 @@ static void __perf_event_period(struct perf_event *event,
 }
 
 static int perf_event_check_period(struct perf_event *event, u64 value)
+<<<<<<< HEAD
+=======
+{
+	return event->pmu->check_period(event, value);
+}
+
+static int perf_event_period(struct perf_event *event, u64 __user *arg)
+>>>>>>> master
 {
 	return event->pmu->check_period(event, value);
 }
@@ -5829,9 +5885,12 @@ static int _perf_event_period(struct perf_event *event, u64 value)
 	if (perf_event_check_period(event, value))
 		return -EINVAL;
 
+<<<<<<< HEAD
 	if (!event->attr.freq && (value & (1ULL << 63)))
 		return -EINVAL;
 
+=======
+>>>>>>> master
 	event_function_call(event, __perf_event_period, &value);
 
 	return 0;
@@ -6703,6 +6762,7 @@ void perf_event_wakeup(struct perf_event *event)
 	}
 }
 
+<<<<<<< HEAD
 static void perf_sigtrap(struct perf_event *event)
 {
 	/*
@@ -6780,6 +6840,47 @@ static void __perf_pending_irq(struct perf_event *event)
 static void perf_pending_irq(struct irq_work *entry)
 {
 	struct perf_event *event = container_of(entry, struct perf_event, pending_irq);
+=======
+static void perf_pending_event_disable(struct perf_event *event)
+{
+	int cpu = READ_ONCE(event->pending_disable);
+
+	if (cpu < 0)
+		return;
+
+	if (cpu == smp_processor_id()) {
+		WRITE_ONCE(event->pending_disable, -1);
+		perf_event_disable_local(event);
+		return;
+	}
+
+	/*
+	 *  CPU-A			CPU-B
+	 *
+	 *  perf_event_disable_inatomic()
+	 *    @pending_disable = CPU-A;
+	 *    irq_work_queue();
+	 *
+	 *  sched-out
+	 *    @pending_disable = -1;
+	 *
+	 *				sched-in
+	 *				perf_event_disable_inatomic()
+	 *				  @pending_disable = CPU-B;
+	 *				  irq_work_queue(); // FAILS
+	 *
+	 *  irq_work_run()
+	 *    perf_pending_event()
+	 *
+	 * But the event runs on CPU-B and wants disabling there.
+	 */
+	irq_work_queue_on(&event->pending, cpu);
+}
+
+static void perf_pending_event(struct irq_work *entry)
+{
+	struct perf_event *event = container_of(entry, struct perf_event, pending);
+>>>>>>> master
 	int rctx;
 
 	/*
@@ -6788,10 +6889,15 @@ static void perf_pending_irq(struct irq_work *entry)
 	 */
 	rctx = perf_swevent_get_recursion_context();
 
+<<<<<<< HEAD
 	/*
 	 * The wakeup isn't bound to the context of the event -- it can happen
 	 * irrespective of where the event is.
 	 */
+=======
+	perf_pending_event_disable(event);
+
+>>>>>>> master
 	if (event->pending_wakeup) {
 		event->pending_wakeup = 0;
 		perf_event_wakeup(event);
@@ -6889,7 +6995,11 @@ static void perf_sample_regs_user(struct perf_regs *regs_user,
 		regs_user->abi = perf_reg_abi(current);
 		regs_user->regs = regs;
 	} else if (!(current->flags & PF_KTHREAD)) {
+<<<<<<< HEAD
 		perf_get_regs_user(regs_user, regs);
+=======
+		perf_get_regs_user(regs_user, regs, regs_user_copy);
+>>>>>>> master
 	} else {
 		regs_user->abi = PERF_SAMPLE_REGS_ABI_NONE;
 		regs_user->regs = NULL;
@@ -8107,7 +8217,12 @@ static void __perf_event_output_stop(struct perf_event *event, void *data)
 static int __perf_pmu_output_stop(void *info)
 {
 	struct perf_event *event = info;
+<<<<<<< HEAD
 	struct perf_cpu_context *cpuctx = this_cpu_ptr(&perf_cpu_context);
+=======
+	struct pmu *pmu = event->ctx->pmu;
+	struct perf_cpu_context *cpuctx = this_cpu_ptr(pmu->pmu_cpu_context);
+>>>>>>> master
 	struct remote_output ro = {
 		.rb	= event->rb,
 	};
@@ -8636,7 +8751,10 @@ static void perf_event_mmap_output(struct perf_event *event,
 	struct perf_sample_data sample;
 	int size = mmap_event->event_id.header.size;
 	u32 type = mmap_event->event_id.header.type;
+<<<<<<< HEAD
 	bool use_build_id;
+=======
+>>>>>>> master
 	int ret;
 
 	if (!perf_event_mmap_match(event, data))
@@ -11927,8 +12045,13 @@ perf_event_alloc(struct perf_event_attr *attr, int cpu,
 
 
 	init_waitqueue_head(&event->waitq);
+<<<<<<< HEAD
 	init_irq_work(&event->pending_irq, perf_pending_irq);
 	init_task_work(&event->pending_task, perf_pending_task);
+=======
+	event->pending_disable = -1;
+	init_irq_work(&event->pending, perf_pending_event);
+>>>>>>> master
 
 	mutex_init(&event->mmap_mutex);
 	raw_spin_lock_init(&event->addr_filters.lock);
@@ -12573,7 +12696,112 @@ SYSCALL_DEFINE5(perf_event_open,
 		goto err_cred;
 	}
 
+<<<<<<< HEAD
 	mutex_lock(&ctx->mutex);
+=======
+	/*
+	 * Look up the group leader (we will attach this event to it):
+	 */
+	if (group_leader) {
+		err = -EINVAL;
+
+		/*
+		 * Do not allow a recursive hierarchy (this new sibling
+		 * becoming part of another group-sibling):
+		 */
+		if (group_leader->group_leader != group_leader)
+			goto err_context;
+
+		/* All events in a group should have the same clock */
+		if (group_leader->clock != event->clock)
+			goto err_context;
+
+		/*
+		 * Make sure we're both events for the same CPU;
+		 * grouping events for different CPUs is broken; since
+		 * you can never concurrently schedule them anyhow.
+		 */
+		if (group_leader->cpu != event->cpu)
+			goto err_context;
+
+		/*
+		 * Make sure we're both on the same task, or both
+		 * per-CPU events.
+		 */
+		if (group_leader->ctx->task != ctx->task)
+			goto err_context;
+
+		/*
+		 * Do not allow to attach to a group in a different task
+		 * or CPU context. If we're moving SW events, we'll fix
+		 * this up later, so allow that.
+		 */
+		if (!move_group && group_leader->ctx != ctx)
+			goto err_context;
+
+		/*
+		 * Only a group leader can be exclusive or pinned
+		 */
+		if (attr.exclusive || attr.pinned)
+			goto err_context;
+	}
+
+	if (output_event) {
+		err = perf_event_set_output(event, output_event);
+		if (err)
+			goto err_context;
+	}
+
+	event_file = anon_inode_getfile("[perf_event]", &perf_fops, event,
+					f_flags);
+	if (IS_ERR(event_file)) {
+		err = PTR_ERR(event_file);
+		event_file = NULL;
+		goto err_context;
+	}
+
+	if (move_group) {
+		gctx = __perf_event_ctx_lock_double(group_leader, ctx);
+
+		if (gctx->task == TASK_TOMBSTONE) {
+			err = -ESRCH;
+			goto err_locked;
+		}
+
+		/*
+		 * Check if we raced against another sys_perf_event_open() call
+		 * moving the software group underneath us.
+		 */
+		if (!(group_leader->group_caps & PERF_EV_CAP_SOFTWARE)) {
+			/*
+			 * If someone moved the group out from under us, check
+			 * if this new event wound up on the same ctx, if so
+			 * its the regular !move_group case, otherwise fail.
+			 */
+			if (gctx != ctx) {
+				err = -EINVAL;
+				goto err_locked;
+			} else {
+				perf_event_ctx_unlock(group_leader, gctx);
+				move_group = 0;
+			}
+		}
+
+		/*
+		 * Failure to create exclusive events returns -EBUSY.
+		 */
+		err = -EBUSY;
+		if (!exclusive_event_installable(group_leader, ctx))
+			goto err_locked;
+
+		for_each_sibling_event(sibling, group_leader) {
+			if (!exclusive_event_installable(sibling, ctx))
+				goto err_locked;
+		}
+	} else {
+		mutex_lock(&ctx->mutex);
+	}
+>>>>>>> master
 
 	if (ctx->task == TASK_TOMBSTONE) {
 		err = -ESRCH;
@@ -13239,6 +13467,7 @@ void perf_event_free_task(struct task_struct *task)
 	raw_spin_unlock_irq(&ctx->lock);
 
 
+<<<<<<< HEAD
 	list_for_each_entry_safe(event, tmp, &ctx->event_list, event_entry)
 		perf_free_event(event, ctx);
 
@@ -13260,6 +13489,27 @@ void perf_event_free_task(struct task_struct *task)
 	 */
 	wait_var_event(&ctx->refcount, refcount_read(&ctx->refcount) == 1);
 	put_ctx(ctx); /* must be last */
+=======
+		mutex_unlock(&ctx->mutex);
+
+		/*
+		 * perf_event_release_kernel() could've stolen some of our
+		 * child events and still have them on its free_list. In that
+		 * case we must wait for these events to have been freed (in
+		 * particular all their references to this task must've been
+		 * dropped).
+		 *
+		 * Without this copy_process() will unconditionally free this
+		 * task (irrespective of its reference count) and
+		 * _free_event()'s put_task_struct(event->hw.target) will be a
+		 * use-after-free.
+		 *
+		 * Wait for all events to drop their context reference.
+		 */
+		wait_var_event(&ctx->refcount, atomic_read(&ctx->refcount) == 1);
+		put_ctx(ctx); /* must be last */
+	}
+>>>>>>> master
 }
 
 void perf_event_delayed_put(struct task_struct *task)

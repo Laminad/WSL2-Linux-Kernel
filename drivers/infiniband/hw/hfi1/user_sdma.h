@@ -72,6 +72,15 @@ enum pkt_q_sdma_state {
 	SDMA_PKT_Q_ACTIVE,
 	SDMA_PKT_Q_DEFERRED,
 };
+<<<<<<< HEAD
+=======
+
+/*
+ * Maximum retry attempts to submit a TX request
+ * before putting the process to sleep.
+ */
+#define MAX_DEFER_RETRY_COUNT 1
+>>>>>>> master
 
 #define SDMA_IOWAIT_TIMEOUT 1000 /* in milliseconds */
 
@@ -147,8 +156,13 @@ struct user_sdma_request {
 	s8 ahg_idx;
 
 	/* Writeable fields shared with interrupt */
+<<<<<<< HEAD
 	u16 seqcomp ____cacheline_aligned_in_smp;
 	u16 seqsubmitted;
+=======
+	u64 seqcomp ____cacheline_aligned_in_smp;
+	u64 seqsubmitted;
+>>>>>>> master
 
 	/* Send side fields */
 	struct list_head txps ____cacheline_aligned_in_smp;
@@ -188,7 +202,11 @@ struct user_sdma_txreq {
 	struct list_head list;
 	struct user_sdma_request *req;
 	u16 flags;
+<<<<<<< HEAD
 	u16 seqnum;
+=======
+	u64 seqnum;
+>>>>>>> master
 };
 
 int hfi1_user_sdma_alloc_queues(struct hfi1_ctxtdata *uctxt,

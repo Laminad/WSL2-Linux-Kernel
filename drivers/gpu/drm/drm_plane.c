@@ -292,9 +292,14 @@ static int __drm_universal_plane_init(struct drm_device *dev,
 		}
 	}
 
+<<<<<<< HEAD
 	/* autoset the cap and check for consistency across all planes */
 	drm_WARN_ON(dev, config->fb_modifiers_not_supported &&
 				format_modifier_count);
+=======
+	if (format_modifier_count)
+		config->allow_fb_modifiers = true;
+>>>>>>> master
 
 	plane->modifier_count = format_modifier_count;
 	plane->modifiers = kmalloc_array(format_modifier_count,

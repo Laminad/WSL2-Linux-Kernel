@@ -61,10 +61,15 @@ struct pci_bus;
 #ifdef CONFIG_PCI
 struct pci_dev *acpi_get_pci_dev(acpi_handle);
 #else
+<<<<<<< HEAD
 static inline struct pci_dev *acpi_get_pci_dev(acpi_handle handle)
 {
 	return NULL;
 }
+=======
+static inline struct pci_dev *acpi_get_pci_dev(acpi_handle hndl)
+{ return NULL; }
+>>>>>>> master
 #endif
 
 /* Arch-defined function to add a bus to the system */

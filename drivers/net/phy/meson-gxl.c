@@ -184,6 +184,40 @@ read_status_continue:
 	return genphy_read_status(phydev);
 }
 
+<<<<<<< HEAD
+=======
+static int meson_gxl_ack_interrupt(struct phy_device *phydev)
+{
+	int ret = phy_read(phydev, INTSRC_FLAG);
+
+	return ret < 0 ? ret : 0;
+}
+
+static int meson_gxl_config_intr(struct phy_device *phydev)
+{
+	u16 val;
+	int ret;
+
+	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
+		val = INTSRC_ANEG_PR
+			| INTSRC_PARALLEL_FAULT
+			| INTSRC_ANEG_LP_ACK
+			| INTSRC_LINK_DOWN
+			| INTSRC_REMOTE_FAULT
+			| INTSRC_ANEG_COMPLETE;
+	} else {
+		val = 0;
+	}
+
+	/* Ack any pending IRQ */
+	ret = meson_gxl_ack_interrupt(phydev);
+	if (ret)
+		return ret;
+
+	return phy_write(phydev, INTSRC_MASK, val);
+}
+
+>>>>>>> master
 static struct phy_driver meson_gxl_phy[] = {
 	{
 		PHY_ID_MATCH_EXACT(0x01814400),

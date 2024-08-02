@@ -170,7 +170,20 @@ static void evsel__free_prev_raw_counts(struct evsel *evsel)
 	evsel->prev_raw_counts = NULL;
 }
 
+<<<<<<< HEAD
 static void evsel__reset_prev_raw_counts(struct evsel *evsel)
+=======
+static void perf_evsel__reset_prev_raw_counts(struct perf_evsel *evsel)
+{
+	if (evsel->prev_raw_counts) {
+		evsel->prev_raw_counts->aggr.val = 0;
+		evsel->prev_raw_counts->aggr.ena = 0;
+		evsel->prev_raw_counts->aggr.run = 0;
+       }
+}
+
+static int perf_evsel__alloc_stats(struct perf_evsel *evsel, bool alloc_raw)
+>>>>>>> master
 {
 	if (evsel->prev_raw_counts)
 		perf_counts__reset(evsel->prev_raw_counts);
@@ -228,7 +241,19 @@ void evlist__reset_stats(struct evlist *evlist)
 	}
 }
 
+<<<<<<< HEAD
 void evlist__reset_aggr_stats(struct evlist *evlist)
+=======
+void perf_evlist__reset_prev_raw_counts(struct perf_evlist *evlist)
+{
+	struct perf_evsel *evsel;
+
+	evlist__for_each_entry(evlist, evsel)
+		perf_evsel__reset_prev_raw_counts(evsel);
+}
+
+static void zero_per_pkg(struct perf_evsel *counter)
+>>>>>>> master
 {
 	struct evsel *evsel;
 

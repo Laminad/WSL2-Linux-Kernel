@@ -359,6 +359,7 @@ static const struct ieee1394_device_id oxfw_id_table[] = {
 		.specifier_id	= SPECIFIER_1394TA,
 		.version	= VERSION_AVC,
 	},
+<<<<<<< HEAD
 	// TASCAM, FireOne.
 	OXFW_DEV_ENTRY(VENDOR_TASCAM, 0x800007, NULL),
 	// Stanton, Stanton Controllers & Systems 1 Mixer (SCS.1m).
@@ -367,6 +368,36 @@ static const struct ieee1394_device_id oxfw_id_table[] = {
 	OXFW_DEV_ENTRY(OUI_STANTON, 0x002000, NULL),
 	// APOGEE, duet FireWire.
 	OXFW_DEV_ENTRY(OUI_APOGEE, MODEL_DUET_FW, NULL),
+=======
+	/* TASCAM, FireOne */
+	{
+		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
+				  IEEE1394_MATCH_MODEL_ID,
+		.vendor_id	= VENDOR_TASCAM,
+		.model_id	= 0x800007,
+	},
+	/* Stanton, Stanton Controllers & Systems 1 Mixer (SCS.1m) */
+	{
+		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
+				  IEEE1394_MATCH_MODEL_ID,
+		.vendor_id	= OUI_STANTON,
+		.model_id	= 0x001000,
+	},
+	/* Stanton, Stanton Controllers & Systems 1 Deck (SCS.1d) */
+	{
+		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
+				  IEEE1394_MATCH_MODEL_ID,
+		.vendor_id	= OUI_STANTON,
+		.model_id	= 0x002000,
+	},
+	// APOGEE, duet FireWire
+	{
+		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
+				  IEEE1394_MATCH_MODEL_ID,
+		.vendor_id	= OUI_APOGEE,
+		.model_id	= 0x01dddd,
+	},
+>>>>>>> master
 	{ }
 };
 MODULE_DEVICE_TABLE(ieee1394, oxfw_id_table);

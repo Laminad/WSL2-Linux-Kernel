@@ -509,11 +509,22 @@ static void acm_read_bulk_callback(struct urb *urb)
 	int status = urb->status;
 	bool stopped = false;
 	bool stalled = false;
+<<<<<<< HEAD
 	bool cooldown = false;
+=======
+>>>>>>> master
 
 	dev_vdbg(&acm->data->dev, "got urb %d, len %d, status %d\n",
 		rb->index, urb->actual_length, status);
 
+<<<<<<< HEAD
+=======
+	if (!acm->dev) {
+		dev_dbg(&acm->data->dev, "%s - disconnected\n", __func__);
+		return;
+	}
+
+>>>>>>> master
 	switch (status) {
 	case 0:
 		usb_mark_last_busy(acm->dev);
@@ -531,6 +542,7 @@ static void acm_read_bulk_callback(struct urb *urb)
 			__func__, status);
 		stopped = true;
 		break;
+<<<<<<< HEAD
 	case -EOVERFLOW:
 	case -EPROTO:
 		dev_dbg(&acm->data->dev,
@@ -540,6 +552,8 @@ static void acm_read_bulk_callback(struct urb *urb)
 		set_bit(ACM_ERROR_DELAY, &acm->flags);
 		cooldown = true;
 		break;
+=======
+>>>>>>> master
 	default:
 		dev_dbg(&acm->data->dev,
 			"%s - nonzero urb status received: %d\n",
@@ -560,6 +574,15 @@ static void acm_read_bulk_callback(struct urb *urb)
 	 * smp_mb() in unthrottle().
 	 */
 	smp_mb__after_atomic();
+<<<<<<< HEAD
+=======
+
+	if (stopped || stalled) {
+		if (stalled)
+			schedule_work(&acm->work);
+		return;
+	}
+>>>>>>> master
 
 	if (stopped || stalled || cooldown) {
 		if (stalled)
@@ -612,12 +635,15 @@ static void acm_softint(struct work_struct *work)
 		}
 	}
 
+<<<<<<< HEAD
 	if (test_and_clear_bit(ACM_ERROR_DELAY, &acm->flags)) {
 		for (i = 0; i < acm->rx_buflimit; i++)
 			if (test_and_clear_bit(i, &acm->urbs_in_error_delay))
 				acm_submit_read_urb(acm, i, GFP_KERNEL);
 	}
 
+=======
+>>>>>>> master
 	if (test_and_clear_bit(EVENT_TTY_WAKEUP, &acm->flags))
 		tty_port_tty_wakeup(&acm->port);
 }
@@ -908,7 +934,12 @@ static void acm_tty_unthrottle(struct tty_struct *tty)
 	/* Matches the smp_mb__after_atomic() in acm_read_bulk_callback(). */
 	smp_mb();
 
+<<<<<<< HEAD
 	acm_submit_read_urbs(acm, GFP_KERNEL);
+=======
+	if (was_throttled)
+		acm_submit_read_urbs(acm, GFP_KERNEL);
+>>>>>>> master
 }
 
 static int acm_tty_break_ctl(struct tty_struct *tty, int state)
@@ -1355,10 +1386,15 @@ made_compressed_probe:
 	usb_get_intf(acm->control); /* undone in destruct() */
 
 	minor = acm_alloc_minor(acm);
+<<<<<<< HEAD
 	if (minor < 0) {
 		acm->minor = ACM_MINOR_INVALID;
 		goto err_put_port;
 	}
+=======
+	if (minor < 0)
+		goto alloc_fail1;
+>>>>>>> master
 
 	acm->minor = minor;
 	acm->dev = usb_dev;
@@ -1959,6 +1995,7 @@ static const struct usb_device_id acm_ids[] = {
 	.driver_info = IGNORE_DEVICE,
 	},
 
+<<<<<<< HEAD
 	/* Exclude ETAS ES58x */
 	{ USB_DEVICE(0x108c, 0x0159), /* ES581.4 */
 	.driver_info = IGNORE_DEVICE,
@@ -1970,6 +2007,8 @@ static const struct usb_device_id acm_ids[] = {
 	.driver_info = IGNORE_DEVICE,
 	},
 
+=======
+>>>>>>> master
 	{ USB_DEVICE(0x1bc7, 0x0021), /* Telit 3G ACM only composition */
 	.driver_info = SEND_ZERO_PACKET,
 	},
@@ -1977,6 +2016,7 @@ static const struct usb_device_id acm_ids[] = {
 	.driver_info = SEND_ZERO_PACKET,
 	},
 
+<<<<<<< HEAD
 	/* Exclude Goodix Fingerprint Reader */
 	{ USB_DEVICE(0x27c6, 0x5395),
 	.driver_info = IGNORE_DEVICE,
@@ -1987,6 +2027,8 @@ static const struct usb_device_id acm_ids[] = {
 	.driver_info = IGNORE_DEVICE,
 	},
 
+=======
+>>>>>>> master
 	/* control interfaces without any protocol set */
 	{ USB_INTERFACE_INFO(USB_CLASS_COMM, USB_CDC_SUBCLASS_ACM,
 		USB_CDC_PROTO_NONE) },

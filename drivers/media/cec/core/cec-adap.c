@@ -57,6 +57,7 @@ u16 cec_get_edid_phys_addr(const u8 *edid, unsigned int size,
 }
 EXPORT_SYMBOL_GPL(cec_get_edid_phys_addr);
 
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 void cec_fill_conn_info_from_drm(struct cec_connector_info *conn_info,
 				 const struct drm_connector *connector)
 {
@@ -67,6 +68,8 @@ void cec_fill_conn_info_from_drm(struct cec_connector_info *conn_info,
 }
 EXPORT_SYMBOL_GPL(cec_fill_conn_info_from_drm);
 
+=======
+>>>>>>> master:drivers/media/cec/cec-adap.c
 /*
  * Queue a new event for this filehandle. If ts == 0, then set it
  * to the current time.
@@ -349,7 +352,11 @@ static void cec_data_completed(struct cec_data *data)
  *
  * This function is called with adap->lock held.
  */
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 static void cec_data_cancel(struct cec_data *data, u8 tx_status, u8 rx_status)
+=======
+static void cec_data_cancel(struct cec_data *data, u8 tx_status)
+>>>>>>> master:drivers/media/cec/cec-adap.c
 {
 	struct cec_adapter *adap = data->adap;
 
@@ -368,9 +375,13 @@ static void cec_data_cancel(struct cec_data *data, u8 tx_status, u8 rx_status)
 
 	if (data->msg.tx_status & CEC_TX_STATUS_OK) {
 		data->msg.rx_ts = ktime_get_ns();
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 		data->msg.rx_status = rx_status;
 		if (!data->blocking)
 			data->msg.tx_status = 0;
+=======
+		data->msg.rx_status = CEC_RX_STATUS_ABORTED;
+>>>>>>> master:drivers/media/cec/cec-adap.c
 	} else {
 		data->msg.tx_ts = ktime_get_ns();
 		data->msg.tx_status |= tx_status |
@@ -407,15 +418,26 @@ static void cec_flush(struct cec_adapter *adap)
 	while (!list_empty(&adap->transmit_queue)) {
 		data = list_first_entry(&adap->transmit_queue,
 					struct cec_data, list);
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 		cec_data_cancel(data, CEC_TX_STATUS_ABORTED, 0);
 	}
 	if (adap->transmitting)
 		adap->transmit_in_progress_aborted = true;
+=======
+		cec_data_cancel(data, CEC_TX_STATUS_ABORTED);
+	}
+	if (adap->transmitting)
+		cec_data_cancel(adap->transmitting, CEC_TX_STATUS_ABORTED);
+>>>>>>> master:drivers/media/cec/cec-adap.c
 
 	/* Cancel the pending timeout work. */
 	list_for_each_entry_safe(data, n, &adap->wait_queue, list) {
 		if (cancel_delayed_work(&data->work))
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 			cec_data_cancel(data, CEC_TX_STATUS_OK, CEC_RX_STATUS_ABORTED);
+=======
+			cec_data_cancel(data, CEC_TX_STATUS_OK);
+>>>>>>> master:drivers/media/cec/cec-adap.c
 		/*
 		 * If cancel_delayed_work returned false, then
 		 * the cec_wait_timeout function is running,
@@ -509,6 +531,7 @@ int cec_thread_func(void *_adap)
 			 * unable to transmit for xfer_timeout_ms (2.1s by
 			 * default).
 			 */
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 			if (adap->transmitting) {
 				pr_warn("cec-%s: message %*ph timed out\n", adap->name,
 					adap->transmitting->msg.len,
@@ -521,6 +544,16 @@ int cec_thread_func(void *_adap)
 			}
 			adap->transmit_in_progress = false;
 			adap->tx_timeouts++;
+=======
+			pr_warn("cec-%s: message %*ph timed out\n", adap->name,
+				adap->transmitting->msg.len,
+				adap->transmitting->msg.msg);
+			adap->transmit_in_progress = false;
+			adap->tx_timeouts++;
+			/* Just give up on this. */
+			cec_data_cancel(adap->transmitting,
+					CEC_TX_STATUS_TIMEOUT);
+>>>>>>> master:drivers/media/cec/cec-adap.c
 			goto unlock;
 		}
 
@@ -573,9 +606,15 @@ int cec_thread_func(void *_adap)
 
 		adap->transmit_in_progress_aborted = false;
 		/* Tell the adapter to transmit, cancel on error */
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 		if (call_op(adap, adap_transmit, data->attempts,
 			    signal_free_time, &data->msg))
 			cec_data_cancel(data, CEC_TX_STATUS_ABORTED, 0);
+=======
+		if (adap->ops->adap_transmit(adap, data->attempts,
+					     signal_free_time, &data->msg))
+			cec_data_cancel(data, CEC_TX_STATUS_ABORTED);
+>>>>>>> master:drivers/media/cec/cec-adap.c
 		else
 			adap->transmit_in_progress = true;
 
@@ -621,7 +660,10 @@ void cec_transmit_done_ts(struct cec_adapter *adap, u8 status,
 		goto wake_thread;
 	}
 	adap->transmit_in_progress = false;
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 	adap->transmit_in_progress_aborted = false;
+=======
+>>>>>>> master:drivers/media/cec/cec-adap.c
 
 	msg = &data->msg;
 
@@ -752,11 +794,14 @@ int cec_transmit_msg_fh(struct cec_adapter *adap, struct cec_msg *msg,
 			struct cec_fh *fh, bool block)
 {
 	struct cec_data *data;
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 	bool is_raw = msg_is_raw(msg);
 	int err;
 
 	if (adap->devnode.unregistered)
 		return -ENODEV;
+=======
+>>>>>>> master:drivers/media/cec/cec-adap.c
 
 	msg->rx_ts = 0;
 	msg->tx_ts = 0;
@@ -918,6 +963,7 @@ int cec_transmit_msg_fh(struct cec_adapter *adap, struct cec_msg *msg,
 	 * Release the lock and wait, retake the lock afterwards.
 	 */
 	mutex_unlock(&adap->lock);
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 	err = wait_for_completion_killable(&data->c);
 	cancel_delayed_work_sync(&data->work);
 	mutex_lock(&adap->lock);
@@ -939,6 +985,19 @@ int cec_transmit_msg_fh(struct cec_adapter *adap, struct cec_msg *msg,
 		list_del(&data->list);
 	if (WARN_ON(!list_empty(&data->xfer_list)))
 		list_del(&data->xfer_list);
+=======
+	wait_for_completion_killable(&data->c);
+	if (!data->completed)
+		cancel_delayed_work_sync(&data->work);
+	mutex_lock(&adap->lock);
+
+	/* Cancel the transmit if it was interrupted */
+	if (!data->completed)
+		cec_data_cancel(data, CEC_TX_STATUS_ABORTED);
+
+	/* The transmit completed (possibly with an error) */
+	*msg = data->msg;
+>>>>>>> master:drivers/media/cec/cec-adap.c
 	kfree(data);
 	return 0;
 }
@@ -1103,8 +1162,12 @@ void cec_received_msg_ts(struct cec_adapter *adap,
 	mutex_lock(&adap->lock);
 	dprintk(2, "%s: %*ph\n", __func__, msg->len, msg->msg);
 
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 	if (!adap->transmit_in_progress)
 		adap->last_initiator = 0xff;
+=======
+	adap->last_initiator = 0xff;
+>>>>>>> master:drivers/media/cec/cec-adap.c
 
 	/* Check if this message was for us (directed or broadcast). */
 	if (!cec_msg_is_broadcast(msg)) {
@@ -1278,22 +1341,33 @@ static int cec_config_log_addr(struct cec_adapter *adap,
 		 * While trying to poll the physical address was reset
 		 * and the adapter was unconfigured, so bail out.
 		 */
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 		if (adap->phys_addr == CEC_PHYS_ADDR_INVALID)
 			return -EINTR;
 
 		/* Also bail out if the PA changed while configuring. */
 		if (adap->must_reconfigure)
+=======
+		if (!adap->is_configuring)
+>>>>>>> master:drivers/media/cec/cec-adap.c
 			return -EINTR;
 
 		if (err)
 			return err;
 
 		/*
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 		 * The message was aborted or timed out due to a disconnect or
 		 * unconfigure, just bail out.
 		 */
 		if (msg.tx_status &
 		    (CEC_TX_STATUS_ABORTED | CEC_TX_STATUS_TIMEOUT))
+=======
+		 * The message was aborted due to a disconnect or
+		 * unconfigure, just bail out.
+		 */
+		if (msg.tx_status & CEC_TX_STATUS_ABORTED)
+>>>>>>> master:drivers/media/cec/cec-adap.c
 			return -EINTR;
 		if (msg.tx_status & CEC_TX_STATUS_OK)
 			return 0;
@@ -1309,12 +1383,19 @@ static int cec_config_log_addr(struct cec_adapter *adap,
 	/*
 	 * If we are unable to get an OK or a NACK after max_retries attempts
 	 * (and note that each attempt already consists of four polls), then
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 	 * we assume that something is really weird and that it is not a
 	 * good idea to try and claim this logical address.
 	 */
 	if (i == max_retries) {
 		dprintk(0, "polling for LA %u failed with tx_status=0x%04x\n",
 			log_addr, msg.tx_status);
+=======
+	 * then we assume that something is really weird and that it is not a
+	 * good idea to try and claim this logical address.
+	 */
+	if (i == max_retries)
+>>>>>>> master:drivers/media/cec/cec-adap.c
 		return 0;
 	}
 
@@ -1660,12 +1741,48 @@ void __cec_s_phys_addr(struct cec_adapter *adap, u16 phys_addr, bool block)
 		adap->phys_addr = CEC_PHYS_ADDR_INVALID;
 		cec_post_state_event(adap);
 		cec_adap_unconfigure(adap);
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
 		if (becomes_invalid) {
 			cec_adap_enable(adap);
+=======
+		/* Disabling monitor all mode should always succeed */
+		if (adap->monitor_all_cnt)
+			WARN_ON(call_op(adap, adap_monitor_all_enable, false));
+		mutex_lock(&adap->devnode.lock);
+		if (adap->needs_hpd || list_empty(&adap->devnode.fhs)) {
+			WARN_ON(adap->ops->adap_enable(adap, false));
+			adap->transmit_in_progress = false;
+			wake_up_interruptible(&adap->kthread_waitq);
+		}
+		mutex_unlock(&adap->devnode.lock);
+		if (phys_addr == CEC_PHYS_ADDR_INVALID)
+>>>>>>> master:drivers/media/cec/cec-adap.c
 			return;
 		}
 	}
 
+<<<<<<< HEAD:drivers/media/cec/core/cec-adap.c
+=======
+	mutex_lock(&adap->devnode.lock);
+	adap->last_initiator = 0xff;
+	adap->transmit_in_progress = false;
+
+	if ((adap->needs_hpd || list_empty(&adap->devnode.fhs)) &&
+	    adap->ops->adap_enable(adap, true)) {
+		mutex_unlock(&adap->devnode.lock);
+		return;
+	}
+
+	if (adap->monitor_all_cnt &&
+	    call_op(adap, adap_monitor_all_enable, true)) {
+		if (adap->needs_hpd || list_empty(&adap->devnode.fhs))
+			WARN_ON(adap->ops->adap_enable(adap, false));
+		mutex_unlock(&adap->devnode.lock);
+		return;
+	}
+	mutex_unlock(&adap->devnode.lock);
+
+>>>>>>> master:drivers/media/cec/cec-adap.c
 	adap->phys_addr = phys_addr;
 	if (is_invalid)
 		cec_adap_enable(adap);

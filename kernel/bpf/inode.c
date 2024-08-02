@@ -556,7 +556,11 @@ int bpf_obj_get_user(int path_fd, const char __user *pathname, int flags)
 static struct bpf_prog *__get_prog_inode(struct inode *inode, enum bpf_prog_type type)
 {
 	struct bpf_prog *prog;
+<<<<<<< HEAD
 	int ret = inode_permission(&nop_mnt_idmap, inode, MAY_READ);
+=======
+	int ret = inode_permission(inode, MAY_READ);
+>>>>>>> master
 	if (ret)
 		return ERR_PTR(ret);
 
@@ -607,8 +611,14 @@ static int bpf_show_options(struct seq_file *m, struct dentry *root)
 	return 0;
 }
 
+<<<<<<< HEAD
 static void bpf_free_inode(struct inode *inode)
 {
+=======
+static void bpf_destroy_inode_deferred(struct rcu_head *head)
+{
+	struct inode *inode = container_of(head, struct inode, i_rcu);
+>>>>>>> master
 	enum bpf_type type;
 
 	if (S_ISLNK(inode->i_mode))
@@ -618,11 +628,23 @@ static void bpf_free_inode(struct inode *inode)
 	free_inode_nonrcu(inode);
 }
 
+<<<<<<< HEAD
+=======
+static void bpf_destroy_inode(struct inode *inode)
+{
+	call_rcu(&inode->i_rcu, bpf_destroy_inode_deferred);
+}
+
+>>>>>>> master
 static const struct super_operations bpf_super_ops = {
 	.statfs		= simple_statfs,
 	.drop_inode	= generic_delete_inode,
 	.show_options	= bpf_show_options,
+<<<<<<< HEAD
 	.free_inode	= bpf_free_inode,
+=======
+	.destroy_inode	= bpf_destroy_inode,
+>>>>>>> master
 };
 
 enum {

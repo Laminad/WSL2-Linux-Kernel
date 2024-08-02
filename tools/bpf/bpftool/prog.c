@@ -187,7 +187,99 @@ static void print_boot_time(__u64 nsecs, char *buf, unsigned int size)
 		strftime(buf, size, "%FT%T%z", &load_tm);
 }
 
+<<<<<<< HEAD
 static void show_prog_maps(int fd, __u32 num_maps)
+=======
+static int prog_fd_by_tag(unsigned char *tag)
+{
+	unsigned int id = 0;
+	int err;
+	int fd;
+
+	while (true) {
+		struct bpf_prog_info info = {};
+		__u32 len = sizeof(info);
+
+		err = bpf_prog_get_next_id(id, &id);
+		if (err) {
+			p_err("%s", strerror(errno));
+			return -1;
+		}
+
+		fd = bpf_prog_get_fd_by_id(id);
+		if (fd < 0) {
+			p_err("can't get prog by id (%u): %s",
+			      id, strerror(errno));
+			return -1;
+		}
+
+		err = bpf_obj_get_info_by_fd(fd, &info, &len);
+		if (err) {
+			p_err("can't get prog info (%u): %s",
+			      id, strerror(errno));
+			close(fd);
+			return -1;
+		}
+
+		if (!memcmp(tag, info.tag, BPF_TAG_SIZE))
+			return fd;
+
+		close(fd);
+	}
+}
+
+int prog_parse_fd(int *argc, char ***argv)
+{
+	int fd;
+
+	if (is_prefix(**argv, "id")) {
+		unsigned int id;
+		char *endptr;
+
+		NEXT_ARGP();
+
+		id = strtoul(**argv, &endptr, 0);
+		if (*endptr) {
+			p_err("can't parse %s as ID", **argv);
+			return -1;
+		}
+		NEXT_ARGP();
+
+		fd = bpf_prog_get_fd_by_id(id);
+		if (fd < 0)
+			p_err("get by id (%u): %s", id, strerror(errno));
+		return fd;
+	} else if (is_prefix(**argv, "tag")) {
+		unsigned char tag[BPF_TAG_SIZE];
+
+		NEXT_ARGP();
+
+		if (sscanf(**argv, BPF_TAG_FMT, tag, tag + 1, tag + 2,
+			   tag + 3, tag + 4, tag + 5, tag + 6, tag + 7)
+		    != BPF_TAG_SIZE) {
+			p_err("can't parse tag");
+			return -1;
+		}
+		NEXT_ARGP();
+
+		return prog_fd_by_tag(tag);
+	} else if (is_prefix(**argv, "pinned")) {
+		char *path;
+
+		NEXT_ARGP();
+
+		path = **argv;
+		NEXT_ARGP();
+
+		return open_obj_pinned_any(path, BPF_OBJ_PROG);
+	}
+
+	p_err("expected 'id', 'tag' or 'pinned', got: '%s'?", **argv);
+	return -1;
+}
+
+static void show_prog_maps(int fd, u32 num_maps)
+>>>>>>> master
 {
 	struct bpf_prog_info info = {};
 	__u32 len = sizeof(info);
@@ -640,8 +732,15 @@ static int do_show(int argc, char **argv)
 		if (IS_ERR(prog_table)) {
 			p_err("failed to create hashmap for pinned paths");
 			return -1;
+<<<<<<< HEAD
 		}
 		build_pinned_obj_table(prog_table, BPF_OBJ_PROG);
+=======
+
+		err = show_prog(fd);
+		close(fd);
+		return err;
+>>>>>>> master
 	}
 	build_obj_refs_table(&refs_table, BPF_OBJ_PROG);
 
@@ -1601,9 +1700,15 @@ static int load_with_options(int argc, char **argv, bool first_prog_only)
 			if (fd < 0)
 				goto err_free_reuse_maps;
 
+<<<<<<< HEAD
 			new_map_replace = libbpf_reallocarray(map_replace,
 							      old_map_fds + 1,
 							      sizeof(*map_replace));
+=======
+			new_map_replace = reallocarray(map_replace,
+						       old_map_fds + 1,
+						       sizeof(*map_replace));
+>>>>>>> master
 			if (!new_map_replace) {
 				p_err("mem alloc failed");
 				goto err_free_reuse_maps;

@@ -1803,7 +1803,10 @@ static __always_inline bool is_percpu_thread(void)
 #define PFA_SPEC_SSB_FORCE_DISABLE	4	/* Speculative Store Bypass force disabled*/
 #define PFA_SPEC_IB_DISABLE		5	/* Indirect branch speculation restricted */
 #define PFA_SPEC_IB_FORCE_DISABLE	6	/* Indirect branch speculation permanently restricted */
+<<<<<<< HEAD
 #define PFA_SPEC_SSB_NOEXEC		7	/* Speculative Store Bypass clear on execve() */
+=======
+>>>>>>> master
 
 #define TASK_PFA_TEST(name, func)					\
 	static inline bool task_##func(struct task_struct *p)		\
@@ -2262,7 +2265,15 @@ static __always_inline bool need_resched(void)
 
 static inline unsigned int task_cpu(const struct task_struct *p)
 {
+<<<<<<< HEAD
 	return READ_ONCE(task_thread_info(p)->cpu);
+=======
+#ifdef CONFIG_THREAD_INFO_IN_TASK
+	return READ_ONCE(p->cpu);
+#else
+	return READ_ONCE(task_thread_info(p)->cpu);
+#endif
+>>>>>>> master
 }
 
 extern void set_task_cpu(struct task_struct *p, unsigned int cpu);

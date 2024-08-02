@@ -1923,6 +1923,7 @@ static int cgroup2_parse_param(struct fs_context *fc, struct fs_parameter *param
 	if (opt < 0)
 		return opt;
 
+<<<<<<< HEAD
 	switch (opt) {
 	case Opt_nsdelegate:
 		ctx->flags |= CGRP_ROOT_NS_DELEGATE;
@@ -1935,6 +1936,9 @@ static int cgroup2_parse_param(struct fs_context *fc, struct fs_parameter *param
 		return 0;
 	case Opt_memory_recursiveprot:
 		ctx->flags |= CGRP_ROOT_MEMORY_RECURSIVE_PROT;
+=======
+	if (!data || *data == '\0')
+>>>>>>> master
 		return 0;
 	}
 	return -EINVAL;
@@ -2134,8 +2138,13 @@ out:
 
 int cgroup_do_get_tree(struct fs_context *fc)
 {
+<<<<<<< HEAD
 	struct cgroup_fs_context *ctx = cgroup_fc2context(fc);
 	int ret;
+=======
+	struct dentry *dentry;
+	bool new_sb = false;
+>>>>>>> master
 
 	ctx->kfc.root = ctx->root->kf_root;
 	if (fc->fs_type == &cgroup2_fs_type)
@@ -2150,7 +2159,11 @@ int cgroup_do_get_tree(struct fs_context *fc)
 	 */
 	if (!ret && ctx->ns != &init_cgroup_ns) {
 		struct dentry *nsdentry;
+<<<<<<< HEAD
 		struct super_block *sb = fc->root->d_sb;
+=======
+		struct super_block *sb = dentry->d_sb;
+>>>>>>> master
 		struct cgroup *cgrp;
 
 		cgroup_lock();
@@ -2162,6 +2175,7 @@ int cgroup_do_get_tree(struct fs_context *fc)
 		cgroup_unlock();
 
 		nsdentry = kernfs_node_dentry(cgrp->kn, sb);
+<<<<<<< HEAD
 		dput(fc->root);
 		if (IS_ERR(nsdentry)) {
 			deactivate_locked_super(sb);
@@ -2173,6 +2187,16 @@ int cgroup_do_get_tree(struct fs_context *fc)
 
 	if (!ctx->kfc.new_sb_created)
 		cgroup_put(&ctx->root->cgrp);
+=======
+		dput(dentry);
+		if (IS_ERR(nsdentry))
+			deactivate_locked_super(sb);
+		dentry = nsdentry;
+	}
+
+	if (!new_sb)
+		cgroup_put(&root->cgrp);
+>>>>>>> master
 
 	return ret;
 }
@@ -4800,12 +4824,27 @@ static void css_task_iter_advance_css_set(struct css_task_iter *it)
 			it->cur_tasks_head = &cset->dying_tasks;
 			break;
 		}
+<<<<<<< HEAD
 	}
 	if (!cset) {
 		it->task_pos = NULL;
 		return;
 	}
 	it->task_pos = it->cur_tasks_head->next;
+=======
+	} while (!css_set_populated(cset) && list_empty(&cset->dying_tasks));
+
+	if (!list_empty(&cset->tasks))
+		it->task_pos = cset->tasks.next;
+	else if (!list_empty(&cset->mg_tasks))
+		it->task_pos = cset->mg_tasks.next;
+	else
+		it->task_pos = cset->dying_tasks.next;
+
+	it->tasks_head = &cset->tasks;
+	it->mg_tasks_head = &cset->mg_tasks;
+	it->dying_tasks_head = &cset->dying_tasks;
+>>>>>>> master
 
 	/*
 	 * We don't keep css_sets locked across iteration steps and thus
@@ -4850,15 +4889,22 @@ static void css_task_iter_advance(struct css_task_iter *it)
 repeat:
 	if (it->task_pos) {
 		/*
+<<<<<<< HEAD
 		 * Advance iterator to find next entry. We go through cset
 		 * tasks, mg_tasks and dying_tasks, when consumed we move onto
 		 * the next cset.
+=======
+		 * Advance iterator to find next entry.  cset->tasks is
+		 * consumed first and then ->mg_tasks.  After ->mg_tasks,
+		 * we move onto the next cset.
+>>>>>>> master
 		 */
 		if (it->flags & CSS_TASK_ITER_SKIPPED)
 			it->flags &= ~CSS_TASK_ITER_SKIPPED;
 		else
 			it->task_pos = it->task_pos->next;
 
+<<<<<<< HEAD
 		if (it->task_pos == &it->cur_cset->tasks) {
 			it->cur_tasks_head = &it->cur_cset->mg_tasks;
 			it->task_pos = it->cur_tasks_head->next;
@@ -4868,6 +4914,13 @@ repeat:
 			it->task_pos = it->cur_tasks_head->next;
 		}
 		if (it->task_pos == &it->cur_cset->dying_tasks)
+=======
+		if (it->task_pos == it->tasks_head)
+			it->task_pos = it->mg_tasks_head->next;
+		if (it->task_pos == it->mg_tasks_head)
+			it->task_pos = it->dying_tasks_head->next;
+		if (it->task_pos == it->dying_tasks_head)
+>>>>>>> master
 			css_task_iter_advance_css_set(it);
 	} else {
 		/* called from start, proceed to the first cset */
@@ -4885,12 +4938,20 @@ repeat:
 			goto repeat;
 
 		/* and dying leaders w/o live member threads */
+<<<<<<< HEAD
 		if (it->cur_tasks_head == &it->cur_cset->dying_tasks &&
 		    !atomic_read(&task->signal->live))
 			goto repeat;
 	} else {
 		/* skip all dying ones */
 		if (it->cur_tasks_head == &it->cur_cset->dying_tasks)
+=======
+		if (!atomic_read(&task->signal->live))
+			goto repeat;
+	} else {
+		/* skip all dying ones */
+		if (task->flags & PF_EXITING)
+>>>>>>> master
 			goto repeat;
 	}
 }
@@ -5414,6 +5475,12 @@ static void css_release_work_fn(struct work_struct *work)
 		     tcgrp = cgroup_parent(tcgrp))
 			tcgrp->nr_dying_descendants--;
 		spin_unlock_irq(&css_set_lock);
+<<<<<<< HEAD
+=======
+
+		cgroup_idr_remove(&cgrp->root->cgroup_idr, cgrp->id);
+		cgrp->id = -1;
+>>>>>>> master
 
 		/*
 		 * There are two control paths which try to determine
@@ -5613,6 +5680,7 @@ static struct cgroup *cgroup_create(struct cgroup *parent, const char *name,
 	if (ret)
 		goto out_psi_free;
 
+<<<<<<< HEAD
 	/*
 	 * New cgroup inherits effective freeze counter, and
 	 * if the parent has to be frozen, the child has too.
@@ -5627,7 +5695,16 @@ static struct cgroup *cgroup_create(struct cgroup *parent, const char *name,
 		 */
 		set_bit(CGRP_FREEZE, &cgrp->flags);
 		set_bit(CGRP_FROZEN, &cgrp->flags);
+=======
+	spin_lock_irq(&css_set_lock);
+	for (tcgrp = cgrp; tcgrp; tcgrp = cgroup_parent(tcgrp)) {
+		cgrp->ancestor_ids[tcgrp->level] = tcgrp->id;
+
+		if (tcgrp != cgrp)
+			tcgrp->nr_descendants++;
+>>>>>>> master
 	}
+	spin_unlock_irq(&css_set_lock);
 
 	spin_lock_irq(&css_set_lock);
 	for (tcgrp = cgrp; tcgrp; tcgrp = cgroup_parent(tcgrp)) {
@@ -5915,7 +5992,11 @@ static int cgroup_destroy_locked(struct cgroup *cgrp)
 		parent->nr_threaded_children--;
 
 	spin_lock_irq(&css_set_lock);
+<<<<<<< HEAD
 	for (tcgrp = parent; tcgrp; tcgrp = cgroup_parent(tcgrp)) {
+=======
+	for (tcgrp = cgroup_parent(cgrp); tcgrp; tcgrp = cgroup_parent(tcgrp)) {
+>>>>>>> master
 		tcgrp->nr_descendants--;
 		tcgrp->nr_dying_descendants++;
 		/*
@@ -6666,6 +6747,7 @@ void cgroup_exit(struct task_struct *tsk)
 
 	spin_lock_irq(&css_set_lock);
 
+<<<<<<< HEAD
 	WARN_ON_ONCE(list_empty(&tsk->cg_list));
 	cset = task_css_set(tsk);
 	css_set_move_task(tsk, cset, NULL, false);
@@ -6681,6 +6763,17 @@ void cgroup_exit(struct task_struct *tsk)
 		cgroup_update_frozen(task_dfl_cgroup(tsk));
 
 	spin_unlock_irq(&css_set_lock);
+=======
+	if (!list_empty(&tsk->cg_list)) {
+		spin_lock_irq(&css_set_lock);
+		css_set_move_task(tsk, cset, NULL, false);
+		list_add_tail(&tsk->cg_list, &cset->dying_tasks);
+		cset->nr_tasks--;
+		spin_unlock_irq(&css_set_lock);
+	} else {
+		get_css_set(cset);
+	}
+>>>>>>> master
 
 	/* see cgroup_post_fork() for details */
 	do_each_subsys_mask(ss, i, have_exit_callback) {
@@ -6697,10 +6790,19 @@ void cgroup_release(struct task_struct *task)
 		ss->release(task);
 	} while_each_subsys_mask();
 
+<<<<<<< HEAD
 	spin_lock_irq(&css_set_lock);
 	css_set_skip_task_iters(task_css_set(task), task);
 	list_del_init(&task->cg_list);
 	spin_unlock_irq(&css_set_lock);
+=======
+	if (use_task_css_set_links) {
+		spin_lock_irq(&css_set_lock);
+		css_set_skip_task_iters(task_css_set(task), task);
+		list_del_init(&task->cg_list);
+		spin_unlock_irq(&css_set_lock);
+	}
+>>>>>>> master
 }
 
 void cgroup_free(struct task_struct *task)

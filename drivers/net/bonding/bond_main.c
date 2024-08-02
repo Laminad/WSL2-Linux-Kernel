@@ -1481,6 +1481,7 @@ done:
 	bond_dev->vlan_features = vlan_features;
 	bond_dev->hw_enc_features = enc_features | NETIF_F_GSO_ENCAP_ALL |
 				    NETIF_F_HW_VLAN_CTAG_TX |
+<<<<<<< HEAD
 				    NETIF_F_HW_VLAN_STAG_TX;
 #ifdef CONFIG_XFRM_OFFLOAD
 	bond_dev->hw_enc_features |= xfrm_features;
@@ -1488,6 +1489,12 @@ done:
 	bond_dev->mpls_features = mpls_features;
 	netif_set_tso_max_segs(bond_dev, tso_max_segs);
 	netif_set_tso_max_size(bond_dev, tso_max_size);
+=======
+				    NETIF_F_HW_VLAN_STAG_TX |
+				    NETIF_F_GSO_UDP_L4;
+	bond_dev->gso_max_segs = gso_max_segs;
+	netif_set_gso_max_size(bond_dev, gso_max_size);
+>>>>>>> master
 
 	bond_dev->priv_flags &= ~IFF_XMIT_DST_RELEASE;
 	if ((bond_dev->priv_flags & IFF_XMIT_DST_RELEASE_PERM) &&
@@ -2457,6 +2464,13 @@ static int __bond_release_one(struct net_device *bond_dev,
 	bond_set_carrier(bond);
 	if (!bond_has_slaves(bond))
 		eth_hw_addr_random(bond_dev);
+<<<<<<< HEAD
+=======
+		bond->nest_level = SINGLE_DEPTH_NESTING;
+	} else {
+		bond->nest_level = dev_get_nest_level(bond_dev) + 1;
+	}
+>>>>>>> master
 
 	unblock_netpoll_tx();
 	synchronize_rcu();
@@ -2780,8 +2794,13 @@ static void bond_miimon_commit(struct bonding *bond)
 			continue;
 
 		default:
+<<<<<<< HEAD
 			slave_err(bond->dev, slave->dev, "invalid new link %d on slave\n",
 				  slave->link_new_state);
+=======
+			netdev_err(bond->dev, "invalid new link %d on slave %s\n",
+				   slave->link_new_state, slave->dev->name);
+>>>>>>> master
 			bond_propose_link_state(slave, BOND_LINK_NOCHANGE);
 
 			continue;
@@ -3531,9 +3550,12 @@ static int bond_ab_arp_inspect(struct bonding *bond)
 		if (slave->link != BOND_LINK_UP) {
 			if (bond_time_in_interval(bond, last_rx, 1)) {
 				bond_propose_link_state(slave, BOND_LINK_UP);
+<<<<<<< HEAD
 				commit++;
 			} else if (slave->link == BOND_LINK_BACK) {
 				bond_propose_link_state(slave, BOND_LINK_FAIL);
+=======
+>>>>>>> master
 				commit++;
 			}
 			continue;
@@ -3560,7 +3582,11 @@ static int bond_ab_arp_inspect(struct bonding *bond)
 		 */
 		if (!bond_is_active_slave(slave) &&
 		    !rcu_access_pointer(bond->current_arp_slave) &&
+<<<<<<< HEAD
 		    !bond_time_in_interval(bond, last_rx, bond->params.missed_max + 1)) {
+=======
+		    !bond_time_in_interval(bond, last_rx, 3)) {
+>>>>>>> master
 			bond_propose_link_state(slave, BOND_LINK_DOWN);
 			commit++;
 		}
@@ -3572,8 +3598,13 @@ static int bond_ab_arp_inspect(struct bonding *bond)
 		 */
 		last_tx = slave_last_tx(slave);
 		if (bond_is_active_slave(slave) &&
+<<<<<<< HEAD
 		    (!bond_time_in_interval(bond, last_tx, bond->params.missed_max) ||
 		     !bond_time_in_interval(bond, last_rx, bond->params.missed_max))) {
+=======
+		    (!bond_time_in_interval(bond, trans_start, 2) ||
+		     !bond_time_in_interval(bond, last_rx, 2))) {
+>>>>>>> master
 			bond_propose_link_state(slave, BOND_LINK_DOWN);
 			commit++;
 		}
@@ -3659,9 +3690,14 @@ static void bond_ab_arp_commit(struct bonding *bond)
 			continue;
 
 		default:
+<<<<<<< HEAD
 			slave_err(bond->dev, slave->dev,
 				  "impossible: link_new_state %d on slave\n",
 				  slave->link_new_state);
+=======
+			netdev_err(bond->dev, "impossible: new_link %d on slave %s\n",
+				   slave->link_new_state, slave->dev->name);
+>>>>>>> master
 			continue;
 		}
 	}
@@ -4005,6 +4041,10 @@ static int bond_netdev_event(struct notifier_block *this,
 	if (event_dev->flags & IFF_MASTER) {
 		int ret;
 
+<<<<<<< HEAD
+=======
+		netdev_dbg(event_dev, "IFF_MASTER\n");
+>>>>>>> master
 		ret = bond_master_netdev_event(event, event_dev);
 		if (ret != NOTIFY_DONE)
 			return ret;
@@ -4873,6 +4913,10 @@ static u32 bond_rr_gen_slave_id(struct bonding *bond)
 static struct slave *bond_xmit_roundrobin_slave_get(struct bonding *bond,
 						    struct sk_buff *skb)
 {
+<<<<<<< HEAD
+=======
+	struct bonding *bond = netdev_priv(bond_dev);
+>>>>>>> master
 	struct slave *slave;
 	int slave_cnt;
 	u32 slave_id;
@@ -4894,14 +4938,22 @@ static struct slave *bond_xmit_roundrobin_slave_get(struct bonding *bond,
 		if (iph->protocol == IPPROTO_IGMP) {
 			slave = rcu_dereference(bond->curr_active_slave);
 			if (slave)
+<<<<<<< HEAD
 				return slave;
 			return bond_get_slave_by_id(bond, 0);
+=======
+				bond_dev_queue_xmit(bond, skb, slave->dev);
+			else
+				bond_xmit_slave_id(bond, skb, 0);
+			return NETDEV_TX_OK;
+>>>>>>> master
 		}
 	}
 
 non_igmp:
 	slave_cnt = READ_ONCE(bond->slave_cnt);
 	if (likely(slave_cnt)) {
+<<<<<<< HEAD
 		slave_id = bond_rr_gen_slave_id(bond) % slave_cnt;
 		return bond_get_slave_by_id(bond, slave_id);
 	}
@@ -4965,6 +5017,14 @@ static netdev_tx_t bond_xmit_roundrobin(struct sk_buff *skb,
 static struct slave *bond_xmit_activebackup_slave_get(struct bonding *bond)
 {
 	return rcu_dereference(bond->curr_active_slave);
+=======
+		slave_id = bond_rr_gen_slave_id(bond);
+		bond_xmit_slave_id(bond, skb, slave_id % slave_cnt);
+	} else {
+		bond_tx_drop(bond_dev, skb);
+	}
+	return NETDEV_TX_OK;
+>>>>>>> master
 }
 
 /* In active-backup mode, we know that bond->curr_active_slave is always valid if
@@ -5124,10 +5184,32 @@ int bond_update_slave_arr(struct bonding *bond, struct slave *skipslave)
 	return ret;
 out:
 	if (ret != 0 && skipslave) {
+<<<<<<< HEAD
 		bond_skip_slave(rtnl_dereference(bond->all_slaves),
 				skipslave);
 		bond_skip_slave(rtnl_dereference(bond->usable_slaves),
 				skipslave);
+=======
+		int idx;
+
+		/* Rare situation where caller has asked to skip a specific
+		 * slave but allocation failed (most likely!). BTW this is
+		 * only possible when the call is initiated from
+		 * __bond_release_one(). In this situation; overwrite the
+		 * skipslave entry in the array with the last entry from the
+		 * array to avoid a situation where the xmit path may choose
+		 * this to-be-skipped slave to send a packet out.
+		 */
+		old_arr = rtnl_dereference(bond->slave_arr);
+		for (idx = 0; old_arr != NULL && idx < old_arr->count; idx++) {
+			if (skipslave == old_arr->arr[idx]) {
+				old_arr->arr[idx] =
+				    old_arr->arr[old_arr->count-1];
+				old_arr->count--;
+				break;
+			}
+		}
+>>>>>>> master
 	}
 	kfree_rcu(all_slaves, rcu);
 	kfree_rcu(usable_slaves, rcu);
@@ -5930,12 +6012,15 @@ void bond_setup(struct net_device *bond_dev)
 	bond_dev->hw_features |= NETIF_F_GSO_ENCAP_ALL;
 	bond_dev->features |= bond_dev->hw_features;
 	bond_dev->features |= NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_STAG_TX;
+<<<<<<< HEAD
 #ifdef CONFIG_XFRM_OFFLOAD
 	bond_dev->hw_features |= BOND_XFRM_FEATURES;
 	/* Only enable XFRM features if this is an active-backup config */
 	if (BOND_MODE(bond) == BOND_MODE_ACTIVEBACKUP)
 		bond_dev->features |= BOND_XFRM_FEATURES;
 #endif /* CONFIG_XFRM_OFFLOAD */
+=======
+>>>>>>> master
 }
 
 /* Destroy a bonding device.

@@ -197,6 +197,7 @@ static void dax_wake_entry(struct xa_state *xas, void *entry,
 }
 
 /*
+<<<<<<< HEAD
  * Look up entry in page cache, wait for it to become unlocked if it
  * is a DAX entry and return it.  The caller must subsequently call
  * put_unlocked_entry() if it did not lock the entry or dax_unlock_entry()
@@ -207,6 +208,58 @@ static void dax_wake_entry(struct xa_state *xas, void *entry,
  * Must be called with the i_pages lock held.
  */
 static void *get_unlocked_entry(struct xa_state *xas, unsigned int order)
+=======
+ * Check whether the given slot is locked.  Must be called with the i_pages
+ * lock held.
+ */
+static inline int slot_locked(struct address_space *mapping, void **slot)
+{
+	unsigned long entry = (unsigned long)
+		radix_tree_deref_slot_protected(slot, &mapping->i_pages.xa_lock);
+	return entry & RADIX_DAX_ENTRY_LOCK;
+}
+
+/*
+ * Mark the given slot as locked.  Must be called with the i_pages lock held.
+ */
+static inline void *lock_slot(struct address_space *mapping, void **slot)
+{
+	unsigned long entry = (unsigned long)
+		radix_tree_deref_slot_protected(slot, &mapping->i_pages.xa_lock);
+
+	entry |= RADIX_DAX_ENTRY_LOCK;
+	radix_tree_replace_slot(&mapping->i_pages, slot, (void *)entry);
+	return (void *)entry;
+}
+
+/*
+ * Mark the given slot as unlocked.  Must be called with the i_pages lock held.
+ */
+static inline void *unlock_slot(struct address_space *mapping, void **slot)
+{
+	unsigned long entry = (unsigned long)
+		radix_tree_deref_slot_protected(slot, &mapping->i_pages.xa_lock);
+
+	entry &= ~(unsigned long)RADIX_DAX_ENTRY_LOCK;
+	radix_tree_replace_slot(&mapping->i_pages, slot, (void *)entry);
+	return (void *)entry;
+}
+
+static void put_unlocked_mapping_entry(struct address_space *mapping,
+				       pgoff_t index, void *entry);
+
+/*
+ * Lookup entry in radix tree, wait for it to become unlocked if it is
+ * exceptional entry and return it. The caller must call
+ * put_unlocked_mapping_entry() when he decided not to lock the entry or
+ * put_locked_mapping_entry() when he locked the entry and now wants to
+ * unlock it.
+ *
+ * Must be called with the i_pages lock held.
+ */
+static void *get_unlocked_mapping_entry(struct address_space *mapping,
+		pgoff_t index, void ***slotp)
+>>>>>>> master
 {
 	void *entry;
 	struct wait_exceptional_entry_queue ewait;
@@ -216,17 +269,28 @@ static void *get_unlocked_entry(struct xa_state *xas, unsigned int order)
 	ewait.wait.func = wake_exceptional_entry_func;
 
 	for (;;) {
+<<<<<<< HEAD
 		entry = xas_find_conflict(xas);
 		if (!entry || WARN_ON_ONCE(!xa_is_value(entry)))
 			return entry;
 		if (dax_entry_order(entry) < order)
 			return XA_RETRY_ENTRY;
 		if (!dax_is_locked(entry))
+=======
+		entry = __radix_tree_lookup(&mapping->i_pages, index, NULL,
+					  &slot);
+		if (!entry ||
+		    WARN_ON_ONCE(!radix_tree_exceptional_entry(entry)) ||
+		    !slot_locked(mapping, slot)) {
+			if (slotp)
+				*slotp = slot;
+>>>>>>> master
 			return entry;
 
 		wq = dax_entry_waitqueue(xas, entry, &ewait.key);
 		prepare_to_wait_exclusive(wq, &ewait.wait,
 					  TASK_UNINTERRUPTIBLE);
+<<<<<<< HEAD
 		xas_unlock_irq(xas);
 		xas_reset(xas);
 		schedule();
@@ -235,6 +299,64 @@ static void *get_unlocked_entry(struct xa_state *xas, unsigned int order)
 	}
 }
 
+=======
+		xa_unlock_irq(&mapping->i_pages);
+		schedule();
+		finish_wait(wq, &ewait.wait);
+		xa_lock_irq(&mapping->i_pages);
+	}
+}
+
+/*
+ * The only thing keeping the address space around is the i_pages lock
+ * (it's cycled in clear_inode() after removing the entries from i_pages)
+ * After we call xas_unlock_irq(), we cannot touch xas->xa.
+ */
+static void wait_entry_unlocked(struct address_space *mapping, pgoff_t index,
+		void ***slotp, void *entry)
+{
+	struct wait_exceptional_entry_queue ewait;
+	wait_queue_head_t *wq;
+
+	init_wait(&ewait.wait);
+	ewait.wait.func = wake_exceptional_entry_func;
+
+	wq = dax_entry_waitqueue(mapping, index, entry, &ewait.key);
+	/*
+	 * Unlike get_unlocked_entry() there is no guarantee that this
+	 * path ever successfully retrieves an unlocked entry before an
+	 * inode dies. Perform a non-exclusive wait in case this path
+	 * never successfully performs its own wake up.
+	 */
+	prepare_to_wait(wq, &ewait.wait, TASK_UNINTERRUPTIBLE);
+	xa_unlock_irq(&mapping->i_pages);
+	schedule();
+	finish_wait(wq, &ewait.wait);
+}
+
+static void unlock_mapping_entry(struct address_space *mapping, pgoff_t index)
+{
+	void *entry, **slot;
+
+	xa_lock_irq(&mapping->i_pages);
+	entry = __radix_tree_lookup(&mapping->i_pages, index, NULL, &slot);
+	if (WARN_ON_ONCE(!entry || !radix_tree_exceptional_entry(entry) ||
+			 !slot_locked(mapping, slot))) {
+		xa_unlock_irq(&mapping->i_pages);
+		return;
+	}
+	unlock_slot(mapping, slot);
+	xa_unlock_irq(&mapping->i_pages);
+	dax_wake_mapping_entry_waiter(mapping, index, entry, false);
+}
+
+static void put_locked_mapping_entry(struct address_space *mapping,
+		pgoff_t index)
+{
+	unlock_mapping_entry(mapping, index);
+}
+
+>>>>>>> master
 /*
  * The only thing keeping the address space around is the i_pages lock
  * (it's cycled in clear_inode() after removing the entries from i_pages)
@@ -412,6 +534,7 @@ static struct page *dax_busy_page(void *entry)
 	return NULL;
 }
 
+<<<<<<< HEAD
 /**
  * dax_lock_folio - Lock the DAX entry corresponding to a folio
  * @folio: The folio whose entry we want to lock
@@ -424,13 +547,25 @@ dax_entry_t dax_lock_folio(struct folio *folio)
 {
 	XA_STATE(xas, NULL, 0);
 	void *entry;
+=======
+bool dax_lock_mapping_entry(struct page *page)
+{
+	pgoff_t index;
+	struct inode *inode;
+	bool did_lock = false;
+	void *entry = NULL, **slot;
+	struct address_space *mapping;
+>>>>>>> master
 
 	/* Ensure folio->mapping isn't freed while we look at it */
 	rcu_read_lock();
 	for (;;) {
 		struct address_space *mapping = READ_ONCE(folio->mapping);
 
+<<<<<<< HEAD
 		entry = NULL;
+=======
+>>>>>>> master
 		if (!mapping || !dax_mapping(mapping))
 			break;
 
@@ -451,11 +586,24 @@ dax_entry_t dax_lock_folio(struct folio *folio)
 			xas_unlock_irq(&xas);
 			continue;
 		}
+<<<<<<< HEAD
 		xas_set(&xas, folio->index);
 		entry = xas_load(&xas);
 		if (dax_is_locked(entry)) {
 			rcu_read_unlock();
 			wait_entry_unlocked(&xas, entry);
+=======
+		index = page->index;
+
+		entry = __radix_tree_lookup(&mapping->i_pages, index,
+						NULL, &slot);
+		if (!entry) {
+			xa_unlock_irq(&mapping->i_pages);
+			break;
+		} else if (slot_locked(mapping, slot)) {
+			rcu_read_unlock();
+			wait_entry_unlocked(mapping, index, &slot, entry);
+>>>>>>> master
 			rcu_read_lock();
 			continue;
 		}
@@ -710,7 +858,55 @@ struct page *dax_layout_busy_page_range(struct address_space *mapping,
 	 * guaranteed to either see new references or prevent new
 	 * references from being established.
 	 */
+<<<<<<< HEAD
 	unmap_mapping_pages(mapping, start_idx, end_idx - start_idx + 1, 0);
+=======
+	unmap_mapping_range(mapping, 0, 0, 0);
+
+	while (index < end && pagevec_lookup_entries(&pvec, mapping, index,
+				min(end - index, (pgoff_t)PAGEVEC_SIZE),
+				indices)) {
+		pgoff_t nr_pages = 1;
+
+		for (i = 0; i < pagevec_count(&pvec); i++) {
+			struct page *pvec_ent = pvec.pages[i];
+			void *entry;
+
+			index = indices[i];
+			if (index >= end)
+				break;
+
+			if (WARN_ON_ONCE(
+			     !radix_tree_exceptional_entry(pvec_ent)))
+				continue;
+
+			xa_lock_irq(&mapping->i_pages);
+			entry = get_unlocked_mapping_entry(mapping, index, NULL);
+			if (entry) {
+				page = dax_busy_page(entry);
+				/*
+				 * Account for multi-order entries at
+				 * the end of the pagevec.
+				 */
+				if (i + 1 >= pagevec_count(&pvec))
+					nr_pages = 1UL << dax_radix_order(entry);
+			}
+			put_unlocked_mapping_entry(mapping, index, entry);
+			xa_unlock_irq(&mapping->i_pages);
+			if (page)
+				break;
+		}
+
+		/*
+		 * We don't expect normal struct page entries to exist in our
+		 * tree, but we keep these pagevec calls so that this code is
+		 * consistent with the common pattern for handling pagevecs
+		 * throughout the kernel.
+		 */
+		pagevec_remove_exceptionals(&pvec);
+		pagevec_release(&pvec);
+		index += nr_pages;
+>>>>>>> master
 
 	xas_lock_irq(&xas);
 	xas_for_each(&xas, entry, end_idx) {
@@ -926,7 +1122,95 @@ static void *dax_insert_entry(struct xa_state *xas, struct vm_fault *vmf,
 static int dax_writeback_one(struct xa_state *xas, struct dax_device *dax_dev,
 		struct address_space *mapping, void *entry)
 {
+<<<<<<< HEAD
 	unsigned long pfn, index, count, end;
+=======
+	unsigned long address;
+
+	address = vma->vm_start + ((pgoff - vma->vm_pgoff) << PAGE_SHIFT);
+	VM_BUG_ON_VMA(address < vma->vm_start || address >= vma->vm_end, vma);
+	return address;
+}
+
+/* Walk all mappings of a given index of a file and writeprotect them */
+static void dax_mapping_entry_mkclean(struct address_space *mapping,
+				      pgoff_t index, unsigned long pfn)
+{
+	struct vm_area_struct *vma;
+	pte_t pte, *ptep = NULL;
+	pmd_t *pmdp = NULL;
+	spinlock_t *ptl;
+
+	i_mmap_lock_read(mapping);
+	vma_interval_tree_foreach(vma, &mapping->i_mmap, index, index) {
+		unsigned long address, start, end;
+
+		cond_resched();
+
+		if (!(vma->vm_flags & VM_SHARED))
+			continue;
+
+		address = pgoff_address(index, vma);
+
+		/*
+		 * Note because we provide start/end to follow_pte_pmd it will
+		 * call mmu_notifier_invalidate_range_start() on our behalf
+		 * before taking any lock.
+		 */
+		if (follow_pte_pmd(vma->vm_mm, address, &start, &end, &ptep, &pmdp, &ptl))
+			continue;
+
+		/*
+		 * No need to call mmu_notifier_invalidate_range() as we are
+		 * downgrading page table protection not changing it to point
+		 * to a new page.
+		 *
+		 * See Documentation/vm/mmu_notifier.rst
+		 */
+		if (pmdp) {
+#ifdef CONFIG_FS_DAX_PMD
+			pmd_t pmd;
+
+			if (pfn != pmd_pfn(*pmdp))
+				goto unlock_pmd;
+			if (!pmd_dirty(*pmdp) && !pmd_write(*pmdp))
+				goto unlock_pmd;
+
+			flush_cache_page(vma, address, pfn);
+			pmd = pmdp_invalidate(vma, address, pmdp);
+			pmd = pmd_wrprotect(pmd);
+			pmd = pmd_mkclean(pmd);
+			set_pmd_at(vma->vm_mm, address, pmdp, pmd);
+unlock_pmd:
+#endif
+			spin_unlock(ptl);
+		} else {
+			if (pfn != pte_pfn(*ptep))
+				goto unlock_pte;
+			if (!pte_dirty(*ptep) && !pte_write(*ptep))
+				goto unlock_pte;
+
+			flush_cache_page(vma, address, pfn);
+			pte = ptep_clear_flush(vma, address, ptep);
+			pte = pte_wrprotect(pte);
+			pte = pte_mkclean(pte);
+			set_pte_at(vma->vm_mm, address, ptep, pte);
+unlock_pte:
+			pte_unmap_unlock(ptep, ptl);
+		}
+
+		mmu_notifier_invalidate_range_end(vma->vm_mm, start, end);
+	}
+	i_mmap_unlock_read(mapping);
+}
+
+static int dax_writeback_one(struct dax_device *dax_dev,
+		struct address_space *mapping, pgoff_t index, void *entry)
+{
+	struct radix_tree_root *pages = &mapping->i_pages;
+	void *entry2, **slot;
+	unsigned long pfn;
+>>>>>>> master
 	long ret = 0;
 	struct vm_area_struct *vma;
 
@@ -1867,9 +2151,52 @@ static vm_fault_t dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
 		if (iomap_length(&iter) < PMD_SIZE)
 			continue; /* actually breaks out of the loop */
 
+<<<<<<< HEAD
 		ret = dax_fault_iter(vmf, &iter, pfnp, &xas, &entry, true);
 		if (ret != VM_FAULT_FALLBACK)
 			iter.processed = PMD_SIZE;
+=======
+	if (iomap.offset + iomap.length < pos + PMD_SIZE)
+		goto finish_iomap;
+
+	sync = dax_fault_is_synchronous(iomap_flags, vma, &iomap);
+
+	switch (iomap.type) {
+	case IOMAP_MAPPED:
+		error = dax_iomap_pfn(&iomap, pos, PMD_SIZE, &pfn);
+		if (error < 0)
+			goto finish_iomap;
+
+		entry = dax_insert_mapping_entry(mapping, vmf, entry, pfn,
+						RADIX_DAX_PMD, write && !sync);
+
+		/*
+		 * If we are doing synchronous page fault and inode needs fsync,
+		 * we can insert PMD into page tables only after that happens.
+		 * Skip insertion for now and return the pfn so that caller can
+		 * insert it after fsync is done.
+		 */
+		if (sync) {
+			if (WARN_ON_ONCE(!pfnp))
+				goto finish_iomap;
+			*pfnp = pfn;
+			result = VM_FAULT_NEEDDSYNC;
+			goto finish_iomap;
+		}
+
+		trace_dax_pmd_insert_mapping(inode, vmf, PMD_SIZE, pfn, entry);
+		result = vmf_insert_pfn_pmd(vmf, pfn, write);
+		break;
+	case IOMAP_UNWRITTEN:
+	case IOMAP_HOLE:
+		if (WARN_ON_ONCE(write))
+			break;
+		result = dax_pmd_load_hole(vmf, &iomap, entry);
+		break;
+	default:
+		WARN_ON_ONCE(1);
+		break;
+>>>>>>> master
 	}
 
 unlock_entry:
@@ -1950,8 +2277,14 @@ dax_insert_pfn_mkwrite(struct vm_fault *vmf, pfn_t pfn, unsigned int order)
 	if (order == 0)
 		ret = vmf_insert_mixed_mkwrite(vmf->vma, vmf->address, pfn);
 #ifdef CONFIG_FS_DAX_PMD
+<<<<<<< HEAD
 	else if (order == PMD_ORDER)
 		ret = vmf_insert_pfn_pmd(vmf, pfn, FAULT_FLAG_WRITE);
+=======
+	case PE_SIZE_PMD:
+		ret = vmf_insert_pfn_pmd(vmf, pfn, FAULT_FLAG_WRITE);
+		break;
+>>>>>>> master
 #endif
 	else
 		ret = VM_FAULT_FALLBACK;

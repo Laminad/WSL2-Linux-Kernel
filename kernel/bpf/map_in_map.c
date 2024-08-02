@@ -25,11 +25,14 @@ struct bpf_map *bpf_map_meta_alloc(int inner_map_ufd)
 		goto put;
 	}
 
+<<<<<<< HEAD
 	if (!inner_map->ops->map_meta_equal) {
 		ret = -ENOTSUPP;
 		goto put;
 	}
 
+=======
+>>>>>>> master
 	inner_map_meta_size = sizeof(*inner_map_meta);
 	/* In some cases verifier needs to access beyond just base map. */
 	if (inner_map->ops == &array_map_ops)
@@ -47,6 +50,7 @@ struct bpf_map *bpf_map_meta_alloc(int inner_map_ufd)
 	inner_map_meta->map_flags = inner_map->map_flags;
 	inner_map_meta->max_entries = inner_map->max_entries;
 
+<<<<<<< HEAD
 	inner_map_meta->record = btf_record_dup(inner_map->record);
 	if (IS_ERR(inner_map_meta->record)) {
 		/* btf_record_dup returns NULL or valid pointer in case of
@@ -76,6 +80,14 @@ struct bpf_map *bpf_map_meta_alloc(int inner_map_ufd)
 		inner_array_meta->index_mask = inner_array->index_mask;
 		inner_array_meta->elem_size = inner_array->elem_size;
 		inner_map_meta->bypass_spec_v1 = inner_map->bypass_spec_v1;
+=======
+	/* Misc members not needed in bpf_map_meta_equal() check. */
+	inner_map_meta->ops = inner_map->ops;
+	if (inner_map->ops == &array_map_ops) {
+		inner_map_meta->unpriv_array = inner_map->unpriv_array;
+		container_of(inner_map_meta, struct bpf_array, map)->index_mask =
+		     container_of(inner_map, struct bpf_array, map)->index_mask;
+>>>>>>> master
 	}
 
 	fdput(f);

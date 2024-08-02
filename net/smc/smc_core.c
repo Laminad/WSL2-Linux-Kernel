@@ -822,8 +822,13 @@ out:
 	return rc;
 }
 
+<<<<<<< HEAD
 /* create a new SMC link group */
 static int smc_lgr_create(struct smc_sock *smc, struct smc_init_info *ini)
+=======
+static void smc_buf_unuse(struct smc_connection *conn,
+			  struct smc_link_group *lgr)
+>>>>>>> master
 {
 	struct smc_link_group *lgr;
 	struct list_head *lgr_list;
@@ -902,6 +907,7 @@ static int smc_lgr_create(struct smc_sock *smc, struct smc_init_info *ini)
 			lgr->max_conns = ini->max_conns;
 			lgr->max_links = ini->max_links;
 		} else {
+<<<<<<< HEAD
 			ibdev = ini->ib_dev;
 			ibport = ini->ib_port;
 			lgr->max_conns = SMC_CONN_PER_LGR_MAX;
@@ -932,6 +938,12 @@ static int smc_lgr_create(struct smc_sock *smc, struct smc_init_info *ini)
 	list_add_tail(&lgr->list, lgr_list);
 	spin_unlock_bh(lgr_lock);
 	return 0;
+=======
+			/* buf registration failed, reuse not possible */
+			write_lock_bh(&lgr->rmbs_lock);
+			list_del(&conn->rmb_desc->list);
+			write_unlock_bh(&lgr->rmbs_lock);
+>>>>>>> master
 
 free_wq:
 	destroy_workqueue(lgr->tx_wq);
@@ -1166,6 +1178,7 @@ void smc_conn_free(struct smc_connection *conn)
 {
 	struct smc_link_group *lgr = conn->lgr;
 
+<<<<<<< HEAD
 	if (!lgr || conn->freed)
 		/* Connection has never been registered in a
 		 * link group, or has already been freed.
@@ -1182,12 +1195,19 @@ void smc_conn_free(struct smc_connection *conn)
 	if (lgr->is_smcd) {
 		if (!list_empty(&lgr->list))
 			smc_ism_unset_conn(conn);
+=======
+	if (!lgr)
+		return;
+	if (lgr->is_smcd) {
+		smc_ism_unset_conn(conn);
+>>>>>>> master
 		tasklet_kill(&conn->rx_tsklet);
 	} else {
 		smc_cdc_wait_pend_tx_wr(conn);
 		if (current_work() != &conn->abort_work)
 			cancel_work_sync(&conn->abort_work);
 	}
+<<<<<<< HEAD
 	if (!list_empty(&lgr->list)) {
 		smc_buf_unuse(conn, lgr); /* allow buffer reuse */
 		smc_lgr_unregister_conn(conn);
@@ -1199,6 +1219,13 @@ lgr_put:
 	if (!lgr->is_smcd)
 		smcr_link_put(conn->lnk); /* link_hold in smc_conn_create() */
 	smc_lgr_put(lgr); /* lgr_hold in smc_conn_create() */
+=======
+	smc_lgr_unregister_conn(conn);		/* unsets conn->lgr */
+	smc_buf_unuse(conn, lgr);		/* allow buffer reuse */
+
+	if (!lgr->conns_num)
+		smc_lgr_schedule_free_work(lgr);
+>>>>>>> master
 }
 
 /* unregister a link from a buf_desc */

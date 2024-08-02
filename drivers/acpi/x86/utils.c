@@ -71,6 +71,7 @@ static const struct override_status_id override_status_ids[] = {
 	 * Bay / Cherry Trail PWM directly poked by GPU driver in win10,
 	 * but Linux uses a separate PWM driver, harmless if not used.
 	 */
+<<<<<<< HEAD
 	PRESENT_ENTRY_HID("80860F09", "1", ATOM_SILVERMONT, {}),
 	PRESENT_ENTRY_HID("80862288", "1", ATOM_AIRMONT, {}),
 
@@ -80,6 +81,10 @@ static const struct override_status_id override_status_ids[] = {
 		DMI_MATCH(DMI_PRODUCT_NAME, "Mipad2"),
 	      }),
 
+=======
+	ENTRY("80860F09", "1", ICPU(INTEL_FAM6_ATOM_SILVERMONT), {}),
+	ENTRY("80862288", "1", ICPU(INTEL_FAM6_ATOM_AIRMONT), {}),
+>>>>>>> master
 	/*
 	 * The INT0002 device is necessary to clear wakeup interrupt sources
 	 * on Cherry Trail devices, without it we get nobody cared IRQ msgs.

@@ -1209,7 +1209,11 @@ err_assert_reset:
 err_disable_phy:
 	phy_power_off(pcie->phy);
 err_deinit:
+<<<<<<< HEAD
 	pcie->cfg->ops->deinit(pcie);
+=======
+	pcie->ops->deinit(pcie);
+>>>>>>> master
 
 	return ret;
 }
@@ -1470,8 +1474,15 @@ static int qcom_pcie_probe(struct platform_device *pdev)
 
 	pm_runtime_enable(dev);
 	ret = pm_runtime_get_sync(dev);
+<<<<<<< HEAD
 	if (ret < 0)
 		goto err_pm_runtime_put;
+=======
+	if (ret < 0) {
+		pm_runtime_disable(dev);
+		return ret;
+	}
+>>>>>>> master
 
 	pci->dev = dev;
 	pci->ops = &dw_pcie_ops;
@@ -1487,12 +1498,18 @@ static int qcom_pcie_probe(struct platform_device *pdev)
 		goto err_pm_runtime_put;
 	}
 
+<<<<<<< HEAD
 	pcie->parf = devm_platform_ioremap_resource_byname(pdev, "parf");
+=======
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "parf");
+	pcie->parf = devm_ioremap_resource(dev, res);
+>>>>>>> master
 	if (IS_ERR(pcie->parf)) {
 		ret = PTR_ERR(pcie->parf);
 		goto err_pm_runtime_put;
 	}
 
+<<<<<<< HEAD
 	pcie->elbi = devm_platform_ioremap_resource_byname(pdev, "elbi");
 	if (IS_ERR(pcie->elbi)) {
 		ret = PTR_ERR(pcie->elbi);
@@ -1507,6 +1524,20 @@ static int qcom_pcie_probe(struct platform_device *pdev)
 			ret = PTR_ERR(pcie->mhi);
 			goto err_pm_runtime_put;
 		}
+=======
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "dbi");
+	pci->dbi_base = devm_pci_remap_cfg_resource(dev, res);
+	if (IS_ERR(pci->dbi_base)) {
+		ret = PTR_ERR(pci->dbi_base);
+		goto err_pm_runtime_put;
+	}
+
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "elbi");
+	pcie->elbi = devm_ioremap_resource(dev, res);
+	if (IS_ERR(pcie->elbi)) {
+		ret = PTR_ERR(pcie->elbi);
+		goto err_pm_runtime_put;
+>>>>>>> master
 	}
 
 	pcie->phy = devm_phy_optional_get(dev, "pciephy");
@@ -1518,6 +1549,7 @@ static int qcom_pcie_probe(struct platform_device *pdev)
 	ret = qcom_pcie_icc_init(pcie);
 	if (ret)
 		goto err_pm_runtime_put;
+<<<<<<< HEAD
 
 	ret = pcie->cfg->ops->get_resources(pcie);
 	if (ret)
@@ -1528,12 +1560,31 @@ static int qcom_pcie_probe(struct platform_device *pdev)
 	ret = phy_init(pcie->phy);
 	if (ret)
 		goto err_pm_runtime_put;
+=======
+
+	pp->ops = &qcom_pcie_dw_ops;
+
+	if (IS_ENABLED(CONFIG_PCI_MSI)) {
+		pp->msi_irq = platform_get_irq_byname(pdev, "msi");
+		if (pp->msi_irq < 0) {
+			ret = pp->msi_irq;
+			goto err_pm_runtime_put;
+		}
+	}
+
+	ret = phy_init(pcie->phy);
+	if (ret) {
+		pm_runtime_disable(&pdev->dev);
+		goto err_pm_runtime_put;
+	}
+>>>>>>> master
 
 	platform_set_drvdata(pdev, pcie);
 
 	ret = dw_pcie_host_init(pp);
 	if (ret) {
 		dev_err(dev, "cannot initialize host\n");
+<<<<<<< HEAD
 		goto err_phy_exit;
 	}
 
@@ -1566,6 +1617,10 @@ static int qcom_pcie_suspend_noirq(struct device *dev)
 	if (ret) {
 		dev_err(dev, "Failed to set interconnect bandwidth: %d\n", ret);
 		return ret;
+=======
+		pm_runtime_disable(&pdev->dev);
+		goto err_pm_runtime_put;
+>>>>>>> master
 	}
 
 	/*
@@ -1607,6 +1662,12 @@ static int qcom_pcie_resume_noirq(struct device *dev)
 	qcom_pcie_icc_update(pcie);
 
 	return 0;
+
+err_pm_runtime_put:
+	pm_runtime_put(dev);
+	pm_runtime_disable(dev);
+
+	return ret;
 }
 
 static const struct of_device_id qcom_pcie_match[] = {

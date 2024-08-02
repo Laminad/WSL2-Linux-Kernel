@@ -20,9 +20,13 @@
 #include "cifs_ioctl.h"
 
 #define MAX_EA_VALUE_SIZE CIFSMaxBufSize
+<<<<<<< HEAD:fs/smb/client/xattr.c
 #define CIFS_XATTR_CIFS_ACL "system.cifs_acl" /* DACL only */
 #define CIFS_XATTR_CIFS_NTSD "system.cifs_ntsd" /* owner plus DACL */
 #define CIFS_XATTR_CIFS_NTSD_FULL "system.cifs_ntsd_full" /* owner/DACL/SACL */
+=======
+#define CIFS_XATTR_CIFS_ACL "system.cifs_acl"
+>>>>>>> master:fs/cifs/xattr.c
 #define CIFS_XATTR_ATTRIB "cifs.dosattrib"  /* full name: user.cifs.dosattrib */
 #define CIFS_XATTR_CREATETIME "cifs.creationtime"  /* user.cifs.creationtime */
 /*

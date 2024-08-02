@@ -980,6 +980,7 @@ route_setup()
 	$IP addr add 172.16.101.1/24 dev veth1
 	$IP addr add 172.16.103.1/24 dev veth3
 
+<<<<<<< HEAD
 	ip -netns ns2 -6 addr add 2001:db8:101::2/64 dev veth2 nodad
 	ip -netns ns2 -6 addr add 2001:db8:103::2/64 dev veth4 nodad
 	ip -netns ns2 -6 addr add 2001:db8:104::1/64 dev dummy1 nodad
@@ -988,6 +989,8 @@ route_setup()
 	ip -netns ns2 addr add 172.16.103.2/24 dev veth4
 	ip -netns ns2 addr add 172.16.104.1/24 dev dummy1
 
+=======
+>>>>>>> master
 	set +e
 }
 
@@ -1394,10 +1397,13 @@ check_route()
 	local pfx
 	local expected="$1"
 	local out
+<<<<<<< HEAD
 
 	set -- $expected
 	pfx=$1
 	[ "${pfx}" = "unreachable" ] && pfx=$2
+=======
+>>>>>>> master
 
 	out=$($IP ro ls match ${pfx})
 	check_expected "${out}" "${expected}"
@@ -1794,6 +1800,7 @@ ipv4_addr_metric_test()
 
 	run_cmd "$IP addr flush dev dummy2"
 	run_cmd "$IP addr add dev dummy2 172.16.104.1/32 peer 172.16.104.2 metric 260"
+<<<<<<< HEAD
 	rc=$?
 	if [ $rc -eq 0 ]; then
 		check_route "172.16.104.2 dev dummy2 proto kernel scope link src 172.16.104.1 metric 260"
@@ -1808,6 +1815,15 @@ ipv4_addr_metric_test()
 		rc=$?
 	fi
 	log_test $rc 0 "Modify metric and peer address for peer route"
+=======
+	run_cmd "$IP addr change dev dummy2 172.16.104.1/32 peer 172.16.104.2 metric 261"
+	rc=$?
+	if [ $rc -eq 0 ]; then
+		check_route "172.16.104.2 dev dummy2 proto kernel scope link src 172.16.104.1 metric 261"
+		rc=$?
+	fi
+	log_test $rc 0 "Modify metric of address with peer route"
+>>>>>>> master
 
 	$IP li del dummy1
 	$IP li del dummy2

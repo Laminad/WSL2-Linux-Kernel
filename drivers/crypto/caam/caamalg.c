@@ -1018,6 +1018,7 @@ static inline u8 *skcipher_edesc_iv(struct skcipher_edesc *edesc)
 static void skcipher_crypt_done(struct device *jrdev, u32 *desc, u32 err,
 				void *context)
 {
+<<<<<<< HEAD
 	struct skcipher_request *req = context;
 	struct skcipher_edesc *edesc;
 	struct caam_skcipher_req_ctx *rctx = skcipher_request_ctx(req);
@@ -1026,6 +1027,13 @@ static void skcipher_crypt_done(struct device *jrdev, u32 *desc, u32 err,
 	int ivsize = crypto_skcipher_ivsize(skcipher);
 	int ecode = 0;
 	bool has_bklog;
+=======
+	struct ablkcipher_request *req = context;
+	struct ablkcipher_edesc *edesc;
+	struct crypto_ablkcipher *ablkcipher = crypto_ablkcipher_reqtfm(req);
+	struct caam_ctx *ctx = crypto_ablkcipher_ctx(ablkcipher);
+	int ivsize = crypto_ablkcipher_ivsize(ablkcipher);
+>>>>>>> master
 
 	dev_dbg(jrdev, "%s %d: err 0x%x\n", __func__, __LINE__, err);
 
@@ -1037,12 +1045,21 @@ static void skcipher_crypt_done(struct device *jrdev, u32 *desc, u32 err,
 	skcipher_unmap(jrdev, edesc, req);
 
 	/*
+<<<<<<< HEAD
 	 * The crypto API expects us to set the IV (req->iv) to the last
 	 * ciphertext block (CBC mode) or last counter (CTR mode).
 	 * This is used e.g. by the CTS mode.
 	 */
 	if (ivsize && !ecode) {
 		memcpy(req->iv, skcipher_edesc_iv(edesc), ivsize);
+=======
+	 * The crypto API expects us to set the IV (req->info) to the last
+	 * ciphertext block when running in CBC mode.
+	 */
+	if ((ctx->cdata.algtype & OP_ALG_AAI_MASK) == OP_ALG_AAI_CBC)
+		scatterwalk_map_and_copy(req->info, req->dst, req->nbytes -
+					 ivsize, ivsize, 0);
+>>>>>>> master
 
 		print_hex_dump_debug("dstiv  @" __stringify(__LINE__)": ",
 				     DUMP_PREFIX_ADDRESS, 16, 4, req->iv,
@@ -1819,12 +1836,21 @@ static inline int skcipher_crypt(struct skcipher_request *req, bool encrypt)
 	int ret = 0;
 
 	/*
+<<<<<<< HEAD
 	 * XTS is expected to return an error even for input length = 0
 	 * Note that the case input length < block size will be caught during
 	 * HW offloading and return an error.
 	 */
 	if (!req->cryptlen && !ctx->fallback)
 		return 0;
+=======
+	 * The crypto API expects us to set the IV (req->info) to the last
+	 * ciphertext block when running in CBC mode.
+	 */
+	if ((ctx->cdata.algtype & OP_ALG_AAI_MASK) == OP_ALG_AAI_CBC)
+		scatterwalk_map_and_copy(req->info, req->src, req->nbytes -
+					 ivsize, ivsize, 0);
+>>>>>>> master
 
 	if (ctx->fallback && ((ctrlpriv->era <= 8 && xts_skcipher_ivsize(req)) ||
 			      ctx->xts_key_fallback)) {

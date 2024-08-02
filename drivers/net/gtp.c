@@ -630,7 +630,11 @@ static void __gtp_encap_destroy(struct sock *sk)
 			gtp->sk0 = NULL;
 		else
 			gtp->sk1u = NULL;
+<<<<<<< HEAD
 		WRITE_ONCE(udp_sk(sk)->encap_type, 0);
+=======
+		udp_sk(sk)->encap_type = 0;
+>>>>>>> master
 		rcu_assign_sk_user_data(sk, NULL);
 		release_sock(sk);
 		sock_put(sk);
@@ -1229,8 +1233,13 @@ static struct sock *gtp_encap_enable_socket(int fd, int type,
 		goto out_sock;
 	}
 
+<<<<<<< HEAD
 	lock_sock(sk);
 	if (sk->sk_user_data) {
+=======
+	lock_sock(sock->sk);
+	if (sock->sk->sk_user_data) {
+>>>>>>> master
 		sk = ERR_PTR(-EBUSY);
 		goto out_rel_sock;
 	}
@@ -1247,6 +1256,7 @@ static struct sock *gtp_encap_enable_socket(int fd, int type,
 out_rel_sock:
 	release_sock(sock->sk);
 out_sock:
+	release_sock(sock->sk);
 	sockfd_put(sock);
 	return sk;
 }
@@ -1277,6 +1287,20 @@ static int gtp_encap_enable(struct gtp_dev *gtp, struct nlattr *data[])
 		}
 	}
 
+<<<<<<< HEAD
+=======
+	if (data[IFLA_GTP_ROLE]) {
+		role = nla_get_u32(data[IFLA_GTP_ROLE]);
+		if (role > GTP_ROLE_SGSN) {
+			if (sk0)
+				gtp_encap_disable_sock(sk0);
+			if (sk1u)
+				gtp_encap_disable_sock(sk1u);
+			return -EINVAL;
+		}
+	}
+
+>>>>>>> master
 	gtp->sk0 = sk0;
 	gtp->sk1u = sk1u;
 
@@ -1479,6 +1503,10 @@ static int gtp_genl_new_pdp(struct sk_buff *skb, struct genl_info *info)
 	}
 
 	rtnl_lock();
+<<<<<<< HEAD
+=======
+	rcu_read_lock();
+>>>>>>> master
 
 	gtp = gtp_find_dev(sock_net(skb->sk), info->attrs);
 	if (!gtp) {
@@ -1507,6 +1535,10 @@ static int gtp_genl_new_pdp(struct sk_buff *skb, struct genl_info *info)
 	}
 
 out_unlock:
+<<<<<<< HEAD
+=======
+	rcu_read_unlock();
+>>>>>>> master
 	rtnl_unlock();
 	return err;
 }

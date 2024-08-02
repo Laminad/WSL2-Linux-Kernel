@@ -53,6 +53,7 @@ struct pl061 {
 
 	void __iomem		*base;
 	struct gpio_chip	gc;
+	struct irq_chip		irq_chip;
 	int			parent_irq;
 
 #ifdef CONFIG_PM
@@ -287,6 +288,7 @@ static int pl061_irq_set_wake(struct irq_data *d, unsigned int state)
 	return irq_set_irq_wake(pl061->parent_irq, state);
 }
 
+<<<<<<< HEAD
 static void pl061_irq_print_chip(struct irq_data *data, struct seq_file *p)
 {
 	struct gpio_chip *gc = irq_data_get_irq_chip_data(data);
@@ -305,6 +307,8 @@ static const struct irq_chip pl061_irq_chip = {
 	GPIOCHIP_IRQ_RESOURCE_HELPERS,
 };
 
+=======
+>>>>>>> master
 static int pl061_probe(struct amba_device *adev, const struct amba_id *id)
 {
 	struct device *dev = &adev->dev;
@@ -337,12 +341,20 @@ static int pl061_probe(struct amba_device *adev, const struct amba_id *id)
 	/*
 	 * irq_chip support
 	 */
+	pl061->irq_chip.name = dev_name(dev);
+	pl061->irq_chip.irq_ack	= pl061_irq_ack;
+	pl061->irq_chip.irq_mask = pl061_irq_mask;
+	pl061->irq_chip.irq_unmask = pl061_irq_unmask;
+	pl061->irq_chip.irq_set_type = pl061_irq_type;
+	pl061->irq_chip.irq_set_wake = pl061_irq_set_wake;
+
 	writeb(0, pl061->base + GPIOIE); /* disable irqs */
 	irq = adev->irq[0];
 	if (!irq)
 		dev_warn(&adev->dev, "IRQ support disabled\n");
 	pl061->parent_irq = irq;
 
+<<<<<<< HEAD
 	girq = &pl061->gc.irq;
 	gpio_irq_chip_set_chip(girq, &pl061_irq_chip);
 	girq->parent_handler = pl061_irq_handler;
@@ -358,6 +370,17 @@ static int pl061_probe(struct amba_device *adev, const struct amba_id *id)
 	ret = devm_gpiochip_add_data(dev, &pl061->gc, pl061);
 	if (ret)
 		return ret;
+=======
+	ret = gpiochip_irqchip_add(&pl061->gc, &pl061->irq_chip,
+				   0, handle_bad_irq,
+				   IRQ_TYPE_NONE);
+	if (ret) {
+		dev_info(&adev->dev, "could not add irqchip\n");
+		return ret;
+	}
+	gpiochip_set_chained_irqchip(&pl061->gc, &pl061->irq_chip,
+				     irq, pl061_irq_handler);
+>>>>>>> master
 
 	amba_set_drvdata(adev, pl061);
 	dev_info(dev, "PL061 GPIO chip registered\n");

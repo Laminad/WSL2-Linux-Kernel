@@ -402,13 +402,21 @@ void smp_call_online_cpu(void (*func)(void *), void *data)
  */
 void smp_call_ipl_cpu(void (*func)(void *), void *data)
 {
+<<<<<<< HEAD
 	struct lowcore *lc = lowcore_ptr[0];
+=======
+	struct lowcore *lc = pcpu_devices->lowcore;
+>>>>>>> master
 
 	if (pcpu_devices[0].address == stap())
 		lc = &S390_lowcore;
 
 	pcpu_delegate(&pcpu_devices[0], func, data,
+<<<<<<< HEAD
 		      lc->nodat_stack);
+=======
+		      lc->panic_stack - PANIC_FRAME_OFFSET + PAGE_SIZE);
+>>>>>>> master
 }
 
 int smp_find_processor_id(u16 address)

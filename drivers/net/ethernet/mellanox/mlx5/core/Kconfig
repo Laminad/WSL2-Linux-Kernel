@@ -6,6 +6,7 @@
 config MLX5_CORE
 	tristate "Mellanox 5th generation network adapters (ConnectX series) core driver"
 	depends on PCI
+<<<<<<< HEAD
 	select AUXILIARY_BUS
 	select NET_DEVLINK
 	depends on VXLAN || !VXLAN
@@ -14,6 +15,13 @@ config MLX5_CORE
 	depends on PCI_HYPERV_INTERFACE || !PCI_HYPERV_INTERFACE
 	depends on HWMON || !HWMON
 	help
+=======
+	imply PTP_1588_CLOCK
+	imply VXLAN
+	imply MLXFW
+	default n
+	---help---
+>>>>>>> master
 	  Core driver for low level functionality of the ConnectX-4 and
 	  Connect-IB cards by Mellanox Technologies.
 

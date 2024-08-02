@@ -582,7 +582,12 @@ xfs_fs_reserve_ag_blocks(
 	int			err2;
 
 	mp->m_finobt_nores = false;
+<<<<<<< HEAD
 	for_each_perag(mp, agno, pag) {
+=======
+	for (agno = 0; agno < mp->m_sb.sb_agcount; agno++) {
+		pag = xfs_perag_get(mp, agno);
+>>>>>>> master
 		err2 = xfs_ag_resv_init(pag, NULL);
 		if (err2 && !error)
 			error = err2;

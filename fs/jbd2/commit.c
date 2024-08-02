@@ -177,6 +177,7 @@ static int journal_wait_on_commit_record(journal_t *journal,
 	return ret;
 }
 
+<<<<<<< HEAD
 /* Send all the data buffers related to an inode */
 int jbd2_submit_inode_data(journal_t *journal, struct jbd2_inode *jinode)
 {
@@ -185,6 +186,24 @@ int jbd2_submit_inode_data(journal_t *journal, struct jbd2_inode *jinode)
 
 	trace_jbd2_submit_inode_data(jinode->i_vfs_inode);
 	return journal->j_submit_inode_data_buffers(jinode);
+=======
+/*
+ * write the filemap data using writepage() address_space_operations.
+ * We don't do block allocation here even for delalloc. We don't
+ * use writepages() because with dealyed allocation we may be doing
+ * block allocation in writepages().
+ */
+static int journal_submit_inode_data_buffers(struct address_space *mapping,
+		loff_t dirty_start, loff_t dirty_end)
+{
+	int ret;
+	struct writeback_control wbc = {
+		.sync_mode =  WB_SYNC_ALL,
+		.nr_to_write = mapping->nrpages * 2,
+		.range_start = dirty_start,
+		.range_end = dirty_end,
+	};
+>>>>>>> master
 
 }
 EXPORT_SYMBOL(jbd2_submit_inode_data);
@@ -216,17 +235,27 @@ static int journal_submit_data_buffers(journal_t *journal,
 
 	spin_lock(&journal->j_list_lock);
 	list_for_each_entry(jinode, &commit_transaction->t_inode_list, i_list) {
+		loff_t dirty_start = jinode->i_dirty_start;
+		loff_t dirty_end = jinode->i_dirty_end;
+
 		if (!(jinode->i_flags & JI_WRITE_DATA))
 			continue;
 		jinode->i_flags |= JI_COMMIT_RUNNING;
 		spin_unlock(&journal->j_list_lock);
 		/* submit the inode data buffers. */
 		trace_jbd2_submit_inode_data(jinode->i_vfs_inode);
+<<<<<<< HEAD
 		if (journal->j_submit_inode_data_buffers) {
 			err = journal->j_submit_inode_data_buffers(jinode);
 			if (!ret)
 				ret = err;
 		}
+=======
+		err = journal_submit_inode_data_buffers(mapping, dirty_start,
+				dirty_end);
+		if (!ret)
+			ret = err;
+>>>>>>> master
 		spin_lock(&journal->j_list_lock);
 		J_ASSERT(jinode->i_transaction == commit_transaction);
 		jinode->i_flags &= ~JI_COMMIT_RUNNING;
@@ -260,10 +289,14 @@ static int journal_finish_inode_data_buffers(journal_t *journal,
 	/* For locking, see the comment in journal_submit_data_buffers() */
 	spin_lock(&journal->j_list_lock);
 	list_for_each_entry(jinode, &commit_transaction->t_inode_list, i_list) {
+		loff_t dirty_start = jinode->i_dirty_start;
+		loff_t dirty_end = jinode->i_dirty_end;
+
 		if (!(jinode->i_flags & JI_WAIT_DATA))
 			continue;
 		jinode->i_flags |= JI_COMMIT_RUNNING;
 		spin_unlock(&journal->j_list_lock);
+<<<<<<< HEAD
 		/* wait for the inode data buffers writeout. */
 		if (journal->j_finish_inode_data_buffers) {
 			err = journal->j_finish_inode_data_buffers(jinode);
@@ -271,6 +304,13 @@ static int journal_finish_inode_data_buffers(journal_t *journal,
 				ret = err;
 		}
 		cond_resched();
+=======
+		err = filemap_fdatawait_range_keep_errors(
+				jinode->i_vfs_inode->i_mapping, dirty_start,
+				dirty_end);
+		if (!ret)
+			ret = err;
+>>>>>>> master
 		spin_lock(&journal->j_list_lock);
 		jinode->i_flags &= ~JI_COMMIT_RUNNING;
 		smp_mb();

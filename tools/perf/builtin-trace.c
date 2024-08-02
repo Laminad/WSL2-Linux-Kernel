@@ -3110,6 +3110,7 @@ static size_t trace__fprintf_thread_summary(struct trace *trace, FILE *fp);
 static bool evlist__add_vfs_getname(struct evlist *evlist)
 {
 	bool found = false;
+<<<<<<< HEAD
 	struct evsel *evsel, *tmp;
 	struct parse_events_error err;
 	int ret;
@@ -3117,22 +3118,41 @@ static bool evlist__add_vfs_getname(struct evlist *evlist)
 	parse_events_error__init(&err);
 	ret = parse_events(evlist, "probe:vfs_getname*", &err);
 	parse_events_error__exit(&err);
+=======
+	struct perf_evsel *evsel, *tmp;
+	struct parse_events_error err = { .idx = 0, };
+	int ret = parse_events(evlist, "probe:vfs_getname*", &err);
+
+>>>>>>> master
 	if (ret)
 		return false;
 
 	evlist__for_each_entry_safe(evlist, evsel, tmp) {
+<<<<<<< HEAD
 		if (!strstarts(evsel__name(evsel), "probe:vfs_getname"))
 			continue;
 
 		if (evsel__field(evsel, "pathname")) {
+=======
+		if (!strstarts(perf_evsel__name(evsel), "probe:vfs_getname"))
+			continue;
+
+		if (perf_evsel__field(evsel, "pathname")) {
+>>>>>>> master
 			evsel->handler = trace__vfs_getname;
 			found = true;
 			continue;
 		}
 
+<<<<<<< HEAD
 		list_del_init(&evsel->core.node);
 		evsel->evlist = NULL;
 		evsel__delete(evsel);
+=======
+		list_del_init(&evsel->node);
+		evsel->evlist = NULL;
+		perf_evsel__delete(evsel);
+>>>>>>> master
 	}
 
 	return found;

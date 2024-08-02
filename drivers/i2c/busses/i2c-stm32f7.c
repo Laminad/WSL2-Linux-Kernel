@@ -498,8 +498,13 @@ static int stm32f7_i2c_compute_timing(struct stm32f7_i2c_dev *i2c_dev,
 		 STM32F7_I2C_ANALOG_FILTER_DELAY_MAX : 0);
 	dnf_delay = i2c_dev->dnf * i2cclk;
 
+<<<<<<< HEAD
 	sdadel_min = specs->hddat_min + setup->fall_time -
 		af_delay_min - (i2c_dev->dnf + 3) * i2cclk;
+=======
+	sdadel_min = i2c_specs[setup->speed].hddat_min + setup->fall_time -
+		af_delay_min - (setup->dnf + 3) * i2cclk;
+>>>>>>> master
 
 	sdadel_max = specs->vddat_max - setup->rise_time -
 		af_delay_max - (i2c_dev->dnf + 4) * i2cclk;
@@ -1644,6 +1649,7 @@ static irqreturn_t stm32f7_i2c_isr_error(int irq, void *data)
 		f7_msg->result = -EINVAL;
 	}
 
+<<<<<<< HEAD
 	if (status & STM32F7_I2C_ISR_ALERT) {
 		dev_dbg(dev, "<%s>: SMBus alert received\n", __func__);
 		writel_relaxed(STM32F7_I2C_ICR_ALERTCF, base + STM32F7_I2C_ICR);
@@ -1651,6 +1657,8 @@ static irqreturn_t stm32f7_i2c_isr_error(int irq, void *data)
 		return IRQ_HANDLED;
 	}
 
+=======
+>>>>>>> master
 	if (!i2c_dev->slave_running) {
 		u32 mask;
 		/* Disable interrupts */
@@ -2109,6 +2117,10 @@ static int stm32f7_i2c_probe(struct platform_device *pdev)
 	struct stm32f7_i2c_dev *i2c_dev;
 	const struct stm32f7_i2c_setup *setup;
 	struct resource *res;
+<<<<<<< HEAD
+=======
+	u32 clk_rate, rise_time, fall_time;
+>>>>>>> master
 	struct i2c_adapter *adap;
 	struct reset_control *rst;
 	dma_addr_t phy_addr;
@@ -2124,6 +2136,7 @@ static int stm32f7_i2c_probe(struct platform_device *pdev)
 	phy_addr = (dma_addr_t)res->start;
 
 	irq_event = platform_get_irq(pdev, 0);
+<<<<<<< HEAD
 	if (irq_event < 0)
 		return irq_event;
 
@@ -2133,6 +2146,22 @@ static int stm32f7_i2c_probe(struct platform_device *pdev)
 
 	i2c_dev->wakeup_src = of_property_read_bool(pdev->dev.of_node,
 						    "wakeup-source");
+=======
+	if (irq_event <= 0) {
+		if (irq_event != -EPROBE_DEFER)
+			dev_err(&pdev->dev, "Failed to get IRQ event: %d\n",
+				irq_event);
+		return irq_event ? : -ENOENT;
+	}
+
+	irq_error = platform_get_irq(pdev, 1);
+	if (irq_error <= 0) {
+		if (irq_error != -EPROBE_DEFER)
+			dev_err(&pdev->dev, "Failed to get IRQ error: %d\n",
+				irq_error);
+		return irq_error ? : -ENOENT;
+	}
+>>>>>>> master
 
 	i2c_dev->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(i2c_dev->clk))

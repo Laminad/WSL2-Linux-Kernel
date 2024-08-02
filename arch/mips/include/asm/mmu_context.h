@@ -124,9 +124,31 @@ static inline void set_cpu_context(unsigned int cpu,
 #define cpu_asid(cpu, mm) \
 	(cpu_context((cpu), (mm)) & cpu_asid_mask(&cpu_data[cpu]))
 
+<<<<<<< HEAD
 extern void get_new_mmu_context(struct mm_struct *mm);
 extern void check_mmu_context(struct mm_struct *mm);
 extern void check_switch_mmu_context(struct mm_struct *mm);
+=======
+static inline void enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk)
+{
+}
+
+
+/* Normal, classic MIPS get_new_mmu_context */
+static inline void
+get_new_mmu_context(struct mm_struct *mm, unsigned long cpu)
+{
+	u64 asid = asid_cache(cpu);
+
+	if (!((asid += cpu_asid_inc()) & cpu_asid_mask(&cpu_data[cpu]))) {
+		if (cpu_has_vtag_icache)
+			flush_icache_all();
+		local_flush_tlb_all();	/* start new asid cycle */
+	}
+
+	cpu_context(cpu, mm) = asid_cache(cpu) = asid;
+}
+>>>>>>> master
 
 /*
  * Initialize the context related info for a new mm_struct

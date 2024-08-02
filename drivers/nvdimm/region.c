@@ -43,6 +43,24 @@ static int nd_region_probe(struct device *dev)
 		dev_warn(dev, "'badblocks' notification disabled\n");
 	nvdimm_badblocks_populate(nd_region, &nd_region->bb, &range);
 
+<<<<<<< HEAD
+=======
+	if (is_memory(&nd_region->dev)) {
+		struct resource ndr_res;
+
+		if (devm_init_badblocks(dev, &nd_region->bb))
+			return -ENODEV;
+		nd_region->bb_state = sysfs_get_dirent(nd_region->dev.kobj.sd,
+						       "badblocks");
+		if (!nd_region->bb_state)
+			dev_warn(&nd_region->dev,
+					"'badblocks' notification disabled\n");
+		ndr_res.start = nd_region->ndr_start;
+		ndr_res.end = nd_region->ndr_start + nd_region->ndr_size - 1;
+		nvdimm_badblocks_populate(nd_region, &nd_region->bb, &ndr_res);
+	}
+
+>>>>>>> master
 	rc = nd_region_register_namespaces(nd_region, &err);
 	if (rc < 0)
 		return rc;
@@ -125,12 +143,18 @@ static void nd_region_notify(struct device *dev, enum nvdimm_event event)
 		struct nd_region *nd_region = to_nd_region(dev);
 
 		if (is_memory(&nd_region->dev)) {
+<<<<<<< HEAD
 			struct range range = {
 				.start = nd_region->ndr_start,
 				.end = nd_region->ndr_start +
 					nd_region->ndr_size - 1,
 			};
 
+=======
+			res.start = nd_region->ndr_start;
+			res.end = nd_region->ndr_start +
+				nd_region->ndr_size - 1;
+>>>>>>> master
 			nvdimm_badblocks_populate(nd_region,
 					&nd_region->bb, &range);
 			if (nd_region->bb_state)

@@ -366,6 +366,7 @@ tcp_base_mss - INTEGER
 	Path MTU discovery (MTU probing).  If MTU probing is enabled,
 	this is the initial MSS used by the connection.
 
+<<<<<<< HEAD:Documentation/networking/ip-sysctl.rst
 tcp_mtu_probe_floor - INTEGER
 	If MTU probing is enabled this caps the minimum MSS used for search_low
 	for the connection.
@@ -376,6 +377,11 @@ tcp_min_snd_mss - INTEGER
 	TCP SYN and SYNACK messages usually advertise an ADVMSS option,
 	as described in RFC 1122 and RFC 6691.
 
+=======
+tcp_min_snd_mss - INTEGER
+	TCP SYN and SYNACK messages usually advertise an ADVMSS option,
+	as described in RFC 1122 and RFC 6691.
+>>>>>>> master:Documentation/networking/ip-sysctl.txt
 	If this ADVMSS option is smaller than tcp_min_snd_mss,
 	it is silently capped to tcp_min_snd_mss.
 
@@ -573,9 +579,13 @@ tcp_min_rtt_wlen - INTEGER
 	minimum RTT when it is moved to a longer path (e.g., due to traffic
 	engineering). A longer window makes the filter more resistant to RTT
 	inflations such as transient congestion. The unit is seconds.
+<<<<<<< HEAD:Documentation/networking/ip-sysctl.rst
 
 	Possible values: 0 - 86400 (1 day)
 
+=======
+	Possible values: 0 - 86400 (1 day)
+>>>>>>> master:Documentation/networking/ip-sysctl.txt
 	Default: 300
 
 tcp_moderate_rcvbuf - BOOLEAN

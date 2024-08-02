@@ -142,7 +142,11 @@ void thread__put(struct thread *thread)
 		RC_CHK_PUT(thread);
 }
 
+<<<<<<< HEAD
 static struct namespaces *__thread__namespaces(struct thread *thread)
+=======
+static struct namespaces *__thread__namespaces(const struct thread *thread)
+>>>>>>> master
 {
 	if (list_empty(thread__namespaces_list(thread)))
 		return NULL;
@@ -157,6 +161,17 @@ struct namespaces *thread__namespaces(struct thread *thread)
 	down_read(thread__namespaces_lock(thread));
 	ns = __thread__namespaces(thread);
 	up_read(thread__namespaces_lock(thread));
+
+	return ns;
+}
+
+struct namespaces *thread__namespaces(const struct thread *thread)
+{
+	struct namespaces *ns;
+
+	down_read((struct rw_semaphore *)&thread->namespaces_lock);
+	ns = __thread__namespaces(thread);
+	up_read((struct rw_semaphore *)&thread->namespaces_lock);
 
 	return ns;
 }
@@ -221,7 +236,11 @@ struct comm *thread__exec_comm(struct thread *thread)
 	 * thread, that is very probably wrong. Prefer a later comm to avoid
 	 * that case.
 	 */
+<<<<<<< HEAD
 	if (second_last && !last->start && thread__pid(thread) == thread__tid(thread))
+=======
+	if (second_last && !last->start && thread->pid_ == thread->tid)
+>>>>>>> master
 		return second_last;
 
 	return last;

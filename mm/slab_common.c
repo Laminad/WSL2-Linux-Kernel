@@ -735,6 +735,7 @@ struct kmem_cache *kmalloc_slab(size_t size, gfp_t flags, unsigned long caller)
 
 		index = size_index[size_index_elem(size)];
 	} else {
+<<<<<<< HEAD
 		if (WARN_ON_ONCE(size > KMALLOC_MAX_CACHE_SIZE))
 			return NULL;
 		index = fls(size - 1);
@@ -765,6 +766,14 @@ size_t kmalloc_size_roundup(size_t size)
 
 }
 EXPORT_SYMBOL(kmalloc_size_roundup);
+=======
+		if (unlikely(size > KMALLOC_MAX_CACHE_SIZE)) {
+			WARN_ON(1);
+			return NULL;
+		}
+		index = fls(size - 1);
+	}
+>>>>>>> master
 
 #ifdef CONFIG_ZONE_DMA
 #define KMALLOC_DMA_NAME(sz)	.name[KMALLOC_DMA] = "dma-kmalloc-" #sz,

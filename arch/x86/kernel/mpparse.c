@@ -515,8 +515,15 @@ void __init default_get_smp_config(unsigned int early)
 	 */
 	if (mpf->feature1) {
 		if (early) {
+<<<<<<< HEAD
 			/* Local APIC has default address */
 			register_lapic_address(APIC_DEFAULT_PHYS_BASE);
+=======
+			/*
+			 * local APIC has default address
+			 */
+			mp_lapic_addr = APIC_DEFAULT_PHYS_BASE;
+>>>>>>> master
 			goto out;
 		}
 

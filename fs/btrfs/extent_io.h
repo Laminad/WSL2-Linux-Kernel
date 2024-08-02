@@ -71,7 +71,72 @@ struct btrfs_tree_parent_check;
 int __init extent_buffer_init_cachep(void);
 void __cold extent_buffer_free_cachep(void);
 
+<<<<<<< HEAD
 #define INLINE_EXTENT_BUFFER_PAGES     (BTRFS_MAX_METADATA_BLOCKSIZE / PAGE_SIZE)
+=======
+typedef blk_status_t (extent_submit_bio_start_t)(void *private_data,
+		struct bio *bio, u64 bio_offset);
+
+struct extent_io_ops {
+	/*
+	 * The following callbacks must be allways defined, the function
+	 * pointer will be called unconditionally.
+	 */
+	extent_submit_bio_hook_t *submit_bio_hook;
+	int (*readpage_end_io_hook)(struct btrfs_io_bio *io_bio, u64 phy_offset,
+				    struct page *page, u64 start, u64 end,
+				    int mirror);
+	int (*readpage_io_failed_hook)(struct page *page, int failed_mirror);
+
+	/*
+	 * Optional hooks, called if the pointer is not NULL
+	 */
+	int (*writepage_start_hook)(struct page *page, u64 start, u64 end);
+	void (*writepage_end_io_hook)(struct page *page, u64 start, u64 end,
+				      struct extent_state *state, int uptodate);
+	void (*set_bit_hook)(void *private_data, struct extent_state *state,
+			     unsigned *bits);
+	void (*clear_bit_hook)(void *private_data,
+			struct extent_state *state,
+			unsigned *bits);
+	void (*merge_extent_hook)(void *private_data,
+				  struct extent_state *new,
+				  struct extent_state *other);
+	void (*split_extent_hook)(void *private_data,
+				  struct extent_state *orig, u64 split);
+	void (*check_extent_io_range)(void *private_data, const char *caller,
+				      u64 start, u64 end);
+};
+
+struct extent_io_tree {
+	struct rb_root state;
+	void *private_data;
+	u64 dirty_bytes;
+	int track_uptodate;
+	spinlock_t lock;
+	const struct extent_io_ops *ops;
+};
+
+struct extent_state {
+	u64 start;
+	u64 end; /* inclusive */
+	struct rb_node rb_node;
+
+	/* ADD NEW ELEMENTS AFTER THIS */
+	wait_queue_head_t wq;
+	refcount_t refs;
+	unsigned state;
+
+	struct io_failure_record *failrec;
+
+#ifdef CONFIG_BTRFS_DEBUG
+	struct list_head leak_list;
+#endif
+};
+
+#define INLINE_EXTENT_BUFFER_PAGES 16
+#define MAX_INLINE_EXTENT_BUFFER_SIZE (INLINE_EXTENT_BUFFER_PAGES * PAGE_SIZE)
+>>>>>>> master
 struct extent_buffer {
 	u64 start;
 	unsigned long len;

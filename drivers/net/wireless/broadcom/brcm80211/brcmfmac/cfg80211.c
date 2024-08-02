@@ -6314,6 +6314,7 @@ static s32 brcmf_get_assoc_ies(struct brcmf_cfg80211_info *cfg,
 			    GFP_KERNEL);
 		if (!conn_info->resp_ie)
 			conn_info->resp_ie_len = 0;
+<<<<<<< HEAD
 
 		err = brcmf_fil_iovar_data_get(ifp, "wme_ac_sta",
 					       edcf_acparam_info,
@@ -6325,6 +6326,8 @@ static s32 brcmf_get_assoc_ies(struct brcmf_cfg80211_info *cfg,
 
 		brcmf_wifi_prioritize_acparams(edcf_acparam_info,
 					       cfg->ac_priority);
+=======
+>>>>>>> master
 	} else {
 		conn_info->resp_ie_len = 0;
 		conn_info->resp_ie = NULL;

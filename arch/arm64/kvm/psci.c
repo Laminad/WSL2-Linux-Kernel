@@ -62,7 +62,10 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
 	struct vcpu_reset_state *reset_state;
 	struct kvm *kvm = source_vcpu->kvm;
 	struct kvm_vcpu *vcpu = NULL;
+<<<<<<< HEAD:arch/arm64/kvm/psci.c
 	int ret = PSCI_RET_SUCCESS;
+=======
+>>>>>>> master:virt/kvm/arm/psci.c
 	unsigned long cpu_id;
 
 	cpu_id = smccc_get_arg1(source_vcpu);
@@ -101,8 +104,22 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
 	 */
 	reset_state->r0 = smccc_get_arg3(source_vcpu);
 
+<<<<<<< HEAD:arch/arm64/kvm/psci.c
 	reset_state->reset = true;
 	kvm_make_request(KVM_REQ_VCPU_RESET, vcpu);
+=======
+	WRITE_ONCE(reset_state->reset, true);
+	kvm_make_request(KVM_REQ_VCPU_RESET, vcpu);
+
+	/*
+	 * Make sure the reset request is observed if the change to
+	 * power_state is observed.
+	 */
+	smp_wmb();
+
+	vcpu->arch.power_off = false;
+	kvm_vcpu_wake_up(vcpu);
+>>>>>>> master:virt/kvm/arm/psci.c
 
 	/*
 	 * Make sure the reset request is observed if the RUNNABLE mp_state is

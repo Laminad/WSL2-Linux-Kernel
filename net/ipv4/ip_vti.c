@@ -72,6 +72,7 @@ drop:
 	return 0;
 }
 
+<<<<<<< HEAD
 static int vti_input_proto(struct sk_buff *skb, int nexthdr, __be32 spi,
 			   int encap_type)
 {
@@ -79,6 +80,36 @@ static int vti_input_proto(struct sk_buff *skb, int nexthdr, __be32 spi,
 }
 
 static int vti_rcv(struct sk_buff *skb, __be32 spi, bool update_skb_dev)
+=======
+static int vti_input_ipip(struct sk_buff *skb, int nexthdr, __be32 spi,
+		     int encap_type)
+{
+	struct ip_tunnel *tunnel;
+	const struct iphdr *iph = ip_hdr(skb);
+	struct net *net = dev_net(skb->dev);
+	struct ip_tunnel_net *itn = net_generic(net, vti_net_id);
+
+	tunnel = ip_tunnel_lookup(itn, skb->dev->ifindex, TUNNEL_NO_KEY,
+				  iph->saddr, iph->daddr, 0);
+	if (tunnel) {
+		if (!xfrm4_policy_check(NULL, XFRM_POLICY_IN, skb))
+			goto drop;
+
+		XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip4 = tunnel;
+
+		skb->dev = tunnel->dev;
+
+		return xfrm_input(skb, nexthdr, spi, encap_type);
+	}
+
+	return -EINVAL;
+drop:
+	kfree_skb(skb);
+	return 0;
+}
+
+static int vti_rcv(struct sk_buff *skb)
+>>>>>>> master
 {
 	XFRM_SPI_SKB_CB(skb)->family = AF_INET;
 	XFRM_SPI_SKB_CB(skb)->daddroff = offsetof(struct iphdr, daddr);
@@ -89,6 +120,14 @@ static int vti_rcv(struct sk_buff *skb, __be32 spi, bool update_skb_dev)
 static int vti_rcv_proto(struct sk_buff *skb)
 {
 	return vti_rcv(skb, 0, false);
+}
+
+static int vti_rcv_ipip(struct sk_buff *skb)
+{
+	XFRM_SPI_SKB_CB(skb)->family = AF_INET;
+	XFRM_SPI_SKB_CB(skb)->daddroff = offsetof(struct iphdr, daddr);
+
+	return vti_input_ipip(skb, ip_hdr(skb)->protocol, ip_hdr(skb)->saddr, 0);
 }
 
 static int vti_rcv_cb(struct sk_buff *skb, int err)
@@ -304,7 +343,11 @@ static netdev_tx_t vti_tunnel_xmit(struct sk_buff *skb, struct net_device *dev)
 	return vti_xmit(skb, dev, &fl);
 
 tx_err:
+<<<<<<< HEAD
 	DEV_STATS_INC(dev, tx_errors);
+=======
+	dev->stats.tx_errors++;
+>>>>>>> master
 	kfree_skb(skb);
 	return NETDEV_TX_OK;
 }
@@ -470,6 +513,7 @@ static struct xfrm4_protocol vti_ipcomp4_protocol __read_mostly = {
 	.priority	=	100,
 };
 
+<<<<<<< HEAD
 #if IS_ENABLED(CONFIG_INET_XFRM_TUNNEL)
 static int vti_rcv_tunnel(struct sk_buff *skb)
 {
@@ -482,10 +526,15 @@ static int vti_rcv_tunnel(struct sk_buff *skb)
 static struct xfrm_tunnel vti_ipip_handler __read_mostly = {
 	.handler	=	vti_rcv_tunnel,
 	.cb_handler	=	vti_rcv_cb,
+=======
+static struct xfrm_tunnel ipip_handler __read_mostly = {
+	.handler	=	vti_rcv_ipip,
+>>>>>>> master
 	.err_handler	=	vti4_err,
 	.priority	=	0,
 };
 
+<<<<<<< HEAD
 #if IS_ENABLED(CONFIG_IPV6)
 static struct xfrm_tunnel vti_ipip6_handler __read_mostly = {
 	.handler	=	vti_rcv_tunnel,
@@ -496,6 +545,8 @@ static struct xfrm_tunnel vti_ipip6_handler __read_mostly = {
 #endif
 #endif
 
+=======
+>>>>>>> master
 static int __net_init vti_init_net(struct net *net)
 {
 	int err;
@@ -664,6 +715,7 @@ static int __init vti_init(void)
 	if (err < 0)
 		goto xfrm_proto_comp_failed;
 
+<<<<<<< HEAD
 #if IS_ENABLED(CONFIG_INET_XFRM_TUNNEL)
 	msg = "ipip tunnel";
 	err = xfrm4_tunnel_register(&vti_ipip_handler, AF_INET);
@@ -675,6 +727,14 @@ static int __init vti_init(void)
 		goto xfrm_tunnel_ipip6_failed;
 #endif
 #endif
+=======
+	msg = "ipip tunnel";
+	err = xfrm4_tunnel_register(&ipip_handler, AF_INET);
+	if (err < 0) {
+		pr_info("%s: cant't register tunnel\n",__func__);
+		goto xfrm_tunnel_failed;
+	}
+>>>>>>> master
 
 	msg = "netlink interface";
 	err = rtnl_link_register(&vti_link_ops);
@@ -684,6 +744,7 @@ static int __init vti_init(void)
 	return err;
 
 rtnl_link_failed:
+<<<<<<< HEAD
 #if IS_ENABLED(CONFIG_INET_XFRM_TUNNEL)
 #if IS_ENABLED(CONFIG_IPV6)
 	xfrm4_tunnel_deregister(&vti_ipip6_handler, AF_INET6);
@@ -692,6 +753,10 @@ xfrm_tunnel_ipip6_failed:
 	xfrm4_tunnel_deregister(&vti_ipip_handler, AF_INET);
 xfrm_tunnel_ipip_failed:
 #endif
+=======
+	xfrm4_tunnel_deregister(&ipip_handler, AF_INET);
+xfrm_tunnel_failed:
+>>>>>>> master
 	xfrm4_protocol_deregister(&vti_ipcomp4_protocol, IPPROTO_COMP);
 xfrm_proto_comp_failed:
 	xfrm4_protocol_deregister(&vti_ah4_protocol, IPPROTO_AH);
@@ -707,12 +772,16 @@ pernet_dev_failed:
 static void __exit vti_fini(void)
 {
 	rtnl_link_unregister(&vti_link_ops);
+<<<<<<< HEAD
 #if IS_ENABLED(CONFIG_INET_XFRM_TUNNEL)
 #if IS_ENABLED(CONFIG_IPV6)
 	xfrm4_tunnel_deregister(&vti_ipip6_handler, AF_INET6);
 #endif
 	xfrm4_tunnel_deregister(&vti_ipip_handler, AF_INET);
 #endif
+=======
+	xfrm4_tunnel_deregister(&ipip_handler, AF_INET);
+>>>>>>> master
 	xfrm4_protocol_deregister(&vti_ipcomp4_protocol, IPPROTO_COMP);
 	xfrm4_protocol_deregister(&vti_ah4_protocol, IPPROTO_AH);
 	xfrm4_protocol_deregister(&vti_esp4_protocol, IPPROTO_ESP);

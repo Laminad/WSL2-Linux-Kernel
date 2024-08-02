@@ -192,6 +192,18 @@ restart:
 		jh = transaction->t_checkpoint_list;
 		bh = jh2bh(jh);
 
+<<<<<<< HEAD
+=======
+		if (buffer_locked(bh)) {
+			get_bh(bh);
+			spin_unlock(&journal->j_list_lock);
+			wait_on_buffer(bh);
+			/* the journal_head may have gone by now */
+			BUFFER_TRACE(bh, "brelse");
+			__brelse(bh);
+			goto retry;
+		}
+>>>>>>> master
 		if (jh->b_transaction != NULL) {
 			transaction_t *t = jh->b_transaction;
 			tid_t tid = t->t_tid;
@@ -283,6 +295,43 @@ restart:
 			goto restart;
 	}
 
+<<<<<<< HEAD
+=======
+	/*
+	 * Now we issued all of the transaction's buffers, let's deal
+	 * with the buffers that are out for I/O.
+	 */
+restart2:
+	/* Did somebody clean up the transaction in the meanwhile? */
+	if (journal->j_checkpoint_transactions != transaction ||
+	    transaction->t_tid != this_tid)
+		goto out;
+
+	while (transaction->t_checkpoint_io_list) {
+		jh = transaction->t_checkpoint_io_list;
+		bh = jh2bh(jh);
+		if (buffer_locked(bh)) {
+			get_bh(bh);
+			spin_unlock(&journal->j_list_lock);
+			wait_on_buffer(bh);
+			/* the journal_head may have gone by now */
+			BUFFER_TRACE(bh, "brelse");
+			__brelse(bh);
+			spin_lock(&journal->j_list_lock);
+			goto restart2;
+		}
+		if (unlikely(buffer_write_io_error(bh)) && !result)
+			result = -EIO;
+
+		/*
+		 * Now in whatever state the buffer currently is, we
+		 * know that it has been written out and so we can
+		 * drop it from the list
+		 */
+		if (__jbd2_journal_remove_checkpoint(jh))
+			break;
+	}
+>>>>>>> master
 out:
 	spin_unlock(&journal->j_list_lock);
 	result = jbd2_cleanup_journal_tail(journal);

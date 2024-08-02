@@ -383,7 +383,11 @@ static int sdhci_at91_probe(struct platform_device *pdev)
 	pm_runtime_use_autosuspend(&pdev->dev);
 
 	/* HS200 is broken at this moment */
+<<<<<<< HEAD
 	host->quirks2 |= SDHCI_QUIRK2_BROKEN_HS200;
+=======
+	host->quirks2 = SDHCI_QUIRK2_BROKEN_HS200;
+>>>>>>> master
 
 	ret = sdhci_add_host(host);
 	if (ret)

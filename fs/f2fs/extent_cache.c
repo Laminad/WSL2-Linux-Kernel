@@ -507,7 +507,10 @@ static struct extent_node *__try_merge_extent_node(struct f2fs_sb_info *sbi,
 				struct extent_node *prev_ex,
 				struct extent_node *next_ex)
 {
+<<<<<<< HEAD
 	struct extent_tree_info *eti = &sbi->extent_tree[et->type];
+=======
+>>>>>>> master
 	struct extent_node *en = NULL;
 
 	if (prev_ex && __is_back_mergeable(ei, &prev_ex->ei, et->type)) {
@@ -547,8 +550,12 @@ static struct extent_node *__insert_extent_tree(struct f2fs_sb_info *sbi,
 				struct rb_node *insert_parent,
 				bool leftmost)
 {
+<<<<<<< HEAD
 	struct extent_tree_info *eti = &sbi->extent_tree[et->type];
 	struct rb_node **p = &et->root.rb_root.rb_node;
+=======
+	struct rb_node **p;
+>>>>>>> master
 	struct rb_node *parent = NULL;
 	struct extent_node *en = NULL;
 
@@ -601,8 +608,13 @@ static void __update_extent_tree_range(struct inode *inode,
 	struct rb_node **insert_p = NULL, *insert_parent = NULL;
 	unsigned int fofs = tei->fofs, len = tei->len;
 	unsigned int end = fofs + len;
+<<<<<<< HEAD
 	bool updated = false;
 	bool leftmost = false;
+=======
+	unsigned int pos = (unsigned int)fofs;
+	bool updated = false;
+>>>>>>> master
 
 	if (!et)
 		return;
@@ -632,6 +644,18 @@ static void __update_extent_tree_range(struct inode *inode,
 		__drop_largest_extent(et, fofs, len);
 	}
 
+<<<<<<< HEAD
+=======
+	prev = et->largest;
+	dei.len = 0;
+
+	/*
+	 * drop largest extent before lookup, in case it's already
+	 * been shrunk from extent tree
+	 */
+	__drop_largest_extent(et, fofs, len);
+
+>>>>>>> master
 	/* 1. lookup first extent node in range [fofs, fofs + len - 1] */
 	en = __lookup_extent_node_ret(&et->root,
 					et->cached_en, fofs,
@@ -662,6 +686,7 @@ static void __update_extent_tree_range(struct inode *inode,
 		if (end < org_end && (type != EX_READ ||
 				org_end - end >= F2FS_MIN_EXTENT_LEN)) {
 			if (parts) {
+<<<<<<< HEAD
 				__set_extent_info(&ei,
 					end, org_end - end,
 					end - dei.fofs + dei.blk, false,
@@ -669,6 +694,13 @@ static void __update_extent_tree_range(struct inode *inode,
 					type);
 				en1 = __insert_extent_tree(sbi, et, &ei,
 							NULL, NULL, true);
+=======
+				set_extent_info(&ei, end,
+						end - dei.fofs + dei.blk,
+						org_end - end);
+				en1 = __insert_extent_tree(sbi, et, &ei,
+							NULL, NULL);
+>>>>>>> master
 				next_en = en1;
 			} else {
 				__set_extent_info(&en->ei,
@@ -708,6 +740,7 @@ static void __update_extent_tree_range(struct inode *inode,
 	if (type == EX_BLOCK_AGE)
 		goto update_age_extent_cache;
 
+<<<<<<< HEAD
 	/* 3. update extent in read extent cache */
 	BUG_ON(type != EX_READ);
 
@@ -717,6 +750,12 @@ static void __update_extent_tree_range(struct inode *inode,
 		if (!__try_merge_extent_node(sbi, et, &ei, prev_en, next_en))
 			__insert_extent_tree(sbi, et, &ei,
 					insert_p, insert_parent, leftmost);
+=======
+		set_extent_info(&ei, fofs, blkaddr, len);
+		if (!__try_merge_extent_node(sbi, et, &ei, prev_en, next_en))
+			__insert_extent_tree(sbi, et, &ei,
+						insert_p, insert_parent);
+>>>>>>> master
 
 		/* give up extent_cache, if split and small updates happen */
 		if (dei.len >= 1 &&
@@ -735,6 +774,7 @@ static void __update_extent_tree_range(struct inode *inode,
 		et->largest_updated = false;
 		updated = true;
 	}
+<<<<<<< HEAD
 	goto out_read_extent_cache;
 update_age_extent_cache:
 	if (!tei->last_blocks)
@@ -746,6 +786,9 @@ update_age_extent_cache:
 		__insert_extent_tree(sbi, et, &ei,
 					insert_p, insert_parent, leftmost);
 out_read_extent_cache:
+=======
+
+>>>>>>> master
 	write_unlock(&et->lock);
 
 	if (updated)
@@ -1080,7 +1123,11 @@ void f2fs_destroy_extent_node(struct inode *inode)
 static void __drop_extent_tree(struct inode *inode, enum extent_type type)
 {
 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+<<<<<<< HEAD
 	struct extent_tree *et = F2FS_I(inode)->extent_tree[type];
+=======
+	struct extent_tree *et = F2FS_I(inode)->extent_tree;
+>>>>>>> master
 	bool updated = false;
 
 	if (!__may_extent_tree(inode, type))
@@ -1088,12 +1135,18 @@ static void __drop_extent_tree(struct inode *inode, enum extent_type type)
 
 	write_lock(&et->lock);
 	__free_extent_tree(sbi, et);
+<<<<<<< HEAD
 	if (type == EX_READ) {
 		set_inode_flag(inode, FI_NO_EXTENT);
 		if (et->largest.len) {
 			et->largest.len = 0;
 			updated = true;
 		}
+=======
+	if (et->largest.len) {
+		et->largest.len = 0;
+		updated = true;
+>>>>>>> master
 	}
 	write_unlock(&et->lock);
 	if (updated)

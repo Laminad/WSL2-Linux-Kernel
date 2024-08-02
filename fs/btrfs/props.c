@@ -291,8 +291,47 @@ static int prop_compression_validate(const struct btrfs_inode *inode,
 	if (btrfs_compress_is_valid_type(value, len))
 		return 0;
 
+<<<<<<< HEAD
 	if ((len == 2 && strncmp("no", value, 2) == 0) ||
 	    (len == 4 && strncmp("none", value, 4) == 0))
+=======
+	return inherit_props(trans, inode, dir);
+}
+
+int btrfs_subvol_inherit_props(struct btrfs_trans_handle *trans,
+			       struct btrfs_root *root,
+			       struct btrfs_root *parent_root)
+{
+	struct super_block *sb = root->fs_info->sb;
+	struct btrfs_key key;
+	struct inode *parent_inode, *child_inode;
+	int ret;
+
+	key.objectid = BTRFS_FIRST_FREE_OBJECTID;
+	key.type = BTRFS_INODE_ITEM_KEY;
+	key.offset = 0;
+
+	parent_inode = btrfs_iget(sb, &key, parent_root, NULL);
+	if (IS_ERR(parent_inode))
+		return PTR_ERR(parent_inode);
+
+	child_inode = btrfs_iget(sb, &key, root, NULL);
+	if (IS_ERR(child_inode)) {
+		iput(parent_inode);
+		return PTR_ERR(child_inode);
+	}
+
+	ret = inherit_props(trans, child_inode, parent_inode);
+	iput(child_inode);
+	iput(parent_inode);
+
+	return ret;
+}
+
+static int prop_compression_validate(const char *value, size_t len)
+{
+	if (btrfs_compress_is_valid_type(value, len))
+>>>>>>> master
 		return 0;
 
 	return -EINVAL;

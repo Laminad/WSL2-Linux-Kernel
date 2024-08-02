@@ -588,7 +588,49 @@ xfs_file_dio_write_aligned(
 	unsigned int		iolock = XFS_IOLOCK_SHARED;
 	ssize_t			ret;
 
+<<<<<<< HEAD
 	ret = xfs_ilock_iocb_for_write(iocb, &iolock);
+=======
+	/* DIO must be aligned to device logical sector size */
+	if ((iocb->ki_pos | count) & target->bt_logical_sectormask)
+		return -EINVAL;
+
+	/*
+	 * Don't take the exclusive iolock here unless the I/O is unaligned to
+	 * the file system block size.  We don't need to consider the EOF
+	 * extension case here because xfs_file_aio_write_checks() will relock
+	 * the inode as necessary for EOF zeroing cases and fill out the new
+	 * inode size as appropriate.
+	 */
+	if ((iocb->ki_pos & mp->m_blockmask) ||
+	    ((iocb->ki_pos + count) & mp->m_blockmask)) {
+		unaligned_io = 1;
+
+		/*
+		 * We can't properly handle unaligned direct I/O to reflink
+		 * files yet, as we can't unshare a partial block.
+		 */
+		if (xfs_is_reflink_inode(ip)) {
+			trace_xfs_reflink_bounce_dio_write(ip, iocb->ki_pos, count);
+			return -EREMCHG;
+		}
+		iolock = XFS_IOLOCK_EXCL;
+	} else {
+		iolock = XFS_IOLOCK_SHARED;
+	}
+
+	if (iocb->ki_flags & IOCB_NOWAIT) {
+		/* unaligned dio always waits, bail */
+		if (unaligned_io)
+			return -EAGAIN;
+		if (!xfs_ilock_nowait(ip, iolock))
+			return -EAGAIN;
+	} else {
+		xfs_ilock(ip, iolock);
+	}
+
+	ret = xfs_file_aio_write_checks(iocb, from, &iolock);
+>>>>>>> master
 	if (ret)
 		return ret;
 	ret = xfs_file_write_checks(iocb, from, &iolock);
@@ -596,11 +638,23 @@ xfs_file_dio_write_aligned(
 		goto out_unlock;
 
 	/*
+<<<<<<< HEAD
 	 * We don't need to hold the IOLOCK exclusively across the IO, so demote
 	 * the iolock back to shared if we had to take the exclusive lock in
 	 * xfs_file_write_checks() for other reasons.
 	 */
 	if (iolock == XFS_IOLOCK_EXCL) {
+=======
+	 * If we are doing unaligned IO, we can't allow any other overlapping IO
+	 * in-flight at the same time or we risk data corruption. Wait for all
+	 * other IO to drain before we submit. If the IO is aligned, demote the
+	 * iolock if we had to take the exclusive lock in
+	 * xfs_file_aio_write_checks() for other reasons.
+	 */
+	if (unaligned_io) {
+		inode_dio_wait(inode);
+	} else if (iolock == XFS_IOLOCK_EXCL) {
+>>>>>>> master
 		xfs_ilock_demote(ip, XFS_IOLOCK_EXCL);
 		iolock = XFS_IOLOCK_SHARED;
 	}
@@ -613,6 +667,7 @@ out_unlock:
 	return ret;
 }
 
+<<<<<<< HEAD
 /*
  * Handle block unaligned direct I/O writes
  *
@@ -641,6 +696,20 @@ xfs_file_dio_write_unaligned(
 	unsigned int		iolock = XFS_IOLOCK_SHARED;
 	unsigned int		flags = IOMAP_DIO_OVERWRITE_ONLY;
 	ssize_t			ret;
+=======
+	trace_xfs_file_direct_write(ip, count, iocb->ki_pos);
+	ret = iomap_dio_rw(iocb, from, &xfs_iomap_ops, xfs_dio_write_end_io);
+
+	/*
+	 * If unaligned, this is the only IO in-flight. If it has not yet
+	 * completed, wait on it before we release the iolock to prevent
+	 * subsequent overlapping IO.
+	 */
+	if (ret == -EIOCBQUEUED && unaligned_io)
+		inode_dio_wait(inode);
+out:
+	xfs_iunlock(ip, iolock);
+>>>>>>> master
 
 	/*
 	 * Extending writes need exclusivity because of the sub-block zeroing

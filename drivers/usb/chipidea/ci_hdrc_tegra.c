@@ -367,6 +367,7 @@ static void tegra_usb_remove(struct platform_device *pdev)
 {
 	struct tegra_usb *usb = platform_get_drvdata(pdev);
 
+<<<<<<< HEAD
 	ci_hdrc_remove_device(usb->dev);
 	usb_phy_shutdown(usb->phy);
 
@@ -384,6 +385,11 @@ static int __maybe_unused tegra_usb_runtime_resume(struct device *dev)
 		dev_err(dev, "failed to enable clock: %d\n", err);
 		return err;
 	}
+=======
+	ci_hdrc_remove_device(udc->dev);
+	usb_phy_set_suspend(udc->phy, 1);
+	clk_disable_unprepare(udc->clk);
+>>>>>>> master
 
 	return 0;
 }

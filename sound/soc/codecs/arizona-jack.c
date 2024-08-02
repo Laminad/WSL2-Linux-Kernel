@@ -1600,7 +1600,19 @@ static int arizona_jack_disable_jack_detect(struct arizona_priv *info)
 	struct arizona *arizona = info->arizona;
 	int jack_irq_rise, jack_irq_fall;
 	bool change;
+<<<<<<< HEAD:sound/soc/codecs/arizona-jack.c
 	int ret;
+=======
+
+	regmap_update_bits_check(arizona->regmap, ARIZONA_MIC_DETECT_1,
+				 ARIZONA_MICD_ENA, 0,
+				 &change);
+
+	if (change) {
+		regulator_disable(info->micvdd);
+		pm_runtime_put(info->dev);
+	}
+>>>>>>> master:drivers/extcon/extcon-arizona.c
 
 	if (!info->jack)
 		return 0;

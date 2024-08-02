@@ -92,7 +92,6 @@ static struct cgroup *cgroup_rstat_cpu_pop_updated(struct cgroup *pos,
 						   struct cgroup *root, int cpu)
 {
 	struct cgroup_rstat_cpu *rstatc;
-	struct cgroup *parent;
 
 	if (pos == root)
 		return NULL;
@@ -124,9 +123,16 @@ static struct cgroup *cgroup_rstat_cpu_pop_updated(struct cgroup *pos,
 	 * However, due to the way we traverse, @pos will be the first
 	 * child in most cases. The only exception is @root.
 	 */
+<<<<<<< HEAD
 	parent = cgroup_parent(pos);
 	if (parent) {
 		struct cgroup_rstat_cpu *prstatc;
+=======
+	if (rstatc->updated_next) {
+		struct cgroup *parent = cgroup_parent(pos);
+		struct cgroup_rstat_cpu *prstatc = cgroup_rstat_cpu(parent, cpu);
+		struct cgroup_rstat_cpu *nrstatc;
+>>>>>>> master
 		struct cgroup **nextp;
 
 		prstatc = cgroup_rstat_cpu(parent, cpu);
@@ -139,10 +145,27 @@ static struct cgroup *cgroup_rstat_cpu_pop_updated(struct cgroup *pos,
 			nextp = &nrstatc->updated_next;
 		}
 		*nextp = rstatc->updated_next;
+<<<<<<< HEAD
 	}
 
 	rstatc->updated_next = NULL;
 	return pos;
+=======
+		rstatc->updated_next = NULL;
+
+		/*
+		 * Paired with the one in cgroup_rstat_cpu_updated().
+		 * Either they see NULL updated_next or we see their
+		 * updated stat.
+		 */
+		smp_mb();
+
+		return pos;
+	}
+
+	/* only happens for @root */
+	return NULL;
+>>>>>>> master
 }
 
 /*

@@ -813,9 +813,15 @@ static int i2s_hw_params(struct snd_pcm_substream *substream,
 
 	i2s->frmclk = params_rate(params);
 
+<<<<<<< HEAD
 	rclksrc = priv->clk_table[CLK_I2S_RCLK_SRC];
 	if (rclksrc && !IS_ERR(rclksrc))
 		priv->rclk_srcrate = clk_get_rate(rclksrc);
+=======
+	rclksrc = i2s->clk_table[CLK_I2S_RCLK_SRC];
+	if (rclksrc && !IS_ERR(rclksrc))
+		i2s->rclk_srcrate = clk_get_rate(rclksrc);
+>>>>>>> master
 
 	return 0;
 }
@@ -923,9 +929,15 @@ static int config_setup(struct i2s_dai *i2s)
 	if (priv->slave_mode)
 		return 0;
 
+<<<<<<< HEAD
 	if (!(priv->quirks & QUIRK_NO_MUXPSR)) {
 		psr = priv->rclk_srcrate / i2s->frmclk / rfs;
 		writel(((psr - 1) << 8) | PSR_PSREN, priv->addr + I2SPSR);
+=======
+	if (!(i2s->quirks & QUIRK_NO_MUXPSR)) {
+		psr = i2s->rclk_srcrate / i2s->frmclk / rfs;
+		writel(((psr - 1) << 8) | PSR_PSREN, i2s->addr + I2SPSR);
+>>>>>>> master
 		dev_dbg(&i2s->pdev->dev,
 			"RCLK_SRC=%luHz PSR=%u, RCLK=%dfs, BCLK=%dfs\n",
 				priv->rclk_srcrate, psr, rfs, bfs);

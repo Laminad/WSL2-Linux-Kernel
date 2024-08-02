@@ -73,7 +73,13 @@ static bool kvm_mtrr_valid(struct kvm_vcpu *vcpu, u32 msr, u64 data)
 	if (!msr_mtrr_valid(msr))
 		return false;
 
+<<<<<<< HEAD
 	if (msr == MSR_MTRRdefType) {
+=======
+	if (msr == MSR_IA32_CR_PAT) {
+		return kvm_pat_valid(data);
+	} else if (msr == MSR_MTRRdefType) {
+>>>>>>> master
 		if (data & ~0xcff)
 			return false;
 		return valid_mtrr_type(data & 0xff);

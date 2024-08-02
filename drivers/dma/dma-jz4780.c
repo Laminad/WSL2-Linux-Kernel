@@ -860,6 +860,21 @@ static int jz4780_dma_probe(struct platform_device *pdev)
 
 	if (!dev->of_node) {
 		dev_err(dev, "This driver must be probed from devicetree\n");
+<<<<<<< HEAD
+=======
+		return -EINVAL;
+	}
+
+	jzdma = devm_kzalloc(dev, sizeof(*jzdma), GFP_KERNEL);
+	if (!jzdma)
+		return -ENOMEM;
+
+	platform_set_drvdata(pdev, jzdma);
+
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!res) {
+		dev_err(dev, "failed to get I/O memory\n");
+>>>>>>> master
 		return -EINVAL;
 	}
 

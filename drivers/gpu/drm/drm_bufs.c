@@ -47,6 +47,10 @@
 
 #include "drm_legacy.h"
 
+<<<<<<< HEAD
+=======
+#include <linux/nospec.h>
+>>>>>>> master
 
 static struct drm_map_list *drm_find_matching_map(struct drm_device *dev,
 						  struct drm_local_map *map)

@@ -1419,9 +1419,12 @@ struct drm_i915_gem_execbuffer2 {
 	 * single &i915_user_extension and num_cliprects is 0.
 	 */
 	__u64 cliprects_ptr;
+<<<<<<< HEAD
 
 	/** @flags: Execbuf flags */
 	__u64 flags;
+=======
+>>>>>>> master
 #define I915_EXEC_RING_MASK              (0x3f)
 #define I915_EXEC_DEFAULT                (0<<0)
 #define I915_EXEC_RENDER                 (1<<0)

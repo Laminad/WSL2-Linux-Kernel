@@ -231,10 +231,29 @@ static void afs_kill_pages(struct address_space *mapping,
 	do {
 		_debug("kill %lx (to %lx)", index, last);
 
+<<<<<<< HEAD
 		folio = filemap_get_folio(mapping, index);
 		if (IS_ERR(folio)) {
 			next = index + 1;
 			continue;
+=======
+		count = last - first + 1;
+		if (count > PAGEVEC_SIZE)
+			count = PAGEVEC_SIZE;
+		pv.nr = find_get_pages_contig(mapping, first, count, pv.pages);
+		ASSERTCMP(pv.nr, ==, count);
+
+		for (loop = 0; loop < count; loop++) {
+			struct page *page = pv.pages[loop];
+			ClearPageUptodate(page);
+			SetPageError(page);
+			end_page_writeback(page);
+			if (page->index >= first)
+				first = page->index + 1;
+			lock_page(page);
+			generic_error_remove_page(mapping, page);
+			unlock_page(page);
+>>>>>>> master
 		}
 
 		next = folio_next_index(folio);

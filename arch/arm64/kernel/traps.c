@@ -172,6 +172,81 @@ static void dump_kernel_instr(const char *lvl, struct pt_regs *regs)
 	printk("%sCode: %s\n", lvl, str);
 }
 
+<<<<<<< HEAD
+=======
+static void dump_instr(const char *lvl, struct pt_regs *regs)
+{
+	if (!user_mode(regs)) {
+		mm_segment_t fs = get_fs();
+		set_fs(KERNEL_DS);
+		__dump_instr(lvl, regs);
+		set_fs(fs);
+	} else {
+		__dump_instr(lvl, regs);
+	}
+}
+
+void dump_backtrace(struct pt_regs *regs, struct task_struct *tsk)
+{
+	struct stackframe frame;
+	int skip = 0;
+
+	pr_debug("%s(regs = %p tsk = %p)\n", __func__, regs, tsk);
+
+	if (regs) {
+		if (user_mode(regs))
+			return;
+		skip = 1;
+	}
+
+	if (!tsk)
+		tsk = current;
+
+	if (!try_get_task_stack(tsk))
+		return;
+
+	if (tsk == current) {
+		frame.fp = (unsigned long)__builtin_frame_address(0);
+		frame.pc = (unsigned long)dump_backtrace;
+	} else {
+		/*
+		 * task blocked in __switch_to
+		 */
+		frame.fp = thread_saved_fp(tsk);
+		frame.pc = thread_saved_pc(tsk);
+	}
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+	frame.graph = tsk->curr_ret_stack;
+#endif
+
+	printk("Call trace:\n");
+	do {
+		/* skip until specified stack frame */
+		if (!skip) {
+			dump_backtrace_entry(frame.pc);
+		} else if (frame.fp == regs->regs[29]) {
+			skip = 0;
+			/*
+			 * Mostly, this is the case where this function is
+			 * called in panic/abort. As exception handler's
+			 * stack frame does not contain the corresponding pc
+			 * at which an exception has taken place, use regs->pc
+			 * instead.
+			 */
+			dump_backtrace_entry(regs->pc);
+		}
+	} while (!unwind_frame(tsk, &frame));
+
+	put_task_stack(tsk);
+}
+
+void show_stack(struct task_struct *tsk, unsigned long *sp)
+{
+	dump_backtrace(NULL, tsk);
+	barrier();
+}
+
+>>>>>>> master
 #ifdef CONFIG_PREEMPT
 #define S_PREEMPT " PREEMPT"
 #elif defined(CONFIG_PREEMPT_RT)
@@ -196,9 +271,19 @@ static int __die(const char *str, long err, struct pt_regs *regs)
 		return ret;
 
 	print_modules();
+<<<<<<< HEAD
 	show_regs(regs);
 
 	dump_kernel_instr(KERN_EMERG, regs);
+=======
+	pr_emerg("Process %.*s (pid: %d, stack limit = 0x%p)\n",
+		 TASK_COMM_LEN, tsk->comm, task_pid_nr(tsk),
+		 end_of_stack(tsk));
+	show_regs(regs);
+
+	if (!user_mode(regs))
+		dump_instr(KERN_EMERG, regs);
+>>>>>>> master
 
 	return ret;
 }
@@ -377,9 +462,21 @@ void arm64_skip_faulting_instruction(struct pt_regs *regs, unsigned long size)
 static int user_insn_read(struct pt_regs *regs, u32 *insnp)
 {
 	u32 instr;
+<<<<<<< HEAD
 	unsigned long pc = instruction_pointer(regs);
 
 	if (compat_thumb_mode(regs)) {
+=======
+	int (*fn)(struct pt_regs *regs, u32 instr) = NULL;
+	void __user *pc = (void __user *)instruction_pointer(regs);
+
+	if (!user_mode(regs)) {
+		__le32 instr_le;
+		if (probe_kernel_address((__force __le32 *)pc, instr_le))
+			goto exit;
+		instr = le32_to_cpu(instr_le);
+	} else if (compat_thumb_mode(regs)) {
+>>>>>>> master
 		/* 16-bit Thumb instruction */
 		__le16 instr_le;
 		if (get_user(instr_le, (__le16 __user *)pc))
@@ -465,11 +562,16 @@ void do_el0_undef(struct pt_regs *regs, unsigned long esr)
 	if (try_emulate_mrs(regs, insn))
 		return;
 
+<<<<<<< HEAD
 	if (try_emulate_armv8_deprecated(regs, insn))
 		return;
 
 out_err:
 	force_signal_inject(SIGILL, ILL_ILLOPC, regs->pc, 0);
+=======
+	force_signal_inject(SIGILL, ILL_ILLOPC, regs->pc);
+	BUG_ON(!user_mode(regs));
+>>>>>>> master
 }
 
 void do_el1_undef(struct pt_regs *regs, unsigned long esr)

@@ -112,7 +112,10 @@ static int ip6_frag_queue(struct frag_queue *fq, struct sk_buff *skb,
 	struct sk_buff *prev_tail;
 	struct net_device *dev;
 	int err = -ENOENT;
+<<<<<<< HEAD
 	SKB_DR(reason);
+=======
+>>>>>>> master
 	u8 ecn;
 
 	/* If reassembly is already done, @skb must be a duplicate frag. */
@@ -230,9 +233,14 @@ static int ip6_frag_queue(struct frag_queue *fq, struct sk_buff *skb,
 
 insert_error:
 	if (err == IPFRAG_DUP) {
+<<<<<<< HEAD
 		SKB_DR_SET(reason, DUP_FRAG);
 		err = -EINVAL;
 		goto err;
+=======
+		kfree_skb(skb);
+		return -EINVAL;
+>>>>>>> master
 	}
 	err = -EINVAL;
 	__IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)),
@@ -242,7 +250,11 @@ discard_fq:
 	__IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)),
 			IPSTATS_MIB_REASMFAILS);
 err:
+<<<<<<< HEAD
 	kfree_skb_reason(skb, reason);
+=======
+	kfree_skb(skb);
+>>>>>>> master
 	return err;
 }
 
@@ -256,7 +268,11 @@ err:
 static int ip6_frag_reasm(struct frag_queue *fq, struct sk_buff *skb,
 			  struct sk_buff *prev_tail, struct net_device *dev)
 {
+<<<<<<< HEAD
 	struct net *net = fq->q.fqdir->net;
+=======
+	struct net *net = container_of(fq->q.net, struct net, ipv6.frags);
+>>>>>>> master
 	unsigned int nhoff;
 	void *reasm_data;
 	int payload_len;
@@ -290,7 +306,11 @@ static int ip6_frag_reasm(struct frag_queue *fq, struct sk_buff *skb,
 
 	skb_reset_transport_header(skb);
 
+<<<<<<< HEAD
 	inet_frag_reasm_finish(&fq->q, skb, reasm_data, true);
+=======
+	inet_frag_reasm_finish(&fq->q, skb, reasm_data);
+>>>>>>> master
 
 	skb->dev = dev;
 	ipv6_hdr(skb)->payload_len = htons(payload_len);
@@ -362,6 +382,7 @@ static int ipv6_frag_rcv(struct sk_buff *skb)
 		return 1;
 	}
 
+<<<<<<< HEAD
 	/* RFC 8200, Section 4.5 Fragment Header:
 	 * If the first fragment does not include all headers through an
 	 * Upper-Layer header, then that fragment should be discarded and
@@ -376,6 +397,8 @@ static int ipv6_frag_rcv(struct sk_buff *skb)
 		return -1;
 	}
 
+=======
+>>>>>>> master
 	iif = skb->dev ? skb->dev->ifindex : 0;
 	fq = fq_find(net, fhdr->identification, hdr, iif);
 	if (fq) {

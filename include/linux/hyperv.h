@@ -1008,6 +1008,7 @@ struct vmbus_channel {
 	bool probe_done;
 
 	/*
+<<<<<<< HEAD
 	 * Cache the device ID here for easy access; this is useful, in
 	 * particular, in situations where the channel's device_obj has
 	 * not been allocated/initialized yet.
@@ -1015,12 +1016,15 @@ struct vmbus_channel {
 	u16 device_id;
 
 	/*
+=======
+>>>>>>> master
 	 * We must offload the handling of the primary/sub channels
 	 * from the single-threaded vmbus_connection.work_queue to
 	 * two different workqueue, otherwise we can block
 	 * vmbus_connection.work_queue and hang: see vmbus_process_offer().
 	 */
 	struct work_struct add_channel_work;
+<<<<<<< HEAD
 
 	/*
 	 * Guest to host interrupts caused by the inbound ring buffer changing
@@ -1065,6 +1069,8 @@ struct vmbus_channel {
 
 	/* The max size of a packet on this channel */
 	u32 max_pkt_size;
+=======
+>>>>>>> master
 };
 
 #define lock_requestor(channel, flags)					\
@@ -1353,10 +1359,15 @@ struct hv_ring_buffer_debug_info {
 };
 
 
+<<<<<<< HEAD
 int hv_ringbuffer_get_debuginfo(struct hv_ring_buffer_info *ring_info,
 				struct hv_ring_buffer_debug_info *debug_info);
 
 bool hv_ringbuffer_spinlock_busy(struct vmbus_channel *channel);
+=======
+int hv_ringbuffer_get_debuginfo(const struct hv_ring_buffer_info *ring_info,
+				struct hv_ring_buffer_debug_info *debug_info);
+>>>>>>> master
 
 /* Vmbus interface */
 #define vmbus_driver_register(driver)	\

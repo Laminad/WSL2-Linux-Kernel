@@ -112,5 +112,7 @@ int populate_cache_leaves(unsigned int cpu)
 
 	this_cpu_ci->cpu_map_populated = true;
 
+	this_cpu_ci->cpu_map_populated = true;
+
 	return 0;
 }

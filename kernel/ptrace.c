@@ -31,10 +31,13 @@
 #include <linux/cn_proc.h>
 #include <linux/compat.h>
 #include <linux/sched/signal.h>
+<<<<<<< HEAD
 #include <linux/minmax.h>
 #include <linux/syscall_user_dispatch.h>
 
 #include <asm/syscall.h>	/* for syscall_get_* */
+=======
+>>>>>>> master
 
 /*
  * Access another process' address space via ptrace.
@@ -756,7 +759,11 @@ static int ptrace_peek_siginfo(struct task_struct *child,
 		pending = &child->pending;
 
 	for (i = 0; i < arg.nr; ) {
+<<<<<<< HEAD
 		kernel_siginfo_t info;
+=======
+		siginfo_t info;
+>>>>>>> master
 		unsigned long off = arg.off + i;
 		bool found = false;
 

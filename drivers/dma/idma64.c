@@ -637,6 +637,10 @@ static int idma64_platform_probe(struct platform_device *pdev)
 	struct idma64_chip *chip;
 	struct device *dev = &pdev->dev;
 	struct device *sysdev = dev->parent;
+<<<<<<< HEAD
+=======
+	struct resource *mem;
+>>>>>>> master
 	int ret;
 
 	chip = devm_kzalloc(dev, sizeof(*chip), GFP_KERNEL);

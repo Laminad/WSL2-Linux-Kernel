@@ -3738,8 +3738,11 @@ static void macsec_free_netdev(struct net_device *dev)
 	free_percpu(macsec->stats);
 	free_percpu(macsec->secy.tx_sc.stats);
 
+<<<<<<< HEAD
 	/* Get rid of the macsec's reference to real_dev */
 	netdev_put(macsec->real_dev, &macsec->dev_tracker);
+=======
+>>>>>>> master
 }
 
 static void macsec_setup(struct net_device *dev)
@@ -4108,6 +4111,10 @@ static int macsec_newlink(struct net *net, struct net_device *dev,
 	if (err < 0)
 		return err;
 
+<<<<<<< HEAD
+=======
+	macsec->nest_level = dev_get_nest_level(real_dev) + 1;
+>>>>>>> master
 	netdev_lockdep_set_classes(dev);
 	lockdep_set_class(&dev->addr_list_lock,
 			  &macsec_netdev_addr_lock_key);

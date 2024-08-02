@@ -25,10 +25,14 @@
  * _PAGE_PROT_NONE is set on not-present pages (and ignored by the hardware) to
  * distinguish them from swapped out pages
  */
+<<<<<<< HEAD
 #define _PAGE_PROT_NONE _PAGE_GLOBAL
 
 /* Used for swap PTEs only. */
 #define _PAGE_SWP_EXCLUSIVE _PAGE_ACCESSED
+=======
+#define _PAGE_PROT_NONE _PAGE_READ
+>>>>>>> master
 
 #define _PAGE_PFN_SHIFT 10
 

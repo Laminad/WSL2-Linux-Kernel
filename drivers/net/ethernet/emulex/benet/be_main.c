@@ -4709,6 +4709,7 @@ int be_update_queues(struct be_adapter *adapter)
 	int status;
 
 	if (netif_running(netdev)) {
+<<<<<<< HEAD
 		/* be_tx_timeout() must not run concurrently with this
 		 * function, synchronize with an already-running dev_watchdog
 		 */
@@ -4716,6 +4717,10 @@ int be_update_queues(struct be_adapter *adapter)
 		/* device cannot transmit now, avoid dev_watchdog timeouts */
 		netif_carrier_off(netdev);
 		netif_tx_unlock_bh(netdev);
+=======
+		/* device cannot transmit now, avoid dev_watchdog timeouts */
+		netif_carrier_off(netdev);
+>>>>>>> master
 
 		be_close(netdev);
 	}

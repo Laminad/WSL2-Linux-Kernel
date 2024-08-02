@@ -43,7 +43,11 @@ static void ftrace_dump_buf(int skip_entries, long cpu_file)
 	if (cpu_file == RING_BUFFER_ALL_CPUS) {
 		for_each_tracing_cpu(cpu) {
 			iter.buffer_iter[cpu] =
+<<<<<<< HEAD
 			ring_buffer_read_prepare(iter.array_buffer->buffer,
+=======
+			ring_buffer_read_prepare(iter.trace_buffer->buffer,
+>>>>>>> master
 						 cpu, GFP_ATOMIC);
 			ring_buffer_read_start(iter.buffer_iter[cpu]);
 			tracing_iter_reset(&iter, cpu);
@@ -51,7 +55,11 @@ static void ftrace_dump_buf(int skip_entries, long cpu_file)
 	} else {
 		iter.cpu_file = cpu_file;
 		iter.buffer_iter[cpu_file] =
+<<<<<<< HEAD
 			ring_buffer_read_prepare(iter.array_buffer->buffer,
+=======
+			ring_buffer_read_prepare(iter.trace_buffer->buffer,
+>>>>>>> master
 						 cpu_file, GFP_ATOMIC);
 		ring_buffer_read_start(iter.buffer_iter[cpu_file]);
 		tracing_iter_reset(&iter, cpu_file);

@@ -281,6 +281,7 @@ int br_nf_pre_routing_finish_bridge(struct net *net, struct sock *sk, struct sk_
 		struct nf_bridge_info *nf_bridge = nf_bridge_info_get(skb);
 		int ret;
 
+<<<<<<< HEAD
 		if ((READ_ONCE(neigh->nud_state) & NUD_CONNECTED) &&
 		    READ_ONCE(neigh->hh.hh_len)) {
 			struct net_device *br_indev;
@@ -291,6 +292,9 @@ int br_nf_pre_routing_finish_bridge(struct net *net, struct sock *sk, struct sk_
 				goto free_skb;
 			}
 
+=======
+		if ((neigh->nud_state & NUD_CONNECTED) && neigh->hh.hh_len) {
+>>>>>>> master
 			neigh_hh_bridge(&neigh->hh, skb);
 			skb->dev = br_indev;
 

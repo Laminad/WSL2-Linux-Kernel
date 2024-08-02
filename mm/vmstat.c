@@ -1677,12 +1677,23 @@ static void zoneinfo_show_print(struct seq_file *m, pg_data_t *pgdat,
 	if (is_zone_first_populated(pgdat, zone)) {
 		seq_printf(m, "\n  per-node stats");
 		for (i = 0; i < NR_VM_NODE_STAT_ITEMS; i++) {
+<<<<<<< HEAD
 			unsigned long pages = node_page_state_pages(pgdat, i);
 
 			if (vmstat_item_print_in_thp(i))
 				pages /= HPAGE_PMD_NR;
 			seq_printf(m, "\n      %-12s %lu", node_stat_name(i),
 				   pages);
+=======
+			/* Skip hidden vmstat items. */
+			if (*vmstat_text[i + NR_VM_ZONE_STAT_ITEMS +
+					 NR_VM_NUMA_STAT_ITEMS] == '\0')
+				continue;
+			seq_printf(m, "\n      %-12s %lu",
+				vmstat_text[i + NR_VM_ZONE_STAT_ITEMS +
+				NR_VM_NUMA_STAT_ITEMS],
+				node_page_state(pgdat, i));
+>>>>>>> master
 		}
 	}
 	seq_printf(m,

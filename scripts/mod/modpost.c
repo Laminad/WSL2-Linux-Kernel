@@ -624,6 +624,37 @@ static int ignore_undef_symbol(struct elf_info *info, const char *symname)
 static void handle_symbol(struct module *mod, struct elf_info *info,
 			  const Elf_Sym *sym, const char *symname)
 {
+<<<<<<< HEAD
+=======
+	unsigned int crc;
+	enum export export;
+	bool is_crc = false;
+
+	if ((!is_vmlinux(mod->name) || mod->is_dot_o) &&
+	    strstarts(symname, "__ksymtab"))
+		export = export_from_secname(info, get_secindex(info, sym));
+	else
+		export = export_from_sec(info, get_secindex(info, sym));
+
+	/* CRC'd symbol */
+	if (strstarts(symname, "__crc_")) {
+		is_crc = true;
+		crc = (unsigned int) sym->st_value;
+		if (sym->st_shndx != SHN_UNDEF && sym->st_shndx != SHN_ABS) {
+			unsigned int *crcp;
+
+			/* symbol points to the CRC in the ELF object */
+			crcp = (void *)info->hdr + sym->st_value +
+			       info->sechdrs[sym->st_shndx].sh_offset -
+			       (info->hdr->e_type != ET_REL ?
+				info->sechdrs[sym->st_shndx].sh_addr : 0);
+			crc = TO_NATIVE(*crcp);
+		}
+		sym_update_crc(symname + strlen("__crc_"), mod, crc,
+				export);
+	}
+
+>>>>>>> master
 	switch (sym->st_shndx) {
 	case SHN_COMMON:
 		if (strstarts(symname, "__gnu_lto_")) {
@@ -1044,6 +1075,7 @@ static int secref_whitelist(const char *fromsec, const char *fromsym,
 	return 1;
 }
 
+<<<<<<< HEAD
 static Elf_Sym *find_fromsym(struct elf_info *elf, Elf_Addr addr,
 			     unsigned int secndx)
 {
@@ -1073,6 +1105,323 @@ static bool is_executable_section(struct elf_info *elf, unsigned int secndx)
 		return false;
 
 	return (elf->sechdrs[secndx].sh_flags & SHF_EXECINSTR) != 0;
+=======
+static inline int is_arm_mapping_symbol(const char *str)
+{
+	return str[0] == '$' && strchr("axtd", str[1])
+	       && (str[2] == '\0' || str[2] == '.');
+}
+
+/*
+ * If there's no name there, ignore it; likewise, ignore it if it's
+ * one of the magic symbols emitted used by current ARM tools.
+ *
+ * Otherwise if find_symbols_between() returns those symbols, they'll
+ * fail the whitelist tests and cause lots of false alarms ... fixable
+ * only by merging __exit and __init sections into __text, bloating
+ * the kernel (which is especially evil on embedded platforms).
+ */
+static inline int is_valid_name(struct elf_info *elf, Elf_Sym *sym)
+{
+	const char *name = elf->strtab + sym->st_name;
+
+	if (!name || !strlen(name))
+		return 0;
+	return !is_arm_mapping_symbol(name);
+}
+
+/**
+ * Find symbol based on relocation record info.
+ * In some cases the symbol supplied is a valid symbol so
+ * return refsym. If st_name != 0 we assume this is a valid symbol.
+ * In other cases the symbol needs to be looked up in the symbol table
+ * based on section and address.
+ *  **/
+static Elf_Sym *find_elf_symbol(struct elf_info *elf, Elf64_Sword addr,
+				Elf_Sym *relsym)
+{
+	Elf_Sym *sym;
+	Elf_Sym *near = NULL;
+	Elf64_Sword distance = 20;
+	Elf64_Sword d;
+	unsigned int relsym_secindex;
+
+	if (relsym->st_name != 0)
+		return relsym;
+
+	relsym_secindex = get_secindex(elf, relsym);
+	for (sym = elf->symtab_start; sym < elf->symtab_stop; sym++) {
+		if (get_secindex(elf, sym) != relsym_secindex)
+			continue;
+		if (ELF_ST_TYPE(sym->st_info) == STT_SECTION)
+			continue;
+		if (!is_valid_name(elf, sym))
+			continue;
+		if (sym->st_value == addr)
+			return sym;
+		/* Find a symbol nearby - addr are maybe negative */
+		d = sym->st_value - addr;
+		if (d < 0)
+			d = addr - sym->st_value;
+		if (d < distance) {
+			distance = d;
+			near = sym;
+		}
+	}
+	/* We need a close match */
+	if (distance < 20)
+		return near;
+	else
+		return NULL;
+}
+
+/*
+ * Find symbols before or equal addr and after addr - in the section sec.
+ * If we find two symbols with equal offset prefer one with a valid name.
+ * The ELF format may have a better way to detect what type of symbol
+ * it is, but this works for now.
+ **/
+static Elf_Sym *find_elf_symbol2(struct elf_info *elf, Elf_Addr addr,
+				 const char *sec)
+{
+	Elf_Sym *sym;
+	Elf_Sym *near = NULL;
+	Elf_Addr distance = ~0;
+
+	for (sym = elf->symtab_start; sym < elf->symtab_stop; sym++) {
+		const char *symsec;
+
+		if (is_shndx_special(sym->st_shndx))
+			continue;
+		symsec = sec_name(elf, get_secindex(elf, sym));
+		if (strcmp(symsec, sec) != 0)
+			continue;
+		if (!is_valid_name(elf, sym))
+			continue;
+		if (sym->st_value <= addr) {
+			if ((addr - sym->st_value) < distance) {
+				distance = addr - sym->st_value;
+				near = sym;
+			} else if ((addr - sym->st_value) == distance) {
+				near = sym;
+			}
+		}
+	}
+	return near;
+}
+
+/*
+ * Convert a section name to the function/data attribute
+ * .init.text => __init
+ * .memexitconst => __memconst
+ * etc.
+ *
+ * The memory of returned value has been allocated on a heap. The user of this
+ * method should free it after usage.
+*/
+static char *sec2annotation(const char *s)
+{
+	if (match(s, init_exit_sections)) {
+		char *p = NOFAIL(malloc(20));
+		char *r = p;
+
+		*p++ = '_';
+		*p++ = '_';
+		if (*s == '.')
+			s++;
+		while (*s && *s != '.')
+			*p++ = *s++;
+		*p = '\0';
+		if (*s == '.')
+			s++;
+		if (strstr(s, "rodata") != NULL)
+			strcat(p, "const ");
+		else if (strstr(s, "data") != NULL)
+			strcat(p, "data ");
+		else
+			strcat(p, " ");
+		return r;
+	} else {
+		return NOFAIL(strdup(""));
+	}
+}
+
+static int is_function(Elf_Sym *sym)
+{
+	if (sym)
+		return ELF_ST_TYPE(sym->st_info) == STT_FUNC;
+	else
+		return -1;
+}
+
+static void print_section_list(const char * const list[20])
+{
+	const char *const *s = list;
+
+	while (*s) {
+		fprintf(stderr, "%s", *s);
+		s++;
+		if (*s)
+			fprintf(stderr, ", ");
+	}
+	fprintf(stderr, "\n");
+}
+
+static inline void get_pretty_name(int is_func, const char** name, const char** name_p)
+{
+	switch (is_func) {
+	case 0:	*name = "variable"; *name_p = ""; break;
+	case 1:	*name = "function"; *name_p = "()"; break;
+	default: *name = "(unknown reference)"; *name_p = ""; break;
+	}
+}
+
+/*
+ * Print a warning about a section mismatch.
+ * Try to find symbols near it so user can find it.
+ * Check whitelist before warning - it may be a false positive.
+ */
+static void report_sec_mismatch(const char *modname,
+				const struct sectioncheck *mismatch,
+				const char *fromsec,
+				unsigned long long fromaddr,
+				const char *fromsym,
+				int from_is_func,
+				const char *tosec, const char *tosym,
+				int to_is_func)
+{
+	const char *from, *from_p;
+	const char *to, *to_p;
+	char *prl_from;
+	char *prl_to;
+
+	sec_mismatch_count++;
+	if (!sec_mismatch_verbose)
+		return;
+
+	get_pretty_name(from_is_func, &from, &from_p);
+	get_pretty_name(to_is_func, &to, &to_p);
+
+	warn("%s(%s+0x%llx): Section mismatch in reference from the %s %s%s "
+	     "to the %s %s:%s%s\n",
+	     modname, fromsec, fromaddr, from, fromsym, from_p, to, tosec,
+	     tosym, to_p);
+
+	switch (mismatch->mismatch) {
+	case TEXT_TO_ANY_INIT:
+		prl_from = sec2annotation(fromsec);
+		prl_to = sec2annotation(tosec);
+		fprintf(stderr,
+		"The function %s%s() references\n"
+		"the %s %s%s%s.\n"
+		"This is often because %s lacks a %s\n"
+		"annotation or the annotation of %s is wrong.\n",
+		prl_from, fromsym,
+		to, prl_to, tosym, to_p,
+		fromsym, prl_to, tosym);
+		free(prl_from);
+		free(prl_to);
+		break;
+	case DATA_TO_ANY_INIT: {
+		prl_to = sec2annotation(tosec);
+		fprintf(stderr,
+		"The variable %s references\n"
+		"the %s %s%s%s\n"
+		"If the reference is valid then annotate the\n"
+		"variable with __init* or __refdata (see linux/init.h) "
+		"or name the variable:\n",
+		fromsym, to, prl_to, tosym, to_p);
+		print_section_list(mismatch->symbol_white_list);
+		free(prl_to);
+		break;
+	}
+	case TEXT_TO_ANY_EXIT:
+		prl_to = sec2annotation(tosec);
+		fprintf(stderr,
+		"The function %s() references a %s in an exit section.\n"
+		"Often the %s %s%s has valid usage outside the exit section\n"
+		"and the fix is to remove the %sannotation of %s.\n",
+		fromsym, to, to, tosym, to_p, prl_to, tosym);
+		free(prl_to);
+		break;
+	case DATA_TO_ANY_EXIT: {
+		prl_to = sec2annotation(tosec);
+		fprintf(stderr,
+		"The variable %s references\n"
+		"the %s %s%s%s\n"
+		"If the reference is valid then annotate the\n"
+		"variable with __exit* (see linux/init.h) or "
+		"name the variable:\n",
+		fromsym, to, prl_to, tosym, to_p);
+		print_section_list(mismatch->symbol_white_list);
+		free(prl_to);
+		break;
+	}
+	case XXXINIT_TO_SOME_INIT:
+	case XXXEXIT_TO_SOME_EXIT:
+		prl_from = sec2annotation(fromsec);
+		prl_to = sec2annotation(tosec);
+		fprintf(stderr,
+		"The %s %s%s%s references\n"
+		"a %s %s%s%s.\n"
+		"If %s is only used by %s then\n"
+		"annotate %s with a matching annotation.\n",
+		from, prl_from, fromsym, from_p,
+		to, prl_to, tosym, to_p,
+		tosym, fromsym, tosym);
+		free(prl_from);
+		free(prl_to);
+		break;
+	case ANY_INIT_TO_ANY_EXIT:
+		prl_from = sec2annotation(fromsec);
+		prl_to = sec2annotation(tosec);
+		fprintf(stderr,
+		"The %s %s%s%s references\n"
+		"a %s %s%s%s.\n"
+		"This is often seen when error handling "
+		"in the init function\n"
+		"uses functionality in the exit path.\n"
+		"The fix is often to remove the %sannotation of\n"
+		"%s%s so it may be used outside an exit section.\n",
+		from, prl_from, fromsym, from_p,
+		to, prl_to, tosym, to_p,
+		prl_to, tosym, to_p);
+		free(prl_from);
+		free(prl_to);
+		break;
+	case ANY_EXIT_TO_ANY_INIT:
+		prl_from = sec2annotation(fromsec);
+		prl_to = sec2annotation(tosec);
+		fprintf(stderr,
+		"The %s %s%s%s references\n"
+		"a %s %s%s%s.\n"
+		"This is often seen when error handling "
+		"in the exit function\n"
+		"uses functionality in the init path.\n"
+		"The fix is often to remove the %sannotation of\n"
+		"%s%s so it may be used outside an init section.\n",
+		from, prl_from, fromsym, from_p,
+		to, prl_to, tosym, to_p,
+		prl_to, tosym, to_p);
+		free(prl_from);
+		free(prl_to);
+		break;
+	case EXPORT_TO_INIT_EXIT:
+		prl_to = sec2annotation(tosec);
+		fprintf(stderr,
+		"The symbol %s is exported and annotated %s\n"
+		"Fix this by removing the %sannotation of %s "
+		"or drop the export.\n",
+		tosym, prl_to, prl_to, tosym);
+		free(prl_to);
+		break;
+	case EXTABLE_TO_NON_TEXT:
+		fatal("There's a special handler for this mismatch type, "
+		      "we should never get here.");
+		break;
+	}
+	fprintf(stderr, "\n");
+>>>>>>> master
 }
 
 static void default_mismatch_handler(const char *modname, struct elf_info *elf,
@@ -1884,11 +2233,21 @@ static void add_header(struct buffer *b, struct module *mod)
 	if (!external_module)
 		buf_printf(b, "\nMODULE_INFO(intree, \"Y\");\n");
 
+<<<<<<< HEAD
 	buf_printf(b,
 		   "\n"
 		   "#ifdef CONFIG_RETPOLINE\n"
 		   "MODULE_INFO(retpoline, \"Y\");\n"
 		   "#endif\n");
+=======
+/* Cannot check for assembler */
+static void add_retpoline(struct buffer *b)
+{
+	buf_printf(b, "\n#ifdef CONFIG_RETPOLINE\n");
+	buf_printf(b, "MODULE_INFO(retpoline, \"Y\");\n");
+	buf_printf(b, "#endif\n");
+}
+>>>>>>> master
 
 	if (strstarts(mod->name, "drivers/staging"))
 		buf_printf(b, "\nMODULE_INFO(staging, \"Y\");\n");

@@ -105,7 +105,11 @@ static __used noinline struct dummy *dummy_alloc(void)
 		msecs_to_jiffies(1000 * EXPIRE_PERIOD);
 
 	/* Oops, forgot to save leak! */
+<<<<<<< HEAD
 	leak = kzalloc(sizeof(*leak), GFP_KERNEL);
+=======
+	leak = kzalloc(sizeof(int), GFP_KERNEL);
+>>>>>>> master
 	if (!leak) {
 		kfree(d);
 		return NULL;

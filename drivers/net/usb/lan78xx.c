@@ -1537,9 +1537,18 @@ static void lan78xx_status(struct lan78xx_net *dev, struct urb *urb)
 		netif_dbg(dev, link, dev->net, "PHY INTR: 0x%08x\n", intdata);
 		lan78xx_defer_kevent(dev, EVENT_LINK_RESET);
 
+<<<<<<< HEAD
 		if (dev->domain_data.phyirq > 0)
 			generic_handle_irq_safe(dev->domain_data.phyirq);
 	} else {
+=======
+		if (dev->domain_data.phyirq > 0) {
+			local_irq_disable();
+			generic_handle_irq(dev->domain_data.phyirq);
+			local_irq_enable();
+		}
+	} else
+>>>>>>> master
 		netdev_warn(dev->net,
 			    "unexpected interrupt: 0x%08x\n", intdata);
 	}
@@ -2562,6 +2571,10 @@ static int lan78xx_set_mac_addr(struct net_device *netdev, void *p)
 	/* Added to support MAC address changes */
 	lan78xx_write_reg(dev, MAF_LO(0), addr_lo);
 	lan78xx_write_reg(dev, MAF_HI(0), addr_hi | MAF_HI_VALID_);
+
+	/* Added to support MAC address changes */
+	ret = lan78xx_write_reg(dev, MAF_LO(0), addr_lo);
+	ret = lan78xx_write_reg(dev, MAF_HI(0), addr_hi | MAF_HI_VALID_);
 
 	return 0;
 }
@@ -4444,12 +4457,20 @@ static int lan78xx_probe(struct usb_interface *intf,
 
 	ret = lan78xx_phy_init(dev);
 	if (ret < 0)
+<<<<<<< HEAD
 		goto out7;
+=======
+		goto out4;
+>>>>>>> master
 
 	ret = register_netdev(netdev);
 	if (ret != 0) {
 		netif_err(dev, probe, netdev, "couldn't register the device\n");
+<<<<<<< HEAD
 		goto out8;
+=======
+		goto out5;
+>>>>>>> master
 	}
 
 	usb_set_intfdata(intf, dev);
@@ -4464,6 +4485,7 @@ static int lan78xx_probe(struct usb_interface *intf,
 
 	return 0;
 
+<<<<<<< HEAD
 out8:
 	phy_disconnect(netdev->phydev);
 out7:
@@ -4471,6 +4493,13 @@ out7:
 out6:
 	kfree(buf);
 out5:
+=======
+out5:
+	phy_disconnect(netdev->phydev);
+out4:
+	usb_free_urb(dev->urb_intr);
+out3:
+>>>>>>> master
 	lan78xx_unbind(dev, intf);
 out4:
 	netif_napi_del(&dev->napi);

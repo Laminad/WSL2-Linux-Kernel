@@ -384,6 +384,7 @@ int update_dl_rq_load_avg(u64 now, struct rq *rq, int running)
 	return 0;
 }
 
+<<<<<<< HEAD
 #ifdef CONFIG_SCHED_THERMAL_PRESSURE
 /*
  * thermal:
@@ -415,6 +416,8 @@ int update_thermal_load_avg(u64 now, struct rq *rq, u64 capacity)
 }
 #endif
 
+=======
+>>>>>>> master
 #ifdef CONFIG_HAVE_SCHED_AVG_IRQ
 /*
  * irq:

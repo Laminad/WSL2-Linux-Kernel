@@ -636,6 +636,7 @@ static void del_sw_hw_rule(struct fs_node *node)
 		goto out;
 	}
 
+<<<<<<< HEAD
 	if (rule->dest_attr.type == MLX5_FLOW_DESTINATION_TYPE_PORT) {
 		--fte->dests_size;
 		fte->modify_mask |= BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_ACTION);
@@ -653,6 +654,12 @@ static void del_sw_hw_rule(struct fs_node *node)
 		fte->modify_mask |=
 			BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_DESTINATION_LIST);
 		goto out;
+=======
+	if ((fte->action.action & MLX5_FLOW_CONTEXT_ACTION_FWD_DEST) &&
+	    --fte->dests_size) {
+		modify_mask = BIT(MLX5_SET_FTE_MODIFY_ENABLE_MASK_DESTINATION_LIST);
+		update_fte = true;
+>>>>>>> master
 	}
 out:
 	kfree(rule);
@@ -2876,6 +2883,56 @@ static void cleanup_root_ns(struct mlx5_flow_root_namespace *root_ns)
 	clean_tree(&root_ns->ns.node);
 }
 
+<<<<<<< HEAD
+=======
+static void cleanup_egress_acls_root_ns(struct mlx5_core_dev *dev)
+{
+	struct mlx5_flow_steering *steering = dev->priv.steering;
+	int i;
+
+	if (!steering->esw_egress_root_ns)
+		return;
+
+	for (i = 0; i < MLX5_TOTAL_VPORTS(dev); i++)
+		cleanup_root_ns(steering->esw_egress_root_ns[i]);
+
+	kfree(steering->esw_egress_root_ns);
+	steering->esw_egress_root_ns = NULL;
+}
+
+static void cleanup_ingress_acls_root_ns(struct mlx5_core_dev *dev)
+{
+	struct mlx5_flow_steering *steering = dev->priv.steering;
+	int i;
+
+	if (!steering->esw_ingress_root_ns)
+		return;
+
+	for (i = 0; i < MLX5_TOTAL_VPORTS(dev); i++)
+		cleanup_root_ns(steering->esw_ingress_root_ns[i]);
+
+	kfree(steering->esw_ingress_root_ns);
+	steering->esw_ingress_root_ns = NULL;
+}
+
+void mlx5_cleanup_fs(struct mlx5_core_dev *dev)
+{
+	struct mlx5_flow_steering *steering = dev->priv.steering;
+
+	cleanup_root_ns(steering->root_ns);
+	cleanup_egress_acls_root_ns(dev);
+	cleanup_ingress_acls_root_ns(dev);
+	cleanup_root_ns(steering->fdb_root_ns);
+	cleanup_root_ns(steering->sniffer_rx_root_ns);
+	cleanup_root_ns(steering->sniffer_tx_root_ns);
+	cleanup_root_ns(steering->egress_root_ns);
+	mlx5_cleanup_fc_stats(dev);
+	kmem_cache_destroy(steering->ftes_cache);
+	kmem_cache_destroy(steering->fgs_cache);
+	kfree(steering);
+}
+
+>>>>>>> master
 static int init_sniffer_tx_root_ns(struct mlx5_flow_steering *steering)
 {
 	struct fs_prio *prio;

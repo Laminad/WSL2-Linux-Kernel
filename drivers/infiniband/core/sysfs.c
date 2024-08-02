@@ -990,12 +990,21 @@ int ib_setup_device_attrs(struct ib_device *ibdev)
 	return -EINVAL;
 }
 
+<<<<<<< HEAD
 static struct hw_stats_port_data *
 alloc_hw_stats_port(struct ib_port *port, struct attribute_group *group)
 {
 	struct ib_device *ibdev = port->ibdev;
 	struct hw_stats_port_data *data;
 	struct rdma_hw_stats *stats;
+=======
+	if (device->process_mad) {
+		p->pma_table = get_counter_table(device, port_num);
+		ret = sysfs_create_group(&p->kobj, p->pma_table);
+		if (ret)
+			goto err_put_gid_attrs;
+	}
+>>>>>>> master
 
 	if (!ibdev->ops.alloc_hw_port_stats)
 		return ERR_PTR(-EOPNOTSUPP);
@@ -1173,8 +1182,60 @@ static int setup_gid_attrs(struct ib_port *port,
 	port->gid_attr_group = gid_attr_group;
 	return 0;
 
+<<<<<<< HEAD
 err_del:
 	kobject_del(&gid_attr_group->kobj);
+=======
+err_remove_pkey:
+	sysfs_remove_group(&p->kobj, &p->pkey_group);
+
+err_free_pkey:
+	for (i = 0; i < attr.pkey_tbl_len; ++i)
+		kfree(p->pkey_group.attrs[i]);
+
+	kfree(p->pkey_group.attrs);
+	p->pkey_group.attrs = NULL;
+
+err_remove_gid_type:
+	sysfs_remove_group(&p->gid_attr_group->kobj,
+			   &p->gid_attr_group->type);
+
+err_free_gid_type:
+	for (i = 0; i < attr.gid_tbl_len; ++i)
+		kfree(p->gid_attr_group->type.attrs[i]);
+
+	kfree(p->gid_attr_group->type.attrs);
+	p->gid_attr_group->type.attrs = NULL;
+
+err_remove_gid_ndev:
+	sysfs_remove_group(&p->gid_attr_group->kobj,
+			   &p->gid_attr_group->ndev);
+
+err_free_gid_ndev:
+	for (i = 0; i < attr.gid_tbl_len; ++i)
+		kfree(p->gid_attr_group->ndev.attrs[i]);
+
+	kfree(p->gid_attr_group->ndev.attrs);
+	p->gid_attr_group->ndev.attrs = NULL;
+
+err_remove_gid:
+	sysfs_remove_group(&p->kobj, &p->gid_group);
+
+err_free_gid:
+	for (i = 0; i < attr.gid_tbl_len; ++i)
+		kfree(p->gid_group.attrs[i]);
+
+	kfree(p->gid_group.attrs);
+	p->gid_group.attrs = NULL;
+
+err_remove_pma:
+	if (p->pma_table)
+		sysfs_remove_group(&p->kobj, p->pma_table);
+
+err_put_gid_attrs:
+	kobject_put(&p->gid_attr_group->kobj);
+
+>>>>>>> master
 err_put:
 	kobject_put(&gid_attr_group->kobj);
 	return ret;
@@ -1410,9 +1471,28 @@ void ib_free_port_attrs(struct ib_core_device *coredev)
 
 	list_for_each_entry_safe(p, t, &coredev->port_list, entry) {
 		struct ib_port *port = container_of(p, struct ib_port, kobj);
+<<<<<<< HEAD
 
 		destroy_gid_attrs(port);
 		destroy_port(coredev, port);
+=======
+		list_del(&p->entry);
+		if (port->hw_stats) {
+			kfree(port->hw_stats);
+			free_hsag(&port->kobj, port->hw_stats_ag);
+		}
+
+		if (port->pma_table)
+			sysfs_remove_group(p, port->pma_table);
+		sysfs_remove_group(p, &port->pkey_group);
+		sysfs_remove_group(p, &port->gid_group);
+		sysfs_remove_group(&port->gid_attr_group->kobj,
+				   &port->gid_attr_group->ndev);
+		sysfs_remove_group(&port->gid_attr_group->kobj,
+				   &port->gid_attr_group->type);
+		kobject_put(&port->gid_attr_group->kobj);
+		kobject_put(p);
+>>>>>>> master
 	}
 
 	kobject_put(coredev->ports_kobj);

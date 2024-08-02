@@ -162,6 +162,10 @@ SECTIONS
 	/DISCARD/ : {
 		*(.interp .dynamic)
 		*(.dynsym .dynstr .hash .gnu.hash)
+<<<<<<< HEAD
+=======
+		*(.eh_frame)
+>>>>>>> master
 	}
 
 	. = KIMAGE_VADDR;
@@ -267,19 +271,28 @@ SECTIONS
 	PERCPU_SECTION(L1_CACHE_BYTES)
 	HYPERVISOR_PERCPU_SECTION
 
+<<<<<<< HEAD
 	HYPERVISOR_RELOC_SECTION
 
 	.rela.dyn : ALIGN(8) {
 		__rela_start = .;
+=======
+	.rela.dyn : ALIGN(8) {
+>>>>>>> master
 		*(.rela .rela*)
 		__rela_end = .;
 	}
 
+<<<<<<< HEAD
 	.relr.dyn : ALIGN(8) {
 		__relr_start = .;
 		*(.relr.dyn)
 		__relr_end = .;
 	}
+=======
+	__rela_offset	= ABSOLUTE(ADDR(.rela.dyn) - KIMAGE_VADDR);
+	__rela_size	= SIZEOF(.rela.dyn);
+>>>>>>> master
 
 	. = ALIGN(SEGMENT_ALIGN);
 	__initdata_end = .;

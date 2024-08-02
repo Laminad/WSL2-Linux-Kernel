@@ -231,7 +231,11 @@ static int dsps_check_status(struct musb *musb, void *unused)
 			dsps_mod_timer_optional(glue);
 			break;
 		}
+<<<<<<< HEAD
 		fallthrough;
+=======
+		/* fall through */
+>>>>>>> master
 
 	case OTG_STATE_A_WAIT_BCON:
 		/* keep VBUS on for host-only mode */

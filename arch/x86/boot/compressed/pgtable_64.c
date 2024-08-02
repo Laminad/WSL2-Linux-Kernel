@@ -1,7 +1,12 @@
+<<<<<<< HEAD
 // SPDX-License-Identifier: GPL-2.0
 #include "misc.h"
+=======
+#include <linux/efi.h>
+>>>>>>> master
 #include <asm/e820/types.h>
 #include <asm/processor.h>
+#include <asm/efi.h>
 #include "pgtable.h"
 #include "../string.h"
 #include "efi.h"
@@ -34,6 +39,10 @@ int cmdline_find_option_bool(const char *option);
 static unsigned long find_trampoline_placement(void)
 {
 	unsigned long bios_start = 0, ebda_start = 0;
+<<<<<<< HEAD
+=======
+	unsigned long trampoline_start;
+>>>>>>> master
 	struct boot_e820_entry *entry;
 	char *signature;
 	int i;

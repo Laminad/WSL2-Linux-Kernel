@@ -604,6 +604,12 @@ static netdev_tx_t reg_vif_xmit(struct sk_buff *skb,
 
 	if (!pskb_inet_may_pull(skb))
 		goto tx_err;
+<<<<<<< HEAD
+=======
+
+	if (ip6mr_fib_lookup(net, &fl6, &mrt) < 0)
+		goto tx_err;
+>>>>>>> master
 
 	if (ip6mr_fib_lookup(net, &fl6, &mrt) < 0)
 		goto tx_err;
@@ -619,6 +625,11 @@ static netdev_tx_t reg_vif_xmit(struct sk_buff *skb,
 
 tx_err:
 	DEV_STATS_INC(dev, tx_errors);
+	kfree_skb(skb);
+	return NETDEV_TX_OK;
+
+tx_err:
+	dev->stats.tx_errors++;
 	kfree_skb(skb);
 	return NETDEV_TX_OK;
 }
@@ -1534,6 +1545,7 @@ static void mroute_clean_tables(struct mr_table *mrt, int flags)
 	}
 
 	/* Wipe the cache */
+<<<<<<< HEAD
 	if (flags & (MRT6_FLUSH_MFC | MRT6_FLUSH_MFC_STATIC)) {
 		list_for_each_entry_safe(c, tmp, &mrt->mfc_cache_list, list) {
 			if (((c->mfc_flags & MFC_STATIC) && !(flags & MRT6_FLUSH_MFC_STATIC)) ||
@@ -1559,6 +1571,27 @@ static void mroute_clean_tables(struct mr_table *mrt, int flags)
 				ip6mr_destroy_unres(mrt, (struct mfc6_cache *)c);
 			}
 			spin_unlock_bh(&mfc_unres_lock);
+=======
+	list_for_each_entry_safe(c, tmp, &mrt->mfc_cache_list, list) {
+		if (!all && (c->mfc_flags & MFC_STATIC))
+			continue;
+		rhltable_remove(&mrt->mfc_hash, &c->mnode, ip6mr_rht_params);
+		list_del_rcu(&c->list);
+		call_ip6mr_mfc_entry_notifiers(read_pnet(&mrt->net),
+					       FIB_EVENT_ENTRY_DEL,
+					       (struct mfc6_cache *)c, mrt->id);
+		mr6_netlink_event(mrt, (struct mfc6_cache *)c, RTM_DELROUTE);
+		mr_cache_put(c);
+	}
+
+	if (atomic_read(&mrt->cache_resolve_queue_len) != 0) {
+		spin_lock_bh(&mfc_unres_lock);
+		list_for_each_entry_safe(c, tmp, &mrt->mfc_unres_queue, list) {
+			list_del(&c->list);
+			mr6_netlink_event(mrt, (struct mfc6_cache *)c,
+					  RTM_DELROUTE);
+			ip6mr_destroy_unres(mrt, (struct mfc6_cache *)c);
+>>>>>>> master
 		}
 	}
 }
@@ -1897,6 +1930,7 @@ int ip6mr_ioctl(struct sock *sk, int cmd, void *arg)
 		vr = (struct sioc_mif_req6 *)arg;
 		if (vr->mifi >= mrt->maxvif)
 			return -EINVAL;
+<<<<<<< HEAD
 		vr->mifi = array_index_nospec(vr->mifi, mrt->maxvif);
 		rcu_read_lock();
 		vif = &mrt->vif_table[vr->mifi];
@@ -1906,6 +1940,20 @@ int ip6mr_ioctl(struct sock *sk, int cmd, void *arg)
 			vr->ibytes = READ_ONCE(vif->bytes_in);
 			vr->obytes = READ_ONCE(vif->bytes_out);
 			rcu_read_unlock();
+=======
+		vr.mifi = array_index_nospec(vr.mifi, mrt->maxvif);
+		read_lock(&mrt_lock);
+		vif = &mrt->vif_table[vr.mifi];
+		if (VIF_EXISTS(mrt, vr.mifi)) {
+			vr.icount = vif->pkt_in;
+			vr.ocount = vif->pkt_out;
+			vr.ibytes = vif->bytes_in;
+			vr.obytes = vif->bytes_out;
+			read_unlock(&mrt_lock);
+
+			if (copy_to_user(arg, &vr, sizeof(vr)))
+				return -EFAULT;
+>>>>>>> master
 			return 0;
 		}
 		rcu_read_unlock();
@@ -1967,7 +2015,11 @@ int ip6mr_compat_ioctl(struct sock *sk, unsigned int cmd, void __user *arg)
 		if (vr.mifi >= mrt->maxvif)
 			return -EINVAL;
 		vr.mifi = array_index_nospec(vr.mifi, mrt->maxvif);
+<<<<<<< HEAD
 		rcu_read_lock();
+=======
+		read_lock(&mrt_lock);
+>>>>>>> master
 		vif = &mrt->vif_table[vr.mifi];
 		if (VIF_EXISTS(mrt, vr.mifi)) {
 			vr.icount = READ_ONCE(vif->pkt_in);
@@ -2010,6 +2062,11 @@ static inline int ip6mr_forward2_finish(struct net *net, struct sock *sk, struct
 {
 	IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)),
 		      IPSTATS_MIB_OUTFORWDATAGRAMS);
+<<<<<<< HEAD
+=======
+	IP6_ADD_STATS(net, ip6_dst_idev(skb_dst(skb)),
+		      IPSTATS_MIB_OUTOCTETS, skb->len);
+>>>>>>> master
 	return dst_output(net, sk, skb);
 }
 

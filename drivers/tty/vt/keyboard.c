@@ -138,7 +138,11 @@ static struct input_handler kbd_handler;
 static DEFINE_SPINLOCK(kbd_event_lock);
 static DEFINE_SPINLOCK(led_lock);
 static DEFINE_SPINLOCK(func_buf_lock); /* guard 'func_buf'  and friends */
+<<<<<<< HEAD
 static DECLARE_BITMAP(key_down, KEY_CNT);	/* keyboard key bitmap */
+=======
+static unsigned long key_down[BITS_TO_LONGS(KEY_CNT)];	/* keyboard key bitmap */
+>>>>>>> master
 static unsigned char shift_down[NR_SHIFT];		/* shift state counters.. */
 static bool dead_key_next;
 
@@ -2059,10 +2063,22 @@ static char *vt_kdskbsent(char *kbs, unsigned char cur)
 
 int vt_do_kdgkb_ioctl(int cmd, struct kbsentry __user *user_kdgkb, int perm)
 {
+<<<<<<< HEAD
 	unsigned char kb_func;
 	unsigned long flags;
 	char *kbs;
+=======
+	struct kbsentry *kbs;
+	char *p;
+	u_char *q;
+	u_char __user *up;
+	int sz, fnw_sz;
+	int delta;
+	char *first_free, *fj, *fnw;
+	int i, j, k;
+>>>>>>> master
 	int ret;
+	unsigned long flags;
 
 	if (get_user(kb_func, &user_kdgkb->kb_func))
 		return -EFAULT;
@@ -2074,6 +2090,7 @@ int vt_do_kdgkb_ioctl(int cmd, struct kbsentry __user *user_kdgkb, int perm)
 		/* size should have been a struct member */
 		ssize_t len = sizeof(user_kdgkb->kb_string);
 
+<<<<<<< HEAD
 		kbs = kmalloc(len, GFP_KERNEL);
 		if (!kbs)
 			return -ENOMEM;
@@ -2085,6 +2102,78 @@ int vt_do_kdgkb_ioctl(int cmd, struct kbsentry __user *user_kdgkb, int perm)
 		ret = copy_to_user(user_kdgkb->kb_string, kbs, len + 1) ?
 			-EFAULT : 0;
 
+=======
+		fnw = NULL;
+		fnw_sz = 0;
+		/* race aginst other writers */
+		again:
+		spin_lock_irqsave(&func_buf_lock, flags);
+		q = func_table[i];
+
+		/* fj pointer to next entry after 'q' */
+		first_free = funcbufptr + (funcbufsize - funcbufleft);
+		for (j = i+1; j < MAX_NR_FUNC && !func_table[j]; j++)
+			;
+		if (j < MAX_NR_FUNC)
+			fj = func_table[j];
+		else
+			fj = first_free;
+		/* buffer usage increase by new entry */
+		delta = (q ? -strlen(q) : 1) + strlen(kbs->kb_string);
+
+		if (delta <= funcbufleft) { 	/* it fits in current buf */
+		    if (j < MAX_NR_FUNC) {
+			/* make enough space for new entry at 'fj' */
+			memmove(fj + delta, fj, first_free - fj);
+			for (k = j; k < MAX_NR_FUNC; k++)
+			    if (func_table[k])
+				func_table[k] += delta;
+		    }
+		    if (!q)
+		      func_table[i] = fj;
+		    funcbufleft -= delta;
+		} else {			/* allocate a larger buffer */
+		    sz = 256;
+		    while (sz < funcbufsize - funcbufleft + delta)
+		      sz <<= 1;
+		    if (fnw_sz != sz) {
+		      spin_unlock_irqrestore(&func_buf_lock, flags);
+		      kfree(fnw);
+		      fnw = kmalloc(sz, GFP_KERNEL);
+		      fnw_sz = sz;
+		      if (!fnw) {
+			ret = -ENOMEM;
+			goto reterr;
+		      }
+		      goto again;
+		    }
+
+		    if (!q)
+		      func_table[i] = fj;
+		    /* copy data before insertion point to new location */
+		    if (fj > funcbufptr)
+			memmove(fnw, funcbufptr, fj - funcbufptr);
+		    for (k = 0; k < j; k++)
+		      if (func_table[k])
+			func_table[k] = fnw + (func_table[k] - funcbufptr);
+
+		    /* copy data after insertion point to new location */
+		    if (first_free > fj) {
+			memmove(fnw + (fj - funcbufptr) + delta, fj, first_free - fj);
+			for (k = j; k < MAX_NR_FUNC; k++)
+			  if (func_table[k])
+			    func_table[k] = fnw + (func_table[k] - funcbufptr) + delta;
+		    }
+		    if (funcbufptr != func_buf)
+		      kfree(funcbufptr);
+		    funcbufptr = fnw;
+		    funcbufleft = funcbufleft - delta + sz - funcbufsize;
+		    funcbufsize = sz;
+		}
+		/* finally insert item itself */
+		strcpy(func_table[i], kbs->kb_string);
+		spin_unlock_irqrestore(&func_buf_lock, flags);
+>>>>>>> master
 		break;
 	}
 	case KDSKBSENT:

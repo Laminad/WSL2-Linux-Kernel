@@ -475,12 +475,40 @@ static int xts_aes_crypt(struct skcipher_request *req, unsigned long modifier)
 
 static int xts_aes_encrypt(struct skcipher_request *req)
 {
+<<<<<<< HEAD
 	return xts_aes_crypt(req, 0);
+=======
+	struct s390_xts_ctx *xts_ctx = crypto_blkcipher_ctx(desc->tfm);
+	struct blkcipher_walk walk;
+
+	if (!nbytes)
+		return -EINVAL;
+
+	if (unlikely(!xts_ctx->fc))
+		return xts_fallback_encrypt(desc, dst, src, nbytes);
+
+	blkcipher_walk_init(&walk, dst, src, nbytes);
+	return xts_aes_crypt(desc, 0, &walk);
+>>>>>>> master
 }
 
 static int xts_aes_decrypt(struct skcipher_request *req)
 {
+<<<<<<< HEAD
 	return xts_aes_crypt(req, CPACF_DECRYPT);
+=======
+	struct s390_xts_ctx *xts_ctx = crypto_blkcipher_ctx(desc->tfm);
+	struct blkcipher_walk walk;
+
+	if (!nbytes)
+		return -EINVAL;
+
+	if (unlikely(!xts_ctx->fc))
+		return xts_fallback_decrypt(desc, dst, src, nbytes);
+
+	blkcipher_walk_init(&walk, dst, src, nbytes);
+	return xts_aes_crypt(desc, CPACF_DECRYPT, &walk);
+>>>>>>> master
 }
 
 static int xts_fallback_init(struct crypto_skcipher *tfm)
@@ -571,8 +599,12 @@ static int ctr_aes_crypt(struct skcipher_request *req)
 	unsigned int n, nbytes;
 	int ret, locked;
 
+<<<<<<< HEAD
 	if (unlikely(!sctx->fc))
 		return fallback_skcipher_crypt(sctx, req, 0);
+=======
+	locked = mutex_trylock(&ctrblk_lock);
+>>>>>>> master
 
 	locked = mutex_trylock(&ctrblk_lock);
 
@@ -699,7 +731,11 @@ static inline void _gcm_sg_unmap_and_advance(struct gcm_sg_walk *gw,
 					     unsigned int nbytes)
 {
 	gw->walk_bytes_remain -= nbytes;
+<<<<<<< HEAD
 	scatterwalk_unmap(gw->walk_ptr);
+=======
+	scatterwalk_unmap(&gw->walk);
+>>>>>>> master
 	scatterwalk_advance(&gw->walk, nbytes);
 	scatterwalk_done(&gw->walk, 0, gw->walk_bytes_remain);
 	gw->walk_ptr = NULL;
@@ -774,7 +810,11 @@ static int gcm_out_walk_go(struct gcm_sg_walk *gw, unsigned int minbytesneeded)
 		goto out;
 	}
 
+<<<<<<< HEAD
 	scatterwalk_unmap(gw->walk_ptr);
+=======
+	scatterwalk_unmap(&gw->walk);
+>>>>>>> master
 	gw->walk_ptr = NULL;
 
 	gw->ptr = gw->buf;

@@ -3,9 +3,15 @@ include ../../../build/Build.include
 
 all:
 
+<<<<<<< HEAD
 top_srcdir = ../../../..
 include $(top_srcdir)/scripts/subarch.include
 ARCH            ?= $(SUBARCH)
+=======
+top_srcdir = ../../../../
+KSFT_KHDR_INSTALL := 1
+UNAME_M := $(shell uname -m)
+>>>>>>> master
 
 ifeq ($(ARCH),x86)
 	ARCH_DIR := x86_64
@@ -256,6 +262,7 @@ $(TEST_GEN_OBJ): $(OUTPUT)/%.o: %.c
 $(SPLIT_TESTS_TARGETS): %: %.o $(SPLIT_TESTS_OBJS)
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH) $^ $(LDLIBS) -o $@
 
+<<<<<<< HEAD
 EXTRA_CLEAN += $(LIBKVM_OBJS) $(TEST_DEP_FILES) $(TEST_GEN_OBJ) $(SPLIT_TESTS_OBJS) cscope.*
 
 x := $(shell mkdir -p $(sort $(dir $(LIBKVM_C_OBJ) $(LIBKVM_S_OBJ))))
@@ -283,3 +290,7 @@ cscope:
 	find . -name '*.c' \
 		-exec realpath --relative-base=$(PWD) {} \;) | sort -u > cscope.files
 	cscope -b
+=======
+all: $(STATIC_LIBS)
+$(TEST_GEN_PROGS): $(STATIC_LIBS)
+>>>>>>> master

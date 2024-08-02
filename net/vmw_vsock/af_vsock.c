@@ -789,11 +789,14 @@ static struct sock *__vsock_create(struct net *net,
 	return sk;
 }
 
+<<<<<<< HEAD
 static bool sock_type_connectible(u16 type)
 {
 	return (type == SOCK_STREAM) || (type == SOCK_SEQPACKET);
 }
 
+=======
+>>>>>>> master
 static void __vsock_release(struct sock *sk, int level)
 {
 	if (sk) {
@@ -803,6 +806,7 @@ static void __vsock_release(struct sock *sk, int level)
 		vsk = vsock_sk(sk);
 		pending = NULL;	/* Compiler warning. */
 
+<<<<<<< HEAD
 		/* When "level" is SINGLE_DEPTH_NESTING, use the nested
 		 * version to avoid the warning "possible recursive locking
 		 * detected". When "level" is 0, lock_sock_nested(sk, level)
@@ -815,6 +819,19 @@ static void __vsock_release(struct sock *sk, int level)
 		else if (sock_type_connectible(sk->sk_type))
 			vsock_remove_sock(vsk);
 
+=======
+		/* The release call is supposed to use lock_sock_nested()
+		 * rather than lock_sock(), if a sock lock should be acquired.
+		 */
+		transport->release(vsk);
+
+		/* When "level" is SINGLE_DEPTH_NESTING, use the nested
+		 * version to avoid the warning "possible recursive locking
+		 * detected". When "level" is 0, lock_sock_nested(sk, level)
+		 * is the same as lock_sock(sk).
+		 */
+		lock_sock_nested(sk, level);
+>>>>>>> master
 		sock_orphan(sk);
 		sk->sk_shutdown = SHUTDOWN_MASK;
 

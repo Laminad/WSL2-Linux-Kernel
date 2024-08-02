@@ -296,6 +296,12 @@ would break how applications interpret the quantization range.
 
 The chromaticities of the primary colors and the white reference are:
 
+<<<<<<< HEAD:Documentation/userspace-api/media/v4l/colorspaces-details.rst
+=======
+
+.. tabularcolumns:: |p{4.4cm}|p{4.4cm}|p{8.7cm}|
+
+>>>>>>> master:Documentation/media/uapi/v4l/colorspaces-details.rst
 .. flat-table:: opRGB Chromaticities
     :header-rows:  1
     :stub-columns: 0

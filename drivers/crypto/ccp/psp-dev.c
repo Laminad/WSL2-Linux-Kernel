@@ -260,7 +260,35 @@ void psp_pci_init(void)
 	if (!psp_master)
 		return;
 
+<<<<<<< HEAD
 	sev_pci_init();
+=======
+	psp_master = sp->psp_data;
+
+	psp_timeout = psp_probe_timeout;
+
+	if (sev_get_api_version())
+		goto err;
+
+	if (SEV_VERSION_GREATER_OR_EQUAL(0, 15) &&
+	    sev_update_firmware(psp_master->dev) == 0)
+		sev_get_api_version();
+
+	/* Initialize the platform */
+	rc = sev_platform_init(&error);
+	if (rc) {
+		dev_err(sp->dev, "SEV: failed to INIT error %#x\n", error);
+		return;
+	}
+
+	dev_info(sp->dev, "SEV API:%d.%d build:%d\n", psp_master->api_major,
+		 psp_master->api_minor, psp_master->build);
+
+	return;
+
+err:
+	psp_master = NULL;
+>>>>>>> master
 }
 
 void psp_pci_exit(void)

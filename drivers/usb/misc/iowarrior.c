@@ -888,6 +888,17 @@ static void iowarrior_disconnect(struct usb_interface *interface)
 	struct iowarrior *dev = usb_get_intfdata(interface);
 	int minor = dev->minor;
 
+<<<<<<< HEAD
+=======
+	dev = usb_get_intfdata(interface);
+	mutex_lock(&iowarrior_open_disc_lock);
+	usb_set_intfdata(interface, NULL);
+
+	minor = dev->minor;
+	mutex_unlock(&iowarrior_open_disc_lock);
+	/* give back our minor - this will call close() locks need to be dropped at this point*/
+
+>>>>>>> master
 	usb_deregister_dev(interface, &iowarrior_class);
 
 	mutex_lock(&dev->mutex);

@@ -1073,7 +1073,336 @@ int ttm_bo_init_validate(struct ttm_device *bdev, struct ttm_buffer_object *bo,
 
 	return 0;
 }
+<<<<<<< HEAD
 EXPORT_SYMBOL(ttm_bo_init_validate);
+=======
+EXPORT_SYMBOL(ttm_bo_init);
+
+size_t ttm_bo_acc_size(struct ttm_bo_device *bdev,
+		       unsigned long bo_size,
+		       unsigned struct_size)
+{
+	unsigned npages = (PAGE_ALIGN(bo_size)) >> PAGE_SHIFT;
+	size_t size = 0;
+
+	size += ttm_round_pot(struct_size);
+	size += ttm_round_pot(npages * sizeof(void *));
+	size += ttm_round_pot(sizeof(struct ttm_tt));
+	return size;
+}
+EXPORT_SYMBOL(ttm_bo_acc_size);
+
+size_t ttm_bo_dma_acc_size(struct ttm_bo_device *bdev,
+			   unsigned long bo_size,
+			   unsigned struct_size)
+{
+	unsigned npages = (PAGE_ALIGN(bo_size)) >> PAGE_SHIFT;
+	size_t size = 0;
+
+	size += ttm_round_pot(struct_size);
+	size += ttm_round_pot(npages * (2*sizeof(void *) + sizeof(dma_addr_t)));
+	size += ttm_round_pot(sizeof(struct ttm_dma_tt));
+	return size;
+}
+EXPORT_SYMBOL(ttm_bo_dma_acc_size);
+
+int ttm_bo_create(struct ttm_bo_device *bdev,
+			unsigned long size,
+			enum ttm_bo_type type,
+			struct ttm_placement *placement,
+			uint32_t page_alignment,
+			bool interruptible,
+			struct ttm_buffer_object **p_bo)
+{
+	struct ttm_buffer_object *bo;
+	size_t acc_size;
+	int ret;
+
+	bo = kzalloc(sizeof(*bo), GFP_KERNEL);
+	if (unlikely(bo == NULL))
+		return -ENOMEM;
+
+	acc_size = ttm_bo_acc_size(bdev, size, sizeof(struct ttm_buffer_object));
+	ret = ttm_bo_init(bdev, bo, size, type, placement, page_alignment,
+			  interruptible, acc_size,
+			  NULL, NULL, NULL);
+	if (likely(ret == 0))
+		*p_bo = bo;
+
+	return ret;
+}
+EXPORT_SYMBOL(ttm_bo_create);
+
+static int ttm_bo_force_list_clean(struct ttm_bo_device *bdev,
+				   unsigned mem_type)
+{
+	struct ttm_operation_ctx ctx = {
+		.interruptible = false,
+		.no_wait_gpu = false,
+		.flags = TTM_OPT_FLAG_FORCE_ALLOC
+	};
+	struct ttm_mem_type_manager *man = &bdev->man[mem_type];
+	struct ttm_bo_global *glob = bdev->glob;
+	struct dma_fence *fence;
+	int ret;
+	unsigned i;
+
+	/*
+	 * Can't use standard list traversal since we're unlocking.
+	 */
+
+	spin_lock(&glob->lru_lock);
+	for (i = 0; i < TTM_MAX_BO_PRIORITY; ++i) {
+		while (!list_empty(&man->lru[i])) {
+			spin_unlock(&glob->lru_lock);
+			ret = ttm_mem_evict_first(bdev, mem_type, NULL, &ctx);
+			if (ret)
+				return ret;
+			spin_lock(&glob->lru_lock);
+		}
+	}
+	spin_unlock(&glob->lru_lock);
+
+	spin_lock(&man->move_lock);
+	fence = dma_fence_get(man->move);
+	spin_unlock(&man->move_lock);
+
+	if (fence) {
+		ret = dma_fence_wait(fence, false);
+		dma_fence_put(fence);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
+int ttm_bo_clean_mm(struct ttm_bo_device *bdev, unsigned mem_type)
+{
+	struct ttm_mem_type_manager *man;
+	int ret = -EINVAL;
+
+	if (mem_type >= TTM_NUM_MEM_TYPES) {
+		pr_err("Illegal memory type %d\n", mem_type);
+		return ret;
+	}
+	man = &bdev->man[mem_type];
+
+	if (!man->has_type) {
+		pr_err("Trying to take down uninitialized memory manager type %u\n",
+		       mem_type);
+		return ret;
+	}
+
+	man->use_type = false;
+	man->has_type = false;
+
+	ret = 0;
+	if (mem_type > 0) {
+		ret = ttm_bo_force_list_clean(bdev, mem_type);
+		if (ret) {
+			pr_err("Cleanup eviction failed\n");
+			return ret;
+		}
+
+		ret = (*man->func->takedown)(man);
+	}
+
+	dma_fence_put(man->move);
+	man->move = NULL;
+
+	return ret;
+}
+EXPORT_SYMBOL(ttm_bo_clean_mm);
+
+int ttm_bo_evict_mm(struct ttm_bo_device *bdev, unsigned mem_type)
+{
+	struct ttm_mem_type_manager *man = &bdev->man[mem_type];
+
+	if (mem_type == 0 || mem_type >= TTM_NUM_MEM_TYPES) {
+		pr_err("Illegal memory manager memory type %u\n", mem_type);
+		return -EINVAL;
+	}
+
+	if (!man->has_type) {
+		pr_err("Memory type %u has not been initialized\n", mem_type);
+		return 0;
+	}
+
+	return ttm_bo_force_list_clean(bdev, mem_type);
+}
+EXPORT_SYMBOL(ttm_bo_evict_mm);
+
+int ttm_bo_init_mm(struct ttm_bo_device *bdev, unsigned type,
+			unsigned long p_size)
+{
+	int ret;
+	struct ttm_mem_type_manager *man;
+	unsigned i;
+
+	BUG_ON(type >= TTM_NUM_MEM_TYPES);
+	man = &bdev->man[type];
+	BUG_ON(man->has_type);
+	man->io_reserve_fastpath = true;
+	man->use_io_reserve_lru = false;
+	mutex_init(&man->io_reserve_mutex);
+	spin_lock_init(&man->move_lock);
+	INIT_LIST_HEAD(&man->io_reserve_lru);
+
+	ret = bdev->driver->init_mem_type(bdev, type, man);
+	if (ret)
+		return ret;
+	man->bdev = bdev;
+
+	if (type != TTM_PL_SYSTEM) {
+		ret = (*man->func->init)(man, p_size);
+		if (ret)
+			return ret;
+	}
+	man->has_type = true;
+	man->use_type = true;
+	man->size = p_size;
+
+	for (i = 0; i < TTM_MAX_BO_PRIORITY; ++i)
+		INIT_LIST_HEAD(&man->lru[i]);
+	man->move = NULL;
+
+	return 0;
+}
+EXPORT_SYMBOL(ttm_bo_init_mm);
+
+static void ttm_bo_global_kobj_release(struct kobject *kobj)
+{
+	struct ttm_bo_global *glob =
+		container_of(kobj, struct ttm_bo_global, kobj);
+
+	__free_page(glob->dummy_read_page);
+}
+
+void ttm_bo_global_release(struct drm_global_reference *ref)
+{
+	struct ttm_bo_global *glob = ref->object;
+
+	kobject_del(&glob->kobj);
+	kobject_put(&glob->kobj);
+}
+EXPORT_SYMBOL(ttm_bo_global_release);
+
+int ttm_bo_global_init(struct drm_global_reference *ref)
+{
+	struct ttm_bo_global_ref *bo_ref =
+		container_of(ref, struct ttm_bo_global_ref, ref);
+	struct ttm_bo_global *glob = ref->object;
+	int ret;
+	unsigned i;
+
+	mutex_init(&glob->device_list_mutex);
+	spin_lock_init(&glob->lru_lock);
+	glob->mem_glob = bo_ref->mem_glob;
+	glob->mem_glob->bo_glob = glob;
+	glob->dummy_read_page = alloc_page(__GFP_ZERO | GFP_DMA32);
+
+	if (unlikely(glob->dummy_read_page == NULL)) {
+		ret = -ENOMEM;
+		goto out_no_drp;
+	}
+
+	for (i = 0; i < TTM_MAX_BO_PRIORITY; ++i)
+		INIT_LIST_HEAD(&glob->swap_lru[i]);
+	INIT_LIST_HEAD(&glob->device_list);
+	atomic_set(&glob->bo_count, 0);
+
+	ret = kobject_init_and_add(
+		&glob->kobj, &ttm_bo_glob_kobj_type, ttm_get_kobj(), "buffer_objects");
+	if (unlikely(ret != 0))
+		kobject_put(&glob->kobj);
+	return ret;
+out_no_drp:
+	kfree(glob);
+	return ret;
+}
+EXPORT_SYMBOL(ttm_bo_global_init);
+
+
+int ttm_bo_device_release(struct ttm_bo_device *bdev)
+{
+	int ret = 0;
+	unsigned i = TTM_NUM_MEM_TYPES;
+	struct ttm_mem_type_manager *man;
+	struct ttm_bo_global *glob = bdev->glob;
+
+	while (i--) {
+		man = &bdev->man[i];
+		if (man->has_type) {
+			man->use_type = false;
+			if ((i != TTM_PL_SYSTEM) && ttm_bo_clean_mm(bdev, i)) {
+				ret = -EBUSY;
+				pr_err("DRM memory manager type %d is not clean\n",
+				       i);
+			}
+			man->has_type = false;
+		}
+	}
+
+	mutex_lock(&glob->device_list_mutex);
+	list_del(&bdev->device_list);
+	mutex_unlock(&glob->device_list_mutex);
+
+	cancel_delayed_work_sync(&bdev->wq);
+
+	if (ttm_bo_delayed_delete(bdev, true))
+		pr_debug("Delayed destroy list was clean\n");
+
+	spin_lock(&glob->lru_lock);
+	for (i = 0; i < TTM_MAX_BO_PRIORITY; ++i)
+		if (list_empty(&bdev->man[0].lru[0]))
+			pr_debug("Swap list %d was clean\n", i);
+	spin_unlock(&glob->lru_lock);
+
+	drm_vma_offset_manager_destroy(&bdev->vma_manager);
+
+	return ret;
+}
+EXPORT_SYMBOL(ttm_bo_device_release);
+
+int ttm_bo_device_init(struct ttm_bo_device *bdev,
+		       struct ttm_bo_global *glob,
+		       struct ttm_bo_driver *driver,
+		       struct address_space *mapping,
+		       uint64_t file_page_offset,
+		       bool need_dma32)
+{
+	int ret = -EINVAL;
+
+	bdev->driver = driver;
+
+	memset(bdev->man, 0, sizeof(bdev->man));
+
+	/*
+	 * Initialize the system memory buffer type.
+	 * Other types need to be driver / IOCTL initialized.
+	 */
+	ret = ttm_bo_init_mm(bdev, TTM_PL_SYSTEM, 0);
+	if (unlikely(ret != 0))
+		goto out_no_sys;
+
+	drm_vma_offset_manager_init(&bdev->vma_manager, file_page_offset,
+				    0x10000000);
+	INIT_DELAYED_WORK(&bdev->wq, ttm_bo_delayed_workqueue);
+	INIT_LIST_HEAD(&bdev->ddestroy);
+	bdev->dev_mapping = mapping;
+	bdev->glob = glob;
+	bdev->need_dma32 = need_dma32;
+	mutex_lock(&glob->device_list_mutex);
+	list_add_tail(&bdev->device_list, &glob->device_list);
+	mutex_unlock(&glob->device_list_mutex);
+
+	return 0;
+out_no_sys:
+	return ret;
+}
+EXPORT_SYMBOL(ttm_bo_device_init);
+>>>>>>> master
 
 /*
  * buffer object vm functions.

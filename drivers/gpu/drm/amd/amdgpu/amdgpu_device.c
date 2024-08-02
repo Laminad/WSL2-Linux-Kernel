@@ -2383,9 +2383,16 @@ static int amdgpu_device_ip_init(struct amdgpu_device *adev)
 	if (r)
 		goto init_failed;
 
+<<<<<<< HEAD
 	r = amdgpu_device_ip_hw_init_phase1(adev);
 	if (r)
 		goto init_failed;
+=======
+	if (amdgpu_sriov_vf(adev)) {
+		amdgpu_virt_init_data_exchange(adev);
+		amdgpu_virt_release_full_gpu(adev, true);
+	}
+>>>>>>> master
 
 	r = amdgpu_device_fw_loading(adev);
 	if (r)
@@ -3826,10 +3833,21 @@ fence_driver_init:
 	/* Get a log2 for easy divisions. */
 	adev->mm_stats.log2_max_MBps = ilog2(max(1u, max_MBps));
 
+<<<<<<< HEAD
 	r = amdgpu_atombios_sysfs_init(adev);
 	if (r)
 		drm_err(&adev->ddev,
 			"registering atombios sysfs failed (%d).\n", r);
+=======
+	r = amdgpu_ib_pool_init(adev);
+	if (r) {
+		dev_err(adev->dev, "IB initialization failed (%d).\n", r);
+		amdgpu_vf_error_put(adev, AMDGIM_ERROR_VF_IB_INIT_FAIL, 0, r);
+		goto failed;
+	}
+
+	amdgpu_fbdev_init(adev);
+>>>>>>> master
 
 	r = amdgpu_pm_sysfs_init(adev);
 	if (r)
@@ -4580,6 +4598,11 @@ retry:
 	}
 
 error:
+<<<<<<< HEAD
+=======
+	amdgpu_virt_init_data_exchange(adev);
+	amdgpu_virt_release_full_gpu(adev, true);
+>>>>>>> master
 	if (!r && adev->virt.gim_feature & AMDGIM_FEATURE_GIM_FLR_VRAMLOST) {
 		amdgpu_inc_vram_lost(adev);
 		r = amdgpu_device_recover_vram(adev);

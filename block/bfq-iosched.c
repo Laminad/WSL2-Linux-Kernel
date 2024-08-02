@@ -2508,7 +2508,11 @@ static void bfq_request_merged(struct request_queue *q, struct request *req,
 	    blk_rq_pos(req) <
 	    blk_rq_pos(container_of(rb_prev(&req->rb_node),
 				    struct request, rb_node))) {
+<<<<<<< HEAD
 		struct bfq_queue *bfqq = RQ_BFQQ(req);
+=======
+		struct bfq_queue *bfqq = bfq_init_rq(req);
+>>>>>>> master
 		struct bfq_data *bfqd;
 		struct request *prev, *next_rq;
 
@@ -2565,6 +2569,9 @@ static void bfq_requests_merged(struct request_queue *q, struct request *rq,
 
 	if (!bfqq)
 		goto remove;
+
+	if (!bfqq)
+		return;
 
 	/*
 	 * If next and rq belong to the same bfq_queue and next is older
@@ -5458,7 +5465,14 @@ static void bfq_exit_icq_bfqq(struct bfq_io_cq *bic, bool is_sync,
 		bfqd = bfqq->bfqd; /* NULL if scheduler already exited */
 
 	if (bfqq && bfqd) {
+<<<<<<< HEAD
 		bic_set_bfqq(bic, NULL, is_sync, actuator_idx);
+=======
+		unsigned long flags;
+
+		spin_lock_irqsave(&bfqd->lock, flags);
+		bfqq->bic = NULL;
+>>>>>>> master
 		bfq_exit_bfqq(bfqd, bfqq);
 	}
 }
@@ -6260,10 +6274,22 @@ static void bfq_insert_request(struct blk_mq_hw_ctx *hctx, struct request *rq,
 
 	trace_block_rq_insert(rq);
 
+<<<<<<< HEAD
 	if (flags & BLK_MQ_INSERT_AT_HEAD) {
 		list_add(&rq->queuelist, &bfqd->dispatch);
 	} else if (!bfqq) {
 		list_add_tail(&rq->queuelist, &bfqd->dispatch);
+=======
+	blk_mq_sched_request_inserted(rq);
+
+	spin_lock_irq(&bfqd->lock);
+	bfqq = bfq_init_rq(rq);
+	if (!bfqq || at_head || blk_rq_is_passthrough(rq)) {
+		if (at_head)
+			list_add(&rq->queuelist, &bfqd->dispatch);
+		else
+			list_add_tail(&rq->queuelist, &bfqd->dispatch);
+>>>>>>> master
 	} else {
 		idle_timer_disabled = __bfq_insert_request(bfqd, rq);
 		/*
@@ -7129,8 +7155,21 @@ static void bfq_depth_updated(struct blk_mq_hw_ctx *hctx)
 	sbitmap_queue_min_shallow_depth(&tags->bitmap_tags, 1);
 }
 
+static void bfq_depth_updated(struct blk_mq_hw_ctx *hctx)
+{
+<<<<<<< HEAD
+=======
+	struct bfq_data *bfqd = hctx->queue->elevator->elevator_data;
+	struct blk_mq_tags *tags = hctx->sched_tags;
+	unsigned int min_shallow;
+
+	min_shallow = bfq_update_depths(bfqd, &tags->bitmap_tags);
+	sbitmap_queue_min_shallow_depth(&tags->bitmap_tags, min_shallow);
+}
+
 static int bfq_init_hctx(struct blk_mq_hw_ctx *hctx, unsigned int index)
 {
+>>>>>>> master
 	bfq_depth_updated(hctx);
 	return 0;
 }

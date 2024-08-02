@@ -54,7 +54,10 @@ void kvm_vgic_early_init(struct kvm *kvm)
 	struct vgic_dist *dist = &kvm->arch.vgic;
 
 	INIT_LIST_HEAD(&dist->lpi_list_head);
+<<<<<<< HEAD:arch/arm64/kvm/vgic/vgic-init.c
 	INIT_LIST_HEAD(&dist->lpi_translation_cache);
+=======
+>>>>>>> master:virt/kvm/arm/vgic/vgic-init.c
 	raw_spin_lock_init(&dist->lpi_list_lock);
 }
 
@@ -175,7 +178,10 @@ static int kvm_vgic_dist_init(struct kvm *kvm, unsigned int nr_spis)
 			break;
 		default:
 			kfree(dist->spis);
+<<<<<<< HEAD:arch/arm64/kvm/vgic/vgic-init.c
 			dist->spis = NULL;
+=======
+>>>>>>> master:virt/kvm/arm/vgic/vgic-init.c
 			return -EINVAL;
 		}
 	}
@@ -263,10 +269,14 @@ int vgic_init(struct kvm *kvm)
 {
 	struct vgic_dist *dist = &kvm->arch.vgic;
 	struct kvm_vcpu *vcpu;
+<<<<<<< HEAD:arch/arm64/kvm/vgic/vgic-init.c
 	int ret = 0, i;
 	unsigned long idx;
 
 	lockdep_assert_held(&kvm->arch.config_lock);
+=======
+	int ret = 0, i, idx;
+>>>>>>> master:virt/kvm/arm/vgic/vgic-init.c
 
 	if (vgic_initialized(kvm))
 		return 0;
@@ -305,6 +315,7 @@ int vgic_init(struct kvm *kvm)
 		}
 	}
 
+<<<<<<< HEAD:arch/arm64/kvm/vgic/vgic-init.c
 	if (vgic_has_its(kvm))
 		vgic_lpi_translation_cache_init(kvm);
 
@@ -314,6 +325,9 @@ int vgic_init(struct kvm *kvm)
 	 * enable it if we present a virtual ITS to the guest.
 	 */
 	if (vgic_supports_direct_msis(kvm)) {
+=======
+	if (vgic_has_its(kvm)) {
+>>>>>>> master:virt/kvm/arm/vgic/vgic-init.c
 		ret = vgic_v4_init(kvm);
 		if (ret)
 			goto out;

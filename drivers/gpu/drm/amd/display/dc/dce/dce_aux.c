@@ -219,7 +219,11 @@ static void submit_channel_request(
 	REG_UPDATE(AUX_INTERRUPT_CONTROL, AUX_SW_DONE_ACK, 1);
 
 	REG_WAIT(AUX_SW_STATUS, AUX_SW_DONE, 0,
+<<<<<<< HEAD
 				10, aux110->polling_timeout_period/10);
+=======
+				10, aux110->timeout_period/10);
+>>>>>>> master
 
 	/* set the delay and the number of bytes to write */
 

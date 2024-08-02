@@ -471,7 +471,12 @@ static void SRXAFSCB_ProbeUuid(struct work_struct *work)
 	if (memcmp(r, &call->net->uuid, sizeof(call->net->uuid)) == 0)
 		afs_send_empty_reply(call);
 	else
+<<<<<<< HEAD
 		afs_abort_service_call(call, 1, 1, afs_abort_probeuuid_negative);
+=======
+		rxrpc_kernel_abort_call(call->net->socket, call->rxcall,
+					1, 1, "K-1");
+>>>>>>> master
 
 	afs_put_call(call);
 	_leave("");

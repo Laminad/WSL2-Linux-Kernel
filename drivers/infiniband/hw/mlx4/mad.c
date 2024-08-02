@@ -1680,7 +1680,11 @@ tx_err:
 				    tx_buf_size, DMA_TO_DEVICE);
 		kfree(tun_qp->tx_ring[i].buf.addr);
 	}
+<<<<<<< HEAD
 	i = nmbr_bufs;
+=======
+	i = MLX4_NUM_TUNNEL_BUFS;
+>>>>>>> master
 err:
 	while (i > 0) {
 		--i;

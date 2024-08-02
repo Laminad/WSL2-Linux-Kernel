@@ -2340,18 +2340,38 @@ static int ibmvscsi_probe(struct vio_dev *vdev, const struct vio_device_id *id)
 static void ibmvscsi_remove(struct vio_dev *vdev)
 {
 	struct ibmvscsi_host_data *hostdata = dev_get_drvdata(&vdev->dev);
+<<<<<<< HEAD
+=======
+	unsigned long flags;
+>>>>>>> master
 
 	srp_remove_host(hostdata->host);
 	scsi_remove_host(hostdata->host);
 
 	purge_requests(hostdata, DID_ERROR);
+<<<<<<< HEAD
 	release_event_pool(&hostdata->pool, hostdata);
+=======
+
+	spin_lock_irqsave(hostdata->host->host_lock, flags);
+	release_event_pool(&hostdata->pool, hostdata);
+	spin_unlock_irqrestore(hostdata->host->host_lock, flags);
+>>>>>>> master
 
 	ibmvscsi_release_crq_queue(&hostdata->queue, hostdata,
 					max_events);
 
 	kthread_stop(hostdata->work_thread);
 	unmap_persist_bufs(hostdata);
+<<<<<<< HEAD
+=======
+
+	spin_lock(&ibmvscsi_driver_lock);
+	list_del(&hostdata->host_list);
+	spin_unlock(&ibmvscsi_driver_lock);
+
+	scsi_host_put(hostdata->host);
+>>>>>>> master
 
 	spin_lock(&ibmvscsi_driver_lock);
 	list_del(&hostdata->host_list);

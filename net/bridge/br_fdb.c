@@ -1409,6 +1409,12 @@ int br_fdb_external_learn_add(struct net_bridge *br, struct net_bridge_port *p,
 			err = -ENOMEM;
 			goto err_unlock;
 		}
+<<<<<<< HEAD
+=======
+		if (swdev_notify)
+			fdb->added_by_user = 1;
+		fdb->added_by_external_learn = 1;
+>>>>>>> master
 		fdb_notify(br, fdb, RTM_NEWNEIGH, swdev_notify);
 	} else {
 		if (locked &&
@@ -1434,6 +1440,7 @@ int br_fdb_external_learn_add(struct net_bridge *br, struct net_bridge_port *p,
 			modified = true;
 		}
 
+<<<<<<< HEAD
 		if (locked != test_bit(BR_FDB_LOCKED, &fdb->flags)) {
 			change_bit(BR_FDB_LOCKED, &fdb->flags);
 			modified = true;
@@ -1444,6 +1451,10 @@ int br_fdb_external_learn_add(struct net_bridge *br, struct net_bridge_port *p,
 
 		if (!p)
 			set_bit(BR_FDB_LOCAL, &fdb->flags);
+=======
+		if (swdev_notify)
+			fdb->added_by_user = 1;
+>>>>>>> master
 
 		if (modified)
 			fdb_notify(br, fdb, RTM_NEWNEIGH, swdev_notify);

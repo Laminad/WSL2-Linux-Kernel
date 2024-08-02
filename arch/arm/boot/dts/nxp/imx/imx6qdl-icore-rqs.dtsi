@@ -274,7 +274,11 @@
 	pinctrl-0 = <&pinctrl_usdhc4>;
 	pinctrl-1 = <&pinctrl_usdhc4_100mhz>;
 	pinctrl-2 = <&pinctrl_usdhc4_200mhz>;
+<<<<<<< HEAD:arch/arm/boot/dts/nxp/imx/imx6qdl-icore-rqs.dtsi
 	vmmc-supply = <&reg_sd4_vmmc>;
+=======
+	vmcc-supply = <&reg_sd4_vmmc>;
+>>>>>>> master:arch/arm/boot/dts/imx6qdl-icore-rqs.dtsi
 	bus-width = <8>;
 	no-1-8-v;
 	non-removable;

@@ -66,6 +66,52 @@
 
 static struct kmem_cache *nfs_direct_cachep;
 
+<<<<<<< HEAD
+=======
+/*
+ * This represents a set of asynchronous requests that we're waiting on
+ */
+struct nfs_direct_mirror {
+	ssize_t count;
+};
+
+struct nfs_direct_req {
+	struct kref		kref;		/* release manager */
+
+	/* I/O parameters */
+	struct nfs_open_context	*ctx;		/* file open context info */
+	struct nfs_lock_context *l_ctx;		/* Lock context info */
+	struct kiocb *		iocb;		/* controlling i/o request */
+	struct inode *		inode;		/* target file of i/o */
+
+	/* completion state */
+	atomic_t		io_count;	/* i/os we're waiting for */
+	spinlock_t		lock;		/* protect completion state */
+
+	struct nfs_direct_mirror mirrors[NFS_PAGEIO_DESCRIPTOR_MIRROR_MAX];
+	int			mirror_count;
+
+	loff_t			io_start;	/* Start offset for I/O */
+	ssize_t			count,		/* bytes actually processed */
+				max_count,	/* max expected count */
+				bytes_left,	/* bytes left to be sent */
+				error;		/* any reported error */
+	struct completion	completion;	/* wait for i/o completion */
+
+	/* commit state */
+	struct nfs_mds_commit_info mds_cinfo;	/* Storage for cinfo */
+	struct pnfs_ds_commit_info ds_cinfo;	/* Storage for cinfo */
+	struct work_struct	work;
+	int			flags;
+	/* for write */
+#define NFS_ODIRECT_DO_COMMIT		(1)	/* an unstable reply was received */
+#define NFS_ODIRECT_RESCHED_WRITES	(2)	/* write verification failed */
+	/* for read */
+#define NFS_ODIRECT_SHOULD_DIRTY	(3)	/* dirty user-space page after read */
+	struct nfs_writeverf	verf;		/* unstable write verifier */
+};
+
+>>>>>>> master
 static const struct nfs_pgio_completion_ops nfs_direct_write_completion_ops;
 static const struct nfs_commit_completion_ops nfs_direct_commit_completion_ops;
 static void nfs_direct_write_complete(struct nfs_direct_req *dreq);
@@ -86,6 +132,11 @@ nfs_direct_handle_truncated(struct nfs_direct_req *dreq,
 			    const struct nfs_pgio_header *hdr,
 			    ssize_t dreq_len)
 {
+<<<<<<< HEAD
+=======
+	struct nfs_direct_mirror *mirror = &dreq->mirrors[hdr->pgio_mirror_idx];
+
+>>>>>>> master
 	if (!(test_bit(NFS_IOHDR_ERROR, &hdr->flags) ||
 	      test_bit(NFS_IOHDR_EOF, &hdr->flags)))
 		return;
@@ -93,10 +144,43 @@ nfs_direct_handle_truncated(struct nfs_direct_req *dreq,
 		dreq->max_count = dreq_len;
 		if (dreq->count > dreq_len)
 			dreq->count = dreq_len;
+<<<<<<< HEAD
 	}
 
 	if (test_bit(NFS_IOHDR_ERROR, &hdr->flags) && !dreq->error)
 		dreq->error = hdr->error;
+=======
+
+		if (test_bit(NFS_IOHDR_ERROR, &hdr->flags))
+			dreq->error = hdr->error;
+		else /* Clear outstanding error if this is EOF */
+			dreq->error = 0;
+	}
+	if (mirror->count > dreq_len)
+		mirror->count = dreq_len;
+}
+
+static void
+nfs_direct_count_bytes(struct nfs_direct_req *dreq,
+		       const struct nfs_pgio_header *hdr)
+{
+	struct nfs_direct_mirror *mirror = &dreq->mirrors[hdr->pgio_mirror_idx];
+	loff_t hdr_end = hdr->io_start + hdr->good_bytes;
+	ssize_t dreq_len = 0;
+
+	if (hdr_end > dreq->io_start)
+		dreq_len = hdr_end - dreq->io_start;
+
+	nfs_direct_handle_truncated(dreq, hdr, dreq_len);
+
+	if (dreq_len > dreq->max_count)
+		dreq_len = dreq->max_count;
+
+	if (mirror->count < dreq_len)
+		mirror->count = dreq_len;
+	if (dreq->count < dreq_len)
+		dreq->count = dreq_len;
+>>>>>>> master
 }
 
 static void
@@ -454,11 +538,18 @@ ssize_t nfs_file_direct_read(struct kiocb *iocb, struct iov_iter *iter,
 	if (!is_sync_kiocb(iocb))
 		dreq->iocb = iocb;
 
+<<<<<<< HEAD
 	if (user_backed_iter(iter))
 		dreq->flags = NFS_ODIRECT_SHOULD_DIRTY;
 
 	if (!swap)
 		nfs_start_io_direct(inode);
+=======
+	if (iter_is_iovec(iter))
+		dreq->flags = NFS_ODIRECT_SHOULD_DIRTY;
+
+	nfs_start_io_direct(inode);
+>>>>>>> master
 
 	NFS_I(inode)->read_io += count;
 	requested = nfs_direct_read_schedule_iovec(dreq, iter, iocb->ki_pos);
@@ -548,8 +639,16 @@ static void nfs_direct_write_reschedule(struct nfs_direct_req *dreq)
 	nfs_init_cinfo_from_dreq(&cinfo, dreq);
 	nfs_direct_write_scan_commit_list(dreq->inode, &reqs, &cinfo);
 
+<<<<<<< HEAD
 	nfs_direct_join_group(&reqs, &cinfo, dreq->inode);
 
+=======
+	dreq->count = 0;
+	dreq->max_count = 0;
+	list_for_each_entry(req, &reqs, wb_list)
+		dreq->max_count += req->wb_bytes;
+	dreq->verf.committed = NFS_INVALID_STABLE_HOW;
+>>>>>>> master
 	nfs_clear_pnfs_ds_commit_verifiers(&dreq->ds_cinfo);
 	get_dreq(dreq);
 
@@ -562,6 +661,7 @@ static void nfs_direct_write_reschedule(struct nfs_direct_req *dreq)
 		/* Bump the transmission count */
 		req->wb_nio++;
 		if (!nfs_pageio_add_request(&desc, req)) {
+<<<<<<< HEAD
 			spin_lock(&dreq->lock);
 			if (dreq->error < 0) {
 				desc.pg_error = dreq->error;
@@ -569,6 +669,12 @@ static void nfs_direct_write_reschedule(struct nfs_direct_req *dreq)
 				dreq->flags = 0;
 				if (!desc.pg_error)
 					desc.pg_error = -EIO;
+=======
+			nfs_list_move_request(req, &failed);
+			spin_lock(&cinfo.inode->i_lock);
+			dreq->flags = 0;
+			if (desc.pg_error < 0)
+>>>>>>> master
 				dreq->error = desc.pg_error;
 			} else
 				dreq->flags = NFS_ODIRECT_RESCHED_WRITES;
@@ -732,8 +838,11 @@ static void nfs_direct_write_completion(struct nfs_pgio_header *hdr)
 	struct nfs_page *req = nfs_list_entry(hdr->pages.next);
 	int flags = NFS_ODIRECT_DONE;
 
+<<<<<<< HEAD
 	trace_nfs_direct_write_completion(dreq);
 
+=======
+>>>>>>> master
 	nfs_init_cinfo_from_dreq(&cinfo, dreq);
 
 	spin_lock(&dreq->lock);
@@ -743,11 +852,29 @@ static void nfs_direct_write_completion(struct nfs_pgio_header *hdr)
 	}
 
 	nfs_direct_count_bytes(dreq, hdr);
+<<<<<<< HEAD
 	if (test_bit(NFS_IOHDR_UNSTABLE_WRITES, &hdr->flags) &&
 	    !test_bit(NFS_IOHDR_ERROR, &hdr->flags)) {
 		if (!dreq->flags)
 			dreq->flags = NFS_ODIRECT_DO_COMMIT;
 		flags = dreq->flags;
+=======
+	if (hdr->good_bytes != 0) {
+		if (nfs_write_need_commit(hdr)) {
+			if (dreq->flags == NFS_ODIRECT_RESCHED_WRITES)
+				request_commit = true;
+			else if (dreq->flags == 0) {
+				nfs_direct_set_hdr_verf(dreq, hdr);
+				request_commit = true;
+				dreq->flags = NFS_ODIRECT_DO_COMMIT;
+			} else if (dreq->flags == NFS_ODIRECT_DO_COMMIT) {
+				request_commit = true;
+				if (nfs_direct_set_or_cmp_hdr_verf(dreq, hdr))
+					dreq->flags =
+						NFS_ODIRECT_RESCHED_WRITES;
+			}
+		}
+>>>>>>> master
 	}
 	spin_unlock(&dreq->lock);
 

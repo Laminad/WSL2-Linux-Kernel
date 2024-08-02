@@ -5164,12 +5164,15 @@ static void qed_iov_handle_trust_change(struct qed_hwfn *hwfn)
 
 		params.update_ctl_frame_check = 1;
 		params.mac_chk_en = !vf_info->is_trusted_configured;
+<<<<<<< HEAD
 		params.update_accept_any_vlan_flg = 0;
 
 		if (vf_info->accept_any_vlan && vf_info->forced_vlan) {
 			params.update_accept_any_vlan_flg = 1;
 			params.accept_any_vlan = vf_info->accept_any_vlan;
 		}
+=======
+>>>>>>> master
 
 		if (vf_info->rx_accept_mode & mask) {
 			flags->update_rx_mode_config = 1;
@@ -5190,12 +5193,16 @@ static void qed_iov_handle_trust_change(struct qed_hwfn *hwfn)
 
 		if (flags->update_rx_mode_config ||
 		    flags->update_tx_mode_config ||
+<<<<<<< HEAD
 		    params.update_ctl_frame_check ||
 		    params.update_accept_any_vlan_flg) {
 			DP_VERBOSE(hwfn, QED_MSG_IOV,
 				   "vport update config for %s VF[abs 0x%x rel 0x%x]\n",
 				   vf_info->is_trusted_configured ? "trusted" : "untrusted",
 				   vf->abs_vf_id, vf->relative_vf_id);
+=======
+		    params.update_ctl_frame_check)
+>>>>>>> master
 			qed_sp_vport_update(hwfn, &params,
 					    QED_SPQ_MODE_EBLOCK, NULL);
 		}

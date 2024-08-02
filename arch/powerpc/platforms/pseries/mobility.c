@@ -6,6 +6,7 @@
  * Copyright (C) 2010 IBM Corporation
  */
 
+<<<<<<< HEAD
 
 #define pr_fmt(fmt) "mobility: " fmt
 
@@ -13,6 +14,11 @@
 #include <linux/kernel.h>
 #include <linux/kobject.h>
 #include <linux/nmi.h>
+=======
+#include <linux/cpu.h>
+#include <linux/kernel.h>
+#include <linux/kobject.h>
+>>>>>>> master
 #include <linux/sched.h>
 #include <linux/smp.h>
 #include <linux/stat.h>
@@ -345,7 +351,10 @@ static int pseries_devicetree_update(s32 scope)
 					break;
 				}
 
+<<<<<<< HEAD
 				of_node_put(np);
+=======
+>>>>>>> master
 				cond_resched();
 			}
 		}
@@ -376,10 +385,17 @@ void post_mobility_fixup(void)
 	 */
 	cacheinfo_teardown();
 
+	/*
+	 * We don't want CPUs to go online/offline while the device
+	 * tree is being updated.
+	 */
+	cpus_read_lock();
+
 	rc = pseries_devicetree_update(MIGRATION_SCOPE);
 	if (rc)
 		pr_err("device tree update failed: %d\n", rc);
 
+<<<<<<< HEAD
 	cacheinfo_rebuild();
 
 	cpus_read_unlock();
@@ -389,6 +405,12 @@ void post_mobility_fixup(void)
 
 	/* Reinitialise system information for hv-24x7 */
 	read_24x7_sys_info();
+=======
+	cpus_read_unlock();
+
+	/* Possibly switch to a new RFI flush type */
+	pseries_setup_rfi_flush();
+>>>>>>> master
 
 	return;
 }

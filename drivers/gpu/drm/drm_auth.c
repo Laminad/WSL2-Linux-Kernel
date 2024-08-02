@@ -189,6 +189,7 @@ static int drm_new_set_master(struct drm_device *dev, struct drm_file *fpriv)
 	return 0;
 }
 
+<<<<<<< HEAD
 /*
  * In the olden days the SET/DROP_MASTER ioctls used to return EACCES when
  * CAP_SYS_ADMIN was not set. This was used to prevent rogue applications
@@ -238,6 +239,13 @@ drm_master_check_perm(struct drm_device *dev, struct drm_file *file_priv)
 	if (file_priv->was_master &&
 	    rcu_access_pointer(file_priv->pid) == task_tgid(current))
 		return 0;
+=======
+out_err:
+	/* drop references and restore old master on failure */
+	drm_master_put(&fpriv->master);
+	fpriv->master = old_master;
+	fpriv->is_master = 0;
+>>>>>>> master
 
 	if (!capable(CAP_SYS_ADMIN))
 		return -EACCES;

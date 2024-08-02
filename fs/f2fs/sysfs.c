@@ -569,6 +569,7 @@ out:
 		return count;
 	}
 
+<<<<<<< HEAD
 #ifdef CONFIG_F2FS_IOSTAT
 	if (!strcmp(a->attr.name, "iostat_enable")) {
 		sbi->iostat_enable = !!t;
@@ -736,6 +737,18 @@ out:
 
 	*ui = (unsigned int)t;
 
+=======
+
+	if (!strcmp(a->attr.name, "iostat_enable")) {
+		sbi->iostat_enable = !!t;
+		if (!sbi->iostat_enable)
+			f2fs_reset_iostat(sbi);
+		return count;
+	}
+
+	*ui = (unsigned int)t;
+
+>>>>>>> master
 	return count;
 }
 

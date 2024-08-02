@@ -1056,8 +1056,21 @@ svcxdr_encode_entry3_common(struct nfsd3_readdirres *resp, const char *name,
 	if (xdr_stream_encode_u64(xdr, OFFSET_MAX) < 0)
 		return false;
 
+<<<<<<< HEAD
 	return true;
 }
+=======
+		if (unlikely(cd->offset1)) {
+			/* we ended up with offset on a page boundary */
+			*cd->offset = htonl(offset64 >> 32);
+			*cd->offset1 = htonl(offset64 & 0xffffffff);
+			cd->offset1 = NULL;
+		} else {
+			xdr_encode_hyper(cd->offset, offset64);
+		}
+		cd->offset = NULL;
+	}
+>>>>>>> master
 
 /**
  * nfs3svc_encode_entry3 - encode one NFSv3 READDIR entry

@@ -32,8 +32,18 @@
  * of GPIO lines.
  */
 #define GPIO_MOCKUP_MAX_RANGES	(GPIO_MOCKUP_MAX_GC * 2)
+<<<<<<< HEAD
 /* Maximum of four properties + the sentinel. */
 #define GPIO_MOCKUP_MAX_PROP	5
+=======
+
+#define gpio_mockup_err(...)	pr_err(GPIO_MOCKUP_NAME ": " __VA_ARGS__)
+
+enum {
+	GPIO_MOCKUP_DIR_IN = 0,
+	GPIO_MOCKUP_DIR_OUT = 1,
+};
+>>>>>>> master
 
 /*
  * struct gpio_pin_status - structure describing a GPIO status
@@ -235,11 +245,15 @@ static int gpio_mockup_get_direction(struct gpio_chip *gc, unsigned int offset)
 	struct gpio_mockup_chip *chip = gpiochip_get_data(gc);
 	int direction;
 
+<<<<<<< HEAD
 	mutex_lock(&chip->lock);
 	direction = chip->lines[offset].dir;
 	mutex_unlock(&chip->lock);
 
 	return direction;
+=======
+	return !chip->lines[offset].dir;
+>>>>>>> master
 }
 
 static int gpio_mockup_to_irq(struct gpio_chip *gc, unsigned int offset)

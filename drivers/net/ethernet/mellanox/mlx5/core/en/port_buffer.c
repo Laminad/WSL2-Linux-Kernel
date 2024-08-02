@@ -358,7 +358,11 @@ static u32 calculate_xoff(struct mlx5e_priv *priv, unsigned int mtu)
 }
 
 static int update_xoff_threshold(struct mlx5e_port_buffer *port_buffer,
+<<<<<<< HEAD
 				 u32 xoff, unsigned int max_mtu, u16 port_buff_cell_sz)
+=======
+				 u32 xoff, unsigned int max_mtu)
+>>>>>>> master
 {
 	int i;
 
@@ -370,9 +374,13 @@ static int update_xoff_threshold(struct mlx5e_port_buffer *port_buffer,
 		}
 
 		if (port_buffer->buffer[i].size <
+<<<<<<< HEAD
 		    (xoff + max_mtu + port_buff_cell_sz)) {
 			pr_err("buffer_size[%d]=%d is not enough for lossless buffer\n",
 			       i, port_buffer->buffer[i].size);
+=======
+		    (xoff + max_mtu + (1 << MLX5E_BUFFER_CELL_SHIFT)))
+>>>>>>> master
 			return -ENOMEM;
 		}
 
@@ -385,6 +393,7 @@ static int update_xoff_threshold(struct mlx5e_port_buffer *port_buffer,
 }
 
 /**
+<<<<<<< HEAD
  *	update_buffer_lossy	- Update buffer configuration based on pfc
  *	@mdev: port function core device
  *	@max_mtu: netdev's max_mtu
@@ -394,6 +403,15 @@ static int update_xoff_threshold(struct mlx5e_port_buffer *port_buffer,
  *	@port_buff_cell_sz: <input> port buffer cell_size
  *	@port_buffer: <output> port receive buffer configuration
  *	@change: <output>
+=======
+ * update_buffer_lossy()
+ *   max_mtu: netdev's max_mtu
+ *   pfc_en: <input> current pfc configuration
+ *   buffer: <input> current prio to buffer mapping
+ *   xoff:   <input> xoff value
+ *   port_buffer: <output> port receive buffer configuration
+ *   change: <output>
+>>>>>>> master
  *
  *	Update buffer configuration based on pfc configuration and
  *	priority to buffer mapping.
@@ -405,9 +423,14 @@ static int update_xoff_threshold(struct mlx5e_port_buffer *port_buffer,
  *	@return: 0 if no error,
  *	sets change to true if buffer configuration was modified.
  */
+<<<<<<< HEAD
 static int update_buffer_lossy(struct mlx5_core_dev *mdev,
 			       unsigned int max_mtu,
 			       u8 pfc_en, u8 *buffer, u32 xoff, u16 port_buff_cell_sz,
+=======
+static int update_buffer_lossy(unsigned int max_mtu,
+			       u8 pfc_en, u8 *buffer, u32 xoff,
+>>>>>>> master
 			       struct mlx5e_port_buffer *port_buffer,
 			       bool *change)
 {
@@ -443,11 +466,15 @@ static int update_buffer_lossy(struct mlx5_core_dev *mdev,
 	}
 
 	if (changed) {
+<<<<<<< HEAD
 		err = update_xoff_threshold(port_buffer, xoff, max_mtu, port_buff_cell_sz);
 		if (err)
 			return err;
 
 		err = port_update_pool_cfg(mdev, port_buffer);
+=======
+		err = update_xoff_threshold(port_buffer, xoff, max_mtu);
+>>>>>>> master
 		if (err)
 			return err;
 
@@ -457,6 +484,7 @@ static int update_buffer_lossy(struct mlx5_core_dev *mdev,
 	return 0;
 }
 
+<<<<<<< HEAD
 static int fill_pfc_en(struct mlx5_core_dev *mdev, u8 *pfc_en)
 {
 	u32 g_rx_pause, g_tx_pause;
@@ -477,6 +505,8 @@ static int fill_pfc_en(struct mlx5_core_dev *mdev, u8 *pfc_en)
 	return err;
 }
 
+=======
+>>>>>>> master
 #define MINIMUM_MAX_MTU 9216
 int mlx5e_port_manual_buffer_config(struct mlx5e_priv *priv,
 				    u32 change, unsigned int mtu,
@@ -497,7 +527,11 @@ int mlx5e_port_manual_buffer_config(struct mlx5e_priv *priv,
 	int err;
 	int i;
 
+<<<<<<< HEAD
 	netdev_dbg(netdev, "%s: change=%x\n", __func__, change);
+=======
+	mlx5e_dbg(HW, priv, "%s: change=%x\n", __func__, change);
+>>>>>>> master
 	max_mtu = max_t(unsigned int, priv->netdev->max_mtu, MINIMUM_MAX_MTU);
 
 	err = mlx5e_port_query_buffer(priv, &port_buffer);
@@ -506,7 +540,11 @@ int mlx5e_port_manual_buffer_config(struct mlx5e_priv *priv,
 
 	if (change & MLX5E_PORT_BUFFER_CABLE_LEN) {
 		update_buffer = true;
+<<<<<<< HEAD
 		err = update_xoff_threshold(&port_buffer, xoff, max_mtu, port_buff_cell_sz);
+=======
+		err = update_xoff_threshold(&port_buffer, xoff, max_mtu);
+>>>>>>> master
 		if (err)
 			return err;
 	}
@@ -518,9 +556,14 @@ int mlx5e_port_manual_buffer_config(struct mlx5e_priv *priv,
 		if (err)
 			return err;
 
+<<<<<<< HEAD
 		err = update_buffer_lossy(priv->mdev, max_mtu, pfc->pfc_en, buffer, xoff,
 					  port_buff_cell_sz, &port_buffer,
 					  &update_buffer);
+=======
+		err = update_buffer_lossy(max_mtu, pfc->pfc_en, buffer, xoff,
+					  &port_buffer, &update_buffer);
+>>>>>>> master
 		if (err)
 			return err;
 	}
@@ -535,8 +578,13 @@ int mlx5e_port_manual_buffer_config(struct mlx5e_priv *priv,
 		if (err)
 			return err;
 
+<<<<<<< HEAD
 		err = update_buffer_lossy(priv->mdev, max_mtu, curr_pfc_en, prio2buffer, xoff,
 					  port_buff_cell_sz, &port_buffer, &update_buffer);
+=======
+		err = update_buffer_lossy(max_mtu, curr_pfc_en, prio2buffer,
+					  xoff, &port_buffer, &update_buffer);
+>>>>>>> master
 		if (err)
 			return err;
 	}
@@ -562,7 +610,11 @@ int mlx5e_port_manual_buffer_config(struct mlx5e_priv *priv,
 			return -EINVAL;
 
 		update_buffer = true;
+<<<<<<< HEAD
 		err = update_xoff_threshold(&port_buffer, xoff, max_mtu, port_buff_cell_sz);
+=======
+		err = update_xoff_threshold(&port_buffer, xoff, max_mtu);
+>>>>>>> master
 		if (err)
 			return err;
 	}
@@ -570,7 +622,11 @@ int mlx5e_port_manual_buffer_config(struct mlx5e_priv *priv,
 	/* Need to update buffer configuration if xoff value is changed */
 	if (!update_buffer && xoff != priv->dcbx.xoff) {
 		update_buffer = true;
+<<<<<<< HEAD
 		err = update_xoff_threshold(&port_buffer, xoff, max_mtu, port_buff_cell_sz);
+=======
+		err = update_xoff_threshold(&port_buffer, xoff, max_mtu);
+>>>>>>> master
 		if (err)
 			return err;
 	}

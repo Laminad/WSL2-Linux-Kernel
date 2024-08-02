@@ -382,6 +382,7 @@ struct qed_sp_init_data {
 };
 
 /**
+<<<<<<< HEAD
  * qed_sp_destroy_request(): Returns a SPQ entry to the pool / frees the
  *                           entry if allocated. Should be called on in error
  *                           flows after initializing the SPQ entry
@@ -391,6 +392,14 @@ struct qed_sp_init_data {
  * @p_ent: Ent.
  *
  * Return: Void.
+=======
+ * @brief Returns a SPQ entry to the pool / frees the entry if allocated.
+ *        Should be called on in error flows after initializing the SPQ entry
+ *        and before posting it.
+ *
+ * @param p_hwfn
+ * @param p_ent
+>>>>>>> master
  */
 void qed_sp_destroy_request(struct qed_hwfn *p_hwfn,
 			    struct qed_spq_entry *p_ent);

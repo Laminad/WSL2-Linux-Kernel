@@ -32,6 +32,8 @@ static struct bio_set bounce_bio_set, bounce_bio_split;
 static mempool_t page_pool;
 
 static void init_bounce_bioset(void)
+<<<<<<< HEAD
+=======
 {
 	static bool bounce_bs_setup;
 	int ret;
@@ -39,6 +41,27 @@ static void init_bounce_bioset(void)
 	if (bounce_bs_setup)
 		return;
 
+	ret = bioset_init(&bounce_bio_set, BIO_POOL_SIZE, 0, BIOSET_NEED_BVECS);
+	BUG_ON(ret);
+	if (bioset_integrity_create(&bounce_bio_set, BIO_POOL_SIZE))
+		BUG_ON(1);
+
+	ret = bioset_init(&bounce_bio_split, BIO_POOL_SIZE, 0, 0);
+	BUG_ON(ret);
+	bounce_bs_setup = true;
+}
+
+#if defined(CONFIG_HIGHMEM)
+static __init int init_emergency_pool(void)
+>>>>>>> master
+{
+	static bool bounce_bs_setup;
+	int ret;
+
+	if (bounce_bs_setup)
+		return;
+
+<<<<<<< HEAD
 	ret = bioset_init(&bounce_bio_set, BIO_POOL_SIZE, 0, BIOSET_NEED_BVECS);
 	BUG_ON(ret);
 	if (bioset_integrity_create(&bounce_bio_set, BIO_POOL_SIZE))
@@ -62,11 +85,72 @@ static __init int init_emergency_pool(void)
 	BUG_ON(ret);
 	pr_info("pool size: %d pages\n", POOL_SIZE);
 
+=======
+>>>>>>> master
 	init_bounce_bioset();
 	return 0;
 }
 
 __initcall(init_emergency_pool);
+<<<<<<< HEAD
+=======
+#endif
+
+#ifdef CONFIG_HIGHMEM
+/*
+ * highmem version, map in to vec
+ */
+static void bounce_copy_vec(struct bio_vec *to, unsigned char *vfrom)
+{
+	unsigned char *vto;
+
+	vto = kmap_atomic(to->bv_page);
+	memcpy(vto + to->bv_offset, vfrom, to->bv_len);
+	kunmap_atomic(vto);
+}
+
+#else /* CONFIG_HIGHMEM */
+
+#define bounce_copy_vec(to, vfrom)	\
+	memcpy(page_address((to)->bv_page) + (to)->bv_offset, vfrom, (to)->bv_len)
+
+#endif /* CONFIG_HIGHMEM */
+
+/*
+ * allocate pages in the DMA region for the ISA pool
+ */
+static void *mempool_alloc_pages_isa(gfp_t gfp_mask, void *data)
+{
+	return mempool_alloc_pages(gfp_mask | GFP_DMA, data);
+}
+
+static DEFINE_MUTEX(isa_mutex);
+
+/*
+ * gets called "every" time someone init's a queue with BLK_BOUNCE_ISA
+ * as the max address, so check if the pool has already been created.
+ */
+int init_emergency_isa_pool(void)
+{
+	int ret;
+
+	mutex_lock(&isa_mutex);
+
+	if (mempool_initialized(&isa_page_pool)) {
+		mutex_unlock(&isa_mutex);
+		return 0;
+	}
+
+	ret = mempool_init(&isa_page_pool, ISA_POOL_SIZE, mempool_alloc_pages_isa,
+			   mempool_free_pages, (void *) 0);
+	BUG_ON(ret);
+
+	pr_info("isa pool size: %d pages\n", ISA_POOL_SIZE);
+	init_bounce_bioset();
+	mutex_unlock(&isa_mutex);
+	return 0;
+}
+>>>>>>> master
 
 /*
  * Simple bounce buffer support for highmem pages. Depending on the
@@ -164,11 +248,22 @@ static struct bio *bounce_clone_bio(struct bio *bio_src)
 	 *    to date (i.e. for clones that share the parent biovec) is just
 	 *    asking for trouble and would force extra work.
 	 */
+<<<<<<< HEAD
 	bio = bio_alloc_bioset(bio_src->bi_bdev, bio_segments(bio_src),
 			       bio_src->bi_opf, GFP_NOIO, &bounce_bio_set);
 	if (bio_flagged(bio_src, BIO_REMAPPED))
 		bio_set_flag(bio, BIO_REMAPPED);
 	bio->bi_ioprio		= bio_src->bi_ioprio;
+=======
+
+	bio = bio_alloc_bioset(gfp_mask, bio_segments(bio_src), bs);
+	if (!bio)
+		return NULL;
+	bio->bi_disk		= bio_src->bi_disk;
+	bio->bi_opf		= bio_src->bi_opf;
+	bio->bi_ioprio		= bio_src->bi_ioprio;
+	bio->bi_write_hint	= bio_src->bi_write_hint;
+>>>>>>> master
 	bio->bi_iter.bi_sector	= bio_src->bi_iter.bi_sector;
 	bio->bi_iter.bi_size	= bio_src->bi_iter.bi_size;
 

@@ -97,6 +97,7 @@ EXPORT_SYMBOL(dcache_dir_close);
 /*
  * Returns an element of siblings' list.
  * We are looking for <count>th positive after <p>; if
+<<<<<<< HEAD
  * found, dentry is grabbed and returned to caller.
  * If no such element exists, NULL is returned.
  */
@@ -104,6 +105,16 @@ static struct dentry *scan_positives(struct dentry *cursor,
 					struct list_head *p,
 					loff_t count,
 					struct dentry *last)
+=======
+ * found, dentry is grabbed and passed to caller via *<res>.
+ * If no such element exists, the anchor of list is returned
+ * and *<res> is set to NULL.
+ */
+static struct list_head *scan_positives(struct dentry *cursor,
+					struct list_head *p,
+					loff_t count,
+					struct dentry **res)
+>>>>>>> master
 {
 	struct dentry *dentry = cursor->d_parent, *found = NULL;
 
@@ -131,8 +142,14 @@ static struct dentry *scan_positives(struct dentry *cursor,
 		}
 	}
 	spin_unlock(&dentry->d_lock);
+<<<<<<< HEAD
 	dput(last);
 	return found;
+=======
+	dput(*res);
+	*res = found;
+	return p;
+>>>>>>> master
 }
 
 loff_t dcache_dir_lseek(struct file *file, loff_t offset, int whence)
@@ -152,6 +169,7 @@ loff_t dcache_dir_lseek(struct file *file, loff_t offset, int whence)
 	if (offset != file->f_pos) {
 		struct dentry *cursor = file->private_data;
 		struct dentry *to = NULL;
+<<<<<<< HEAD
 
 		inode_lock_shared(dentry->d_inode);
 
@@ -168,6 +186,27 @@ loff_t dcache_dir_lseek(struct file *file, loff_t offset, int whence)
 
 		file->f_pos = offset;
 
+=======
+		struct list_head *p;
+
+		file->f_pos = offset;
+		inode_lock_shared(dentry->d_inode);
+
+		if (file->f_pos > 2) {
+			p = scan_positives(cursor, &dentry->d_subdirs,
+					   file->f_pos - 2, &to);
+			spin_lock(&dentry->d_lock);
+			list_move(&cursor->d_child, p);
+			spin_unlock(&dentry->d_lock);
+		} else {
+			spin_lock(&dentry->d_lock);
+			list_del_init(&cursor->d_child);
+			spin_unlock(&dentry->d_lock);
+		}
+
+		dput(to);
+
+>>>>>>> master
 		inode_unlock_shared(dentry->d_inode);
 	}
 	return offset;
@@ -193,12 +232,19 @@ int dcache_readdir(struct file *file, struct dir_context *ctx)
 
 	if (ctx->pos == 2)
 		p = anchor;
+<<<<<<< HEAD
 	else if (!list_empty(&cursor->d_child))
 		p = &cursor->d_child;
 	else
 		return 0;
 
 	while ((next = scan_positives(cursor, p, 1, next)) != NULL) {
+=======
+	else
+		p = &cursor->d_child;
+
+	while ((p = scan_positives(cursor, p, 1, &next)) != anchor) {
+>>>>>>> master
 		if (!dir_emit(ctx, next->d_name.name, next->d_name.len,
 			      d_inode(next)->i_ino,
 			      fs_umode_to_dtype(d_inode(next)->i_mode)))
@@ -207,10 +253,14 @@ int dcache_readdir(struct file *file, struct dir_context *ctx)
 		p = &next->d_child;
 	}
 	spin_lock(&dentry->d_lock);
+<<<<<<< HEAD
 	if (next)
 		list_move_tail(&cursor->d_child, &next->d_child);
 	else
 		list_del_init(&cursor->d_child);
+=======
+	list_move_tail(&cursor->d_child, p);
+>>>>>>> master
 	spin_unlock(&dentry->d_lock);
 	dput(next);
 

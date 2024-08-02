@@ -11,8 +11,163 @@
 
 static void default_calc_sets(struct irq_affinity *affd, unsigned int affvecs)
 {
+<<<<<<< HEAD
 	affd->nr_sets = 1;
 	affd->set_size[0] = affvecs;
+=======
+	const struct cpumask *siblmsk;
+	int cpu, sibl;
+
+	for ( ; cpus_per_vec > 0; ) {
+		cpu = cpumask_first(nmsk);
+
+		/* Should not happen, but I'm too lazy to think about it */
+		if (cpu >= nr_cpu_ids)
+			return;
+
+		cpumask_clear_cpu(cpu, nmsk);
+		cpumask_set_cpu(cpu, irqmsk);
+		cpus_per_vec--;
+
+		/* If the cpu has siblings, use them first */
+		siblmsk = topology_sibling_cpumask(cpu);
+		for (sibl = -1; cpus_per_vec > 0; ) {
+			sibl = cpumask_next(sibl, siblmsk);
+			if (sibl >= nr_cpu_ids)
+				break;
+			if (!cpumask_test_and_clear_cpu(sibl, nmsk))
+				continue;
+			cpumask_set_cpu(sibl, irqmsk);
+			cpus_per_vec--;
+		}
+	}
+}
+
+static cpumask_var_t *alloc_node_to_cpumask(void)
+{
+	cpumask_var_t *masks;
+	int node;
+
+	masks = kcalloc(nr_node_ids, sizeof(cpumask_var_t), GFP_KERNEL);
+	if (!masks)
+		return NULL;
+
+	for (node = 0; node < nr_node_ids; node++) {
+		if (!zalloc_cpumask_var(&masks[node], GFP_KERNEL))
+			goto out_unwind;
+	}
+
+	return masks;
+
+out_unwind:
+	while (--node >= 0)
+		free_cpumask_var(masks[node]);
+	kfree(masks);
+	return NULL;
+}
+
+static void free_node_to_cpumask(cpumask_var_t *masks)
+{
+	int node;
+
+	for (node = 0; node < nr_node_ids; node++)
+		free_cpumask_var(masks[node]);
+	kfree(masks);
+}
+
+static void build_node_to_cpumask(cpumask_var_t *masks)
+{
+	int cpu;
+
+	for_each_possible_cpu(cpu)
+		cpumask_set_cpu(cpu, masks[cpu_to_node(cpu)]);
+}
+
+static int get_nodes_in_cpumask(cpumask_var_t *node_to_cpumask,
+				const struct cpumask *mask, nodemask_t *nodemsk)
+{
+	int n, nodes = 0;
+
+	/* Calculate the number of nodes in the supplied affinity mask */
+	for_each_node(n) {
+		if (cpumask_intersects(mask, node_to_cpumask[n])) {
+			node_set(n, *nodemsk);
+			nodes++;
+		}
+	}
+	return nodes;
+}
+
+static int irq_build_affinity_masks(const struct irq_affinity *affd,
+				    int startvec, int numvecs,
+				    cpumask_var_t *node_to_cpumask,
+				    const struct cpumask *cpu_mask,
+				    struct cpumask *nmsk,
+				    struct cpumask *masks)
+{
+	int n, nodes, cpus_per_vec, extra_vecs, done = 0;
+	int last_affv = affd->pre_vectors + numvecs;
+	int curvec = startvec;
+	nodemask_t nodemsk = NODE_MASK_NONE;
+
+	if (!cpumask_weight(cpu_mask))
+		return 0;
+
+	nodes = get_nodes_in_cpumask(node_to_cpumask, cpu_mask, &nodemsk);
+
+	/*
+	 * If the number of nodes in the mask is greater than or equal the
+	 * number of vectors we just spread the vectors across the nodes.
+	 */
+	if (numvecs <= nodes) {
+		for_each_node_mask(n, nodemsk) {
+			cpumask_or(masks + curvec, masks + curvec, node_to_cpumask[n]);
+			if (++curvec == last_affv)
+				curvec = affd->pre_vectors;
+		}
+		done = numvecs;
+		goto out;
+	}
+
+	for_each_node_mask(n, nodemsk) {
+		int ncpus, v, vecs_to_assign, vecs_per_node;
+
+		/* Spread the vectors per node */
+		vecs_per_node = (numvecs - (curvec - affd->pre_vectors)) / nodes;
+
+		/* Get the cpus on this node which are in the mask */
+		cpumask_and(nmsk, cpu_mask, node_to_cpumask[n]);
+
+		/* Calculate the number of cpus per vector */
+		ncpus = cpumask_weight(nmsk);
+		vecs_to_assign = min(vecs_per_node, ncpus);
+
+		/* Account for rounding errors */
+		extra_vecs = ncpus - vecs_to_assign * (ncpus / vecs_to_assign);
+
+		for (v = 0; curvec < last_affv && v < vecs_to_assign;
+		     curvec++, v++) {
+			cpus_per_vec = ncpus / vecs_to_assign;
+
+			/* Account for extra vectors to compensate rounding errors */
+			if (extra_vecs) {
+				cpus_per_vec++;
+				--extra_vecs;
+			}
+			irq_spread_init_one(masks + curvec, nmsk, cpus_per_vec);
+		}
+
+		done += v;
+		if (done >= numvecs)
+			break;
+		if (curvec >= last_affv)
+			curvec = affd->pre_vectors;
+		--nodes;
+	}
+
+out:
+	return done;
+>>>>>>> master
 }
 
 /**

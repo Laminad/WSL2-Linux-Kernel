@@ -273,8 +273,13 @@ static int create_yamaha_midi_quirk(struct snd_usb_audio *chip,
 					NULL, USB_MS_MIDI_OUT_JACK);
 	if (!injd && !outjd)
 		return -ENODEV;
+<<<<<<< HEAD
 	if ((injd && !snd_usb_validate_midi_desc(injd)) ||
 	    (outjd && !snd_usb_validate_midi_desc(outjd)))
+=======
+	if (!(injd && snd_usb_validate_midi_desc(injd)) ||
+	    !(outjd && snd_usb_validate_midi_desc(outjd)))
+>>>>>>> master
 		return -ENODEV;
 	if (injd && (injd->bLength < 5 ||
 		     (injd->bJackType != USB_MS_EMBEDDED &&
@@ -1876,10 +1881,14 @@ u64 snd_usb_interface_dsd_format_quirks(struct snd_usb_audio *chip,
 
 	/* XMOS based USB DACs */
 	switch (chip->usb_id) {
+<<<<<<< HEAD
 	case USB_ID(0x139f, 0x5504): /* Nagra DAC */
 	case USB_ID(0x20b1, 0x3089): /* Mola-Mola DAC */
 	case USB_ID(0x2522, 0x0007): /* LH Labs Geek Out 1V5 */
 	case USB_ID(0x2522, 0x0009): /* LH Labs Geek Pulse X Inifinity 2V0 */
+=======
+	case USB_ID(0x1511, 0x0037): /* AURALiC VEGA */
+>>>>>>> master
 	case USB_ID(0x2522, 0x0012): /* LH Labs VI DAC Infinity */
 	case USB_ID(0x2772, 0x0230): /* Pro-Ject Pre Box S2 Digital */
 		if (fp->altsetting == 2)
@@ -1888,14 +1897,22 @@ u64 snd_usb_interface_dsd_format_quirks(struct snd_usb_audio *chip,
 
 	case USB_ID(0x0d8c, 0x0316): /* Hegel HD12 DSD */
 	case USB_ID(0x10cb, 0x0103): /* The Bit Opus #3; with fp->dsd_raw */
+<<<<<<< HEAD
 	case USB_ID(0x16d0, 0x06b2): /* NuPrime DAC-10 */
 	case USB_ID(0x16d0, 0x06b4): /* NuPrime Audio HD-AVP/AVA */
+=======
+	case USB_ID(0x16b0, 0x06b2): /* NuPrime DAC-10 */
+	case USB_ID(0x16d0, 0x09dd): /* Encore mDSD */
+>>>>>>> master
 	case USB_ID(0x16d0, 0x0733): /* Furutech ADL Stratos */
 	case USB_ID(0x16d0, 0x09d8): /* NuPrime IDA-8 */
 	case USB_ID(0x16d0, 0x09db): /* NuPrime Audio DAC-9 */
 	case USB_ID(0x16d0, 0x09dd): /* Encore mDSD */
 	case USB_ID(0x1db5, 0x0003): /* Bryston BDA3 */
+<<<<<<< HEAD
 	case USB_ID(0x20a0, 0x4143): /* WaveIO USB Audio 2.0 */
+=======
+>>>>>>> master
 	case USB_ID(0x22e1, 0xca01): /* HDTA Serenade DSD */
 	case USB_ID(0x249c, 0x9326): /* M2Tech Young MkIII */
 	case USB_ID(0x2616, 0x0106): /* PS Audio NuWave DAC */
@@ -1944,9 +1961,33 @@ u64 snd_usb_interface_dsd_format_quirks(struct snd_usb_audio *chip,
 			return SNDRV_PCM_FMTBIT_DSD_U32_BE;
 	}
 
+<<<<<<< HEAD
 	/* Mostly generic method to detect many DSD-capable implementations */
 	if ((chip->quirk_flags & QUIRK_FLAG_DSD_RAW) && fp->dsd_raw)
 		return SNDRV_PCM_FMTBIT_DSD_U32_BE;
+=======
+	/* Mostly generic method to detect many DSD-capable implementations -
+	 * from XMOS/Thesycon
+	 */
+	switch (USB_ID_VENDOR(chip->usb_id)) {
+	case 0x152a:  /* Thesycon devices */
+	case 0x20b1:  /* XMOS based devices */
+	case 0x22d9:  /* Oppo */
+	case 0x23ba:  /* Playback Designs */
+	case 0x25ce:  /* Mytek devices */
+	case 0x278b:  /* Rotel? */
+	case 0x292b:  /* Gustard/Ess based devices */
+	case 0x2ab6:  /* T+A devices */
+	case 0x3842:  /* EVGA */
+	case 0xc502:  /* HiBy devices */
+		if (fp->dsd_raw)
+			return SNDRV_PCM_FMTBIT_DSD_U32_BE;
+		break;
+	default:
+		break;
+
+	}
+>>>>>>> master
 
 	return 0;
 }

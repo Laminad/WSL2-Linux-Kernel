@@ -627,6 +627,10 @@ static void msg_done_handler(struct ssif_info *ssif_info, int result,
 
 			flags = ipmi_ssif_lock_cond(ssif_info, &oflags);
 			ssif_info->waiting_alert = true;
+<<<<<<< HEAD
+=======
+			ssif_info->rtc_us_timer = SSIF_MSG_USEC;
+>>>>>>> master
 			if (!ssif_info->stopping)
 				mod_timer(&ssif_info->retry_timer,
 					  jiffies + SSIF_MSG_JIFFIES);
@@ -683,6 +687,18 @@ static void msg_done_handler(struct ssif_info *ssif_info, int result,
 		if (blocknum != 0xff && len != 31) {
 		    /* All blocks but the last must have 31 data bytes. */
 			result = -EIO;
+<<<<<<< HEAD
+=======
+			if (ssif_info->ssif_debug & SSIF_DEBUG_MSG)
+				pr_info("Received middle message <31\n");
+
+			goto continue_op;
+		}
+
+		if (ssif_info->multi_len + len > IPMI_MAX_MSG_LENGTH) {
+			/* Received message too big, abort the operation. */
+			result = -E2BIG;
+>>>>>>> master
 			if (ssif_info->ssif_debug & SSIF_DEBUG_MSG)
 				dev_dbg(&ssif_info->client->dev,
 					"Received middle message <31\n");
@@ -983,6 +999,10 @@ static void msg_written_handler(struct ssif_info *ssif_info, int result,
 			/* Wait a jiffie then request the next message */
 			ssif_info->waiting_alert = true;
 			ssif_info->retries_left = SSIF_RECV_RETRIES;
+<<<<<<< HEAD
+=======
+			ssif_info->rtc_us_timer = SSIF_MSG_PART_USEC;
+>>>>>>> master
 			if (!ssif_info->stopping)
 				mod_timer(&ssif_info->retry_timer,
 					  jiffies + SSIF_MSG_PART_JIFFIES);

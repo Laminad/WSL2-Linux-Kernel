@@ -869,6 +869,7 @@ static enum ucode_state load_microcode_amd(u8 family, const u8 *data, size_t siz
 		return ret;
 	}
 
+<<<<<<< HEAD
 	for_each_node(nid) {
 		cpu = cpumask_first(cpumask_of_node(nid));
 		c = &cpu_data(cpu);
@@ -879,6 +880,14 @@ static enum ucode_state load_microcode_amd(u8 family, const u8 *data, size_t siz
 
 		if (c->microcode >= p->patch_id)
 			continue;
+=======
+	p = find_patch(0);
+	if (!p) {
+		return ret;
+	} else {
+		if (boot_cpu_data.microcode >= p->patch_id)
+			return ret;
+>>>>>>> master
 
 		ret = UCODE_NEW;
 	}

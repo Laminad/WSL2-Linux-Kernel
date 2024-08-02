@@ -175,8 +175,12 @@ void __dynamic_ibdev_dbg(struct _ddebug *descriptor,
 	BUILD_BUG_ON_MSG(cls > _DPRINTK_CLASS_DFLT,		\
 			 "classid value overflow")
 
+<<<<<<< HEAD
 #define DEFINE_DYNAMIC_DEBUG_METADATA(name, fmt)		\
 	DEFINE_DYNAMIC_DEBUG_METADATA_CLS(name, _DPRINTK_CLASS_DFLT, fmt)
+=======
+#ifdef CONFIG_JUMP_LABEL
+>>>>>>> master
 
 #ifdef CONFIG_JUMP_LABEL
 

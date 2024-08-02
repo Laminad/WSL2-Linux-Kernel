@@ -57,7 +57,16 @@
 	};
 
 	chosen {
+<<<<<<< HEAD:arch/arm/boot/dts/allwinner/sun6i-a31-app4-evb1.dts
 		stdout-path = "serial0:115200n8";
+=======
+		bootargs = "clk_ignore_unused init=/linuxrc rw";
+		stdout-path = "serial2:115200";
+	};
+
+	memory@8c000000 {
+		reg = <0x8c000000 0x3000000>;
+>>>>>>> master:arch/arm/boot/dts/vf610m4-colibri.dts
 	};
 };
 

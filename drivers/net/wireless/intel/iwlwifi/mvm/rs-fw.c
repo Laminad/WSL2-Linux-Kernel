@@ -40,12 +40,21 @@ static u8 rs_fw_set_active_chains(u8 chains)
 
 static u8 rs_fw_sgi_cw_support(struct ieee80211_link_sta *link_sta)
 {
+<<<<<<< HEAD
 	struct ieee80211_sta_ht_cap *ht_cap = &link_sta->ht_cap;
 	struct ieee80211_sta_vht_cap *vht_cap = &link_sta->vht_cap;
 	struct ieee80211_sta_he_cap *he_cap = &link_sta->he_cap;
 	u8 supp = 0;
 
 	if (he_cap->has_he)
+=======
+	struct ieee80211_sta_ht_cap *ht_cap = &sta->ht_cap;
+	struct ieee80211_sta_vht_cap *vht_cap = &sta->vht_cap;
+	struct ieee80211_sta_he_cap *he_cap = &sta->he_cap;
+	u8 supp = 0;
+
+	if (he_cap && he_cap->has_he)
+>>>>>>> master
 		return 0;
 
 	if (ht_cap->cap & IEEE80211_HT_CAP_SGI_20)
@@ -517,6 +526,7 @@ out:
 	rcu_read_unlock();
 }
 
+<<<<<<< HEAD
 u16 rs_fw_get_max_amsdu_len(struct ieee80211_sta *sta,
 			    struct ieee80211_bss_conf *link_conf,
 			    struct ieee80211_link_sta *link_sta)
@@ -597,6 +607,21 @@ void iwl_mvm_rs_fw_rate_init(struct iwl_mvm *mvm,
 			rs_fw_bw_from_sta_bw(link_sta) : IWL_TLC_MNG_CH_WIDTH_20MHZ,
 		.flags = cpu_to_le16(rs_fw_get_config_flags(mvm, vif, link_sta,
 							    sband_he_cap)),
+=======
+void rs_fw_rate_init(struct iwl_mvm *mvm, struct ieee80211_sta *sta,
+		     enum nl80211_band band, bool update)
+{
+	struct ieee80211_hw *hw = mvm->hw;
+	struct iwl_mvm_sta *mvmsta = iwl_mvm_sta_from_mac80211(sta);
+	struct iwl_lq_sta_rs_fw *lq_sta = &mvmsta->lq_sta.rs_fw;
+	u32 cmd_id = iwl_cmd_id(TLC_MNG_CONFIG_CMD, DATA_PATH_GROUP, 0);
+	struct ieee80211_supported_band *sband;
+	struct iwl_tlc_config_cmd cfg_cmd = {
+		.sta_id = mvmsta->sta_id,
+		.max_ch_width = update ?
+			rs_fw_bw_from_sta_bw(sta) : RATE_MCS_CHAN_WIDTH_20,
+		.flags = cpu_to_le16(rs_fw_set_config_flags(mvm, sta)),
+>>>>>>> master
 		.chains = rs_fw_set_active_chains(iwl_mvm_get_valid_tx_ant(mvm)),
 		.sgi_ch_width_supp = rs_fw_sgi_cw_support(link_sta),
 		.max_mpdu_len = iwl_mvm_is_csum_supported(mvm) ?

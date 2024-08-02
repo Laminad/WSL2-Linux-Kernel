@@ -717,7 +717,15 @@ void vtime_account_kernel(struct task_struct *tsk)
 		return;
 
 	write_seqcount_begin(&vtime->seqcount);
+<<<<<<< HEAD
 	__vtime_account_kernel(tsk, vtime);
+=======
+	/* We might have scheduled out from guest path */
+	if (tsk->flags & PF_VCPU)
+		vtime_account_guest(tsk, vtime);
+	else
+		__vtime_account_system(tsk, vtime);
+>>>>>>> master
 	write_seqcount_end(&vtime->seqcount);
 }
 
@@ -756,9 +764,14 @@ void vtime_guest_enter(struct task_struct *tsk)
 	 * that can thus safely catch up with a tickless delta.
 	 */
 	write_seqcount_begin(&vtime->seqcount);
+<<<<<<< HEAD
 	vtime_account_system(tsk, vtime);
 	tsk->flags |= PF_VCPU;
 	vtime->state = VTIME_GUEST;
+=======
+	__vtime_account_system(tsk, vtime);
+	tsk->flags |= PF_VCPU;
+>>>>>>> master
 	write_seqcount_end(&vtime->seqcount);
 }
 EXPORT_SYMBOL_GPL(vtime_guest_enter);
@@ -770,7 +783,10 @@ void vtime_guest_exit(struct task_struct *tsk)
 	write_seqcount_begin(&vtime->seqcount);
 	vtime_account_guest(tsk, vtime);
 	tsk->flags &= ~PF_VCPU;
+<<<<<<< HEAD
 	vtime->state = VTIME_SYS;
+=======
+>>>>>>> master
 	write_seqcount_end(&vtime->seqcount);
 }
 EXPORT_SYMBOL_GPL(vtime_guest_exit);

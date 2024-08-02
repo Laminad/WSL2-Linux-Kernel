@@ -765,7 +765,15 @@ static int build_info_commit_dev(struct build_feature_devs_info *binfo)
 	struct dfl_feature_platform_data *pdata;
 	struct dfl_feature_info *finfo, *p;
 	enum dfl_id_type type;
+<<<<<<< HEAD
 	int ret, index = 0, res_idx = 0;
+=======
+	int ret, index = 0;
+>>>>>>> master
+
+	type = feature_dev_id_type(fdev);
+	if (WARN_ON_ONCE(type >= DFL_ID_MAX))
+		return -EINVAL;
 
 	type = feature_dev_id_type(fdev);
 	if (WARN_ON_ONCE(type >= DFL_ID_MAX))

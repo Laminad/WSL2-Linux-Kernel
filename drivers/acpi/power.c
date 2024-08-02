@@ -164,6 +164,17 @@ int acpi_extract_power_resources(union acpi_object *package, unsigned int start,
 			err = -ENODEV;
 			break;
 		}
+<<<<<<< HEAD
+=======
+
+		/* Some ACPI tables contain duplicate power resource references */
+		if (acpi_power_resource_is_dup(package, start, i))
+			continue;
+
+		err = acpi_add_power_resource(rhandle);
+		if (err)
+			break;
+>>>>>>> master
 
 		/* Some ACPI tables contain duplicate power resource references */
 		if (acpi_power_resource_is_dup(package, start, i))

@@ -664,6 +664,7 @@ struct extent_tree {
 	rwlock_t lock;			/* protect extent info rb-tree */
 	atomic_t node_cnt;		/* # of extent node in rb-tree*/
 	bool largest_updated;		/* largest extent updated */
+<<<<<<< HEAD
 	struct extent_info largest;	/* largest cached extent for EX_READ */
 };
 
@@ -676,6 +677,8 @@ struct extent_tree_info {
 	struct list_head zombie_list;		/* extent zombie tree list */
 	atomic_t total_zombie_tree;		/* extent zombie tree count */
 	atomic_t total_ext_node;		/* extent info count */
+=======
+>>>>>>> master
 };
 
 /*
@@ -895,6 +898,38 @@ static inline bool __is_discard_front_mergeable(struct discard_info *cur,
 	return __is_discard_mergeable(cur, front, max_len);
 }
 
+<<<<<<< HEAD
+=======
+static inline bool __is_extent_mergeable(struct extent_info *back,
+						struct extent_info *front)
+{
+	return (back->fofs + back->len == front->fofs &&
+			back->blk + back->len == front->blk);
+}
+
+static inline bool __is_back_mergeable(struct extent_info *cur,
+						struct extent_info *back)
+{
+	return __is_extent_mergeable(back, cur);
+}
+
+static inline bool __is_front_mergeable(struct extent_info *cur,
+						struct extent_info *front)
+{
+	return __is_extent_mergeable(cur, front);
+}
+
+extern void f2fs_mark_inode_dirty_sync(struct inode *inode, bool sync);
+static inline void __try_update_largest_extent(struct extent_tree *et,
+						struct extent_node *en)
+{
+	if (en->ei.len > et->largest.len) {
+		et->largest = en->ei;
+		et->largest_updated = true;
+	}
+}
+
+>>>>>>> master
 /*
  * For free nid management
  */
@@ -1297,6 +1332,7 @@ enum {
 	SBI_NEED_CP,				/* need to checkpoint */
 	SBI_IS_SHUTDOWN,			/* shutdown by ioctl */
 	SBI_IS_RECOVERED,			/* recovered orphan/data */
+<<<<<<< HEAD
 	SBI_CP_DISABLED,			/* CP was disabled last mount */
 	SBI_CP_DISABLED_QUICK,			/* CP was disabled quickly */
 	SBI_QUOTA_NEED_FLUSH,			/* need to flush quota info in CP */
@@ -1306,6 +1342,8 @@ enum {
 	SBI_IS_FREEZING,			/* freezefs is in process */
 	SBI_IS_WRITABLE,			/* remove ro mountoption transiently */
 	MAX_SBI_FLAG,
+=======
+>>>>>>> master
 };
 
 enum {
@@ -1868,6 +1906,17 @@ static inline bool time_to_inject(struct f2fs_sb_info *sbi, int type)
  *   - For a single regular disk volume, sbi->s_ndevs is 0.
  *   - For a single zoned disk volume, sbi->s_ndevs is 1.
  *   - For a multi-device volume, sbi->s_ndevs is always 2 or more.
+<<<<<<< HEAD
+=======
+ */
+static inline bool f2fs_is_multi_device(struct f2fs_sb_info *sbi)
+{
+	return sbi->s_ndevs > 1;
+}
+
+/* For write statistics. Suppose sector size is 512 bytes,
+ * and the return value is in kbytes. s is of struct f2fs_sb_info.
+>>>>>>> master
  */
 static inline bool f2fs_is_multi_device(struct f2fs_sb_info *sbi)
 {
@@ -2353,6 +2402,7 @@ release_quota:
 	return -ENOSPC;
 }
 
+<<<<<<< HEAD
 #define PAGE_PRIVATE_GET_FUNC(name, flagname) \
 static inline bool page_private_##name(struct page *page) \
 { \
@@ -2424,6 +2474,9 @@ static inline void clear_page_private_all(struct page *page)
 	f2fs_bug_on(F2FS_P_SB(page), page_private(page));
 }
 
+=======
+void f2fs_msg(struct super_block *sb, const char *level, const char *fmt, ...);
+>>>>>>> master
 static inline void dec_valid_block_count(struct f2fs_sb_info *sbi,
 						struct inode *inode,
 						block_t count)
@@ -2439,10 +2492,18 @@ static inline void dec_valid_block_count(struct f2fs_sb_info *sbi,
 					sbi->current_reserved_blocks + count);
 	spin_unlock(&sbi->stat_lock);
 	if (unlikely(inode->i_blocks < sectors)) {
+<<<<<<< HEAD
 		f2fs_warn(sbi, "Inconsistent i_blocks, ino:%lu, iblocks:%llu, sectors:%llu",
 			  inode->i_ino,
 			  (unsigned long long)inode->i_blocks,
 			  (unsigned long long)sectors);
+=======
+		f2fs_msg(sbi->sb, KERN_WARNING,
+			"Inconsistent i_blocks, ino:%lu, iblocks:%llu, sectors:%llu",
+			inode->i_ino,
+			(unsigned long long)inode->i_blocks,
+			(unsigned long long)sectors);
+>>>>>>> master
 		set_sbi_flag(sbi, SBI_NEED_FSCK);
 		return;
 	}
@@ -3379,6 +3440,27 @@ static inline bool is_dot_dotdot(const u8 *name, size_t len)
 	return false;
 }
 
+<<<<<<< HEAD
+=======
+static inline bool f2fs_may_extent_tree(struct inode *inode)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+
+	if (!test_opt(sbi, EXTENT_CACHE) ||
+			is_inode_flag_set(inode, FI_NO_EXTENT))
+		return false;
+
+	/*
+	 * for recovered files during mount do not create extents
+	 * if shrinker is not registered.
+	 */
+	if (list_empty(&sbi->s_list))
+		return false;
+
+	return S_ISREG(inode->i_mode);
+}
+
+>>>>>>> master
 static inline void *f2fs_kmalloc(struct f2fs_sb_info *sbi,
 					size_t size, gfp_t flags)
 {
@@ -4475,8 +4557,25 @@ static inline int f2fs_bdev_index(struct f2fs_sb_info *sbi,
 		if (FDEV(i).bdev == bdev)
 			return i;
 
+<<<<<<< HEAD
 	WARN_ON(1);
 	return -1;
+=======
+static inline bool f2fs_hw_should_discard(struct f2fs_sb_info *sbi)
+{
+	return f2fs_sb_has_blkzoned(sbi->sb);
+}
+
+static inline bool f2fs_hw_support_discard(struct f2fs_sb_info *sbi)
+{
+	return blk_queue_discard(bdev_get_queue(sbi->sb->s_bdev));
+}
+
+static inline bool f2fs_realtime_discard_enable(struct f2fs_sb_info *sbi)
+{
+	return (test_opt(sbi, DISCARD) && f2fs_hw_support_discard(sbi)) ||
+					f2fs_hw_should_discard(sbi);
+>>>>>>> master
 }
 
 static inline bool f2fs_hw_should_discard(struct f2fs_sb_info *sbi)
@@ -4504,6 +4603,7 @@ static inline bool f2fs_hw_support_discard(struct f2fs_sb_info *sbi)
 
 static inline bool f2fs_realtime_discard_enable(struct f2fs_sb_info *sbi)
 {
+<<<<<<< HEAD
 	return (test_opt(sbi, DISCARD) && f2fs_hw_support_discard(sbi)) ||
 					f2fs_hw_should_discard(sbi);
 }
@@ -4590,6 +4690,11 @@ static inline bool f2fs_need_verity(const struct inode *inode, pgoff_t idx)
 {
 	return fsverity_active(inode) &&
 	       idx < DIV_ROUND_UP(inode->i_size, PAGE_SIZE);
+=======
+	return (f2fs_post_read_required(inode) ||
+			(rw == WRITE && test_opt(F2FS_I_SB(inode), LFS)) ||
+			f2fs_is_multi_device(F2FS_I_SB(inode)));
+>>>>>>> master
 }
 
 #ifdef CONFIG_F2FS_FAULT_INJECTION
@@ -4609,6 +4714,7 @@ static inline bool is_journalled_quota(struct f2fs_sb_info *sbi)
 		F2FS_OPTION(sbi).s_qf_names[PRJQUOTA])
 		return true;
 #endif
+<<<<<<< HEAD
 	return false;
 }
 
@@ -4675,8 +4781,13 @@ static inline void f2fs_invalidate_internal_cache(struct f2fs_sb_info *sbi,
 	f2fs_truncate_meta_inode_pages(sbi, blkaddr, 1);
 	f2fs_invalidate_compress_page(sbi, blkaddr);
 }
+=======
+>>>>>>> master
 
 #define EFSBADCRC	EBADMSG		/* Bad CRC detected */
 #define EFSCORRUPTED	EUCLEAN		/* Filesystem is corrupted */
 
+<<<<<<< HEAD
 #endif /* _LINUX_F2FS_H */
+=======
+>>>>>>> master

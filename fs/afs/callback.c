@@ -194,6 +194,7 @@ static void afs_break_some_callbacks(struct afs_server *server,
 	 * break them anyway.
 	 */
 
+<<<<<<< HEAD
 	for (i = *_count; i > 0; cbb++, i--) {
 		if (cbb->fid.vid == vid) {
 			_debug("- Fid { vl=%08llx n=%llu u=%u }",
@@ -203,6 +204,20 @@ static void afs_break_some_callbacks(struct afs_server *server,
 			--*_count;
 			if (volume)
 				afs_break_one_callback(volume, &cbb->fid);
+=======
+	/* Step through all interested superblocks.  There may be more than one
+	 * because of cell aliasing.
+	 */
+	hlist_for_each_entry(cbi, &vi->cb_interests, cb_vlink) {
+		if (fid->vnode == 0 && fid->unique == 0) {
+			/* The callback break applies to an entire volume. */
+			struct afs_super_info *as = AFS_FS_S(cbi->sb);
+			struct afs_volume *volume = as->volume;
+
+			write_lock(&volume->cb_v_break_lock);
+			volume->cb_v_break++;
+			write_unlock(&volume->cb_v_break_lock);
+>>>>>>> master
 		} else {
 			*residue++ = *cbb;
 		}

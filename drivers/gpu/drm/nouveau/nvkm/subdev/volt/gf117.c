@@ -46,13 +46,21 @@ gf117_volt = {
 };
 
 int
+<<<<<<< HEAD
 gf117_volt_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
 	       struct nvkm_volt **pvolt)
+=======
+gf117_volt_new(struct nvkm_device *device, int index, struct nvkm_volt **pvolt)
+>>>>>>> master
 {
 	struct nvkm_volt *volt;
 	int ret;
 
+<<<<<<< HEAD
 	ret = nvkm_volt_new_(&gf117_volt, device, type, inst, &volt);
+=======
+	ret = nvkm_volt_new_(&gf117_volt, device, index, &volt);
+>>>>>>> master
 	*pvolt = volt;
 	if (ret)
 		return ret;

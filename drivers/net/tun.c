@@ -653,7 +653,10 @@ static void __tun_detach(struct tun_file *tfile, bool clean)
 				   tun->tfiles[tun->numqueues - 1]);
 		ntfile = rtnl_dereference(tun->tfiles[index]);
 		ntfile->queue_index = index;
+<<<<<<< HEAD
 		ntfile->xdp_rxq.queue_index = index;
+=======
+>>>>>>> master
 		rcu_assign_pointer(tun->tfiles[tun->numqueues - 1],
 				   NULL);
 
@@ -826,9 +829,12 @@ static int tun_attach(struct tun_struct *tun, struct file *file,
 		tun_napi_init(tun, tfile, napi, napi_frags);
 	}
 
+<<<<<<< HEAD
 	if (rtnl_dereference(tun->xdp_prog))
 		sock_set_flag(&tfile->sk, SOCK_XDP);
 
+=======
+>>>>>>> master
 	/* device is allowed to go away first, so no need to hold extra
 	 * refcnt.
 	 */
@@ -1081,8 +1087,12 @@ static netdev_tx_t tun_net_xmit(struct sk_buff *skb, struct net_device *dev)
 	tfile = rcu_dereference(tun->tfiles[txq]);
 
 	/* Drop packet if interface is not attached */
+<<<<<<< HEAD
 	if (!tfile) {
 		drop_reason = SKB_DROP_REASON_DEV_READY;
+=======
+	if (!tfile)
+>>>>>>> master
 		goto drop;
 	}
 
@@ -1735,6 +1745,23 @@ static struct sk_buff *tun_build_skb(struct tun_struct *tun,
 		pad = xdp.data - xdp.data_hard_start;
 		len = xdp.data_end - xdp.data;
 	}
+<<<<<<< HEAD
+=======
+
+	skb = build_skb(buf, buflen);
+	if (!skb) {
+		rcu_read_unlock();
+		local_bh_enable();
+		return ERR_PTR(-ENOMEM);
+	}
+
+	skb_reserve(skb, pad - delta);
+	skb_put(skb, len);
+	skb_set_owner_w(skb, tfile->socket.sk);
+	get_page(alloc_frag->page);
+	alloc_frag->offset += buflen;
+
+>>>>>>> master
 	rcu_read_unlock();
 	local_bh_enable();
 
@@ -1763,7 +1790,10 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 	u32 rxhash = 0;
 	int skb_xdp = 1;
 	bool frags = tun_napi_frags_enabled(tfile);
+<<<<<<< HEAD
 	enum skb_drop_reason drop_reason = SKB_DROP_REASON_NOT_SPECIFIED;
+=======
+>>>>>>> master
 
 	if (!(tun->flags & IFF_NO_PI)) {
 		if (len < sizeof(pi))
@@ -1865,8 +1895,20 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 
 		if (err) {
 			err = -EFAULT;
+<<<<<<< HEAD
 			drop_reason = SKB_DROP_REASON_SKB_UCOPY_FAULT;
 			goto drop;
+=======
+drop:
+			this_cpu_inc(tun->pcpu_stats->rx_dropped);
+			kfree_skb(skb);
+			if (frags) {
+				tfile->napi.skb = NULL;
+				mutex_unlock(&tfile->napi_mutex);
+			}
+
+			return err;
+>>>>>>> master
 		}
 	}
 
@@ -1951,7 +1993,10 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 	if (unlikely(!(tun->dev->flags & IFF_UP))) {
 		err = -EIO;
 		rcu_read_unlock();
+<<<<<<< HEAD
 		drop_reason = SKB_DROP_REASON_DEV_READY;
+=======
+>>>>>>> master
 		goto drop;
 	}
 
@@ -2195,7 +2240,11 @@ static void *tun_ring_recv(struct tun_file *tfile, int noblock, int *err)
 		goto out;
 	}
 
+<<<<<<< HEAD
 	add_wait_queue(&tfile->socket.wq.wait, &wait);
+=======
+	add_wait_queue(&tfile->wq.wait, &wait);
+>>>>>>> master
 
 	while (1) {
 		set_current_state(TASK_INTERRUPTIBLE);
@@ -2215,7 +2264,11 @@ static void *tun_ring_recv(struct tun_file *tfile, int noblock, int *err)
 	}
 
 	__set_current_state(TASK_RUNNING);
+<<<<<<< HEAD
 	remove_wait_queue(&tfile->socket.wq.wait, &wait);
+=======
+	remove_wait_queue(&tfile->wq.wait, &wait);
+>>>>>>> master
 
 out:
 	*err = error;
@@ -2854,6 +2907,7 @@ static int tun_set_iff(struct net *net, struct file *file, struct ifreq *ifr)
 		tun->ifr = ifr;
 		tun->file = file;
 
+<<<<<<< HEAD
 		tun_net_initialize(dev);
 
 		err = register_netdevice(tun->dev);
@@ -2862,6 +2916,38 @@ static int tun_set_iff(struct net *net, struct file *file, struct ifreq *ifr)
 			return err;
 		}
 		/* free_netdev() won't check refcnt, to avoid race
+=======
+		spin_lock_init(&tun->lock);
+
+		err = security_tun_dev_alloc_security(&tun->security);
+		if (err < 0)
+			goto err_free_stat;
+
+		tun_net_init(dev);
+		tun_flow_init(tun);
+
+		dev->hw_features = NETIF_F_SG | NETIF_F_FRAGLIST |
+				   TUN_USER_FEATURES | NETIF_F_HW_VLAN_CTAG_TX |
+				   NETIF_F_HW_VLAN_STAG_TX;
+		dev->features = dev->hw_features | NETIF_F_LLTX;
+		dev->vlan_features = dev->features &
+				     ~(NETIF_F_HW_VLAN_CTAG_TX |
+				       NETIF_F_HW_VLAN_STAG_TX);
+
+		tun->flags = (tun->flags & ~TUN_FEATURES) |
+			      (ifr->ifr_flags & TUN_FEATURES);
+
+		INIT_LIST_HEAD(&tun->disabled);
+		err = tun_attach(tun, file, false, ifr->ifr_flags & IFF_NAPI,
+				 ifr->ifr_flags & IFF_NAPI_FRAGS, false);
+		if (err < 0)
+			goto err_free_flow;
+
+		err = register_netdevice(tun->dev);
+		if (err < 0)
+			goto err_detach;
+		/* free_netdev() won't check refcnt, to aovid race
+>>>>>>> master
 		 * with dev_put() we need publish tun after registration.
 		 */
 		rcu_assign_pointer(tfile->tun, tun);

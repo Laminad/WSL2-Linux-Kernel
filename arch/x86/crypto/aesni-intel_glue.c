@@ -688,7 +688,13 @@ static int gcmaes_crypt_by_sg(bool enc, struct aead_request *req,
 	do_avx2 = (left >= AVX_GEN4_OPTSIZE);
 
 	/* Linearize assoc, if not already linear */
+<<<<<<< HEAD
 	if (req->src->length >= assoclen && req->src->length) {
+=======
+	if (req->src->length >= assoclen && req->src->length &&
+		(!PageHighMem(sg_page(req->src)) ||
+			req->src->offset + req->src->length <= PAGE_SIZE)) {
+>>>>>>> master
 		scatterwalk_start(&assoc_sg_walk, req->src);
 		assoc = scatterwalk_map(&assoc_sg_walk);
 	} else {
@@ -704,6 +710,19 @@ static int gcmaes_crypt_by_sg(bool enc, struct aead_request *req,
 		scatterwalk_map_and_copy(assoc, req->src, 0, assoclen, 0);
 	}
 
+<<<<<<< HEAD
+=======
+	if (left) {
+		src_sg = scatterwalk_ffwd(src_start, req->src, req->assoclen);
+		scatterwalk_start(&src_sg_walk, src_sg);
+		if (req->src != req->dst) {
+			dst_sg = scatterwalk_ffwd(dst_start, req->dst,
+						  req->assoclen);
+			scatterwalk_start(&dst_sg_walk, dst_sg);
+		}
+	}
+
+>>>>>>> master
 	kernel_fpu_begin();
 	if (static_branch_likely(&gcm_use_avx2) && do_avx2)
 		aesni_gcm_init_avx_gen4(aes_ctx, data, iv, hash_subkey, assoc,

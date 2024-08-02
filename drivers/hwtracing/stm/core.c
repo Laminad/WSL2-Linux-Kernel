@@ -726,7 +726,10 @@ static int stm_char_policy_set_ioctl(struct stm_file *stmf, void __user *arg)
 {
 	struct stm_device *stm = stmf->stm;
 	struct stp_policy_id *id;
+<<<<<<< HEAD
 	char *ids[] = { NULL, NULL };
+=======
+>>>>>>> master
 	int ret = -EINVAL, wlimit = 1;
 	u32 size;
 

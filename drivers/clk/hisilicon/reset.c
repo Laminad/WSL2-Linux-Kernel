@@ -95,7 +95,12 @@ struct hisi_reset_controller *hisi_reset_init(struct platform_device *pdev)
 	if (!rstc)
 		return NULL;
 
+<<<<<<< HEAD
 	rstc->membase = devm_platform_ioremap_resource(pdev, 0);
+=======
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	rstc->membase = devm_ioremap_resource(&pdev->dev, res);
+>>>>>>> master
 	if (IS_ERR(rstc->membase))
 		return NULL;
 

@@ -1137,6 +1137,7 @@ static int saa7164_seq_show(struct seq_file *m, void *v)
 	return 0;
 }
 
+<<<<<<< HEAD
 static const struct seq_operations saa7164_sops = {
 	.start = saa7164_seq_start,
 	.next = saa7164_seq_next,
@@ -1161,6 +1162,27 @@ static void __exit saa7164_debugfs_remove(void)
 #else
 static void saa7164_debugfs_create(void) { }
 static void saa7164_debugfs_remove(void) { }
+=======
+static struct proc_dir_entry *saa7164_pe;
+
+static int saa7164_proc_create(void)
+{
+	saa7164_pe = proc_create_single("saa7164", 0444, NULL, saa7164_proc_show);
+	if (!saa7164_pe)
+		return -ENOMEM;
+
+	return 0;
+}
+
+static void saa7164_proc_destroy(void)
+{
+	if (saa7164_pe)
+		remove_proc_entry("saa7164", NULL);
+}
+#else
+static int saa7164_proc_create(void) { return 0; }
+static void saa7164_proc_destroy(void) {}
+>>>>>>> master
 #endif
 
 static int saa7164_thread_function(void *data)
@@ -1532,11 +1554,19 @@ static struct pci_driver saa7164_pci_driver = {
 static int __init saa7164_init(void)
 {
 	int ret = pci_register_driver(&saa7164_pci_driver);
+<<<<<<< HEAD
 
 	if (ret)
 		return ret;
 
 	saa7164_debugfs_create();
+=======
+
+	if (ret)
+		return ret;
+
+	saa7164_proc_create();
+>>>>>>> master
 
 	pr_info("saa7164 driver loaded\n");
 
@@ -1545,7 +1575,11 @@ static int __init saa7164_init(void)
 
 static void __exit saa7164_fini(void)
 {
+<<<<<<< HEAD
 	saa7164_debugfs_remove();
+=======
+	saa7164_proc_destroy();
+>>>>>>> master
 	pci_unregister_driver(&saa7164_pci_driver);
 }
 

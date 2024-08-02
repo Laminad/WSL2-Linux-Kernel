@@ -1069,6 +1069,7 @@ static int append_metric_groups(const struct option *opt __maybe_unused,
 	return 0;
 }
 
+<<<<<<< HEAD
 static int parse_control_option(const struct option *opt,
 				const char *str,
 				int unset __maybe_unused)
@@ -1160,6 +1161,8 @@ out:
 	return 0;
 }
 
+=======
+>>>>>>> master
 static struct option stat_options[] = {
 	OPT_BOOLEAN('T', "transaction", &transaction_run,
 		    "hardware transaction statistics"),
@@ -2086,6 +2089,7 @@ static int add_default_attributes(void)
 		}
 
 		if (!force_metric_only)
+<<<<<<< HEAD
 			stat_config.metric_only = true;
 
 		return metricgroup__parse_groups(evsel_list, pmu, "smi",
@@ -2095,6 +2099,31 @@ static int add_default_attributes(void)
 						stat_config.user_requested_cpu_list,
 						stat_config.system_wide,
 						&stat_config.metric_events);
+=======
+			metric_only = true;
+		if (topdown_filter_events(topdown_attrs, &str,
+				arch_topdown_check_group(&warn)) < 0) {
+			pr_err("Out of memory\n");
+			return -1;
+		}
+		if (topdown_attrs[0] && str) {
+			if (warn)
+				arch_topdown_group_warn();
+			err = parse_events(evsel_list, str, &errinfo);
+			if (err) {
+				fprintf(stderr,
+					"Cannot set up top down events %s: %d\n",
+					str, err);
+				parse_events_print_error(&errinfo, str);
+				free(str);
+				return -1;
+			}
+		} else {
+			fprintf(stderr, "System does not support topdown\n");
+			return -1;
+		}
+		free(str);
+>>>>>>> master
 	}
 
 	if (topdown_run) {
@@ -2826,7 +2855,11 @@ int cmd_stat(int argc, const char **argv)
 				run_idx + 1);
 
 		if (run_idx != 0)
+<<<<<<< HEAD
 			evlist__reset_prev_raw_counts(evsel_list);
+=======
+			perf_evlist__reset_prev_raw_counts(evsel_list);
+>>>>>>> master
 
 		status = run_perf_stat(argc, argv, run_idx);
 		if (forever && status != -1 && !interval) {

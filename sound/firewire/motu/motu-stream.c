@@ -358,10 +358,23 @@ static void destroy_stream(struct snd_motu *motu, struct amdtp_stream *s)
 {
 	amdtp_stream_destroy(s);
 
+<<<<<<< HEAD
 	if (s == &motu->tx_stream)
 		fw_iso_resources_destroy(&motu->tx_resources);
 	else
 		fw_iso_resources_destroy(&motu->rx_resources);
+=======
+	if (dir == AMDTP_IN_STREAM) {
+		stream = &motu->tx_stream;
+		resources = &motu->tx_resources;
+	} else {
+		stream = &motu->rx_stream;
+		resources = &motu->rx_resources;
+	}
+
+	amdtp_stream_destroy(stream);
+	fw_iso_resources_destroy(resources);
+>>>>>>> master
 }
 
 int snd_motu_stream_init_duplex(struct snd_motu *motu)

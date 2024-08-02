@@ -207,7 +207,11 @@ __xfs_xattr_put_listent(
 	if (context->count < 0 || context->seen_enough)
 		return;
 
+<<<<<<< HEAD
 	if (!context->buffer)
+=======
+	if (!context->alist)
+>>>>>>> master
 		goto compute_size;
 
 	arraytop = context->count + prefix_len + namelen + 1;

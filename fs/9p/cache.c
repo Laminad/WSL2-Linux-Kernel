@@ -31,6 +31,7 @@ int v9fs_cache_session_get_cookie(struct v9fs_session_info *v9ses,
 		if (*p == '/')
 			*p = ';';
 
+<<<<<<< HEAD
 	vcookie = fscache_acquire_volume(name, NULL, NULL, 0);
 	p9_debug(P9_DEBUG_FSC, "session %p get volume %p (%s)\n",
 		 v9ses, vcookie, name);
@@ -38,6 +39,22 @@ int v9fs_cache_session_get_cookie(struct v9fs_session_info *v9ses,
 		if (vcookie != ERR_PTR(-EBUSY)) {
 			kfree(name);
 			return PTR_ERR(vcookie);
+=======
+const struct fscache_cookie_def v9fs_cache_session_index_def = {
+	.name		= "9P.session",
+	.type		= FSCACHE_COOKIE_TYPE_INDEX,
+};
+
+void v9fs_cache_session_get_cookie(struct v9fs_session_info *v9ses)
+{
+	/* If no cache session tag was specified, we generate a random one. */
+	if (!v9ses->cachetag) {
+		if (v9fs_random_cachetag(v9ses) < 0) {
+			v9ses->fscache = NULL;
+			kfree(v9ses->cachetag);
+			v9ses->cachetag = NULL;
+			return;
+>>>>>>> master
 		}
 		pr_err("Cache volume key already in use (%s)\n", name);
 		vcookie = NULL;

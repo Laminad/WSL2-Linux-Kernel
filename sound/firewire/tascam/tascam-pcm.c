@@ -59,6 +59,7 @@ static int pcm_open(struct snd_pcm_substream *substream)
 	if (err < 0)
 		goto err_locked;
 
+<<<<<<< HEAD
 	mutex_lock(&tscm->mutex);
 
 	// When source of clock is not internal or any stream is reserved for
@@ -69,6 +70,11 @@ static int pcm_open(struct snd_pcm_substream *substream)
 		unsigned int frames_per_buffer = d->events_per_buffer;
 		unsigned int rate;
 
+=======
+	if (clock != SND_TSCM_CLOCK_INTERNAL ||
+	    amdtp_stream_pcm_running(&tscm->rx_stream) ||
+	    amdtp_stream_pcm_running(&tscm->tx_stream)) {
+>>>>>>> master
 		err = snd_tscm_stream_get_rate(tscm, &rate);
 		if (err < 0) {
 			mutex_unlock(&tscm->mutex);

@@ -123,8 +123,11 @@
 /* Magic constants */
 #define MLX90632_ID_MEDICAL	0x0105 /* EEPROM DSPv5 Medical device id */
 #define MLX90632_ID_CONSUMER	0x0205 /* EEPROM DSPv5 Consumer device id */
+<<<<<<< HEAD
 #define MLX90632_ID_EXTENDED	0x0505 /* EEPROM DSPv5 Extended range device id */
 #define MLX90632_ID_MASK	GENMASK(14, 0) /* DSP version and device ID in EE_VERSION */
+=======
+>>>>>>> master
 #define MLX90632_DSP_VERSION	5 /* DSP version */
 #define MLX90632_DSP_MASK	GENMASK(7, 0) /* DSP version in EE_VERSION */
 #define MLX90632_RESET_CMD	0x0006 /* Reset sensor (address or global) */
@@ -1246,10 +1249,13 @@ static int mlx90632_probe(struct i2c_client *client)
 	} else if (read == MLX90632_ID_CONSUMER) {
 		dev_dbg(&client->dev,
 			"Detected Consumer EEPROM calibration %x\n", read);
+<<<<<<< HEAD
 	} else if (read == MLX90632_ID_EXTENDED) {
 		dev_dbg(&client->dev,
 			"Detected Extended range EEPROM calibration %x\n", read);
 		mlx90632->mtyp = MLX90632_MTYP_EXTENDED;
+=======
+>>>>>>> master
 	} else if ((read & MLX90632_DSP_MASK) == MLX90632_DSP_VERSION) {
 		dev_dbg(&client->dev,
 			"Detected Unknown EEPROM calibration %x\n", read);

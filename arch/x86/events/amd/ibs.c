@@ -1063,9 +1063,18 @@ fail:
 	size = 1;
 	offset = 1;
 	check_rip = (perf_ibs == &perf_ibs_op && (ibs_caps & IBS_CAPS_RIPINVALIDCHK));
+<<<<<<< HEAD
 
 	offset_max = perf_ibs_get_offset_max(perf_ibs, event->attr.sample_type, check_rip);
 
+=======
+	if (event->attr.sample_type & PERF_SAMPLE_RAW)
+		offset_max = perf_ibs->offset_max;
+	else if (check_rip)
+		offset_max = 3;
+	else
+		offset_max = 1;
+>>>>>>> master
 	do {
 		rdmsrl(msr + offset, *buf++);
 		size++;
@@ -1134,6 +1143,7 @@ out:
 	if (throttle) {
 		perf_ibs_stop(event, 0);
 	} else {
+<<<<<<< HEAD
 		if (perf_ibs == &perf_ibs_op) {
 			if (ibs_caps & IBS_CAPS_OPCNTEXT) {
 				new_config = period & IBS_OP_MAX_CNT_EXT_MASK;
@@ -1145,6 +1155,15 @@ out:
 		new_config |= period >> 4;
 
 		perf_ibs_enable_event(perf_ibs, hwc, new_config);
+=======
+		period >>= 4;
+
+		if ((ibs_caps & IBS_CAPS_RDWROPCNT) &&
+		    (*config & IBS_OP_CNT_CTL))
+			period |= *config & IBS_OP_CUR_CNT_RAND;
+
+		perf_ibs_enable_event(perf_ibs, hwc, period);
+>>>>>>> master
 	}
 
 	perf_event_update_userpage(event);

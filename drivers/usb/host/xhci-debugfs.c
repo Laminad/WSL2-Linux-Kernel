@@ -205,7 +205,11 @@ static void xhci_ring_dump_segment(struct seq_file *s,
 		trb = &seg->trbs[i];
 		dma = seg->dma + i * sizeof(*trb);
 		seq_printf(s, "%pad: %s\n", &dma,
+<<<<<<< HEAD
 			   xhci_decode_trb(str, XHCI_MSG_MAX, le32_to_cpu(trb->generic.field[0]),
+=======
+			   xhci_decode_trb(le32_to_cpu(trb->generic.field[0]),
+>>>>>>> master
 					   le32_to_cpu(trb->generic.field[1]),
 					   le32_to_cpu(trb->generic.field[2]),
 					   le32_to_cpu(trb->generic.field[3])));
@@ -267,8 +271,12 @@ static int xhci_slot_context_show(struct seq_file *s, void *unused)
 	xhci = hcd_to_xhci(bus_to_hcd(dev->udev->bus));
 	slot_ctx = xhci_get_slot_ctx(xhci, dev->out_ctx);
 	seq_printf(s, "%pad: %s\n", &dev->out_ctx->dma,
+<<<<<<< HEAD
 		   xhci_decode_slot_context(str,
 					    le32_to_cpu(slot_ctx->dev_info),
+=======
+		   xhci_decode_slot_context(le32_to_cpu(slot_ctx->dev_info),
+>>>>>>> master
 					    le32_to_cpu(slot_ctx->dev_info2),
 					    le32_to_cpu(slot_ctx->tt_info),
 					    le32_to_cpu(slot_ctx->dev_state)));
@@ -292,8 +300,12 @@ static int xhci_endpoint_context_show(struct seq_file *s, void *unused)
 		ep_ctx = xhci_get_ep_ctx(xhci, dev->out_ctx, ep_index);
 		dma = dev->out_ctx->dma + (ep_index + 1) * CTX_SIZE(xhci->hcc_params);
 		seq_printf(s, "%pad: %s\n", &dma,
+<<<<<<< HEAD
 			   xhci_decode_ep_context(str,
 						  le32_to_cpu(ep_ctx->ep_info),
+=======
+			   xhci_decode_ep_context(le32_to_cpu(ep_ctx->ep_info),
+>>>>>>> master
 						  le32_to_cpu(ep_ctx->ep_info2),
 						  le64_to_cpu(ep_ctx->deq),
 						  le32_to_cpu(ep_ctx->tx_info)));

@@ -1165,8 +1165,13 @@ struct ib_qp *ib_open_qp(struct ib_xrcd *xrcd,
 }
 EXPORT_SYMBOL(ib_open_qp);
 
+<<<<<<< HEAD
 static struct ib_qp *create_xrc_qp_user(struct ib_qp *qp,
 					struct ib_qp_init_attr *qp_init_attr)
+=======
+static struct ib_qp *create_xrc_qp(struct ib_qp *qp,
+				   struct ib_qp_init_attr *qp_init_attr)
+>>>>>>> master
 {
 	struct ib_qp *real_qp = qp;
 	int err;
@@ -1185,12 +1190,16 @@ static struct ib_qp *create_xrc_qp_user(struct ib_qp *qp,
 	if (IS_ERR(qp))
 		return qp;
 
+<<<<<<< HEAD
 	err = xa_err(xa_store(&qp_init_attr->xrcd->tgt_qps, real_qp->qp_num,
 			      real_qp, GFP_KERNEL));
 	if (err) {
 		ib_close_qp(qp);
 		return ERR_PTR(err);
 	}
+=======
+	__ib_insert_xrcd_qp(qp_init_attr->xrcd, real_qp);
+>>>>>>> master
 	return qp;
 }
 
@@ -1347,7 +1356,57 @@ struct ib_qp *ib_create_qp_kernel(struct ib_pd *pd,
 	if (IS_ERR(qp))
 		return qp;
 
+<<<<<<< HEAD
 	ib_qp_usecnt_inc(qp);
+=======
+	ret = ib_create_qp_security(qp, device);
+	if (ret)
+		goto err;
+
+	qp->real_qp    = qp;
+	qp->qp_type    = qp_init_attr->qp_type;
+	qp->rwq_ind_tbl = qp_init_attr->rwq_ind_tbl;
+
+	atomic_set(&qp->usecnt, 0);
+	qp->mrs_used = 0;
+	spin_lock_init(&qp->mr_lock);
+	INIT_LIST_HEAD(&qp->rdma_mrs);
+	INIT_LIST_HEAD(&qp->sig_mrs);
+	qp->port = 0;
+
+	if (qp_init_attr->qp_type == IB_QPT_XRC_TGT) {
+		struct ib_qp *xrc_qp = create_xrc_qp(qp, qp_init_attr);
+
+		if (IS_ERR(xrc_qp)) {
+			ret = PTR_ERR(xrc_qp);
+			goto err;
+		}
+		return xrc_qp;
+	}
+
+	qp->event_handler = qp_init_attr->event_handler;
+	qp->qp_context = qp_init_attr->qp_context;
+	if (qp_init_attr->qp_type == IB_QPT_XRC_INI) {
+		qp->recv_cq = NULL;
+		qp->srq = NULL;
+	} else {
+		qp->recv_cq = qp_init_attr->recv_cq;
+		if (qp_init_attr->recv_cq)
+			atomic_inc(&qp_init_attr->recv_cq->usecnt);
+		qp->srq = qp_init_attr->srq;
+		if (qp->srq)
+			atomic_inc(&qp_init_attr->srq->usecnt);
+	}
+
+	qp->send_cq = qp_init_attr->send_cq;
+	qp->xrcd    = NULL;
+
+	atomic_inc(&pd->usecnt);
+	if (qp_init_attr->send_cq)
+		atomic_inc(&qp_init_attr->send_cq->usecnt);
+	if (qp_init_attr->rwq_ind_tbl)
+		atomic_inc(&qp->rwq_ind_tbl->usecnt);
+>>>>>>> master
 
 	if (qp_init_attr->cap.max_rdma_ctxs) {
 		ret = rdma_rw_init_mrs(qp, qp_init_attr);

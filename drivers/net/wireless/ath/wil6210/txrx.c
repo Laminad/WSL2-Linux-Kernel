@@ -903,6 +903,17 @@ void wil_netif_rx(struct sk_buff *skb, struct net_device *ndev, int cid,
 	 */
 	int mcast = is_multicast_ether_addr(da);
 	struct sk_buff *xmit_skb = NULL;
+<<<<<<< HEAD
+=======
+	static const char * const gro_res_str[] = {
+		[GRO_MERGED]		= "GRO_MERGED",
+		[GRO_MERGED_FREE]	= "GRO_MERGED_FREE",
+		[GRO_HELD]		= "GRO_HELD",
+		[GRO_NORMAL]		= "GRO_NORMAL",
+		[GRO_DROP]		= "GRO_DROP",
+		[GRO_CONSUMED]		= "GRO_CONSUMED",
+	};
+>>>>>>> master
 
 	if (wdev->iftype == NL80211_IFTYPE_STATION) {
 		sa = wil_skb_get_sa(skb);

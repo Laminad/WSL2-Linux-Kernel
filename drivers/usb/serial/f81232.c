@@ -751,7 +751,10 @@ static void f81232_close(struct usb_serial_port *port)
 	usb_serial_generic_close(port);
 	usb_kill_urb(port->interrupt_in_urb);
 	flush_work(&port_priv->interrupt_work);
+<<<<<<< HEAD
 	flush_work(&port_priv->lsr_work);
+=======
+>>>>>>> master
 }
 
 static void f81232_dtr_rts(struct usb_serial_port *port, int on)
@@ -948,6 +951,26 @@ static int f81232_suspend(struct usb_serial *serial, pm_message_t message)
 	return 0;
 }
 
+<<<<<<< HEAD
+=======
+static int f81232_suspend(struct usb_serial *serial, pm_message_t message)
+{
+	struct usb_serial_port *port = serial->port[0];
+	struct f81232_private *port_priv = usb_get_serial_port_data(port);
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(port->read_urbs); ++i)
+		usb_kill_urb(port->read_urbs[i]);
+
+	usb_kill_urb(port->interrupt_in_urb);
+
+	if (port_priv)
+		flush_work(&port_priv->interrupt_work);
+
+	return 0;
+}
+
+>>>>>>> master
 static int f81232_resume(struct usb_serial *serial)
 {
 	struct usb_serial_port *port = serial->port[0];
@@ -988,6 +1011,7 @@ static struct usb_serial_driver f81232_device = {
 	.process_read_urb =	f81232_process_read_urb,
 	.read_int_callback =	f81232_read_int_callback,
 	.port_probe =		f81232_port_probe,
+<<<<<<< HEAD
 	.suspend =		f81232_suspend,
 	.resume =		f81232_resume,
 };
@@ -1013,6 +1037,9 @@ static struct usb_serial_driver f81534a_device = {
 	.process_read_urb =	f81534a_process_read_urb,
 	.read_int_callback =	f81232_read_int_callback,
 	.port_probe =		f81534a_port_probe,
+=======
+	.port_remove =		f81232_port_remove,
+>>>>>>> master
 	.suspend =		f81232_suspend,
 	.resume =		f81232_resume,
 };

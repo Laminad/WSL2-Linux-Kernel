@@ -37,8 +37,38 @@
 
 #include <linux/fsl/mc.h>
 
+<<<<<<< HEAD:drivers/iommu/arm/arm-smmu/arm-smmu.c
 #include "arm-smmu.h"
 #include "../../dma-iommu.h"
+=======
+#include "io-pgtable.h"
+#include "arm-smmu-regs.h"
+
+/*
+ * Apparently, some Qualcomm arm64 platforms which appear to expose their SMMU
+ * global register space are still, in fact, using a hypervisor to mediate it
+ * by trapping and emulating register accesses. Sadly, some deployed versions
+ * of said trapping code have bugs wherein they go horribly wrong for stores
+ * using r31 (i.e. XZR/WZR) as the source register.
+ */
+#define QCOM_DUMMY_VAL -1
+
+#define ARM_MMU500_ACTLR_CPRE		(1 << 1)
+
+#define ARM_MMU500_ACR_CACHE_LOCK	(1 << 26)
+#define ARM_MMU500_ACR_S2CRB_TLBEN	(1 << 10)
+#define ARM_MMU500_ACR_SMTNMB_TLBEN	(1 << 8)
+
+#define TLB_LOOP_TIMEOUT		1000000	/* 1s! */
+#define TLB_SPIN_COUNT			10
+
+/* Maximum number of context banks per SMMU */
+#define ARM_SMMU_MAX_CBS		128
+
+/* SMMU global address space */
+#define ARM_SMMU_GR0(smmu)		((smmu)->base)
+#define ARM_SMMU_GR1(smmu)		((smmu)->base + (1 << (smmu)->pgshift))
+>>>>>>> master:drivers/iommu/arm-smmu.c
 
 /*
  * Apparently, some Qualcomm arm64 platforms which appear to expose their SMMU
@@ -62,6 +92,30 @@ module_param(disable_bypass, bool, S_IRUGO);
 MODULE_PARM_DESC(disable_bypass,
 	"Disable bypass streams such that incoming transactions from devices that are not attached to an iommu domain will report an abort back to the device and will not be allowed to pass through the SMMU.");
 
+<<<<<<< HEAD:drivers/iommu/arm/arm-smmu/arm-smmu.c
+=======
+enum arm_smmu_arch_version {
+	ARM_SMMU_V1,
+	ARM_SMMU_V1_64K,
+	ARM_SMMU_V2,
+};
+
+enum arm_smmu_implementation {
+	GENERIC_SMMU,
+	ARM_MMU500,
+	CAVIUM_SMMUV2,
+	QCOM_SMMUV2,
+};
+
+struct arm_smmu_s2cr {
+	struct iommu_group		*group;
+	int				count;
+	enum arm_smmu_s2cr_type		type;
+	enum arm_smmu_s2cr_privcfg	privcfg;
+	u8				cbndx;
+};
+
+>>>>>>> master:drivers/iommu/arm-smmu.c
 #define s2cr_init_val (struct arm_smmu_s2cr){				\
 	.type = disable_bypass ? S2CR_TYPE_FAULT : S2CR_TYPE_BYPASS,	\
 }
@@ -196,10 +250,14 @@ static void __arm_smmu_tlb_sync(struct arm_smmu_device *smmu, int page,
 	unsigned int spin_cnt, delay;
 	u32 reg;
 
+<<<<<<< HEAD:drivers/iommu/arm/arm-smmu/arm-smmu.c
 	if (smmu->impl && unlikely(smmu->impl->tlb_sync))
 		return smmu->impl->tlb_sync(smmu, page, sync, status);
 
 	arm_smmu_writel(smmu, page, sync, QCOM_DUMMY_VAL);
+=======
+	writel_relaxed(QCOM_DUMMY_VAL, sync);
+>>>>>>> master:drivers/iommu/arm-smmu.c
 	for (delay = 1; delay < TLB_LOOP_TIMEOUT; delay *= 2) {
 		for (spin_cnt = TLB_SPIN_COUNT; spin_cnt > 0; spin_cnt--) {
 			reg = arm_smmu_readl(smmu, page, status);
@@ -266,8 +324,16 @@ static void arm_smmu_tlb_inv_range_s1(unsigned long iova, size_t size,
 	struct arm_smmu_cfg *cfg = &smmu_domain->cfg;
 	int idx = cfg->cbndx;
 
+<<<<<<< HEAD:drivers/iommu/arm/arm-smmu/arm-smmu.c
 	if (smmu->features & ARM_SMMU_FEAT_COHERENT_WALK)
 		wmb();
+=======
+	if (smmu_domain->smmu->features & ARM_SMMU_FEAT_COHERENT_WALK)
+		wmb();
+
+	if (stage1) {
+		reg += leaf ? ARM_SMMU_CB_S1_TLBIVAL : ARM_SMMU_CB_S1_TLBIVA;
+>>>>>>> master:drivers/iommu/arm-smmu.c
 
 	if (cfg->fmt != ARM_SMMU_CTX_FMT_AARCH64) {
 		iova = (iova >> 12) << 12;
@@ -364,10 +430,17 @@ static void arm_smmu_tlb_add_page_s2_v1(struct iommu_iotlb_gather *gather,
 	struct arm_smmu_domain *smmu_domain = cookie;
 	struct arm_smmu_device *smmu = smmu_domain->smmu;
 
+<<<<<<< HEAD:drivers/iommu/arm/arm-smmu/arm-smmu.c
 	if (smmu->features & ARM_SMMU_FEAT_COHERENT_WALK)
 		wmb();
 
 	arm_smmu_gr0_write(smmu, ARM_SMMU_GR0_TLBIVMID, smmu_domain->cfg.vmid);
+=======
+	if (smmu_domain->smmu->features & ARM_SMMU_FEAT_COHERENT_WALK)
+		wmb();
+
+	writel_relaxed(smmu_domain->cfg.vmid, base + ARM_SMMU_GR0_TLBIVMID);
+>>>>>>> master:drivers/iommu/arm-smmu.c
 }
 
 static const struct iommu_flush_ops arm_smmu_s1_tlb_ops = {
@@ -1607,8 +1680,13 @@ static void arm_smmu_device_reset(struct arm_smmu_device *smmu)
 	}
 
 	/* Invalidate the TLB, just in case */
+<<<<<<< HEAD:drivers/iommu/arm/arm-smmu/arm-smmu.c
 	arm_smmu_gr0_write(smmu, ARM_SMMU_GR0_TLBIALLH, QCOM_DUMMY_VAL);
 	arm_smmu_gr0_write(smmu, ARM_SMMU_GR0_TLBIALLNSNH, QCOM_DUMMY_VAL);
+=======
+	writel_relaxed(QCOM_DUMMY_VAL, gr0_base + ARM_SMMU_GR0_TLBIALLH);
+	writel_relaxed(QCOM_DUMMY_VAL, gr0_base + ARM_SMMU_GR0_TLBIALLNSNH);
+>>>>>>> master:drivers/iommu/arm-smmu.c
 
 	reg = arm_smmu_gr0_read(smmu, ARM_SMMU_GR0_sCR0);
 
@@ -1891,7 +1969,10 @@ static const struct of_device_id arm_smmu_of_match[] = {
 	{ .compatible = "arm,mmu-401", .data = &arm_mmu401 },
 	{ .compatible = "arm,mmu-500", .data = &arm_mmu500 },
 	{ .compatible = "cavium,smmu-v2", .data = &cavium_smmuv2 },
+<<<<<<< HEAD:drivers/iommu/arm/arm-smmu/arm-smmu.c
 	{ .compatible = "nvidia,smmu-500", .data = &arm_mmu500 },
+=======
+>>>>>>> master:drivers/iommu/arm-smmu.c
 	{ .compatible = "qcom,smmu-v2", .data = &qcom_smmuv2 },
 	{ },
 };

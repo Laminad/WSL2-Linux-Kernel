@@ -78,9 +78,12 @@ do {									\
 /* Atomic operations are already serializing on x86 */
 #define __smp_mb__before_atomic()	do { } while (0)
 #define __smp_mb__after_atomic()	do { } while (0)
+<<<<<<< HEAD
 
 /* Writing to CR3 provides a full memory barrier in switch_mm(). */
 #define smp_mb__after_switch_mm()	do { } while (0)
+=======
+>>>>>>> master
 
 #include <asm-generic/barrier.h>
 

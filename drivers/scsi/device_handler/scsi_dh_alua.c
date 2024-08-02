@@ -532,11 +532,14 @@ static int alua_rtpg(struct scsi_device *sdev, struct alua_port_group *pg)
 	unsigned char orig_transition_tmo;
 	unsigned long flags;
 	bool transitioning_sense = false;
+<<<<<<< HEAD
 
 	group_id_old = pg->group_id;
 	state_old = pg->state;
 	pref_old = pg->pref;
 	valid_states_old = pg->valid_states;
+=======
+>>>>>>> master
 
 	if (!pg->expiry) {
 		unsigned long transition_tmo = ALUA_FAILOVER_TIMEOUT * HZ;
@@ -705,6 +708,7 @@ static int alua_rtpg(struct scsi_device *sdev, struct alua_port_group *pg)
 	if (transitioning_sense)
 		pg->state = SCSI_ACCESS_STATE_TRANSITIONING;
 
+<<<<<<< HEAD
 	if (group_id_old != pg->group_id || state_old != pg->state ||
 		pref_old != pg->pref || valid_states_old != pg->valid_states)
 		sdev_printk(KERN_INFO, sdev,
@@ -718,6 +722,19 @@ static int alua_rtpg(struct scsi_device *sdev, struct alua_port_group *pg)
 			pg->valid_states&TPGS_SUPPORT_STANDBY?'S':'s',
 			pg->valid_states&TPGS_SUPPORT_NONOPTIMIZED?'N':'n',
 			pg->valid_states&TPGS_SUPPORT_OPTIMIZED?'A':'a');
+=======
+	sdev_printk(KERN_INFO, sdev,
+		    "%s: port group %02x state %c %s supports %c%c%c%c%c%c%c\n",
+		    ALUA_DH_NAME, pg->group_id, print_alua_state(pg->state),
+		    pg->pref ? "preferred" : "non-preferred",
+		    pg->valid_states&TPGS_SUPPORT_TRANSITION?'T':'t',
+		    pg->valid_states&TPGS_SUPPORT_OFFLINE?'O':'o',
+		    pg->valid_states&TPGS_SUPPORT_LBA_DEPENDENT?'L':'l',
+		    pg->valid_states&TPGS_SUPPORT_UNAVAILABLE?'U':'u',
+		    pg->valid_states&TPGS_SUPPORT_STANDBY?'S':'s',
+		    pg->valid_states&TPGS_SUPPORT_NONOPTIMIZED?'N':'n',
+		    pg->valid_states&TPGS_SUPPORT_OPTIMIZED?'A':'a');
+>>>>>>> master
 
 	switch (pg->state) {
 	case SCSI_ACCESS_STATE_TRANSITIONING:
@@ -920,9 +937,13 @@ static void alua_rtpg_work(struct work_struct *work)
 		if (err == SCSI_DH_RETRY || err == SCSI_DH_IMM_RETRY ||
 		    pg->flags & ALUA_PG_RUN_RTPG) {
 			pg->flags &= ~ALUA_PG_RUNNING;
+<<<<<<< HEAD
 			if (err == SCSI_DH_IMM_RETRY)
 				pg->interval = 0;
 			else if (!pg->interval && !(pg->flags & ALUA_PG_RUN_RTPG))
+=======
+			if (!pg->interval && !(pg->flags & ALUA_PG_RUN_RTPG))
+>>>>>>> master
 				pg->interval = ALUA_RTPG_RETRY_DELAY;
 			pg->flags |= ALUA_PG_RUN_RTPG;
 			spin_unlock_irqrestore(&pg->lock, flags);

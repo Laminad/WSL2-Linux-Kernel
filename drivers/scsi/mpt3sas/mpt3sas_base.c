@@ -3006,6 +3006,7 @@ static int
 _base_config_dma_addressing(struct MPT3SAS_ADAPTER *ioc, struct pci_dev *pdev)
 {
 	struct sysinfo s;
+<<<<<<< HEAD
 	u64 coherent_dma_mask, dma_mask;
 
 	if (ioc->is_mcpu_endpoint || sizeof(dma_addr_t) == 4) {
@@ -3018,6 +3019,31 @@ _base_config_dma_addressing(struct MPT3SAS_ADAPTER *ioc, struct pci_dev *pdev)
 	} else {
 		ioc->dma_mask = 64;
 		coherent_dma_mask = dma_mask = DMA_BIT_MASK(64);
+=======
+	u64 consistent_dma_mask;
+	/* Set 63 bit DMA mask for all SAS3 and SAS35 controllers */
+	int dma_mask = (ioc->hba_mpi_version_belonged > MPI2_VERSION) ? 63 : 64;
+
+	if (ioc->is_mcpu_endpoint)
+		goto try_32bit;
+
+	if (ioc->dma_mask)
+		consistent_dma_mask = DMA_BIT_MASK(dma_mask);
+	else
+		consistent_dma_mask = DMA_BIT_MASK(32);
+
+	if (sizeof(dma_addr_t) > 4) {
+		const uint64_t required_mask =
+		    dma_get_required_mask(&pdev->dev);
+		if ((required_mask > DMA_BIT_MASK(32)) &&
+		    !pci_set_dma_mask(pdev, DMA_BIT_MASK(dma_mask)) &&
+		    !pci_set_consistent_dma_mask(pdev, consistent_dma_mask)) {
+			ioc->base_add_sg_single = &_base_add_sg_single_64;
+			ioc->sge_size = sizeof(Mpi2SGESimple64_t);
+			ioc->dma_mask = dma_mask;
+			goto out;
+		}
+>>>>>>> master
 	}
 
 	if (ioc->use_32bit_dma)
@@ -3027,12 +3053,31 @@ _base_config_dma_addressing(struct MPT3SAS_ADAPTER *ioc, struct pci_dev *pdev)
 	    dma_set_coherent_mask(&pdev->dev, coherent_dma_mask))
 		return -ENODEV;
 
+<<<<<<< HEAD
 	if (ioc->dma_mask > 32) {
 		ioc->base_add_sg_single = &_base_add_sg_single_64;
 		ioc->sge_size = sizeof(Mpi2SGESimple64_t);
 	} else {
 		ioc->base_add_sg_single = &_base_add_sg_single_32;
 		ioc->sge_size = sizeof(Mpi2SGESimple32_t);
+=======
+ out:
+	si_meminfo(&s);
+	pr_info(MPT3SAS_FMT
+		"%d BIT PCI BUS DMA ADDRESSING SUPPORTED, total mem (%ld kB)\n",
+		ioc->name, ioc->dma_mask, convert_to_kb(s.totalram));
+
+	return 0;
+}
+
+static int
+_base_change_consistent_dma_mask(struct MPT3SAS_ADAPTER *ioc,
+				      struct pci_dev *pdev)
+{
+	if (pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(ioc->dma_mask))) {
+		if (pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32)))
+			return -ENODEV;
+>>>>>>> master
 	}
 
 	si_meminfo(&s);
@@ -6446,12 +6491,37 @@ _base_allocate_memory_pools(struct MPT3SAS_ADAPTER *ioc)
 			    "32 DMA mask failed %s\n", pci_name(ioc->pdev));
 			return -ENODEV;
 		}
+<<<<<<< HEAD
 		if (base_alloc_rdpq_dma_pool(ioc, rdpq_sz))
 			return -ENOMEM;
 	} else if (ret == -ENOMEM)
 		return -ENOMEM;
 	total_sz = rdpq_sz * (!ioc->rdpq_array_enable ? 1 :
 	    DIV_ROUND_UP(ioc->reply_queue_count, RDPQ_MAX_INDEX_IN_ONE_CHUNK));
+=======
+		memset(ioc->reply_post[i].reply_post_free, 0, sz);
+		dinitprintk(ioc, pr_info(MPT3SAS_FMT
+		    "reply post free pool (0x%p): depth(%d),"
+		    "element_size(%d), pool_size(%d kB)\n", ioc->name,
+		    ioc->reply_post[i].reply_post_free,
+		    ioc->reply_post_queue_depth, 8, sz/1024));
+		dinitprintk(ioc, pr_info(MPT3SAS_FMT
+		    "reply_post_free_dma = (0x%llx)\n", ioc->name,
+		    (unsigned long long)
+		    ioc->reply_post[i].reply_post_free_dma));
+		total_sz += sz;
+	} while (ioc->rdpq_array_enable && (++i < ioc->reply_queue_count));
+
+	if (ioc->dma_mask > 32) {
+		if (_base_change_consistent_dma_mask(ioc, ioc->pdev) != 0) {
+			pr_warn(MPT3SAS_FMT
+			    "no suitable consistent DMA mask for %s\n",
+			    ioc->name, pci_name(ioc->pdev));
+			goto out;
+		}
+	}
+
+>>>>>>> master
 	ioc->scsiio_depth = ioc->hba_queue_depth -
 	    ioc->hi_priority_depth - ioc->internal_depth;
 

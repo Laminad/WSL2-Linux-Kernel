@@ -210,7 +210,36 @@ static int crypto_cfb_create(struct crypto_template *tmpl, struct rtattr **tb)
 
 	alg = skcipher_ialg_simple(inst);
 
+<<<<<<< HEAD
 	/* CFB mode is a stream cipher. */
+=======
+	algt = crypto_get_attr_type(tb);
+	err = PTR_ERR(algt);
+	if (IS_ERR(algt))
+		goto err_free_inst;
+
+	mask = CRYPTO_ALG_TYPE_MASK |
+		crypto_requires_off(algt->type, algt->mask,
+				    CRYPTO_ALG_NEED_FALLBACK);
+
+	alg = crypto_get_attr_alg(tb, CRYPTO_ALG_TYPE_CIPHER, mask);
+	err = PTR_ERR(alg);
+	if (IS_ERR(alg))
+		goto err_free_inst;
+
+	spawn = skcipher_instance_ctx(inst);
+	err = crypto_init_spawn(spawn, alg, skcipher_crypto_instance(inst),
+				CRYPTO_ALG_TYPE_MASK);
+	if (err)
+		goto err_put_alg;
+
+	err = crypto_inst_setname(skcipher_crypto_instance(inst), "cfb", alg);
+	if (err)
+		goto err_drop_spawn;
+
+	inst->alg.base.cra_priority = alg->cra_priority;
+	/* we're a stream cipher independend of the crypto cra_blocksize */
+>>>>>>> master
 	inst->alg.base.cra_blocksize = 1;
 
 	/*
@@ -218,15 +247,38 @@ static int crypto_cfb_create(struct crypto_template *tmpl, struct rtattr **tb)
 	 * give a partial block at the very end, never earlier.
 	 */
 	inst->alg.chunksize = alg->cra_blocksize;
+<<<<<<< HEAD
+=======
+
+	inst->alg.ivsize = alg->cra_blocksize;
+	inst->alg.min_keysize = alg->cra_cipher.cia_min_keysize;
+	inst->alg.max_keysize = alg->cra_cipher.cia_max_keysize;
+>>>>>>> master
 
 	inst->alg.encrypt = crypto_cfb_encrypt;
 	inst->alg.decrypt = crypto_cfb_decrypt;
 
 	err = skcipher_register_instance(tmpl, inst);
 	if (err)
+<<<<<<< HEAD
 		inst->free(inst);
+=======
+		goto err_drop_spawn;
+	crypto_mod_put(alg);
+>>>>>>> master
 
 	return err;
+<<<<<<< HEAD
+=======
+
+err_drop_spawn:
+	crypto_drop_spawn(spawn);
+err_put_alg:
+	crypto_mod_put(alg);
+err_free_inst:
+	kfree(inst);
+	goto out;
+>>>>>>> master
 }
 
 static struct crypto_template crypto_cfb_tmpl = {

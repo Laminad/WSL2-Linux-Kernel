@@ -8,6 +8,7 @@
 #include <linux/efi.h>
 #include <linux/export.h>
 #include <linux/ftrace.h>
+#include <linux/kprobes.h>
 #include <linux/sched.h>
 #include <linux/sched/debug.h>
 #include <linux/sched/task_stack.h>
@@ -97,6 +98,7 @@ unwind_recover_return_address(struct unwind_state *state)
 
 	return 0;
 }
+NOKPROBE_SYMBOL(unwind_frame);
 
 /*
  * Unwind from one frame record (A) to the next frame record (B).
@@ -142,6 +144,7 @@ unwind(struct unwind_state *state, stack_trace_consume_fn consume_entry,
 			break;
 	}
 }
+NOKPROBE_SYMBOL(walk_stackframe);
 
 /*
  * Per-cpu stacks are only accessible when unwinding the current task in a

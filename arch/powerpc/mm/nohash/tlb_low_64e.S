@@ -61,6 +61,10 @@ END_FTR_SECTION_IFSET(CPU_FTR_EMB_HV)
 	ld	r14,PACAPGD(r13)
 	std	r15,EX_TLB_R15(r12)
 	std	r10,EX_TLB_CR(r12)
+<<<<<<< HEAD:arch/powerpc/mm/nohash/tlb_low_64e.S
+=======
+#ifdef CONFIG_PPC_FSL_BOOK3E
+>>>>>>> master:arch/powerpc/mm/tlb_low_64e.S
 START_BTB_FLUSH_SECTION
 	mfspr r11, SPRN_SRR1
 	andi. r10,r11,MSR_PR

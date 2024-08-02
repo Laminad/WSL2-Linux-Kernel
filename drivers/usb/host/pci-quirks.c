@@ -207,7 +207,12 @@ EXPORT_SYMBOL_GPL(sb800_prefetch);
 static void usb_amd_find_chipset_info(void)
 {
 	unsigned long flags;
+<<<<<<< HEAD
 	struct amd_chipset_info info = { };
+=======
+	struct amd_chipset_info info;
+	int need_pll_quirk = 0;
+>>>>>>> master
 
 	spin_lock_irqsave(&amd_lock, flags);
 
@@ -225,11 +230,16 @@ static void usb_amd_find_chipset_info(void)
 
 	switch (info.sb_type.gen) {
 	case AMD_CHIPSET_SB700:
+<<<<<<< HEAD
 		info.need_pll_quirk = info.sb_type.rev <= 0x3B;
+=======
+		need_pll_quirk = info.sb_type.rev <= 0x3B;
+>>>>>>> master
 		break;
 	case AMD_CHIPSET_SB800:
 	case AMD_CHIPSET_HUDSON2:
 	case AMD_CHIPSET_BOLTON:
+<<<<<<< HEAD
 		info.need_pll_quirk = true;
 		break;
 	default:
@@ -238,6 +248,16 @@ static void usb_amd_find_chipset_info(void)
 	}
 
 	if (!info.need_pll_quirk) {
+=======
+		need_pll_quirk = 1;
+		break;
+	default:
+		need_pll_quirk = 0;
+		break;
+	}
+
+	if (!need_pll_quirk) {
+>>>>>>> master
 		if (info.smbus_dev) {
 			pci_dev_put(info.smbus_dev);
 			info.smbus_dev = NULL;
@@ -260,6 +280,10 @@ static void usb_amd_find_chipset_info(void)
 		}
 	}
 
+<<<<<<< HEAD
+=======
+	need_pll_quirk = info.probe_result = 1;
+>>>>>>> master
 	printk(KERN_DEBUG "QUIRK: Enable AMD PLL fix\n");
 
 commit:
@@ -270,6 +294,10 @@ commit:
 
 		/* Mark that we where here */
 		amd_chipset.probe_count++;
+<<<<<<< HEAD
+=======
+		need_pll_quirk = amd_chipset.probe_result;
+>>>>>>> master
 
 		spin_unlock_irqrestore(&amd_lock, flags);
 
@@ -282,6 +310,11 @@ commit:
 		amd_chipset = info;
 		spin_unlock_irqrestore(&amd_lock, flags);
 	}
+<<<<<<< HEAD
+=======
+
+	return need_pll_quirk;
+>>>>>>> master
 }
 
 int usb_hcd_amd_remote_wakeup_quirk(struct pci_dev *pdev)

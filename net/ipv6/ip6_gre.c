@@ -518,8 +518,12 @@ static int ip6gre_rcv(struct sk_buff *skb, const struct tnl_ptk_info *tpi)
 	return PACKET_REJECT;
 }
 
+<<<<<<< HEAD
 static int ip6erspan_rcv(struct sk_buff *skb,
 			 struct tnl_ptk_info *tpi,
+=======
+static int ip6erspan_rcv(struct sk_buff *skb, struct tnl_ptk_info *tpi,
+>>>>>>> master
 			 int gre_hdr_len)
 {
 	struct erspan_base_hdr *ershdr;
@@ -527,9 +531,6 @@ static int ip6erspan_rcv(struct sk_buff *skb,
 	struct erspan_md2 *md2;
 	struct ip6_tnl *tunnel;
 	u8 ver;
-
-	if (unlikely(!pskb_may_pull(skb, sizeof(*ershdr))))
-		return PACKET_REJECT;
 
 	ipv6h = ipv6_hdr(skb);
 	ershdr = (struct erspan_base_hdr *)skb->data;
@@ -951,6 +952,9 @@ static netdev_tx_t ip6erspan_tunnel_xmit(struct sk_buff *skb,
 	if (!pskb_inet_may_pull(skb))
 		goto tx_err;
 
+	if (!pskb_inet_may_pull(skb))
+		goto tx_err;
+
 	if (!ip6_tnl_xmit_ctl(t, &t->parms.laddr, &t->parms.raddr))
 		goto tx_err;
 
@@ -993,9 +997,16 @@ static netdev_tx_t ip6erspan_tunnel_xmit(struct sk_buff *skb,
 		struct erspan_metadata *md;
 		__be32 tun_id;
 
+<<<<<<< HEAD
 		tun_info = skb_tunnel_info_txcheck(skb);
 		if (IS_ERR(tun_info) ||
 		    unlikely(ip_tunnel_info_af(tun_info) != AF_INET6))
+=======
+		tun_info = skb_tunnel_info(skb);
+		if (unlikely(!tun_info ||
+			     !(tun_info->mode & IP_TUNNEL_INFO_TX) ||
+			     ip_tunnel_info_af(tun_info) != AF_INET6))
+>>>>>>> master
 			goto tx_err;
 
 		key = &tun_info->key;
@@ -1068,7 +1079,13 @@ static netdev_tx_t ip6erspan_tunnel_xmit(struct sk_buff *skb,
 	}
 
 	/* Push GRE header. */
+<<<<<<< HEAD
 	gre_build_header(skb, 8, TUNNEL_SEQ, proto, 0, htonl(atomic_fetch_inc(&t->o_seqno)));
+=======
+	proto = (t->parms.erspan_ver == 1) ? htons(ETH_P_ERSPAN)
+					   : htons(ETH_P_ERSPAN2);
+	gre_build_header(skb, 8, TUNNEL_SEQ, proto, 0, htonl(t->o_seqno++));
+>>>>>>> master
 
 	/* TooBig packet may have updated dst->dev's mtu */
 	if (!t->parms.collect_md && dst && dst_mtu(dst) > dst->dev->mtu)
@@ -2151,6 +2168,7 @@ static int ip6gre_fill_info(struct sk_buff *skb, const struct net_device *dev)
 	struct __ip6_tnl_parm *p = &t->parms;
 	__be16 o_flags = p->o_flags;
 
+<<<<<<< HEAD
 	if (p->erspan_ver == 1 || p->erspan_ver == 2) {
 		if (!p->collect_md)
 			o_flags |= TUNNEL_KEY;
@@ -2168,6 +2186,11 @@ static int ip6gre_fill_info(struct sk_buff *skb, const struct net_device *dev)
 				goto nla_put_failure;
 		}
 	}
+=======
+	if ((p->erspan_ver == 1 || p->erspan_ver == 2) &&
+	    !p->collect_md)
+		o_flags |= TUNNEL_KEY;
+>>>>>>> master
 
 	if (nla_put_u32(skb, IFLA_GRE_LINK, p->link) ||
 	    nla_put_be16(skb, IFLA_GRE_IFLAGS,

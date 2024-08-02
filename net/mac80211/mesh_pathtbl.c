@@ -91,10 +91,24 @@ static void mesh_table_init(struct mesh_table *tbl)
 	spin_lock_init(&tbl->gates_lock);
 	spin_lock_init(&tbl->walk_lock);
 
+<<<<<<< HEAD
 	/* rhashtable_init() may fail only in case of wrong
 	 * mesh_rht_params
 	 */
 	WARN_ON(rhashtable_init(&tbl->rhead, &mesh_rht_params));
+=======
+	newtbl = kmalloc(sizeof(struct mesh_table), GFP_ATOMIC);
+	if (!newtbl)
+		return NULL;
+
+	INIT_HLIST_HEAD(&newtbl->known_gates);
+	INIT_HLIST_HEAD(&newtbl->walk_head);
+	atomic_set(&newtbl->entries,  0);
+	spin_lock_init(&newtbl->gates_lock);
+	spin_lock_init(&newtbl->walk_lock);
+
+	return newtbl;
+>>>>>>> master
 }
 
 static void mesh_table_free(struct mesh_table *tbl)
@@ -692,6 +706,7 @@ struct mesh_path *mesh_path_add(struct ieee80211_sub_if_data *sdata,
 	if (!new_mpath)
 		return ERR_PTR(-ENOMEM);
 
+<<<<<<< HEAD
 	tbl = &sdata->u.mesh.mesh_paths;
 	spin_lock_bh(&tbl->walk_lock);
 	mpath = rhashtable_lookup_get_insert_fast(&tbl->rhead,
@@ -706,6 +721,29 @@ struct mesh_path *mesh_path_add(struct ieee80211_sub_if_data *sdata,
 
 		if (IS_ERR(mpath))
 			return mpath;
+=======
+	tbl = sdata->u.mesh.mesh_paths;
+	spin_lock_bh(&tbl->walk_lock);
+	do {
+		ret = rhashtable_lookup_insert_fast(&tbl->rhead,
+						    &new_mpath->rhash,
+						    mesh_rht_params);
+
+		if (ret == -EEXIST)
+			mpath = rhashtable_lookup_fast(&tbl->rhead,
+						       dst,
+						       mesh_rht_params);
+		else if (!ret)
+			hlist_add_head(&new_mpath->walk_list, &tbl->walk_head);
+	} while (unlikely(ret == -EEXIST && !mpath));
+	spin_unlock_bh(&tbl->walk_lock);
+
+	if (ret) {
+		kfree(new_mpath);
+
+		if (ret != -EEXIST)
+			return ERR_PTR(ret);
+>>>>>>> master
 
 		new_mpath = mpath;
 	}
@@ -734,7 +772,11 @@ int mpp_path_add(struct ieee80211_sub_if_data *sdata,
 		return -ENOMEM;
 
 	memcpy(new_mpath->mpp, mpp, ETH_ALEN);
+<<<<<<< HEAD
 	tbl = &sdata->u.mesh.mpp_paths;
+=======
+	tbl = sdata->u.mesh.mpp_paths;
+>>>>>>> master
 
 	spin_lock_bh(&tbl->walk_lock);
 	ret = rhashtable_lookup_insert_fast(&tbl->rhead,
@@ -746,8 +788,11 @@ int mpp_path_add(struct ieee80211_sub_if_data *sdata,
 
 	if (ret)
 		kfree(new_mpath);
+<<<<<<< HEAD
 	else
 		mesh_fast_tx_flush_addr(sdata, dst);
+=======
+>>>>>>> master
 
 	sdata->u.mesh.mpp_paths_generation++;
 	return ret;

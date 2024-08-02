@@ -287,7 +287,10 @@ void perf_kprobe_destroy(struct perf_event *p_event)
 	mutex_lock(&event_mutex);
 	perf_trace_event_close(p_event);
 	perf_trace_event_unreg(p_event);
+<<<<<<< HEAD
 	trace_event_put_ref(p_event->tp_event);
+=======
+>>>>>>> master
 	mutex_unlock(&event_mutex);
 
 	destroy_local_trace_kprobe(p_event->tp_event);

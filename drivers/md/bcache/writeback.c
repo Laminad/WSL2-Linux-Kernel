@@ -832,9 +832,16 @@ static int bch_writeback_thread(void *arg)
 		}
 	}
 
+<<<<<<< HEAD
 	if (dc->writeback_write_wq)
 		destroy_workqueue(dc->writeback_write_wq);
 
+=======
+	if (dc->writeback_write_wq) {
+		flush_workqueue(dc->writeback_write_wq);
+		destroy_workqueue(dc->writeback_write_wq);
+	}
+>>>>>>> master
 	cached_dev_put(dc);
 	wait_for_kthread_stop();
 

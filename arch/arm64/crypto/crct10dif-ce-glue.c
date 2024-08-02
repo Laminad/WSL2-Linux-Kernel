@@ -36,6 +36,7 @@ static int crct10dif_update_pmull_p8(struct shash_desc *desc, const u8 *data,
 {
 	u16 *crc = shash_desc_ctx(desc);
 
+<<<<<<< HEAD
 	if (length >= CRC_T10DIF_PMULL_CHUNK_SIZE && crypto_simd_usable()) {
 		do {
 			unsigned int chunk = length;
@@ -74,6 +75,12 @@ static int crct10dif_update_pmull_p64(struct shash_desc *desc, const u8 *data,
 			data += chunk;
 			length -= chunk;
 		} while (length);
+=======
+	if (length >= CRC_T10DIF_PMULL_CHUNK_SIZE && may_use_simd()) {
+		kernel_neon_begin();
+		*crc = crc_t10dif_pmull(*crc, data, length);
+		kernel_neon_end();
+>>>>>>> master
 	} else {
 		*crc = crc_t10dif_generic(*crc, data, length);
 	}

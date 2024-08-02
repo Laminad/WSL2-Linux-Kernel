@@ -1357,10 +1357,21 @@ void usb_initialize_gadget(struct device *parent, struct usb_gadget *gadget,
 	INIT_WORK(&gadget->work, usb_gadget_state_work);
 	gadget->dev.parent = parent;
 
+<<<<<<< HEAD
 	if (release)
 		gadget->dev.release = release;
 	else
 		gadget->dev.release = usb_udc_nop_release;
+=======
+	list_for_each_entry(driver, &gadget_driver_pending_list, pending)
+		if (!driver->udc_name || strcmp(driver->udc_name,
+						dev_name(&udc->dev)) == 0) {
+			ret = udc_bind_to_driver(udc, driver);
+			if (ret != -EPROBE_DEFER)
+				list_del_init(&driver->pending);
+			break;
+		}
+>>>>>>> master
 
 	device_initialize(&gadget->dev);
 	gadget->dev.bus = &gadget_bus_type;

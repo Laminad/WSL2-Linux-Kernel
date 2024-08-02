@@ -273,6 +273,7 @@ static int erspan_rcv(struct sk_buff *skb, struct tnl_ptk_info *tpi,
 	int len;
 
 	itn = net_generic(net, erspan_net_id);
+<<<<<<< HEAD
 	iph = ip_hdr(skb);
 	if (is_erspan_type1(gre_hdr_len)) {
 		ver = 0;
@@ -301,6 +302,22 @@ static int erspan_rcv(struct sk_buff *skb, struct tnl_ptk_info *tpi,
 		if (unlikely(!pskb_may_pull(skb, len)))
 			return PACKET_REJECT;
 
+=======
+
+	iph = ip_hdr(skb);
+	ershdr = (struct erspan_base_hdr *)(skb->data + gre_hdr_len);
+	ver = ershdr->ver;
+
+	tunnel = ip_tunnel_lookup(itn, skb->dev->ifindex,
+				  tpi->flags | TUNNEL_KEY,
+				  iph->saddr, iph->daddr, tpi->key);
+
+	if (tunnel) {
+		len = gre_hdr_len + erspan_hdr_len(ver);
+		if (unlikely(!pskb_may_pull(skb, len)))
+			return PACKET_REJECT;
+
+>>>>>>> master
 		if (__iptunnel_pull_header(skb,
 					   len,
 					   htons(ETH_P_TEB),
@@ -525,7 +542,12 @@ static void erspan_fb_xmit(struct sk_buff *skb, struct net_device *dev)
 	const struct ip_tunnel_key *key;
 	struct erspan_metadata *md;
 	bool truncate = false;
+<<<<<<< HEAD
 	__be16 proto;
+=======
+	__be16 df, proto;
+	struct flowi4 fl;
+>>>>>>> master
 	int tunnel_hlen;
 	int version;
 	int nhoff;
@@ -537,9 +559,15 @@ static void erspan_fb_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	key = &tun_info->key;
 	if (!(tun_info->key.tun_flags & TUNNEL_ERSPAN_OPT))
+<<<<<<< HEAD
 		goto err_free_skb;
 	if (tun_info->options_len < sizeof(*md))
 		goto err_free_skb;
+=======
+		goto err_free_rt;
+	if (tun_info->options_len < sizeof(*md))
+ 		goto err_free_rt;
+>>>>>>> master
 	md = ip_tunnel_info_opts(tun_info);
 
 	/* ERSPAN has fixed 8 byte GRE header */
@@ -590,7 +618,11 @@ static void erspan_fb_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 
 	gre_build_header(skb, 8, TUNNEL_SEQ,
+<<<<<<< HEAD
 			 proto, 0, htonl(atomic_fetch_inc(&tunnel->o_seqno)));
+=======
+			 proto, 0, htonl(tunnel->o_seqno++));
+>>>>>>> master
 
 	ip_md_tunnel_xmit(skb, dev, IPPROTO_GRE, tunnel_hlen);
 
@@ -704,10 +736,14 @@ static netdev_tx_t erspan_xmit(struct sk_buff *skb,
 	}
 
 	/* Push ERSPAN header */
+<<<<<<< HEAD
 	if (tunnel->erspan_ver == 0) {
 		proto = htons(ETH_P_ERSPAN);
 		tunnel->parms.o_flags &= ~TUNNEL_SEQ;
 	} else if (tunnel->erspan_ver == 1) {
+=======
+	if (tunnel->erspan_ver == 1) {
+>>>>>>> master
 		erspan_build_header(skb, ntohl(tunnel->parms.o_key),
 				    tunnel->index,
 				    truncate, true);
@@ -1501,6 +1537,13 @@ static int ipgre_fill_info(struct sk_buff *skb, const struct net_device *dev)
 	struct ip_tunnel *t = netdev_priv(dev);
 	struct ip_tunnel_parm *p = &t->parms;
 	__be16 o_flags = p->o_flags;
+<<<<<<< HEAD
+=======
+
+	if ((t->erspan_ver == 1 || t->erspan_ver == 2) &&
+	    !t->collect_md)
+		o_flags |= TUNNEL_KEY;
+>>>>>>> master
 
 	if (nla_put_u32(skb, IFLA_GRE_LINK, p->link) ||
 	    nla_put_be16(skb, IFLA_GRE_IFLAGS,

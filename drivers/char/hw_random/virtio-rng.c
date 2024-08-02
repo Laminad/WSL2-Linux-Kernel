@@ -85,6 +85,7 @@ static int virtio_read(struct hwrng *rng, void *buf, size_t size, bool wait)
 	if (vi->hwrng_removed)
 		return -ENODEV;
 
+<<<<<<< HEAD
 	read = 0;
 
 	/* copy available data */
@@ -92,6 +93,12 @@ static int virtio_read(struct hwrng *rng, void *buf, size_t size, bool wait)
 		chunk = copy_data(vi, buf, size);
 		size -= chunk;
 		read += chunk;
+=======
+	if (!vi->busy) {
+		vi->busy = true;
+		reinit_completion(&vi->have_data);
+		register_buffer(vi, buf, size);
+>>>>>>> master
 	}
 
 	if (!wait)

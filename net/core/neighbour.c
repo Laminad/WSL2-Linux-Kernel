@@ -1190,7 +1190,11 @@ int __neigh_event_send(struct neighbour *neigh, struct sk_buff *skb,
 			atomic_set(&neigh->probes,
 				   NEIGH_VAR(neigh->parms, UCAST_PROBES));
 			neigh_del_timer(neigh);
+<<<<<<< HEAD
 			WRITE_ONCE(neigh->nud_state, NUD_INCOMPLETE);
+=======
+			neigh->nud_state     = NUD_INCOMPLETE;
+>>>>>>> master
 			neigh->updated = now;
 			if (!immediate_ok) {
 				next = now + 1;
@@ -1212,7 +1216,11 @@ int __neigh_event_send(struct neighbour *neigh, struct sk_buff *skb,
 	} else if (neigh->nud_state & NUD_STALE) {
 		neigh_dbg(2, "neigh %p is delayed\n", neigh);
 		neigh_del_timer(neigh);
+<<<<<<< HEAD
 		WRITE_ONCE(neigh->nud_state, NUD_DELAY);
+=======
+		neigh->nud_state = NUD_DELAY;
+>>>>>>> master
 		neigh->updated = jiffies;
 		neigh_add_timer(neigh, jiffies +
 				NEIGH_VAR(neigh->parms, DELAY_PROBE_TIME));
@@ -3150,7 +3158,11 @@ int neigh_xmit(int index, struct net_device *dev,
 		tbl = neigh_tables[index];
 		if (!tbl)
 			goto out;
+<<<<<<< HEAD
 		rcu_read_lock();
+=======
+		rcu_read_lock_bh();
+>>>>>>> master
 		if (index == NEIGH_ARP_TABLE) {
 			u32 key = *((u32 *)addr);
 
@@ -3366,7 +3378,11 @@ static void *neigh_get_idx_any(struct seq_file *seq, loff_t *pos)
 
 void *neigh_seq_start(struct seq_file *seq, loff_t *pos, struct neigh_table *tbl, unsigned int neigh_seq_flags)
 	__acquires(tbl->lock)
+<<<<<<< HEAD
 	__acquires(rcu)
+=======
+	__acquires(rcu_bh)
+>>>>>>> master
 {
 	struct neigh_seq_state *state = seq->private;
 
@@ -3374,9 +3390,15 @@ void *neigh_seq_start(struct seq_file *seq, loff_t *pos, struct neigh_table *tbl
 	state->bucket = 0;
 	state->flags = (neigh_seq_flags & ~NEIGH_SEQ_IS_PNEIGH);
 
+<<<<<<< HEAD
 	rcu_read_lock();
 	state->nht = rcu_dereference(tbl->nht);
 	read_lock_bh(&tbl->lock);
+=======
+	rcu_read_lock_bh();
+	state->nht = rcu_dereference_bh(tbl->nht);
+	read_lock(&tbl->lock);
+>>>>>>> master
 
 	return *pos ? neigh_get_idx_any(seq, pos) : SEQ_START_TOKEN;
 }
@@ -3411,13 +3433,22 @@ EXPORT_SYMBOL(neigh_seq_next);
 
 void neigh_seq_stop(struct seq_file *seq, void *v)
 	__releases(tbl->lock)
+<<<<<<< HEAD
 	__releases(rcu)
+=======
+	__releases(rcu_bh)
+>>>>>>> master
 {
 	struct neigh_seq_state *state = seq->private;
 	struct neigh_table *tbl = state->tbl;
 
+<<<<<<< HEAD
 	read_unlock_bh(&tbl->lock);
 	rcu_read_unlock();
+=======
+	read_unlock(&tbl->lock);
+	rcu_read_unlock_bh();
+>>>>>>> master
 }
 EXPORT_SYMBOL(neigh_seq_stop);
 

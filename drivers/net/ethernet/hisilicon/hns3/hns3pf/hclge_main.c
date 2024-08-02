@@ -560,9 +560,12 @@ static u8 *hclge_comm_get_strings(struct hclge_dev *hdev, u32 stringset,
 		return buff;
 
 	for (i = 0; i < size; i++) {
+<<<<<<< HEAD
 		if (strs[i].stats_num > hdev->ae_dev->dev_specs.mac_stats_num)
 			continue;
 
+=======
+>>>>>>> master
 		snprintf(buff, ETH_GSTRING_LEN, "%s", strs[i].desc);
 		buff = buff + ETH_GSTRING_LEN;
 	}
@@ -2042,12 +2045,65 @@ static int hclge_tx_buffer_calc(struct hclge_dev *hdev,
 static bool hclge_rx_buf_calc_all(struct hclge_dev *hdev, bool max,
 				  struct hclge_pkt_buf_alloc *buf_alloc)
 {
+<<<<<<< HEAD
 	u32 rx_all = hdev->pkt_buf_size - hclge_get_tx_buff_alloced(buf_alloc);
 	u32 aligned_mps = round_up(hdev->mps, HCLGE_BUF_SIZE_UNIT);
 	unsigned int i;
 
 	for (i = 0; i < HCLGE_MAX_TC_NUM; i++) {
 		struct hclge_priv_buf *priv = &buf_alloc->priv_buf[i];
+=======
+#define HCLGE_BUF_SIZE_UNIT	128
+	u32 rx_all = hdev->pkt_buf_size, aligned_mps;
+	int no_pfc_priv_num, pfc_priv_num;
+	struct hclge_priv_buf *priv;
+	int i;
+
+	aligned_mps = round_up(hdev->mps, HCLGE_BUF_SIZE_UNIT);
+	rx_all -= hclge_get_tx_buff_alloced(buf_alloc);
+
+	/* When DCB is not supported, rx private
+	 * buffer is not allocated.
+	 */
+	if (!hnae3_dev_dcb_supported(hdev)) {
+		if (!hclge_is_rx_buf_ok(hdev, buf_alloc, rx_all))
+			return -ENOMEM;
+
+		return 0;
+	}
+
+	/* step 1, try to alloc private buffer for all enabled tc */
+	for (i = 0; i < HCLGE_MAX_TC_NUM; i++) {
+		priv = &buf_alloc->priv_buf[i];
+		if (hdev->hw_tc_map & BIT(i)) {
+			priv->enable = 1;
+			if (hdev->tm_info.hw_pfc_map & BIT(i)) {
+				priv->wl.low = aligned_mps;
+				priv->wl.high = priv->wl.low + aligned_mps;
+				priv->buf_size = priv->wl.high +
+						HCLGE_DEFAULT_DV;
+			} else {
+				priv->wl.low = 0;
+				priv->wl.high = 2 * aligned_mps;
+				priv->buf_size = priv->wl.high;
+			}
+		} else {
+			priv->enable = 0;
+			priv->wl.low = 0;
+			priv->wl.high = 0;
+			priv->buf_size = 0;
+		}
+	}
+
+	if (hclge_is_rx_buf_ok(hdev, buf_alloc, rx_all))
+		return 0;
+
+	/* step 2, try to decrease the buffer size of
+	 * no pfc TC's private buffer
+	 */
+	for (i = 0; i < HCLGE_MAX_TC_NUM; i++) {
+		priv = &buf_alloc->priv_buf[i];
+>>>>>>> master
 
 		priv->enable = 0;
 		priv->wl.low = 0;
@@ -2060,6 +2116,7 @@ static bool hclge_rx_buf_calc_all(struct hclge_dev *hdev, bool max,
 		priv->enable = 1;
 
 		if (hdev->tm_info.hw_pfc_map & BIT(i)) {
+<<<<<<< HEAD
 			priv->wl.low = max ? aligned_mps : HCLGE_BUF_SIZE_UNIT;
 			priv->wl.high = roundup(priv->wl.low + aligned_mps,
 						HCLGE_BUF_SIZE_UNIT);
@@ -2067,6 +2124,15 @@ static bool hclge_rx_buf_calc_all(struct hclge_dev *hdev, bool max,
 			priv->wl.low = 0;
 			priv->wl.high = max ? (aligned_mps * HCLGE_BUF_MUL_BY) :
 					aligned_mps;
+=======
+			priv->wl.low = 128;
+			priv->wl.high = priv->wl.low + aligned_mps;
+			priv->buf_size = priv->wl.high + HCLGE_DEFAULT_DV;
+		} else {
+			priv->wl.low = 0;
+			priv->wl.high = aligned_mps;
+			priv->buf_size = priv->wl.high;
+>>>>>>> master
 		}
 
 		priv->buf_size = priv->wl.high + hdev->dv_buf_size;
@@ -2996,7 +3062,14 @@ static int hclge_get_mac_phy_link(struct hclge_dev *hdev, int *link_status)
 {
 	struct phy_device *phydev = hdev->hw.mac.phydev;
 
+<<<<<<< HEAD
 	*link_status = HCLGE_LINK_STATUS_DOWN;
+=======
+	if (test_bit(HCLGE_STATE_DOWN, &hdev->state))
+		return 0;
+
+	mac_state = hclge_get_mac_link_status(hdev);
+>>>>>>> master
 
 	if (test_bit(HCLGE_STATE_DOWN, &hdev->state))
 		return 0;
@@ -4351,6 +4424,7 @@ static void hclge_reset(struct hclge_dev *hdev)
 	if (hclge_reset_prepare(hdev))
 		goto err_reset;
 
+<<<<<<< HEAD
 	if (hclge_reset_wait(hdev))
 		goto err_reset;
 
@@ -4361,6 +4435,25 @@ static void hclge_reset(struct hclge_dev *hdev)
 
 err_reset:
 	if (hclge_reset_err_handle(hdev))
+=======
+	/* perform reset of the stack & ae device for a client */
+	handle = &hdev->vport[0].nic;
+	rtnl_lock();
+	hclge_notify_client(hdev, HNAE3_DOWN_CLIENT);
+	rtnl_unlock();
+
+	if (!hclge_reset_wait(hdev)) {
+		rtnl_lock();
+		hclge_notify_client(hdev, HNAE3_UNINIT_CLIENT);
+		hclge_reset_ae_dev(hdev->ae_dev);
+		hclge_notify_client(hdev, HNAE3_INIT_CLIENT);
+
+		hclge_clear_reset_cause(hdev);
+	} else {
+		rtnl_lock();
+		/* schedule again to check pending resets later */
+		set_bit(hdev->reset_type, &hdev->reset_pending);
+>>>>>>> master
 		hclge_reset_task_schedule(hdev);
 }
 
@@ -7979,9 +8072,16 @@ static void hclge_ae_stop(struct hnae3_handle *handle)
 	struct hclge_dev *hdev = vport->back;
 
 	set_bit(HCLGE_STATE_DOWN, &hdev->state);
+<<<<<<< HEAD
 	spin_lock_bh(&hdev->fd_rule_lock);
 	hclge_clear_arfs_rules(hdev);
 	spin_unlock_bh(&hdev->fd_rule_lock);
+=======
+
+	del_timer_sync(&hdev->service_timer);
+	cancel_work_sync(&hdev->service_task);
+	clear_bit(HCLGE_STATE_SERVICE_SCHED, &hdev->state);
+>>>>>>> master
 
 	/* If it is not PF reset or FLR, the firmware will disable the MAC,
 	 * so it only need to stop phy here.
@@ -8560,8 +8660,20 @@ int hclge_add_uc_addr_common(struct hclge_vport *vport,
 	}
 
 	/* check if we just hit the duplicate */
+<<<<<<< HEAD
 	if (!ret)
 		return -EEXIST;
+=======
+	if (!ret) {
+		dev_warn(&hdev->pdev->dev, "VF %d mac(%pM) exists\n",
+			 vport->vport_id, addr);
+		return 0;
+	}
+
+	dev_err(&hdev->pdev->dev,
+		"PF failed to add unicast entry(%pM) in the MAC table\n",
+		addr);
+>>>>>>> master
 
 	return ret;
 }
@@ -9583,6 +9695,7 @@ static int hclge_check_vf_vlan_cmd_status(struct hclge_dev *hdev, u16 vfid,
 			req->resp_code);
 	} else {
 #define HCLGE_VF_VLAN_DEL_NO_FOUND	1
+<<<<<<< HEAD
 		if (!req->resp_code)
 			return 0;
 
@@ -9592,7 +9705,17 @@ static int hclge_check_vf_vlan_cmd_status(struct hclge_dev *hdev, u16 vfid,
 		 * print logs when unload.
 		 */
 		if (req->resp_code == HCLGE_VF_VLAN_DEL_NO_FOUND)
+=======
+		if (!req0->resp_code)
+>>>>>>> master
 			return 0;
+
+		if (req0->resp_code == HCLGE_VF_VLAN_DEL_NO_FOUND) {
+			dev_warn(&hdev->pdev->dev,
+				 "vlan %d filter is not in vf vlan table\n",
+				 vlan);
+			return 0;
+		}
 
 		dev_err(&hdev->pdev->dev,
 			"Kill vf vlan filter fail, ret =%u.\n",
@@ -9695,10 +9818,15 @@ static int hclge_set_vlan_filter_hw(struct hclge_dev *hdev, __be16 proto,
 	if (is_kill && !vlan_id)
 		return 0;
 
+<<<<<<< HEAD
 	if (vlan_id >= VLAN_N_VID)
 		return -EINVAL;
 
 	ret = hclge_set_vf_vlan_common(hdev, vport_id, is_kill, vlan_id);
+=======
+	ret = hclge_set_vf_vlan_common(hdev, vport_id, is_kill, vlan_id,
+				       0, proto);
+>>>>>>> master
 	if (ret) {
 		dev_err(&hdev->pdev->dev,
 			"Set %u vport vlan filter config fail, ret =%d.\n",

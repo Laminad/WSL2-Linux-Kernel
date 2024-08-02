@@ -32,12 +32,22 @@ static void resend_irqs(struct tasklet_struct *unused)
 {
 	struct irq_desc *desc;
 
+<<<<<<< HEAD
 	raw_spin_lock_irq(&irq_resend_lock);
 	while (!hlist_empty(&irq_resend_list)) {
 		desc = hlist_entry(irq_resend_list.first, struct irq_desc,
 				   resend_node);
 		hlist_del_init(&desc->resend_node);
 		raw_spin_unlock(&irq_resend_lock);
+=======
+	while (!bitmap_empty(irqs_resend, nr_irqs)) {
+		irq = find_first_bit(irqs_resend, nr_irqs);
+		clear_bit(irq, irqs_resend);
+		desc = irq_to_desc(irq);
+		if (!desc)
+			continue;
+		local_irq_disable();
+>>>>>>> master
 		desc->handle_irq(desc);
 		raw_spin_lock(&irq_resend_lock);
 	}

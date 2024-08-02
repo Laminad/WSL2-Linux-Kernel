@@ -65,7 +65,11 @@ static int gnss_serial_write_raw(struct gnss_device *gdev,
 
 	/* write is only buffered synchronously */
 	ret = serdev_device_write(serdev, buf, count, MAX_SCHEDULE_TIMEOUT);
+<<<<<<< HEAD
 	if (ret < 0 || ret < count)
+=======
+	if (ret < 0)
+>>>>>>> master
 		return ret;
 
 	/* FIXME: determine if interrupted? */

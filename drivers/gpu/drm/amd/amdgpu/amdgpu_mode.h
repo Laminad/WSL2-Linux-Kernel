@@ -324,8 +324,13 @@ struct amdgpu_mode_info {
 	struct drm_property *audio_property;
 	/* FMT dithering */
 	struct drm_property *dither_property;
+<<<<<<< HEAD
 	/* Adaptive Backlight Modulation (power feature) */
 	struct drm_property *abm_level_property;
+=======
+	/* maximum number of bits per channel for monitor color */
+	struct drm_property *max_bpc_property;
+>>>>>>> master
 	/* hardcoded DFP edid from BIOS */
 	struct edid *bios_hardcoded_edid;
 	int bios_hardcoded_edid_size;

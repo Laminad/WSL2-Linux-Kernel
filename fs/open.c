@@ -889,9 +889,19 @@ static int do_dentry_open(struct file *f,
 		return 0;
 	}
 
+<<<<<<< HEAD
 	if ((f->f_mode & (FMODE_READ | FMODE_WRITE)) == FMODE_READ) {
 		i_readcount_inc(inode);
 	} else if (f->f_mode & FMODE_WRITE && !special_file(inode->i_mode)) {
+=======
+	/* Any file opened for execve()/uselib() has to be a regular file. */
+	if (unlikely(f->f_flags & FMODE_EXEC && !S_ISREG(inode->i_mode))) {
+		error = -EACCES;
+		goto cleanup_file;
+	}
+
+	if (f->f_mode & FMODE_WRITE && !special_file(inode->i_mode)) {
+>>>>>>> master
 		error = get_write_access(inode);
 		if (unlikely(error))
 			goto cleanup_file;
@@ -1640,9 +1650,14 @@ EXPORT_SYMBOL(nonseekable_open);
 /*
  * stream_open is used by subsystems that want stream-like file descriptors.
  * Such file descriptors are not seekable and don't have notion of position
+<<<<<<< HEAD
  * (file.f_pos is always 0 and ppos passed to .read()/.write() is always NULL).
  * Contrary to file descriptors of other regular files, .read() and .write()
  * can run simultaneously.
+=======
+ * (file.f_pos is always 0). Contrary to file descriptors of other regular
+ * files, .read() and .write() can run simultaneously.
+>>>>>>> master
  *
  * stream_open never fails and is marked to return int so that it could be
  * directly used as file_operations.open .

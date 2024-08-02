@@ -536,7 +536,11 @@ static int mtk_nfc_setup_interface(struct nand_chip *chip, int csline,
 	struct mtk_nfc *nfc = nand_get_controller_data(chip);
 	const struct nand_sdr_timings *timings;
 	u32 rate, tpoecs, tprecs, tc2r, tw2r, twh, twst = 0, trlt = 0;
+<<<<<<< HEAD
 	u32 temp, tsel = 0;
+=======
+	u32 thold;
+>>>>>>> master
 
 	timings = nand_get_sdr_timings(conf);
 	if (IS_ERR(timings))
@@ -573,27 +577,47 @@ static int mtk_nfc_setup_interface(struct nand_chip *chip, int csline,
 	twh &= 0xf;
 
 	/* Calculate real WE#/RE# hold time in nanosecond */
+<<<<<<< HEAD
 	temp = (twh + 1) * 1000000 / rate;
 	/* nanosecond to picosecond */
 	temp *= 1000;
+=======
+	thold = (twh + 1) * 1000000 / rate;
+	/* nanosecond to picosecond */
+	thold *= 1000;
+>>>>>>> master
 
 	/*
 	 * WE# low level time should be expaned to meet WE# pulse time
 	 * and WE# cycle time at the same time.
 	 */
+<<<<<<< HEAD
 	if (temp < timings->tWC_min)
 		twst = timings->tWC_min - temp;
+=======
+	if (thold < timings->tWC_min)
+		twst = timings->tWC_min - thold;
+>>>>>>> master
 	twst = max(timings->tWP_min, twst) / 1000;
 	twst = DIV_ROUND_UP(twst * rate, 1000000) - 1;
 	twst &= 0xf;
 
 	/*
+<<<<<<< HEAD
 	 * RE# low level time should be expaned to meet RE# pulse time
 	 * and RE# cycle time at the same time.
 	 */
 	if (temp < timings->tRC_min)
 		trlt = timings->tRC_min - temp;
 	trlt = max(trlt, timings->tRP_min) / 1000;
+=======
+	 * RE# low level time should be expaned to meet RE# pulse time,
+	 * RE# access time and RE# cycle time at the same time.
+	 */
+	if (thold < timings->tRC_min)
+		trlt = timings->tRC_min - thold;
+	trlt = max3(trlt, timings->tREA_max, timings->tRP_min) / 1000;
+>>>>>>> master
 	trlt = DIV_ROUND_UP(trlt * rate, 1000000) - 1;
 	trlt &= 0xf;
 

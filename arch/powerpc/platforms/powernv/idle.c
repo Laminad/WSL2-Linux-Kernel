@@ -990,6 +990,7 @@ out:
 }
 
 #ifdef CONFIG_HOTPLUG_CPU
+<<<<<<< HEAD
 static unsigned long arch300_offline_stop(unsigned long psscr)
 {
 	unsigned long srr1;
@@ -1036,6 +1037,8 @@ static void arch300_idle(void)
 }
 
 #ifdef CONFIG_HOTPLUG_CPU
+=======
+>>>>>>> master
 
 void pnv_program_cpu_hotplug_lpcr(unsigned int cpu, u64 lpcr_val)
 {
@@ -1059,6 +1062,10 @@ void pnv_program_cpu_hotplug_lpcr(unsigned int cpu, u64 lpcr_val)
 unsigned long pnv_cpu_offline(unsigned int cpu)
 {
 	unsigned long srr1;
+<<<<<<< HEAD
+=======
+	u32 idle_states = pnv_get_supported_cpuidle_states();
+>>>>>>> master
 
 	__ppc64_runlatch_off();
 

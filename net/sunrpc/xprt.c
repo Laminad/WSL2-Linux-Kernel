@@ -1845,12 +1845,15 @@ void xprt_free(struct rpc_xprt *xprt)
 }
 EXPORT_SYMBOL_GPL(xprt_free);
 
+<<<<<<< HEAD
 static void
 xprt_init_connect_cookie(struct rpc_rqst *req, struct rpc_xprt *xprt)
 {
 	req->rq_connect_cookie = xprt_connect_cookie(xprt) - 1;
 }
 
+=======
+>>>>>>> master
 static __be32
 xprt_alloc_xid(struct rpc_xprt *xprt)
 {
@@ -1865,7 +1868,11 @@ xprt_alloc_xid(struct rpc_xprt *xprt)
 static void
 xprt_init_xid(struct rpc_xprt *xprt)
 {
+<<<<<<< HEAD
 	xprt->xid = get_random_u32();
+=======
+	xprt->xid = prandom_u32();
+>>>>>>> master
 }
 
 static void
@@ -1874,21 +1881,38 @@ xprt_request_init(struct rpc_task *task)
 	struct rpc_xprt *xprt = task->tk_xprt;
 	struct rpc_rqst	*req = task->tk_rqstp;
 
+<<<<<<< HEAD
+=======
+	INIT_LIST_HEAD(&req->rq_list);
+	req->rq_timeout = task->tk_client->cl_timeout->to_initval;
+>>>>>>> master
 	req->rq_task	= task;
 	req->rq_xprt    = xprt;
 	req->rq_buffer  = NULL;
 	req->rq_xid	= xprt_alloc_xid(xprt);
+<<<<<<< HEAD
 	xprt_init_connect_cookie(req, xprt);
+=======
+	req->rq_connect_cookie = xprt->connect_cookie - 1;
+	req->rq_bytes_sent = 0;
+>>>>>>> master
 	req->rq_snd_buf.len = 0;
 	req->rq_snd_buf.buflen = 0;
 	req->rq_rcv_buf.len = 0;
 	req->rq_rcv_buf.buflen = 0;
+<<<<<<< HEAD
 	req->rq_snd_buf.bvec = NULL;
 	req->rq_rcv_buf.bvec = NULL;
 	req->rq_release_snd_buf = NULL;
 	xprt_init_majortimeo(task, req);
 
 	trace_xprt_reserve(req);
+=======
+	req->rq_release_snd_buf = NULL;
+	xprt_reset_majortimeo(req);
+	dprintk("RPC: %5u reserved req %p xid %08x\n", task->tk_pid,
+			req, ntohl(req->rq_xid));
+>>>>>>> master
 }
 
 static void

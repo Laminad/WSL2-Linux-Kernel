@@ -65,11 +65,19 @@
 	}									\
 	static inline long __do_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
 
+<<<<<<< HEAD
+=======
+#ifndef SYSCALL_DEFINE0
+>>>>>>> master
 #define SYSCALL_DEFINE0(sname)							\
 	SYSCALL_METADATA(_##sname, 0);						\
 	asmlinkage long __arm64_sys_##sname(const struct pt_regs *__unused);	\
 	ALLOW_ERROR_INJECTION(__arm64_sys_##sname, ERRNO);			\
 	asmlinkage long __arm64_sys_##sname(const struct pt_regs *__unused)
+<<<<<<< HEAD
+=======
+#endif
+>>>>>>> master
 
 #define COND_SYSCALL(name)							\
 	asmlinkage long __arm64_sys_##name(const struct pt_regs *regs);		\

@@ -35,7 +35,11 @@
  */
 #define THREAD_NORMSAVE(offset)	(THREAD_NORMSAVES + (offset * 4))
 
+<<<<<<< HEAD
 #ifdef CONFIG_PPC_E500
+=======
+#ifdef CONFIG_PPC_FSL_BOOK3E
+>>>>>>> master
 #define BOOKE_CLEAR_BTB(reg)									\
 START_BTB_FLUSH_SECTION								\
 	BTB_FLUSH(reg)									\
@@ -45,7 +49,11 @@ END_BTB_FLUSH_SECTION
 #endif
 
 
+<<<<<<< HEAD
 #define NORMAL_EXCEPTION_PROLOG(trapno, intno)						     \
+=======
+#define NORMAL_EXCEPTION_PROLOG(intno)						     \
+>>>>>>> master
 	mtspr	SPRN_SPRG_WSCRATCH0, r10;	/* save one register */	     \
 	mfspr	r10, SPRN_SPRG_THREAD;					     \
 	stw	r11, THREAD_NORMSAVE(0)(r10);				     \

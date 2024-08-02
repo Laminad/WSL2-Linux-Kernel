@@ -653,6 +653,7 @@ intel_pt_cache_lookup(struct dso *dso, struct machine *machine, u64 offset)
 	return auxtrace_cache__lookup(dso->auxtrace_cache, offset);
 }
 
+<<<<<<< HEAD
 static void intel_pt_cache_invalidate(struct dso *dso, struct machine *machine,
 				      u64 offset)
 {
@@ -679,10 +680,16 @@ static inline u8 intel_pt_nr_cpumode(struct intel_pt_queue *ptq, uint64_t ip, bo
 	}
 
 	return ip >= ptq->pt->kernel_start ?
+=======
+static inline u8 intel_pt_cpumode(struct intel_pt *pt, uint64_t ip)
+{
+	return ip >= pt->kernel_start ?
+>>>>>>> master
 	       PERF_RECORD_MISC_KERNEL :
 	       PERF_RECORD_MISC_USER;
 }
 
+<<<<<<< HEAD
 static inline u8 intel_pt_cpumode(struct intel_pt_queue *ptq, uint64_t from_ip, uint64_t to_ip)
 {
 	/* No support for non-zero CS base */
@@ -743,6 +750,8 @@ static bool intel_pt_emulated_ptwrite(struct dso *dso, struct machine *machine, 
 	return false;
 }
 
+=======
+>>>>>>> master
 static int intel_pt_walk_next_insn(struct intel_pt_insn *intel_pt_insn,
 				   uint64_t *insn_cnt_ptr, uint64_t *ip,
 				   uint64_t to_ip, uint64_t max_insn_cnt,
@@ -769,8 +778,12 @@ static int intel_pt_walk_next_insn(struct intel_pt_insn *intel_pt_insn,
 	if (to_ip && *ip == to_ip)
 		goto out_no_cache;
 
+<<<<<<< HEAD
 	nr = ptq->state->to_nr;
 	cpumode = intel_pt_nr_cpumode(ptq, *ip, nr);
+=======
+	cpumode = intel_pt_cpumode(ptq->pt, *ip);
+>>>>>>> master
 
 	if (nr) {
 		if (ptq->pt->have_guest_sideband) {
@@ -1300,7 +1313,15 @@ static struct intel_pt_queue *intel_pt_alloc_queue(struct intel_pt *pt,
 		return NULL;
 
 	if (pt->synth_opts.callchain) {
+<<<<<<< HEAD
 		ptq->chain = intel_pt_alloc_chain(pt);
+=======
+		size_t sz = sizeof(struct ip_callchain);
+
+		/* Add 1 to callchain_sz for callchain context */
+		sz += (pt->synth_opts.callchain_sz + 1) * sizeof(u64);
+		ptq->chain = zalloc(sz);
+>>>>>>> master
 		if (!ptq->chain)
 			goto out_free;
 	}
@@ -1712,18 +1733,36 @@ static void intel_pt_prep_b_sample(struct intel_pt *pt,
 				   union perf_event *event,
 				   struct perf_sample *sample)
 {
+<<<<<<< HEAD
 	intel_pt_prep_a_sample(ptq, event, sample);
 
+=======
+>>>>>>> master
 	if (!pt->timeless_decoding)
 		sample->time = tsc_to_perf_time(ptq->timestamp, &pt->tc);
 
 	sample->ip = ptq->state->from_ip;
+<<<<<<< HEAD
+=======
+	sample->cpumode = intel_pt_cpumode(pt, sample->ip);
+	sample->pid = ptq->pid;
+	sample->tid = ptq->tid;
+>>>>>>> master
 	sample->addr = ptq->state->to_ip;
 	sample->cpumode = intel_pt_cpumode(ptq, sample->ip, sample->addr);
 	sample->period = 1;
 	sample->flags = ptq->flags;
+<<<<<<< HEAD
 
 	event->sample.header.misc = sample->cpumode;
+=======
+	sample->insn_len = ptq->insn_len;
+	memcpy(sample->insn, ptq->insn, INTEL_PT_INSN_BUF_SZ);
+
+	event->sample.header.type = PERF_RECORD_SAMPLE;
+	event->sample.header.misc = sample->cpumode;
+	event->sample.header.size = sizeof(struct perf_event_header);
+>>>>>>> master
 }
 
 static int intel_pt_inject_event(union perf_event *event,
@@ -1818,7 +1857,11 @@ static void intel_pt_prep_sample(struct intel_pt *pt,
 	intel_pt_prep_b_sample(pt, ptq, event, sample);
 
 	if (pt->synth_opts.callchain) {
+<<<<<<< HEAD
 		thread_stack__sample(ptq->thread, ptq->cpu, ptq->chain,
+=======
+		thread_stack__sample(ptq->thread, ptq->chain,
+>>>>>>> master
 				     pt->synth_opts.callchain_sz + 1,
 				     sample->ip, pt->kernel_start);
 		sample->callchain = ptq->chain;

@@ -1731,6 +1731,7 @@ struct xhci_interrupter {
  * Intel Lynx Point LP xHCI host.
  */
 #define	XHCI_MAX_REXIT_TIMEOUT_MS	20
+<<<<<<< HEAD
 struct xhci_port_cap {
 	u32			*psi;	/* array of protocol speed ID entries */
 	u8			psi_count;
@@ -1738,6 +1739,8 @@ struct xhci_port_cap {
 	u8			maj_rev;
 	u8			min_rev;
 };
+=======
+>>>>>>> master
 
 struct xhci_port {
 	__le32 __iomem		*addr;
@@ -1899,6 +1902,7 @@ struct xhci_hcd {
 #define XHCI_SUSPEND_DELAY	BIT_ULL(30)
 #define XHCI_INTEL_USB_ROLE_SW	BIT_ULL(31)
 #define XHCI_ZERO_64B_REGS	BIT_ULL(32)
+<<<<<<< HEAD
 #define XHCI_DEFAULT_PM_RUNTIME_ALLOW	BIT_ULL(33)
 #define XHCI_RESET_PLL_ON_DISCONNECT	BIT_ULL(34)
 #define XHCI_SNPS_BROKEN_SUSPEND    BIT_ULL(35)
@@ -1913,6 +1917,10 @@ struct xhci_hcd {
 #define XHCI_RESET_TO_DEFAULT	BIT_ULL(44)
 #define XHCI_ZHAOXIN_TRB_FETCH	BIT_ULL(45)
 #define XHCI_ZHAOXIN_HOST	BIT_ULL(46)
+=======
+#define XHCI_RESET_PLL_ON_DISCONNECT	BIT_ULL(34)
+#define XHCI_SNPS_BROKEN_SUSPEND    BIT_ULL(35)
+>>>>>>> master
 
 	unsigned int		num_active_eps;
 	unsigned int		limit_active_eps;
@@ -1923,8 +1931,11 @@ struct xhci_hcd {
 	unsigned		hw_lpm_support:1;
 	/* Broken Suspend flag for SNPS Suspend resume issue */
 	unsigned		broken_suspend:1;
+<<<<<<< HEAD
 	/* Indicates that omitting hcd is supported if root hub has no ports */
 	unsigned		allow_single_roothub:1;
+=======
+>>>>>>> master
 	/* cached usb2 extened protocol capabilites */
 	u32                     *ext_caps;
 	unsigned int            num_ext_caps;

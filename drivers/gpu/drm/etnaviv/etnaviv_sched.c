@@ -46,7 +46,11 @@ static enum drm_gpu_sched_stat etnaviv_sched_timedout_job(struct drm_sched_job
 	 * spurious. Bail out.
 	 */
 	if (dma_fence_is_signaled(submit->out_fence))
+<<<<<<< HEAD
 		goto out_no_timeout;
+=======
+		return;
+>>>>>>> master
 
 	/*
 	 * If the GPU is still making forward progress on the front-end (which

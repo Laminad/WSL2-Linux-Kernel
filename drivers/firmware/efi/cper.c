@@ -448,6 +448,7 @@ static void cper_print_pcie(const char *pfx, const struct cper_sec_pcie *pcie,
 		       aer->header_log.dw0, aer->header_log.dw1,
 		       aer->header_log.dw2, aer->header_log.dw3);
 	}
+<<<<<<< HEAD
 }
 
 static const char * const fw_err_rec_type_strs[] = {
@@ -500,6 +501,8 @@ static void cper_print_fw_err(const char *pfx,
 	length -= offset;
 
 	print_hex_dump(pfx, "", DUMP_PREFIX_OFFSET, 16, 4, buf, length, true);
+=======
+>>>>>>> master
 }
 
 static void cper_print_tstamp(const char *pfx,
@@ -672,7 +675,11 @@ int cper_estatus_check(const struct acpi_hest_generic_status *estatus)
 	data_len = estatus->data_length;
 
 	apei_estatus_for_each_section(estatus, gdata) {
+<<<<<<< HEAD
 		if (acpi_hest_get_size(gdata) > data_len)
+=======
+		if (sizeof(struct acpi_hest_generic_data) > data_len)
+>>>>>>> master
 			return -EINVAL;
 
 		record_size = acpi_hest_get_record_size(gdata);

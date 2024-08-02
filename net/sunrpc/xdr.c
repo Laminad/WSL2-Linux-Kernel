@@ -1043,6 +1043,10 @@ EXPORT_SYMBOL_GPL(__xdr_commit_encode);
 static noinline __be32 *xdr_get_next_encode_buffer(struct xdr_stream *xdr,
 						   size_t nbytes)
 {
+<<<<<<< HEAD
+=======
+	__be32 *p;
+>>>>>>> master
 	int space_left;
 	int frag1bytes, frag2bytes;
 	void *p;

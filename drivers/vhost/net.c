@@ -847,10 +847,15 @@ static void handle_tx_copy(struct vhost_net *net, struct socket *sock)
 		} else if (unlikely(err != len))
 			pr_debug("Truncated TX packet: len %d != %zd\n",
 				 err, len);
+<<<<<<< HEAD
 done:
 		vq->heads[nvq->done_idx].id = cpu_to_vhost32(vq, head);
 		vq->heads[nvq->done_idx].len = 0;
 		++nvq->done_idx;
+=======
+		if (++nvq->done_idx >= VHOST_NET_BATCH)
+			vhost_net_signal_used(nvq);
+>>>>>>> master
 	} while (likely(!vhost_exceeds_weight(vq, ++sent_pkts, total_len)));
 
 	vhost_tx_batch(net, nvq, sock, &msg);
@@ -1344,8 +1349,12 @@ static int vhost_net_open(struct inode *inode, struct file *f)
 	}
 	vhost_dev_init(dev, vqs, VHOST_NET_VQ_MAX,
 		       UIO_MAXIOV + VHOST_NET_BATCH,
+<<<<<<< HEAD
 		       VHOST_NET_PKT_WEIGHT, VHOST_NET_WEIGHT, true,
 		       NULL);
+=======
+		       VHOST_NET_PKT_WEIGHT, VHOST_NET_WEIGHT);
+>>>>>>> master
 
 	vhost_poll_init(n->poll + VHOST_NET_VQ_TX, handle_tx_net, EPOLLOUT, dev,
 			vqs[VHOST_NET_VQ_TX]);

@@ -682,12 +682,16 @@ void qla24xx_do_nack_work(struct scsi_qla_host *vha, struct qla_work_evt *e)
 void qla24xx_delete_sess_fn(struct work_struct *work)
 {
 	fc_port_t *fcport = container_of(work, struct fc_port, del_work);
+<<<<<<< HEAD
 	struct qla_hw_data *ha = NULL;
 
 	if (!fcport || !fcport->vha || !fcport->vha->hw)
 		return;
 
 	ha = fcport->vha->hw;
+=======
+	struct qla_hw_data *ha = fcport->vha->hw;
+>>>>>>> master
 
 	if (fcport->se_sess) {
 		ha->tgt.tgt_ops->shutdown_sess(fcport);
@@ -965,7 +969,11 @@ void qlt_free_session_done(struct work_struct *work)
 		sess->send_els_logo);
 
 	if (!IS_SW_RESV_ADDR(sess->d_id)) {
+<<<<<<< HEAD
 		qla2x00_mark_device_lost(vha, sess, 0);
+=======
+		qla2x00_mark_device_lost(vha, sess, 0, 0);
+>>>>>>> master
 
 		if (sess->send_els_logo) {
 			qlt_port_logo_t logo;
@@ -1049,12 +1057,16 @@ void qlt_free_session_done(struct work_struct *work)
 			}
 			msleep(100);
 			cnt++;
+<<<<<<< HEAD
 			/*
 			 * Driver timeout is set to 22 Sec, update count value to loop
 			 * long enough for log-out to complete before advancing. Otherwise,
 			 * straddling logout can interfere with re-login attempt.
 			 */
 			if (cnt > 230)
+=======
+			if (cnt > 200)
+>>>>>>> master
 				break;
 		}
 
@@ -1201,7 +1213,12 @@ void qlt_unreg_sess(struct fc_port *sess)
 	if (sess->se_sess)
 		vha->hw->tgt.tgt_ops->clear_nacl_from_fcport_map(sess);
 
+<<<<<<< HEAD
 	qla2x00_set_fcport_disc_state(sess, DSC_DELETE_PEND);
+=======
+	sess->deleted = QLA_SESS_DELETION_IN_PROGRESS;
+	sess->disc_state = DSC_DELETE_PEND;
+>>>>>>> master
 	sess->last_rscn_gen = sess->rscn_gen;
 	sess->last_login_gen = sess->login_gen;
 
@@ -1307,9 +1324,15 @@ void qlt_schedule_sess_for_deletion(struct fc_port *sess)
 
 	qla24xx_chk_fcp_state(sess);
 
+<<<<<<< HEAD
 	ql_dbg(ql_log_warn, sess->vha, 0xe001,
 	    "Scheduling sess %p for deletion %8phC fc4_type %x\n",
 	    sess, sess->port_name, sess->fc4_type);
+=======
+	ql_dbg(ql_dbg_tgt, sess->vha, 0xe001,
+	    "Scheduling sess %p for deletion %8phC\n",
+	    sess, sess->port_name);
+>>>>>>> master
 
 	WARN_ON(!queue_work(sess->vha->hw->wq, &sess->del_work));
 }
@@ -6320,6 +6343,12 @@ static void qlt_abort_work(struct qla_tgt *tgt,
 
 out_term2:
 	spin_unlock_irqrestore(&ha->tgt.sess_lock, flags2);
+<<<<<<< HEAD
+=======
+
+	if (sess)
+		ha->tgt.tgt_ops->put_sess(sess);
+>>>>>>> master
 
 out_term:
 	spin_lock_irqsave(&ha->hardware_lock, flags);
@@ -6328,6 +6357,76 @@ out_term:
 	spin_unlock_irqrestore(&ha->hardware_lock, flags);
 }
 
+<<<<<<< HEAD
+=======
+static void qlt_tmr_work(struct qla_tgt *tgt,
+	struct qla_tgt_sess_work_param *prm)
+{
+	struct atio_from_isp *a = &prm->tm_iocb2;
+	struct scsi_qla_host *vha = tgt->vha;
+	struct qla_hw_data *ha = vha->hw;
+	struct fc_port *sess = NULL;
+	unsigned long flags;
+	uint8_t *s_id = NULL; /* to hide compiler warnings */
+	int rc;
+	u64 unpacked_lun;
+	int fn;
+	void *iocb;
+
+	spin_lock_irqsave(&ha->tgt.sess_lock, flags);
+
+	if (tgt->tgt_stop)
+		goto out_term2;
+
+	s_id = prm->tm_iocb2.u.isp24.fcp_hdr.s_id;
+	sess = ha->tgt.tgt_ops->find_sess_by_s_id(vha, s_id);
+	if (!sess) {
+		spin_unlock_irqrestore(&ha->tgt.sess_lock, flags);
+
+		sess = qlt_make_local_sess(vha, s_id);
+		/* sess has got an extra creation ref */
+
+		spin_lock_irqsave(&ha->tgt.sess_lock, flags);
+		if (!sess)
+			goto out_term2;
+	} else {
+		if (sess->deleted) {
+			sess = NULL;
+			goto out_term2;
+		}
+
+		if (!kref_get_unless_zero(&sess->sess_kref)) {
+			ql_dbg(ql_dbg_tgt_tmr, vha, 0xf020,
+			    "%s: kref_get fail %8phC\n",
+			     __func__, sess->port_name);
+			sess = NULL;
+			goto out_term2;
+		}
+	}
+
+	iocb = a;
+	fn = a->u.isp24.fcp_cmnd.task_mgmt_flags;
+	unpacked_lun =
+	    scsilun_to_int((struct scsi_lun *)&a->u.isp24.fcp_cmnd.lun);
+
+	rc = qlt_issue_task_mgmt(sess, unpacked_lun, fn, iocb, 0);
+	spin_unlock_irqrestore(&ha->tgt.sess_lock, flags);
+
+	ha->tgt.tgt_ops->put_sess(sess);
+
+	if (rc != 0)
+		goto out_term;
+	return;
+
+out_term2:
+	if (sess)
+		ha->tgt.tgt_ops->put_sess(sess);
+	spin_unlock_irqrestore(&ha->tgt.sess_lock, flags);
+out_term:
+	qlt_send_term_exchange(ha->base_qpair, NULL, &prm->tm_iocb2, 1, 0);
+}
+
+>>>>>>> master
 static void qlt_sess_work_fn(struct work_struct *work)
 {
 	struct qla_tgt *tgt = container_of(work, struct qla_tgt, sess_work);

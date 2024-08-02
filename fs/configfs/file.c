@@ -79,7 +79,10 @@ static int fill_read_buffer(struct file *file, struct configfs_buffer *buffer)
 
 static ssize_t configfs_read_iter(struct kiocb *iocb, struct iov_iter *to)
 {
+<<<<<<< HEAD
 	struct file *file = iocb->ki_filp;
+=======
+>>>>>>> master
 	struct configfs_buffer *buffer = file->private_data;
 	ssize_t retval = 0;
 
@@ -105,7 +108,10 @@ out:
 
 static ssize_t configfs_bin_read_iter(struct kiocb *iocb, struct iov_iter *to)
 {
+<<<<<<< HEAD
 	struct file *file = iocb->ki_filp;
+=======
+>>>>>>> master
 	struct configfs_fragment *frag = to_frag(file);
 	struct configfs_buffer *buffer = file->private_data;
 	ssize_t retval = 0;
@@ -219,9 +225,14 @@ flush_write_buffer(struct file *file, struct configfs_buffer *buffer, size_t cou
  */
 static ssize_t configfs_write_iter(struct kiocb *iocb, struct iov_iter *from)
 {
+<<<<<<< HEAD
 	struct file *file = iocb->ki_filp;
 	struct configfs_buffer *buffer = file->private_data;
 	int len;
+=======
+	struct configfs_buffer *buffer = file->private_data;
+	ssize_t len;
+>>>>>>> master
 
 	mutex_lock(&buffer->mutex);
 	len = fill_write_buffer(buffer, from);
@@ -252,9 +263,16 @@ static ssize_t configfs_bin_write_iter(struct kiocb *iocb,
 	buffer->write_in_progress = true;
 
 	/* buffer grows? */
+<<<<<<< HEAD
 	end_offset = iocb->ki_pos + iov_iter_count(from);
 	if (end_offset > buffer->bin_buffer_size) {
 		if (buffer->cb_max_size && end_offset > buffer->cb_max_size) {
+=======
+	if (*ppos + count > buffer->bin_buffer_size) {
+
+		if (buffer->cb_max_size &&
+			*ppos + count > buffer->cb_max_size) {
+>>>>>>> master
 			len = -EFBIG;
 			goto out;
 		}
@@ -312,7 +330,11 @@ static int __configfs_open_file(struct inode *inode, struct file *file, int type
 
 	attr = to_attr(dentry);
 	if (!attr)
+<<<<<<< HEAD
 		goto out_free_buffer;
+=======
+		goto out_put_item;
+>>>>>>> master
 
 	if (type & CONFIGFS_ITEM_BIN_ATTR) {
 		buffer->bin_attr = to_bin_attr(dentry);
@@ -325,7 +347,11 @@ static int __configfs_open_file(struct inode *inode, struct file *file, int type
 	/* Grab the module reference for this attribute if we have one */
 	error = -ENODEV;
 	if (!try_module_get(buffer->owner))
+<<<<<<< HEAD
 		goto out_free_buffer;
+=======
+		goto out_put_item;
+>>>>>>> master
 
 	error = -EACCES;
 	if (!buffer->item->ci_type)
@@ -369,6 +395,11 @@ static int __configfs_open_file(struct inode *inode, struct file *file, int type
 
 out_put_module:
 	module_put(buffer->owner);
+<<<<<<< HEAD
+=======
+out_put_item:
+	config_item_put(buffer->item);
+>>>>>>> master
 out_free_buffer:
 	up_read(&frag->frag_sem);
 	kfree(buffer);
@@ -401,9 +432,18 @@ static int configfs_open_bin_file(struct inode *inode, struct file *filp)
 static int configfs_release_bin_file(struct inode *inode, struct file *file)
 {
 	struct configfs_buffer *buffer = file->private_data;
+<<<<<<< HEAD
 
 	if (buffer->write_in_progress) {
 		struct configfs_fragment *frag = to_frag(file);
+=======
+
+	buffer->read_in_progress = false;
+
+	if (buffer->write_in_progress) {
+		struct configfs_fragment *frag = to_frag(file);
+		buffer->write_in_progress = false;
+>>>>>>> master
 
 		down_read(&frag->frag_sem);
 		if (!frag->frag_dead) {
@@ -413,10 +453,20 @@ static int configfs_release_bin_file(struct inode *inode, struct file *file)
 					buffer->bin_buffer_size);
 		}
 		up_read(&frag->frag_sem);
+<<<<<<< HEAD
 	}
 
 	vfree(buffer->bin_buffer);
 
+=======
+		/* vfree on NULL is safe */
+		vfree(buffer->bin_buffer);
+		buffer->bin_buffer = NULL;
+		buffer->bin_buffer_size = 0;
+		buffer->needs_read_fill = 1;
+	}
+
+>>>>>>> master
 	configfs_release(inode, file);
 	return 0;
 }

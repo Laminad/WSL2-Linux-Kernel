@@ -24,6 +24,7 @@
 #endif
 
 #ifdef CONFIG_CPU_MICROMIPS
+<<<<<<< HEAD
 # define B_INSN "b32"
 # define J_INSN "j32"
 #elif MIPS_ISA_REV >= 6
@@ -32,12 +33,22 @@
 #else
 # define B_INSN "b"
 # define J_INSN "j"
+=======
+#define B_INSN "b32"
+#else
+#define B_INSN "b"
+>>>>>>> master
 #endif
 
 static __always_inline bool arch_static_branch(struct static_key *key, bool branch)
 {
+<<<<<<< HEAD
 	asm goto("1:\t" B_INSN " 2f\n\t"
 		"2:\t.insn\n\t"
+=======
+	asm_volatile_goto("1:\t" B_INSN " 2f\n\t"
+		"2:\tnop\n\t"
+>>>>>>> master
 		".pushsection __jump_table,  \"aw\"\n\t"
 		WORD_INSN " 1b, %l[l_yes], %0\n\t"
 		".popsection\n\t"

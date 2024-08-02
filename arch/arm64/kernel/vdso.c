@@ -447,5 +447,59 @@ int arch_setup_additional_pages(struct linux_binprm *bprm, int uses_interp)
 	ret = __setup_additional_pages(VDSO_ABI_AA64, mm, bprm, uses_interp);
 	mmap_write_unlock(mm);
 
+<<<<<<< HEAD
 	return ret;
+=======
+
+	up_write(&mm->mmap_sem);
+	return 0;
+
+up_fail:
+	mm->context.vdso = NULL;
+	up_write(&mm->mmap_sem);
+	return PTR_ERR(ret);
+}
+
+/*
+ * Update the vDSO data page to keep in sync with kernel timekeeping.
+ */
+void update_vsyscall(struct timekeeper *tk)
+{
+	u32 use_syscall = !tk->tkr_mono.clock->archdata.vdso_direct;
+
+	++vdso_data->tb_seq_count;
+	smp_wmb();
+
+	vdso_data->use_syscall			= use_syscall;
+	vdso_data->xtime_coarse_sec		= tk->xtime_sec;
+	vdso_data->xtime_coarse_nsec		= tk->tkr_mono.xtime_nsec >>
+							tk->tkr_mono.shift;
+	vdso_data->wtm_clock_sec		= tk->wall_to_monotonic.tv_sec;
+	vdso_data->wtm_clock_nsec		= tk->wall_to_monotonic.tv_nsec;
+
+	/* Read without the seqlock held by clock_getres() */
+	WRITE_ONCE(vdso_data->hrtimer_res, hrtimer_resolution);
+
+	if (!use_syscall) {
+		/* tkr_mono.cycle_last == tkr_raw.cycle_last */
+		vdso_data->cs_cycle_last	= tk->tkr_mono.cycle_last;
+		vdso_data->raw_time_sec         = tk->raw_sec;
+		vdso_data->raw_time_nsec        = tk->tkr_raw.xtime_nsec;
+		vdso_data->xtime_clock_sec	= tk->xtime_sec;
+		vdso_data->xtime_clock_nsec	= tk->tkr_mono.xtime_nsec;
+		vdso_data->cs_mono_mult		= tk->tkr_mono.mult;
+		vdso_data->cs_raw_mult		= tk->tkr_raw.mult;
+		/* tkr_mono.shift == tkr_raw.shift */
+		vdso_data->cs_shift		= tk->tkr_mono.shift;
+	}
+
+	smp_wmb();
+	++vdso_data->tb_seq_count;
+}
+
+void update_vsyscall_tz(void)
+{
+	vdso_data->tz_minuteswest	= sys_tz.tz_minuteswest;
+	vdso_data->tz_dsttime		= sys_tz.tz_dsttime;
+>>>>>>> master
 }

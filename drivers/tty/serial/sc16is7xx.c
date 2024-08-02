@@ -344,7 +344,13 @@ struct sc16is7xx_port {
 	unsigned char			buf[SC16IS7XX_FIFO_SIZE];
 	struct kthread_worker		kworker;
 	struct task_struct		*kworker_task;
+<<<<<<< HEAD
 	struct sc16is7xx_one		p[];
+=======
+	struct kthread_work		irq_work;
+	struct mutex			efr_lock;
+	struct sc16is7xx_one		p[0];
+>>>>>>> master
 };
 
 static unsigned long sc16is7xx_lines;
@@ -519,7 +525,11 @@ static int sc16is7xx_set_baud(struct uart_port *port, int baud)
 	 * because the bulk of the interrupt processing is run as a workqueue
 	 * job in thread context.
 	 */
+<<<<<<< HEAD
 	mutex_lock(&one->efr_lock);
+=======
+	mutex_lock(&s->efr_lock);
+>>>>>>> master
 
 	lcr = sc16is7xx_port_read(port, SC16IS7XX_LCR_REG);
 
@@ -538,9 +548,14 @@ static int sc16is7xx_set_baud(struct uart_port *port, int baud)
 	/* Put LCR back to the normal mode */
 	sc16is7xx_port_write(port, SC16IS7XX_LCR_REG, lcr);
 
+<<<<<<< HEAD
 	mutex_unlock(&one->efr_lock);
 
 	/* If bit MCR_CLKSEL is set, the divide by 4 prescaler is activated. */
+=======
+	mutex_unlock(&s->efr_lock);
+
+>>>>>>> master
 	sc16is7xx_port_update(port, SC16IS7XX_MCR_REG,
 			      SC16IS7XX_MCR_CLKSEL_BIT,
 			      prescaler == 1 ? 0 : SC16IS7XX_MCR_CLKSEL_BIT);
@@ -694,7 +709,11 @@ static void sc16is7xx_handle_tx(struct uart_port *port)
 	uart_port_unlock_irqrestore(port, flags);
 }
 
+<<<<<<< HEAD
 static unsigned int sc16is7xx_get_hwmctrl(struct uart_port *port)
+=======
+static bool sc16is7xx_port_irq(struct sc16is7xx_port *s, int portno)
+>>>>>>> master
 {
 	u8 msr = sc16is7xx_port_read(port, SC16IS7XX_MSR_REG);
 	unsigned int mctrl = 0;
@@ -745,14 +764,21 @@ static bool sc16is7xx_port_irq(struct sc16is7xx_port *s, int portno)
 
 	mutex_lock(&one->efr_lock);
 
+<<<<<<< HEAD
 	iir = sc16is7xx_port_read(port, SC16IS7XX_IIR_REG);
 	if (iir & SC16IS7XX_IIR_NO_INT_BIT) {
 		rc = false;
 		goto out_port_irq;
 	}
+=======
+		iir = sc16is7xx_port_read(port, SC16IS7XX_IIR_REG);
+		if (iir & SC16IS7XX_IIR_NO_INT_BIT)
+			return false;
+>>>>>>> master
 
 	iir &= SC16IS7XX_IIR_ID_MASK;
 
+<<<<<<< HEAD
 	switch (iir) {
 	case SC16IS7XX_IIR_RDI_SRC:
 	case SC16IS7XX_IIR_RLSE_SRC:
@@ -793,6 +819,47 @@ out_port_irq:
 	mutex_unlock(&one->efr_lock);
 
 	return rc;
+=======
+		switch (iir) {
+		case SC16IS7XX_IIR_RDI_SRC:
+		case SC16IS7XX_IIR_RLSE_SRC:
+		case SC16IS7XX_IIR_RTOI_SRC:
+		case SC16IS7XX_IIR_XOFFI_SRC:
+			rxlen = sc16is7xx_port_read(port, SC16IS7XX_RXLVL_REG);
+			if (rxlen)
+				sc16is7xx_handle_rx(port, rxlen, iir);
+			break;
+		case SC16IS7XX_IIR_THRI_SRC:
+			sc16is7xx_handle_tx(port);
+			break;
+		default:
+			dev_err_ratelimited(port->dev,
+					    "ttySC%i: Unexpected interrupt: %x",
+					    port->line, iir);
+			break;
+		}
+	} while (0);
+	return true;
+}
+
+static void sc16is7xx_ist(struct kthread_work *ws)
+{
+	struct sc16is7xx_port *s = to_sc16is7xx_port(ws, irq_work);
+
+	mutex_lock(&s->efr_lock);
+
+	while (1) {
+		bool keep_polling = false;
+		int i;
+
+		for (i = 0; i < s->devtype->nr_uart; ++i)
+			keep_polling |= sc16is7xx_port_irq(s, i);
+		if (!keep_polling)
+			break;
+	}
+
+	mutex_unlock(&s->efr_lock);
+>>>>>>> master
 }
 
 static irqreturn_t sc16is7xx_irq(int irq, void *dev_id)
@@ -1071,7 +1138,11 @@ static void sc16is7xx_set_termios(struct uart_port *port,
 		port->ignore_status_mask |= SC16IS7XX_LSR_BRK_ERROR_MASK;
 
 	/* As above, claim the mutex while accessing the EFR. */
+<<<<<<< HEAD
 	mutex_lock(&one->efr_lock);
+=======
+	mutex_lock(&s->efr_lock);
+>>>>>>> master
 
 	sc16is7xx_port_write(port, SC16IS7XX_LCR_REG,
 			     SC16IS7XX_LCR_CONF_MODE_B);
@@ -1101,7 +1172,11 @@ static void sc16is7xx_set_termios(struct uart_port *port,
 	/* Update LCR register */
 	sc16is7xx_port_write(port, SC16IS7XX_LCR_REG, lcr);
 
+<<<<<<< HEAD
 	mutex_unlock(&one->efr_lock);
+=======
+	mutex_unlock(&s->efr_lock);
+>>>>>>> master
 
 	/* Get baud rate generator configuration */
 	baud = uart_get_baud_rate(port, termios, old,
@@ -1512,6 +1587,7 @@ static int sc16is7xx_probe(struct device *dev,
 
 	s->devtype = devtype;
 	dev_set_drvdata(dev, s);
+	mutex_init(&s->efr_lock);
 
 	kthread_init_worker(&s->kworker);
 	s->kworker_task = kthread_run(kthread_worker_fn, &s->kworker,
@@ -1883,11 +1959,19 @@ static int __init sc16is7xx_init(void)
 
 #ifdef CONFIG_SERIAL_SC16IS7XX_SPI
 err_spi:
+<<<<<<< HEAD
 #endif
 #ifdef CONFIG_SERIAL_SC16IS7XX_I2C
 	i2c_del_driver(&sc16is7xx_i2c_uart_driver);
 err_i2c:
 #endif
+=======
+#ifdef CONFIG_SERIAL_SC16IS7XX_I2C
+	i2c_del_driver(&sc16is7xx_i2c_uart_driver);
+#endif
+#endif
+err_i2c:
+>>>>>>> master
 	uart_unregister_driver(&sc16is7xx_uart);
 	return ret;
 }

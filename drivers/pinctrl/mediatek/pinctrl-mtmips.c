@@ -74,10 +74,17 @@ static int mtmips_get_group_pins(struct pinctrl_dev *pctrldev,
 	return 0;
 }
 
+<<<<<<< HEAD:drivers/pinctrl/mediatek/pinctrl-mtmips.c
 static const struct pinctrl_ops mtmips_pctrl_ops = {
 	.get_groups_count	= mtmips_get_group_count,
 	.get_group_name		= mtmips_get_group_name,
 	.get_group_pins		= mtmips_get_group_pins,
+=======
+static const struct pinctrl_ops rt2880_pctrl_ops = {
+	.get_groups_count	= rt2880_get_group_count,
+	.get_group_name		= rt2880_get_group_name,
+	.get_group_pins		= rt2880_get_group_pins,
+>>>>>>> master:drivers/staging/mt7621-pinctrl/pinctrl-rt2880.c
 	.dt_node_to_map		= pinconf_generic_dt_node_to_map_all,
 	.dt_free_map		= pinconf_generic_dt_free_map,
 };

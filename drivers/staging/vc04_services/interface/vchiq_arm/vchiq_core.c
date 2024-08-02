@@ -2246,9 +2246,15 @@ vchiq_init_state(struct vchiq_state *state, struct vchiq_slot_zero *slot_zero, s
 
 	local->debug[DEBUG_ENTRIES] = DEBUG_MAX;
 
+<<<<<<< HEAD
 	ret = vchiq_platform_init_state(state);
 	if (ret)
 		return ret;
+=======
+	status = vchiq_platform_init_state(state);
+	if (status != VCHIQ_SUCCESS)
+		return VCHIQ_ERROR;
+>>>>>>> master
 
 	/*
 	 * bring up slot handler thread

@@ -2113,10 +2113,17 @@ lpfc_nvmet_destroy_targetport(struct lpfc_hba *phba)
 		}
 		tgtp->tport_unreg_cmp = &tport_unreg_cmp;
 		nvmet_fc_unregister_targetport(phba->targetport);
+<<<<<<< HEAD
 		if (!wait_for_completion_timeout(&tport_unreg_cmp,
 					msecs_to_jiffies(LPFC_NVMET_WAIT_TMO)))
 			lpfc_printf_log(phba, KERN_ERR, LOG_TRACE_EVENT,
 					"6179 Unreg targetport x%px timeout "
+=======
+		if (!wait_for_completion_timeout(tgtp->tport_unreg_cmp,
+					msecs_to_jiffies(LPFC_NVMET_WAIT_TMO)))
+			lpfc_printf_log(phba, KERN_ERR, LOG_NVME,
+					"6179 Unreg targetport %p timeout "
+>>>>>>> master
 					"reached.\n", phba->targetport);
 		lpfc_nvmet_cleanup_io_context(phba);
 	}

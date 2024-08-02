@@ -1426,18 +1426,30 @@ static int fl_set_enc_opt(struct nlattr **tb, struct fl_flow_key *key,
 	const struct nlattr *nla_enc_key, *nla_opt_key, *nla_opt_msk = NULL;
 	int err, option_len, key_depth, msk_depth = 0;
 
+<<<<<<< HEAD
 	err = nla_validate_nested_deprecated(tb[TCA_FLOWER_KEY_ENC_OPTS],
 					     TCA_FLOWER_KEY_ENC_OPTS_MAX,
 					     enc_opts_policy, extack);
+=======
+	err = nla_validate_nested(tb[TCA_FLOWER_KEY_ENC_OPTS],
+				  TCA_FLOWER_KEY_ENC_OPTS_MAX,
+				  enc_opts_policy, extack);
+>>>>>>> master
 	if (err)
 		return err;
 
 	nla_enc_key = nla_data(tb[TCA_FLOWER_KEY_ENC_OPTS]);
 
 	if (tb[TCA_FLOWER_KEY_ENC_OPTS_MASK]) {
+<<<<<<< HEAD
 		err = nla_validate_nested_deprecated(tb[TCA_FLOWER_KEY_ENC_OPTS_MASK],
 						     TCA_FLOWER_KEY_ENC_OPTS_MAX,
 						     enc_opts_policy, extack);
+=======
+		err = nla_validate_nested(tb[TCA_FLOWER_KEY_ENC_OPTS_MASK],
+					  TCA_FLOWER_KEY_ENC_OPTS_MAX,
+					  enc_opts_policy, extack);
+>>>>>>> master
 		if (err)
 			return err;
 
@@ -2238,7 +2250,10 @@ static int fl_change(struct net *net, struct sk_buff *in_skb,
 	struct cls_fl_filter *fnew;
 	struct fl_flow_mask *mask;
 	struct nlattr **tb;
+<<<<<<< HEAD
 	bool in_ht;
+=======
+>>>>>>> master
 	int err;
 
 	if (!tca[TCA_OPTIONS]) {
@@ -2252,6 +2267,7 @@ static int fl_change(struct net *net, struct sk_buff *in_skb,
 		goto errout_fold;
 	}
 
+<<<<<<< HEAD
 	tb = kcalloc(TCA_FLOWER_MAX + 1, sizeof(struct nlattr *), GFP_KERNEL);
 	if (!tb) {
 		err = -ENOBUFS;
@@ -2260,6 +2276,20 @@ static int fl_change(struct net *net, struct sk_buff *in_skb,
 
 	err = nla_parse_nested_deprecated(tb, TCA_FLOWER_MAX,
 					  tca[TCA_OPTIONS], fl_policy, NULL);
+=======
+	mask = kzalloc(sizeof(struct fl_flow_mask), GFP_KERNEL);
+	if (!mask)
+		return -ENOBUFS;
+
+	tb = kcalloc(TCA_FLOWER_MAX + 1, sizeof(struct nlattr *), GFP_KERNEL);
+	if (!tb) {
+		err = -ENOBUFS;
+		goto errout_mask_alloc;
+	}
+
+	err = nla_parse_nested(tb, TCA_FLOWER_MAX, tca[TCA_OPTIONS],
+			       fl_policy, NULL);
+>>>>>>> master
 	if (err < 0)
 		goto errout_tb;
 
@@ -2273,6 +2303,7 @@ static int fl_change(struct net *net, struct sk_buff *in_skb,
 		err = -ENOBUFS;
 		goto errout_tb;
 	}
+<<<<<<< HEAD
 	INIT_LIST_HEAD(&fnew->hw_list);
 	refcount_set(&fnew->refcnt, 1);
 
@@ -2304,13 +2335,62 @@ static int fl_change(struct net *net, struct sk_buff *in_skb,
 			 */
 			if (err == -ENOSPC)
 				err = -EAGAIN;
+=======
+
+	err = tcf_exts_init(&fnew->exts, TCA_FLOWER_ACT, 0);
+	if (err < 0)
+		goto errout;
+
+	if (tb[TCA_FLOWER_FLAGS]) {
+		fnew->flags = nla_get_u32(tb[TCA_FLOWER_FLAGS]);
+
+		if (!tc_flags_valid(fnew->flags)) {
+			err = -EINVAL;
+			goto errout;
+		}
+	}
+
+	err = fl_set_parms(net, tp, fnew, mask, base, tb, tca[TCA_RATE], ovr,
+			   tp->chain->tmplt_priv, extack);
+	if (err)
+		goto errout;
+
+	err = fl_check_assign_mask(head, fnew, fold, mask);
+	if (err)
+		goto errout;
+
+	if (!handle) {
+		handle = 1;
+		err = idr_alloc_u32(&head->handle_idr, fnew, &handle,
+				    INT_MAX, GFP_KERNEL);
+	} else if (!fold) {
+		/* user specifies a handle and it doesn't exist */
+		err = idr_alloc_u32(&head->handle_idr, fnew, &handle,
+				    handle, GFP_KERNEL);
+	}
+	if (err)
+		goto errout_mask;
+	fnew->handle = handle;
+
+	if (!tc_skip_sw(fnew->flags)) {
+		if (!fold && fl_lookup(fnew->mask, &fnew->mkey)) {
+			err = -EEXIST;
+			goto errout_idr;
+>>>>>>> master
 		}
 		spin_unlock(&tp->lock);
 
+<<<<<<< HEAD
 		if (err) {
 			kfree(fnew);
 			goto errout_tb;
 		}
+=======
+		err = rhashtable_insert_fast(&fnew->mask->ht, &fnew->ht_node,
+					     fnew->mask->filter_ht_params);
+		if (err)
+			goto errout_idr;
+>>>>>>> master
 	}
 	fnew->handle = handle;
 
@@ -2434,6 +2514,7 @@ static int fl_change(struct net *net, struct sk_buff *in_skb,
 	*arg = fnew;
 
 	kfree(tb);
+<<<<<<< HEAD
 	tcf_queue_work(&mask->rwork, fl_uninit_mask_free_work);
 	return 0;
 
@@ -2459,10 +2540,16 @@ unbind_filter:
 			rtnl_unlock();
 	}
 
+=======
+	kfree(mask);
+	return 0;
+
+>>>>>>> master
 errout_idr:
 	if (!fold) {
 		spin_lock(&tp->lock);
 		idr_remove(&head->handle_idr, fnew->handle);
+<<<<<<< HEAD
 		spin_unlock(&tp->lock);
 	}
 	__fl_put(fnew);
@@ -2473,6 +2560,19 @@ errout_mask_alloc:
 errout_fold:
 	if (fold)
 		__fl_put(fold);
+=======
+
+errout_mask:
+	fl_mask_put(head, fnew->mask, false);
+
+errout:
+	tcf_exts_destroy(&fnew->exts);
+	kfree(fnew);
+errout_tb:
+	kfree(tb);
+errout_mask_alloc:
+	kfree(mask);
+>>>>>>> master
 	return err;
 }
 

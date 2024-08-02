@@ -349,6 +349,7 @@
 /* default value of bitfield rdm_desc_init_i */
 #define HW_ATL_RDM_RX_DMA_DESC_CACHE_INIT_DEFAULT 0x0
 
+<<<<<<< HEAD
 /* rdm_desc_init_done_i bitfield definitions
  * preprocessor definitions for the bitfield rdm_desc_init_done_i.
  * port="pif_rdm_desc_init_done_i"
@@ -368,6 +369,8 @@
 #define RDM_RX_DMA_DESC_CACHE_INIT_DONE_DEFAULT 0x0
 
 
+=======
+>>>>>>> master
 /* rx int_desc_wrb_en bitfield definitions
  * preprocessor definitions for the bitfield "int_desc_wrb_en".
  * port="pif_rdm_int_desc_wrb_en_i"

@@ -5,7 +5,11 @@
 
 menuconfig SOUNDWIRE
 	tristate "SoundWire support"
+<<<<<<< HEAD
 	depends on ACPI || OF
+=======
+	depends on ACPI
+>>>>>>> master
 	help
 	  SoundWire is a 2-Pin interface with data and clock line ratified
 	  by the MIPI Alliance. SoundWire is used for transporting data
@@ -18,6 +22,7 @@ if SOUNDWIRE
 
 comment "SoundWire Devices"
 
+<<<<<<< HEAD
 config SOUNDWIRE_AMD
 	tristate "AMD SoundWire Manager driver"
 	select SOUNDWIRE_GENERIC_ALLOCATION
@@ -28,17 +33,24 @@ config SOUNDWIRE_AMD
 	  enable this config option to get the SoundWire support for that
 	  device.
 
+=======
+>>>>>>> master
 config SOUNDWIRE_CADENCE
 	tristate
 
 config SOUNDWIRE_INTEL
 	tristate "Intel SoundWire Master driver"
 	select SOUNDWIRE_CADENCE
+<<<<<<< HEAD
 	select SOUNDWIRE_GENERIC_ALLOCATION
 	select AUXILIARY_BUS
 	depends on ACPI && SND_SOC
 	depends on SND_SOC_SOF_HDA_MLINK || !SND_SOC_SOF_HDA_MLINK
 	help
+=======
+	depends on X86 && ACPI && SND_SOC
+	---help---
+>>>>>>> master
 	  SoundWire Intel Master driver.
 	  If you have an Intel platform which has a SoundWire Master then
 	  enable this config option to get the SoundWire support for that

@@ -879,7 +879,11 @@ unsigned int bch_btree_insert_key(struct btree_keys *b, struct bkey *k,
 	unsigned int status = BTREE_INSERT_STATUS_NO_INSERT;
 	struct bset *i = bset_tree_last(b)->data;
 	struct bkey *m, *prev = NULL;
+<<<<<<< HEAD
 	struct btree_iter_stack iter;
+=======
+	struct btree_iter iter;
+>>>>>>> master
 	struct bkey preceding_key_on_stack = ZERO_KEY;
 	struct bkey *preceding_key_p = &preceding_key_on_stack;
 
@@ -894,6 +898,11 @@ unsigned int bch_btree_insert_key(struct btree_keys *b, struct bkey *k,
 		preceding_key(&START_KEY(k), &preceding_key_p);
 	else
 		preceding_key(k, &preceding_key_p);
+<<<<<<< HEAD
+=======
+
+	m = bch_btree_iter_init(b, &iter, preceding_key_p);
+>>>>>>> master
 
 	m = bch_btree_iter_stack_init(b, &iter, preceding_key_p);
 

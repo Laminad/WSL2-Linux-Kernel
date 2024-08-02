@@ -2420,8 +2420,11 @@ static void gfx_v9_0_constants_init(struct amdgpu_device *adev)
 	mutex_unlock(&adev->srbm_mutex);
 
 	gfx_v9_0_init_compute_vmid(adev);
+<<<<<<< HEAD
 	gfx_v9_0_init_gds_vmid(adev);
 	gfx_v9_0_init_sq_config(adev);
+=======
+>>>>>>> master
 }
 
 static void gfx_v9_0_wait_for_rlc_serdes(struct amdgpu_device *adev)

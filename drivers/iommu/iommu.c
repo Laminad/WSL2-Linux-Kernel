@@ -736,6 +736,7 @@ static int iommu_insert_resv_region(struct iommu_resv_region *new,
 	struct iommu_resv_region *iter, *tmp, *nr, *top;
 	LIST_HEAD(stack);
 
+<<<<<<< HEAD
 	nr = iommu_alloc_resv_region(new->start, new->length,
 				     new->prot, new->type, GFP_KERNEL);
 	if (!nr)
@@ -779,6 +780,48 @@ check_overlap:
 		}
 	}
 	list_splice(&stack, regions);
+=======
+	while (pos != regions) {
+		struct iommu_resv_region *entry =
+			list_entry(pos, struct iommu_resv_region, list);
+		phys_addr_t a = entry->start;
+		phys_addr_t b = entry->start + entry->length - 1;
+		int type = entry->type;
+
+		if (end < a) {
+			goto insert;
+		} else if (start > b) {
+			pos = pos->next;
+		} else if ((start >= a) && (end <= b)) {
+			if (new->type == type)
+				return 0;
+			else
+				pos = pos->next;
+		} else {
+			if (new->type == type) {
+				phys_addr_t new_start = min(a, start);
+				phys_addr_t new_end = max(b, end);
+				int ret;
+
+				list_del(&entry->list);
+				entry->start = new_start;
+				entry->length = new_end - new_start + 1;
+				ret = iommu_insert_resv_region(entry, regions);
+				kfree(entry);
+				return ret;
+			} else {
+				pos = pos->next;
+			}
+		}
+	}
+insert:
+	region = iommu_alloc_resv_region(new->start, new->length,
+					 new->prot, new->type);
+	if (!region)
+		return -ENOMEM;
+
+	list_add_tail(&region->list, pos);
+>>>>>>> master
 	return 0;
 }
 

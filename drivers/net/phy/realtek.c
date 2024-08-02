@@ -886,8 +886,17 @@ static struct phy_driver realtek_drvs[] = {
 		.read_page	= rtl821x_read_page,
 		.write_page	= rtl821x_write_page,
 	}, {
+<<<<<<< HEAD
 		PHY_ID_MATCH_EXACT(0x001cc816),
 		.name		= "RTL8201F Fast Ethernet",
+=======
+		.phy_id		= 0x001cc816,
+		.name		= "RTL8201F Fast Ethernet",
+		.phy_id_mask	= 0x001fffff,
+		.features	= PHY_BASIC_FEATURES,
+		.flags		= PHY_HAS_INTERRUPT,
+		.ack_interrupt	= &rtl8201_ack_interrupt,
+>>>>>>> master
 		.config_intr	= &rtl8201_config_intr,
 		.handle_interrupt = rtl8201_handle_interrupt,
 		.suspend	= genphy_suspend,

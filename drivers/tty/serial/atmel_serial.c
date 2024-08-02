@@ -164,10 +164,14 @@ struct atmel_uart_port {
 
 	bool			hd_start_rx;	/* can start RX during half-duplex operation */
 
+<<<<<<< HEAD
 	/* ISO7816 */
 	unsigned int		fidi_min;
 	unsigned int		fidi_max;
 
+=======
+#ifdef CONFIG_PM
+>>>>>>> master
 	struct {
 		u32		cr;
 		u32		mr;
@@ -225,6 +229,7 @@ static inline void atmel_uart_write_char(struct uart_port *port, u8 value)
 
 static inline int atmel_uart_is_half_duplex(struct uart_port *port)
 {
+<<<<<<< HEAD
 	return ((port->rs485.flags & SER_RS485_ENABLED) &&
 		!(port->rs485.flags & SER_RS485_RX_DURING_TX)) ||
 		(port->iso7816.flags & SER_ISO7816_ENABLED);
@@ -233,6 +238,10 @@ static inline int atmel_uart_is_half_duplex(struct uart_port *port)
 static inline int atmel_error_rate(int desired_value, int actual_value)
 {
 	return 100 - (desired_value * 100) / actual_value;
+=======
+	return (port->rs485.flags & SER_RS485_ENABLED) &&
+		!(port->rs485.flags & SER_RS485_RX_DURING_TX);
+>>>>>>> master
 }
 
 #ifdef CONFIG_SERIAL_ATMEL_PDC
@@ -573,8 +582,13 @@ static void atmel_stop_tx(struct uart_port *port)
 	atmel_uart_writel(port, ATMEL_US_IDR, atmel_port->tx_done_mask);
 
 	if (atmel_uart_is_half_duplex(port))
+<<<<<<< HEAD
 		if (!atomic_read(&atmel_port->tasklet_shutdown))
 			atmel_start_rx(port);
+=======
+		atmel_start_rx(port);
+
+>>>>>>> master
 }
 
 /*
@@ -592,8 +606,14 @@ static void atmel_start_tx(struct uart_port *port)
 		   really need this.*/
 		return;
 
+<<<<<<< HEAD
 	if (is_dma && atmel_uart_is_half_duplex(port))
 		atmel_stop_rx(port);
+=======
+	if (atmel_use_pdc_tx(port) || atmel_use_dma_tx(port))
+		if (atmel_uart_is_half_duplex(port))
+			atmel_stop_rx(port);
+>>>>>>> master
 
 	if (is_pdc) {
 		/* re-enable PDC transmit */

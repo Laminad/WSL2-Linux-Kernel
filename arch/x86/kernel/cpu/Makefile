@@ -29,11 +29,15 @@ obj-y			+= umwait.o
 obj-$(CONFIG_PROC_FS)	+= proc.o
 obj-y += capflags.o powerflags.o
 
+<<<<<<< HEAD
 obj-$(CONFIG_IA32_FEAT_CTL) += feat_ctl.o
 ifdef CONFIG_CPU_SUP_INTEL
 obj-y			+= intel.o intel_pconfig.o tsx.o
 obj-$(CONFIG_PM)	+= intel_epb.o
 endif
+=======
+obj-$(CONFIG_CPU_SUP_INTEL)		+= intel.o intel_pconfig.o tsx.o
+>>>>>>> master
 obj-$(CONFIG_CPU_SUP_AMD)		+= amd.o
 obj-$(CONFIG_CPU_SUP_HYGON)		+= hygon.o
 obj-$(CONFIG_CPU_SUP_CYRIX_32)		+= cyrix.o

@@ -704,10 +704,26 @@ struct nqe_cn {
 
 #define DFLT_HWRM_CMD_TIMEOUT		500
 
+<<<<<<< HEAD
 #define BNXT_RX_EVENT		1
 #define BNXT_AGG_EVENT		2
 #define BNXT_TX_EVENT		4
 #define BNXT_REDIRECT_EVENT	8
+=======
+#define HWRM_MIN_TIMEOUT		25
+#define HWRM_MAX_TIMEOUT		40
+
+#define HWRM_TOTAL_TIMEOUT(n)	(((n) <= HWRM_SHORT_TIMEOUT_COUNTER) ?	\
+	((n) * HWRM_SHORT_MIN_TIMEOUT) :				\
+	(HWRM_SHORT_TIMEOUT_COUNTER * HWRM_SHORT_MIN_TIMEOUT +		\
+	 ((n) - HWRM_SHORT_TIMEOUT_COUNTER) * HWRM_MIN_TIMEOUT))
+
+#define HWRM_VALID_BIT_DELAY_USEC	150
+
+#define BNXT_RX_EVENT	1
+#define BNXT_AGG_EVENT	2
+#define BNXT_TX_EVENT	4
+>>>>>>> master
 
 struct bnxt_sw_tx_bd {
 	union {

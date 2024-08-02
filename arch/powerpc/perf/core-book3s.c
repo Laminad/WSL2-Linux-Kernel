@@ -2010,6 +2010,7 @@ static int power_pmu_event_init(struct perf_event *event)
 	int n;
 	int err;
 	struct cpu_hw_events *cpuhw;
+	u64 bhrb_filter;
 
 	if (!ppmu)
 		return -ENOENT;
@@ -2128,6 +2129,7 @@ static int power_pmu_event_init(struct perf_event *event)
 	err = power_check_constraints(cpuhw, events, cflags, n + 1, ctrs);
 
 	if (has_branch_stack(event)) {
+<<<<<<< HEAD
 		u64 bhrb_filter = -1;
 
 		/*
@@ -2155,6 +2157,15 @@ static int power_pmu_event_init(struct perf_event *event)
 			local_irq_restore(irq_flags);
 			return -EOPNOTSUPP;
 		}
+=======
+		bhrb_filter = ppmu->bhrb_filter_map(
+					event->attr.branch_sample_type);
+
+		if (bhrb_filter == -1) {
+			put_cpu_var(cpu_hw_events);
+			return -EOPNOTSUPP;
+		}
+>>>>>>> master
 		cpuhw->bhrb_filter = bhrb_filter;
 	}
 

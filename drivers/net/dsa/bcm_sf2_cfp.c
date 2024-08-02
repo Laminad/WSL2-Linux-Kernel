@@ -851,8 +851,28 @@ static int bcm_sf2_cfp_rule_insert(struct dsa_switch *ds, int port,
 	__u64 ring_cookie = fs->ring_cookie;
 	struct switchdev_obj_port_vlan vlan;
 	unsigned int queue_num, port_num;
+<<<<<<< HEAD
 	u16 vid;
 	int ret;
+=======
+	int ret = -EINVAL;
+
+	/* Check for unsupported extensions */
+	if ((fs->flow_type & FLOW_EXT) && (fs->m_ext.vlan_etype ||
+	     fs->m_ext.data[1]))
+		return -EINVAL;
+
+	if (fs->location != RX_CLS_LOC_ANY && fs->location >= CFP_NUM_RULES)
+		return -EINVAL;
+
+	if (fs->location != RX_CLS_LOC_ANY &&
+	    test_bit(fs->location, priv->cfp.used))
+		return -EBUSY;
+
+	if (fs->location != RX_CLS_LOC_ANY &&
+	    fs->location > bcm_sf2_cfp_rule_size(priv))
+		return -EINVAL;
+>>>>>>> master
 
 	/* This rule is a Wake-on-LAN filter and we must specifically
 	 * target the CPU port in order for it to be working.
@@ -1010,6 +1030,19 @@ static int bcm_sf2_cfp_rule_remove(struct bcm_sf2_priv *priv, int port,
 	u32 next_loc = 0;
 	int ret;
 
+<<<<<<< HEAD
+=======
+	if (loc >= CFP_NUM_RULES)
+		return -EINVAL;
+
+	/* Refuse deleting unused rules, and those that are not unique since
+	 * that could leave IPv6 rules with one of the chained rule in the
+	 * table.
+	 */
+	if (!test_bit(loc, priv->cfp.unique) || loc == 0)
+		return -EINVAL;
+
+>>>>>>> master
 	ret = bcm_sf2_cfp_rule_del_one(priv, port, loc, &next_loc);
 	if (ret)
 		return ret;

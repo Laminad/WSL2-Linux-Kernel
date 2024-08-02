@@ -43,12 +43,20 @@ static inline void nft_connlimit_do_eval(struct nft_connlimit *priv,
 		return;
 	}
 
+<<<<<<< HEAD
 	if (nf_conncount_add(nft_net(pkt), priv->list, tuple_ptr, zone)) {
+=======
+	if (nf_conncount_add(nft_net(pkt), &priv->list, tuple_ptr, zone)) {
+>>>>>>> master
 		regs->verdict.code = NF_DROP;
 		return;
 	}
 
+<<<<<<< HEAD
 	count = priv->list->count;
+=======
+	count = priv->list.count;
+>>>>>>> master
 
 	if ((count > priv->limit) ^ priv->invert) {
 		regs->verdict.code = NFT_BREAK;
@@ -241,7 +249,11 @@ static bool nft_connlimit_gc(struct net *net, const struct nft_expr *expr)
 	bool ret;
 
 	local_bh_disable();
+<<<<<<< HEAD
 	ret = nf_conncount_gc_list(net, priv->list);
+=======
+	ret = nf_conncount_gc_list(net, &priv->list);
+>>>>>>> master
 	local_bh_enable();
 
 	return ret;

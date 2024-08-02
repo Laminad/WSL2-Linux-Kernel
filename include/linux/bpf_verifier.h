@@ -82,6 +82,7 @@ struct bpf_reg_state {
 		/* valid when type == CONST_PTR_TO_MAP | PTR_TO_MAP_VALUE |
 		 *   PTR_TO_MAP_VALUE_OR_NULL
 		 */
+<<<<<<< HEAD
 		struct {
 			struct bpf_map *map_ptr;
 			/* To distinguish map lookups from outer map
@@ -133,6 +134,12 @@ struct bpf_reg_state {
 		} raw;
 
 		u32 subprogno; /* for PTR_TO_FUNC */
+=======
+		struct bpf_map *map_ptr;
+
+		/* Max size from any of the above. */
+		unsigned long raw;
+>>>>>>> master
 	};
 	/* For scalar types (SCALAR_VALUE), this represents our knowledge of
 	 * the actual value.
@@ -379,6 +386,7 @@ struct bpf_verifier_state {
 	u32 branches;
 	u32 insn_idx;
 	u32 curframe;
+<<<<<<< HEAD
 
 	struct bpf_active_lock active_lock;
 	bool speculative;
@@ -411,6 +419,9 @@ struct bpf_verifier_state {
 	u32 jmp_history_cnt;
 	u32 dfs_depth;
 	u32 callback_unroll_depth;
+=======
+	bool speculative;
+>>>>>>> master
 };
 
 #define bpf_get_spilled_reg(slot, frame)				\
@@ -452,6 +463,7 @@ struct bpf_verifier_state_list {
 	int miss_cnt, hit_cnt;
 };
 
+<<<<<<< HEAD
 struct bpf_loop_inline_state {
 	unsigned int initialized:1; /* set to true upon first entry */
 	unsigned int fit_for_inline:1; /* true if callback function is the same
@@ -466,6 +478,13 @@ struct bpf_loop_inline_state {
 #define BPF_ALU_NEG_VALUE		(1U << 2)
 #define BPF_ALU_NON_POINTER		(1U << 3)
 #define BPF_ALU_IMMEDIATE		(1U << 4)
+=======
+/* Possible states for alu_state member. */
+#define BPF_ALU_SANITIZE_SRC		1U
+#define BPF_ALU_SANITIZE_DST		2U
+#define BPF_ALU_NEG_VALUE		(1U << 2)
+#define BPF_ALU_NON_POINTER		(1U << 3)
+>>>>>>> master
 #define BPF_ALU_SANITIZE		(BPF_ALU_SANITIZE_SRC | \
 					 BPF_ALU_SANITIZE_DST)
 
@@ -475,6 +494,7 @@ struct bpf_insn_aux_data {
 		unsigned long map_ptr_state;	/* pointer/poison value for maps */
 		s32 call_imm;			/* saved imm field of call insn */
 		u32 alu_limit;			/* limit for add/sub register with pointer */
+<<<<<<< HEAD
 		struct {
 			u32 map_index;		/* index into used_maps[] */
 			u32 map_off;		/* offset from value base address */
@@ -493,6 +513,8 @@ struct bpf_insn_aux_data {
 		 * the state of the relevant registers to make decision about inlining
 		 */
 		struct bpf_loop_inline_state loop_inline_state;
+=======
+>>>>>>> master
 	};
 	union {
 		/* remember the size of type passed to bpf_obj_new to rewrite R1 */
@@ -503,6 +525,7 @@ struct bpf_insn_aux_data {
 	struct btf_struct_meta *kptr_struct_meta;
 	u64 map_key_state; /* constant (32 bit) key tracking for maps */
 	int ctx_field_size; /* the ctx field size for load insn, maybe 0 */
+<<<<<<< HEAD
 	u32 seen; /* this insn was processed by the verifier at env->pass_cnt */
 	bool sanitize_stack_spill; /* subject to Spectre v4 sanitation */
 	bool zext_dst; /* this insn zero extends dst reg */
@@ -522,6 +545,11 @@ struct bpf_insn_aux_data {
 	 * accepts callback function as a parameter.
 	 */
 	bool calls_callback;
+=======
+	int sanitize_stack_off; /* stack slot to be cleared */
+	bool seen; /* this insn was processed by the verifier */
+	u8 alu_state; /* used in combination with alu_limit */
+>>>>>>> master
 };
 
 #define MAX_USED_MAPS 64 /* max number of maps accessed by one eBPF program */

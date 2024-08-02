@@ -28,6 +28,7 @@
 
 #include "stm32-adc-core.h"
 
+<<<<<<< HEAD
 #define STM32_ADC_CORE_SLEEP_DELAY_MS	2000
 
 /* SYSCFG registers */
@@ -41,20 +42,34 @@
 #define HAS_VBOOSTER		BIT(0)
 #define HAS_ANASWVDD		BIT(1)
 
+=======
+>>>>>>> master
 /**
  * struct stm32_adc_common_regs - stm32 common registers
  * @csr:	common status register offset
+<<<<<<< HEAD
  * @ccr:	common control register offset
  * @eoc_msk:    array of eoc (end of conversion flag) masks in csr for adc1..n
  * @ovr_msk:    array of ovr (overrun flag) masks in csr for adc1..n
+=======
+ * @eoc1:	adc1 end of conversion flag in @csr
+ * @eoc2:	adc2 end of conversion flag in @csr
+ * @eoc3:	adc3 end of conversion flag in @csr
+>>>>>>> master
  * @ier:	interrupt enable register offset for each adc
  * @eocie_msk:	end of conversion interrupt enable mask in @ier
  */
 struct stm32_adc_common_regs {
 	u32 csr;
+<<<<<<< HEAD
 	u32 ccr;
 	u32 eoc_msk[STM32_ADC_MAX_ADCS];
 	u32 ovr_msk[STM32_ADC_MAX_ADCS];
+=======
+	u32 eoc1_msk;
+	u32 eoc2_msk;
+	u32 eoc3_msk;
+>>>>>>> master
 	u32 ier;
 	u32 eocie_msk;
 };
@@ -308,9 +323,15 @@ out:
 /* STM32F4 common registers definitions */
 static const struct stm32_adc_common_regs stm32f4_adc_common_regs = {
 	.csr = STM32F4_ADC_CSR,
+<<<<<<< HEAD
 	.ccr = STM32F4_ADC_CCR,
 	.eoc_msk = { STM32F4_EOC1, STM32F4_EOC2, STM32F4_EOC3 },
 	.ovr_msk = { STM32F4_OVR1, STM32F4_OVR2, STM32F4_OVR3 },
+=======
+	.eoc1_msk = STM32F4_EOC1,
+	.eoc2_msk = STM32F4_EOC2,
+	.eoc3_msk = STM32F4_EOC3,
+>>>>>>> master
 	.ier = STM32F4_ADC_CR1,
 	.eocie_msk = STM32F4_EOCIE,
 };
@@ -318,13 +339,19 @@ static const struct stm32_adc_common_regs stm32f4_adc_common_regs = {
 /* STM32H7 common registers definitions */
 static const struct stm32_adc_common_regs stm32h7_adc_common_regs = {
 	.csr = STM32H7_ADC_CSR,
+<<<<<<< HEAD
 	.ccr = STM32H7_ADC_CCR,
 	.eoc_msk = { STM32H7_EOC_MST, STM32H7_EOC_SLV },
 	.ovr_msk = { STM32H7_OVR_MST, STM32H7_OVR_SLV },
+=======
+	.eoc1_msk = STM32H7_EOC_MST,
+	.eoc2_msk = STM32H7_EOC_SLV,
+>>>>>>> master
 	.ier = STM32H7_ADC_IER,
 	.eocie_msk = STM32H7_EOCIE,
 };
 
+<<<<<<< HEAD
 /* STM32MP13 common registers definitions */
 static const struct stm32_adc_common_regs stm32mp13_adc_common_regs = {
 	.csr = STM32H7_ADC_CSR,
@@ -335,6 +362,8 @@ static const struct stm32_adc_common_regs stm32mp13_adc_common_regs = {
 	.eocie_msk = STM32H7_EOCIE,
 };
 
+=======
+>>>>>>> master
 static const unsigned int stm32_adc_offset[STM32_ADC_MAX_ADCS] = {
 	0, STM32_ADC_OFFSET, STM32_ADC_OFFSET * 2,
 };
@@ -372,12 +401,26 @@ static void stm32_adc_irq_handler(struct irq_desc *desc)
 	 * before invoking the interrupt handler (e.g. call ISR only for
 	 * IRQ-enabled ADCs).
 	 */
+<<<<<<< HEAD
 	for (i = 0; i < priv->nb_adc_max; i++) {
 		if ((status & priv->cfg->regs->eoc_msk[i] &&
 		     stm32_adc_eoc_enabled(priv, i)) ||
 		     (status & priv->cfg->regs->ovr_msk[i]))
 			generic_handle_domain_irq(priv->domain, i);
 	}
+=======
+	if (status & priv->cfg->regs->eoc1_msk &&
+	    stm32_adc_eoc_enabled(priv, 0))
+		generic_handle_irq(irq_find_mapping(priv->domain, 0));
+
+	if (status & priv->cfg->regs->eoc2_msk &&
+	    stm32_adc_eoc_enabled(priv, 1))
+		generic_handle_irq(irq_find_mapping(priv->domain, 1));
+
+	if (status & priv->cfg->regs->eoc3_msk &&
+	    stm32_adc_eoc_enabled(priv, 2))
+		generic_handle_irq(irq_find_mapping(priv->domain, 2));
+>>>>>>> master
 
 	chained_irq_exit(chip, desc);
 };

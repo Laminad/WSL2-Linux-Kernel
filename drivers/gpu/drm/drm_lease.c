@@ -507,7 +507,15 @@ int drm_mode_create_lease_ioctl(struct drm_device *dev,
 
 	object_count = cl->object_count;
 
+<<<<<<< HEAD
 	/* Handle leased objects, if any */
+=======
+	object_ids = memdup_user(u64_to_user_ptr(cl->object_ids),
+			array_size(object_count, sizeof(__u32)));
+	if (IS_ERR(object_ids))
+		return PTR_ERR(object_ids);
+
+>>>>>>> master
 	idr_init(&leases);
 	if (object_count != 0) {
 		object_ids = memdup_array_user(u64_to_user_ptr(cl->object_ids),

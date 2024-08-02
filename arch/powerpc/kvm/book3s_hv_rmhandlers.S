@@ -50,6 +50,7 @@
 #define STACK_SLOT_HFSCR	(SFS-72)
 #define STACK_SLOT_AMR		(SFS-80)
 #define STACK_SLOT_UAMOR	(SFS-88)
+<<<<<<< HEAD
 #define STACK_SLOT_FSCR		(SFS-96)
 
 /*
@@ -59,6 +60,8 @@
  * ignores the top bits.
  */
 #define   LPID_RSVD		0xfff
+=======
+>>>>>>> master
 
 /*
  * Call kvmppc_hv_entry in real mode.
@@ -643,6 +646,7 @@ kvmppc_got_guest:
 
 	/* Save host values of some registers */
 BEGIN_FTR_SECTION
+<<<<<<< HEAD
 	mfspr	r5, SPRN_CIABR
 	mfspr	r6, SPRN_DAWR0
 	mfspr	r7, SPRN_DAWRX0
@@ -653,6 +657,26 @@ BEGIN_FTR_SECTION
 	std	r8, STACK_SLOT_IAMR(r1)
 	mfspr	r5, SPRN_FSCR
 	std	r5, STACK_SLOT_FSCR(r1)
+=======
+	mfspr	r5, SPRN_TIDR
+	mfspr	r6, SPRN_PSSCR
+	mfspr	r7, SPRN_PID
+	std	r5, STACK_SLOT_TID(r1)
+	std	r6, STACK_SLOT_PSSCR(r1)
+	std	r7, STACK_SLOT_PID(r1)
+	mfspr	r5, SPRN_HFSCR
+	std	r5, STACK_SLOT_HFSCR(r1)
+END_FTR_SECTION_IFSET(CPU_FTR_ARCH_300)
+BEGIN_FTR_SECTION
+	mfspr	r5, SPRN_CIABR
+	mfspr	r6, SPRN_DAWR
+	mfspr	r7, SPRN_DAWRX
+	mfspr	r8, SPRN_IAMR
+	std	r5, STACK_SLOT_CIABR(r1)
+	std	r6, STACK_SLOT_DAWR(r1)
+	std	r7, STACK_SLOT_DAWRX(r1)
+	std	r8, STACK_SLOT_IAMR(r1)
+>>>>>>> master
 END_FTR_SECTION_IFSET(CPU_FTR_ARCH_207S)
 
 	mfspr	r5, SPRN_AMR
@@ -912,6 +936,10 @@ BEGIN_FTR_SECTION
 END_FTR_SECTION_IFSET(CPU_FTR_HAS_PPR)
 
 	ld	r5, VCPU_LR(r4)
+<<<<<<< HEAD
+=======
+	ld	r6, VCPU_CR(r4)
+>>>>>>> master
 	mtlr	r5
 
 	ld	r1, VCPU_GPR(R1)(r4)
@@ -1285,11 +1313,19 @@ END_FTR_SECTION_IFSET(CPU_FTR_ARCH_207S)
 	li	r0, 0
 	mtspr	SPRN_PSPB, r0
 	mtspr	SPRN_WORT, r0
+<<<<<<< HEAD
+=======
+BEGIN_FTR_SECTION
+>>>>>>> master
 	mtspr	SPRN_TCSCR, r0
 	/* Set MMCRS to 1<<31 to freeze and disable the SPMC counters */
 	li	r0, 1
 	sldi	r0, r0, 31
 	mtspr	SPRN_MMCRS, r0
+<<<<<<< HEAD
+=======
+END_FTR_SECTION_IFCLR(CPU_FTR_ARCH_300)
+>>>>>>> master
 
 	/* Save and restore AMR, IAMR and UAMOR before turning on the MMU */
 	ld	r8, STACK_SLOT_IAMR(r1)
@@ -1394,6 +1430,67 @@ BEGIN_FTR_SECTION
 	mtspr	SPRN_DAWR0, r6
 	mtspr	SPRN_DAWRX0, r7
 END_FTR_SECTION_IFSET(CPU_FTR_ARCH_207S)
+<<<<<<< HEAD
+=======
+BEGIN_FTR_SECTION
+	ld	r5, STACK_SLOT_TID(r1)
+	ld	r6, STACK_SLOT_PSSCR(r1)
+	ld	r7, STACK_SLOT_PID(r1)
+	mtspr	SPRN_TIDR, r5
+	mtspr	SPRN_PSSCR, r6
+	mtspr	SPRN_PID, r7
+END_FTR_SECTION_IFSET(CPU_FTR_ARCH_300)
+
+#ifdef CONFIG_PPC_RADIX_MMU
+	/*
+	 * Are we running hash or radix ?
+	 */
+	ld	r5, VCPU_KVM(r9)
+	lbz	r0, KVM_RADIX(r5)
+	cmpwi	cr2, r0, 0
+	beq	cr2, 2f
+
+	/*
+	 * Radix: do eieio; tlbsync; ptesync sequence in case we
+	 * interrupted the guest between a tlbie and a ptesync.
+	 */
+	eieio
+	tlbsync
+	ptesync
+
+	/* Radix: Handle the case where the guest used an illegal PID */
+	LOAD_REG_ADDR(r4, mmu_base_pid)
+	lwz	r3, VCPU_GUEST_PID(r9)
+	lwz	r5, 0(r4)
+	cmpw	cr0,r3,r5
+	blt	2f
+
+	/*
+	 * Illegal PID, the HW might have prefetched and cached in the TLB
+	 * some translations for the  LPID 0 / guest PID combination which
+	 * Linux doesn't know about, so we need to flush that PID out of
+	 * the TLB. First we need to set LPIDR to 0 so tlbiel applies to
+	 * the right context.
+	*/
+	li	r0,0
+	mtspr	SPRN_LPID,r0
+	isync
+
+	/* Then do a congruence class local flush */
+	ld	r6,VCPU_KVM(r9)
+	lwz	r0,KVM_TLB_SETS(r6)
+	mtctr	r0
+	li	r7,0x400		/* IS field = 0b01 */
+	ptesync
+	sldi	r0,r3,32		/* RS has PID */
+1:	PPC_TLBIEL(7,0,2,1,1)		/* RIC=2, PRS=1, R=1 */
+	addi	r7,r7,0x1000
+	bdnz	1b
+	ptesync
+
+2:
+#endif /* CONFIG_PPC_RADIX_MMU */
+>>>>>>> master
 
 	/*
 	 * POWER7/POWER8 guest -> host partition switch code.
@@ -2320,7 +2417,46 @@ kvm_cede_prodded:
 	/* we've ceded but we want to give control to the host */
 kvm_cede_exit:
 	ld	r9, HSTATE_KVM_VCPU(r13)
+<<<<<<< HEAD
 	b	guest_exit_cont
+=======
+#ifdef CONFIG_KVM_XICS
+	/* are we using XIVE with single escalation? */
+	ld	r10, VCPU_XIVE_ESC_VADDR(r9)
+	cmpdi	r10, 0
+	beq	3f
+	li	r6, XIVE_ESB_SET_PQ_00
+	/*
+	 * If we still have a pending escalation, abort the cede,
+	 * and we must set PQ to 10 rather than 00 so that we don't
+	 * potentially end up with two entries for the escalation
+	 * interrupt in the XIVE interrupt queue.  In that case
+	 * we also don't want to set xive_esc_on to 1 here in
+	 * case we race with xive_esc_irq().
+	 */
+	lbz	r5, VCPU_XIVE_ESC_ON(r9)
+	cmpwi	r5, 0
+	beq	4f
+	li	r0, 0
+	stb	r0, VCPU_CEDED(r9)
+	li	r6, XIVE_ESB_SET_PQ_10
+	b	5f
+4:	li	r0, 1
+	stb	r0, VCPU_XIVE_ESC_ON(r9)
+	/* make sure store to xive_esc_on is seen before xive_esc_irq runs */
+	sync
+5:	/* Enable XIVE escalation */
+	mfmsr	r0
+	andi.	r0, r0, MSR_DR		/* in real mode? */
+	beq	1f
+	ldx	r0, r10, r6
+	b	2f
+1:	ld	r10, VCPU_XIVE_ESC_RADDR(r9)
+	ldcix	r0, r10, r6
+2:	sync
+#endif /* CONFIG_KVM_XICS */
+3:	b	guest_exit_cont
+>>>>>>> master
 
 	/* Try to do machine check recovery in real mode */
 machine_check_realmode:

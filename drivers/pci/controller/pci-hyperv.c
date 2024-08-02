@@ -2357,6 +2357,7 @@ static void hv_pci_remove_slots(struct hv_pcibus_device *hbus)
 	}
 }
 
+<<<<<<< HEAD
 /*
  * Set NUMA node for the devices on the bus
  */
@@ -2387,6 +2388,8 @@ static void hv_pci_assign_numa_node(struct hv_pcibus_device *hbus)
 	}
 }
 
+=======
+>>>>>>> master
 /**
  * create_root_hv_pci_bus() - Expose a new root PCI bus
  * @hbus:	Root PCI bus, as understood by this driver
@@ -2851,7 +2854,11 @@ static void hv_eject_device_work(struct work_struct *work)
 	 * because hbus->bridge->bus may not exist yet.
 	 */
 	wslot = wslot_to_devfn(hpdev->desc.win_slot.slot);
+<<<<<<< HEAD
 	pdev = pci_get_domain_bus_and_slot(hbus->bridge->domain_nr, 0, wslot);
+=======
+	pdev = pci_get_domain_bus_and_slot(hbus->sysdata.domain, 0, wslot);
+>>>>>>> master
 	if (pdev) {
 		pci_lock_rescan_remove();
 		pci_stop_and_remove_bus_device(pdev);
@@ -2871,7 +2878,11 @@ static void hv_eject_device_work(struct work_struct *work)
 	ejct_pkt->message_type.type = PCI_EJECTION_COMPLETE;
 	ejct_pkt->wslot.slot = hpdev->desc.win_slot.slot;
 	vmbus_sendpacket(hbus->hdev->channel, ejct_pkt,
+<<<<<<< HEAD
 			 sizeof(*ejct_pkt), 0,
+=======
+			 sizeof(*ejct_pkt), (unsigned long)&ctxt.pkt,
+>>>>>>> master
 			 VM_PKT_DATA_INBAND, 0);
 
 	/* For the get_pcichild() in hv_pci_eject_device() */
@@ -2881,7 +2892,11 @@ static void hv_eject_device_work(struct work_struct *work)
 	put_pcichild(hpdev);
 	/* hpdev has been freed. Do not use it any more. */
 
+<<<<<<< HEAD
 	mutex_unlock(&hbus->state_lock);
+=======
+	put_hvpcibus(hbus);
+>>>>>>> master
 }
 
 /**
@@ -3910,9 +3925,15 @@ static void hv_pci_remove(struct hv_device *hdev)
 
 		/* Remove the bus from PCI's point of view. */
 		pci_lock_rescan_remove();
+<<<<<<< HEAD
 		pci_stop_root_bus(hbus->bridge->bus);
 		hv_pci_remove_slots(hbus);
 		pci_remove_root_bus(hbus->bridge->bus);
+=======
+		pci_stop_root_bus(hbus->pci_bus);
+		hv_pci_remove_slots(hbus);
+		pci_remove_root_bus(hbus->pci_bus);
+>>>>>>> master
 		pci_unlock_rescan_remove();
 	}
 

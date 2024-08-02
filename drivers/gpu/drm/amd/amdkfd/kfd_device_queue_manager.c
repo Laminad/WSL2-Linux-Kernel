@@ -1905,6 +1905,22 @@ int amdkfd_fence_wait_timeout(uint64_t *fence_addr,
 	return 0;
 }
 
+<<<<<<< HEAD
+=======
+static int unmap_sdma_queues(struct device_queue_manager *dqm)
+{
+	int i, retval = 0;
+
+	for (i = 0; i < dqm->dev->device_info->num_sdma_engines; i++) {
+		retval = pm_send_unmap_queue(&dqm->packets, KFD_QUEUE_TYPE_SDMA,
+			KFD_UNMAP_QUEUES_FILTER_DYNAMIC_QUEUES, 0, false, i);
+		if (retval)
+			return retval;
+	}
+	return retval;
+}
+
+>>>>>>> master
 /* dqm->lock mutex has to be locked before calling this function */
 static int map_queues_cpsch(struct device_queue_manager *dqm)
 {
@@ -1945,11 +1961,19 @@ static int unmap_queues_cpsch(struct device_queue_manager *dqm,
 	if (!dqm->active_runlist)
 		return retval;
 
+<<<<<<< HEAD
 	if (grace_period != USE_DEFAULT_GRACE_PERIOD) {
 		retval = pm_update_grace_period(&dqm->packet_mgr, grace_period);
 		if (retval)
 			return retval;
 	}
+=======
+	pr_debug("Before destroying queues, sdma queue count is : %u\n",
+		dqm->sdma_queue_count);
+
+	if (dqm->sdma_queue_count > 0)
+		unmap_sdma_queues(dqm);
+>>>>>>> master
 
 	retval = pm_send_unmap_queue(&dqm->packet_mgr, filter, filter_param, reset);
 	if (retval)

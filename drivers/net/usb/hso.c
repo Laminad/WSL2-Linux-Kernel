@@ -2629,6 +2629,7 @@ static struct hso_device *hso_create_bulk_serial_device(
 		num_urbs = 2;
 		serial->tiocmget = kzalloc(sizeof(struct hso_tiocmget),
 					   GFP_KERNEL);
+<<<<<<< HEAD
 		if (!serial->tiocmget)
 			goto exit;
 		serial->tiocmget->serial_state_notification
@@ -2643,6 +2644,27 @@ static struct hso_device *hso_create_bulk_serial_device(
 		if (!tiocmget->endp) {
 			dev_err(&interface->dev, "Failed to find INT IN ep\n");
 			goto exit;
+=======
+		/* it isn't going to break our heart if serial->tiocmget
+		 *  allocation fails don't bother checking this.
+		 */
+		if (serial->tiocmget) {
+			tiocmget = serial->tiocmget;
+			tiocmget->endp = hso_get_ep(interface,
+						    USB_ENDPOINT_XFER_INT,
+						    USB_DIR_IN);
+			if (!tiocmget->endp) {
+				dev_err(&interface->dev, "Failed to find INT IN ep\n");
+				goto exit;
+			}
+
+			tiocmget->urb = usb_alloc_urb(0, GFP_KERNEL);
+			if (tiocmget->urb) {
+				mutex_init(&tiocmget->mutex);
+				init_waitqueue_head(&tiocmget->waitq);
+			} else
+				hso_free_tiomget(serial);
+>>>>>>> master
 		}
 
 		tiocmget->urb = usb_alloc_urb(0, GFP_KERNEL);

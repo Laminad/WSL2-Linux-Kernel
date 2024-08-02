@@ -639,6 +639,7 @@ static void cpcap_usb_detect(struct work_struct *work)
 		return;
 	}
 
+<<<<<<< HEAD
 	/*
 	 * If battery voltage is higher than charge voltage, it may have been
 	 * charged to 4.35V by Android. Try again in 10 minutes.
@@ -727,6 +728,8 @@ static void cpcap_usb_detect(struct work_struct *work)
 					   POWER_SUPPLY_STATUS_DISCHARGING);
 	}
 
+=======
+>>>>>>> master
 	power_supply_changed(ddata->usb);
 	return;
 

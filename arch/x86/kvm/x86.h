@@ -220,7 +220,11 @@ static inline void vcpu_cache_mmio_info(struct kvm_vcpu *vcpu,
 {
 	u64 gen = kvm_memslots(vcpu->kvm)->generation;
 
+<<<<<<< HEAD
 	if (unlikely(gen & KVM_MEMSLOT_GEN_UPDATE_IN_PROGRESS))
+=======
+	if (unlikely(gen & 1))
+>>>>>>> master
 		return;
 
 	/*
@@ -430,6 +434,7 @@ static inline bool kvm_notify_vmexit_enabled(struct kvm *kvm)
 	return kvm->arch.notify_vmexit_flags & KVM_X86_NOTIFY_VMEXIT_ENABLED;
 }
 
+<<<<<<< HEAD
 enum kvm_intr_type {
 	/* Values are arbitrary, but must be non-zero. */
 	KVM_HANDLING_IRQ = 1,
@@ -451,6 +456,8 @@ static inline bool kvm_handling_nmi_from_guest(struct kvm_vcpu *vcpu)
 {
 	return vcpu->arch.handling_intr_from_guest == KVM_HANDLING_NMI;
 }
+=======
+>>>>>>> master
 
 static inline bool kvm_pat_valid(u64 data)
 {
@@ -460,6 +467,7 @@ static inline bool kvm_pat_valid(u64 data)
 	return (data | ((data & 0x0202020202020202ull) << 1)) == data;
 }
 
+<<<<<<< HEAD
 static inline bool kvm_dr7_valid(u64 data)
 {
 	/* Bits [63:32] are reserved */
@@ -539,5 +547,9 @@ int kvm_sev_es_mmio_read(struct kvm_vcpu *vcpu, gpa_t src, unsigned int bytes,
 int kvm_sev_es_string_io(struct kvm_vcpu *vcpu, unsigned int size,
 			 unsigned int port, void *data,  unsigned int count,
 			 int in);
+=======
+void kvm_load_guest_xcr0(struct kvm_vcpu *vcpu);
+void kvm_put_guest_xcr0(struct kvm_vcpu *vcpu);
+>>>>>>> master
 
 #endif

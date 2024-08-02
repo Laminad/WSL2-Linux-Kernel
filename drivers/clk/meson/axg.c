@@ -804,7 +804,11 @@ static struct clk_regmap axg_pcie_mux = {
 	.hw.init = &(struct clk_init_data){
 		.name = "pcie_mux",
 		.ops = &clk_regmap_mux_ops,
+<<<<<<< HEAD
 		.parent_hws = (const struct clk_hw *[]) { &axg_pcie_pll.hw },
+=======
+		.parent_names = (const char *[]){ "pcie_pll" },
+>>>>>>> master
 		.num_parents = 1,
 		.flags = CLK_SET_RATE_PARENT,
 	},

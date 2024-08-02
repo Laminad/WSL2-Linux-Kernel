@@ -952,8 +952,41 @@ static void dwc_issue_pending(struct dma_chan *chan)
 
 /*----------------------------------------------------------------------*/
 
+<<<<<<< HEAD
 void do_dw_dma_off(struct dw_dma *dw)
 {
+=======
+/*
+ * Program FIFO size of channels.
+ *
+ * By default full FIFO (512 bytes) is assigned to channel 0. Here we
+ * slice FIFO on equal parts between channels.
+ */
+static void idma32_fifo_partition(struct dw_dma *dw)
+{
+	u64 value = IDMA32C_FP_PSIZE_CH0(64) | IDMA32C_FP_PSIZE_CH1(64) |
+		    IDMA32C_FP_UPDATE;
+	u64 fifo_partition = 0;
+
+	if (!dw->pdata->is_idma32)
+		return;
+
+	/* Fill FIFO_PARTITION low bits (Channels 0..1, 4..5) */
+	fifo_partition |= value << 0;
+
+	/* Fill FIFO_PARTITION high bits (Channels 2..3, 6..7) */
+	fifo_partition |= value << 32;
+
+	/* Program FIFO Partition registers - 64 bytes per channel */
+	idma32_writeq(dw, FIFO_PARTITION1, fifo_partition);
+	idma32_writeq(dw, FIFO_PARTITION0, fifo_partition);
+}
+
+static void dw_dma_off(struct dw_dma *dw)
+{
+	unsigned int i;
+
+>>>>>>> master
 	dma_writel(dw, CFG, 0);
 
 	channel_clear_bit(dw, MASK.XFER, dw->all_chan_mask);

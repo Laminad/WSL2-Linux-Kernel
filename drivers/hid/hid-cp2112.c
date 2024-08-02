@@ -1151,6 +1151,11 @@ static unsigned int cp2112_gpio_irq_startup(struct irq_data *d)
 	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
 	struct cp2112_device *dev = gpiochip_get_data(gc);
 
+<<<<<<< HEAD
+=======
+	INIT_DELAYED_WORK(&dev->gpio_poll_worker, cp2112_gpio_poll_callback);
+
+>>>>>>> master
 	if (!dev->gpio_poll) {
 		dev->gpio_poll = true;
 		schedule_delayed_work(&dev->gpio_poll_worker, 0);
@@ -1190,6 +1195,52 @@ static const struct irq_chip cp2112_gpio_irqchip = {
 	GPIOCHIP_IRQ_RESOURCE_HELPERS,
 };
 
+<<<<<<< HEAD
+=======
+static int __maybe_unused cp2112_allocate_irq(struct cp2112_device *dev,
+					      int pin)
+{
+	int ret;
+
+	if (dev->desc[pin])
+		return -EINVAL;
+
+	dev->desc[pin] = gpiochip_request_own_desc(&dev->gc, pin,
+						   "HID/I2C:Event");
+	if (IS_ERR(dev->desc[pin])) {
+		dev_err(dev->gc.parent, "Failed to request GPIO\n");
+		return PTR_ERR(dev->desc[pin]);
+	}
+
+	ret = cp2112_gpio_direction_input(&dev->gc, pin);
+	if (ret < 0) {
+		dev_err(dev->gc.parent, "Failed to set GPIO to input dir\n");
+		goto err_desc;
+	}
+
+	ret = gpiochip_lock_as_irq(&dev->gc, pin);
+	if (ret) {
+		dev_err(dev->gc.parent, "Failed to lock GPIO as interrupt\n");
+		goto err_desc;
+	}
+
+	ret = gpiod_to_irq(dev->desc[pin]);
+	if (ret < 0) {
+		dev_err(dev->gc.parent, "Failed to translate GPIO to IRQ\n");
+		goto err_lock;
+	}
+
+	return ret;
+
+err_lock:
+	gpiochip_unlock_as_irq(&dev->gc, pin);
+err_desc:
+	gpiochip_free_own_desc(dev->desc[pin]);
+	dev->desc[pin] = NULL;
+	return ret;
+}
+
+>>>>>>> master
 static int cp2112_probe(struct hid_device *hdev, const struct hid_device_id *id)
 {
 	struct cp2112_device *dev;

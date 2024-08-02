@@ -2045,7 +2045,15 @@ static inline void __set_task_cpu(struct task_struct *p, unsigned int cpu)
 	 * per-task data have been completed by this moment.
 	 */
 	smp_wmb();
+<<<<<<< HEAD
 	WRITE_ONCE(task_thread_info(p)->cpu, cpu);
+=======
+#ifdef CONFIG_THREAD_INFO_IN_TASK
+	WRITE_ONCE(p->cpu, cpu);
+#else
+	WRITE_ONCE(task_thread_info(p)->cpu, cpu);
+#endif
+>>>>>>> master
 	p->wake_cpu = cpu;
 #endif
 }
@@ -2069,7 +2077,11 @@ enum {
 
 #undef SCHED_FEAT
 
+<<<<<<< HEAD
 #ifdef CONFIG_SCHED_DEBUG
+=======
+#if defined(CONFIG_SCHED_DEBUG) && defined(CONFIG_JUMP_LABEL)
+>>>>>>> master
 
 /*
  * To support run-time toggling of sched features, all the translation units
@@ -2090,6 +2102,7 @@ static __always_inline bool static_branch_##name(struct static_key *key) \
 extern struct static_key sched_feat_keys[__SCHED_FEAT_NR];
 #define sched_feat(x) (static_branch_##x(&sched_feat_keys[__SCHED_FEAT_##x]))
 
+<<<<<<< HEAD
 #else /* !CONFIG_JUMP_LABEL */
 
 #define sched_feat(x) (sysctl_sched_features & (1UL << __SCHED_FEAT_##x))
@@ -2097,6 +2110,9 @@ extern struct static_key sched_feat_keys[__SCHED_FEAT_NR];
 #endif /* CONFIG_JUMP_LABEL */
 
 #else /* !SCHED_DEBUG */
+=======
+#else /* !(SCHED_DEBUG && CONFIG_JUMP_LABEL) */
+>>>>>>> master
 
 /*
  * Each translation unit has its own copy of sysctl_sched_features to allow
@@ -2112,7 +2128,11 @@ static const_debug __maybe_unused unsigned int sysctl_sched_features =
 
 #define sched_feat(x) !!(sysctl_sched_features & (1UL << __SCHED_FEAT_##x))
 
+<<<<<<< HEAD
 #endif /* SCHED_DEBUG */
+=======
+#endif /* SCHED_DEBUG && CONFIG_JUMP_LABEL */
+>>>>>>> master
 
 extern struct static_key_false sched_numa_balancing;
 extern struct static_key_false sched_schedstats;
@@ -3038,6 +3058,7 @@ static inline unsigned long cpu_util_rt(struct rq *rq)
 }
 #endif
 
+<<<<<<< HEAD
 #ifdef CONFIG_UCLAMP_TASK
 unsigned long uclamp_eff_value(struct task_struct *p, enum uclamp_id clamp_id);
 
@@ -3182,6 +3203,8 @@ static inline bool uclamp_rq_is_idle(struct rq *rq)
 }
 #endif /* CONFIG_UCLAMP_TASK */
 
+=======
+>>>>>>> master
 #ifdef CONFIG_HAVE_SCHED_AVG_IRQ
 static inline unsigned long cpu_util_irq(struct rq *rq)
 {

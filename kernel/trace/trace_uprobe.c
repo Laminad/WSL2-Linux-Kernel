@@ -150,6 +150,7 @@ fetch_store_string(unsigned long addr, void *dest, void *base)
 	if (unlikely(!maxlen))
 		return -ENOMEM;
 
+<<<<<<< HEAD
 	if (addr == FETCH_TOKEN_COMM)
 		ret = strlcpy(dst, current->comm, maxlen);
 	else
@@ -167,6 +168,18 @@ fetch_store_string(unsigned long addr, void *dest, void *base)
 		*(u32 *)dest = make_data_loc(ret, (void *)dst - base);
 	} else
 		*(u32 *)dest = make_data_loc(0, (void *)dst - base);
+=======
+	ret = strncpy_from_user(dst, src, maxlen);
+	if (ret == maxlen)
+		dst[ret - 1] = '\0';
+	else if (ret >= 0)
+		/*
+		 * Include the terminating null byte. In this case it
+		 * was copied by strncpy_from_user but not accounted
+		 * for in ret.
+		 */
+		ret++;
+>>>>>>> master
 
 	return ret;
 }

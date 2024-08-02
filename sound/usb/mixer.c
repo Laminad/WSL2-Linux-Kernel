@@ -909,6 +909,7 @@ static int parse_term_proc_unit(struct mixer_build *state,
 	return 0;
 }
 
+<<<<<<< HEAD
 static int parse_term_effect_unit(struct mixer_build *state,
 				  struct usb_audio_term *term,
 				  void *p1, int id)
@@ -924,6 +925,8 @@ static int parse_term_effect_unit(struct mixer_build *state,
 	return 0;
 }
 
+=======
+>>>>>>> master
 static int parse_term_uac2_clock_source(struct mixer_build *state,
 					struct usb_audio_term *term,
 					void *p1, int id)
@@ -1008,7 +1011,12 @@ static int __check_input_term(struct mixer_build *state, int id,
 						    UAC3_PROCESSING_UNIT);
 		case PTYPE(UAC_VERSION_2, UAC2_EFFECT_UNIT):
 		case PTYPE(UAC_VERSION_3, UAC3_EFFECT_UNIT):
+<<<<<<< HEAD
 			return parse_term_effect_unit(state, term, p1, id);
+=======
+			return parse_term_proc_unit(state, term, p1, id,
+						    UAC3_EFFECT_UNIT);
+>>>>>>> master
 		case PTYPE(UAC_VERSION_1, UAC1_EXTENSION_UNIT):
 		case PTYPE(UAC_VERSION_2, UAC2_EXTENSION_UNIT_V2):
 		case PTYPE(UAC_VERSION_3, UAC3_EXTENSION_UNIT):
@@ -2457,7 +2465,11 @@ static const struct procunit_info extunits[] = {
  * build a processing/extension unit
  */
 static int build_audio_procunit(struct mixer_build *state, int unitid,
+<<<<<<< HEAD
 				void *raw_desc, const struct procunit_info *list,
+=======
+				void *raw_desc, struct procunit_info *list,
+>>>>>>> master
 				bool extension_unit)
 {
 	struct uac_processing_unit_descriptor *desc = raw_desc;

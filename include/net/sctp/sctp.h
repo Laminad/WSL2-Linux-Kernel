@@ -613,6 +613,7 @@ static inline bool sctp_transport_pmtu_check(struct sctp_transport *t)
 	return false;
 }
 
+<<<<<<< HEAD
 static inline __u32 sctp_min_frag_point(struct sctp_sock *sp, __u16 datasize)
 {
 	return sctp_mtu_payload(sp, SCTP_DEFAULT_MINSEGMENT, datasize);
@@ -671,4 +672,6 @@ static inline void sctp_sock_set_nodelay(struct sock *sk)
 	release_sock(sk);
 }
 
+=======
+>>>>>>> master
 #endif /* __net_sctp_h__ */

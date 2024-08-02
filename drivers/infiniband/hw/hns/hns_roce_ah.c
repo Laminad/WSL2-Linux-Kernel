@@ -64,7 +64,25 @@ int hns_roce_create_ah(struct ib_ah *ibah, struct rdma_ah_init_attr *init_attr,
 	if (hr_dev->pci_dev->revision == PCI_REVISION_ID_HIP08 && udata)
 		return -EOPNOTSUPP;
 
+<<<<<<< HEAD
 	ah->av.port = rdma_ah_get_port_num(ah_attr);
+=======
+	/* Get mac address */
+	memcpy(ah->av.mac, ah_attr->roce.dmac, ETH_ALEN);
+
+	gid_attr = ah_attr->grh.sgid_attr;
+	if (is_vlan_dev(gid_attr->ndev))
+		vlan_tag = vlan_dev_vlan_id(gid_attr->ndev);
+
+	if (vlan_tag < 0x1000)
+		vlan_tag |= (rdma_ah_get_sl(ah_attr) &
+			     HNS_ROCE_VLAN_SL_BIT_MASK) <<
+			     HNS_ROCE_VLAN_SL_SHIFT;
+
+	ah->av.port_pd = cpu_to_le32(to_hr_pd(ibpd)->pdn |
+				     (rdma_ah_get_port_num(ah_attr) <<
+				     HNS_ROCE_PORT_NUM_SHIFT));
+>>>>>>> master
 	ah->av.gid_index = grh->sgid_index;
 
 	if (rdma_ah_get_static_rate(ah_attr))

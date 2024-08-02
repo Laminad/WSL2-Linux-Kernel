@@ -199,6 +199,10 @@ static void __exit exit_p9(void)
 {
 	pr_info("Unloading 9P2000 support\n");
 
+<<<<<<< HEAD
+=======
+	p9_trans_fd_exit();
+>>>>>>> master
 	p9_client_exit();
 }
 

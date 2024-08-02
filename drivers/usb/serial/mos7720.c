@@ -257,7 +257,164 @@ static void destroy_mos_parport(struct kref *kref)
 }
 
 /*
+<<<<<<< HEAD
  * This is the common top part of all parallel port callback operations that
+=======
+ * This runs as a tasklet when sending an urb in a non-blocking parallel
+ * port callback had to be deferred because the disconnect mutex could not be
+ * obtained at the time.
+ */
+static void send_deferred_urbs(unsigned long _mos_parport)
+{
+	int ret_val;
+	unsigned long flags;
+	struct mos7715_parport *mos_parport = (void *)_mos_parport;
+	struct urbtracker *urbtrack, *tmp;
+	struct list_head *cursor, *next;
+	struct device *dev;
+
+	/* if release function ran, game over */
+	if (unlikely(mos_parport->serial == NULL))
+		return;
+
+	dev = &mos_parport->serial->dev->dev;
+
+	/* try again to get the mutex */
+	if (!mutex_trylock(&mos_parport->serial->disc_mutex)) {
+		dev_dbg(dev, "%s: rescheduling tasklet\n", __func__);
+		tasklet_schedule(&mos_parport->urb_tasklet);
+		return;
+	}
+
+	/* if device disconnected, game over */
+	if (unlikely(mos_parport->serial->disconnected)) {
+		mutex_unlock(&mos_parport->serial->disc_mutex);
+		return;
+	}
+
+	spin_lock_irqsave(&mos_parport->listlock, flags);
+	if (list_empty(&mos_parport->deferred_urbs)) {
+		spin_unlock_irqrestore(&mos_parport->listlock, flags);
+		mutex_unlock(&mos_parport->serial->disc_mutex);
+		dev_dbg(dev, "%s: deferred_urbs list empty\n", __func__);
+		return;
+	}
+
+	/* move contents of deferred_urbs list to active_urbs list and submit */
+	list_for_each_safe(cursor, next, &mos_parport->deferred_urbs)
+		list_move_tail(cursor, &mos_parport->active_urbs);
+	list_for_each_entry_safe(urbtrack, tmp, &mos_parport->active_urbs,
+			    urblist_entry) {
+		ret_val = usb_submit_urb(urbtrack->urb, GFP_ATOMIC);
+		dev_dbg(dev, "%s: urb submitted\n", __func__);
+		if (ret_val) {
+			dev_err(dev, "usb_submit_urb() failed: %d\n", ret_val);
+			list_del(&urbtrack->urblist_entry);
+			kref_put(&urbtrack->ref_count, destroy_urbtracker);
+		}
+	}
+	spin_unlock_irqrestore(&mos_parport->listlock, flags);
+	mutex_unlock(&mos_parport->serial->disc_mutex);
+}
+
+/* callback for parallel port control urbs submitted asynchronously */
+static void async_complete(struct urb *urb)
+{
+	struct urbtracker *urbtrack = urb->context;
+	int status = urb->status;
+	unsigned long flags;
+
+	if (unlikely(status))
+		dev_dbg(&urb->dev->dev, "%s - nonzero urb status received: %d\n", __func__, status);
+
+	/* remove the urbtracker from the active_urbs list */
+	spin_lock_irqsave(&urbtrack->mos_parport->listlock, flags);
+	list_del(&urbtrack->urblist_entry);
+	spin_unlock_irqrestore(&urbtrack->mos_parport->listlock, flags);
+	kref_put(&urbtrack->ref_count, destroy_urbtracker);
+}
+
+static int write_parport_reg_nonblock(struct mos7715_parport *mos_parport,
+				      enum mos_regs reg, __u8 data)
+{
+	struct urbtracker *urbtrack;
+	int ret_val;
+	unsigned long flags;
+	struct usb_serial *serial = mos_parport->serial;
+	struct usb_device *usbdev = serial->dev;
+
+	/* create and initialize the control urb and containing urbtracker */
+	urbtrack = kmalloc(sizeof(struct urbtracker), GFP_ATOMIC);
+	if (!urbtrack)
+		return -ENOMEM;
+
+	urbtrack->urb = usb_alloc_urb(0, GFP_ATOMIC);
+	if (!urbtrack->urb) {
+		kfree(urbtrack);
+		return -ENOMEM;
+	}
+	urbtrack->setup = kmalloc(sizeof(*urbtrack->setup), GFP_ATOMIC);
+	if (!urbtrack->setup) {
+		usb_free_urb(urbtrack->urb);
+		kfree(urbtrack);
+		return -ENOMEM;
+	}
+	urbtrack->setup->bRequestType = (__u8)0x40;
+	urbtrack->setup->bRequest = (__u8)0x0e;
+	urbtrack->setup->wValue = cpu_to_le16(get_reg_value(reg, dummy));
+	urbtrack->setup->wIndex = cpu_to_le16(get_reg_index(reg));
+	urbtrack->setup->wLength = 0;
+	usb_fill_control_urb(urbtrack->urb, usbdev,
+			     usb_sndctrlpipe(usbdev, 0),
+			     (unsigned char *)urbtrack->setup,
+			     NULL, 0, async_complete, urbtrack);
+	kref_get(&mos_parport->ref_count);
+	urbtrack->mos_parport = mos_parport;
+	kref_init(&urbtrack->ref_count);
+	INIT_LIST_HEAD(&urbtrack->urblist_entry);
+
+	/*
+	 * get the disconnect mutex, or add tracker to the deferred_urbs list
+	 * and schedule a tasklet to try again later
+	 */
+	if (!mutex_trylock(&serial->disc_mutex)) {
+		spin_lock_irqsave(&mos_parport->listlock, flags);
+		list_add_tail(&urbtrack->urblist_entry,
+			      &mos_parport->deferred_urbs);
+		spin_unlock_irqrestore(&mos_parport->listlock, flags);
+		tasklet_schedule(&mos_parport->urb_tasklet);
+		dev_dbg(&usbdev->dev, "tasklet scheduled\n");
+		return 0;
+	}
+
+	/* bail if device disconnected */
+	if (serial->disconnected) {
+		kref_put(&urbtrack->ref_count, destroy_urbtracker);
+		mutex_unlock(&serial->disc_mutex);
+		return -ENODEV;
+	}
+
+	/* add the tracker to the active_urbs list and submit */
+	spin_lock_irqsave(&mos_parport->listlock, flags);
+	list_add_tail(&urbtrack->urblist_entry, &mos_parport->active_urbs);
+	spin_unlock_irqrestore(&mos_parport->listlock, flags);
+	ret_val = usb_submit_urb(urbtrack->urb, GFP_ATOMIC);
+	mutex_unlock(&serial->disc_mutex);
+	if (ret_val) {
+		dev_err(&usbdev->dev,
+			"%s: submit_urb() failed: %d\n", __func__, ret_val);
+		spin_lock_irqsave(&mos_parport->listlock, flags);
+		list_del(&urbtrack->urblist_entry);
+		spin_unlock_irqrestore(&mos_parport->listlock, flags);
+		kref_put(&urbtrack->ref_count, destroy_urbtracker);
+		return ret_val;
+	}
+	return 0;
+}
+
+/*
+ * This is the the common top part of all parallel port callback operations that
+>>>>>>> master
  * send synchronous messages to the device.  This implements convoluted locking
  * that avoids two scenarios: (1) a port operation is called after usbserial
  * has called our release function, at which point struct mos7715_parport has

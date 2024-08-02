@@ -900,9 +900,12 @@ static const struct mfd_cell axp221_cells[] = {
 
 static const struct mfd_cell axp223_cells[] = {
 	{
+<<<<<<< HEAD
 		.name		= "axp20x-gpio",
 		.of_compatible	= "x-powers,axp221-gpio",
 	}, {
+=======
+>>>>>>> master
 		.name		= "axp221-pek",
 		.num_resources	= ARRAY_SIZE(axp22x_pek_resources),
 		.resources	= axp22x_pek_resources,
@@ -992,7 +995,10 @@ static const struct mfd_cell axp288_cells[] = {
 		.name		= "axp288_fuel_gauge",
 		.num_resources	= ARRAY_SIZE(axp288_fuel_gauge_resources),
 		.resources	= axp288_fuel_gauge_resources,
+<<<<<<< HEAD
 		.swnode		= &axp288_fuel_gauge_sw_node,
+=======
+>>>>>>> master
 	}, {
 		.name		= "axp221-pek",
 		.num_resources	= ARRAY_SIZE(axp288_power_button_resources),
@@ -1021,11 +1027,14 @@ static const struct mfd_cell axp803_cells[] = {
 		.of_compatible	= "x-powers,axp813-ac-power-supply",
 		.num_resources	= ARRAY_SIZE(axp20x_ac_power_supply_resources),
 		.resources	= axp20x_ac_power_supply_resources,
+<<<<<<< HEAD
 	}, {
 		.name		= "axp20x-usb-power-supply",
 		.num_resources	= ARRAY_SIZE(axp803_usb_power_supply_resources),
 		.resources	= axp803_usb_power_supply_resources,
 		.of_compatible	= "x-powers,axp813-usb-power-supply",
+=======
+>>>>>>> master
 	},
 	{	.name		= "axp20x-regulator" },
 };
@@ -1048,6 +1057,7 @@ static const struct mfd_cell axp806_cells[] = {
 
 static const struct mfd_cell axp809_cells[] = {
 	{
+<<<<<<< HEAD
 		.name		= "axp20x-gpio",
 		.of_compatible	= "x-powers,axp221-gpio",
 	}, {
@@ -1055,6 +1065,12 @@ static const struct mfd_cell axp809_cells[] = {
 		.num_resources	= ARRAY_SIZE(axp809_pek_resources),
 		.resources	= axp809_pek_resources,
 	}, {
+=======
+		.name		= "axp221-pek",
+		.num_resources	= ARRAY_SIZE(axp809_pek_resources),
+		.resources	= axp809_pek_resources,
+	}, {
+>>>>>>> master
 		.id		= 1,
 		.name		= "axp20x-regulator",
 	},
@@ -1081,11 +1097,14 @@ static const struct mfd_cell axp813_cells[] = {
 		.of_compatible	= "x-powers,axp813-ac-power-supply",
 		.num_resources	= ARRAY_SIZE(axp20x_ac_power_supply_resources),
 		.resources	= axp20x_ac_power_supply_resources,
+<<<<<<< HEAD
 	}, {
 		.name		= "axp20x-usb-power-supply",
 		.num_resources	= ARRAY_SIZE(axp803_usb_power_supply_resources),
 		.resources	= axp803_usb_power_supply_resources,
 		.of_compatible	= "x-powers,axp813-usb-power-supply",
+=======
+>>>>>>> master
 	},
 };
 

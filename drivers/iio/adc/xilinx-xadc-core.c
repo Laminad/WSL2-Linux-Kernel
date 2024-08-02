@@ -1437,7 +1437,56 @@ static int xadc_probe(struct platform_device *pdev)
 	/* Go to non-buffered mode */
 	xadc_postdisable(indio_dev);
 
+<<<<<<< HEAD
 	return devm_iio_device_register(dev, indio_dev);
+=======
+	ret = iio_device_register(indio_dev);
+	if (ret)
+		goto err_free_irq;
+
+	platform_set_drvdata(pdev, indio_dev);
+
+	return 0;
+
+err_free_irq:
+	free_irq(xadc->irq, indio_dev);
+	cancel_delayed_work_sync(&xadc->zynq_unmask_work);
+err_clk_disable_unprepare:
+	clk_disable_unprepare(xadc->clk);
+err_free_samplerate_trigger:
+	if (xadc->ops->flags & XADC_FLAGS_BUFFERED)
+		iio_trigger_free(xadc->samplerate_trigger);
+err_free_convst_trigger:
+	if (xadc->ops->flags & XADC_FLAGS_BUFFERED)
+		iio_trigger_free(xadc->convst_trigger);
+err_triggered_buffer_cleanup:
+	if (xadc->ops->flags & XADC_FLAGS_BUFFERED)
+		iio_triggered_buffer_cleanup(indio_dev);
+err_device_free:
+	kfree(indio_dev->channels);
+
+	return ret;
+}
+
+static int xadc_remove(struct platform_device *pdev)
+{
+	struct iio_dev *indio_dev = platform_get_drvdata(pdev);
+	struct xadc *xadc = iio_priv(indio_dev);
+
+	iio_device_unregister(indio_dev);
+	if (xadc->ops->flags & XADC_FLAGS_BUFFERED) {
+		iio_trigger_free(xadc->samplerate_trigger);
+		iio_trigger_free(xadc->convst_trigger);
+		iio_triggered_buffer_cleanup(indio_dev);
+	}
+	free_irq(xadc->irq, indio_dev);
+	cancel_delayed_work_sync(&xadc->zynq_unmask_work);
+	clk_disable_unprepare(xadc->clk);
+	kfree(xadc->data);
+	kfree(indio_dev->channels);
+
+	return 0;
+>>>>>>> master
 }
 
 static struct platform_driver xadc_driver = {

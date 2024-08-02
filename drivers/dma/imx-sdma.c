@@ -456,6 +456,7 @@ struct sdma_channel {
 	enum dma_status			status;
 	struct imx_dma_data		data;
 	struct work_struct		terminate_worker;
+<<<<<<< HEAD
 	struct list_head                terminated;
 	bool				is_ram_script;
 	unsigned int			n_fifos_src;
@@ -464,6 +465,8 @@ struct sdma_channel {
 	unsigned int			stride_fifos_dst;
 	unsigned int			words_per_fifo;
 	bool				sw_done;
+=======
+>>>>>>> master
 };
 
 #define IMX_DMA_SG_LOOP		BIT(0)
@@ -1174,6 +1177,12 @@ static void sdma_channel_terminate_work(struct work_struct *work)
 {
 	struct sdma_channel *sdmac = container_of(work, struct sdma_channel,
 						  terminate_worker);
+<<<<<<< HEAD
+=======
+	unsigned long flags;
+	LIST_HEAD(head);
+
+>>>>>>> master
 	/*
 	 * According to NXP R&D team a delay of one BD SDMA cost time
 	 * (maximum is 1ms) should be added after disable of the channel
@@ -1182,6 +1191,7 @@ static void sdma_channel_terminate_work(struct work_struct *work)
 	 */
 	usleep_range(1000, 2000);
 
+<<<<<<< HEAD
 	vchan_dma_desc_free_list(&sdmac->vc, &sdmac->terminated);
 }
 
@@ -1208,6 +1218,23 @@ static int sdma_terminate_all(struct dma_chan *chan)
 	}
 
 	spin_unlock_irqrestore(&sdmac->vc.lock, flags);
+=======
+	spin_lock_irqsave(&sdmac->vc.lock, flags);
+	vchan_get_all_descriptors(&sdmac->vc, &head);
+	sdmac->desc = NULL;
+	spin_unlock_irqrestore(&sdmac->vc.lock, flags);
+	vchan_dma_desc_free_list(&sdmac->vc, &head);
+}
+
+static int sdma_disable_channel_async(struct dma_chan *chan)
+{
+	struct sdma_channel *sdmac = to_sdma_chan(chan);
+
+	sdma_disable_channel(chan);
+
+	if (sdmac->desc)
+		schedule_work(&sdmac->terminate_worker);
+>>>>>>> master
 
 	return 0;
 }
@@ -1385,8 +1412,13 @@ static int sdma_alloc_bd(struct sdma_desc *desc)
 	u32 bd_size = desc->num_bd * sizeof(struct sdma_buffer_descriptor);
 	int ret = 0;
 
+<<<<<<< HEAD
 	desc->bd = dma_alloc_coherent(desc->sdmac->sdma->dev, bd_size,
 				      &desc->bd_phys, GFP_NOWAIT);
+=======
+	desc->bd = dma_zalloc_coherent(NULL, bd_size, &desc->bd_phys,
+					GFP_NOWAIT);
+>>>>>>> master
 	if (!desc->bd) {
 		ret = -ENOMEM;
 		goto out;
@@ -1399,8 +1431,12 @@ static void sdma_free_bd(struct sdma_desc *desc)
 {
 	u32 bd_size = desc->num_bd * sizeof(struct sdma_buffer_descriptor);
 
+<<<<<<< HEAD
 	dma_free_coherent(desc->sdmac->sdma->dev, bd_size, desc->bd,
 			  desc->bd_phys);
+=======
+	dma_free_coherent(NULL, bd_size, desc->bd, desc->bd_phys);
+>>>>>>> master
 }
 
 static void sdma_desc_free(struct virt_dma_desc *vd)
@@ -1482,7 +1518,13 @@ static void sdma_free_chan_resources(struct dma_chan *chan)
 	struct sdma_channel *sdmac = to_sdma_chan(chan);
 	struct sdma_engine *sdma = sdmac->sdma;
 
+<<<<<<< HEAD
 	sdma_terminate_all(chan);
+=======
+	sdma_disable_channel_async(chan);
+
+	sdma_channel_synchronize(chan);
+>>>>>>> master
 
 	sdma_channel_synchronize(chan);
 
@@ -2264,7 +2306,10 @@ static int sdma_probe(struct platform_device *pdev)
 
 		sdmac->channel = i;
 		sdmac->vc.desc_free = sdma_desc_free;
+<<<<<<< HEAD
 		INIT_LIST_HEAD(&sdmac->terminated);
+=======
+>>>>>>> master
 		INIT_WORK(&sdmac->terminate_worker,
 				sdma_channel_terminate_work);
 		/*
@@ -2286,6 +2331,11 @@ static int sdma_probe(struct platform_device *pdev)
 
 	if (sdma->drvdata->script_addrs)
 		sdma_add_scripts(sdma, sdma->drvdata->script_addrs);
+<<<<<<< HEAD
+=======
+	if (pdata && pdata->script_addrs)
+		sdma_add_scripts(sdma, pdata->script_addrs);
+>>>>>>> master
 
 	sdma->dma_device.dev = &pdev->dev;
 
@@ -2295,7 +2345,11 @@ static int sdma_probe(struct platform_device *pdev)
 	sdma->dma_device.device_prep_slave_sg = sdma_prep_slave_sg;
 	sdma->dma_device.device_prep_dma_cyclic = sdma_prep_dma_cyclic;
 	sdma->dma_device.device_config = sdma_config;
+<<<<<<< HEAD
 	sdma->dma_device.device_terminate_all = sdma_terminate_all;
+=======
+	sdma->dma_device.device_terminate_all = sdma_disable_channel_async;
+>>>>>>> master
 	sdma->dma_device.device_synchronize = sdma_channel_synchronize;
 	sdma->dma_device.src_addr_widths = SDMA_DMA_BUSWIDTHS;
 	sdma->dma_device.dst_addr_widths = SDMA_DMA_BUSWIDTHS;
@@ -2331,6 +2385,7 @@ static int sdma_probe(struct platform_device *pdev)
 	}
 
 	/*
+<<<<<<< HEAD
 	 * Because that device tree does not encode ROM script address,
 	 * the RAM script in firmware is mandatory for device tree
 	 * probe, otherwise it fails.
@@ -2343,6 +2398,32 @@ static int sdma_probe(struct platform_device *pdev)
 		ret = sdma_get_firmware(sdma, fw_name);
 		if (ret)
 			dev_warn(&pdev->dev, "failed to get firmware from device tree\n");
+=======
+	 * Kick off firmware loading as the very last step:
+	 * attempt to load firmware only if we're not on the error path, because
+	 * the firmware callback requires a fully functional and allocated sdma
+	 * instance.
+	 */
+	if (pdata) {
+		ret = sdma_get_firmware(sdma, pdata->fw_name);
+		if (ret)
+			dev_warn(&pdev->dev, "failed to get firmware from platform data\n");
+	} else {
+		/*
+		 * Because that device tree does not encode ROM script address,
+		 * the RAM script in firmware is mandatory for device tree
+		 * probe, otherwise it fails.
+		 */
+		ret = of_property_read_string(np, "fsl,sdma-ram-script-name",
+					      &fw_name);
+		if (ret) {
+			dev_warn(&pdev->dev, "failed to get firmware name\n");
+		} else {
+			ret = sdma_get_firmware(sdma, fw_name);
+			if (ret)
+				dev_warn(&pdev->dev, "failed to get firmware from device tree\n");
+		}
+>>>>>>> master
 	}
 
 	return 0;

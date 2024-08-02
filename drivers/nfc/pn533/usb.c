@@ -582,7 +582,11 @@ static int pn533_usb_probe(struct usb_interface *interface,
 
 	rc = pn533_finalize_setup(priv);
 	if (rc)
+<<<<<<< HEAD
 		goto err_clean;
+=======
+		goto err_deregister;
+>>>>>>> master
 
 	usb_set_intfdata(interface, phy);
 	rc = pn53x_register_nfc(priv, protocols, &interface->dev);
@@ -591,8 +595,13 @@ static int pn533_usb_probe(struct usb_interface *interface,
 
 	return 0;
 
+<<<<<<< HEAD
 err_clean:
 	pn53x_common_clean(priv);
+=======
+err_deregister:
+	pn533_unregister_device(phy->priv);
+>>>>>>> master
 error:
 	usb_kill_urb(phy->in_urb);
 	usb_kill_urb(phy->out_urb);

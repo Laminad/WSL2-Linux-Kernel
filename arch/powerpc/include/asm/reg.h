@@ -124,7 +124,11 @@
 #ifdef CONFIG_PPC_TRANSACTIONAL_MEM
 #define MSR_TM_ACTIVE(x) (((x) & MSR_TS_MASK) != 0) /* Transaction active? */
 #else
+<<<<<<< HEAD
 #define MSR_TM_ACTIVE(x) ((void)(x), 0)
+=======
+#define MSR_TM_ACTIVE(x) 0
+>>>>>>> master
 #endif
 
 #if defined(CONFIG_PPC_BOOK3S_64)

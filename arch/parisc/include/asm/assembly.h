@@ -77,6 +77,27 @@
 #define COND(x)	x
 #endif
 
+<<<<<<< HEAD
+=======
+#define CALLEE_SAVE_FRAME_SIZE (CALLEE_REG_FRAME_SIZE + CALLEE_FLOAT_FRAME_SIZE)
+
+#ifdef CONFIG_PA20
+#define LDCW		ldcw,co
+#define BL		b,l
+# ifdef CONFIG_64BIT
+#  define PA_ASM_LEVEL	2.0w
+# else
+#  define PA_ASM_LEVEL	2.0
+# endif
+#else
+#define LDCW		ldcw
+#define BL		bl
+#define PA_ASM_LEVEL	1.1
+#endif
+
+#ifdef __ASSEMBLY__
+
+>>>>>>> master
 #ifdef CONFIG_64BIT
 /* the 64-bit pa gnu assembler unfortunately defaults to .level 1.1 or 2.0 so
  * work around that for now... */

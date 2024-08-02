@@ -445,9 +445,17 @@ static int edac_create_csrow_object(struct mem_ctl_info *mci,
 		return err;
 	}
 
+<<<<<<< HEAD
 	edac_dbg(0, "device %s created\n", dev_name(&csrow->dev));
 
 	return 0;
+=======
+	err = device_add(&csrow->dev);
+	if (err)
+		put_device(&csrow->dev);
+
+	return err;
+>>>>>>> master
 }
 
 /* Create a CSROW object under specifed edac_mc_device */

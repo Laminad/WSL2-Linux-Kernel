@@ -86,7 +86,10 @@ static int coalesced_mmio_write(struct kvm_vcpu *vcpu,
 	ring->coalesced_mmio[insert].phys_addr = addr;
 	ring->coalesced_mmio[insert].len = len;
 	memcpy(ring->coalesced_mmio[insert].data, val, len);
+<<<<<<< HEAD
 	ring->coalesced_mmio[insert].pio = dev->zone.pio;
+=======
+>>>>>>> master
 	smp_wmb();
 	ring->last = (insert + 1) % KVM_COALESCED_MMIO_MAX;
 	spin_unlock(&dev->kvm->ring_lock);

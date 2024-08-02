@@ -10,6 +10,7 @@
 #include "shuffle.h"
 
 DEFINE_STATIC_KEY_FALSE(page_alloc_shuffle_key);
+<<<<<<< HEAD
 
 static bool shuffle_param;
 
@@ -28,21 +29,73 @@ static const struct kernel_param_ops shuffle_param_ops = {
 	.get = param_get_bool,
 };
 module_param_cb(shuffle, &shuffle_param_ops, &shuffle_param, 0400);
+=======
+static unsigned long shuffle_state __ro_after_init;
+
+/*
+ * Depending on the architecture, module parameter parsing may run
+ * before, or after the cache detection. SHUFFLE_FORCE_DISABLE prevents,
+ * or reverts the enabling of the shuffle implementation. SHUFFLE_ENABLE
+ * attempts to turn on the implementation, but aborts if it finds
+ * SHUFFLE_FORCE_DISABLE already set.
+ */
+__meminit void page_alloc_shuffle(enum mm_shuffle_ctl ctl)
+{
+	if (ctl == SHUFFLE_FORCE_DISABLE)
+		set_bit(SHUFFLE_FORCE_DISABLE, &shuffle_state);
+
+	if (test_bit(SHUFFLE_FORCE_DISABLE, &shuffle_state)) {
+		if (test_and_clear_bit(SHUFFLE_ENABLE, &shuffle_state))
+			static_branch_disable(&page_alloc_shuffle_key);
+	} else if (ctl == SHUFFLE_ENABLE
+			&& !test_and_set_bit(SHUFFLE_ENABLE, &shuffle_state))
+		static_branch_enable(&page_alloc_shuffle_key);
+}
+
+static bool shuffle_param;
+extern int shuffle_show(char *buffer, const struct kernel_param *kp)
+{
+	return sprintf(buffer, "%c\n", test_bit(SHUFFLE_ENABLE, &shuffle_state)
+			? 'Y' : 'N');
+}
+
+static __meminit int shuffle_store(const char *val,
+		const struct kernel_param *kp)
+{
+	int rc = param_set_bool(val, kp);
+
+	if (rc < 0)
+		return rc;
+	if (shuffle_param)
+		page_alloc_shuffle(SHUFFLE_ENABLE);
+	else
+		page_alloc_shuffle(SHUFFLE_FORCE_DISABLE);
+	return 0;
+}
+module_param_call(shuffle, shuffle_store, shuffle_show, &shuffle_param, 0400);
+>>>>>>> master
 
 /*
  * For two pages to be swapped in the shuffle, they must be free (on a
  * 'free_area' lru), have the same order, and have the same migratetype.
  */
+<<<<<<< HEAD
 static struct page * __meminit shuffle_valid_page(struct zone *zone,
 						  unsigned long pfn, int order)
 {
 	struct page *page = pfn_to_online_page(pfn);
+=======
+static struct page * __meminit shuffle_valid_page(unsigned long pfn, int order)
+{
+	struct page *page;
+>>>>>>> master
 
 	/*
 	 * Given we're dealing with randomly selected pfns in a zone we
 	 * need to ask questions like...
 	 */
 
+<<<<<<< HEAD
 	/* ... is the page managed by the buddy? */
 	if (!page)
 		return NULL;
@@ -52,6 +105,18 @@ static struct page * __meminit shuffle_valid_page(struct zone *zone,
 		return NULL;
 
 	/* ...is the page free and currently on a free_area list? */
+=======
+	/* ...is the pfn even in the memmap? */
+	if (!pfn_valid_within(pfn))
+		return NULL;
+
+	/* ...is the pfn in a present section or a hole? */
+	if (!pfn_present(pfn))
+		return NULL;
+
+	/* ...is the page free and currently on a free_area list? */
+	page = pfn_to_page(pfn);
+>>>>>>> master
 	if (!PageBuddy(page))
 		return NULL;
 
@@ -59,7 +124,11 @@ static struct page * __meminit shuffle_valid_page(struct zone *zone,
 	 * ...is the page on the same list as the page we will
 	 * shuffle it with?
 	 */
+<<<<<<< HEAD
 	if (buddy_order(page) != order)
+=======
+	if (page_order(page) != order)
+>>>>>>> master
 		return NULL;
 
 	return page;
@@ -98,7 +167,11 @@ void __meminit __shuffle_zone(struct zone *z)
 		 * page_j randomly selected in the span @zone_start_pfn to
 		 * @spanned_pages.
 		 */
+<<<<<<< HEAD
 		page_i = shuffle_valid_page(z, i, order);
+=======
+		page_i = shuffle_valid_page(i, order);
+>>>>>>> master
 		if (!page_i)
 			continue;
 
@@ -112,7 +185,11 @@ void __meminit __shuffle_zone(struct zone *z)
 			j = z->zone_start_pfn +
 				ALIGN_DOWN(get_random_long() % z->spanned_pages,
 						order_pages);
+<<<<<<< HEAD
 			page_j = shuffle_valid_page(z, j, order);
+=======
+			page_j = shuffle_valid_page(j, order);
+>>>>>>> master
 			if (page_j && page_j != page_i)
 				break;
 		}
@@ -146,8 +223,13 @@ void __meminit __shuffle_zone(struct zone *z)
 	spin_unlock_irqrestore(&z->lock, flags);
 }
 
+<<<<<<< HEAD
 /*
  * __shuffle_free_memory - reduce the predictability of the page allocator
+=======
+/**
+ * shuffle_free_memory - reduce the predictability of the page allocator
+>>>>>>> master
  * @pgdat: node page data
  */
 void __meminit __shuffle_free_memory(pg_data_t *pgdat)

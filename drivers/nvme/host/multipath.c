@@ -14,6 +14,7 @@ module_param(multipath, bool, 0444);
 MODULE_PARM_DESC(multipath,
 	"turn on native support for multiple controllers per subsystem");
 
+<<<<<<< HEAD
 static const char *nvme_iopolicy_names[] = {
 	[NVME_IOPOLICY_NUMA]	= "numa",
 	[NVME_IOPOLICY_RR]	= "round-robin",
@@ -33,6 +34,36 @@ static int nvme_set_iopolicy(const char *val, const struct kernel_param *kp)
 		return -EINVAL;
 
 	return 0;
+=======
+void nvme_mpath_unfreeze(struct nvme_subsystem *subsys)
+{
+	struct nvme_ns_head *h;
+
+	lockdep_assert_held(&subsys->lock);
+	list_for_each_entry(h, &subsys->nsheads, entry)
+		if (h->disk)
+			blk_mq_unfreeze_queue(h->disk->queue);
+}
+
+void nvme_mpath_wait_freeze(struct nvme_subsystem *subsys)
+{
+	struct nvme_ns_head *h;
+
+	lockdep_assert_held(&subsys->lock);
+	list_for_each_entry(h, &subsys->nsheads, entry)
+		if (h->disk)
+			blk_mq_freeze_queue_wait(h->disk->queue);
+}
+
+void nvme_mpath_start_freeze(struct nvme_subsystem *subsys)
+{
+	struct nvme_ns_head *h;
+
+	lockdep_assert_held(&subsys->lock);
+	list_for_each_entry(h, &subsys->nsheads, entry)
+		if (h->disk)
+			blk_freeze_queue_start(h->disk->queue);
+>>>>>>> master
 }
 
 static int nvme_get_iopolicy(char *buf, const struct kernel_param *kp)
@@ -89,6 +120,7 @@ void nvme_failover_req(struct request *req)
 
 	nvme_mpath_clear_current_path(ns);
 
+<<<<<<< HEAD
 	/*
 	 * If we got back an ANA error, we know the controller is alive but not
 	 * ready to serve this namespace.  Kick of a re-read of the ANA
@@ -97,6 +129,41 @@ void nvme_failover_req(struct request *req)
 	if (nvme_is_ana_error(status) && ns->ctrl->ana_log_buf) {
 		set_bit(NVME_NS_ANA_PENDING, &ns->flags);
 		queue_work(nvme_wq, &ns->ctrl->ana_work);
+=======
+	switch (status & 0x7ff) {
+	case NVME_SC_ANA_TRANSITION:
+	case NVME_SC_ANA_INACCESSIBLE:
+	case NVME_SC_ANA_PERSISTENT_LOSS:
+		/*
+		 * If we got back an ANA error we know the controller is alive,
+		 * but not ready to serve this namespaces.  The spec suggests
+		 * we should update our general state here, but due to the fact
+		 * that the admin and I/O queues are not serialized that is
+		 * fundamentally racy.  So instead just clear the current path,
+		 * mark the the path as pending and kick of a re-read of the ANA
+		 * log page ASAP.
+		 */
+		nvme_mpath_clear_current_path(ns);
+		if (ns->ctrl->ana_log_buf) {
+			set_bit(NVME_NS_ANA_PENDING, &ns->flags);
+			queue_work(nvme_wq, &ns->ctrl->ana_work);
+		}
+		break;
+	case NVME_SC_HOST_PATH_ERROR:
+		/*
+		 * Temporary transport disruption in talking to the controller.
+		 * Try to send on a new path.
+		 */
+		nvme_mpath_clear_current_path(ns);
+		break;
+	default:
+		/*
+		 * Reset the controller for any non-ANA error as we don't know
+		 * what caused the error.
+		 */
+		nvme_reset_ctrl(ns->ctrl);
+		break;
+>>>>>>> master
 	}
 
 	spin_lock_irqsave(&ns->head->requeue_lock, flags);
@@ -533,6 +600,7 @@ int nvme_mpath_alloc_disk(struct nvme_ctrl *ctrl, struct nvme_ns_head *head)
 	    !nvme_is_unique_nsid(ctrl, head) || !multipath)
 		return 0;
 
+<<<<<<< HEAD
 	head->disk = blk_alloc_disk(ctrl->numa_node);
 	if (!head->disk)
 		return -ENOMEM;
@@ -558,6 +626,18 @@ int nvme_mpath_alloc_disk(struct nvme_ctrl *ctrl, struct nvme_ns_head *head)
 	blk_queue_logical_block_size(head->disk->queue, 512);
 	blk_set_stacking_limits(&head->disk->queue->limits);
 	blk_queue_dma_alignment(head->disk->queue, 3);
+=======
+	q = blk_alloc_queue_node(GFP_KERNEL, NUMA_NO_NODE, NULL);
+	if (!q)
+		goto out;
+	q->queuedata = head;
+	blk_queue_make_request(q, nvme_ns_head_make_request);
+	q->poll_fn = nvme_ns_head_poll;
+	blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
+	/* set to a default value for 512 until disk is validated */
+	blk_queue_logical_block_size(q, 512);
+	blk_set_stacking_limits(&q->limits);
+>>>>>>> master
 
 	/* we need to propagate up the VMC settings */
 	if (ctrl->vwc & NVME_CTRL_VWC_PRESENT)
@@ -589,6 +669,7 @@ static void nvme_mpath_set_live(struct nvme_ns *ns)
 		nvme_add_ns_head_cdev(head);
 	}
 
+<<<<<<< HEAD
 	mutex_lock(&head->lock);
 	if (nvme_path_is_optimized(ns)) {
 		int node, srcu_idx;
@@ -602,6 +683,10 @@ static void nvme_mpath_set_live(struct nvme_ns *ns)
 
 	synchronize_srcu(&head->srcu);
 	kblockd_schedule_work(&head->requeue_work);
+=======
+	synchronize_srcu(&ns->head->srcu);
+	kblockd_schedule_work(&ns->head->requeue_work);
+>>>>>>> master
 }
 
 static int nvme_parse_ana_log(struct nvme_ctrl *ctrl, void *data,
@@ -656,6 +741,7 @@ static inline bool nvme_state_is_live(enum nvme_ana_state state)
 static void nvme_update_ns_ana_state(struct nvme_ana_group_desc *desc,
 		struct nvme_ns *ns)
 {
+<<<<<<< HEAD
 	ns->ana_grpid = le32_to_cpu(desc->grpid);
 	ns->ana_state = desc->state;
 	clear_bit(NVME_NS_ANA_PENDING, &ns->flags);
@@ -670,6 +756,14 @@ static void nvme_update_ns_ana_state(struct nvme_ana_group_desc *desc,
 	 */
 	if (nvme_state_is_live(ns->ana_state) &&
 	    ns->ctrl->state == NVME_CTRL_LIVE)
+=======
+	mutex_lock(&ns->head->lock);
+	ns->ana_grpid = le32_to_cpu(desc->grpid);
+	ns->ana_state = desc->state;
+	clear_bit(NVME_NS_ANA_PENDING, &ns->flags);
+
+	if (nvme_state_is_live(ns->ana_state))
+>>>>>>> master
 		nvme_mpath_set_live(ns);
 }
 
@@ -692,9 +786,14 @@ static int nvme_update_ana_state(struct nvme_ctrl *ctrl,
 
 	down_read(&ctrl->namespaces_rwsem);
 	list_for_each_entry(ns, &ctrl->namespaces, list) {
+<<<<<<< HEAD
 		unsigned nsid;
 again:
 		nsid = le32_to_cpu(desc->nsids[n]);
+=======
+		unsigned nsid = le32_to_cpu(desc->nsids[n]);
+
+>>>>>>> master
 		if (ns->head->ns_id < nsid)
 			continue;
 		if (ns->head->ns_id == nsid)
@@ -704,7 +803,11 @@ again:
 		if (ns->head->ns_id > nsid)
 			goto again;
 	}
+<<<<<<< HEAD
 	up_read(&ctrl->namespaces_rwsem);
+=======
+	up_write(&ctrl->namespaces_rwsem);
+>>>>>>> master
 	return 0;
 }
 
@@ -907,6 +1010,7 @@ void nvme_mpath_init_ctrl(struct nvme_ctrl *ctrl)
 	INIT_WORK(&ctrl->ana_work, nvme_ana_work);
 }
 
+<<<<<<< HEAD
 int nvme_mpath_init_identify(struct nvme_ctrl *ctrl, struct nvme_id_ctrl *id)
 {
 	size_t max_transfer_size = ctrl->max_hw_sectors << SECTOR_SHIFT;
@@ -916,6 +1020,10 @@ int nvme_mpath_init_identify(struct nvme_ctrl *ctrl, struct nvme_id_ctrl *id)
 	/* check if multipath is enabled and we have the capability */
 	if (!multipath || !ctrl->subsys ||
 	    !(ctrl->subsys->cmic & NVME_CTRL_CMIC_ANA))
+=======
+	/* check if multipath is enabled and we have the capability */
+	if (!multipath || !ctrl->subsys || !(ctrl->subsys->cmic & (1 << 3)))
+>>>>>>> master
 		return 0;
 
 	if (!ctrl->max_namespaces ||
@@ -930,10 +1038,20 @@ int nvme_mpath_init_identify(struct nvme_ctrl *ctrl, struct nvme_id_ctrl *id)
 	ctrl->nanagrpid = le32_to_cpu(id->nanagrpid);
 	ctrl->anagrpmax = le32_to_cpu(id->anagrpmax);
 
+<<<<<<< HEAD
 	ana_log_size = sizeof(struct nvme_ana_rsp_hdr) +
 		ctrl->nanagrpid * sizeof(struct nvme_ana_group_desc) +
 		ctrl->max_namespaces * sizeof(__le32);
 	if (ana_log_size > max_transfer_size) {
+=======
+	mutex_init(&ctrl->ana_lock);
+	timer_setup(&ctrl->anatt_timer, nvme_anatt_timeout, 0);
+	ctrl->ana_log_size = sizeof(struct nvme_ana_rsp_hdr) +
+		ctrl->nanagrpid * sizeof(struct nvme_ana_group_desc);
+	ctrl->ana_log_size += ctrl->max_namespaces * sizeof(__le32);
+
+	if (ctrl->ana_log_size > ctrl->max_hw_sectors << SECTOR_SHIFT) {
+>>>>>>> master
 		dev_err(ctrl->device,
 			"ANA log page size (%zd) larger than MDTS (%zd).\n",
 			ana_log_size, max_transfer_size);
@@ -947,20 +1065,37 @@ int nvme_mpath_init_identify(struct nvme_ctrl *ctrl, struct nvme_id_ctrl *id)
 		if (!ctrl->ana_log_buf)
 			return -ENOMEM;
 	}
+<<<<<<< HEAD
 	ctrl->ana_log_size = ana_log_size;
 	error = nvme_read_ana_log(ctrl);
+=======
+
+	error = nvme_read_ana_log(ctrl, false);
+>>>>>>> master
 	if (error)
 		goto out_uninit;
 	return 0;
+<<<<<<< HEAD
 
 out_uninit:
 	nvme_mpath_uninit(ctrl);
+=======
+out_free_ana_log_buf:
+	kfree(ctrl->ana_log_buf);
+	ctrl->ana_log_buf = NULL;
+out:
+>>>>>>> master
 	return error;
 }
 
 void nvme_mpath_uninit(struct nvme_ctrl *ctrl)
 {
+<<<<<<< HEAD
 	kvfree(ctrl->ana_log_buf);
 	ctrl->ana_log_buf = NULL;
 	ctrl->ana_log_size = 0;
+=======
+	kfree(ctrl->ana_log_buf);
+	ctrl->ana_log_buf = NULL;
+>>>>>>> master
 }

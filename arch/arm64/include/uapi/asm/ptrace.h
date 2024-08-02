@@ -46,7 +46,10 @@
 #define PSR_I_BIT	0x00000080
 #define PSR_A_BIT	0x00000100
 #define PSR_D_BIT	0x00000200
+<<<<<<< HEAD
 #define PSR_BTYPE_MASK	0x00000c00
+=======
+>>>>>>> master
 #define PSR_SSBS_BIT	0x00001000
 #define PSR_PAN_BIT	0x00400000
 #define PSR_UAO_BIT	0x00800000
@@ -145,9 +148,15 @@ struct user_sve_header {
  */
 
 /* Offset from the start of struct user_sve_header to the register data */
+<<<<<<< HEAD
 #define SVE_PT_REGS_OFFSET						\
 	((sizeof(struct user_sve_header) + (__SVE_VQ_BYTES - 1))	\
 		/ __SVE_VQ_BYTES * __SVE_VQ_BYTES)
+=======
+#define SVE_PT_REGS_OFFSET					\
+	((sizeof(struct user_sve_header) + (SVE_VQ_BYTES - 1))	\
+		/ SVE_VQ_BYTES * SVE_VQ_BYTES)
+>>>>>>> master
 
 /*
  * The register data content and layout depends on the value of the

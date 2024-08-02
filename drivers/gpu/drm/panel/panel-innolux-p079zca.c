@@ -68,6 +68,11 @@ static int innolux_panel_disable(struct drm_panel *panel)
 	if (!innolux->enabled)
 		return 0;
 
+<<<<<<< HEAD
+=======
+	backlight_disable(innolux->backlight);
+
+>>>>>>> master
 	innolux->enabled = false;
 
 	return 0;
@@ -83,7 +88,12 @@ static int innolux_panel_unprepare(struct drm_panel *panel)
 
 	err = mipi_dsi_dcs_set_display_off(innolux->link);
 	if (err < 0)
+<<<<<<< HEAD
 		dev_err(panel->dev, "failed to set display off: %d\n", err);
+=======
+		DRM_DEV_ERROR(panel->dev, "failed to set display off: %d\n",
+			      err);
+>>>>>>> master
 
 	err = mipi_dsi_dcs_enter_sleep_mode(innolux->link);
 	if (err < 0) {

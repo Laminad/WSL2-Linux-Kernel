@@ -241,6 +241,29 @@ static const struct sdhci_acpi_chip sdhci_acpi_chip_int = {
 
 #ifdef CONFIG_X86
 
+<<<<<<< HEAD
+=======
+static bool sdhci_acpi_byt(void)
+{
+	static const struct x86_cpu_id byt[] = {
+		{ X86_VENDOR_INTEL, 6, INTEL_FAM6_ATOM_SILVERMONT },
+		{}
+	};
+
+	return x86_match_cpu(byt);
+}
+
+static bool sdhci_acpi_cht(void)
+{
+	static const struct x86_cpu_id cht[] = {
+		{ X86_VENDOR_INTEL, 6, INTEL_FAM6_ATOM_AIRMONT },
+		{}
+	};
+
+	return x86_match_cpu(cht);
+}
+
+>>>>>>> master
 #define BYT_IOSF_SCCEP			0x63
 #define BYT_IOSF_OCP_NETCTRL0		0x1078
 #define BYT_IOSF_OCP_TIMEOUT_BASE	GENMASK(10, 8)
@@ -983,6 +1006,14 @@ static void sdhci_acpi_remove(struct platform_device *pdev)
 
 	dead = (sdhci_readl(c->host, SDHCI_INT_STATUS) == ~0);
 	sdhci_remove_host(c->host, dead);
+<<<<<<< HEAD
+=======
+
+	if (c->slot && c->slot->free_slot)
+		c->slot->free_slot(pdev);
+
+	sdhci_free_host(c->host);
+>>>>>>> master
 
 	if (c->slot && c->slot->free_slot)
 		c->slot->free_slot(pdev);

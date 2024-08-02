@@ -789,6 +789,7 @@ static void mld_del_delrec(struct inet6_dev *idev, struct ifmcaddr6 *im)
 	if (pmc) {
 		im->idev = pmc->idev;
 		if (im->mca_sfmode == MCAST_INCLUDE) {
+<<<<<<< HEAD
 			tomb = rcu_replace_pointer(im->mca_tomb,
 						   mc_dereference(pmc->mca_tomb, pmc->idev),
 						   lockdep_is_held(&im->idev->mc_lock));
@@ -799,13 +800,22 @@ static void mld_del_delrec(struct inet6_dev *idev, struct ifmcaddr6 *im)
 						      lockdep_is_held(&im->idev->mc_lock));
 			rcu_assign_pointer(pmc->mca_sources, sources);
 			for_each_psf_mclock(im, psf)
+=======
+			swap(im->mca_tomb, pmc->mca_tomb);
+			swap(im->mca_sources, pmc->mca_sources);
+			for (psf = im->mca_sources; psf; psf = psf->sf_next)
+>>>>>>> master
 				psf->sf_crcount = idev->mc_qrv;
 		} else {
 			im->mca_crcount = idev->mc_qrv;
 		}
 		in6_dev_put(pmc->idev);
 		ip6_mc_clear_src(pmc);
+<<<<<<< HEAD
 		kfree_rcu(pmc, rcu);
+=======
+		kfree(pmc);
+>>>>>>> master
 	}
 }
 

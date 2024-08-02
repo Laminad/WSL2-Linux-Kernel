@@ -290,4 +290,28 @@ static int test__bp_signal(struct test_suite *test __maybe_unused, int subtest _
 		TEST_OK : TEST_FAIL;
 }
 
+<<<<<<< HEAD
 DEFINE_SUITE("Breakpoint overflow signal handler", bp_signal);
+=======
+bool test__bp_signal_is_supported(void)
+{
+	/*
+	 * PowerPC and S390 do not support creation of instruction
+	 * breakpoints using the perf_event interface.
+	 *
+	 * ARM requires explicit rounding down of the instruction
+	 * pointer in Thumb mode, and then requires the single-step
+	 * to be handled explicitly in the overflow handler to avoid
+	 * stepping into the SIGIO handler and getting stuck on the
+	 * breakpointed instruction.
+	 *
+	 * Just disable the test for these architectures until these
+	 * issues are resolved.
+	 */
+#if defined(__powerpc__) || defined(__s390x__) || defined(__arm__)
+	return false;
+#else
+	return true;
+#endif
+}
+>>>>>>> master

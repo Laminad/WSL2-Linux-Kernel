@@ -129,9 +129,12 @@ struct ieee80211_regdomain *iwl_mvm_get_regdomain(struct wiphy *wiphy,
 		*changed = (status == MCC_RESP_NEW_CHAN_PROFILE ||
 			    status == MCC_RESP_ILLEGAL);
 	}
+<<<<<<< HEAD
 	resp_ver = iwl_fw_lookup_notif_ver(mvm->fw, IWL_ALWAYS_LONG_GROUP,
 					   MCC_UPDATE_CMD, 0);
 	IWL_DEBUG_LAR(mvm, "MCC update response version: %d\n", resp_ver);
+=======
+>>>>>>> master
 
 	regd = iwl_parse_nvm_mcc_info(mvm->trans->dev, mvm->cfg,
 				      __le32_to_cpu(resp->n_channels),
@@ -2376,7 +2379,93 @@ static void iwl_mvm_cfg_he_sta(struct iwl_mvm *mvm,
 		flags |= STA_CTXT_HE_RU_2MHZ_BLOCK;
 
 	/* HTC flags */
+<<<<<<< HEAD
 	sta_ctxt_cmd.htc_flags = iwl_mvm_get_sta_htc_flags(sta, &sta->deflink);
+=======
+	if (sta->he_cap.he_cap_elem.mac_cap_info[0] &
+	    IEEE80211_HE_MAC_CAP0_HTC_HE)
+		sta_ctxt_cmd.htc_flags |= cpu_to_le32(IWL_HE_HTC_SUPPORT);
+	if ((sta->he_cap.he_cap_elem.mac_cap_info[1] &
+	      IEEE80211_HE_MAC_CAP1_LINK_ADAPTATION) ||
+	    (sta->he_cap.he_cap_elem.mac_cap_info[2] &
+	      IEEE80211_HE_MAC_CAP2_LINK_ADAPTATION)) {
+		u8 link_adap =
+			((sta->he_cap.he_cap_elem.mac_cap_info[2] &
+			  IEEE80211_HE_MAC_CAP2_LINK_ADAPTATION) << 1) +
+			 (sta->he_cap.he_cap_elem.mac_cap_info[1] &
+			  IEEE80211_HE_MAC_CAP1_LINK_ADAPTATION);
+
+		if (link_adap == 2)
+			sta_ctxt_cmd.htc_flags |=
+				cpu_to_le32(IWL_HE_HTC_LINK_ADAP_UNSOLICITED);
+		else if (link_adap == 3)
+			sta_ctxt_cmd.htc_flags |=
+				cpu_to_le32(IWL_HE_HTC_LINK_ADAP_BOTH);
+	}
+	if (sta->he_cap.he_cap_elem.mac_cap_info[2] &
+	    IEEE80211_HE_MAC_CAP2_UL_MU_RESP_SCHED)
+		sta_ctxt_cmd.htc_flags |=
+			cpu_to_le32(IWL_HE_HTC_UL_MU_RESP_SCHED);
+	if (sta->he_cap.he_cap_elem.mac_cap_info[2] & IEEE80211_HE_MAC_CAP2_BSR)
+		sta_ctxt_cmd.htc_flags |= cpu_to_le32(IWL_HE_HTC_BSR_SUPP);
+	if (sta->he_cap.he_cap_elem.mac_cap_info[3] &
+	    IEEE80211_HE_MAC_CAP3_OMI_CONTROL)
+		sta_ctxt_cmd.htc_flags |= cpu_to_le32(IWL_HE_HTC_OMI_SUPP);
+	if (sta->he_cap.he_cap_elem.mac_cap_info[4] & IEEE80211_HE_MAC_CAP4_BQR)
+		sta_ctxt_cmd.htc_flags |= cpu_to_le32(IWL_HE_HTC_BQR_SUPP);
+
+	/*
+	 * Initialize the PPE thresholds to "None" (7), as described in Table
+	 * 9-262ac of 80211.ax/D3.0.
+	 */
+	memset(&sta_ctxt_cmd.pkt_ext, 7, sizeof(sta_ctxt_cmd.pkt_ext));
+
+	/* If PPE Thresholds exist, parse them into a FW-familiar format. */
+	if (sta->he_cap.he_cap_elem.phy_cap_info[6] &
+	    IEEE80211_HE_PHY_CAP6_PPE_THRESHOLD_PRESENT) {
+		u8 nss = (sta->he_cap.ppe_thres[0] &
+			  IEEE80211_PPE_THRES_NSS_MASK) + 1;
+		u8 ru_index_bitmap =
+			(sta->he_cap.ppe_thres[0] &
+			 IEEE80211_PPE_THRES_RU_INDEX_BITMASK_MASK) >>
+			IEEE80211_PPE_THRES_RU_INDEX_BITMASK_POS;
+		u8 *ppe = &sta->he_cap.ppe_thres[0];
+		u8 ppe_pos_bit = 7; /* Starting after PPE header */
+
+		/*
+		 * FW currently supports only nss == MAX_HE_SUPP_NSS
+		 *
+		 * If nss > MAX: we can ignore values we don't support
+		 * If nss < MAX: we can set zeros in other streams
+		 */
+		if (nss > MAX_HE_SUPP_NSS) {
+			IWL_INFO(mvm, "Got NSS = %d - trimming to %d\n", nss,
+				 MAX_HE_SUPP_NSS);
+			nss = MAX_HE_SUPP_NSS;
+		}
+
+		for (i = 0; i < nss; i++) {
+			u8 ru_index_tmp = ru_index_bitmap << 1;
+			u8 bw;
+
+			for (bw = 0; bw < MAX_HE_CHANNEL_BW_INDX; bw++) {
+				ru_index_tmp >>= 1;
+				if (!(ru_index_tmp & 1))
+					continue;
+
+				sta_ctxt_cmd.pkt_ext.pkt_ext_qam_th[i][bw][1] =
+					iwl_mvm_he_get_ppe_val(ppe,
+							       ppe_pos_bit);
+				ppe_pos_bit +=
+					IEEE80211_PPE_THRES_INFO_PPET_SIZE;
+				sta_ctxt_cmd.pkt_ext.pkt_ext_qam_th[i][bw][0] =
+					iwl_mvm_he_get_ppe_val(ppe,
+							       ppe_pos_bit);
+				ppe_pos_bit +=
+					IEEE80211_PPE_THRES_INFO_PPET_SIZE;
+			}
+		}
+>>>>>>> master
 
 	/* PPE Thresholds */
 	if (!iwl_mvm_set_sta_pkt_ext(mvm, &sta->deflink, &sta_ctxt_cmd.pkt_ext))
@@ -3926,12 +4015,41 @@ int iwl_mvm_mac_sta_state_common(struct ieee80211_hw *hw,
 		ret = 0;
 	} else if (old_state == IEEE80211_STA_AUTH &&
 		   new_state == IEEE80211_STA_ASSOC) {
+<<<<<<< HEAD
 		ret = iwl_mvm_sta_state_auth_to_assoc(hw, mvm, vif, sta,
 						      callbacks);
 	} else if (old_state == IEEE80211_STA_ASSOC &&
 		   new_state == IEEE80211_STA_AUTHORIZED) {
 		ret = iwl_mvm_sta_state_assoc_to_authorized(mvm, vif, sta,
 							    callbacks);
+=======
+		if (vif->type == NL80211_IFTYPE_AP) {
+			mvmvif->ap_assoc_sta_count++;
+			iwl_mvm_mac_ctxt_changed(mvm, vif, false, NULL);
+		}
+
+		iwl_mvm_rs_rate_init(mvm, sta, mvmvif->phy_ctxt->channel->band,
+				     false);
+		ret = iwl_mvm_update_sta(mvm, vif, sta);
+	} else if (old_state == IEEE80211_STA_ASSOC &&
+		   new_state == IEEE80211_STA_AUTHORIZED) {
+
+		/* we don't support TDLS during DCM */
+		if (iwl_mvm_phy_ctx_count(mvm) > 1)
+			iwl_mvm_teardown_tdls_peers(mvm);
+
+		if (sta->tdls)
+			iwl_mvm_tdls_check_trigger(mvm, vif, sta->addr,
+						   NL80211_TDLS_ENABLE_LINK);
+
+		/* enable beacon filtering */
+		WARN_ON(iwl_mvm_enable_beacon_filter(mvm, vif, 0));
+
+		iwl_mvm_rs_rate_init(mvm, sta, mvmvif->phy_ctxt->channel->band,
+				     true);
+
+		ret = 0;
+>>>>>>> master
 	} else if (old_state == IEEE80211_STA_AUTHORIZED &&
 		   new_state == IEEE80211_STA_ASSOC) {
 		ret = iwl_mvm_sta_state_authorized_to_assoc(mvm, vif, sta,
@@ -5858,6 +5976,7 @@ void iwl_mvm_mac_sta_statistics(struct ieee80211_hw *hw,
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_SIGNAL_AVG);
 	}
 
+<<<<<<< HEAD
 	if (iwl_mvm_has_tlc_offload(mvm)) {
 		struct iwl_lq_sta_rs_fw *lq_sta = &mvmsta->deflink.lq_sta.rs_fw;
 
@@ -5865,6 +5984,8 @@ void iwl_mvm_mac_sta_statistics(struct ieee80211_hw *hw,
 		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BITRATE);
 	}
 
+=======
+>>>>>>> master
 	/* if beacon filtering isn't on mac80211 does it anyway */
 	if (!(vif->driver_flags & IEEE80211_VIF_BEACON_FILTER))
 		return;

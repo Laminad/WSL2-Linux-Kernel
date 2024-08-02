@@ -349,6 +349,7 @@ static void steam_set_lizard_mode(struct steam_device *steam, bool enable)
 		/* disable esc, enter, cursor */
 		steam_send_report_byte(steam, STEAM_CMD_CLEAR_MAPPINGS);
 
+<<<<<<< HEAD
 		if (steam->quirks & STEAM_QUIRK_DECK) {
 			steam_write_registers(steam,
 				STEAM_REG_RPAD_MARGIN, 0x00, /* disable margin */
@@ -373,6 +374,8 @@ static void steam_set_lizard_mode(struct steam_device *steam, bool enable)
 	}
 }
 
+=======
+>>>>>>> master
 static int steam_input_open(struct input_dev *dev)
 {
 	struct steam_device *steam = input_get_drvdata(dev);
@@ -650,7 +653,11 @@ static int steam_register(struct steam_device *steam)
 		 */
 		mutex_lock(&steam->mutex);
 		if (steam_get_serial(steam) < 0)
+<<<<<<< HEAD
 			strscpy(steam->serial_no, "XXXXXXXXXX",
+=======
+			strlcpy(steam->serial_no, "XXXXXXXXXX",
+>>>>>>> master
 					sizeof(steam->serial_no));
 		mutex_unlock(&steam->mutex);
 
@@ -662,8 +669,12 @@ static int steam_register(struct steam_device *steam)
 			steam_battery_register(steam);
 
 		mutex_lock(&steam_devices_lock);
+<<<<<<< HEAD
 		if (list_empty(&steam->list))
 			list_add(&steam->list, &steam_devices);
+=======
+		list_add(&steam->list, &steam_devices);
+>>>>>>> master
 		mutex_unlock(&steam_devices_lock);
 	}
 
@@ -689,7 +700,11 @@ static void steam_unregister(struct steam_device *steam)
 		hid_info(steam->hdev, "Steam Controller '%s' disconnected",
 				steam->serial_no);
 		mutex_lock(&steam_devices_lock);
+<<<<<<< HEAD
 		list_del_init(&steam->list);
+=======
+		list_del(&steam->list);
+>>>>>>> master
 		mutex_unlock(&steam_devices_lock);
 		steam->serial_no[0] = 0;
 	}
@@ -1382,6 +1397,7 @@ static int steam_raw_event(struct hid_device *hdev,
 		input = rcu_dereference(steam->input);
 		if (likely(input))
 			steam_do_input_event(steam, input, data);
+<<<<<<< HEAD
 		rcu_read_unlock();
 		break;
 	case STEAM_EV_DECK_INPUT_DATA:
@@ -1391,6 +1407,8 @@ static int steam_raw_event(struct hid_device *hdev,
 		input = rcu_dereference(steam->input);
 		if (likely(input))
 			steam_do_deck_input_event(steam, input, data);
+=======
+>>>>>>> master
 		rcu_read_unlock();
 		break;
 	case STEAM_EV_CONNECT:

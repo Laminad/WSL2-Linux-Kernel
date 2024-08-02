@@ -74,7 +74,135 @@ static unsigned int __maybe_unused aarch32_check_condition(u32 opcode, u32 psr)
 		else
 			return ARM_OPCODE_CONDTEST_FAIL;
 	}
+<<<<<<< HEAD
 	return ARM_OPCODE_CONDTEST_UNCOND;
+=======
+	raw_spin_unlock_irqrestore(&insn_emulation_lock, flags);
+	return rc;
+}
+
+static int update_insn_emulation_mode(struct insn_emulation *insn,
+				       enum insn_emulation_mode prev)
+{
+	int ret = 0;
+
+	switch (prev) {
+	case INSN_UNDEF: /* Nothing to be done */
+		break;
+	case INSN_EMULATE:
+		remove_emulation_hooks(insn->ops);
+		break;
+	case INSN_HW:
+		if (!run_all_cpu_set_hw_mode(insn, false))
+			pr_notice("Disabled %s support\n", insn->ops->name);
+		break;
+	}
+
+	switch (insn->current_mode) {
+	case INSN_UNDEF:
+		break;
+	case INSN_EMULATE:
+		register_emulation_hooks(insn->ops);
+		break;
+	case INSN_HW:
+		ret = run_all_cpu_set_hw_mode(insn, true);
+		if (!ret)
+			pr_notice("Enabled %s support\n", insn->ops->name);
+		break;
+	}
+
+	return ret;
+}
+
+static void __init register_insn_emulation(struct insn_emulation_ops *ops)
+{
+	unsigned long flags;
+	struct insn_emulation *insn;
+
+	insn = kzalloc(sizeof(*insn), GFP_KERNEL);
+	if (!insn)
+		return;
+
+	insn->ops = ops;
+	insn->min = INSN_UNDEF;
+
+	switch (ops->status) {
+	case INSN_DEPRECATED:
+		insn->current_mode = INSN_EMULATE;
+		/* Disable the HW mode if it was turned on at early boot time */
+		run_all_cpu_set_hw_mode(insn, false);
+		insn->max = INSN_HW;
+		break;
+	case INSN_OBSOLETE:
+		insn->current_mode = INSN_UNDEF;
+		insn->max = INSN_EMULATE;
+		break;
+	}
+
+	raw_spin_lock_irqsave(&insn_emulation_lock, flags);
+	list_add(&insn->node, &insn_emulation);
+	nr_insn_emulated++;
+	raw_spin_unlock_irqrestore(&insn_emulation_lock, flags);
+
+	/* Register any handlers if required */
+	update_insn_emulation_mode(insn, INSN_UNDEF);
+}
+
+static int emulation_proc_handler(struct ctl_table *table, int write,
+				  void __user *buffer, size_t *lenp,
+				  loff_t *ppos)
+{
+	int ret = 0;
+	struct insn_emulation *insn = (struct insn_emulation *) table->data;
+	enum insn_emulation_mode prev_mode = insn->current_mode;
+
+	table->data = &insn->current_mode;
+	ret = proc_dointvec_minmax(table, write, buffer, lenp, ppos);
+
+	if (ret || !write || prev_mode == insn->current_mode)
+		goto ret;
+
+	ret = update_insn_emulation_mode(insn, prev_mode);
+	if (ret) {
+		/* Mode change failed, revert to previous mode. */
+		insn->current_mode = prev_mode;
+		update_insn_emulation_mode(insn, INSN_UNDEF);
+	}
+ret:
+	table->data = insn;
+	return ret;
+}
+
+static void __init register_insn_emulation_sysctl(void)
+{
+	unsigned long flags;
+	int i = 0;
+	struct insn_emulation *insn;
+	struct ctl_table *insns_sysctl, *sysctl;
+
+	insns_sysctl = kcalloc(nr_insn_emulated + 1, sizeof(*sysctl),
+			       GFP_KERNEL);
+	if (!insns_sysctl)
+		return;
+
+	raw_spin_lock_irqsave(&insn_emulation_lock, flags);
+	list_for_each_entry(insn, &insn_emulation, node) {
+		sysctl = &insns_sysctl[i];
+
+		sysctl->mode = 0644;
+		sysctl->maxlen = sizeof(int);
+
+		sysctl->procname = insn->ops->name;
+		sysctl->data = insn;
+		sysctl->extra1 = &insn->min;
+		sysctl->extra2 = &insn->max;
+		sysctl->proc_handler = emulation_proc_handler;
+		i++;
+	}
+	raw_spin_unlock_irqrestore(&insn_emulation_lock, flags);
+
+	register_sysctl("abi", insns_sysctl);
+>>>>>>> master
 }
 
 #ifdef CONFIG_SWP_EMULATION

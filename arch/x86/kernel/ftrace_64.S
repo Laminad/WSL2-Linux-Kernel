@@ -196,7 +196,24 @@ SYM_INNER_LABEL(ftrace_caller_end, SYM_L_GLOBAL)
 SYM_FUNC_END(ftrace_caller);
 STACK_FRAME_NON_STANDARD_FP(ftrace_caller)
 
+<<<<<<< HEAD
 SYM_FUNC_START(ftrace_regs_caller)
+=======
+#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+GLOBAL(ftrace_graph_call)
+	jmp ftrace_stub
+#endif
+
+/*
+ * This is weak to keep gas from relaxing the jumps.
+ * It is also used to copy the retq for trampolines.
+ */
+WEAK(ftrace_stub)
+	retq
+ENDPROC(ftrace_caller)
+
+ENTRY(ftrace_regs_caller)
+>>>>>>> master
 	/* Save the current flags before any operations that can change them */
 	pushfq
 

@@ -112,6 +112,7 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 		seq_puts(m, " mips64r6");
 	seq_puts(m, "\n");
 
+<<<<<<< HEAD
 	seq_puts(m, "ASEs implemented\t:");
 	if (cpu_has_mips16)
 		seq_puts(m, " mips16");
@@ -152,6 +153,29 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 	if (cpu_has_loongson_ext2)
 		seq_puts(m, " loongson-ext2");
 	seq_puts(m, "\n");
+=======
+	seq_printf(m, "ASEs implemented\t:");
+	if (cpu_has_mips16)	seq_printf(m, "%s", " mips16");
+	if (cpu_has_mips16e2)	seq_printf(m, "%s", " mips16e2");
+	if (cpu_has_mdmx)	seq_printf(m, "%s", " mdmx");
+	if (cpu_has_mips3d)	seq_printf(m, "%s", " mips3d");
+	if (cpu_has_smartmips)	seq_printf(m, "%s", " smartmips");
+	if (cpu_has_dsp)	seq_printf(m, "%s", " dsp");
+	if (cpu_has_dsp2)	seq_printf(m, "%s", " dsp2");
+	if (cpu_has_dsp3)	seq_printf(m, "%s", " dsp3");
+	if (cpu_has_mipsmt)	seq_printf(m, "%s", " mt");
+	if (cpu_has_mmips)	seq_printf(m, "%s", " micromips");
+	if (cpu_has_vz)		seq_printf(m, "%s", " vz");
+	if (cpu_has_msa)	seq_printf(m, "%s", " msa");
+	if (cpu_has_eva)	seq_printf(m, "%s", " eva");
+	if (cpu_has_htw)	seq_printf(m, "%s", " htw");
+	if (cpu_has_xpa)	seq_printf(m, "%s", " xpa");
+	if (cpu_has_loongson_mmi)	seq_printf(m, "%s", " loongson-mmi");
+	if (cpu_has_loongson_cam)	seq_printf(m, "%s", " loongson-cam");
+	if (cpu_has_loongson_ext)	seq_printf(m, "%s", " loongson-ext");
+	if (cpu_has_loongson_ext2)	seq_printf(m, "%s", " loongson-ext2");
+	seq_printf(m, "\n");
+>>>>>>> master
 
 	if (cpu_has_mmips) {
 		seq_printf(m, "micromips kernel\t: %s\n",

@@ -230,10 +230,16 @@ static int __vb2_buf_mem_alloc(struct vb2_buffer *vb)
 		if (size < vb->planes[plane].length)
 			goto free;
 
+<<<<<<< HEAD
 		mem_priv = call_ptr_memop(alloc,
 					  vb,
 					  q->alloc_devs[plane] ? : q->dev,
 					  size);
+=======
+		mem_priv = call_ptr_memop(vb, alloc,
+				q->alloc_devs[plane] ? : q->dev,
+				q->dma_attrs, size, q->dma_dir, q->gfp_flags);
+>>>>>>> master
 		if (IS_ERR_OR_NULL(mem_priv)) {
 			if (mem_priv)
 				ret = PTR_ERR(mem_priv);
@@ -763,6 +769,11 @@ int vb2_core_reqbufs(struct vb2_queue *q, enum vb2_memory memory,
 		return -EBUSY;
 	}
 
+	if (q->waiting_in_dqbuf && *count) {
+		dprintk(1, "another dup()ped fd is waiting for a buffer\n");
+		return -EBUSY;
+	}
+
 	if (*count == 0 || q->num_buffers != 0 ||
 	    (q->memory != VB2_MEMORY_UNKNOWN && q->memory != memory) ||
 	    !verify_coherency_flags(q, non_coherent_mem)) {
@@ -918,9 +929,15 @@ int vb2_core_create_bufs(struct vb2_queue *q, enum vb2_memory memory,
 		return -ENOBUFS;
 	}
 
+<<<<<<< HEAD
 	if (no_previous_buffers) {
 		if (q->waiting_in_dqbuf && *count) {
 			dprintk(q, 1, "another dup()ped fd is waiting for a buffer\n");
+=======
+	if (!q->num_buffers) {
+		if (q->waiting_in_dqbuf && *count) {
+			dprintk(1, "another dup()ped fd is waiting for a buffer\n");
+>>>>>>> master
 			return -EBUSY;
 		}
 		memset(q->alloc_devs, 0, sizeof(q->alloc_devs));
@@ -932,6 +949,7 @@ int vb2_core_create_bufs(struct vb2_queue *q, enum vb2_memory memory,
 		q->memory = memory;
 		mutex_unlock(&q->mmap_lock);
 		q->waiting_for_buffers = !q->is_output;
+<<<<<<< HEAD
 		set_queue_coherency(q, non_coherent_mem);
 	} else {
 		if (q->memory != memory) {
@@ -940,6 +958,11 @@ int vb2_core_create_bufs(struct vb2_queue *q, enum vb2_memory memory,
 		}
 		if (!verify_coherency_flags(q, non_coherent_mem))
 			return -EINVAL;
+=======
+	} else if (q->memory != memory) {
+		dprintk(1, "memory model mismatch\n");
+		return -EINVAL;
+>>>>>>> master
 	}
 
 	num_buffers = min(*count, VB2_MAX_FRAME - q->num_buffers);
@@ -1809,7 +1832,11 @@ static int __vb2_wait_for_done_vb(struct vb2_queue *q, int nonblocking)
 		int ret;
 
 		if (q->waiting_in_dqbuf) {
+<<<<<<< HEAD
 			dprintk(q, 1, "another dup()ped fd is waiting for a buffer\n");
+=======
+			dprintk(1, "another dup()ped fd is waiting for a buffer\n");
+>>>>>>> master
 			return -EBUSY;
 		}
 
@@ -2137,7 +2164,11 @@ int vb2_core_streamon(struct vb2_queue *q, unsigned int type)
 	if (q->queued_count >= q->min_buffers_needed) {
 		ret = vb2_start_streaming(q);
 		if (ret)
+<<<<<<< HEAD
 			goto unprepare;
+=======
+			return ret;
+>>>>>>> master
 	}
 
 	q->streaming = 1;
@@ -2330,6 +2361,15 @@ int vb2_mmap(struct vb2_queue *q, struct vm_area_struct *vma)
 	}
 
 	mutex_lock(&q->mmap_lock);
+<<<<<<< HEAD
+=======
+
+	if (vb2_fileio_is_active(q)) {
+		dprintk(1, "mmap: file io in progress\n");
+		ret = -EBUSY;
+		goto unlock;
+	}
+>>>>>>> master
 
 	/*
 	 * Find the plane corresponding to the offset passed by userspace. This
@@ -2354,6 +2394,7 @@ int vb2_mmap(struct vb2_queue *q, struct vm_area_struct *vma)
 		goto unlock;
 	}
 
+<<<<<<< HEAD
 	/*
 	 * vm_pgoff is treated in V4L2 API as a 'cookie' to select a buffer,
 	 * not as a in-buffer offset. We always want to mmap a whole buffer
@@ -2361,6 +2402,8 @@ int vb2_mmap(struct vb2_queue *q, struct vm_area_struct *vma)
 	 */
 	vma->vm_pgoff = 0;
 
+=======
+>>>>>>> master
 	ret = call_memop(vb, mmap, vb->planes[plane].mem_priv, vma);
 
 unlock:
@@ -2792,7 +2835,11 @@ static size_t __vb2_perform_fileio(struct vb2_queue *q, char __user *data, size_
 		return -EINVAL;
 
 	if (q->waiting_in_dqbuf) {
+<<<<<<< HEAD
 		dprintk(q, 3, "another dup()ped fd is %s\n",
+=======
+		dprintk(3, "another dup()ped fd is %s\n",
+>>>>>>> master
 			read ? "reading" : "writing");
 		return -EBUSY;
 	}

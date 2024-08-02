@@ -7,11 +7,15 @@
 #include <linux/wait.h>
 
 typedef struct {
+<<<<<<< HEAD
 	union {
 		u64 asid[NR_CPUS];
 		atomic64_t mmid;
 	};
 
+=======
+	u64 asid[NR_CPUS];
+>>>>>>> master
 	void *vdso;
 
 	/* lock to be held whilst modifying fp_bd_emupage_allocmap */

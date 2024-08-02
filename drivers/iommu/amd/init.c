@@ -32,9 +32,16 @@
 #include <asm/set_memory.h>
 
 #include <linux/crash_dump.h>
+<<<<<<< HEAD:drivers/iommu/amd/init.c
 
 #include "amd_iommu.h"
 #include "../irq_remapping.h"
+=======
+#include "amd_iommu.h"
+#include "amd_iommu_proto.h"
+#include "amd_iommu_types.h"
+#include "irq_remapping.h"
+>>>>>>> master:drivers/iommu/amd_iommu_init.c
 
 /*
  * definitions for the ACPI scanning code
@@ -1013,6 +1020,19 @@ static int iommu_init_ga_log(struct amd_iommu *iommu)
 	if (!iommu->ga_log_tail)
 		goto err_out;
 
+<<<<<<< HEAD:drivers/iommu/amd/init.c
+=======
+	entry = iommu_virt_to_phys(iommu->ga_log) | GA_LOG_SIZE_512;
+	memcpy_toio(iommu->mmio_base + MMIO_GA_LOG_BASE_OFFSET,
+		    &entry, sizeof(entry));
+	entry = (iommu_virt_to_phys(iommu->ga_log_tail) &
+		 (BIT_ULL(52)-1)) & ~7ULL;
+	memcpy_toio(iommu->mmio_base + MMIO_GA_LOG_TAIL_OFFSET,
+		    &entry, sizeof(entry));
+	writel(0x00, iommu->mmio_base + MMIO_GA_HEAD_OFFSET);
+	writel(0x00, iommu->mmio_base + MMIO_GA_TAIL_OFFSET);
+
+>>>>>>> master:drivers/iommu/amd_iommu_init.c
 	return 0;
 err_out:
 	free_ga_log(iommu);
@@ -1242,7 +1262,11 @@ static void __init set_dev_entry_from_acpi(struct amd_iommu *iommu,
 	amd_iommu_set_rlookup_table(iommu, devid);
 }
 
+<<<<<<< HEAD:drivers/iommu/amd/init.c
 int __init add_special_device(u8 type, u8 id, u32 *devid, bool cmd_line)
+=======
+int __init add_special_device(u8 type, u8 id, u16 *devid, bool cmd_line)
+>>>>>>> master:drivers/iommu/amd_iommu_init.c
 {
 	struct devid_map *entry;
 	struct list_head *list;
@@ -2044,6 +2068,7 @@ static const struct attribute_group *amd_iommu_groups[] = {
 	NULL,
 };
 
+<<<<<<< HEAD:drivers/iommu/amd/init.c
 /*
  * Note: IVHD 0x11 and 0x40 also contains exact copy
  * of the IOMMU Extended Feature Register [MMIO Offset 0030h].
@@ -2079,6 +2104,8 @@ static void __init late_iommu_features_init(struct amd_iommu *iommu)
 	}
 }
 
+=======
+>>>>>>> master:drivers/iommu/amd_iommu_init.c
 static int __init iommu_init_pci(struct amd_iommu *iommu)
 {
 	int cap_ptr = iommu->cap_ptr;
@@ -2580,6 +2607,9 @@ static int __init init_unity_map_range(struct ivmd_header *m,
 	if (e == NULL)
 		return -ENOMEM;
 
+	if (m->flags & IVMD_FLAG_EXCL_RANGE)
+		init_exclusion_range(m);
+
 	switch (m->type) {
 	default:
 		kfree(e);
@@ -2639,7 +2669,11 @@ static int __init init_memory_definitions(struct acpi_table_header *table)
 	while (p < end) {
 		m = (struct ivmd_header *)p;
 		if (m->flags & (IVMD_FLAG_UNITY_MAP | IVMD_FLAG_EXCL_RANGE))
+<<<<<<< HEAD:drivers/iommu/amd/init.c
 			init_unity_map_range(m, table);
+=======
+			init_unity_map_range(m);
+>>>>>>> master:drivers/iommu/amd_iommu_init.c
 
 		p += m->length;
 	}

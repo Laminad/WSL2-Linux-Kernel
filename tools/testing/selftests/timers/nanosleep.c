@@ -146,6 +146,10 @@ int main(int argc, char **argv)
 			continue;
 		}
 
+<<<<<<< HEAD
+=======
+		printf("Nanosleep %-31s ", clockstring(clockid));
+>>>>>>> master
 		fflush(stdout);
 
 		length = 10;

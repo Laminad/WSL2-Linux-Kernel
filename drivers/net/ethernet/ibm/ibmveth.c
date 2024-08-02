@@ -1209,7 +1209,31 @@ out:
 	dev_consume_skb_any(skb);
 	return NETDEV_TX_OK;
 
+<<<<<<< HEAD
 
+=======
+map_failed_frags:
+	last = i+1;
+	for (i = 1; i < last; i++)
+		dma_unmap_page(&adapter->vdev->dev, descs[i].fields.address,
+			       descs[i].fields.flags_len & IBMVETH_BUF_LEN_MASK,
+			       DMA_TO_DEVICE);
+
+	dma_unmap_single(&adapter->vdev->dev,
+			 descs[0].fields.address,
+			 descs[0].fields.flags_len & IBMVETH_BUF_LEN_MASK,
+			 DMA_TO_DEVICE);
+map_failed:
+	if (!firmware_has_feature(FW_FEATURE_CMO))
+		netdev_err(netdev, "tx: unable to map xmit buffer\n");
+	adapter->tx_map_failed++;
+	if (skb_linearize(skb)) {
+		netdev->stats.tx_dropped++;
+		goto out;
+	}
+	force_bounce = 1;
+	goto retry_bounce;
+>>>>>>> master
 }
 
 static void ibmveth_rx_mss_helper(struct sk_buff *skb, u16 mss, int lrg_pkt)
@@ -1693,7 +1717,11 @@ static int ibmveth_probe(struct vio_dev *dev, const struct vio_device_id *id)
 	adapter->vdev = dev;
 	adapter->netdev = netdev;
 	adapter->mcastFilterSize = be32_to_cpu(*mcastFilterSize_p);
+<<<<<<< HEAD
 	ibmveth_init_link_settings(netdev);
+=======
+	adapter->pool_config = 0;
+>>>>>>> master
 
 	netif_napi_add_weight(netdev, &adapter->napi, ibmveth_poll, 16);
 

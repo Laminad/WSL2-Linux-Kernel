@@ -790,10 +790,23 @@ static __init void cpufeatures_cpu_quirks(void)
 	}
 
 	if ((version & 0xffff0000) == 0x004e0000) {
+<<<<<<< HEAD
+=======
+		cur_cpu_spec->cpu_features &= ~(CPU_FTR_DAWR);
+>>>>>>> master
 		cur_cpu_spec->cpu_features |= CPU_FTR_P9_TIDR;
 	}
 
 	update_tlbie_feature_flag(version);
+<<<<<<< HEAD
+=======
+	/*
+	 * PKEY was not in the initial base or feature node
+	 * specification, but it should become optional in the next
+	 * cpu feature version sequence.
+	 */
+	cur_cpu_spec->cpu_features |= CPU_FTR_PKEY;
+>>>>>>> master
 }
 
 static void __init cpufeatures_setup_finished(void)

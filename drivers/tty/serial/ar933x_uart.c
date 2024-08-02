@@ -579,6 +579,7 @@ static const struct uart_ops ar933x_uart_ops = {
 	.verify_port	= ar933x_uart_verify_port,
 };
 
+<<<<<<< HEAD
 static int ar933x_config_rs485(struct uart_port *port, struct ktermios *termios,
 				struct serial_rs485 *rs485conf)
 {
@@ -592,6 +593,8 @@ static int ar933x_config_rs485(struct uart_port *port, struct ktermios *termios,
 	return 0;
 }
 
+=======
+>>>>>>> master
 #ifdef CONFIG_SERIAL_AR933X_CONSOLE
 static struct ar933x_uart_port *
 ar933x_console_ports[CONFIG_SERIAL_AR933X_NR_UARTS];
@@ -782,6 +785,7 @@ static int ar933x_uart_probe(struct platform_device *pdev)
 	baud = ar933x_uart_get_baud(port->uartclk, 0, AR933X_UART_MAX_STEP);
 	up->max_baud = min_t(unsigned int, baud, AR933X_UART_MAX_BAUD);
 
+<<<<<<< HEAD
 	ret = uart_get_rs485_mode(port);
 	if (ret)
 		goto err_disable_clk;
@@ -802,6 +806,8 @@ static int ar933x_uart_probe(struct platform_device *pdev)
 		}
 	}
 
+=======
+>>>>>>> master
 #ifdef CONFIG_SERIAL_AR933X_CONSOLE
 	ar933x_console_ports[up->port.line] = up;
 #endif

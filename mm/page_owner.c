@@ -305,6 +305,12 @@ void pagetypeinfo_showmixedcount_print(struct seq_file *m,
 		pageblock_mt = get_pageblock_migratetype(page);
 
 		for (; pfn < block_end_pfn; pfn++) {
+<<<<<<< HEAD
+=======
+			if (!pfn_valid_within(pfn))
+				continue;
+
+>>>>>>> master
 			/* The pageblock is online, no need to recheck. */
 			page = pfn_to_page(pfn);
 

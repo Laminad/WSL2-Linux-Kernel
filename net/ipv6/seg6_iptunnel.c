@@ -163,6 +163,7 @@ int seg6_do_srh_encap(struct sk_buff *skb, struct ipv6_sr_hdr *osrh, int proto)
 		hdr->hop_limit = ip6_dst_hoplimit(skb_dst(skb));
 
 		memset(IP6CB(skb), 0, sizeof(*IP6CB(skb)));
+<<<<<<< HEAD
 
 		/* the control block has been erased, so we have to set the
 		 * iif once again.
@@ -171,6 +172,8 @@ int seg6_do_srh_encap(struct sk_buff *skb, struct ipv6_sr_hdr *osrh, int proto)
 		 * ip_rcv_core(...)).
 		 */
 		IP6CB(skb)->iif = skb->skb_iif;
+=======
+>>>>>>> master
 	}
 
 	hdr->nexthdr = NEXTHDR_ROUTING;

@@ -3468,7 +3468,11 @@ static void mvneta_rxq_hw_init(struct mvneta_port *pp,
 		/* Set Offset */
 		mvneta_rxq_offset_set(pp, rxq, 0);
 		mvneta_rxq_buf_size_set(pp, rxq, PAGE_SIZE < SZ_64K ?
+<<<<<<< HEAD
 					MVNETA_MAX_RX_BUF_SIZE :
+=======
+					PAGE_SIZE :
+>>>>>>> master
 					MVNETA_RX_BUF_SIZE(pp->pkt_size));
 		mvneta_rxq_bm_disable(pp, rxq);
 		mvneta_rxq_fill(pp, rxq, rxq->size);

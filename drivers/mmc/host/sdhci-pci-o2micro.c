@@ -415,6 +415,7 @@ static int sdhci_o2_execute_tuning(struct mmc_host *mmc, u32 opcode)
 		mmc->ios.bus_width = MMC_BUS_WIDTH_8;
 		sdhci_set_bus_width(host, current_bus_width);
 	}
+<<<<<<< HEAD
 
 	/* Cancel force power mode enter L0 */
 	scratch = sdhci_readw(host, O2_SD_MISC_CTRL);
@@ -423,6 +424,8 @@ static int sdhci_o2_execute_tuning(struct mmc_host *mmc, u32 opcode)
 
 	sdhci_reset(host, SDHCI_RESET_CMD);
 	sdhci_reset(host, SDHCI_RESET_DATA);
+=======
+>>>>>>> master
 
 	host->flags &= ~SDHCI_HS400_TUNING;
 	return 0;
@@ -726,14 +729,20 @@ static int sdhci_pci_o2_probe_slot(struct sdhci_pci_slot *slot)
 {
 	struct sdhci_pci_chip *chip;
 	struct sdhci_host *host;
+<<<<<<< HEAD
 	struct o2_host *o2_host = sdhci_pci_priv(slot);
+=======
+>>>>>>> master
 	u32 reg, caps;
 	int ret;
 
 	chip = slot->chip;
 	host = slot->host;
 
+<<<<<<< HEAD
 	o2_host->dll_adjust_count = 0;
+=======
+>>>>>>> master
 	caps = sdhci_readl(host, SDHCI_CAPABILITIES);
 
 	/*
@@ -743,11 +752,14 @@ static int sdhci_pci_o2_probe_slot(struct sdhci_pci_slot *slot)
 	if (caps & SDHCI_CAN_DO_8BIT)
 		host->mmc->caps |= MMC_CAP_8_BIT_DATA;
 
+<<<<<<< HEAD
 	host->quirks2 |= SDHCI_QUIRK2_BROKEN_DDR50;
 
 	sdhci_pci_o2_enable_msi(chip, host);
 
 	host->mmc_host_ops.execute_tuning = sdhci_o2_execute_tuning;
+=======
+>>>>>>> master
 	switch (chip->pdev->device) {
 	case PCI_DEVICE_ID_O2_SDS0:
 	case PCI_DEVICE_ID_O2_SEABIRD0:
@@ -966,6 +978,9 @@ static int sdhci_pci_o2_probe(struct sdhci_pci_chip *chip)
 		pci_write_config_byte(chip->pdev, O2_SD_LOCK_WP, scratch);
 		break;
 	case PCI_DEVICE_ID_O2_SEABIRD0:
+		if (chip->pdev->revision == 0x01)
+			chip->quirks |= SDHCI_QUIRK_DELAY_AFTER_POWER;
+		/* fall through */
 	case PCI_DEVICE_ID_O2_SEABIRD1:
 		/* UnLock WP */
 		ret = pci_read_config_byte(chip->pdev,

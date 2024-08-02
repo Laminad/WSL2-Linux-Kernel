@@ -1455,8 +1455,13 @@ static const struct mlxsw_sp_fid_family mlxsw_sp1_fid_8021d_family = {
 static const struct mlxsw_sp_fid_family mlxsw_sp1_fid_dummy_family = {
 	.type			= MLXSW_SP_FID_TYPE_DUMMY,
 	.fid_size		= sizeof(struct mlxsw_sp_fid),
+<<<<<<< HEAD
 	.start_index		= MLXSW_SP_FID_DUMMY,
 	.end_index		= MLXSW_SP_FID_DUMMY,
+=======
+	.start_index		= VLAN_N_VID - 1,
+	.end_index		= VLAN_N_VID - 1,
+>>>>>>> master
 	.ops			= &mlxsw_sp_fid_dummy_ops,
 	.smpe_index_valid       = false,
 };

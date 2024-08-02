@@ -177,11 +177,19 @@ VISIBLE_IF_KUNIT size_t aa_unpack_u16_chunk(struct aa_ext *e, char **chunk)
 	size_t size = 0;
 	void *pos = e->pos;
 
+<<<<<<< HEAD
 	if (!aa_inbounds(e, sizeof(u16)))
 		goto fail;
 	size = le16_to_cpu(get_unaligned((__le16 *) e->pos));
 	e->pos += sizeof(__le16);
 	if (!aa_inbounds(e, size))
+=======
+	if (!inbounds(e, sizeof(u16)))
+		goto fail;
+	size = le16_to_cpu(get_unaligned((__le16 *) e->pos));
+	e->pos += sizeof(__le16);
+	if (!inbounds(e, size))
+>>>>>>> master
 		goto fail;
 	*chunk = e->pos;
 	e->pos += size;
@@ -274,14 +282,27 @@ VISIBLE_IF_KUNIT bool aa_unpack_u32(struct aa_ext *e, u32 *data, const char *nam
 {
 	void *pos = e->pos;
 
+<<<<<<< HEAD
 	if (aa_unpack_nameX(e, AA_U32, name)) {
 		if (!aa_inbounds(e, sizeof(u32)))
+=======
+	if (unpack_nameX(e, AA_U32, name)) {
+		if (!inbounds(e, sizeof(u32)))
+>>>>>>> master
 			goto fail;
 		if (data)
 			*data = le32_to_cpu(get_unaligned((__le32 *) e->pos));
 		e->pos += sizeof(u32);
 		return true;
 	}
+<<<<<<< HEAD
+=======
+
+fail:
+	e->pos = pos;
+	return 0;
+}
+>>>>>>> master
 
 fail:
 	e->pos = pos;
@@ -293,8 +314,13 @@ VISIBLE_IF_KUNIT bool aa_unpack_u64(struct aa_ext *e, u64 *data, const char *nam
 {
 	void *pos = e->pos;
 
+<<<<<<< HEAD
 	if (aa_unpack_nameX(e, AA_U64, name)) {
 		if (!aa_inbounds(e, sizeof(u64)))
+=======
+	if (unpack_nameX(e, AA_U64, name)) {
+		if (!inbounds(e, sizeof(u64)))
+>>>>>>> master
 			goto fail;
 		if (data)
 			*data = le64_to_cpu(get_unaligned((__le64 *) e->pos));
@@ -304,6 +330,7 @@ VISIBLE_IF_KUNIT bool aa_unpack_u64(struct aa_ext *e, u64 *data, const char *nam
 
 fail:
 	e->pos = pos;
+<<<<<<< HEAD
 	return false;
 }
 EXPORT_SYMBOL_IF_KUNIT(aa_unpack_u64);
@@ -316,10 +343,14 @@ static bool aa_unpack_cap_low(struct aa_ext *e, kernel_cap_t *data, const char *
 		return false;
 	data->val = val;
 	return true;
+=======
+	return 0;
+>>>>>>> master
 }
 
 static bool aa_unpack_cap_high(struct aa_ext *e, kernel_cap_t *data, const char *name)
 {
+<<<<<<< HEAD
 	u32 val;
 
 	if (!aa_unpack_u32(e, &val, name))
@@ -336,9 +367,26 @@ VISIBLE_IF_KUNIT bool aa_unpack_array(struct aa_ext *e, const char *name, u16 *s
 		if (!aa_inbounds(e, sizeof(u16)))
 			goto fail;
 		*size = le16_to_cpu(get_unaligned((__le16 *) e->pos));
+=======
+	void *pos = e->pos;
+
+	if (unpack_nameX(e, AA_ARRAY, name)) {
+		int size;
+		if (!inbounds(e, sizeof(u16)))
+			goto fail;
+		size = (int)le16_to_cpu(get_unaligned((__le16 *) e->pos));
+>>>>>>> master
 		e->pos += sizeof(u16);
 		return true;
 	}
+<<<<<<< HEAD
+=======
+
+fail:
+	e->pos = pos;
+	return 0;
+}
+>>>>>>> master
 
 fail:
 	e->pos = pos;
@@ -350,9 +398,15 @@ VISIBLE_IF_KUNIT size_t aa_unpack_blob(struct aa_ext *e, char **blob, const char
 {
 	void *pos = e->pos;
 
+<<<<<<< HEAD
 	if (aa_unpack_nameX(e, AA_BLOB, name)) {
 		u32 size;
 		if (!aa_inbounds(e, sizeof(u32)))
+=======
+	if (unpack_nameX(e, AA_BLOB, name)) {
+		u32 size;
+		if (!inbounds(e, sizeof(u32)))
+>>>>>>> master
 			goto fail;
 		size = le32_to_cpu(get_unaligned((__le32 *) e->pos));
 		e->pos += sizeof(u32);
@@ -362,6 +416,32 @@ VISIBLE_IF_KUNIT size_t aa_unpack_blob(struct aa_ext *e, char **blob, const char
 			return size;
 		}
 	}
+<<<<<<< HEAD
+=======
+
+fail:
+	e->pos = pos;
+	return 0;
+}
+
+static int unpack_str(struct aa_ext *e, const char **string, const char *name)
+{
+	char *src_str;
+	size_t size = 0;
+	void *pos = e->pos;
+	*string = NULL;
+	if (unpack_nameX(e, AA_STRING, name)) {
+		size = unpack_u16_chunk(e, &src_str);
+		if (size) {
+			/* strings are null terminated, length is size - 1 */
+			if (src_str[size - 1] != 0)
+				goto fail;
+			*string = src_str;
+
+			return size;
+		}
+	}
+>>>>>>> master
 
 fail:
 	e->pos = pos;

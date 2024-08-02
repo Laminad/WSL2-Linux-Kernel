@@ -855,6 +855,7 @@ static unsigned long do_shrink_slab(struct shrink_control *shrinkctl,
 	 */
 	nr = xchg_nr_deferred(shrinker, shrinkctl);
 
+<<<<<<< HEAD
 	if (shrinker->seeks) {
 		delta = freeable >> priority;
 		delta *= 4;
@@ -869,6 +870,13 @@ static unsigned long do_shrink_slab(struct shrink_control *shrinkctl,
 	}
 
 	total_scan = nr >> priority;
+=======
+	total_scan = nr;
+	delta = freeable >> priority;
+	delta *= 4;
+	do_div(delta, shrinker->seeks);
+
+>>>>>>> master
 	total_scan += delta;
 	total_scan = min(total_scan, (2 * freeable));
 
@@ -2207,12 +2215,20 @@ unsigned int reclaim_clean_pages_from_list(struct zone *zone,
 	LIST_HEAD(clean_folios);
 	unsigned int noreclaim_flag;
 
+<<<<<<< HEAD
 	list_for_each_entry_safe(folio, next, folio_list, lru) {
 		if (!folio_test_hugetlb(folio) && folio_is_file_lru(folio) &&
 		    !folio_test_dirty(folio) && !__folio_test_movable(folio) &&
 		    !folio_test_unevictable(folio)) {
 			folio_clear_active(folio);
 			list_move(&folio->lru, &clean_folios);
+=======
+	list_for_each_entry_safe(page, next, page_list, lru) {
+		if (page_is_file_cache(page) && !PageDirty(page) &&
+		    !__PageMovable(page) && !PageUnevictable(page)) {
+			ClearPageActive(page);
+			list_move(&page->lru, &clean_pages);
+>>>>>>> master
 		}
 	}
 
@@ -2883,7 +2899,12 @@ static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
  *    1TB     101        10GB
  *   10TB     320        32GB
  */
+<<<<<<< HEAD
 static bool inactive_is_low(struct lruvec *lruvec, enum lru_list inactive_lru)
+=======
+static bool inactive_list_is_low(struct lruvec *lruvec, bool file,
+				 struct scan_control *sc, bool trace)
+>>>>>>> master
 {
 	enum lru_list active_lru = inactive_lru + LRU_ACTIVE;
 	unsigned long inactive, active;
@@ -2893,15 +2914,57 @@ static bool inactive_is_low(struct lruvec *lruvec, enum lru_list inactive_lru)
 	inactive = lruvec_page_state(lruvec, NR_LRU_BASE + inactive_lru);
 	active = lruvec_page_state(lruvec, NR_LRU_BASE + active_lru);
 
+<<<<<<< HEAD
 	gb = (inactive + active) >> (30 - PAGE_SHIFT);
 	if (gb)
 		inactive_ratio = int_sqrt(10 * gb);
 	else
 		inactive_ratio = 1;
+=======
+	inactive = lruvec_lru_size(lruvec, inactive_lru, sc->reclaim_idx);
+	active = lruvec_lru_size(lruvec, active_lru, sc->reclaim_idx);
+
+	/*
+	 * When refaults are being observed, it means a new workingset
+	 * is being established. Disable active list protection to get
+	 * rid of the stale workingset quickly.
+	 */
+	refaults = lruvec_page_state(lruvec, WORKINGSET_ACTIVATE);
+	if (file && lruvec->refaults != refaults) {
+		inactive_ratio = 0;
+	} else {
+		gb = (inactive + active) >> (30 - PAGE_SHIFT);
+		if (gb)
+			inactive_ratio = int_sqrt(10 * gb);
+		else
+			inactive_ratio = 1;
+	}
+
+	if (trace)
+		trace_mm_vmscan_inactive_list_is_low(pgdat->node_id, sc->reclaim_idx,
+			lruvec_lru_size(lruvec, inactive_lru, MAX_NR_ZONES), inactive,
+			lruvec_lru_size(lruvec, active_lru, MAX_NR_ZONES), active,
+			inactive_ratio, file);
+>>>>>>> master
 
 	return inactive * inactive_ratio < active;
 }
 
+<<<<<<< HEAD
+=======
+static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
+				 struct lruvec *lruvec, struct scan_control *sc)
+{
+	if (is_active_lru(lru)) {
+		if (inactive_list_is_low(lruvec, is_file_lru(lru), sc, true))
+			shrink_active_list(nr_to_scan, lruvec, sc, lru);
+		return 0;
+	}
+
+	return shrink_inactive_list(nr_to_scan, lruvec, sc, lru);
+}
+
+>>>>>>> master
 enum scan_balance {
 	SCAN_EQUAL,
 	SCAN_FRACT,
@@ -3066,16 +3129,55 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
 	/*
 	 * If the system is almost out of file pages, force-scan anon.
 	 */
+<<<<<<< HEAD
 	if (sc->file_is_tiny) {
 		scan_balance = SCAN_ANON;
 		goto out;
+=======
+	if (global_reclaim(sc)) {
+		unsigned long pgdatfile;
+		unsigned long pgdatfree;
+		int z;
+		unsigned long total_high_wmark = 0;
+
+		pgdatfree = sum_zone_node_page_state(pgdat->node_id, NR_FREE_PAGES);
+		pgdatfile = node_page_state(pgdat, NR_ACTIVE_FILE) +
+			   node_page_state(pgdat, NR_INACTIVE_FILE);
+
+		for (z = 0; z < MAX_NR_ZONES; z++) {
+			struct zone *zone = &pgdat->node_zones[z];
+			if (!managed_zone(zone))
+				continue;
+
+			total_high_wmark += high_wmark_pages(zone);
+		}
+
+		if (unlikely(pgdatfile + pgdatfree <= total_high_wmark)) {
+			/*
+			 * Force SCAN_ANON if there are enough inactive
+			 * anonymous pages on the LRU in eligible zones.
+			 * Otherwise, the small LRU gets thrashed.
+			 */
+			if (!inactive_list_is_low(lruvec, false, sc, false) &&
+			    lruvec_lru_size(lruvec, LRU_INACTIVE_ANON, sc->reclaim_idx)
+					>> sc->priority) {
+				scan_balance = SCAN_ANON;
+				goto out;
+			}
+		}
+>>>>>>> master
 	}
 
 	/*
 	 * If there is enough inactive page cache, we do not reclaim
 	 * anything from the anonymous working right now.
 	 */
+<<<<<<< HEAD
 	if (sc->cache_trim_mode) {
+=======
+	if (!inactive_list_is_low(lruvec, true, sc, false) &&
+	    lruvec_lru_size(lruvec, LRU_INACTIVE_FILE, sc->reclaim_idx) >> sc->priority) {
+>>>>>>> master
 		scan_balance = SCAN_FILE;
 		goto out;
 	}
@@ -3195,6 +3297,7 @@ out:
 			/*
 			 * Scan types proportional to swappiness and
 			 * their relative recent reclaim efficiency.
+<<<<<<< HEAD
 			 * Make sure we don't miss the last page on
 			 * the offlined memory cgroups because of a
 			 * round-off error.
@@ -3202,6 +3305,12 @@ out:
 			scan = mem_cgroup_online(memcg) ?
 			       div64_u64(scan * fraction[file], denominator) :
 			       DIV64_U64_ROUND_UP(scan * fraction[file],
+=======
+			 * Make sure we don't miss the last page
+			 * because of a round-off error.
+			 */
+			scan = DIV64_U64_ROUND_UP(scan * fraction[file],
+>>>>>>> master
 						  denominator);
 			break;
 		case SCAN_FILE:
@@ -6417,8 +6526,12 @@ static void shrink_lruvec(struct lruvec *lruvec, struct scan_control *sc)
 	 * Even if we did not try to evict anon pages at all, we want to
 	 * rebalance the anon lru active/inactive ratio.
 	 */
+<<<<<<< HEAD
 	if (can_age_anon_pages(lruvec_pgdat(lruvec), sc) &&
 	    inactive_is_low(lruvec, LRU_INACTIVE_ANON))
+=======
+	if (inactive_list_is_low(lruvec, false, sc, true))
+>>>>>>> master
 		shrink_active_list(SWAP_CLUSTER_MAX, lruvec,
 				   sc, LRU_ACTIVE_ANON);
 }
@@ -6835,11 +6948,18 @@ static void snapshot_refaults(struct mem_cgroup *target_memcg, pg_data_t *pgdat)
 	if (lru_gen_enabled())
 		return;
 
+<<<<<<< HEAD
 	target_lruvec = mem_cgroup_lruvec(target_memcg, pgdat);
 	refaults = lruvec_page_state(target_lruvec, WORKINGSET_ACTIVATE_ANON);
 	target_lruvec->refaults[WORKINGSET_ANON] = refaults;
 	refaults = lruvec_page_state(target_lruvec, WORKINGSET_ACTIVATE_FILE);
 	target_lruvec->refaults[WORKINGSET_FILE] = refaults;
+=======
+		lruvec = mem_cgroup_lruvec(pgdat, memcg);
+		refaults = lruvec_page_state(lruvec, WORKINGSET_ACTIVATE);
+		lruvec->refaults = refaults;
+	} while ((memcg = mem_cgroup_iter(root_memcg, memcg, NULL)));
+>>>>>>> master
 }
 
 /*
@@ -7220,9 +7340,18 @@ static void kswapd_age_node(struct pglist_data *pgdat, struct scan_control *sc)
 
 	memcg = mem_cgroup_iter(NULL, NULL, NULL);
 	do {
+<<<<<<< HEAD
 		lruvec = mem_cgroup_lruvec(memcg, pgdat);
 		shrink_active_list(SWAP_CLUSTER_MAX, lruvec,
 				   sc, LRU_ACTIVE_ANON);
+=======
+		struct lruvec *lruvec = mem_cgroup_lruvec(pgdat, memcg);
+
+		if (inactive_list_is_low(lruvec, false, sc, true))
+			shrink_active_list(SWAP_CLUSTER_MAX, lruvec,
+					   sc, LRU_ACTIVE_ANON);
+
+>>>>>>> master
 		memcg = mem_cgroup_iter(NULL, memcg, NULL);
 	} while (memcg);
 }
@@ -7637,6 +7766,7 @@ out:
 }
 
 /*
+<<<<<<< HEAD
  * The pgdat->kswapd_highest_zoneidx is used to pass the highest zone index to
  * be reclaimed by kswapd from the waker. If the value is MAX_NR_ZONES which is
  * not a valid index then either kswapd runs for first time or kswapd couldn't
@@ -7649,6 +7779,20 @@ static enum zone_type kswapd_highest_zoneidx(pg_data_t *pgdat,
 	enum zone_type curr_idx = READ_ONCE(pgdat->kswapd_highest_zoneidx);
 
 	return curr_idx == MAX_NR_ZONES ? prev_highest_zoneidx : curr_idx;
+=======
+ * The pgdat->kswapd_classzone_idx is used to pass the highest zone index to be
+ * reclaimed by kswapd from the waker. If the value is MAX_NR_ZONES which is not
+ * a valid index then either kswapd runs for first time or kswapd couldn't sleep
+ * after previous reclaim attempt (node is still unbalanced). In that case
+ * return the zone index of the previous kswapd reclaim cycle.
+ */
+static enum zone_type kswapd_classzone_idx(pg_data_t *pgdat,
+					   enum zone_type prev_classzone_idx)
+{
+	if (pgdat->kswapd_classzone_idx == MAX_NR_ZONES)
+		return prev_classzone_idx;
+	return pgdat->kswapd_classzone_idx;
+>>>>>>> master
 }
 
 static void kswapd_try_to_sleep(pg_data_t *pgdat, int alloc_order, int reclaim_order,
@@ -7788,12 +7932,20 @@ kswapd_try_sleep:
 		kswapd_try_to_sleep(pgdat, alloc_order, reclaim_order,
 					highest_zoneidx);
 
+<<<<<<< HEAD
 		/* Read the new order and highest_zoneidx */
 		alloc_order = READ_ONCE(pgdat->kswapd_order);
 		highest_zoneidx = kswapd_highest_zoneidx(pgdat,
 							highest_zoneidx);
 		WRITE_ONCE(pgdat->kswapd_order, 0);
 		WRITE_ONCE(pgdat->kswapd_highest_zoneidx, MAX_NR_ZONES);
+=======
+		/* Read the new order and classzone_idx */
+		alloc_order = reclaim_order = pgdat->kswapd_order;
+		classzone_idx = kswapd_classzone_idx(pgdat, classzone_idx);
+		pgdat->kswapd_order = 0;
+		pgdat->kswapd_classzone_idx = MAX_NR_ZONES;
+>>>>>>> master
 
 		ret = try_to_freeze();
 		if (kthread_should_stop())
@@ -7847,6 +7999,7 @@ void wakeup_kswapd(struct zone *zone, gfp_t gfp_flags, int order,
 		return;
 
 	pgdat = zone->zone_pgdat;
+<<<<<<< HEAD
 	curr_idx = READ_ONCE(pgdat->kswapd_highest_zoneidx);
 
 	if (curr_idx == MAX_NR_ZONES || curr_idx < highest_zoneidx)
@@ -7855,6 +8008,15 @@ void wakeup_kswapd(struct zone *zone, gfp_t gfp_flags, int order,
 	if (READ_ONCE(pgdat->kswapd_order) < order)
 		WRITE_ONCE(pgdat->kswapd_order, order);
 
+=======
+
+	if (pgdat->kswapd_classzone_idx == MAX_NR_ZONES)
+		pgdat->kswapd_classzone_idx = classzone_idx;
+	else
+		pgdat->kswapd_classzone_idx = max(pgdat->kswapd_classzone_idx,
+						  classzone_idx);
+	pgdat->kswapd_order = max(pgdat->kswapd_order, order);
+>>>>>>> master
 	if (!waitqueue_active(&pgdat->kswapd_wait))
 		return;
 

@@ -90,6 +90,21 @@ struct btrfs_device {
 
 	u64 generation;
 
+<<<<<<< HEAD
+=======
+	spinlock_t io_lock ____cacheline_aligned;
+	int running_pending;
+	/* When true means this device has pending chunk alloc in
+	 * current transaction. Protected by chunk_mutex.
+	 */
+	bool has_pending_chunks;
+
+	/* regular prio bios */
+	struct btrfs_pending_bios pending_bios;
+	/* sync bios */
+	struct btrfs_pending_bios pending_sync_bios;
+
+>>>>>>> master
 	struct block_device *bdev;
 
 	struct btrfs_zoned_device_info *zone_info;

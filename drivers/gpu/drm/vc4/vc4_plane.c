@@ -1384,6 +1384,7 @@ static void vc4_plane_atomic_async_update(struct drm_plane *plane,
 	if (!drm_dev_enter(plane->dev, &idx))
 		return;
 
+<<<<<<< HEAD
 	swap(plane->state->fb, new_plane_state->fb);
 	plane->state->crtc_x = new_plane_state->crtc_x;
 	plane->state->crtc_y = new_plane_state->crtc_y;
@@ -1403,6 +1404,15 @@ static void vc4_plane_atomic_async_update(struct drm_plane *plane,
 	plane->state->src = new_plane_state->src;
 	plane->state->dst = new_plane_state->dst;
 	plane->state->visible = new_plane_state->visible;
+=======
+	swap(plane->state->fb, state->fb);
+	/* Set the cursor's position on the screen.  This is the
+	 * expected change from the drm_mode_cursor_universal()
+	 * helper.
+	 */
+	plane->state->crtc_x = state->crtc_x;
+	plane->state->crtc_y = state->crtc_y;
+>>>>>>> master
 
 	new_vc4_state = to_vc4_plane_state(new_plane_state);
 	vc4_state = to_vc4_plane_state(plane->state);

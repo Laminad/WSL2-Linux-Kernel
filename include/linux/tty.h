@@ -458,6 +458,7 @@ int tty_set_termios(struct tty_struct *tty, struct ktermios *kt);
 
 void tty_wakeup(struct tty_struct *tty);
 
+<<<<<<< HEAD
 int tty_mode_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg);
 int tty_perform_flush(struct tty_struct *tty, unsigned long arg);
 struct tty_struct *tty_init_dev(struct tty_driver *driver, int idx);
@@ -465,6 +466,25 @@ void tty_release_struct(struct tty_struct *tty, int idx);
 void tty_init_termios(struct tty_struct *tty);
 void tty_save_termios(struct tty_struct *tty);
 int tty_standard_install(struct tty_driver *driver,
+=======
+extern long tty_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
+extern int tty_mode_ioctl(struct tty_struct *tty, struct file *file,
+			unsigned int cmd, unsigned long arg);
+extern long tty_jobctrl_ioctl(struct tty_struct *tty, struct tty_struct *real_tty,
+			      struct file *file, unsigned int cmd, unsigned long arg);
+extern int tty_perform_flush(struct tty_struct *tty, unsigned long arg);
+extern void tty_default_fops(struct file_operations *fops);
+extern struct tty_struct *alloc_tty_struct(struct tty_driver *driver, int idx);
+extern int tty_alloc_file(struct file *file);
+extern void tty_add_file(struct tty_struct *tty, struct file *file);
+extern void tty_free_file(struct file *file);
+extern struct tty_struct *tty_init_dev(struct tty_driver *driver, int idx);
+extern void tty_release_struct(struct tty_struct *tty, int idx);
+extern int tty_release(struct inode *inode, struct file *filp);
+extern void tty_init_termios(struct tty_struct *tty);
+extern void tty_save_termios(struct tty_struct *tty);
+extern int tty_standard_install(struct tty_driver *driver,
+>>>>>>> master
 		struct tty_struct *tty);
 
 extern struct mutex tty_mutex;

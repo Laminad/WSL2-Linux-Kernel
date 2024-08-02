@@ -2106,16 +2106,93 @@ void __init kmemleak_init(void)
 	object_cache = KMEM_CACHE(kmemleak_object, SLAB_NOLEAKTRACE);
 	scan_area_cache = KMEM_CACHE(kmemleak_scan_area, SLAB_NOLEAKTRACE);
 
+<<<<<<< HEAD
+=======
+	if (crt_early_log > ARRAY_SIZE(early_log))
+		pr_warn("Early log buffer exceeded (%d), please increase DEBUG_KMEMLEAK_EARLY_LOG_SIZE\n",
+			crt_early_log);
+
+	/* the kernel is still in UP mode, so disabling the IRQs is enough */
+	local_irq_save(flags);
+	kmemleak_early_log = 0;
+	if (kmemleak_error) {
+		local_irq_restore(flags);
+		return;
+	} else {
+		kmemleak_enabled = 1;
+		kmemleak_free_enabled = 1;
+	}
+	local_irq_restore(flags);
+
+>>>>>>> master
 	/* register the data/bss sections */
 	create_object((unsigned long)_sdata, _edata - _sdata,
 		      KMEMLEAK_GREY, GFP_ATOMIC);
 	create_object((unsigned long)__bss_start, __bss_stop - __bss_start,
 		      KMEMLEAK_GREY, GFP_ATOMIC);
 	/* only register .data..ro_after_init if not within .data */
+<<<<<<< HEAD
 	if (&__start_ro_after_init < &_sdata || &__end_ro_after_init > &_edata)
 		create_object((unsigned long)__start_ro_after_init,
 			      __end_ro_after_init - __start_ro_after_init,
 			      KMEMLEAK_GREY, GFP_ATOMIC);
+=======
+	if (__start_ro_after_init < _sdata || __end_ro_after_init > _edata)
+		create_object((unsigned long)__start_ro_after_init,
+			      __end_ro_after_init - __start_ro_after_init,
+			      KMEMLEAK_GREY, GFP_ATOMIC);
+
+	/*
+	 * This is the point where tracking allocations is safe. Automatic
+	 * scanning is started during the late initcall. Add the early logged
+	 * callbacks to the kmemleak infrastructure.
+	 */
+	for (i = 0; i < crt_early_log; i++) {
+		struct early_log *log = &early_log[i];
+
+		switch (log->op_type) {
+		case KMEMLEAK_ALLOC:
+			early_alloc(log);
+			break;
+		case KMEMLEAK_ALLOC_PERCPU:
+			early_alloc_percpu(log);
+			break;
+		case KMEMLEAK_FREE:
+			kmemleak_free(log->ptr);
+			break;
+		case KMEMLEAK_FREE_PART:
+			kmemleak_free_part(log->ptr, log->size);
+			break;
+		case KMEMLEAK_FREE_PERCPU:
+			kmemleak_free_percpu(log->ptr);
+			break;
+		case KMEMLEAK_NOT_LEAK:
+			kmemleak_not_leak(log->ptr);
+			break;
+		case KMEMLEAK_IGNORE:
+			kmemleak_ignore(log->ptr);
+			break;
+		case KMEMLEAK_SCAN_AREA:
+			kmemleak_scan_area(log->ptr, log->size, GFP_KERNEL);
+			break;
+		case KMEMLEAK_NO_SCAN:
+			kmemleak_no_scan(log->ptr);
+			break;
+		case KMEMLEAK_SET_EXCESS_REF:
+			object_set_excess_ref((unsigned long)log->ptr,
+					      log->excess_ref);
+			break;
+		default:
+			kmemleak_warn("Unknown early log operation: %d\n",
+				      log->op_type);
+		}
+
+		if (kmemleak_warning) {
+			print_log_trace(log);
+			kmemleak_warning = 0;
+		}
+	}
+>>>>>>> master
 }
 
 /*

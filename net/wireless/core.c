@@ -562,7 +562,11 @@ use_default_name:
 					  &rdev->wiphy.dev, RFKILL_TYPE_WLAN,
 					  &rdev->rfkill_ops, rdev);
 
+<<<<<<< HEAD
 	if (!rdev->wiphy.rfkill) {
+=======
+	if (!rdev->rfkill) {
+>>>>>>> master
 		wiphy_free(&rdev->wiphy);
 		return NULL;
 	}
@@ -1587,7 +1591,11 @@ static int cfg80211_netdev_notifier_call(struct notifier_block *nb,
 					     wdev->use_4addr, 0))
 			return notifier_from_errno(-EOPNOTSUPP);
 
+<<<<<<< HEAD
 		if (rfkill_blocked(rdev->wiphy.rfkill))
+=======
+		if (rfkill_blocked(rdev->rfkill))
+>>>>>>> master
 			return notifier_from_errno(-ERFKILL);
 		break;
 	default:

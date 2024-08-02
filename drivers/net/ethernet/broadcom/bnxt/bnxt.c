@@ -1312,12 +1312,19 @@ static void bnxt_tpa_start(struct bnxt *bp, struct bnxt_rx_ring_info *rxr,
 	prod_rx_buf = &rxr->rx_buf_ring[prod];
 	tpa_info = &rxr->rx_tpa[agg_id];
 
+<<<<<<< HEAD
 	if (unlikely(cons != rxr->rx_next_cons ||
 		     TPA_START_ERROR(tpa_start))) {
 		netdev_warn(bp->dev, "TPA cons %x, expected cons %x, error code %x\n",
 			    cons, rxr->rx_next_cons,
 			    TPA_START_ERROR_CODE(tpa_start1));
 		bnxt_sched_reset_rxr(bp, rxr);
+=======
+	if (unlikely(cons != rxr->rx_next_cons)) {
+		netdev_warn(bp->dev, "TPA cons %x != expected cons %x\n",
+			    cons, rxr->rx_next_cons);
+		bnxt_sched_reset(bp, rxr);
+>>>>>>> master
 		return;
 	}
 	/* Store cfa_code in tpa_info to use in tpa_end
@@ -1853,6 +1860,7 @@ static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
 
 	cons = rxcmp->rx_cmp_opaque;
 	if (unlikely(cons != rxr->rx_next_cons)) {
+<<<<<<< HEAD
 		int rc1 = bnxt_discard_rx(bp, cpr, &tmp_raw_cons, rxcmp);
 
 		/* 0xffff is forced error, don't print it */
@@ -1863,6 +1871,14 @@ static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
 		if (rc1)
 			return rc1;
 		goto next_rx_no_prod_no_len;
+=======
+		int rc1 = bnxt_discard_rx(bp, bnapi, raw_cons, rxcmp);
+
+		netdev_warn(bp->dev, "RX cons %x != expected cons %x\n",
+			    cons, rxr->rx_next_cons);
+		bnxt_sched_reset(bp, rxr);
+		return rc1;
+>>>>>>> master
 	}
 	rx_buf = &rxr->rx_buf_ring[cons];
 	data = rx_buf->data;
@@ -1892,6 +1908,7 @@ static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
 
 		rc = -EIO;
 		if (rx_err & RX_CMPL_ERRORS_BUFFER_ERROR_MASK) {
+<<<<<<< HEAD
 			bnapi->cp_ring.sw_stats.rx.rx_buf_errors++;
 			if (!(bp->flags & BNXT_FLAG_CHIP_P5) &&
 			    !(bp->fw_cap & BNXT_FW_CAP_RING_MONITOR)) {
@@ -1899,6 +1916,10 @@ static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
 						 rx_err);
 				bnxt_sched_reset_rxr(bp, rxr);
 			}
+=======
+			netdev_warn(bp->dev, "RX buffer error %x\n", rx_err);
+			bnxt_sched_reset(bp, rxr);
+>>>>>>> master
 		}
 		goto next_rx_no_len;
 	}
@@ -1930,6 +1951,7 @@ static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
 		skb = bnxt_copy_skb(bnapi, data_ptr, len, dma_addr);
 		bnxt_reuse_rx_data(rxr, cons, data);
 		if (!skb) {
+<<<<<<< HEAD
 			if (agg_bufs) {
 				if (!xdp_active)
 					bnxt_reuse_rx_agg_bufs(cpr, cp_cons, 0,
@@ -1938,6 +1960,12 @@ static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
 					bnxt_xdp_buff_frags_free(rxr, &xdp);
 			}
 			goto oom_next_rx;
+=======
+			if (agg_bufs)
+				bnxt_reuse_rx_agg_bufs(bnapi, cp_cons, agg_bufs);
+			rc = -ENOMEM;
+			goto next_rx;
+>>>>>>> master
 		}
 	} else {
 		u32 payload;
@@ -4697,6 +4725,200 @@ static void bnxt_enable_int(struct bnxt *bp)
 int bnxt_hwrm_func_drv_rgtr(struct bnxt *bp, unsigned long *bmap, int bmap_size,
 			    bool async_only)
 {
+<<<<<<< HEAD
+=======
+	struct input *req = request;
+
+	req->req_type = cpu_to_le16(req_type);
+	req->cmpl_ring = cpu_to_le16(cmpl_ring);
+	req->target_id = cpu_to_le16(target_id);
+	req->resp_addr = cpu_to_le64(bp->hwrm_cmd_resp_dma_addr);
+}
+
+static int bnxt_hwrm_do_send_msg(struct bnxt *bp, void *msg, u32 msg_len,
+				 int timeout, bool silent)
+{
+	int i, intr_process, rc, tmo_count;
+	struct input *req = msg;
+	u32 *data = msg;
+	__le32 *resp_len;
+	u8 *valid;
+	u16 cp_ring_id, len = 0;
+	struct hwrm_err_output *resp = bp->hwrm_cmd_resp_addr;
+	u16 max_req_len = BNXT_HWRM_MAX_REQ_LEN;
+	struct hwrm_short_input short_input = {0};
+
+	req->seq_id = cpu_to_le16(bp->hwrm_cmd_seq++);
+	memset(resp, 0, PAGE_SIZE);
+	cp_ring_id = le16_to_cpu(req->cmpl_ring);
+	intr_process = (cp_ring_id == INVALID_HW_RING_ID) ? 0 : 1;
+
+	if (bp->fw_cap & BNXT_FW_CAP_SHORT_CMD) {
+		void *short_cmd_req = bp->hwrm_short_cmd_req_addr;
+
+		memcpy(short_cmd_req, req, msg_len);
+		memset(short_cmd_req + msg_len, 0, BNXT_HWRM_MAX_REQ_LEN -
+						   msg_len);
+
+		short_input.req_type = req->req_type;
+		short_input.signature =
+				cpu_to_le16(SHORT_REQ_SIGNATURE_SHORT_CMD);
+		short_input.size = cpu_to_le16(msg_len);
+		short_input.req_addr =
+			cpu_to_le64(bp->hwrm_short_cmd_req_dma_addr);
+
+		data = (u32 *)&short_input;
+		msg_len = sizeof(short_input);
+
+		/* Sync memory write before updating doorbell */
+		wmb();
+
+		max_req_len = BNXT_HWRM_SHORT_REQ_LEN;
+	}
+
+	/* Write request msg to hwrm channel */
+	__iowrite32_copy(bp->bar0, data, msg_len / 4);
+
+	for (i = msg_len; i < max_req_len; i += 4)
+		writel(0, bp->bar0 + i);
+
+	/* currently supports only one outstanding message */
+	if (intr_process)
+		bp->hwrm_intr_seq_id = le16_to_cpu(req->seq_id);
+
+	/* Ring channel doorbell */
+	writel(1, bp->bar0 + 0x100);
+
+	if (!timeout)
+		timeout = DFLT_HWRM_CMD_TIMEOUT;
+	/* convert timeout to usec */
+	timeout *= 1000;
+
+	i = 0;
+	/* Short timeout for the first few iterations:
+	 * number of loops = number of loops for short timeout +
+	 * number of loops for standard timeout.
+	 */
+	tmo_count = HWRM_SHORT_TIMEOUT_COUNTER;
+	timeout = timeout - HWRM_SHORT_MIN_TIMEOUT * HWRM_SHORT_TIMEOUT_COUNTER;
+	tmo_count += DIV_ROUND_UP(timeout, HWRM_MIN_TIMEOUT);
+	resp_len = bp->hwrm_cmd_resp_addr + HWRM_RESP_LEN_OFFSET;
+	if (intr_process) {
+		/* Wait until hwrm response cmpl interrupt is processed */
+		while (bp->hwrm_intr_seq_id != HWRM_SEQ_ID_INVALID &&
+		       i++ < tmo_count) {
+			/* on first few passes, just barely sleep */
+			if (i < HWRM_SHORT_TIMEOUT_COUNTER)
+				usleep_range(HWRM_SHORT_MIN_TIMEOUT,
+					     HWRM_SHORT_MAX_TIMEOUT);
+			else
+				usleep_range(HWRM_MIN_TIMEOUT,
+					     HWRM_MAX_TIMEOUT);
+		}
+
+		if (bp->hwrm_intr_seq_id != HWRM_SEQ_ID_INVALID) {
+			netdev_err(bp->dev, "Resp cmpl intr err msg: 0x%x\n",
+				   le16_to_cpu(req->req_type));
+			return -1;
+		}
+		len = (le32_to_cpu(*resp_len) & HWRM_RESP_LEN_MASK) >>
+		      HWRM_RESP_LEN_SFT;
+		valid = bp->hwrm_cmd_resp_addr + len - 1;
+	} else {
+		int j;
+
+		/* Check if response len is updated */
+		for (i = 0; i < tmo_count; i++) {
+			len = (le32_to_cpu(*resp_len) & HWRM_RESP_LEN_MASK) >>
+			      HWRM_RESP_LEN_SFT;
+			if (len)
+				break;
+			/* on first few passes, just barely sleep */
+			if (i < HWRM_SHORT_TIMEOUT_COUNTER)
+				usleep_range(HWRM_SHORT_MIN_TIMEOUT,
+					     HWRM_SHORT_MAX_TIMEOUT);
+			else
+				usleep_range(HWRM_MIN_TIMEOUT,
+					     HWRM_MAX_TIMEOUT);
+		}
+
+		if (i >= tmo_count) {
+			netdev_err(bp->dev, "Error (timeout: %d) msg {0x%x 0x%x} len:%d\n",
+				   HWRM_TOTAL_TIMEOUT(i),
+				   le16_to_cpu(req->req_type),
+				   le16_to_cpu(req->seq_id), len);
+			return -1;
+		}
+
+		/* Last byte of resp contains valid bit */
+		valid = bp->hwrm_cmd_resp_addr + len - 1;
+		for (j = 0; j < HWRM_VALID_BIT_DELAY_USEC; j++) {
+			/* make sure we read from updated DMA memory */
+			dma_rmb();
+			if (*valid)
+				break;
+			usleep_range(1, 5);
+		}
+
+		if (j >= HWRM_VALID_BIT_DELAY_USEC) {
+			netdev_err(bp->dev, "Error (timeout: %d) msg {0x%x 0x%x} len:%d v:%d\n",
+				   HWRM_TOTAL_TIMEOUT(i),
+				   le16_to_cpu(req->req_type),
+				   le16_to_cpu(req->seq_id), len, *valid);
+			return -1;
+		}
+	}
+
+	/* Zero valid bit for compatibility.  Valid bit in an older spec
+	 * may become a new field in a newer spec.  We must make sure that
+	 * a new field not implemented by old spec will read zero.
+	 */
+	*valid = 0;
+	rc = le16_to_cpu(resp->error_code);
+	if (rc && !silent)
+		netdev_err(bp->dev, "hwrm req_type 0x%x seq id 0x%x error 0x%x\n",
+			   le16_to_cpu(resp->req_type),
+			   le16_to_cpu(resp->seq_id), rc);
+	return rc;
+}
+
+int _hwrm_send_message(struct bnxt *bp, void *msg, u32 msg_len, int timeout)
+{
+	return bnxt_hwrm_do_send_msg(bp, msg, msg_len, timeout, false);
+}
+
+int _hwrm_send_message_silent(struct bnxt *bp, void *msg, u32 msg_len,
+			      int timeout)
+{
+	return bnxt_hwrm_do_send_msg(bp, msg, msg_len, timeout, true);
+}
+
+int hwrm_send_message(struct bnxt *bp, void *msg, u32 msg_len, int timeout)
+{
+	int rc;
+
+	mutex_lock(&bp->hwrm_cmd_lock);
+	rc = _hwrm_send_message(bp, msg, msg_len, timeout);
+	mutex_unlock(&bp->hwrm_cmd_lock);
+	return rc;
+}
+
+int hwrm_send_message_silent(struct bnxt *bp, void *msg, u32 msg_len,
+			     int timeout)
+{
+	int rc;
+
+	mutex_lock(&bp->hwrm_cmd_lock);
+	rc = bnxt_hwrm_do_send_msg(bp, msg, msg_len, timeout, true);
+	mutex_unlock(&bp->hwrm_cmd_lock);
+	return rc;
+}
+
+int bnxt_hwrm_func_rgtr_async_events(struct bnxt *bp, unsigned long *bmap,
+				     int bmap_size)
+{
+	struct hwrm_func_drv_rgtr_input req = {0};
+>>>>>>> master
 	DECLARE_BITMAP(async_events_bmap, 256);
 	u32 *events = (u32 *)async_events_bmap;
 	struct hwrm_func_drv_rgtr_output *resp;
@@ -9227,17 +9449,38 @@ static void bnxt_clear_int_mode(struct bnxt *bp)
 int bnxt_reserve_rings(struct bnxt *bp, bool irq_re_init)
 {
 	int tcs = netdev_get_num_tc(bp->dev);
+<<<<<<< HEAD
 	bool irq_cleared = false;
+=======
+	bool reinit_irq = false;
+>>>>>>> master
 	int rc;
 
 	if (!bnxt_need_reserve_rings(bp))
 		return 0;
 
+<<<<<<< HEAD
 	if (irq_re_init && BNXT_NEW_RM(bp) &&
 	    bnxt_get_num_msix(bp) != bp->total_irqs) {
 		bnxt_ulp_irq_stop(bp);
 		bnxt_clear_int_mode(bp);
 		irq_cleared = true;
+=======
+	if (BNXT_NEW_RM(bp) && (bnxt_get_num_msix(bp) != bp->total_irqs)) {
+		bnxt_ulp_irq_stop(bp);
+		bnxt_clear_int_mode(bp);
+		reinit_irq = true;
+	}
+	rc = __bnxt_reserve_rings(bp);
+	if (reinit_irq) {
+		if (!rc)
+			rc = bnxt_init_int_mode(bp);
+		bnxt_ulp_irq_restart(bp, rc);
+	}
+	if (rc) {
+		netdev_err(bp->dev, "ring reservation/IRQ init failure rc: %d\n", rc);
+		return rc;
+>>>>>>> master
 	}
 	rc = __bnxt_reserve_rings(bp);
 	if (irq_cleared) {
@@ -11142,10 +11385,16 @@ skip_uc:
 	    !bnxt_promisc_ok(bp))
 		vnic->rx_mask &= ~CFA_L2_SET_RX_MASK_REQ_MASK_PROMISCUOUS;
 	rc = bnxt_hwrm_cfa_l2_set_rx_mask(bp, 0);
+<<<<<<< HEAD
 	if (rc && (vnic->rx_mask & CFA_L2_SET_RX_MASK_REQ_MASK_MCAST)) {
 		netdev_info(bp->dev, "Failed setting MC filters rc: %d, turning on ALL_MCAST mode\n",
 			    rc);
 		vnic->rx_mask &= ~CFA_L2_SET_RX_MASK_REQ_MASK_MCAST;
+=======
+	if (rc && vnic->mc_list_count) {
+		netdev_info(bp->dev, "Failed setting MC filters rc: %d, turning on ALL_MCAST mode\n",
+			    rc);
+>>>>>>> master
 		vnic->rx_mask |= CFA_L2_SET_RX_MASK_REQ_MASK_ALL_MCAST;
 		vnic->mc_list_count = 0;
 		rc = bnxt_hwrm_cfa_l2_set_rx_mask(bp, 0);
@@ -13821,7 +14070,11 @@ init_err_dl:
 	bnxt_clear_int_mode(bp);
 
 init_err_pci_clean:
+<<<<<<< HEAD
 	bnxt_hwrm_func_drv_unrgtr(bp);
+=======
+	bnxt_free_hwrm_short_cmd_req(bp);
+>>>>>>> master
 	bnxt_free_hwrm_resources(bp);
 	bnxt_ethtool_free(bp);
 	bnxt_ptp_clear(bp);

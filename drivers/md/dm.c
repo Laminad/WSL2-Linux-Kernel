@@ -1038,6 +1038,7 @@ static inline void __dm_io_dec_pending(struct dm_io *io)
 		dm_io_complete(io);
 }
 
+<<<<<<< HEAD
 static void dm_io_set_error(struct dm_io *io, blk_status_t error)
 {
 	unsigned long flags;
@@ -1069,6 +1070,18 @@ static inline struct queue_limits *dm_get_queue_limits(struct mapped_device *md)
 }
 
 void disable_discard(struct mapped_device *md)
+=======
+void disable_discard(struct mapped_device *md)
+{
+	struct queue_limits *limits = dm_get_queue_limits(md);
+
+	/* device doesn't really support DISCARD, disable it */
+	limits->max_discard_sectors = 0;
+	blk_queue_flag_clear(QUEUE_FLAG_DISCARD, md->queue);
+}
+
+void disable_write_same(struct mapped_device *md)
+>>>>>>> master
 {
 	struct queue_limits *limits = dm_get_queue_limits(md);
 
@@ -1098,12 +1111,24 @@ static void clone_endio(struct bio *bio)
 	struct dm_io *io = tio->io;
 	struct mapped_device *md = io->md;
 
+<<<<<<< HEAD
 	if (unlikely(error == BLK_STS_TARGET)) {
 		if (bio_op(bio) == REQ_OP_DISCARD &&
 		    !bdev_max_discard_sectors(bio->bi_bdev))
 			disable_discard(md);
 		else if (bio_op(bio) == REQ_OP_WRITE_ZEROES &&
 			 !bdev_write_zeroes_sectors(bio->bi_bdev))
+=======
+	if (unlikely(error == BLK_STS_TARGET) && md->type != DM_TYPE_NVME_BIO_BASED) {
+		if (bio_op(bio) == REQ_OP_DISCARD &&
+		    !bio->bi_disk->queue->limits.max_discard_sectors)
+			disable_discard(md);
+		else if (bio_op(bio) == REQ_OP_WRITE_SAME &&
+			 !bio->bi_disk->queue->limits.max_write_same_sectors)
+			disable_write_same(md);
+		else if (bio_op(bio) == REQ_OP_WRITE_ZEROES &&
+			 !bio->bi_disk->queue->limits.max_write_zeroes_sectors)
+>>>>>>> master
 			disable_write_zeroes(md);
 	}
 
@@ -1755,9 +1780,91 @@ static void dm_split_and_process_bio(struct mapped_device *md,
 				     struct dm_table *map, struct bio *bio)
 {
 	struct clone_info ci;
+<<<<<<< HEAD
 	struct dm_io *io;
 	blk_status_t error = BLK_STS_OK;
 	bool is_abnormal;
+=======
+	blk_qc_t ret = BLK_QC_T_NONE;
+	int error = 0;
+
+	if (unlikely(!map)) {
+		bio_io_error(bio);
+		return ret;
+	}
+
+	blk_queue_split(md->queue, &bio);
+
+	init_clone_info(&ci, md, map, bio);
+
+	if (bio->bi_opf & REQ_PREFLUSH) {
+		ci.bio = &ci.io->md->flush_bio;
+		ci.sector_count = 0;
+		error = __send_empty_flush(&ci);
+		/* dec_pending submits any data associated with flush */
+	} else if (bio_op(bio) == REQ_OP_ZONE_RESET) {
+		ci.bio = bio;
+		ci.sector_count = 0;
+		error = __split_and_process_non_flush(&ci);
+	} else {
+		ci.bio = bio;
+		ci.sector_count = bio_sectors(bio);
+		while (ci.sector_count && !error) {
+			error = __split_and_process_non_flush(&ci);
+			if (current->bio_list && ci.sector_count && !error) {
+				/*
+				 * Remainder must be passed to generic_make_request()
+				 * so that it gets handled *after* bios already submitted
+				 * have been completely processed.
+				 * We take a clone of the original to store in
+				 * ci.io->orig_bio to be used by end_io_acct() and
+				 * for dec_pending to use for completion handling.
+				 * As this path is not used for REQ_OP_ZONE_REPORT,
+				 * the usage of io->orig_bio in dm_remap_zone_report()
+				 * won't be affected by this reassignment.
+				 */
+				struct bio *b = bio_split(bio, bio_sectors(bio) - ci.sector_count,
+							  GFP_NOIO, &md->queue->bio_split);
+				ci.io->orig_bio = b;
+				bio_chain(b, bio);
+				ret = generic_make_request(bio);
+				break;
+			}
+		}
+	}
+
+	/* drop the extra reference count */
+	dec_pending(ci.io, errno_to_blk_status(error));
+	return ret;
+}
+
+/*
+ * Optimized variant of __split_and_process_bio that leverages the
+ * fact that targets that use it do _not_ have a need to split bios.
+ */
+static blk_qc_t __process_bio(struct mapped_device *md,
+			      struct dm_table *map, struct bio *bio)
+{
+	struct clone_info ci;
+	blk_qc_t ret = BLK_QC_T_NONE;
+	int error = 0;
+
+	if (unlikely(!map)) {
+		bio_io_error(bio);
+		return ret;
+	}
+
+	init_clone_info(&ci, md, map, bio);
+
+	if (bio->bi_opf & REQ_PREFLUSH) {
+		ci.bio = &ci.io->md->flush_bio;
+		ci.sector_count = 0;
+		error = __send_empty_flush(&ci);
+		/* dec_pending submits any data associated with flush */
+	} else {
+		struct dm_target *ti = md->immutable_target;
+		struct dm_target_io *tio;
+>>>>>>> master
 
 	is_abnormal = is_abnormal_io(bio);
 	if (unlikely(is_abnormal)) {

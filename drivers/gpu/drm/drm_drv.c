@@ -494,9 +494,13 @@ void drm_dev_unplug(struct drm_device *dev)
 	synchronize_srcu(&drm_unplug_srcu);
 
 	drm_dev_unregister(dev);
+<<<<<<< HEAD
 
 	/* Clear all CPU mappings pointing to this device */
 	unmap_mapping_range(dev->anon_inode->i_mapping, 0, 0, 1);
+=======
+	drm_dev_put(dev);
+>>>>>>> master
 }
 EXPORT_SYMBOL(drm_dev_unplug);
 
@@ -699,15 +703,58 @@ static int drm_dev_init(struct drm_device *dev,
 
 	return 0;
 
+<<<<<<< HEAD
 err:
 	drm_managed_release(dev);
 
+=======
+err_setunique:
+	if (drm_core_check_feature(dev, DRIVER_GEM))
+		drm_gem_destroy(dev);
+err_ctxbitmap:
+	drm_legacy_ctxbitmap_cleanup(dev);
+	drm_ht_remove(&dev->map_hash);
+err_minors:
+	drm_minor_free(dev, DRM_MINOR_PRIMARY);
+	drm_minor_free(dev, DRM_MINOR_RENDER);
+	drm_fs_inode_free(dev->anon_inode);
+err_free:
+	put_device(dev->dev);
+	mutex_destroy(&dev->master_mutex);
+	mutex_destroy(&dev->ctxlist_mutex);
+	mutex_destroy(&dev->clientlist_mutex);
+	mutex_destroy(&dev->filelist_mutex);
+	mutex_destroy(&dev->struct_mutex);
+>>>>>>> master
 	return ret;
 }
 
 static void devm_drm_dev_init_release(void *data)
 {
+<<<<<<< HEAD
 	drm_dev_put(data);
+=======
+	drm_vblank_cleanup(dev);
+
+	if (drm_core_check_feature(dev, DRIVER_GEM))
+		drm_gem_destroy(dev);
+
+	drm_legacy_ctxbitmap_cleanup(dev);
+	drm_ht_remove(&dev->map_hash);
+	drm_fs_inode_free(dev->anon_inode);
+
+	drm_minor_free(dev, DRM_MINOR_PRIMARY);
+	drm_minor_free(dev, DRM_MINOR_RENDER);
+
+	put_device(dev->dev);
+
+	mutex_destroy(&dev->master_mutex);
+	mutex_destroy(&dev->ctxlist_mutex);
+	mutex_destroy(&dev->clientlist_mutex);
+	mutex_destroy(&dev->filelist_mutex);
+	mutex_destroy(&dev->struct_mutex);
+	kfree(dev->unique);
+>>>>>>> master
 }
 
 static int devm_drm_dev_init(struct device *parent,

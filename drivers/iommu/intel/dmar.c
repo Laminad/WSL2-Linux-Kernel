@@ -139,7 +139,11 @@ dmar_alloc_pci_notify_info(struct pci_dev *dev, unsigned long event)
 		for (tmp = dev; tmp; tmp = tmp->bus->self)
 			level++;
 
+<<<<<<< HEAD:drivers/iommu/intel/dmar.c
 	size = struct_size(info, path, level);
+=======
+	size = sizeof(*info) + level * sizeof(info->path[0]);
+>>>>>>> master:drivers/iommu/dmar.c
 	if (size <= sizeof(dmar_pci_notify_info_buf)) {
 		info = (struct dmar_pci_notify_info *)dmar_pci_notify_info_buf;
 	} else {

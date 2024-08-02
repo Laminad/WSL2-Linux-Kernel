@@ -210,6 +210,29 @@ static inline int gpio_to_irq(unsigned gpio)
 	return -EINVAL;
 }
 
+<<<<<<< HEAD
+=======
+static inline int gpiochip_lock_as_irq(struct gpio_chip *chip,
+				       unsigned int offset)
+{
+	WARN_ON(1);
+	return -EINVAL;
+}
+
+static inline void gpiochip_unlock_as_irq(struct gpio_chip *chip,
+					  unsigned int offset)
+{
+	WARN_ON(1);
+}
+
+static inline int irq_to_gpio(unsigned irq)
+{
+	/* irq can never have been returned from gpio_to_irq() */
+	WARN_ON(1);
+	return -EINVAL;
+}
+
+>>>>>>> master
 static inline int devm_gpio_request(struct device *dev, unsigned gpio,
 				    const char *label)
 {

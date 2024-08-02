@@ -944,6 +944,7 @@ static bool intel_sdvo_set_colorimetry(struct intel_sdvo *intel_sdvo,
 	return intel_sdvo_set_value(intel_sdvo, SDVO_CMD_SET_COLORIMETRY, &mode, 1);
 }
 
+<<<<<<< HEAD:drivers/gpu/drm/i915/display/intel_sdvo.c
 static bool intel_sdvo_set_pixel_replication(struct intel_sdvo *intel_sdvo,
 					     u8 pixel_repeat)
 {
@@ -951,6 +952,8 @@ static bool intel_sdvo_set_pixel_replication(struct intel_sdvo *intel_sdvo,
 				    &pixel_repeat, 1);
 }
 
+=======
+>>>>>>> master:drivers/gpu/drm/i915/intel_sdvo.c
 static bool intel_sdvo_set_audio_state(struct intel_sdvo *intel_sdvo,
 				       u8 audio_state)
 {
@@ -958,6 +961,7 @@ static bool intel_sdvo_set_audio_state(struct intel_sdvo *intel_sdvo,
 				    &audio_state, 1);
 }
 
+<<<<<<< HEAD:drivers/gpu/drm/i915/display/intel_sdvo.c
 static bool intel_sdvo_get_hbuf_size(struct intel_sdvo *intel_sdvo,
 				     u8 *hbuf_size)
 {
@@ -972,6 +976,8 @@ static bool intel_sdvo_get_hbuf_size(struct intel_sdvo *intel_sdvo,
 	return true;
 }
 
+=======
+>>>>>>> master:drivers/gpu/drm/i915/intel_sdvo.c
 #if 0
 static void intel_sdvo_dump_hdmi_buf(struct intel_sdvo *intel_sdvo)
 {
@@ -1610,7 +1616,11 @@ static void intel_sdvo_pre_enable(struct intel_atomic_state *state,
 	else
 		sdvox |= SDVO_PIPE_SEL(crtc->pipe);
 
+<<<<<<< HEAD:drivers/gpu/drm/i915/display/intel_sdvo.c
 	if (DISPLAY_VER(dev_priv) >= 4) {
+=======
+	if (INTEL_GEN(dev_priv) >= 4) {
+>>>>>>> master:drivers/gpu/drm/i915/intel_sdvo.c
 		/* done in crtc_mode_set as the dpll_md reg must be written early */
 	} else if (IS_I945G(dev_priv) || IS_I945GM(dev_priv) ||
 		   IS_G33(dev_priv) || IS_PINEVIEW(dev_priv)) {
@@ -1751,6 +1761,7 @@ static void intel_sdvo_get_config(struct intel_encoder *encoder,
 		 "SDVO pixel multiplier mismatch, port: %i, encoder: %i\n",
 		 pipe_config->pixel_multiplier, encoder_pixel_multiplier);
 
+<<<<<<< HEAD:drivers/gpu/drm/i915/display/intel_sdvo.c
 	if (intel_sdvo_get_value(intel_sdvo, SDVO_CMD_GET_COLORIMETRY,
 				 &val, 1)) {
 		if (val == SDVO_COLORIMETRY_RGB220)
@@ -1760,6 +1771,13 @@ static void intel_sdvo_get_config(struct intel_encoder *encoder,
 	if (intel_sdvo_get_value(intel_sdvo, SDVO_CMD_GET_AUDIO_STAT,
 				 &val, 1)) {
 		if (val & SDVO_AUDIO_PRESENCE_DETECT)
+=======
+	if (intel_sdvo_get_value(intel_sdvo, SDVO_CMD_GET_AUDIO_STAT,
+				 &val, 1)) {
+		u8 mask = SDVO_AUDIO_ELD_VALID | SDVO_AUDIO_PRESENCE_DETECT;
+
+		if ((val & mask) == mask)
+>>>>>>> master:drivers/gpu/drm/i915/intel_sdvo.c
 			pipe_config->has_audio = true;
 	}
 
@@ -1783,7 +1801,16 @@ static void intel_sdvo_enable_audio(struct intel_sdvo *intel_sdvo,
 				    const struct intel_crtc_state *crtc_state,
 				    const struct drm_connector_state *conn_state)
 {
+<<<<<<< HEAD:drivers/gpu/drm/i915/display/intel_sdvo.c
 	const u8 *eld = crtc_state->eld;
+=======
+	const struct drm_display_mode *adjusted_mode =
+		&crtc_state->base.adjusted_mode;
+	struct drm_connector *connector = conn_state->connector;
+	u8 *eld = connector->eld;
+
+	eld[6] = drm_av_sync_delay(connector, adjusted_mode) / 2;
+>>>>>>> master:drivers/gpu/drm/i915/intel_sdvo.c
 
 	intel_sdvo_set_audio_state(intel_sdvo, 0);
 
@@ -1795,8 +1822,12 @@ static void intel_sdvo_enable_audio(struct intel_sdvo *intel_sdvo,
 				   SDVO_AUDIO_PRESENCE_DETECT);
 }
 
+<<<<<<< HEAD:drivers/gpu/drm/i915/display/intel_sdvo.c
 static void intel_disable_sdvo(struct intel_atomic_state *state,
 			       struct intel_encoder *encoder,
+=======
+static void intel_disable_sdvo(struct intel_encoder *encoder,
+>>>>>>> master:drivers/gpu/drm/i915/intel_sdvo.c
 			       const struct intel_crtc_state *old_crtc_state,
 			       const struct drm_connector_state *conn_state)
 {
@@ -2798,7 +2829,11 @@ intel_sdvo_dvi_init(struct intel_sdvo *intel_sdvo, u16 type)
 	encoder->encoder_type = DRM_MODE_ENCODER_TMDS;
 	connector->connector_type = DRM_MODE_CONNECTOR_DVID;
 
+<<<<<<< HEAD:drivers/gpu/drm/i915/display/intel_sdvo.c
 	if (intel_sdvo_is_hdmi_connector(intel_sdvo)) {
+=======
+	if (intel_sdvo_is_hdmi_connector(intel_sdvo, device)) {
+>>>>>>> master:drivers/gpu/drm/i915/intel_sdvo.c
 		connector->connector_type = DRM_MODE_CONNECTOR_HDMIA;
 		intel_sdvo_connector->is_hdmi = true;
 	}

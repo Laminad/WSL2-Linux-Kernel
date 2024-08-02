@@ -53,8 +53,12 @@ static int tcf_police_init(struct net *net, struct nlattr *nla,
 	struct tcf_police_params *new;
 	bool exists = false;
 	u32 index;
+<<<<<<< HEAD
 	u64 rate64, prate64;
 	u64 pps, ppsburst;
+=======
+	int size;
+>>>>>>> master
 
 	if (nla == NULL)
 		return -EINVAL;
@@ -81,7 +85,11 @@ static int tcf_police_init(struct net *net, struct nlattr *nla,
 
 	if (!exists) {
 		ret = tcf_idr_create(tn, index, NULL, a,
+<<<<<<< HEAD
 				     &act_police_ops, bind, true, flags);
+=======
+				     &act_police_ops, bind, false);
+>>>>>>> master
 		if (ret) {
 			tcf_idr_cleanup(tn, index);
 			return ret;

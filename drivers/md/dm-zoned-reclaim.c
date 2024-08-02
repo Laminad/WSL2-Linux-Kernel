@@ -137,6 +137,7 @@ static int dmz_reclaim_copy(struct dmz_reclaim *zrc,
 		flags |= BIT(DM_KCOPYD_WRITE_SEQ);
 
 	while (block < end_block) {
+<<<<<<< HEAD
 		if (src_zone->dev->flags & DMZ_BDEV_DYING)
 			return -EIO;
 		if (dst_zone->dev->flags & DMZ_BDEV_DYING)
@@ -145,6 +146,11 @@ static int dmz_reclaim_copy(struct dmz_reclaim *zrc,
 		if (dmz_reclaim_should_terminate(src_zone))
 			return -EINTR;
 
+=======
+		if (dev->flags & DMZ_BDEV_DYING)
+			return -EIO;
+
+>>>>>>> master
 		/* Get a valid region from the source zone */
 		ret = dmz_first_valid_block(zmd, src_zone, &block);
 		if (ret <= 0)
@@ -370,6 +376,7 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
 	int ret;
 
 	/* Get a data zone */
+<<<<<<< HEAD
 	dzone = dmz_get_zone_for_reclaim(zmd, zrc->dev_idx,
 					 dmz_target_idle(zrc));
 	if (!dzone) {
@@ -378,6 +385,11 @@ static int dmz_do_reclaim(struct dmz_reclaim *zrc)
 		return -EBUSY;
 	}
 	rzone = dzone;
+=======
+	dzone = dmz_get_zone_for_reclaim(zmd);
+	if (IS_ERR(dzone))
+		return PTR_ERR(dzone);
+>>>>>>> master
 
 	start = jiffies;
 	if (dmz_is_cache(dzone) || dmz_is_rnd(dzone)) {
@@ -432,6 +444,7 @@ out:
 
 	ret = dmz_flush_metadata(zrc->metadata);
 	if (ret) {
+<<<<<<< HEAD
 		DMDEBUG("(%s/%u): Metadata flush for zone %u failed, err %d",
 			dmz_metadata_label(zmd), zrc->dev_idx, rzone->id, ret);
 		return ret;
@@ -440,6 +453,16 @@ out:
 	DMDEBUG("(%s/%u): Reclaimed zone %u in %u ms",
 		dmz_metadata_label(zmd), zrc->dev_idx,
 		rzone->id, jiffies_to_msecs(jiffies - start));
+=======
+		dmz_dev_debug(zrc->dev,
+			      "Metadata flush for zone %u failed, err %d\n",
+			      dmz_id(zmd, rzone), ret);
+		return ret;
+	}
+
+	dmz_dev_debug(zrc->dev, "Reclaimed zone %u in %u ms",
+		      dmz_id(zmd, rzone), jiffies_to_msecs(jiffies - start));
+>>>>>>> master
 	return 0;
 }
 
@@ -503,8 +526,17 @@ static void dmz_reclaim_work(struct work_struct *work)
 {
 	struct dmz_reclaim *zrc = container_of(work, struct dmz_reclaim, work.work);
 	struct dmz_metadata *zmd = zrc->metadata;
+<<<<<<< HEAD
 	unsigned int p_unmap;
 	int ret;
+=======
+	unsigned int nr_rnd, nr_unmap_rnd;
+	unsigned int p_unmap_rnd;
+	int ret;
+
+	if (dmz_bdev_is_dying(zrc->dev))
+		return;
+>>>>>>> master
 
 	if (dmz_dev_is_dying(zmd))
 		return;
@@ -539,8 +571,19 @@ static void dmz_reclaim_work(struct work_struct *work)
 		dmz_nr_rnd_zones(zmd, zrc->dev_idx));
 
 	ret = dmz_do_reclaim(zrc);
+<<<<<<< HEAD
 	if (ret && ret != -EINTR) {
 		if (!dmz_check_dev(zmd))
+=======
+	if (ret) {
+		dmz_dev_debug(zrc->dev, "Reclaim error %d\n", ret);
+		if (ret == -EIO)
+			/*
+			 * LLD might be performing some error handling sequence
+			 * at the underlying device. To not interfere, do not
+			 * attempt to schedule the next reclaim run immediately.
+			 */
+>>>>>>> master
 			return;
 	}
 

@@ -753,7 +753,11 @@ static int dmatest_func(void *data)
 			ret = dma_mapping_error(dma_dev, um->addr[i]);
 			if (ret) {
 				result("src mapping error", total_tests,
+<<<<<<< HEAD
 				       src->off, dst->off, len, ret);
+=======
+				       src_off, dst_off, len, ret);
+>>>>>>> master
 				goto error_unmap_continue;
 			}
 			um->to_cnt++;
@@ -770,7 +774,11 @@ static int dmatest_func(void *data)
 			ret = dma_mapping_error(dma_dev, dsts[i]);
 			if (ret) {
 				result("dst mapping error", total_tests,
+<<<<<<< HEAD
 				       src->off, dst->off, len, ret);
+=======
+				       src_off, dst_off, len, ret);
+>>>>>>> master
 				goto error_unmap_continue;
 			}
 			um->bidi_cnt++;
@@ -799,8 +807,13 @@ static int dmatest_func(void *data)
 		}
 
 		if (!tx) {
+<<<<<<< HEAD
 			result("prep error", total_tests, src->off,
 			       dst->off, len, ret);
+=======
+			result("prep error", total_tests, src_off,
+			       dst_off, len, ret);
+>>>>>>> master
 			msleep(100);
 			goto error_unmap_continue;
 		}
@@ -813,8 +826,13 @@ static int dmatest_func(void *data)
 		cookie = tx->tx_submit(tx);
 
 		if (dma_submit_error(cookie)) {
+<<<<<<< HEAD
 			result("submit error", total_tests, src->off,
 			       dst->off, len, ret);
+=======
+			result("submit error", total_tests, src_off,
+			       dst_off, len, ret);
+>>>>>>> master
 			msleep(100);
 			goto error_unmap_continue;
 		}
@@ -839,6 +857,7 @@ static int dmatest_func(void *data)
 			result("test timed out", total_tests, src->off, dst->off,
 			       len, 0);
 			goto error_unmap_continue;
+<<<<<<< HEAD
 		} else if (status != DMA_COMPLETE &&
 			   !(dma_has_cap(DMA_COMPLETION_NO_ORDER,
 					 dev->cap_mask) &&
@@ -847,6 +866,14 @@ static int dmatest_func(void *data)
 			       "completion error status" :
 			       "completion busy status", total_tests, src->off,
 			       dst->off, len, ret);
+=======
+		} else if (status != DMA_COMPLETE) {
+			dmaengine_unmap_put(um);
+			result(status == DMA_ERROR ?
+			       "completion error status" :
+			       "completion busy status", total_tests, src_off,
+			       dst_off, len, ret);
+>>>>>>> master
 			goto error_unmap_continue;
 		}
 

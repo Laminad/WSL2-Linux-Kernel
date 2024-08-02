@@ -1868,7 +1868,68 @@ static int remove_session_caps_cb(struct inode *inode, int mds, void *arg)
 		dout(" removing cap %p, ci is %p, inode is %p\n",
 		     cap, ci, &ci->netfs.inode);
 
+<<<<<<< HEAD
 		iputs = ceph_purge_inode_cap(inode, cap, &invalidate);
+=======
+		ci->i_ceph_flags |= CEPH_I_CAP_DROPPED;
+
+		if (ci->i_wrbuffer_ref > 0 &&
+		    READ_ONCE(fsc->mount_state) == CEPH_MOUNT_SHUTDOWN)
+			invalidate = true;
+
+		while (!list_empty(&ci->i_cap_flush_list)) {
+			cf = list_first_entry(&ci->i_cap_flush_list,
+					      struct ceph_cap_flush, i_list);
+			list_move(&cf->i_list, &to_remove);
+		}
+
+		spin_lock(&mdsc->cap_dirty_lock);
+
+		list_for_each_entry(cf, &to_remove, i_list)
+			list_del(&cf->g_list);
+
+		if (!list_empty(&ci->i_dirty_item)) {
+			pr_warn_ratelimited(
+				" dropping dirty %s state for %p %lld\n",
+				ceph_cap_string(ci->i_dirty_caps),
+				inode, ceph_ino(inode));
+			ci->i_dirty_caps = 0;
+			list_del_init(&ci->i_dirty_item);
+			drop = true;
+		}
+		if (!list_empty(&ci->i_flushing_item)) {
+			pr_warn_ratelimited(
+				" dropping dirty+flushing %s state for %p %lld\n",
+				ceph_cap_string(ci->i_flushing_caps),
+				inode, ceph_ino(inode));
+			ci->i_flushing_caps = 0;
+			list_del_init(&ci->i_flushing_item);
+			mdsc->num_cap_flushing--;
+			drop = true;
+		}
+		spin_unlock(&mdsc->cap_dirty_lock);
+
+		if (atomic_read(&ci->i_filelock_ref) > 0) {
+			/* make further file lock syscall return -EIO */
+			ci->i_ceph_flags |= CEPH_I_ERROR_FILELOCK;
+			pr_warn_ratelimited(" dropping file locks for %p %lld\n",
+					    inode, ceph_ino(inode));
+		}
+
+		if (!ci->i_dirty_caps && ci->i_prealloc_cap_flush) {
+			list_add(&ci->i_prealloc_cap_flush->i_list, &to_remove);
+			ci->i_prealloc_cap_flush = NULL;
+		}
+
+               if (drop &&
+                  ci->i_wrbuffer_ref_head == 0 &&
+                  ci->i_wr_ref == 0 &&
+                  ci->i_dirty_caps == 0 &&
+                  ci->i_flushing_caps == 0) {
+                      ceph_put_snap_context(ci->i_head_snapc);
+                      ci->i_head_snapc = NULL;
+               }
+>>>>>>> master
 	}
 	spin_unlock(&ci->i_ceph_lock);
 
@@ -2728,10 +2789,45 @@ retry:
 	return path + pos;
 }
 
+<<<<<<< HEAD
 static int build_dentry_path(struct ceph_mds_client *mdsc, struct dentry *dentry,
 			     struct inode *dir, const char **ppath, int *ppathlen,
 			     u64 *pino, bool *pfreepath, bool parent_locked)
+=======
+/* Duplicate the dentry->d_name.name safely */
+static int clone_dentry_name(struct dentry *dentry, const char **ppath,
+			     int *ppathlen)
 {
+	u32 len;
+	char *name;
+
+retry:
+	len = READ_ONCE(dentry->d_name.len);
+	name = kmalloc(len + 1, GFP_NOFS);
+	if (!name)
+		return -ENOMEM;
+
+	spin_lock(&dentry->d_lock);
+	if (dentry->d_name.len != len) {
+		spin_unlock(&dentry->d_lock);
+		kfree(name);
+		goto retry;
+	}
+	memcpy(name, dentry->d_name.name, len);
+	spin_unlock(&dentry->d_lock);
+
+	name[len] = '\0';
+	*ppath = name;
+	*ppathlen = len;
+	return 0;
+}
+
+static int build_dentry_path(struct dentry *dentry, struct inode *dir,
+			     const char **ppath, int *ppathlen, u64 *pino,
+			     bool *pfreepath, bool parent_locked)
+>>>>>>> master
+{
+	int ret;
 	char *path;
 
 	rcu_read_lock();
@@ -2741,8 +2837,15 @@ static int build_dentry_path(struct ceph_mds_client *mdsc, struct dentry *dentry
 	    !IS_ENCRYPTED(dir)) {
 		*pino = ceph_ino(dir);
 		rcu_read_unlock();
-		*ppath = dentry->d_name.name;
-		*ppathlen = dentry->d_name.len;
+		if (parent_locked) {
+			*ppath = dentry->d_name.name;
+			*ppathlen = dentry->d_name.len;
+		} else {
+			ret = clone_dentry_name(dentry, ppath, ppathlen);
+			if (ret)
+				return ret;
+			*pfreepath = true;
+		}
 		return 0;
 	}
 	rcu_read_unlock();
@@ -2781,11 +2884,18 @@ static int build_inode_path(struct inode *inode,
  * request arguments may be specified via an inode *, a dentry *, or
  * an explicit ino+path.
  */
+<<<<<<< HEAD
 static int set_request_path_attr(struct ceph_mds_client *mdsc, struct inode *rinode,
 				 struct dentry *rdentry, struct inode *rdiri,
 				 const char *rpath, u64 rino, const char **ppath,
 				 int *pathlen, u64 *ino, bool *freepath,
 				 bool parent_locked)
+=======
+static int set_request_path_attr(struct inode *rinode, struct dentry *rdentry,
+				  struct inode *rdiri, const char *rpath,
+				  u64 rino, const char **ppath, int *pathlen,
+				  u64 *ino, bool *freepath, bool parent_locked)
+>>>>>>> master
 {
 	int r = 0;
 
@@ -2794,7 +2904,11 @@ static int set_request_path_attr(struct ceph_mds_client *mdsc, struct inode *rin
 		dout(" inode %p %llx.%llx\n", rinode, ceph_ino(rinode),
 		     ceph_snap(rinode));
 	} else if (rdentry) {
+<<<<<<< HEAD
 		r = build_dentry_path(mdsc, rdentry, rdiri, ppath, pathlen, ino,
+=======
+		r = build_dentry_path(rdentry, rdiri, ppath, pathlen, ino,
+>>>>>>> master
 					freepath, parent_locked);
 		dout(" dentry %p %llx/%.*s\n", rdentry, *ino, *pathlen,
 		     *ppath);
@@ -2872,7 +2986,10 @@ static struct ceph_msg *create_request_message(struct ceph_mds_session *session,
 	u64 ino1 = 0, ino2 = 0;
 	int pathlen1 = 0, pathlen2 = 0;
 	bool freepath1 = false, freepath2 = false;
+<<<<<<< HEAD
 	struct dentry *old_dentry = NULL;
+=======
+>>>>>>> master
 	int len;
 	u16 releases;
 	void *p, *end;
@@ -2892,10 +3009,14 @@ static struct ceph_msg *create_request_message(struct ceph_mds_session *session,
 	}
 
 	/* If r_old_dentry is set, then assume that its parent is locked */
+<<<<<<< HEAD
 	if (req->r_old_dentry &&
 	    !(req->r_old_dentry->d_flags & DCACHE_DISCONNECTED))
 		old_dentry = req->r_old_dentry;
 	ret = set_request_path_attr(mdsc, NULL, old_dentry,
+=======
+	ret = set_request_path_attr(NULL, req->r_old_dentry,
+>>>>>>> master
 			      req->r_old_dentry_dir,
 			      req->r_path2, req->r_ino2.ino,
 			      &path2, &pathlen2, &ino2, &freepath2, true);
@@ -5144,8 +5265,28 @@ static void delayed_work(struct work_struct *work)
 		struct ceph_mds_session *s = __ceph_lookup_mds_session(mdsc, i);
 		if (!s)
 			continue;
+<<<<<<< HEAD
 
 		if (!check_session_state(s)) {
+=======
+		if (s->s_state == CEPH_MDS_SESSION_CLOSING) {
+			dout("resending session close request for mds%d\n",
+			     s->s_mds);
+			request_close_session(mdsc, s);
+			ceph_put_mds_session(s);
+			continue;
+		}
+		if (s->s_ttl && time_after(jiffies, s->s_ttl)) {
+			if (s->s_state == CEPH_MDS_SESSION_OPEN) {
+				s->s_state = CEPH_MDS_SESSION_HUNG;
+				pr_info("mds%d hung\n", s->s_mds);
+			}
+		}
+		if (s->s_state == CEPH_MDS_SESSION_NEW ||
+		    s->s_state == CEPH_MDS_SESSION_RESTARTING ||
+		    s->s_state == CEPH_MDS_SESSION_REJECTED) {
+			/* this mds is failed or recovering, just wait */
+>>>>>>> master
 			ceph_put_mds_session(s);
 			continue;
 		}

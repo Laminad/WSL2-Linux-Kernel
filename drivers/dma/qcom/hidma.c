@@ -443,6 +443,7 @@ hidma_prep_dma_memset(struct dma_chan *dmach, dma_addr_t dest, int value,
 	if (!mdesc)
 		return NULL;
 
+<<<<<<< HEAD
 	byte_pattern = (char)value;
 	fill_pattern =	(byte_pattern << 56) |
 			(byte_pattern << 48) |
@@ -453,6 +454,8 @@ hidma_prep_dma_memset(struct dma_chan *dmach, dma_addr_t dest, int value,
 			(byte_pattern << 8) |
 			byte_pattern;
 
+=======
+>>>>>>> master
 	mdesc->desc.flags = flags;
 	hidma_ll_set_transfer_params(mdma->lldev, mdesc->tre_ch,
 				     fill_pattern, dest, len, flags,

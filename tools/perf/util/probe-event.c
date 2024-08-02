@@ -160,7 +160,13 @@ static struct map *kernel_get_module_map(const char *module)
 		return dso__new_map(module);
 
 	if (!module) {
+<<<<<<< HEAD
 		struct map *map = machine__kernel_map(host_machine);
+=======
+		pos = machine__kernel_map(host_machine);
+		return map__get(pos);
+	}
+>>>>>>> master
 
 		return map__get(map);
 	}

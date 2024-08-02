@@ -105,7 +105,15 @@ static inline int compute_score(struct sock *sk, struct net *net,
 		if (!inet_sk_bound_dev_eq(net, sk->sk_bound_dev_if, dif, sdif))
 			return -1;
 
+<<<<<<< HEAD
 		score =  sk->sk_bound_dev_if ? 2 : 1;
+=======
+			if (!dev_match)
+				return -1;
+			if (sk->sk_bound_dev_if)
+				score++;
+		}
+>>>>>>> master
 		if (READ_ONCE(sk->sk_incoming_cpu) == raw_smp_processor_id())
 			score++;
 	}

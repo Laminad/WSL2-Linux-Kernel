@@ -819,9 +819,12 @@ int qca_uart_setup(struct hci_dev *hdev, uint8_t baudrate,
 	/* Give the controller some time to get ready to receive the NVM */
 	msleep(10);
 
+<<<<<<< HEAD
 	if (soc_type == QCA_QCA2066)
 		qca_read_fw_board_id(hdev, &boardid);
 
+=======
+>>>>>>> master
 	/* Download NVM configuration */
 	config.type = TLV_TYPE_NVM;
 	if (firmware_name) {

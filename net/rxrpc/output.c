@@ -240,6 +240,7 @@ int rxrpc_send_ack_packet(struct rxrpc_call *call, struct rxrpc_txbuf *txb)
 	} else {
 		trace_rxrpc_tx_packet(call->debug_id, &txb->wire,
 				      rxrpc_tx_point_call_ack);
+<<<<<<< HEAD
 		if (txb->wire.flags & RXRPC_REQUEST_ACK)
 			call->peer->rtt_last_req = ktime_get_real();
 	}
@@ -248,6 +249,28 @@ int rxrpc_send_ack_packet(struct rxrpc_call *call, struct rxrpc_txbuf *txb)
 	if (!__rxrpc_call_is_complete(call)) {
 		if (ret < 0)
 			rxrpc_cancel_rtt_probe(call, serial, rtt_slot);
+=======
+	rxrpc_tx_backoff(call, ret);
+
+	if (call->state < RXRPC_CALL_COMPLETE) {
+		if (ret < 0) {
+			if (ping)
+				clear_bit(RXRPC_CALL_PINGING, &call->flags);
+			rxrpc_propose_ACK(call, pkt->ack.reason,
+					  ntohs(pkt->ack.maxSkew),
+					  ntohl(pkt->ack.serial),
+					  false, true,
+					  rxrpc_propose_ack_retry_tx);
+		} else {
+			spin_lock_bh(&call->lock);
+			if (after(hard_ack, call->ackr_consumed))
+				call->ackr_consumed = hard_ack;
+			if (after(top, call->ackr_seen))
+				call->ackr_seen = top;
+			spin_unlock_bh(&call->lock);
+		}
+
+>>>>>>> master
 		rxrpc_set_keepalive(call);
 	}
 
@@ -315,6 +338,11 @@ int rxrpc_send_abort_packet(struct rxrpc_call *call)
 		trace_rxrpc_tx_packet(call->debug_id, &pkt.whdr,
 				      rxrpc_tx_point_call_abort);
 	rxrpc_tx_backoff(call, ret);
+<<<<<<< HEAD
+=======
+
+	rxrpc_put_connection(conn);
+>>>>>>> master
 	return ret;
 }
 
@@ -435,8 +463,11 @@ dont_set_request_ack:
 	} else {
 		trace_rxrpc_tx_packet(call->debug_id, &txb->wire,
 				      rxrpc_tx_point_call_data_nofrag);
+<<<<<<< HEAD
 	}
 
+=======
+>>>>>>> master
 	rxrpc_tx_backoff(call, ret);
 	if (ret == -EMSGSIZE)
 		goto send_fragmentable;
@@ -514,8 +545,14 @@ send_fragmentable:
 	} else {
 		trace_rxrpc_tx_packet(call->debug_id, &txb->wire,
 				      rxrpc_tx_point_call_data_frag);
+<<<<<<< HEAD
 	}
 	rxrpc_tx_backoff(call, ret);
+=======
+	rxrpc_tx_backoff(call, ret);
+
+	up_write(&conn->params.local->defrag_sem);
+>>>>>>> master
 	goto done;
 }
 

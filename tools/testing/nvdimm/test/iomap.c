@@ -98,6 +98,7 @@ static void nfit_test_kill(void *_pgmap)
 {
 	struct dev_pagemap *pgmap = _pgmap;
 
+<<<<<<< HEAD
 	WARN_ON(!pgmap);
 
 	percpu_ref_kill(&pgmap->ref);
@@ -111,6 +112,9 @@ static void dev_pagemap_percpu_release(struct percpu_ref *ref)
 	struct dev_pagemap *pgmap = container_of(ref, struct dev_pagemap, ref);
 
 	complete(&pgmap->done);
+=======
+	pgmap->kill(pgmap->ref);
+>>>>>>> master
 }
 
 void *__wrap_devm_memremap_pages(struct device *dev, struct dev_pagemap *pgmap)
@@ -119,6 +123,7 @@ void *__wrap_devm_memremap_pages(struct device *dev, struct dev_pagemap *pgmap)
 	resource_size_t offset = pgmap->range.start;
 	struct nfit_test_resource *nfit_res = get_nfit_res(offset);
 
+<<<<<<< HEAD
 	if (!nfit_res)
 		return devm_memremap_pages(dev, pgmap);
 
@@ -132,6 +137,17 @@ void *__wrap_devm_memremap_pages(struct device *dev, struct dev_pagemap *pgmap)
 	if (error)
 		return ERR_PTR(error);
 	return nfit_res->buf + offset - nfit_res->res.start;
+=======
+	if (nfit_res) {
+		int rc;
+
+		rc = devm_add_action_or_reset(dev, nfit_test_kill, pgmap);
+		if (rc)
+			return ERR_PTR(rc);
+		return nfit_res->buf + offset - nfit_res->res.start;
+	}
+	return devm_memremap_pages(dev, pgmap);
+>>>>>>> master
 }
 EXPORT_SYMBOL_GPL(__wrap_devm_memremap_pages);
 

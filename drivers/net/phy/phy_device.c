@@ -388,8 +388,45 @@ no_resume:
 	return 0;
 }
 
+<<<<<<< HEAD
 static SIMPLE_DEV_PM_OPS(mdio_bus_phy_pm_ops, mdio_bus_phy_suspend,
 			 mdio_bus_phy_resume);
+=======
+static int mdio_bus_phy_restore(struct device *dev)
+{
+	struct phy_device *phydev = to_phy_device(dev);
+	struct net_device *netdev = phydev->attached_dev;
+	int ret;
+
+	if (!netdev)
+		return 0;
+
+	ret = phy_init_hw(phydev);
+	if (ret < 0)
+		return ret;
+
+	if (phydev->attached_dev && phydev->adjust_link)
+		phy_start_machine(phydev);
+
+	return 0;
+}
+
+static const struct dev_pm_ops mdio_bus_phy_pm_ops = {
+	.suspend = mdio_bus_phy_suspend,
+	.resume = mdio_bus_phy_resume,
+	.freeze = mdio_bus_phy_suspend,
+	.thaw = mdio_bus_phy_resume,
+	.restore = mdio_bus_phy_restore,
+};
+
+#define MDIO_BUS_PHY_PM_OPS (&mdio_bus_phy_pm_ops)
+
+#else
+
+#define MDIO_BUS_PHY_PM_OPS NULL
+
+#endif /* CONFIG_PM */
+>>>>>>> master
 
 /**
  * phy_register_fixup - creates a new phy_fixup and adds it to the list
@@ -2344,6 +2381,7 @@ int genphy_update_link(struct phy_device *phydev)
 {
 	int status = 0, bmcr;
 
+<<<<<<< HEAD
 	bmcr = phy_read(phydev, MII_BMCR);
 	if (bmcr < 0)
 		return bmcr;
@@ -2365,6 +2403,16 @@ int genphy_update_link(struct phy_device *phydev)
 			return status;
 		else if (status & BMSR_LSTATUS)
 			goto done;
+=======
+	/* The link state is latched low so that momentary link
+	 * drops can be detected. Do not double-read the status
+	 * in polling mode to detect such short link drops.
+	 */
+	if (!phy_polling_mode(phydev)) {
+		status = phy_read(phydev, MII_BMSR);
+		if (status < 0)
+			return status;
+>>>>>>> master
 	}
 
 	/* Read link and autonegotiation status */
@@ -2742,6 +2790,7 @@ EXPORT_SYMBOL(genphy_loopback);
  */
 void phy_remove_link_mode(struct phy_device *phydev, u32 link_mode)
 {
+<<<<<<< HEAD
 	linkmode_clear_bit(link_mode, phydev->supported);
 	phy_advertise_supported(phydev);
 }
@@ -3167,6 +3216,19 @@ static int of_phy_leds(struct phy_device *phydev)
 			phy_leds_unregister(phydev);
 			return err;
 		}
+=======
+	switch (max_speed) {
+	case SPEED_10:
+		phydev->supported &= ~PHY_100BT_FEATURES;
+		/* fall through */
+	case SPEED_100:
+		phydev->supported &= ~PHY_1000BT_FEATURES;
+		break;
+	case SPEED_1000:
+		break;
+	default:
+		return -ENOTSUPP;
+>>>>>>> master
 	}
 
 	return 0;
@@ -3442,6 +3504,14 @@ int phy_driver_register(struct phy_driver *new_driver, struct module *owner)
 	new_driver->mdiodrv.driver.probe = phy_probe;
 	new_driver->mdiodrv.driver.remove = phy_remove;
 	new_driver->mdiodrv.driver.owner = owner;
+	new_driver->mdiodrv.driver.probe_type = PROBE_FORCE_SYNCHRONOUS;
+
+	/* The following works around an issue where the PHY driver doesn't bind
+	 * to the device, resulting in the genphy driver being used instead of
+	 * the dedicated driver. The root cause of the issue isn't known yet
+	 * and seems to be in the base driver core. Once this is fixed we may
+	 * remove this workaround.
+	 */
 	new_driver->mdiodrv.driver.probe_type = PROBE_FORCE_SYNCHRONOUS;
 
 	retval = driver_register(&new_driver->mdiodrv.driver);

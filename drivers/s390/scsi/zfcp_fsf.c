@@ -1922,7 +1922,11 @@ int zfcp_fsf_open_wka_port(struct zfcp_fc_wka_port *wka_port)
 {
 	struct zfcp_qdio *qdio = wka_port->adapter->qdio;
 	struct zfcp_fsf_req *req;
+<<<<<<< HEAD
 	u64 req_id = 0;
+=======
+	unsigned long req_id = 0;
+>>>>>>> master
 	int retval = -EIO;
 
 	spin_lock_irq(&qdio->req_q_lock);
@@ -1981,7 +1985,11 @@ int zfcp_fsf_close_wka_port(struct zfcp_fc_wka_port *wka_port)
 {
 	struct zfcp_qdio *qdio = wka_port->adapter->qdio;
 	struct zfcp_fsf_req *req;
+<<<<<<< HEAD
 	u64 req_id = 0;
+=======
+	unsigned long req_id = 0;
+>>>>>>> master
 	int retval = -EIO;
 
 	spin_lock_irq(&qdio->req_q_lock);

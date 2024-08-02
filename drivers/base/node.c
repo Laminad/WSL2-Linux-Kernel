@@ -536,10 +536,22 @@ static ssize_t node_read_vmstat(struct device *dev,
 	for (i = 0; i < NR_VM_NODE_STAT_ITEMS; i++) {
 		unsigned long pages = node_page_state_pages(pgdat, i);
 
+<<<<<<< HEAD
 		if (vmstat_item_print_in_thp(i))
 			pages /= HPAGE_PMD_NR;
 		len += sysfs_emit_at(buf, len, "%s %lu\n", node_stat_name(i),
 				     pages);
+=======
+	for (i = 0; i < NR_VM_NODE_STAT_ITEMS; i++) {
+		/* Skip hidden vmstat items. */
+		if (*vmstat_text[i + NR_VM_ZONE_STAT_ITEMS +
+				 NR_VM_NUMA_STAT_ITEMS] == '\0')
+			continue;
+		n += sprintf(buf+n, "%s %lu\n",
+			     vmstat_text[i + NR_VM_ZONE_STAT_ITEMS +
+			     NR_VM_NUMA_STAT_ITEMS],
+			     node_page_state(pgdat, i));
+>>>>>>> master
 	}
 
 	return len;

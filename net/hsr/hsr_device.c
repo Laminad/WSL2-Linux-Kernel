@@ -76,6 +76,7 @@ static void hsr_check_announce(struct net_device *hsr_dev)
 	struct hsr_priv *hsr;
 
 	hsr = netdev_priv(hsr_dev);
+<<<<<<< HEAD
 	if (netif_running(hsr_dev) && netif_oper_up(hsr_dev)) {
 		/* Enable announce timer and start sending supervisory frames */
 		if (!timer_pending(&hsr->announce_timer)) {
@@ -86,6 +87,15 @@ static void hsr_check_announce(struct net_device *hsr_dev)
 	} else {
 		/* Deactivate the announce timer  */
 		timer_delete(&hsr->announce_timer);
+=======
+
+	if ((hsr_dev->operstate == IF_OPER_UP)
+			&& (old_operstate != IF_OPER_UP)) {
+		/* Went up */
+		hsr->announce_count = 0;
+		mod_timer(&hsr->announce_timer,
+			  jiffies + msecs_to_jiffies(HSR_ANNOUNCE_INTERVAL));
+>>>>>>> master
 	}
 }
 
@@ -376,7 +386,23 @@ static void hsr_announce(struct timer_list *t)
 
 	rcu_read_lock();
 	master = hsr_port_get_hsr(hsr, HSR_PT_MASTER);
+<<<<<<< HEAD
 	hsr->proto_ops->send_sv_frame(master, &interval);
+=======
+
+	if (hsr->announce_count < 3 && hsr->protVersion == 0) {
+		send_hsr_supervision_frame(master, HSR_TLV_ANNOUNCE,
+				hsr->protVersion);
+		hsr->announce_count++;
+
+		interval = msecs_to_jiffies(HSR_ANNOUNCE_INTERVAL);
+	} else {
+		send_hsr_supervision_frame(master, HSR_TLV_LIFE_CHECK,
+				hsr->protVersion);
+
+		interval = msecs_to_jiffies(HSR_LIFE_CHECK_INTERVAL);
+	}
+>>>>>>> master
 
 	if (is_admin_up(master->dev))
 		mod_timer(&hsr->announce_timer, jiffies + interval);
@@ -526,12 +552,16 @@ int hsr_dev_finalize(struct net_device *hsr_dev, struct net_device *slave[2],
 
 	res = hsr_add_port(hsr, hsr_dev, HSR_PT_MASTER, extack);
 	if (res)
+<<<<<<< HEAD
 		goto err_add_master;
 
 	/* HSR forwarding offload supported in lower device? */
 	if ((slave[0]->features & NETIF_F_HW_HSR_FWD) &&
 	    (slave[1]->features & NETIF_F_HW_HSR_FWD))
 		hsr->fwd_offloaded = true;
+=======
+		goto err_add_port;
+>>>>>>> master
 
 	res = register_netdevice(hsr_dev);
 	if (res)
@@ -552,10 +582,18 @@ int hsr_dev_finalize(struct net_device *hsr_dev, struct net_device *slave[2],
 
 	return 0;
 
+<<<<<<< HEAD
 err_unregister:
 	hsr_del_ports(hsr);
 err_add_master:
 	hsr_del_self_node(hsr);
+=======
+fail:
+	hsr_for_each_port(hsr, port)
+		hsr_del_port(port);
+err_add_port:
+	hsr_del_node(&hsr->self_node_db);
+>>>>>>> master
 
 	if (unregister)
 		unregister_netdevice(hsr_dev);

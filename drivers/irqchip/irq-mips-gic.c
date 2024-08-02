@@ -395,6 +395,7 @@ static void gic_all_vpes_irq_cpu_online(void)
 
 	raw_spin_lock_irqsave(&gic_lock, flags);
 
+<<<<<<< HEAD
 	for (i = 0; i < ARRAY_SIZE(local_intrs); i++) {
 		unsigned int intr = local_intrs[i];
 		struct gic_all_vpes_chip_data *cd;
@@ -408,6 +409,11 @@ static void gic_all_vpes_irq_cpu_online(void)
 	}
 
 	raw_spin_unlock_irqrestore(&gic_lock, flags);
+=======
+	write_gic_vl_map(mips_gic_vx_map_reg(intr), cd->map);
+	if (cd->mask)
+		write_gic_vl_smask(BIT(intr));
+>>>>>>> master
 }
 
 static struct irq_chip gic_all_vpes_local_irq_controller = {

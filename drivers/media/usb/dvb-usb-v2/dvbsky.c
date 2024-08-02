@@ -22,6 +22,7 @@ MODULE_PARM_DESC(disable_rc, "Disable inbuilt IR receiver.");
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 struct dvbsky_state {
+	struct mutex stream_mutex;
 	u8 ibuf[DVBSKY_BUF_LEN];
 	u8 obuf[DVBSKY_BUF_LEN];
 	u8 last_lock;
@@ -59,6 +60,7 @@ static int dvbsky_usb_generic_rw(struct dvb_usb_device *d,
 static int dvbsky_stream_ctrl(struct dvb_usb_device *d, u8 onoff)
 {
 	struct dvbsky_state *state = d_to_priv(d);
+<<<<<<< HEAD
 	static const u8 obuf_pre[3] = { 0x37, 0, 0 };
 	static const u8 obuf_post[3] = { 0x36, 3, 0 };
 	int ret;
@@ -70,8 +72,19 @@ static int dvbsky_stream_ctrl(struct dvb_usb_device *d, u8 onoff)
 		msleep(20);
 		memcpy(state->obuf, obuf_post, 3);
 		ret = dvb_usbv2_generic_write_locked(d, state->obuf, 3);
+=======
+	int ret;
+	u8 obuf_pre[3] = { 0x37, 0, 0 };
+	u8 obuf_post[3] = { 0x36, 3, 0 };
+
+	mutex_lock(&state->stream_mutex);
+	ret = dvbsky_usb_generic_rw(d, obuf_pre, 3, NULL, 0);
+	if (!ret && onoff) {
+		msleep(20);
+		ret = dvbsky_usb_generic_rw(d, obuf_post, 3, NULL, 0);
+>>>>>>> master
 	}
-	mutex_unlock(&d->usb_mutex);
+	mutex_unlock(&state->stream_mutex);
 	return ret;
 }
 
@@ -603,6 +616,18 @@ static int dvbsky_identify_state(struct dvb_usb_device *d, const char **name)
 static int dvbsky_init(struct dvb_usb_device *d)
 {
 	struct dvbsky_state *state = d_to_priv(d);
+<<<<<<< HEAD
+=======
+
+	/* use default interface */
+	/*
+	ret = usb_set_interface(d->udev, 0, 0);
+	if (ret)
+		return ret;
+	*/
+	mutex_init(&state->stream_mutex);
+
+>>>>>>> master
 	state->last_lock = 0;
 	return 0;
 }

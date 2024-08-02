@@ -1125,12 +1125,19 @@ static int nfs4_server_common_setup(struct nfs_server *server,
 			(unsigned long long) server->fsid.minor);
 	nfs_display_fhandle(mntfh, "Pseudo-fs root FH");
 
+<<<<<<< HEAD
 	error = nfs_probe_server(server, mntfh);
+=======
+	error = nfs_probe_fsinfo(server, mntfh, fattr);
+>>>>>>> master
 	if (error < 0)
 		goto out;
 
 	nfs4_session_limit_rwsize(server);
+<<<<<<< HEAD
 	nfs4_session_limit_xasize(server);
+=======
+>>>>>>> master
 
 	if (server->namelen == 0 || server->namelen > NFS4_MAXNAMLEN)
 		server->namelen = NFS4_MAXNAMLEN;

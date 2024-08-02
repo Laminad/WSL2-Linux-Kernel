@@ -328,9 +328,46 @@ static int mt6397_probe(struct platform_device *pdev)
 	if (pmic->irq <= 0)
 		return pmic->irq;
 
+<<<<<<< HEAD
 	ret = pmic_core->irq_init(pmic);
 	if (ret)
 		return ret;
+=======
+	switch (id & 0xff) {
+	case MT6323_CID_CODE:
+		pmic->int_con[0] = MT6323_INT_CON0;
+		pmic->int_con[1] = MT6323_INT_CON1;
+		pmic->int_status[0] = MT6323_INT_STATUS0;
+		pmic->int_status[1] = MT6323_INT_STATUS1;
+		ret = mt6397_irq_init(pmic);
+		if (ret)
+			return ret;
+
+		ret = devm_mfd_add_devices(&pdev->dev, -1, mt6323_devs,
+					   ARRAY_SIZE(mt6323_devs), NULL,
+					   0, pmic->irq_domain);
+		break;
+
+	case MT6397_CID_CODE:
+	case MT6391_CID_CODE:
+		pmic->int_con[0] = MT6397_INT_CON0;
+		pmic->int_con[1] = MT6397_INT_CON1;
+		pmic->int_status[0] = MT6397_INT_STATUS0;
+		pmic->int_status[1] = MT6397_INT_STATUS1;
+		ret = mt6397_irq_init(pmic);
+		if (ret)
+			return ret;
+
+		ret = devm_mfd_add_devices(&pdev->dev, -1, mt6397_devs,
+					   ARRAY_SIZE(mt6397_devs), NULL,
+					   0, pmic->irq_domain);
+		break;
+
+	default:
+		dev_err(&pdev->dev, "unsupported chip: %d\n", id);
+		return -ENODEV;
+	}
+>>>>>>> master
 
 	ret = devm_mfd_add_devices(&pdev->dev, PLATFORM_DEVID_NONE,
 				   pmic_core->cells, pmic_core->cell_size,

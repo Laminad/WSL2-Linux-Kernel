@@ -630,6 +630,7 @@ static irqreturn_t aspeed_i2c_bus_irq(int irq, void *dev_id)
 	irq_remaining = irq_received;
 
 #if IS_ENABLED(CONFIG_I2C_SLAVE)
+<<<<<<< HEAD
 	/*
 	 * In most cases, interrupt bits will be set one by one, although
 	 * multiple interrupt bits could be set at the same time. It's also
@@ -649,6 +650,12 @@ static irqreturn_t aspeed_i2c_bus_irq(int irq, void *dev_id)
 		if (irq_remaining)
 			irq_handled |= aspeed_i2c_master_irq(bus,
 							     irq_remaining);
+=======
+	if (IS_ENABLED(CONFIG_I2C_SLAVE) && aspeed_i2c_slave_irq(bus)) {
+		dev_dbg(bus->dev, "irq handled by slave.\n");
+		ret = true;
+		goto out;
+>>>>>>> master
 	}
 
 	/*
@@ -668,12 +675,18 @@ static irqreturn_t aspeed_i2c_bus_irq(int irq, void *dev_id)
 			"irq handled != irq. expected 0x%08x, but was 0x%08x\n",
 			irq_received, irq_handled);
 
+<<<<<<< HEAD
 	/* Ack Rx done */
 	if (irq_received & ASPEED_I2CD_INTR_RX_DONE) {
 		writel(ASPEED_I2CD_INTR_RX_DONE,
 		       bus->base + ASPEED_I2C_INTR_STS_REG);
 		readl(bus->base + ASPEED_I2C_INTR_STS_REG);
 	}
+=======
+#if IS_ENABLED(CONFIG_I2C_SLAVE)
+out:
+#endif
+>>>>>>> master
 	spin_unlock(&bus->lock);
 	return irq_remaining ? IRQ_NONE : IRQ_HANDLED;
 }

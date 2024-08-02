@@ -1636,15 +1636,21 @@ static int genpd_add_device(struct generic_pm_domain *genpd, struct device *dev,
 	if (IS_ERR(gpd_data))
 		return PTR_ERR(gpd_data);
 
+<<<<<<< HEAD
 	gpd_data->cpu = genpd_get_cpu(genpd, base_dev);
 
+=======
+>>>>>>> master
 	ret = genpd->attach_dev ? genpd->attach_dev(genpd, dev) : 0;
 	if (ret)
 		goto out;
 
 	genpd_lock(genpd);
 
+<<<<<<< HEAD
 	genpd_set_cpumask(genpd, gpd_data->cpu);
+=======
+>>>>>>> master
 	dev_pm_domain_set(dev, &genpd->domain);
 
 	genpd->device_count++;
@@ -1706,10 +1712,15 @@ static int genpd_remove_device(struct generic_pm_domain *genpd,
 	}
 
 	genpd->device_count--;
+<<<<<<< HEAD
 	if (genpd->gd)
 		genpd->gd->max_off_time_changed = true;
 
 	genpd_clear_cpumask(genpd, gpd_data->cpu);
+=======
+	genpd->max_off_time_changed = true;
+
+>>>>>>> master
 	dev_pm_domain_set(dev, NULL);
 
 	list_del_init(&pdd->list_node);

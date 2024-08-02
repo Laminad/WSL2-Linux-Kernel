@@ -411,18 +411,29 @@ int rds_ib_flush_mr_pool(struct rds_ib_mr_pool *pool,
 	if (!list_empty(&unmap_list)) {
 		unsigned long flags;
 
+<<<<<<< HEAD
 		list_to_llist_nodes(&unmap_list, &clean_nodes, &clean_tail);
+=======
+		list_to_llist_nodes(pool, &unmap_list, &clean_nodes, &clean_tail);
+>>>>>>> master
 		if (ibmr_ret) {
 			*ibmr_ret = llist_entry(clean_nodes, struct rds_ib_mr, llnode);
 			clean_nodes = clean_nodes->next;
 		}
 		/* more than one entry in llist nodes */
+<<<<<<< HEAD
 		if (clean_nodes) {
 			spin_lock_irqsave(&pool->clean_lock, flags);
 			llist_add_batch(clean_nodes, clean_tail,
 					&pool->clean_list);
 			spin_unlock_irqrestore(&pool->clean_lock, flags);
 		}
+=======
+		if (clean_nodes)
+			llist_add_batch(clean_nodes, clean_tail,
+					&pool->clean_list);
+
+>>>>>>> master
 	}
 
 	atomic_sub(unpinned, &pool->free_pinned);

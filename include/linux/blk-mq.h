@@ -528,7 +528,29 @@ struct blk_mq_queue_data {
 	bool last;
 };
 
+<<<<<<< HEAD
 typedef bool (busy_tag_iter_fn)(struct request *, void *);
+=======
+typedef blk_status_t (queue_rq_fn)(struct blk_mq_hw_ctx *,
+		const struct blk_mq_queue_data *);
+typedef bool (get_budget_fn)(struct blk_mq_hw_ctx *);
+typedef void (put_budget_fn)(struct blk_mq_hw_ctx *);
+typedef enum blk_eh_timer_return (timeout_fn)(struct request *, bool);
+typedef int (init_hctx_fn)(struct blk_mq_hw_ctx *, void *, unsigned int);
+typedef void (exit_hctx_fn)(struct blk_mq_hw_ctx *, unsigned int);
+typedef int (init_request_fn)(struct blk_mq_tag_set *set, struct request *,
+		unsigned int, unsigned int);
+typedef void (exit_request_fn)(struct blk_mq_tag_set *set, struct request *,
+		unsigned int);
+
+typedef void (busy_iter_fn)(struct blk_mq_hw_ctx *, struct request *, void *,
+		bool);
+typedef void (busy_tag_iter_fn)(struct request *, void *, bool);
+typedef int (poll_fn)(struct blk_mq_hw_ctx *, unsigned int);
+typedef int (map_queues_fn)(struct blk_mq_tag_set *set);
+typedef void (cleanup_rq_fn)(struct request *);
+
+>>>>>>> master
 
 /**
  * struct blk_mq_ops - Callback functions that implements block driver
@@ -621,6 +643,7 @@ struct blk_mq_ops {
 	void (*exit_request)(struct blk_mq_tag_set *set, struct request *,
 			     unsigned int);
 
+<<<<<<< HEAD
 	/**
 	 * @cleanup_rq: Called before freeing one request which isn't completed
 	 * yet, and usually for freeing the driver private data.
@@ -637,6 +660,15 @@ struct blk_mq_ops {
 	 * overriding the setup-time function that builds the mq_map.
 	 */
 	void (*map_queues)(struct blk_mq_tag_set *set);
+=======
+	/*
+	 * Called before freeing one request which isn't completed yet,
+	 * and usually for freeing the driver private data
+	 */
+	cleanup_rq_fn		*cleanup_rq;
+
+	map_queues_fn		*map_queues;
+>>>>>>> master
 
 #ifdef CONFIG_BLK_DEBUG_FS
 	/**
@@ -952,6 +984,7 @@ static inline void blk_mq_cleanup_rq(struct request *rq)
 		rq->q->mq_ops->cleanup_rq(rq);
 }
 
+<<<<<<< HEAD
 static inline void blk_rq_bio_prep(struct request *rq, struct bio *bio,
 		unsigned int nr_segs)
 {
@@ -1227,3 +1260,6 @@ static inline bool blk_req_can_dispatch_to_zone(struct request *rq)
 #endif /* CONFIG_BLK_DEV_ZONED */
 
 #endif /* BLK_MQ_H */
+=======
+#endif
+>>>>>>> master

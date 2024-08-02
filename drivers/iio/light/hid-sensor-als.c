@@ -111,8 +111,16 @@ static int als_read_raw(struct iio_dev *indio_dev,
 			hid_sensor_power_state(&als_state->common_attributes,
 						true);
 			*val = sensor_hub_input_attr_get_raw_value(
+<<<<<<< HEAD
 					hsdev, hsdev->usage, address, report_id,
 					SENSOR_HUB_SYNC, min < 0);
+=======
+					als_state->common_attributes.hsdev,
+					HID_USAGE_SENSOR_ALS, address,
+					report_id,
+					SENSOR_HUB_SYNC,
+					min < 0);
+>>>>>>> master
 			hid_sensor_power_state(&als_state->common_attributes,
 						false);
 		} else {

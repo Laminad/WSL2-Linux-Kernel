@@ -596,7 +596,17 @@ ssize_t vfs_write(struct file *file, const char __user *buf, size_t count, loff_
 /* file_ppos returns &file->f_pos or NULL if file is stream */
 static inline loff_t *file_ppos(struct file *file)
 {
+<<<<<<< HEAD
 	return file->f_mode & FMODE_STREAM ? NULL : &file->f_pos;
+=======
+	return file->f_mode & FMODE_STREAM ? 0 : file->f_pos;
+}
+
+static inline void file_pos_write(struct file *file, loff_t pos)
+{
+	if ((file->f_mode & FMODE_STREAM) == 0)
+		file->f_pos = pos;
+>>>>>>> master
 }
 
 ssize_t ksys_read(unsigned int fd, char __user *buf, size_t count)
@@ -1119,8 +1129,14 @@ COMPAT_SYSCALL_DEFINE5(preadv64v2, unsigned long, fd,
 		unsigned long, vlen, loff_t, pos, rwf_t, flags)
 {
 	if (pos == -1)
+<<<<<<< HEAD
 		return do_readv(fd, vec, vlen, flags);
 	return do_preadv(fd, vec, vlen, pos, flags);
+=======
+		return do_compat_readv(fd, vec, vlen, flags);
+
+	return do_compat_preadv64(fd, vec, vlen, pos, flags);
+>>>>>>> master
 }
 #endif
 
@@ -1160,8 +1176,14 @@ COMPAT_SYSCALL_DEFINE5(pwritev64v2, unsigned long, fd,
 		unsigned long, vlen, loff_t, pos, rwf_t, flags)
 {
 	if (pos == -1)
+<<<<<<< HEAD
 		return do_writev(fd, vec, vlen, flags);
 	return do_pwritev(fd, vec, vlen, pos, flags);
+=======
+		return do_compat_writev(fd, vec, vlen, flags);
+
+	return do_compat_pwritev64(fd, vec, vlen, pos, flags);
+>>>>>>> master
 }
 #endif
 
@@ -1716,5 +1738,168 @@ int generic_file_rw_checks(struct file *file_in, struct file *file_out)
 	    (file_out->f_flags & O_APPEND))
 		return -EBADF;
 
+<<<<<<< HEAD
+=======
+	if (!file_in->f_op->clone_file_range)
+		return -EOPNOTSUPP;
+
+	ret = clone_verify_area(file_in, pos_in, len, false);
+	if (ret)
+		return ret;
+
+	ret = clone_verify_area(file_out, pos_out, len, true);
+	if (ret)
+		return ret;
+
+	if (pos_in + len > i_size_read(inode_in))
+		return -EINVAL;
+
+	ret = file_in->f_op->clone_file_range(file_in, pos_in,
+			file_out, pos_out, len);
+	if (!ret) {
+		fsnotify_access(file_in);
+		fsnotify_modify(file_out);
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL(do_clone_file_range);
+
+int vfs_clone_file_range(struct file *file_in, loff_t pos_in,
+			 struct file *file_out, loff_t pos_out, u64 len)
+{
+	int ret;
+
+	file_start_write(file_out);
+	ret = do_clone_file_range(file_in, pos_in, file_out, pos_out, len);
+	file_end_write(file_out);
+
+	return ret;
+}
+EXPORT_SYMBOL(vfs_clone_file_range);
+
+/* Read a page's worth of file data into the page cache. */
+static struct page *vfs_dedupe_get_page(struct inode *inode, loff_t offset)
+{
+	struct address_space *mapping;
+	struct page *page;
+	pgoff_t n;
+
+	n = offset >> PAGE_SHIFT;
+	mapping = inode->i_mapping;
+	page = read_mapping_page(mapping, n, NULL);
+	if (IS_ERR(page))
+		return page;
+	if (!PageUptodate(page)) {
+		put_page(page);
+		return ERR_PTR(-EIO);
+	}
+	return page;
+}
+
+/*
+ * Lock two pages, ensuring that we lock in offset order if the pages are from
+ * the same file.
+ */
+static void vfs_lock_two_pages(struct page *page1, struct page *page2)
+{
+	/* Always lock in order of increasing index. */
+	if (page1->index > page2->index)
+		swap(page1, page2);
+
+	lock_page(page1);
+	if (page1 != page2)
+		lock_page(page2);
+}
+
+/* Unlock two pages, being careful not to unlock the same page twice. */
+static void vfs_unlock_two_pages(struct page *page1, struct page *page2)
+{
+	unlock_page(page1);
+	if (page1 != page2)
+		unlock_page(page2);
+}
+
+/*
+ * Compare extents of two files to see if they are the same.
+ * Caller must have locked both inodes to prevent write races.
+ */
+int vfs_dedupe_file_range_compare(struct inode *src, loff_t srcoff,
+				  struct inode *dest, loff_t destoff,
+				  loff_t len, bool *is_same)
+{
+	loff_t src_poff;
+	loff_t dest_poff;
+	void *src_addr;
+	void *dest_addr;
+	struct page *src_page;
+	struct page *dest_page;
+	loff_t cmp_len;
+	bool same;
+	int error;
+
+	error = -EINVAL;
+	same = true;
+	while (len) {
+		src_poff = srcoff & (PAGE_SIZE - 1);
+		dest_poff = destoff & (PAGE_SIZE - 1);
+		cmp_len = min(PAGE_SIZE - src_poff,
+			      PAGE_SIZE - dest_poff);
+		cmp_len = min(cmp_len, len);
+		if (cmp_len <= 0)
+			goto out_error;
+
+		src_page = vfs_dedupe_get_page(src, srcoff);
+		if (IS_ERR(src_page)) {
+			error = PTR_ERR(src_page);
+			goto out_error;
+		}
+		dest_page = vfs_dedupe_get_page(dest, destoff);
+		if (IS_ERR(dest_page)) {
+			error = PTR_ERR(dest_page);
+			put_page(src_page);
+			goto out_error;
+		}
+
+		vfs_lock_two_pages(src_page, dest_page);
+
+		/*
+		 * Now that we've locked both pages, make sure they're still
+		 * mapped to the file data we're interested in.  If not,
+		 * someone is invalidating pages on us and we lose.
+		 */
+		if (!PageUptodate(src_page) || !PageUptodate(dest_page) ||
+		    src_page->mapping != src->i_mapping ||
+		    dest_page->mapping != dest->i_mapping) {
+			same = false;
+			goto unlock;
+		}
+
+		src_addr = kmap_atomic(src_page);
+		dest_addr = kmap_atomic(dest_page);
+
+		flush_dcache_page(src_page);
+		flush_dcache_page(dest_page);
+
+		if (memcmp(src_addr + src_poff, dest_addr + dest_poff, cmp_len))
+			same = false;
+
+		kunmap_atomic(dest_addr);
+		kunmap_atomic(src_addr);
+unlock:
+		vfs_unlock_two_pages(src_page, dest_page);
+		put_page(dest_page);
+		put_page(src_page);
+
+		if (!same)
+			break;
+
+		srcoff += cmp_len;
+		destoff += cmp_len;
+		len -= cmp_len;
+	}
+
+	*is_same = same;
+>>>>>>> master
 	return 0;
 }

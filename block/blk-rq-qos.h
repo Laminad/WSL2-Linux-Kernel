@@ -118,6 +118,7 @@ static inline void rq_qos_cleanup(struct request_queue *q, struct bio *bio)
 
 static inline void rq_qos_done(struct request_queue *q, struct request *rq)
 {
+<<<<<<< HEAD
 	if (q->rq_qos)
 		__rq_qos_done(q->rq_qos, rq);
 }
@@ -173,6 +174,22 @@ static inline void rq_qos_queue_depth_changed(struct request_queue *q)
 	if (q->rq_qos)
 		__rq_qos_queue_depth_changed(q->rq_qos);
 }
+=======
+	struct rq_qos **cur;
+
+	for (cur = &q->rq_qos; *cur; cur = &(*cur)->next) {
+		if (*cur == rqos) {
+			*cur = rqos->next;
+			break;
+		}
+	}
+}
+
+bool rq_wait_inc_below(struct rq_wait *rq_wait, unsigned int limit);
+bool rq_depth_scale_up(struct rq_depth *rqd);
+bool rq_depth_scale_down(struct rq_depth *rqd, bool hard_throttle);
+bool rq_depth_calc_max_depth(struct rq_depth *rqd);
+>>>>>>> master
 
 void rq_qos_exit(struct request_queue *);
 

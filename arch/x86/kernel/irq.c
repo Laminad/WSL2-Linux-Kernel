@@ -258,8 +258,16 @@ DEFINE_IDTENTRY_IRQ(common_interrupt)
 	} else {
 		apic_eoi();
 
+<<<<<<< HEAD
 		if (desc == VECTOR_UNUSED) {
 			pr_emerg_ratelimited("%s: %d.%u No irq handler for vector\n",
+=======
+	if (!handle_irq(desc, regs)) {
+		ack_APIC_irq();
+
+		if (desc != VECTOR_RETRIGGERED && desc != VECTOR_SHUTDOWN) {
+			pr_emerg_ratelimited("%s: %d.%d No irq handler for vector\n",
+>>>>>>> master
 					     __func__, smp_processor_id(),
 					     vector);
 		} else {

@@ -1004,8 +1004,11 @@ mpt3sas_transport_port_remove(struct MPT3SAS_ADAPTER *ioc, u64 sas_address,
 	}
 	if (!ioc->remove_host)
 		sas_port_delete(mpt3sas_port->port);
+<<<<<<< HEAD
 	ioc_info(ioc, "%s: removed: sas_addr(0x%016llx)\n",
 	    __func__, (unsigned long long)sas_address);
+=======
+>>>>>>> master
 	kfree(mpt3sas_port);
 }
 

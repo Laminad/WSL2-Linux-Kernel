@@ -10018,6 +10018,15 @@ int bpf_link__detach(struct bpf_link *link)
 
 int bpf_link__pin(struct bpf_link *link, const char *path)
 {
+<<<<<<< HEAD
+=======
+	struct bpf_object_open_attr open_attr = {};
+	struct bpf_program *prog, *first_prog = NULL;
+	enum bpf_attach_type expected_attach_type;
+	enum bpf_prog_type prog_type;
+	struct bpf_object *obj;
+	struct bpf_map *map;
+>>>>>>> master
 	int err;
 
 	if (link->pin_path)
@@ -10029,9 +10038,18 @@ int bpf_link__pin(struct bpf_link *link, const char *path)
 	if (err)
 		return libbpf_err(err);
 
+<<<<<<< HEAD
 	link->pin_path = strdup(path);
 	if (!link->pin_path)
 		return libbpf_err(-ENOMEM);
+=======
+	open_attr.file = attr->file;
+	open_attr.prog_type = attr->prog_type;
+
+	obj = bpf_object__open_xattr(&open_attr);
+	if (IS_ERR_OR_NULL(obj))
+		return -ENOENT;
+>>>>>>> master
 
 	if (bpf_obj_pin(link->fd, link->pin_path)) {
 		err = -errno;

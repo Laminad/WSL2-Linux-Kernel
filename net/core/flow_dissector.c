@@ -1627,9 +1627,28 @@ ip_proto_again:
 		break;
 	}
 
+<<<<<<< HEAD
 	if (!(key_control->flags & FLOW_DIS_IS_FRAGMENT))
 		__skb_flow_dissect_ports(skb, flow_dissector, target_container,
 					 data, nhoff, ip_proto, hlen);
+=======
+	if (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_PORTS) &&
+	    !(key_control->flags & FLOW_DIS_IS_FRAGMENT)) {
+		key_ports = skb_flow_dissector_target(flow_dissector,
+						      FLOW_DISSECTOR_KEY_PORTS,
+						      target_container);
+		key_ports->ports = __skb_flow_get_ports(skb, nhoff, ip_proto,
+							data, hlen);
+	}
+
+	if (dissector_uses_key(flow_dissector,
+			       FLOW_DISSECTOR_KEY_ICMP)) {
+		key_icmp = skb_flow_dissector_target(flow_dissector,
+						     FLOW_DISSECTOR_KEY_ICMP,
+						     target_container);
+		key_icmp->icmp = skb_flow_get_be16(skb, nhoff, data, hlen);
+	}
+>>>>>>> master
 
 	/* Process result of IP proto processing */
 	switch (fdret) {
@@ -1665,7 +1684,11 @@ out_bad:
 }
 EXPORT_SYMBOL(__skb_flow_dissect);
 
+<<<<<<< HEAD
 static siphash_aligned_key_t hashrnd;
+=======
+static siphash_key_t hashrnd __read_mostly;
+>>>>>>> master
 static __always_inline void __flow_hash_secret_init(void)
 {
 	net_get_random_once(&hashrnd, sizeof(hashrnd));
@@ -1680,8 +1703,13 @@ static const void *flow_keys_hash_start(const struct flow_keys *flow)
 static inline size_t flow_keys_hash_length(const struct flow_keys *flow)
 {
 	size_t diff = FLOW_KEYS_HASH_OFFSET + sizeof(flow->addrs);
+<<<<<<< HEAD
 
 	BUILD_BUG_ON((sizeof(*flow) - FLOW_KEYS_HASH_OFFSET) % sizeof(u32));
+=======
+	BUILD_BUG_ON(offsetof(typeof(*flow), addrs) !=
+		     sizeof(*flow) - sizeof(flow->addrs));
+>>>>>>> master
 
 	switch (flow->control.addr_type) {
 	case FLOW_DISSECTOR_KEY_IPV4_ADDRS:

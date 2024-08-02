@@ -536,9 +536,12 @@ struct esp {
 	void			*dma;
 	int			dmarev;
 
+<<<<<<< HEAD
 	/* These are used by esp_send_pio_cmd() */
 	u8 __iomem		*fifo_reg;
 	int			send_cmd_error;
+=======
+>>>>>>> master
 	u32			send_cmd_residual;
 };
 

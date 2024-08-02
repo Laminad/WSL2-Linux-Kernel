@@ -33,7 +33,11 @@
  *
  * Returns size of the event. If it is an invalid event, returns 0.
  */
+<<<<<<< HEAD
 static size_t calc_tpm2_event_size(struct tcg_pcr_event2_head *event,
+=======
+static size_t calc_tpm2_event_size(struct tcg_pcr_event2 *event,
+>>>>>>> master
 				   struct tcg_pcr_event *event_header)
 {
 	return __calc_tpm2_event_size(event, event_header, false);

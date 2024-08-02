@@ -82,9 +82,40 @@ static void flush_dcache_range_chunked(unsigned long start, unsigned long stop,
 {
 	unsigned long i;
 
+<<<<<<< HEAD
 	for (i = start; i < stop; i += chunk) {
 		flush_dcache_range(i, min(stop, i + chunk));
 		cond_resched();
+=======
+	return 0;
+}
+
+static int change_memblock_state(struct memory_block *mem, void *arg)
+{
+	unsigned long state = (unsigned long)arg;
+
+	mem->state = state;
+
+	return 0;
+}
+
+/* called with device_hotplug_lock held */
+static bool memtrace_offline_pages(u32 nid, u64 start_pfn, u64 nr_pages)
+{
+	u64 end_pfn = start_pfn + nr_pages - 1;
+
+	if (walk_memory_range(start_pfn, end_pfn, NULL,
+	    check_memblock_online))
+		return false;
+
+	walk_memory_range(start_pfn, end_pfn, (void *)MEM_GOING_OFFLINE,
+			  change_memblock_state);
+
+	if (offline_pages(start_pfn, nr_pages)) {
+		walk_memory_range(start_pfn, end_pfn, (void *)MEM_ONLINE,
+				  change_memblock_state);
+		return false;
+>>>>>>> master
 	}
 }
 
@@ -93,6 +124,7 @@ static void memtrace_clear_range(unsigned long start_pfn,
 {
 	unsigned long pfn;
 
+<<<<<<< HEAD
 	/* As HIGHMEM does not apply, use clear_page() directly. */
 	for (pfn = start_pfn; pfn < start_pfn + nr_pages; pfn++) {
 		if (IS_ALIGNED(pfn, PAGES_PER_SECTION))
@@ -106,13 +138,23 @@ static void memtrace_clear_range(unsigned long start_pfn,
 	flush_dcache_range_chunked((unsigned long)pfn_to_kaddr(start_pfn),
 				   (unsigned long)pfn_to_kaddr(start_pfn + nr_pages),
 				   FLUSH_CHUNK_SIZE);
+=======
+
+	return true;
+>>>>>>> master
 }
 
 static u64 memtrace_alloc_node(u32 nid, u64 size)
 {
+<<<<<<< HEAD
 	const unsigned long nr_pages = PHYS_PFN(size);
 	unsigned long pfn, start_pfn;
 	struct page *page;
+=======
+	u64 start_pfn, end_pfn, nr_pages, pfn;
+	u64 base_pfn;
+	u64 bytes = memory_block_size_bytes();
+>>>>>>> master
 
 	/*
 	 * Trace memory needs to be aligned to the size, which is guaranteed
@@ -138,7 +180,28 @@ static u64 memtrace_alloc_node(u32 nid, u64 size)
 	for (pfn = start_pfn; pfn < start_pfn + nr_pages; pfn++)
 		__SetPageOffline(pfn_to_page(pfn));
 
+<<<<<<< HEAD
 	arch_remove_linear_mapping(PFN_PHYS(start_pfn), size);
+=======
+	lock_device_hotplug();
+	for (base_pfn = end_pfn; base_pfn > start_pfn; base_pfn -= nr_pages) {
+		if (memtrace_offline_pages(nid, base_pfn, nr_pages) == true) {
+			/*
+			 * Remove memory in memory block size chunks so that
+			 * iomem resources are always split to the same size and
+			 * we never try to remove memory that spans two iomem
+			 * resources.
+			 */
+			end_pfn = base_pfn + nr_pages;
+			for (pfn = base_pfn; pfn < end_pfn; pfn += bytes>> PAGE_SHIFT) {
+				remove_memory(nid, pfn << PAGE_SHIFT, bytes);
+			}
+			unlock_device_hotplug();
+			return base_pfn << PAGE_SHIFT;
+		}
+	}
+	unlock_device_hotplug();
+>>>>>>> master
 
 	return PFN_PHYS(start_pfn);
 }

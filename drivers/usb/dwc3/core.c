@@ -1964,10 +1964,19 @@ static int dwc3_probe(struct platform_device *pdev)
 err_exit_debugfs:
 	dwc3_debugfs_exit(dwc);
 	dwc3_event_buffers_cleanup(dwc);
+<<<<<<< HEAD
 	dwc3_phy_power_off(dwc);
 	dwc3_phy_exit(dwc);
 	dwc3_ulpi_exit(dwc);
 err_free_event_buffers:
+=======
+	dwc3_ulpi_exit(dwc);
+
+err4:
+	dwc3_free_scratch_buffers(dwc);
+
+err3:
+>>>>>>> master
 	dwc3_free_event_buffers(dwc);
 err_allow_rpm:
 	pm_runtime_allow(dev);
@@ -2052,6 +2061,10 @@ static int dwc3_suspend_common(struct dwc3 *dwc, pm_message_t msg)
 		if (pm_runtime_suspended(dwc->dev))
 			break;
 		dwc3_gadget_suspend(dwc);
+<<<<<<< HEAD
+=======
+		spin_unlock_irqrestore(&dwc->lock, flags);
+>>>>>>> master
 		synchronize_irq(dwc->irq_gadget);
 		dwc3_core_exit(dwc);
 		break;

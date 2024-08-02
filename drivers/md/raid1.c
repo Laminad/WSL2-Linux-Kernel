@@ -476,12 +476,20 @@ static void raid1_end_write_request(struct bio *bio)
 		/*
 		 * When the device is faulty, it is not necessary to
 		 * handle write error.
+<<<<<<< HEAD
+=======
+		 * For failfast, this is the only remaining device,
+		 * We need to retry the write without FailFast.
+>>>>>>> master
 		 */
 		if (!test_bit(Faulty, &rdev->flags))
 			set_bit(R1BIO_WriteError, &r1_bio->state);
 		else {
+<<<<<<< HEAD
 			/* Fail the request */
 			set_bit(R1BIO_Degraded, &r1_bio->state);
+=======
+>>>>>>> master
 			/* Finished with this branch */
 			r1_bio->bios[mirror] = NULL;
 			to_put = bio;
@@ -1937,6 +1945,7 @@ static void abort_sync_write(struct mddev *mddev, struct r1bio *r1_bio)
 	} while (sectors_to_go > 0);
 }
 
+<<<<<<< HEAD
 static void put_sync_write_buf(struct r1bio *r1_bio, int uptodate)
 {
 	if (atomic_dec_and_test(&r1_bio->remaining)) {
@@ -1953,6 +1962,8 @@ static void put_sync_write_buf(struct r1bio *r1_bio, int uptodate)
 	}
 }
 
+=======
+>>>>>>> master
 static void end_sync_write(struct bio *bio)
 {
 	int uptodate = !bio->bi_status;
@@ -3157,7 +3168,10 @@ static int raid1_run(struct mddev *mddev)
 	 * RAID1 needs at least one disk in active
 	 */
 	if (conf->raid_disks - mddev->degraded < 1) {
+<<<<<<< HEAD
 		md_unregister_thread(mddev, &conf->thread);
+=======
+>>>>>>> master
 		ret = -EINVAL;
 		goto abort;
 	}
@@ -3184,7 +3198,11 @@ static int raid1_run(struct mddev *mddev)
 
 	ret = md_integrity_register(mddev);
 	if (ret) {
+<<<<<<< HEAD
 		md_unregister_thread(mddev, &mddev->thread);
+=======
+		md_unregister_thread(&mddev->thread);
+>>>>>>> master
 		goto abort;
 	}
 	return 0;

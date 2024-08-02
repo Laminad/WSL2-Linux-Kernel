@@ -5049,6 +5049,15 @@ static int __lock_acquire(struct lockdep_map *lock, unsigned int subclass,
 
 			if (!hlock->references)
 				hlock->references++;
+<<<<<<< HEAD
+=======
+
+			hlock->references += references;
+
+			/* Overflow */
+			if (DEBUG_LOCKS_WARN_ON(hlock->references < references))
+				return 0;
+>>>>>>> master
 
 			hlock->references += references;
 
@@ -6006,7 +6015,12 @@ void lock_contended(struct lockdep_map *lock, unsigned long ip)
 {
 	unsigned long flags;
 
+<<<<<<< HEAD
 	trace_lock_contended(lock, ip);
+=======
+	if (unlikely(!lock_stat || !debug_locks))
+		return;
+>>>>>>> master
 
 	if (unlikely(!lock_stat || !lockdep_enabled()))
 		return;
@@ -6024,7 +6038,12 @@ void lock_acquired(struct lockdep_map *lock, unsigned long ip)
 {
 	unsigned long flags;
 
+<<<<<<< HEAD
 	trace_lock_acquired(lock, ip);
+=======
+	if (unlikely(!lock_stat || !debug_locks))
+		return;
+>>>>>>> master
 
 	if (unlikely(!lock_stat || !lockdep_enabled()))
 		return;

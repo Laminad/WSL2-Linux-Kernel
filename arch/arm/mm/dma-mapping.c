@@ -600,6 +600,70 @@ static void *__dma_alloc(struct device *dev, size_t size, dma_addr_t *handle,
 }
 
 /*
+<<<<<<< HEAD
+=======
+ * Allocate DMA-coherent memory space and return both the kernel remapped
+ * virtual and bus address for that space.
+ */
+void *arm_dma_alloc(struct device *dev, size_t size, dma_addr_t *handle,
+		    gfp_t gfp, unsigned long attrs)
+{
+	pgprot_t prot = __get_dma_pgprot(attrs, PAGE_KERNEL);
+
+	return __dma_alloc(dev, size, handle, gfp, prot, false,
+			   attrs, __builtin_return_address(0));
+}
+
+static void *arm_coherent_dma_alloc(struct device *dev, size_t size,
+	dma_addr_t *handle, gfp_t gfp, unsigned long attrs)
+{
+	return __dma_alloc(dev, size, handle, gfp, PAGE_KERNEL, true,
+			   attrs, __builtin_return_address(0));
+}
+
+static int __arm_dma_mmap(struct device *dev, struct vm_area_struct *vma,
+		 void *cpu_addr, dma_addr_t dma_addr, size_t size,
+		 unsigned long attrs)
+{
+	int ret = -ENXIO;
+	unsigned long nr_vma_pages = vma_pages(vma);
+	unsigned long nr_pages = PAGE_ALIGN(size) >> PAGE_SHIFT;
+	unsigned long pfn = dma_to_pfn(dev, dma_addr);
+	unsigned long off = vma->vm_pgoff;
+
+	if (dma_mmap_from_dev_coherent(dev, vma, cpu_addr, size, &ret))
+		return ret;
+
+	if (off < nr_pages && nr_vma_pages <= (nr_pages - off)) {
+		ret = remap_pfn_range(vma, vma->vm_start,
+				      pfn + off,
+				      vma->vm_end - vma->vm_start,
+				      vma->vm_page_prot);
+	}
+
+	return ret;
+}
+
+/*
+ * Create userspace mapping for the DMA-coherent memory.
+ */
+static int arm_coherent_dma_mmap(struct device *dev, struct vm_area_struct *vma,
+		 void *cpu_addr, dma_addr_t dma_addr, size_t size,
+		 unsigned long attrs)
+{
+	return __arm_dma_mmap(dev, vma, cpu_addr, dma_addr, size, attrs);
+}
+
+int arm_dma_mmap(struct device *dev, struct vm_area_struct *vma,
+		 void *cpu_addr, dma_addr_t dma_addr, size_t size,
+		 unsigned long attrs)
+{
+	vma->vm_page_prot = __get_dma_pgprot(attrs, vma->vm_page_prot);
+	return __arm_dma_mmap(dev, vma, cpu_addr, dma_addr, size, attrs);
+}
+
+/*
+>>>>>>> master
  * Free a buffer as defined by the above mapping.
  */
 static void __arm_dma_free(struct device *dev, size_t size, void *cpu_addr,
@@ -1791,6 +1855,7 @@ void arch_teardown_dma_ops(struct device *dev)
 	arm_teardown_iommu_dma_ops(dev);
 	/* Let arch_setup_dma_ops() start again from scratch upon re-probe */
 	set_dma_ops(dev, NULL);
+<<<<<<< HEAD
 }
 
 void arch_sync_dma_for_device(phys_addr_t paddr, size_t size,
@@ -1819,4 +1884,6 @@ void arch_dma_free(struct device *dev, size_t size, void *cpu_addr,
 		dma_addr_t dma_handle, unsigned long attrs)
 {
 	__arm_dma_free(dev, size, cpu_addr, dma_handle, attrs, false);
+=======
+>>>>>>> master
 }

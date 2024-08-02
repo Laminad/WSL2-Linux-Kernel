@@ -169,16 +169,27 @@ static struct xfrm_if *xfrmi_lookup(struct net *net, struct xfrm_state *x)
 	return NULL;
 }
 
+<<<<<<< HEAD:net/xfrm/xfrm_interface_core.c
 static bool xfrmi_decode_session(struct sk_buff *skb,
 				 unsigned short family,
 				 struct xfrm_if_decode_session_result *res)
 {
 	struct net_device *dev;
+=======
+static struct xfrm_if *xfrmi_decode_session(struct sk_buff *skb,
+					    unsigned short family)
+{
+	struct xfrmi_net *xfrmn;
+>>>>>>> master:net/xfrm/xfrm_interface.c
 	struct xfrm_if *xi;
 	int ifindex = 0;
 
 	if (!secpath_exists(skb) || !skb->dev)
+<<<<<<< HEAD:net/xfrm/xfrm_interface_core.c
 		return false;
+=======
+		return NULL;
+>>>>>>> master:net/xfrm/xfrm_interface.c
 
 	switch (family) {
 	case AF_INET6:
@@ -187,6 +198,19 @@ static bool xfrmi_decode_session(struct sk_buff *skb,
 	case AF_INET:
 		ifindex = inet_sdif(skb);
 		break;
+<<<<<<< HEAD:net/xfrm/xfrm_interface_core.c
+=======
+	}
+	if (!ifindex)
+		ifindex = skb->dev->ifindex;
+
+	xfrmn = net_generic(xs_net(xfrm_input_state(skb)), xfrmi_net_id);
+
+	for_each_xfrmi_rcu(xfrmn->xfrmi[0], xi) {
+		if (ifindex == xi->dev->ifindex &&
+			(xi->dev->flags & IFF_UP))
+				return xi;
+>>>>>>> master:net/xfrm/xfrm_interface.c
 	}
 
 	if (ifindex) {

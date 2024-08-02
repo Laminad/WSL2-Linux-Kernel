@@ -206,7 +206,10 @@ struct nitrox_crypto_ctx {
 		struct flexi_crypto_context *fctx;
 	} u;
 	struct crypto_ctx_hdr *chdr;
+<<<<<<< HEAD
 	sereq_completion_t callback;
+=======
+>>>>>>> master
 };
 
 struct nitrox_kcrypt_request {

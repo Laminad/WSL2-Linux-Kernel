@@ -1017,16 +1017,83 @@ static void dpu_plane_sspp_update_pipe(struct drm_plane *plane,
 				       int frame_rate,
 				       struct dpu_hw_fmt_layout *layout)
 {
+<<<<<<< HEAD
 	uint32_t src_flags;
 	struct dpu_plane *pdpu = to_dpu_plane(plane);
 	struct drm_plane_state *state = plane->state;
 	struct dpu_plane_state *pstate = to_dpu_plane_state(state);
+=======
+	uint32_t nplanes, src_flags;
+	struct dpu_plane *pdpu;
+	struct drm_plane_state *state;
+	struct dpu_plane_state *pstate;
+	struct dpu_plane_state *old_pstate;
+	const struct dpu_format *fmt;
+	struct drm_crtc *crtc;
+	struct drm_framebuffer *fb;
+	int ret, min_scale;
+>>>>>>> master
 
 	if (layout && pipe->sspp->ops.setup_sourceaddress) {
 		trace_dpu_plane_set_scanout(pipe, layout);
 		pipe->sspp->ops.setup_sourceaddress(pipe, layout);
 	}
 
+<<<<<<< HEAD
+=======
+	pdpu = to_dpu_plane(plane);
+	state = plane->state;
+
+	pstate = to_dpu_plane_state(state);
+
+	old_pstate = to_dpu_plane_state(old_state);
+
+	crtc = state->crtc;
+	fb = state->fb;
+	if (!crtc || !fb) {
+		DPU_ERROR_PLANE(pdpu, "invalid crtc %d or fb %d\n",
+				crtc != 0, fb != 0);
+		return -EINVAL;
+	}
+	fmt = to_dpu_format(msm_framebuffer_format(fb));
+	nplanes = fmt->num_planes;
+
+	memset(&(pdpu->pipe_cfg), 0, sizeof(struct dpu_hw_pipe_cfg));
+
+	_dpu_plane_set_scanout(plane, pstate, &pdpu->pipe_cfg, fb);
+
+	pstate->pending = true;
+
+	pdpu->is_rt_pipe = (dpu_crtc_get_client_type(crtc) != NRT_CLIENT);
+	_dpu_plane_set_qos_ctrl(plane, false, DPU_PLANE_QOS_PANIC_CTRL);
+
+	min_scale = FRAC_16_16(1, pdpu->pipe_sblk->maxdwnscale);
+	ret = drm_atomic_helper_check_plane_state(state, crtc->state, min_scale,
+					  pdpu->pipe_sblk->maxupscale << 16,
+					  true, false);
+	if (ret) {
+		DPU_ERROR_PLANE(pdpu, "Check plane state failed (%d)\n", ret);
+		return ret;
+	}
+
+	DPU_DEBUG_PLANE(pdpu, "FB[%u] " DRM_RECT_FP_FMT "->crtc%u " DRM_RECT_FMT
+			", %4.4s ubwc %d\n", fb->base.id, DRM_RECT_FP_ARG(&state->src),
+			crtc->base.id, DRM_RECT_ARG(&state->dst),
+			(char *)&fmt->base.pixel_format, DPU_FORMAT_IS_UBWC(fmt));
+
+	pdpu->pipe_cfg.src_rect = state->src;
+
+	/* state->src is 16.16, src_rect is not */
+	pdpu->pipe_cfg.src_rect.x1 >>= 16;
+	pdpu->pipe_cfg.src_rect.x2 >>= 16;
+	pdpu->pipe_cfg.src_rect.y1 >>= 16;
+	pdpu->pipe_cfg.src_rect.y2 >>= 16;
+
+	pdpu->pipe_cfg.dst_rect = state->dst;
+
+	_dpu_plane_setup_scaler(pdpu, pstate, fmt, false);
+
+>>>>>>> master
 	/* override for color fill */
 	if (pdpu->color_fill & DPU_PLANE_COLOR_FILL_FLAG) {
 		_dpu_plane_set_qos_ctrl(plane, pipe, false);

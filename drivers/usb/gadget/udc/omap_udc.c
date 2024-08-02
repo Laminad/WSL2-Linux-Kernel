@@ -2036,8 +2036,17 @@ static irqreturn_t omap_udc_iso_irq(int irq, void *_dev)
 
 static inline int machine_without_vbus_sense(void)
 {
+<<<<<<< HEAD
 	return  machine_is_omap_osk() || machine_is_omap_palmte() ||
 		machine_is_sx1();
+=======
+	return machine_is_omap_innovator()
+		|| machine_is_omap_osk()
+		|| machine_is_omap_palmte()
+		|| machine_is_sx1()
+		/* No known omap7xx boards with vbus sense */
+		|| cpu_is_omap7xx();
+>>>>>>> master
 }
 
 static int omap_udc_start(struct usb_gadget *g,
@@ -2604,8 +2613,11 @@ static void omap_udc_release(struct device *dev)
 	if (udc->dc_clk) {
 		if (udc->clk_requested)
 			omap_udc_enable_clock(0);
+<<<<<<< HEAD
 		clk_unprepare(udc->hhc_clk);
 		clk_unprepare(udc->dc_clk);
+=======
+>>>>>>> master
 		clk_put(udc->hhc_clk);
 		clk_put(udc->dc_clk);
 	}
@@ -2935,11 +2947,21 @@ static void omap_udc_remove(struct platform_device *pdev)
 	udc->done = &done;
 
 	usb_del_gadget_udc(&udc->gadget);
+<<<<<<< HEAD
 
 	wait_for_completion(&done);
 
 	release_mem_region(pdev->resource[0].start,
 			   resource_size(&pdev->resource[0]));
+=======
+
+	wait_for_completion(&done);
+
+	release_mem_region(pdev->resource[0].start,
+			pdev->resource[0].end - pdev->resource[0].start + 1);
+
+	return 0;
+>>>>>>> master
 }
 
 /* suspend/resume/wakeup from sysfs (echo > power/state) or when the

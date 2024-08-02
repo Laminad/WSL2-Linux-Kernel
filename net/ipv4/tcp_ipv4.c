@@ -319,7 +319,11 @@ int tcp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 					     inet->inet_daddr));
 	}
 
+<<<<<<< HEAD
 	atomic_set(&inet->inet_id, get_random_u16());
+=======
+	inet->inet_id = prandom_u32();
+>>>>>>> master
 
 	if (tcp_fastopen_defer_connect(sk, &err))
 		return err;
@@ -577,12 +581,49 @@ int tcp_v4_err(struct sk_buff *skb, u32 info)
 		}
 
 		err = icmp_err_convert[code].errno;
+<<<<<<< HEAD
 		/* check if this ICMP message allows revert of backoff.
 		 * (see RFC 6069)
 		 */
 		if (!fastopen &&
 		    (code == ICMP_NET_UNREACH || code == ICMP_HOST_UNREACH))
 			tcp_ld_RTO_revert(sk, seq);
+=======
+		/* check if icmp_skb allows revert of backoff
+		 * (see draft-zimmermann-tcp-lcd) */
+		if (code != ICMP_NET_UNREACH && code != ICMP_HOST_UNREACH)
+			break;
+		if (seq != tp->snd_una  || !icsk->icsk_retransmits ||
+		    !icsk->icsk_backoff || fastopen)
+			break;
+
+		if (sock_owned_by_user(sk))
+			break;
+
+		skb = tcp_rtx_queue_head(sk);
+		if (WARN_ON_ONCE(!skb))
+			break;
+
+		icsk->icsk_backoff--;
+		icsk->icsk_rto = tp->srtt_us ? __tcp_set_rto(tp) :
+					       TCP_TIMEOUT_INIT;
+		icsk->icsk_rto = inet_csk_rto_backoff(icsk, TCP_RTO_MAX);
+
+		tcp_mstamp_refresh(tp);
+		delta_us = (u32)(tp->tcp_mstamp - skb->skb_mstamp);
+		remaining = icsk->icsk_rto -
+			    usecs_to_jiffies(delta_us);
+
+		if (remaining > 0) {
+			inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS,
+						  remaining, TCP_RTO_MAX);
+		} else {
+			/* RTO revert clocked out retransmission.
+			 * Will retransmit now */
+			tcp_retransmit_timer(sk);
+		}
+
+>>>>>>> master
 		break;
 	case ICMP_TIME_EXCEEDED:
 		err = EHOSTUNREACH;
@@ -1602,6 +1643,7 @@ struct sock *tcp_v4_syn_recv_sock(const struct sock *sk, struct sk_buff *skb,
 	inet_csk(newsk)->icsk_ext_hdr_len = 0;
 	if (inet_opt)
 		inet_csk(newsk)->icsk_ext_hdr_len = inet_opt->opt.optlen;
+<<<<<<< HEAD
 	atomic_set(&newinet->inet_id, get_random_u16());
 
 	/* Set ToS of the new socket based upon the value of incoming SYN.
@@ -1609,6 +1651,9 @@ struct sock *tcp_v4_syn_recv_sock(const struct sock *sk, struct sk_buff *skb,
 	 */
 	if (READ_ONCE(sock_net(sk)->ipv4.sysctl_tcp_reflect_tos))
 		newinet->tos = tcp_rsk(req)->syn_tos & ~INET_ECN_MASK;
+=======
+	newinet->inet_id = prandom_u32();
+>>>>>>> master
 
 	if (!dst) {
 		dst = inet_csk_route_child_sock(sk, newsk, req);
@@ -3177,11 +3222,16 @@ static void __net_exit tcp_sk_exit(struct net *net)
 			       net->ipv4.tcp_congestion_control->owner);
 }
 
+<<<<<<< HEAD
 static void __net_init tcp_set_hashinfo(struct net *net)
 {
 	struct inet_hashinfo *hinfo;
 	unsigned int ehash_entries;
 	struct net *old_net;
+=======
+	if (net->ipv4.tcp_congestion_control)
+		module_put(net->ipv4.tcp_congestion_control->owner);
+>>>>>>> master
 
 	if (net_eq(net, &init_net))
 		goto fallback;

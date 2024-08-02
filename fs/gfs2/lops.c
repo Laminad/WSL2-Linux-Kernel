@@ -904,7 +904,14 @@ void gfs2_drain_revokes(struct gfs2_sbd *sdp)
 		bd = list_first_entry(head, struct gfs2_bufdata, bd_list);
 		list_del_init(&bd->bd_list);
 		gl = bd->bd_gl;
+<<<<<<< HEAD
 		gfs2_glock_remove_revoke(gl);
+=======
+		if (atomic_dec_return(&gl->gl_revokes) == 0) {
+			clear_bit(GLF_LFLUSH, &gl->gl_flags);
+			gfs2_glock_queue_put(gl);
+		}
+>>>>>>> master
 		kmem_cache_free(gfs2_bufdata_cachep, bd);
 	}
 }

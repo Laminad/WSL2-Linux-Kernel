@@ -3980,8 +3980,13 @@ static int smu7_get_gpu_power(struct pp_hwmgr *hwmgr, u32 *query)
 							ixSMU_PM_STATUS_95, 0);
 
 	for (i = 0; i < 10; i++) {
+<<<<<<< HEAD:drivers/gpu/drm/amd/pm/powerplay/hwmgr/smu7_hwmgr.c
 		msleep(500);
 		smum_send_msg_to_smc(hwmgr, PPSMC_MSG_PmStatusLogSample, NULL);
+=======
+		mdelay(500);
+		smum_send_msg_to_smc(hwmgr, PPSMC_MSG_PmStatusLogSample);
+>>>>>>> master:drivers/gpu/drm/amd/powerplay/hwmgr/smu7_hwmgr.c
 		tmp = cgs_read_ind_register(hwmgr->device,
 						CGS_IND_REG__SMC,
 						ixSMU_PM_STATUS_95);

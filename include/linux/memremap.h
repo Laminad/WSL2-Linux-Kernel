@@ -107,7 +107,13 @@ struct dev_pagemap_ops {
  * struct dev_pagemap - metadata for ZONE_DEVICE mappings
  * @altmap: pre-allocated/reserved memory for vmemmap allocations
  * @ref: reference count that pins the devm_memremap_pages() mapping
+<<<<<<< HEAD
  * @done: completion for @ref
+=======
+ * @kill: callback to transition @ref to the dead state
+ * @dev: host device of the mapping for debug
+ * @data: private data pointer for page_free()
+>>>>>>> master
  * @type: memory type: see MEMORY_* in memory_hotplug.h
  * @flags: PGMAP_* flags to specify defailed behavior
  * @vmemmap_shift: structural definition of how the vmemmap page metadata
@@ -125,8 +131,17 @@ struct dev_pagemap_ops {
  */
 struct dev_pagemap {
 	struct vmem_altmap altmap;
+<<<<<<< HEAD
 	struct percpu_ref ref;
 	struct completion done;
+=======
+	bool altmap_valid;
+	struct resource res;
+	struct percpu_ref *ref;
+	void (*kill)(struct percpu_ref *ref);
+	struct device *dev;
+	void *data;
+>>>>>>> master
 	enum memory_type type;
 	unsigned int flags;
 	unsigned long vmemmap_shift;

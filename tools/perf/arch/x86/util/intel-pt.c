@@ -525,20 +525,28 @@ out_err:
 static int intel_pt_validate_config(struct perf_pmu *intel_pt_pmu,
 				    struct evsel *evsel)
 {
+<<<<<<< HEAD
 	int err, dirfd;
+=======
+	int err;
+>>>>>>> master
 	char c;
 
 	if (!evsel)
 		return 0;
 
+<<<<<<< HEAD
 	dirfd = perf_pmu__event_source_devices_fd();
 	if (dirfd < 0)
 		return dirfd;
 
+=======
+>>>>>>> master
 	/*
 	 * If supported, force pass-through config term (pt=1) even if user
 	 * sets pt=0, which avoids senseless kernel errors.
 	 */
+<<<<<<< HEAD
 	if (perf_pmu__scan_file_at(intel_pt_pmu, dirfd, "format/pt", "%c", &c) == 1 &&
 	    !(evsel->core.attr.config & 1)) {
 		pr_warning("pt=0 doesn't make sense, forcing pt=1\n");
@@ -546,6 +554,15 @@ static int intel_pt_validate_config(struct perf_pmu *intel_pt_pmu,
 	}
 
 	err = intel_pt_val_config_term(intel_pt_pmu, dirfd, "caps/cycle_thresholds",
+=======
+	if (perf_pmu__scan_file(intel_pt_pmu, "format/pt", "%c", &c) == 1 &&
+	    !(evsel->attr.config & 1)) {
+		pr_warning("pt=0 doesn't make sense, forcing pt=1\n");
+		evsel->attr.config |= 1;
+	}
+
+	err = intel_pt_val_config_term(intel_pt_pmu, "caps/cycle_thresholds",
+>>>>>>> master
 				       "cyc_thresh", "caps/psb_cyc",
 				       evsel->core.attr.config);
 	if (err)

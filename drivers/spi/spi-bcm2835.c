@@ -125,6 +125,7 @@ struct bcm2835_spi {
 	u8 *rx_buf;
 	int tx_len;
 	int rx_len;
+<<<<<<< HEAD
 	int tx_prologue;
 	int rx_prologue;
 	unsigned int tx_spillover;
@@ -140,6 +141,9 @@ struct bcm2835_spi {
 	unsigned int rx_dma_active;
 	struct dma_async_tx_descriptor *fill_tx_desc;
 	dma_addr_t fill_tx_addr;
+=======
+	unsigned int dma_pending;
+>>>>>>> master
 };
 
 /**
@@ -610,6 +614,7 @@ static void bcm2835_spi_dma_rx_done(void *data)
 	 * is called the tx-dma must have finished - can't get to this
 	 * situation otherwise...
 	 */
+<<<<<<< HEAD
 	dmaengine_terminate_async(ctlr->dma_tx);
 	bs->tx_dma_active = false;
 	bs->rx_dma_active = false;
@@ -617,6 +622,11 @@ static void bcm2835_spi_dma_rx_done(void *data)
 
 	/* reset fifo and HW */
 	bcm2835_spi_reset_hw(bs);
+=======
+	if (cmpxchg(&bs->dma_pending, true, false)) {
+		dmaengine_terminate_all(master->dma_tx);
+	}
+>>>>>>> master
 
 	/* and mark as completed */;
 	spi_finalize_current_transfer(ctlr);
@@ -816,9 +826,16 @@ static int bcm2835_spi_transfer_one_dma(struct spi_controller *ctlr,
 	}
 	if (ret) {
 		/* need to reset on errors */
+<<<<<<< HEAD
 		dmaengine_terminate_sync(ctlr->dma_tx);
 		bs->tx_dma_active = false;
 		goto err_reset_hw;
+=======
+		dmaengine_terminate_all(master->dma_tx);
+		bs->dma_pending = false;
+		bcm2835_spi_reset_hw(master);
+		return ret;
+>>>>>>> master
 	}
 
 	/* start rx dma late */
@@ -1074,7 +1091,12 @@ static int bcm2835_spi_transfer_one(struct spi_controller *ctlr,
 	bcm2835_wr(bs, BCM2835_SPI_CLK, cdiv);
 
 	/* handle all the 3-wire mode */
+<<<<<<< HEAD
 	if (spi->mode & SPI_3WIRE && tfr->rx_buf)
+=======
+	if (spi->mode & SPI_3WIRE && tfr->rx_buf &&
+	    tfr->rx_buf != master->dummy_rx)
+>>>>>>> master
 		cs |= BCM2835_SPI_CS_REN;
 
 	/* set transmit buffers and length */
@@ -1142,9 +1164,15 @@ static void bcm2835_spi_handle_err(struct spi_controller *ctlr,
 	struct bcm2835_spi *bs = spi_controller_get_devdata(ctlr);
 
 	/* if an error occurred and we have an active dma, then terminate */
+<<<<<<< HEAD
 	if (ctlr->dma_tx) {
 		dmaengine_terminate_sync(ctlr->dma_tx);
 		bs->tx_dma_active = false;
+=======
+	if (cmpxchg(&bs->dma_pending, true, false)) {
+		dmaengine_terminate_all(master->dma_tx);
+		dmaengine_terminate_all(master->dma_rx);
+>>>>>>> master
 	}
 	if (ctlr->dma_rx) {
 		dmaengine_terminate_sync(ctlr->dma_rx);

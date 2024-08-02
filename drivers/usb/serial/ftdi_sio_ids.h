@@ -46,6 +46,7 @@
 
 #define FTDI_LUMEL_PD12_PID	0x6002
 
+<<<<<<< HEAD
 /*
  * Custom USB adapters made by Falconia Partners LLC
  * for FreeCalypso project, ID codes allocated to Falconia by FTDI.
@@ -53,6 +54,8 @@
 #define FTDI_FALCONIA_JTAG_BUF_PID	0x7150
 #define FTDI_FALCONIA_JTAG_UNBUF_PID	0x7151
 
+=======
+>>>>>>> master
 /* Sienna Serial Interface by Secyourit GmbH */
 #define FTDI_SIENNA_PID		0x8348
 
@@ -591,7 +594,10 @@
 #define FTDI_NT_ORIONLXM_PID		0x7c90	/* OrionLXm Substation Automation Platform */
 #define FTDI_NT_ORIONLX_PLUS_PID	0x7c91	/* OrionLX+ Substation Automation Platform */
 #define FTDI_NT_ORION_IO_PID		0x7c92	/* Orion I/O */
+<<<<<<< HEAD
 #define FTDI_NT_ORIONMX_PID		0x7c93	/* OrionMX */
+=======
+>>>>>>> master
 
 /*
  * Synapse Wireless product ids (FTDI_VID)
@@ -1582,16 +1588,20 @@
 #define CHETCO_SEASMART_ANALOG_PID	0xA5AF /* SeaSmart Analog Adapter */
 
 /*
+<<<<<<< HEAD
  * Belimo Automation
  */
 #define BELIMO_ZTH_PID			0x8050
 #define BELIMO_ZIP_PID			0xC811
 
 /*
+=======
+>>>>>>> master
  * Unjo AB
  */
 #define UNJO_VID			0x22B7
 #define UNJO_ISODEBUG_V1_PID		0x150D
+<<<<<<< HEAD
 
 /*
  * IDS GmbH
@@ -1612,3 +1622,5 @@
  */
 #define GMC_VID				0x1cd7
 #define GMC_Z216C_PID			0x0217 /* GMC Z216C Adapter IR-USB */
+=======
+>>>>>>> master

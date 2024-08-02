@@ -177,11 +177,14 @@ static struct mlx5_profile profile[] = {
 			.size	= 8,
 			.limit	= 4
 		},
+<<<<<<< HEAD
 	},
 	[3] = {
 		.mask		= MLX5_PROF_MASK_QP_SIZE,
 		.log_max_qp	= LOG_MAX_SUPPORTED_QPS,
 		.num_cmd_caches = 0,
+=======
+>>>>>>> master
 	},
 };
 
@@ -834,9 +837,199 @@ int mlx5_core_disable_hca(struct mlx5_core_dev *dev, u16 func_id)
 
 	MLX5_SET(disable_hca_in, in, opcode, MLX5_CMD_OP_DISABLE_HCA);
 	MLX5_SET(disable_hca_in, in, function_id, func_id);
+<<<<<<< HEAD
 	MLX5_SET(enable_hca_in, in, embedded_cpu_function,
 		 dev->caps.embedded_cpu);
 	return mlx5_cmd_exec_in(dev, disable_hca, in);
+=======
+	return mlx5_cmd_exec(dev, in, sizeof(in), out, sizeof(out));
+}
+
+u64 mlx5_read_internal_timer(struct mlx5_core_dev *dev)
+{
+	u32 timer_h, timer_h1, timer_l;
+
+	timer_h = ioread32be(&dev->iseg->internal_timer_h);
+	timer_l = ioread32be(&dev->iseg->internal_timer_l);
+	timer_h1 = ioread32be(&dev->iseg->internal_timer_h);
+	if (timer_h != timer_h1) /* wrap around */
+		timer_l = ioread32be(&dev->iseg->internal_timer_l);
+
+	return (u64)timer_l | (u64)timer_h1 << 32;
+}
+
+static int mlx5_irq_set_affinity_hint(struct mlx5_core_dev *mdev, int i)
+{
+	struct mlx5_priv *priv  = &mdev->priv;
+	int vecidx = MLX5_EQ_VEC_COMP_BASE + i;
+	int irq = pci_irq_vector(mdev->pdev, vecidx);
+
+	if (!zalloc_cpumask_var(&priv->irq_info[vecidx].mask, GFP_KERNEL)) {
+		mlx5_core_warn(mdev, "zalloc_cpumask_var failed");
+		return -ENOMEM;
+	}
+
+	cpumask_set_cpu(cpumask_local_spread(i, priv->numa_node),
+			priv->irq_info[vecidx].mask);
+
+	if (IS_ENABLED(CONFIG_SMP) &&
+	    irq_set_affinity_hint(irq, priv->irq_info[vecidx].mask))
+		mlx5_core_warn(mdev, "irq_set_affinity_hint failed, irq 0x%.4x", irq);
+
+	return 0;
+}
+
+static void mlx5_irq_clear_affinity_hint(struct mlx5_core_dev *mdev, int i)
+{
+	int vecidx = MLX5_EQ_VEC_COMP_BASE + i;
+	struct mlx5_priv *priv  = &mdev->priv;
+	int irq = pci_irq_vector(mdev->pdev, vecidx);
+
+	irq_set_affinity_hint(irq, NULL);
+	free_cpumask_var(priv->irq_info[vecidx].mask);
+}
+
+static int mlx5_irq_set_affinity_hints(struct mlx5_core_dev *mdev)
+{
+	int err;
+	int i;
+
+	for (i = 0; i < mdev->priv.eq_table.num_comp_vectors; i++) {
+		err = mlx5_irq_set_affinity_hint(mdev, i);
+		if (err)
+			goto err_out;
+	}
+
+	return 0;
+
+err_out:
+	for (i--; i >= 0; i--)
+		mlx5_irq_clear_affinity_hint(mdev, i);
+
+	return err;
+}
+
+static void mlx5_irq_clear_affinity_hints(struct mlx5_core_dev *mdev)
+{
+	int i;
+
+	for (i = 0; i < mdev->priv.eq_table.num_comp_vectors; i++)
+		mlx5_irq_clear_affinity_hint(mdev, i);
+}
+
+int mlx5_vector2eqn(struct mlx5_core_dev *dev, int vector, int *eqn,
+		    unsigned int *irqn)
+{
+	struct mlx5_eq_table *table = &dev->priv.eq_table;
+	struct mlx5_eq *eq, *n;
+	int err = -ENOENT;
+
+	spin_lock(&table->lock);
+	list_for_each_entry_safe(eq, n, &table->comp_eqs_list, list) {
+		if (eq->index == vector) {
+			*eqn = eq->eqn;
+			*irqn = eq->irqn;
+			err = 0;
+			break;
+		}
+	}
+	spin_unlock(&table->lock);
+
+	return err;
+}
+EXPORT_SYMBOL(mlx5_vector2eqn);
+
+struct mlx5_eq *mlx5_eqn2eq(struct mlx5_core_dev *dev, int eqn)
+{
+	struct mlx5_eq_table *table = &dev->priv.eq_table;
+	struct mlx5_eq *eq;
+
+	spin_lock(&table->lock);
+	list_for_each_entry(eq, &table->comp_eqs_list, list)
+		if (eq->eqn == eqn) {
+			spin_unlock(&table->lock);
+			return eq;
+		}
+
+	spin_unlock(&table->lock);
+
+	return ERR_PTR(-ENOENT);
+}
+
+static void free_comp_eqs(struct mlx5_core_dev *dev)
+{
+	struct mlx5_eq_table *table = &dev->priv.eq_table;
+	struct mlx5_eq *eq, *n;
+
+#ifdef CONFIG_RFS_ACCEL
+	if (dev->rmap) {
+		free_irq_cpu_rmap(dev->rmap);
+		dev->rmap = NULL;
+	}
+#endif
+	spin_lock(&table->lock);
+	list_for_each_entry_safe(eq, n, &table->comp_eqs_list, list) {
+		list_del(&eq->list);
+		spin_unlock(&table->lock);
+		if (mlx5_destroy_unmap_eq(dev, eq))
+			mlx5_core_warn(dev, "failed to destroy EQ 0x%x\n",
+				       eq->eqn);
+		kfree(eq);
+		spin_lock(&table->lock);
+	}
+	spin_unlock(&table->lock);
+}
+
+static int alloc_comp_eqs(struct mlx5_core_dev *dev)
+{
+	struct mlx5_eq_table *table = &dev->priv.eq_table;
+	char name[MLX5_MAX_IRQ_NAME];
+	struct mlx5_eq *eq;
+	int ncomp_vec;
+	int nent;
+	int err;
+	int i;
+
+	INIT_LIST_HEAD(&table->comp_eqs_list);
+	ncomp_vec = table->num_comp_vectors;
+	nent = MLX5_COMP_EQ_SIZE;
+#ifdef CONFIG_RFS_ACCEL
+	dev->rmap = alloc_irq_cpu_rmap(ncomp_vec);
+	if (!dev->rmap)
+		return -ENOMEM;
+#endif
+	for (i = 0; i < ncomp_vec; i++) {
+		eq = kzalloc(sizeof(*eq), GFP_KERNEL);
+		if (!eq) {
+			err = -ENOMEM;
+			goto clean;
+		}
+
+#ifdef CONFIG_RFS_ACCEL
+		irq_cpu_rmap_add(dev->rmap, pci_irq_vector(dev->pdev,
+				 MLX5_EQ_VEC_COMP_BASE + i));
+#endif
+		snprintf(name, MLX5_MAX_IRQ_NAME, "mlx5_comp%d", i);
+		err = mlx5_create_map_eq(dev, eq,
+					 i + MLX5_EQ_VEC_COMP_BASE, nent, 0,
+					 name, MLX5_EQ_TYPE_COMP);
+		if (err) {
+			kfree(eq);
+			goto clean;
+		}
+		mlx5_core_dbg(dev, "allocated completion EQN %d\n", eq->eqn);
+		eq->index = i;
+		spin_lock(&table->lock);
+		list_add_tail(&eq->list, &table->comp_eqs_list);
+		spin_unlock(&table->lock);
+	}
+
+	return 0;
+
+clean:
+	free_comp_eqs(dev);
+	return err;
+>>>>>>> master
 }
 
 static int mlx5_core_set_issi(struct mlx5_core_dev *dev)
@@ -2208,8 +2401,11 @@ static const struct pci_device_id mlx5_core_pci_table[] = {
 	{ PCI_VDEVICE(MELLANOX, 0xa2d2) },			/* BlueField integrated ConnectX-5 network controller */
 	{ PCI_VDEVICE(MELLANOX, 0xa2d3), MLX5_PCI_DEV_IS_VF},	/* BlueField integrated ConnectX-5 network controller VF */
 	{ PCI_VDEVICE(MELLANOX, 0xa2d6) },			/* BlueField-2 integrated ConnectX-6 Dx network controller */
+<<<<<<< HEAD
 	{ PCI_VDEVICE(MELLANOX, 0xa2dc) },			/* BlueField-3 integrated ConnectX-7 network controller */
 	{ PCI_VDEVICE(MELLANOX, 0xa2df) },			/* BlueField-4 integrated ConnectX-8 network controller */
+=======
+>>>>>>> master
 	{ 0, }
 };
 

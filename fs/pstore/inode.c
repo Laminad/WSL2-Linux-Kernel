@@ -360,10 +360,65 @@ int pstore_mkfile(struct dentry *root, struct pstore_record *record)
 		return -ENOMEM;
 	inode->i_mode = S_IFREG | 0444;
 	inode->i_fop = &pstore_file_operations;
+<<<<<<< HEAD
 	scnprintf(name, sizeof(name), "%s-%s-%llu%s",
 			pstore_type_to_name(record->type),
 			record->psi->name, record->id,
 			record->compressed ? ".enc.z" : "");
+
+	private = kzalloc(sizeof(*private), GFP_KERNEL);
+	if (!private)
+		goto fail_inode;
+=======
+
+	switch (record->type) {
+	case PSTORE_TYPE_DMESG:
+		scnprintf(name, sizeof(name), "dmesg-%s-%llu%s",
+			  record->psi->name, record->id,
+			  record->compressed ? ".enc.z" : "");
+		break;
+	case PSTORE_TYPE_CONSOLE:
+		scnprintf(name, sizeof(name), "console-%s-%llu",
+			  record->psi->name, record->id);
+		break;
+	case PSTORE_TYPE_FTRACE:
+		scnprintf(name, sizeof(name), "ftrace-%s-%llu",
+			  record->psi->name, record->id);
+		break;
+	case PSTORE_TYPE_MCE:
+		scnprintf(name, sizeof(name), "mce-%s-%llu",
+			  record->psi->name, record->id);
+		break;
+	case PSTORE_TYPE_PPC_RTAS:
+		scnprintf(name, sizeof(name), "rtas-%s-%llu",
+			  record->psi->name, record->id);
+		break;
+	case PSTORE_TYPE_PPC_OF:
+		scnprintf(name, sizeof(name), "powerpc-ofw-%s-%llu",
+			  record->psi->name, record->id);
+		break;
+	case PSTORE_TYPE_PPC_COMMON:
+		scnprintf(name, sizeof(name), "powerpc-common-%s-%llu",
+			  record->psi->name, record->id);
+		break;
+	case PSTORE_TYPE_PMSG:
+		scnprintf(name, sizeof(name), "pmsg-%s-%llu",
+			  record->psi->name, record->id);
+		break;
+	case PSTORE_TYPE_PPC_OPAL:
+		scnprintf(name, sizeof(name), "powerpc-opal-%s-%llu",
+			  record->psi->name, record->id);
+		break;
+	case PSTORE_TYPE_UNKNOWN:
+		scnprintf(name, sizeof(name), "unknown-%s-%llu",
+			  record->psi->name, record->id);
+		break;
+	default:
+		scnprintf(name, sizeof(name), "type%d-%s-%llu",
+			  record->type, record->psi->name, record->id);
+		break;
+	}
+>>>>>>> master
 
 	private = kzalloc(sizeof(*private), GFP_KERNEL);
 	if (!private)
@@ -373,7 +428,10 @@ int pstore_mkfile(struct dentry *root, struct pstore_record *record)
 	if (!dentry)
 		goto fail_private;
 
+<<<<<<< HEAD
 	private->dentry = dentry;
+=======
+>>>>>>> master
 	private->record = record;
 	inode->i_size = private->total_size = size;
 	inode->i_private = private;

@@ -198,6 +198,7 @@ static inline void snd_compr_drain_notify(struct snd_compr_stream *stream)
 	if (snd_BUG_ON(!stream))
 		return;
 
+<<<<<<< HEAD
 	/* for partial_drain case we are back to running state on success */
 	if (stream->partial_drain) {
 		stream->runtime->state = SNDRV_PCM_STATE_RUNNING;
@@ -205,6 +206,9 @@ static inline void snd_compr_drain_notify(struct snd_compr_stream *stream)
 	} else {
 		stream->runtime->state = SNDRV_PCM_STATE_SETUP;
 	}
+=======
+	stream->runtime->state = SNDRV_PCM_STATE_SETUP;
+>>>>>>> master
 
 	wake_up(&stream->runtime->sleep);
 }

@@ -664,7 +664,11 @@ struct map *thread__find_map_fb(struct thread *thread, u8 cpumode, u64 addr,
 				struct addr_location *al)
 {
 	struct map *map = thread__find_map(thread, cpumode, addr, al);
+<<<<<<< HEAD
 	struct machine *machine = maps__machine(thread__maps(thread));
+=======
+	struct machine *machine = thread->mg->machine;
+>>>>>>> master
 	u8 addr_cpumode = machine__addr_cpumode(machine, cpumode, addr);
 
 	if (map || addr_cpumode == cpumode)
@@ -691,6 +695,7 @@ struct symbol *thread__find_symbol_fb(struct thread *thread, u8 cpumode,
 	return al->sym;
 }
 
+<<<<<<< HEAD
 static bool check_address_range(struct intlist *addr_list, int addr_range,
 				unsigned long addr)
 {
@@ -704,6 +709,8 @@ static bool check_address_range(struct intlist *addr_list, int addr_range,
 	return false;
 }
 
+=======
+>>>>>>> master
 /*
  * Callers need to drop the reference to al->thread, obtained in
  * machine__findnew_thread()

@@ -409,12 +409,47 @@ struct property_entry {
 #define PROPERTY_ENTRY_STRING(_name_, _val_)				\
 	__PROPERTY_ENTRY_ELEMENT(_name_, str, STRING, _val_)
 
+<<<<<<< HEAD
 #define PROPERTY_ENTRY_REF(_name_, _ref_, ...)				\
 (struct property_entry) {						\
 	.name = _name_,							\
 	.length = sizeof(struct software_node_ref_args),		\
 	.type = DEV_PROP_REF,						\
 	{ .pointer = &SOFTWARE_NODE_REFERENCE(_ref_, ##__VA_ARGS__), },	\
+=======
+#define PROPERTY_ENTRY_STRING_ARRAY(_name_, _val_)		\
+(struct property_entry) {					\
+	.name = _name_,						\
+	.length = ARRAY_SIZE(_val_) * sizeof(const char *),	\
+	.is_array = true,					\
+	.type = DEV_PROP_STRING,				\
+	{ .pointer = { .str = _val_ } },			\
+}
+
+#define PROPERTY_ENTRY_INTEGER(_name_, _type_, _Type_, _val_)	\
+(struct property_entry) {					\
+	.name = _name_,						\
+	.length = sizeof(_type_),				\
+	.type = DEV_PROP_##_Type_,				\
+	{ .value = { ._type_##_data = _val_ } },		\
+}
+
+#define PROPERTY_ENTRY_U8(_name_, _val_)		\
+	PROPERTY_ENTRY_INTEGER(_name_, u8, U8, _val_)
+#define PROPERTY_ENTRY_U16(_name_, _val_)		\
+	PROPERTY_ENTRY_INTEGER(_name_, u16, U16, _val_)
+#define PROPERTY_ENTRY_U32(_name_, _val_)		\
+	PROPERTY_ENTRY_INTEGER(_name_, u32, U32, _val_)
+#define PROPERTY_ENTRY_U64(_name_, _val_)		\
+	PROPERTY_ENTRY_INTEGER(_name_, u64, U64, _val_)
+
+#define PROPERTY_ENTRY_STRING(_name_, _val_)		\
+(struct property_entry) {				\
+	.name = _name_,					\
+	.length = sizeof(const char *),			\
+	.type = DEV_PROP_STRING,			\
+	{ .value = { .str = _val_ } },			\
+>>>>>>> master
 }
 
 #define PROPERTY_ENTRY_BOOL(_name_)		\

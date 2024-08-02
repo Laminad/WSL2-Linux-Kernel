@@ -81,9 +81,15 @@ static bool validate_processing_unit(const void *p,
 	switch (v->protocol) {
 	case UAC_VERSION_1:
 	default:
+<<<<<<< HEAD
 		/* bNrChannels, wChannelConfig, iChannelNames */
 		len += 1 + 2 + 1;
 		if (d->bLength < len + 1) /* bControlSize */
+=======
+		/* bNrChannels, wChannelConfig, iChannelNames, bControlSize */
+		len += 1 + 2 + 1 + 1;
+		if (d->bLength < len) /* bControlSize */
+>>>>>>> master
 			return false;
 		m = hdr[len];
 		len += 1 + m + 1; /* bControlSize, bmControls, iProcessing */
@@ -110,7 +116,11 @@ static bool validate_processing_unit(const void *p,
 	default:
 		if (v->type == UAC1_EXTENSION_UNIT)
 			return true; /* OK */
+<<<<<<< HEAD
 		switch (le16_to_cpu(d->wProcessType)) {
+=======
+		switch (d->wProcessType) {
+>>>>>>> master
 		case UAC_PROCESS_UP_DOWNMIX:
 		case UAC_PROCESS_DOLBY_PROLOGIC:
 			if (d->bLength < len + 1) /* bNrModes */
@@ -125,7 +135,11 @@ static bool validate_processing_unit(const void *p,
 	case UAC_VERSION_2:
 		if (v->type == UAC2_EXTENSION_UNIT_V2)
 			return true; /* OK */
+<<<<<<< HEAD
 		switch (le16_to_cpu(d->wProcessType)) {
+=======
+		switch (d->wProcessType) {
+>>>>>>> master
 		case UAC2_PROCESS_UP_DOWNMIX:
 		case UAC2_PROCESS_DOLBY_PROLOCIC: /* SiC! */
 			if (d->bLength < len + 1) /* bNrModes */
@@ -142,7 +156,11 @@ static bool validate_processing_unit(const void *p,
 			len += 2; /* wClusterDescrID */
 			break;
 		}
+<<<<<<< HEAD
 		switch (le16_to_cpu(d->wProcessType)) {
+=======
+		switch (d->wProcessType) {
+>>>>>>> master
 		case UAC3_PROCESS_UP_DOWNMIX:
 			if (d->bLength < len + 1) /* bNrModes */
 				return false;
@@ -233,7 +251,11 @@ static bool validate_midi_out_jack(const void *p,
 #define FIXED(p, t, s) { .protocol = (p), .type = (t), .size = sizeof(s) }
 #define FUNC(p, t, f) { .protocol = (p), .type = (t), .func = (f) }
 
+<<<<<<< HEAD
 static const struct usb_desc_validator audio_validators[] = {
+=======
+static struct usb_desc_validator audio_validators[] = {
+>>>>>>> master
 	/* UAC1 */
 	FUNC(UAC_VERSION_1, UAC_HEADER, validate_uac1_header),
 	FIXED(UAC_VERSION_1, UAC_INPUT_TERMINAL,
@@ -288,7 +310,11 @@ static const struct usb_desc_validator audio_validators[] = {
 	{ } /* terminator */
 };
 
+<<<<<<< HEAD
 static const struct usb_desc_validator midi_validators[] = {
+=======
+static struct usb_desc_validator midi_validators[] = {
+>>>>>>> master
 	FIXED(UAC_VERSION_ALL, USB_MS_HEADER,
 	      struct usb_ms_header_descriptor),
 	FIXED(UAC_VERSION_ALL, USB_MS_MIDI_IN_JACK,
@@ -322,6 +348,7 @@ static bool validate_desc(unsigned char *hdr, int protocol,
 
 bool snd_usb_validate_audio_desc(void *p, int protocol)
 {
+<<<<<<< HEAD
 	unsigned char *c = p;
 	bool valid;
 
@@ -332,10 +359,14 @@ bool snd_usb_validate_audio_desc(void *p, int protocol)
 		valid = true;
 	}
 	return valid;
+=======
+	return validate_desc(p, protocol, audio_validators);
+>>>>>>> master
 }
 
 bool snd_usb_validate_midi_desc(void *p)
 {
+<<<<<<< HEAD
 	unsigned char *c = p;
 	bool valid;
 
@@ -347,3 +378,8 @@ bool snd_usb_validate_midi_desc(void *p)
 	}
 	return valid;
 }
+=======
+	return validate_desc(p, UAC_VERSION_1, midi_validators);
+}
+
+>>>>>>> master

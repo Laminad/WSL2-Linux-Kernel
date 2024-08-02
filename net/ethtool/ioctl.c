@@ -752,6 +752,7 @@ ethtool_get_drvinfo(struct net_device *dev, struct ethtool_devlink_compat *rsp)
 		int ret = ops->get_regs_len(dev);
 
 		if (ret > 0)
+<<<<<<< HEAD:net/ethtool/ioctl.c
 			rsp->info.regdump_len = ret;
 	}
 
@@ -760,6 +761,13 @@ ethtool_get_drvinfo(struct net_device *dev, struct ethtool_devlink_compat *rsp)
 
 	if (!rsp->info.fw_version[0])
 		rsp->devlink = netdev_to_devlink_get(dev);
+=======
+			info.regdump_len = ret;
+	}
+
+	if (ops->get_eeprom_len)
+		info.eedump_len = ops->get_eeprom_len(dev);
+>>>>>>> master:net/core/ethtool.c
 
 	return 0;
 }
@@ -1380,6 +1388,9 @@ static int ethtool_get_regs(struct net_device *dev, char __user *useraddr)
 	regbuf = vzalloc(reglen);
 	if (!regbuf)
 		return -ENOMEM;
+
+	if (regs.len < reglen)
+		reglen = regs.len;
 
 	if (regs.len < reglen)
 		reglen = regs.len;
@@ -2159,6 +2170,7 @@ static int ethtool_get_phy_stats(struct net_device *dev, void __user *useraddr)
 	if (copy_from_user(&stats, useraddr, sizeof(stats)))
 		return -EFAULT;
 
+<<<<<<< HEAD:net/ethtool/ioctl.c
 	if (phydev)
 		ret = ethtool_get_phy_stats_phydev(phydev, &stats, &data);
 
@@ -2171,6 +2183,24 @@ static int ethtool_get_phy_stats(struct net_device *dev, void __user *useraddr)
 	if (copy_to_user(useraddr, &stats, sizeof(stats))) {
 		ret = -EFAULT;
 		goto out;
+=======
+	stats.n_stats = n_stats;
+
+	if (n_stats) {
+		data = vzalloc(array_size(n_stats, sizeof(u64)));
+		if (!data)
+			return -ENOMEM;
+
+		if (dev->phydev && !ops->get_ethtool_phy_stats) {
+			ret = phy_ethtool_get_stats(dev->phydev, &stats, data);
+			if (ret < 0)
+				goto out;
+		} else {
+			ops->get_ethtool_phy_stats(dev, &stats, data);
+		}
+	} else {
+		data = NULL;
+>>>>>>> master:net/core/ethtool.c
 	}
 
 	useraddr += sizeof(stats);

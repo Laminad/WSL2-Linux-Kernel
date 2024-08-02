@@ -256,10 +256,29 @@ static void mlx5e_rep_get_strings(struct net_device *dev,
 {
 	struct mlx5e_priv *priv = netdev_priv(dev);
 
+<<<<<<< HEAD
 	switch (stringset) {
 	case ETH_SS_STATS:
 		mlx5e_stats_fill_strings(priv, data);
 		break;
+=======
+	memset(s, 0, sizeof(*s));
+	for (i = 0; i < priv->channels.num; i++) {
+		struct mlx5e_channel *c = priv->channels.c[i];
+
+		rq_stats = c->rq.stats;
+
+		s->rx_packets	+= rq_stats->packets;
+		s->rx_bytes	+= rq_stats->bytes;
+
+		for (j = 0; j < priv->channels.params.num_tc; j++) {
+			sq_stats = c->sq[j].stats;
+
+			s->tx_packets		+= sq_stats->packets;
+			s->tx_bytes		+= sq_stats->bytes;
+			s->tx_queue_dropped	+= sq_stats->dropped;
+		}
+>>>>>>> master
 	}
 }
 

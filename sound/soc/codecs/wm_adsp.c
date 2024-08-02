@@ -365,6 +365,88 @@ const struct soc_enum wm_adsp_fw_enum[] = {
 };
 EXPORT_SYMBOL_GPL(wm_adsp_fw_enum);
 
+<<<<<<< HEAD
+=======
+static struct wm_adsp_region const *wm_adsp_find_region(struct wm_adsp *dsp,
+							int type)
+{
+	int i;
+
+	for (i = 0; i < dsp->num_mems; i++)
+		if (dsp->mem[i].type == type)
+			return &dsp->mem[i];
+
+	return NULL;
+}
+
+static unsigned int wm_adsp_region_to_reg(struct wm_adsp_region const *mem,
+					  unsigned int offset)
+{
+	if (WARN_ON(!mem))
+		return offset;
+	switch (mem->type) {
+	case WMFW_ADSP1_PM:
+		return mem->base + (offset * 3);
+	case WMFW_ADSP1_DM:
+		return mem->base + (offset * 2);
+	case WMFW_ADSP2_XM:
+		return mem->base + (offset * 2);
+	case WMFW_ADSP2_YM:
+		return mem->base + (offset * 2);
+	case WMFW_ADSP1_ZM:
+		return mem->base + (offset * 2);
+	default:
+		WARN(1, "Unknown memory region type");
+		return offset;
+	}
+}
+
+static void wm_adsp2_show_fw_status(struct wm_adsp *dsp)
+{
+	unsigned int scratch[4];
+	unsigned int addr = dsp->base + ADSP2_SCRATCH0;
+	unsigned int i;
+	int ret;
+
+	for (i = 0; i < ARRAY_SIZE(scratch); ++i) {
+		ret = regmap_read(dsp->regmap, addr + i, &scratch[i]);
+		if (ret) {
+			adsp_err(dsp, "Failed to read SCRATCH%u: %d\n", i, ret);
+			return;
+		}
+	}
+
+	adsp_dbg(dsp, "FW SCRATCH 0:0x%x 1:0x%x 2:0x%x 3:0x%x\n",
+		 scratch[0], scratch[1], scratch[2], scratch[3]);
+}
+
+static void wm_adsp2v2_show_fw_status(struct wm_adsp *dsp)
+{
+	unsigned int scratch[2];
+	int ret;
+
+	ret = regmap_read(dsp->regmap, dsp->base + ADSP2V2_SCRATCH0_1,
+			  &scratch[0]);
+	if (ret) {
+		adsp_err(dsp, "Failed to read SCRATCH0_1: %d\n", ret);
+		return;
+	}
+
+	ret = regmap_read(dsp->regmap, dsp->base + ADSP2V2_SCRATCH2_3,
+			  &scratch[1]);
+	if (ret) {
+		adsp_err(dsp, "Failed to read SCRATCH2_3: %d\n", ret);
+		return;
+	}
+
+	adsp_dbg(dsp, "FW SCRATCH 0:0x%x 1:0x%x 2:0x%x 3:0x%x\n",
+		 scratch[0] & 0xFFFF,
+		 scratch[0] >> 16,
+		 scratch[1] & 0xFFFF,
+		 scratch[1] >> 16);
+}
+
+>>>>>>> master
 static inline struct wm_coeff_ctl *bytes_ext_to_ctl(struct soc_bytes_ext *ext)
 {
 	return container_of(ext, struct wm_coeff_ctl, bytes_ext);
@@ -1720,10 +1802,13 @@ int wm_adsp_compr_trigger(struct snd_soc_component *component,
 			}
 		}
 
+<<<<<<< HEAD
 		ret = wm_adsp_buffer_get_error(compr->buf);
 		if (ret < 0)
 			break;
 
+=======
+>>>>>>> master
 		/* Trigger the IRQ at one fragment of data */
 		ret = wm_adsp_buffer_write(compr->buf,
 					   HOST_BUFFER_FIELD(high_water_mark),
@@ -2059,7 +2144,63 @@ irqreturn_t wm_adsp2_bus_error(int irq, void *data)
 {
 	struct wm_adsp *dsp = (struct wm_adsp *)data;
 
+<<<<<<< HEAD
 	cs_dsp_adsp2_bus_error(&dsp->cs_dsp);
+=======
+	mutex_lock(&dsp->pwr_lock);
+
+	ret = regmap_read(regmap, dsp->base + ADSP2_LOCK_REGION_CTRL, &val);
+	if (ret) {
+		adsp_err(dsp,
+			"Failed to read Region Lock Ctrl register: %d\n", ret);
+		goto error;
+	}
+
+	if (val & ADSP2_WDT_TIMEOUT_STS_MASK) {
+		adsp_err(dsp, "watchdog timeout error\n");
+		wm_adsp_stop_watchdog(dsp);
+	}
+
+	if (val & (ADSP2_SLAVE_ERR_MASK | ADSP2_REGION_LOCK_ERR_MASK)) {
+		if (val & ADSP2_SLAVE_ERR_MASK)
+			adsp_err(dsp, "bus error: slave error\n");
+		else
+			adsp_err(dsp, "bus error: region lock error\n");
+
+		ret = regmap_read(regmap, dsp->base + ADSP2_BUS_ERR_ADDR, &val);
+		if (ret) {
+			adsp_err(dsp,
+				 "Failed to read Bus Err Addr register: %d\n",
+				 ret);
+			goto error;
+		}
+
+		adsp_err(dsp, "bus error address = 0x%x\n",
+			 val & ADSP2_BUS_ERR_ADDR_MASK);
+
+		ret = regmap_read(regmap,
+				  dsp->base + ADSP2_PMEM_ERR_ADDR_XMEM_ERR_ADDR,
+				  &val);
+		if (ret) {
+			adsp_err(dsp,
+				 "Failed to read Pmem Xmem Err Addr register: %d\n",
+				 ret);
+			goto error;
+		}
+
+		adsp_err(dsp, "xmem error address = 0x%x\n",
+			 val & ADSP2_XMEM_ERR_ADDR_MASK);
+		adsp_err(dsp, "pmem error address = 0x%x\n",
+			 (val & ADSP2_PMEM_ERR_ADDR_MASK) >>
+			 ADSP2_PMEM_ERR_ADDR_SHIFT);
+	}
+
+	regmap_update_bits(regmap, dsp->base + ADSP2_LOCK_REGION_CTRL,
+			   ADSP2_CTRL_ERR_EINT, ADSP2_CTRL_ERR_EINT);
+>>>>>>> master
+
+error:
+	mutex_unlock(&dsp->pwr_lock);
 
 	return IRQ_HANDLED;
 }

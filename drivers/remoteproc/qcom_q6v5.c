@@ -258,8 +258,18 @@ int qcom_q6v5_init(struct qcom_q6v5 *q6v5, struct platform_device *pdev,
 	init_completion(&q6v5->stop_done);
 
 	q6v5->wdog_irq = platform_get_irq_byname(pdev, "wdog");
+<<<<<<< HEAD
 	if (q6v5->wdog_irq < 0)
 		return q6v5->wdog_irq;
+=======
+	if (q6v5->wdog_irq < 0) {
+		if (q6v5->wdog_irq != -EPROBE_DEFER)
+			dev_err(&pdev->dev,
+				"failed to retrieve wdog IRQ: %d\n",
+				q6v5->wdog_irq);
+		return q6v5->wdog_irq;
+	}
+>>>>>>> master
 
 	ret = devm_request_threaded_irq(&pdev->dev, q6v5->wdog_irq,
 					NULL, q6v5_wdog_interrupt,
@@ -271,8 +281,18 @@ int qcom_q6v5_init(struct qcom_q6v5 *q6v5, struct platform_device *pdev,
 	}
 
 	q6v5->fatal_irq = platform_get_irq_byname(pdev, "fatal");
+<<<<<<< HEAD
 	if (q6v5->fatal_irq < 0)
 		return q6v5->fatal_irq;
+=======
+	if (q6v5->fatal_irq < 0) {
+		if (q6v5->fatal_irq != -EPROBE_DEFER)
+			dev_err(&pdev->dev,
+				"failed to retrieve fatal IRQ: %d\n",
+				q6v5->fatal_irq);
+		return q6v5->fatal_irq;
+	}
+>>>>>>> master
 
 	ret = devm_request_threaded_irq(&pdev->dev, q6v5->fatal_irq,
 					NULL, q6v5_fatal_interrupt,
@@ -284,8 +304,18 @@ int qcom_q6v5_init(struct qcom_q6v5 *q6v5, struct platform_device *pdev,
 	}
 
 	q6v5->ready_irq = platform_get_irq_byname(pdev, "ready");
+<<<<<<< HEAD
 	if (q6v5->ready_irq < 0)
 		return q6v5->ready_irq;
+=======
+	if (q6v5->ready_irq < 0) {
+		if (q6v5->ready_irq != -EPROBE_DEFER)
+			dev_err(&pdev->dev,
+				"failed to retrieve ready IRQ: %d\n",
+				q6v5->ready_irq);
+		return q6v5->ready_irq;
+	}
+>>>>>>> master
 
 	ret = devm_request_threaded_irq(&pdev->dev, q6v5->ready_irq,
 					NULL, q6v5_ready_interrupt,
@@ -297,8 +327,18 @@ int qcom_q6v5_init(struct qcom_q6v5 *q6v5, struct platform_device *pdev,
 	}
 
 	q6v5->handover_irq = platform_get_irq_byname(pdev, "handover");
+<<<<<<< HEAD
 	if (q6v5->handover_irq < 0)
 		return q6v5->handover_irq;
+=======
+	if (q6v5->handover_irq < 0) {
+		if (q6v5->handover_irq != -EPROBE_DEFER)
+			dev_err(&pdev->dev,
+				"failed to retrieve handover IRQ: %d\n",
+				q6v5->handover_irq);
+		return q6v5->handover_irq;
+	}
+>>>>>>> master
 
 	ret = devm_request_threaded_irq(&pdev->dev, q6v5->handover_irq,
 					NULL, q6v5_handover_interrupt,
@@ -311,8 +351,18 @@ int qcom_q6v5_init(struct qcom_q6v5 *q6v5, struct platform_device *pdev,
 	disable_irq(q6v5->handover_irq);
 
 	q6v5->stop_irq = platform_get_irq_byname(pdev, "stop-ack");
+<<<<<<< HEAD
 	if (q6v5->stop_irq < 0)
 		return q6v5->stop_irq;
+=======
+	if (q6v5->stop_irq < 0) {
+		if (q6v5->stop_irq != -EPROBE_DEFER)
+			dev_err(&pdev->dev,
+				"failed to retrieve stop-ack IRQ: %d\n",
+				q6v5->stop_irq);
+		return q6v5->stop_irq;
+	}
+>>>>>>> master
 
 	ret = devm_request_threaded_irq(&pdev->dev, q6v5->stop_irq,
 					NULL, q6v5_stop_interrupt,

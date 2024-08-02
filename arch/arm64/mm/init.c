@@ -261,6 +261,7 @@ static void __init zone_sizes_init(void)
 	unsigned int __maybe_unused dt_zone_dma_bits;
 	phys_addr_t __maybe_unused dma32_phys_limit = max_zone_phys(32);
 
+<<<<<<< HEAD
 #ifdef CONFIG_ZONE_DMA
 	acpi_zone_dma_bits = fls64(acpi_iort_dma_get_max_cpu_address());
 	dt_zone_dma_bits = fls64(of_dma_get_max_cpu_address(NULL));
@@ -276,6 +277,12 @@ static void __init zone_sizes_init(void)
 	if (!arm64_dma_phys_limit)
 		arm64_dma_phys_limit = PHYS_MASK + 1;
 	max_zone_pfns[ZONE_NORMAL] = max_pfn;
+=======
+#ifdef CONFIG_ZONE_DMA32
+	max_zone_pfns[ZONE_DMA32] = PFN_DOWN(max_zone_dma_phys());
+#endif
+	max_zone_pfns[ZONE_NORMAL] = max;
+>>>>>>> master
 
 	free_area_init(max_zone_pfns);
 }
@@ -415,7 +422,11 @@ void __init arm64_memblock_init(void)
 		 * margin, the size of the region that the physical memory can
 		 * span, randomize the linear region as well.
 		 */
+<<<<<<< HEAD
 		if (memstart_offset_seed > 0 && range >= (s64)ARM64_MEMSTART_ALIGN) {
+=======
+		if (memstart_offset_seed > 0 && range >= ARM64_MEMSTART_ALIGN) {
+>>>>>>> master
 			range /= ARM64_MEMSTART_ALIGN;
 			memstart_addr -= ARM64_MEMSTART_ALIGN *
 					 ((range * memstart_offset_seed) >> 16);

@@ -34,9 +34,15 @@ int f2fs_check_nid_range(struct f2fs_sb_info *sbi, nid_t nid)
 {
 	if (unlikely(nid < F2FS_ROOT_INO(sbi) || nid >= NM_I(sbi)->max_nid)) {
 		set_sbi_flag(sbi, SBI_NEED_FSCK);
+<<<<<<< HEAD
 		f2fs_warn(sbi, "%s: out-of-range nid=%x, run fsck to fix.",
 			  __func__, nid);
 		f2fs_handle_error(sbi, ERROR_CORRUPTED_INODE);
+=======
+		f2fs_msg(sbi->sb, KERN_WARNING,
+				"%s: out-of-range nid=%x, run fsck to fix.",
+				__func__, nid);
+>>>>>>> master
 		return -EFSCORRUPTED;
 	}
 	return 0;
@@ -1268,9 +1274,16 @@ int f2fs_remove_inode_page(struct inode *inode)
 	}
 
 	if (unlikely(inode->i_blocks != 0 && inode->i_blocks != 8)) {
+<<<<<<< HEAD
 		f2fs_warn(F2FS_I_SB(inode),
 			"f2fs_remove_inode_page: inconsistent i_blocks, ino:%lu, iblocks:%llu",
 			inode->i_ino, (unsigned long long)inode->i_blocks);
+=======
+		f2fs_msg(F2FS_I_SB(inode)->sb, KERN_WARNING,
+			"Inconsistent i_blocks, ino:%lu, iblocks:%llu",
+			inode->i_ino,
+			(unsigned long long)inode->i_blocks);
+>>>>>>> master
 		set_sbi_flag(F2FS_I_SB(inode), SBI_NEED_FSCK);
 	}
 
@@ -1658,9 +1671,14 @@ static int __write_node_page(struct page *page, bool atomic, bool *submitted,
 	}
 
 	if (__is_valid_data_blkaddr(ni.blk_addr) &&
+<<<<<<< HEAD
 		!f2fs_is_valid_blkaddr(sbi, ni.blk_addr,
 					DATA_GENERIC_ENHANCE)) {
 		f2fs_up_read(&sbi->node_write);
+=======
+		!f2fs_is_valid_blkaddr(sbi, ni.blk_addr, DATA_GENERIC)) {
+		up_read(&sbi->node_write);
+>>>>>>> master
 		goto redirty_out;
 	}
 
@@ -2302,7 +2320,11 @@ static bool add_free_nid(struct f2fs_sb_info *sbi,
 	if (unlikely(f2fs_check_nid_range(sbi, nid)))
 		return false;
 
+<<<<<<< HEAD
 	i = f2fs_kmem_cache_alloc(free_nid_slab, GFP_NOFS, true, NULL);
+=======
+	i = f2fs_kmem_cache_alloc(free_nid_slab, GFP_NOFS);
+>>>>>>> master
 	i->nid = nid;
 	i->state = FREE_NID;
 
@@ -2820,7 +2842,11 @@ retry:
 								i_projid))
 			dst->i_projid = src->i_projid;
 
+<<<<<<< HEAD
 		if (f2fs_sb_has_inode_crtime(sbi) &&
+=======
+		if (f2fs_sb_has_inode_crtime(sbi->sb) &&
+>>>>>>> master
 			F2FS_FITS_IN_INODE(src, le16_to_cpu(src->i_extra_isize),
 							i_crtime_nsec)) {
 			dst->i_crtime = src->i_crtime;

@@ -185,13 +185,19 @@ static void ib_cq_poll_work(struct work_struct *work)
 	if (completed >= IB_POLL_BUDGET_WORKQUEUE ||
 	    ib_req_notify_cq(cq, IB_POLL_FLAGS) > 0)
 		queue_work(cq->comp_wq, &cq->work);
+<<<<<<< HEAD
 	else if (cq->dim)
 		rdma_dim(cq->dim, completed);
+=======
+>>>>>>> master
 }
 
 static void ib_cq_completion_workqueue(struct ib_cq *cq, void *private)
 {
+<<<<<<< HEAD
 	trace_cq_schedule(cq);
+=======
+>>>>>>> master
 	queue_work(cq->comp_wq, &cq->work);
 }
 

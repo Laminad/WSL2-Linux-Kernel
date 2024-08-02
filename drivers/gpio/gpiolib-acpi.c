@@ -7,6 +7,16 @@
  *          Mika Westerberg <mika.westerberg@linux.intel.com>
  */
 
+<<<<<<< HEAD
+=======
+#include <linux/dmi.h>
+#include <linux/errno.h>
+#include <linux/gpio.h>
+#include <linux/gpio/consumer.h>
+#include <linux/gpio/driver.h>
+#include <linux/gpio/machine.h>
+#include <linux/export.h>
+>>>>>>> master
 #include <linux/acpi.h>
 #include <linux/dmi.h>
 #include <linux/errno.h>
@@ -20,14 +30,18 @@
 #include <linux/gpio/driver.h>
 #include <linux/gpio/machine.h>
 
+<<<<<<< HEAD
 #include "gpiolib.h"
 #include "gpiolib-acpi.h"
 
+=======
+>>>>>>> master
 static int run_edge_events_on_boot = -1;
 module_param(run_edge_events_on_boot, int, 0444);
 MODULE_PARM_DESC(run_edge_events_on_boot,
 		 "Run edge _AEI event-handlers at boot: 0=no, 1=yes, -1=auto");
 
+<<<<<<< HEAD
 static char *ignore_wake;
 module_param(ignore_wake, charp, 0444);
 MODULE_PARM_DESC(ignore_wake,
@@ -46,11 +60,14 @@ struct acpi_gpiolib_dmi_quirk {
 	char *ignore_interrupt;
 };
 
+=======
+>>>>>>> master
 /**
  * struct acpi_gpio_event - ACPI GPIO event handler data
  *
  * @node:	  list-entry of the events list of the struct acpi_gpio_chip
  * @handle:	  handle of ACPI method to execute when the IRQ triggers
+<<<<<<< HEAD
  * @handler:	  handler function to pass to request_irq() when requesting the IRQ
  * @pin:	  GPIO pin number on the struct gpio_chip
  * @irq:	  Linux IRQ number for the event, for request_irq() / free_irq()
@@ -58,6 +75,15 @@ struct acpi_gpiolib_dmi_quirk {
  * @irq_is_wake:  If the ACPI flags indicate the IRQ is a wakeup source
  * @irq_requested:True if request_irq() has been done
  * @desc:	  struct gpio_desc for the GPIO pin for this event
+=======
+ * @handler:	  irq_handler to pass to request_irq when requesting the IRQ
+ * @pin:	  GPIO pin number on the gpio_chip
+ * @irq:	  Linux IRQ number for the event, for request_ / free_irq
+ * @irqflags:     flags to pass to request_irq when requesting the IRQ
+ * @irq_is_wake:  If the ACPI flags indicate the IRQ is a wakeup source
+ * @is_requested: True if request_irq has been done
+ * @desc:	  gpio_desc for the GPIO pin for this event
+>>>>>>> master
  */
 struct acpi_gpio_event {
 	struct list_head node;
@@ -116,10 +142,17 @@ struct acpi_gpio_info {
 };
 
 /*
+<<<<<<< HEAD
  * For GPIO chips which call acpi_gpiochip_request_interrupts() before late_init
  * (so builtin drivers) we register the ACPI GpioInt IRQ handlers from a
  * late_initcall_sync() handler, so that other builtin drivers can register their
  * OpRegions before the event handlers can run. This list contains GPIO chips
+=======
+ * For gpiochips which call acpi_gpiochip_request_interrupts() before late_init
+ * (so builtin drivers) we register the ACPI GpioInt IRQ handlers from a
+ * late_initcall_sync handler, so that other builtin drivers can register their
+ * OpRegions before the event handlers can run.  This list contains gpiochips
+>>>>>>> master
  * for which the acpi_gpiochip_request_irqs() call has been deferred.
  */
 static DEFINE_MUTEX(acpi_gpio_deferred_req_irqs_lock);
@@ -243,6 +276,7 @@ bool acpi_gpio_get_irq_resource(struct acpi_resource *ares,
 }
 EXPORT_SYMBOL_GPL(acpi_gpio_get_irq_resource);
 
+<<<<<<< HEAD
 /**
  * acpi_gpio_get_io_resource - Fetch details of an ACPI resource if it is a GPIO
  *			       I/O resource or return False if not.
@@ -276,6 +310,19 @@ static void acpi_gpiochip_request_irq(struct acpi_gpio_chip *acpi_gpio,
 				   event->irqflags | IRQF_ONESHOT, "ACPI:Event", event);
 	if (ret) {
 		dev_err(parent, "Failed to setup interrupt handler for %d\n", event->irq);
+=======
+static void acpi_gpiochip_request_irq(struct acpi_gpio_chip *acpi_gpio,
+				      struct acpi_gpio_event *event)
+{
+	int ret, value;
+
+	ret = request_threaded_irq(event->irq, NULL, event->handler,
+				   event->irqflags, "ACPI:Event", event);
+	if (ret) {
+		dev_err(acpi_gpio->chip->parent,
+			"Failed to setup interrupt handler for %d\n",
+			event->irq);
+>>>>>>> master
 		return;
 	}
 
@@ -302,6 +349,7 @@ static void acpi_gpiochip_request_irqs(struct acpi_gpio_chip *acpi_gpio)
 		acpi_gpiochip_request_irq(acpi_gpio, event);
 }
 
+<<<<<<< HEAD
 static enum gpiod_flags
 acpi_gpio_to_gpiod_flags(const struct acpi_resource_gpio *agpio, int polarity)
 {
@@ -420,6 +468,8 @@ static bool acpi_gpio_irq_is_wake(struct device *parent,
 }
 
 /* Always returns AE_OK so that we keep looping over the resources */
+=======
+>>>>>>> master
 static acpi_status acpi_gpiochip_alloc_event(struct acpi_resource *ares,
 					     void *context)
 {
@@ -430,8 +480,12 @@ static acpi_status acpi_gpiochip_alloc_event(struct acpi_resource *ares,
 	struct acpi_gpio_event *event;
 	irq_handler_t handler = NULL;
 	struct gpio_desc *desc;
+<<<<<<< HEAD
 	unsigned int pin;
 	int ret, irq;
+=======
+	int ret, pin, irq;
+>>>>>>> master
 
 	if (!acpi_gpio_get_irq_resource(ares, &agpio))
 		return AE_OK;
@@ -462,6 +516,11 @@ static acpi_status acpi_gpiochip_alloc_event(struct acpi_resource *ares,
 		return AE_OK;
 	}
 
+<<<<<<< HEAD
+=======
+	gpiod_direction_input(desc);
+
+>>>>>>> master
 	ret = gpiochip_lock_as_irq(chip, pin);
 	if (ret) {
 		dev_err(chip->parent,
@@ -478,11 +537,14 @@ static acpi_status acpi_gpiochip_alloc_event(struct acpi_resource *ares,
 		goto fail_unlock_irq;
 	}
 
+<<<<<<< HEAD
 	if (acpi_gpio_in_ignore_list(ignore_interrupt, dev_name(chip->parent), pin)) {
 		dev_info(chip->parent, "Ignoring interrupt on pin %u\n", pin);
 		return AE_OK;
 	}
 
+=======
+>>>>>>> master
 	event = kzalloc(sizeof(*event), GFP_KERNEL);
 	if (!event)
 		goto fail_unlock_irq;
@@ -511,7 +573,11 @@ static acpi_status acpi_gpiochip_alloc_event(struct acpi_resource *ares,
 	event->handle = evt_handle;
 	event->handler = handler;
 	event->irq = irq;
+<<<<<<< HEAD
 	event->irq_is_wake = acpi_gpio_irq_is_wake(chip->parent, agpio);
+=======
+	event->irq_is_wake = agpio->wake_capable == ACPI_WAKE_CAPABLE;
+>>>>>>> master
 	event->pin = pin;
 	event->desc = desc;
 
@@ -555,10 +621,14 @@ void acpi_gpiochip_request_interrupts(struct gpio_chip *chip)
 	if (ACPI_FAILURE(status))
 		return;
 
+<<<<<<< HEAD
 	if (acpi_quirk_skip_gpio_event_handlers())
 		return;
 
 	acpi_walk_resources(handle, METHOD_NAME__AEI,
+=======
+	acpi_walk_resources(handle, "_AEI",
+>>>>>>> master
 			    acpi_gpiochip_alloc_event, acpi_gpio);
 
 	mutex_lock(&acpi_gpio_deferred_req_irqs_lock);
@@ -610,9 +680,22 @@ void acpi_gpiochip_free_interrupts(struct gpio_chip *chip)
 			if (event->irq_is_wake)
 				disable_irq_wake(event->irq);
 
+<<<<<<< HEAD
 			free_irq(event->irq, event);
 		}
 
+=======
+		if (event->irq_requested) {
+			if (event->irq_is_wake)
+				disable_irq_wake(event->irq);
+
+			free_irq(event->irq, event);
+		}
+
+		desc = event->desc;
+		if (WARN_ON(IS_ERR(desc)))
+			continue;
+>>>>>>> master
 		gpiochip_unlock_as_irq(chip, event->pin);
 		gpiochip_free_own_desc(event->desc);
 		list_del(&event->node);
@@ -1506,8 +1589,22 @@ int acpi_gpio_count(struct device *dev, const char *con_id)
 	return count ? count : -ENOENT;
 }
 
+<<<<<<< HEAD
 /* Run deferred acpi_gpiochip_request_irqs() */
 static int __init acpi_gpio_handle_deferred_request_irqs(void)
+=======
+bool acpi_can_fallback_to_crs(struct acpi_device *adev, const char *con_id)
+{
+	/* Never allow fallback if the device has properties */
+	if (adev->data.properties || adev->driver_gpios)
+		return false;
+
+	return con_id == NULL;
+}
+
+/* Run deferred acpi_gpiochip_request_irqs() */
+static int acpi_gpio_handle_deferred_request_irqs(void)
+>>>>>>> master
 {
 	struct acpi_gpio_chip *acpi_gpio, *tmp;
 
@@ -1525,6 +1622,7 @@ static int __init acpi_gpio_handle_deferred_request_irqs(void)
 /* We must use _sync so that this runs after the first deferred_probe run */
 late_initcall_sync(acpi_gpio_handle_deferred_request_irqs);
 
+<<<<<<< HEAD
 static const struct dmi_system_id gpiolib_acpi_quirks[] __initconst = {
 	{
 		/*
@@ -1705,10 +1803,19 @@ static const struct dmi_system_id gpiolib_acpi_quirks[] __initconst = {
 		.driver_data = &(struct acpi_gpiolib_dmi_quirk) {
 			.ignore_wake = "PNP0C50:00@8",
 		},
+=======
+static const struct dmi_system_id run_edge_events_on_boot_blacklist[] = {
+	{
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "MINIX"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "Z83-4"),
+		}
+>>>>>>> master
 	},
 	{} /* Terminating entry */
 };
 
+<<<<<<< HEAD
 static int __init acpi_gpio_setup_params(void)
 {
 	const struct acpi_gpiolib_dmi_quirk *quirk = NULL;
@@ -1720,17 +1827,26 @@ static int __init acpi_gpio_setup_params(void)
 
 	if (run_edge_events_on_boot < 0) {
 		if (quirk && quirk->no_edge_events_on_boot)
+=======
+static int acpi_gpio_setup_params(void)
+{
+	if (run_edge_events_on_boot < 0) {
+		if (dmi_check_system(run_edge_events_on_boot_blacklist))
+>>>>>>> master
 			run_edge_events_on_boot = 0;
 		else
 			run_edge_events_on_boot = 1;
 	}
 
+<<<<<<< HEAD
 	if (ignore_wake == NULL && quirk && quirk->ignore_wake)
 		ignore_wake = quirk->ignore_wake;
 
 	if (ignore_interrupt == NULL && quirk && quirk->ignore_interrupt)
 		ignore_interrupt = quirk->ignore_interrupt;
 
+=======
+>>>>>>> master
 	return 0;
 }
 

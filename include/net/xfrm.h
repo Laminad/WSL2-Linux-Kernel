@@ -331,9 +331,14 @@ struct xfrm_if_decode_session_result {
 };
 
 struct xfrm_if_cb {
+<<<<<<< HEAD
 	bool (*decode_session)(struct sk_buff *skb,
 			       unsigned short family,
 			       struct xfrm_if_decode_session_result *res);
+=======
+	struct xfrm_if	*(*decode_session)(struct sk_buff *skb,
+					   unsigned short family);
+>>>>>>> master
 };
 
 void xfrm_if_register_cb(const struct xfrm_if_cb *ifcb);

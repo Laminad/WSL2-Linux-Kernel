@@ -44,7 +44,11 @@ static int pwm_vibrator_start(struct pwm_vibrator *vibrator)
 	if (!vibrator->vcc_on) {
 		err = regulator_enable(vibrator->vcc);
 		if (err) {
+<<<<<<< HEAD
 			dev_err(pdev, "failed to enable regulator: %d\n", err);
+=======
+			dev_err(pdev, "failed to enable regulator: %d", err);
+>>>>>>> master
 			return err;
 		}
 		vibrator->vcc_on = true;
@@ -84,8 +88,11 @@ static void pwm_vibrator_stop(struct pwm_vibrator *vibrator)
 		pwm_disable(vibrator->pwm_dir);
 	pwm_disable(vibrator->pwm);
 
+<<<<<<< HEAD
 	gpiod_set_value_cansleep(vibrator->enable_gpio, 0);
 
+=======
+>>>>>>> master
 	if (vibrator->vcc_on) {
 		regulator_disable(vibrator->vcc);
 		vibrator->vcc_on = false;

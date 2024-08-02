@@ -178,6 +178,10 @@ static void tilcdc_fini(struct drm_device *dev)
 	drm_atomic_helper_shutdown(dev);
 	tilcdc_irq_uninstall(dev);
 	drm_mode_config_cleanup(dev);
+<<<<<<< HEAD
+=======
+	tilcdc_remove_external_device(dev);
+>>>>>>> master
 
 	if (priv->clk)
 		clk_put(priv->clk);
@@ -247,6 +251,25 @@ static int tilcdc_init(const struct drm_driver *ddrv, struct device *dev)
 		goto init_failed;
 	}
 
+<<<<<<< HEAD
+=======
+	if (of_property_read_u32(node, "max-bandwidth", &priv->max_bandwidth))
+		priv->max_bandwidth = TILCDC_DEFAULT_MAX_BANDWIDTH;
+
+	DBG("Maximum Bandwidth Value %d", priv->max_bandwidth);
+
+	if (of_property_read_u32(node, "max-width", &priv->max_width))
+		priv->max_width = TILCDC_DEFAULT_MAX_WIDTH;
+
+	DBG("Maximum Horizontal Pixel Width Value %dpixels", priv->max_width);
+
+	if (of_property_read_u32(node, "max-pixelclock",
+					&priv->max_pixelclock))
+		priv->max_pixelclock = TILCDC_DEFAULT_MAX_PIXELCLOCK;
+
+	DBG("Maximum Pixel Clock Value %dKHz", priv->max_pixelclock);
+
+>>>>>>> master
 	pm_runtime_enable(dev);
 
 	/* Determine LCD IP Version */

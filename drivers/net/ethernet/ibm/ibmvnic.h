@@ -1043,6 +1043,10 @@ struct ibmvnic_adapter {
 	 */
 	spinlock_t state_lock;
 	enum ibmvnic_reset_reason reset_reason;
+<<<<<<< HEAD
+=======
+	spinlock_t rwi_lock;
+>>>>>>> master
 	struct list_head rwi_list;
 	/* Used for serialization of rwi_list. When taking both state
 	 * and rwi locks, take state lock first

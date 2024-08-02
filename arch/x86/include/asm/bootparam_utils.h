@@ -49,6 +49,10 @@ static void sanitize_boot_params(struct boot_params *boot_params)
 	 * problems again.
 	 */
 	if (boot_params->sentinel) {
+<<<<<<< HEAD
+=======
+		/* fields in boot_params are left uninitialized, clear them */
+>>>>>>> master
 		static struct boot_params scratch;
 		char *bp_base = (char *)boot_params;
 		char *save_base = (char *)&scratch;
@@ -74,7 +78,10 @@ static void sanitize_boot_params(struct boot_params *boot_params)
 			BOOT_PARAM_PRESERVE(hdr),
 			BOOT_PARAM_PRESERVE(e820_table),
 			BOOT_PARAM_PRESERVE(eddbuf),
+<<<<<<< HEAD
 			BOOT_PARAM_PRESERVE(cc_blob_address),
+=======
+>>>>>>> master
 		};
 
 		memset(&scratch, 0, sizeof(scratch));

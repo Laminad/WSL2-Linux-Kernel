@@ -2759,6 +2759,7 @@ static int fcoe_ctlr_vn_recv(struct fcoe_ctlr *fip, struct sk_buff *skb)
 	mutex_lock(&fip->ctlr_mutex);
 	switch (sub) {
 	case FIP_SC_VN_PROBE_REQ:
+<<<<<<< HEAD
 		fcoe_ctlr_vn_probe_req(fip, &frport);
 		break;
 	case FIP_SC_VN_PROBE_REP:
@@ -2772,6 +2773,21 @@ static int fcoe_ctlr_vn_recv(struct fcoe_ctlr *fip, struct sk_buff *skb)
 		break;
 	case FIP_SC_VN_BEACON:
 		fcoe_ctlr_vn_beacon(fip, &frport);
+=======
+		fcoe_ctlr_vn_probe_req(fip, &frport.rdata);
+		break;
+	case FIP_SC_VN_PROBE_REP:
+		fcoe_ctlr_vn_probe_reply(fip, &frport.rdata);
+		break;
+	case FIP_SC_VN_CLAIM_NOTIFY:
+		fcoe_ctlr_vn_claim_notify(fip, &frport.rdata);
+		break;
+	case FIP_SC_VN_CLAIM_REP:
+		fcoe_ctlr_vn_claim_resp(fip, &frport.rdata);
+		break;
+	case FIP_SC_VN_BEACON:
+		fcoe_ctlr_vn_beacon(fip, &frport.rdata);
+>>>>>>> master
 		break;
 	default:
 		LIBFCOE_FIP_DBG(fip, "vn_recv unknown subcode %d\n", sub);
@@ -2982,7 +2998,11 @@ static int fcoe_ctlr_vlan_recv(struct fcoe_ctlr *fip, struct sk_buff *skb)
 	}
 	mutex_lock(&fip->ctlr_mutex);
 	if (sub == FIP_SC_VL_REQ)
+<<<<<<< HEAD
 		fcoe_ctlr_vlan_disc_reply(fip, &frport);
+=======
+		fcoe_ctlr_vlan_disc_reply(fip, &frport.rdata);
+>>>>>>> master
 	mutex_unlock(&fip->ctlr_mutex);
 
 drop:

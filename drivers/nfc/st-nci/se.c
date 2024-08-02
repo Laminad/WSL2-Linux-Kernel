@@ -342,7 +342,14 @@ static int st_nci_hci_connectivity_event_received(struct nci_dev *ndev,
 		if (skb->len < 2 || skb->data[0] != NFC_EVT_TRANSACTION_AID_TAG)
 			return -EPROTO;
 
+<<<<<<< HEAD
 		aid_len = skb->data[1];
+=======
+		transaction = (struct nfc_evt_transaction *)devm_kzalloc(dev,
+					    skb->len - 2, GFP_KERNEL);
+		if (!transaction)
+			return -ENOMEM;
+>>>>>>> master
 
 		if (skb->len < aid_len + 4 ||
 		    aid_len > sizeof(transaction->aid))

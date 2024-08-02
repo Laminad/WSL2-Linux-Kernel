@@ -2536,6 +2536,7 @@ int snd_soc_tplg_component_load(struct snd_soc_component *comp,
 {
 	struct soc_tplg tplg;
 	int ret;
+<<<<<<< HEAD
 
 	/*
 	 * check if we have sane parameters:
@@ -2546,6 +2547,8 @@ int snd_soc_tplg_component_load(struct snd_soc_component *comp,
 	 */
 	if (!comp || !comp->card || !comp->card->dev || !fw)
 		return -EINVAL;
+=======
+>>>>>>> master
 
 	/* setup parsing context */
 	memset(&tplg, 0, sizeof(tplg));
@@ -2563,7 +2566,11 @@ int snd_soc_tplg_component_load(struct snd_soc_component *comp,
 	ret = soc_tplg_load(&tplg);
 	/* free the created components if fail to load topology */
 	if (ret)
+<<<<<<< HEAD
 		snd_soc_tplg_component_remove(comp);
+=======
+		snd_soc_tplg_component_remove(comp, SND_SOC_TPLG_INDEX_ALL);
+>>>>>>> master
 
 	return ret;
 }

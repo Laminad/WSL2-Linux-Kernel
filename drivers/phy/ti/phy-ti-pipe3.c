@@ -446,8 +446,13 @@ static void ti_pipe3_calibrate(struct ti_pipe3 *phy)
 
 	val = ti_pipe3_readl(phy->phy_rx, PIPE3_PHY_RX_ANA_PROGRAMMABILITY);
 	val &= ~(INTERFACE_MASK | LOSD_MASK | MEM_PLLDIV);
+<<<<<<< HEAD
 	val |= (s->ana_interface << INTERFACE_SHIFT | s->ana_losd << LOSD_SHIFT);
 	ti_pipe3_writel(phy->phy_rx, PIPE3_PHY_RX_ANA_PROGRAMMABILITY, val);
+=======
+	val |= (0x1 << INTERFACE_SHIFT | 0xA << LOSD_SHIFT);
+	ti_pipe3_writel(phy->phy_rx, PCIEPHYRX_ANA_PROGRAMMABILITY, val);
+>>>>>>> master
 
 	val = ti_pipe3_readl(phy->phy_rx, PIPE3_PHY_RX_DIGITAL_MODES);
 	val &= ~(MEM_HS_RATE_MASK | MEM_OVRD_HS_RATE | MEM_CDR_FASTLOCK |

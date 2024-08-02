@@ -52,6 +52,8 @@
 
 #include <asm/vdso/cp15.h>
 
+#define CNTVCT				__ACCESS_CP15_64(1, c14)
+
 extern unsigned long cr_alignment;	/* defined in entry-armv.S */
 
 static inline unsigned long get_cr(void)

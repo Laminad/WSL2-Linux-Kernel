@@ -282,6 +282,7 @@ static void etm_free_aux(void *data)
 	schedule_work(&event_data->work);
 }
 
+<<<<<<< HEAD
 /*
  * Check if two given sinks are compatible with each other,
  * so that they can use the same sink buffers, when an event
@@ -307,6 +308,12 @@ static void *etm_setup_aux(struct perf_event *event, void **pages,
 	u32 id, cfg_hash;
 	int cpu = event->cpu;
 	int trace_id;
+=======
+static void *etm_setup_aux(struct perf_event *event, void **pages,
+			   int nr_pages, bool overwrite)
+{
+	int cpu = event->cpu;
+>>>>>>> master
 	cpumask_t *mask;
 	struct coresight_device *sink = NULL;
 	struct coresight_device *user_sink = NULL, *last_sink = NULL;

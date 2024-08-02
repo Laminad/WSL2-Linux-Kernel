@@ -93,6 +93,7 @@ struct ufs_dev_quirk {
  */
 #define UFS_DEVICE_QUIRK_HOST_VS_DEBUGSAVECONFIGTIME	(1 << 9)
 
+<<<<<<< HEAD:include/ufs/ufs_quirks.h
 /*
  * Some pre-3.1 UFS devices can support extended features by upgrading
  * the firmware. Enable this quirk to make UFS core driver probe and enable
@@ -107,4 +108,6 @@ struct ufs_dev_quirk {
  */
 #define UFS_DEVICE_QUIRK_DELAY_AFTER_LPM        (1 << 11)
 
+=======
+>>>>>>> master:drivers/scsi/ufs/ufs_quirks.h
 #endif /* UFS_QUIRKS_H_ */

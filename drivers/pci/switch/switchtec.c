@@ -1401,7 +1401,12 @@ static int mask_event(struct switchtec_dev *stdev, int eid, int idx)
 	if (hdr & SWITCHTEC_EVENT_NOT_SUPP)
 		return 0;
 
+<<<<<<< HEAD
 	if (!(hdr & SWITCHTEC_EVENT_OCCURRED && hdr & SWITCHTEC_EVENT_EN_IRQ))
+=======
+	if (eid == SWITCHTEC_IOCTL_EVENT_LINK_STATE ||
+	    eid == SWITCHTEC_IOCTL_EVENT_MRPC_COMP)
+>>>>>>> master
 		return 0;
 
 	dev_dbg(&stdev->dev, "%s: %d %d %x\n", __func__, eid, idx, hdr);

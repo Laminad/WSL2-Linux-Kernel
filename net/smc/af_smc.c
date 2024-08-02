@@ -337,18 +337,48 @@ static int smc_release(struct socket *sock)
 	else
 		lock_sock(sk);
 
+<<<<<<< HEAD
 	if (old_state == SMC_INIT && sk->sk_state == SMC_ACTIVE &&
 	    !smc->use_fallback)
 		smc_close_active_abort(smc);
 
 	rc = __smc_release(smc);
+=======
+	if (!smc->use_fallback) {
+		rc = smc_close_active(smc);
+		sock_set_flag(sk, SOCK_DEAD);
+		sk->sk_shutdown |= SHUTDOWN_MASK;
+	}
+
+	sk->sk_prot->unhash(sk);
+
+	if (smc->clcsock) {
+		if (smc->use_fallback && sk->sk_state == SMC_LISTEN) {
+			/* wake up clcsock accept */
+			rc = kernel_sock_shutdown(smc->clcsock, SHUT_RDWR);
+		}
+		mutex_lock(&smc->clcsock_release_lock);
+		sock_release(smc->clcsock);
+		smc->clcsock = NULL;
+		mutex_unlock(&smc->clcsock_release_lock);
+	}
+	if (smc->use_fallback) {
+		if (sk->sk_state != SMC_LISTEN && sk->sk_state != SMC_INIT)
+			sock_put(sk); /* passive closing */
+		sk->sk_state = SMC_CLOSED;
+		sk->sk_state_change(sk);
+	}
+>>>>>>> master
 
 	/* detach socket */
 	sock_orphan(sk);
 	sock->sk = NULL;
 	release_sock(sk);
 
+<<<<<<< HEAD
 	sock_put(sk); /* sock_hold above */
+=======
+>>>>>>> master
 	sock_put(sk); /* final sock_put */
 out:
 	return rc;
@@ -388,8 +418,13 @@ static struct sock *smc_sock_alloc(struct net *net, struct socket *sock,
 	spin_lock_init(&smc->accept_q_lock);
 	spin_lock_init(&smc->conn.send_lock);
 	sk->sk_prot->hash(sk);
+<<<<<<< HEAD
 	mutex_init(&smc->clcsock_release_lock);
 	smc_init_saved_callbacks(smc);
+=======
+	sk_refcnt_debug_inc(sk);
+	mutex_init(&smc->clcsock_release_lock);
+>>>>>>> master
 
 	return sk;
 }
@@ -1719,7 +1754,11 @@ static int smc_clcsock_accept(struct smc_sock *lsmc, struct smc_sock **new_smc)
 
 	mutex_lock(&lsmc->clcsock_release_lock);
 	if (lsmc->clcsock)
+<<<<<<< HEAD
 		rc = kernel_accept(lsmc->clcsock, &new_clcsock, SOCK_NONBLOCK);
+=======
+		rc = kernel_accept(lsmc->clcsock, &new_clcsock, 0);
+>>>>>>> master
 	mutex_unlock(&lsmc->clcsock_release_lock);
 	lock_sock(lsk);
 	if  (rc < 0 && rc != -EAGAIN)
@@ -1729,7 +1768,11 @@ static int smc_clcsock_accept(struct smc_sock *lsmc, struct smc_sock **new_smc)
 		if (new_clcsock)
 			sock_release(new_clcsock);
 		new_sk->sk_state = SMC_CLOSED;
+<<<<<<< HEAD
 		smc_sock_set_flag(new_sk, SOCK_DEAD);
+=======
+		sock_set_flag(new_sk, SOCK_DEAD);
+>>>>>>> master
 		sock_put(new_sk); /* final */
 		*new_smc = NULL;
 		goto out;
@@ -1827,10 +1870,35 @@ void smc_close_non_accepted(struct sock *sk)
 	lock_sock(sk);
 	if (!sk->sk_lingertime)
 		/* wait for peer closing */
+<<<<<<< HEAD
 		WRITE_ONCE(sk->sk_lingertime, SMC_MAX_STREAM_WAIT_TIMEOUT);
 	__smc_release(smc);
 	release_sock(sk);
 	sock_put(sk); /* sock_hold above */
+=======
+		sk->sk_lingertime = SMC_MAX_STREAM_WAIT_TIMEOUT;
+	if (!smc->use_fallback) {
+		smc_close_active(smc);
+		sock_set_flag(sk, SOCK_DEAD);
+		sk->sk_shutdown |= SHUTDOWN_MASK;
+	}
+	sk->sk_prot->unhash(sk);
+	if (smc->clcsock) {
+		struct socket *tcp;
+
+		tcp = smc->clcsock;
+		smc->clcsock = NULL;
+		sock_release(tcp);
+	}
+	if (smc->use_fallback) {
+		sock_put(sk); /* passive closing */
+		sk->sk_state = SMC_CLOSED;
+	} else {
+		if (sk->sk_state == SMC_CLOSED)
+			smc_conn_free(&smc->conn);
+	}
+	release_sock(sk);
+>>>>>>> master
 	sock_put(sk); /* final sock_put */
 }
 
@@ -3054,22 +3122,34 @@ static int smc_setsockopt(struct socket *sock, int level, int optname,
 		if (sk->sk_state != SMC_INIT &&
 		    sk->sk_state != SMC_LISTEN &&
 		    sk->sk_state != SMC_CLOSED) {
+<<<<<<< HEAD
 			if (val) {
 				SMC_STAT_INC(smc, ndly_cnt);
 				smc_tx_pending(&smc->conn);
 				cancel_delayed_work(&smc->conn.tx_work);
 			}
+=======
+			if (val && !smc->use_fallback)
+				mod_delayed_work(system_wq, &smc->conn.tx_work,
+						 0);
+>>>>>>> master
 		}
 		break;
 	case TCP_CORK:
 		if (sk->sk_state != SMC_INIT &&
 		    sk->sk_state != SMC_LISTEN &&
 		    sk->sk_state != SMC_CLOSED) {
+<<<<<<< HEAD
 			if (!val) {
 				SMC_STAT_INC(smc, cork_cnt);
 				smc_tx_pending(&smc->conn);
 				cancel_delayed_work(&smc->conn.tx_work);
 			}
+=======
+			if (!val && !smc->use_fallback)
+				mod_delayed_work(system_wq, &smc->conn.tx_work,
+						 0);
+>>>>>>> master
 		}
 		break;
 	case TCP_DEFER_ACCEPT:

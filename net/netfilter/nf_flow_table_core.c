@@ -22,7 +22,13 @@ flow_offload_fill_dir(struct flow_offload *flow,
 		      enum flow_offload_tuple_dir dir)
 {
 	struct flow_offload_tuple *ft = &flow->tuplehash[dir].tuple;
+<<<<<<< HEAD
 	struct nf_conntrack_tuple *ctt = &flow->ct->tuplehash[dir].tuple;
+=======
+	struct nf_conntrack_tuple *ctt = &ct->tuplehash[dir].tuple;
+	struct dst_entry *other_dst = route->tuple[!dir].dst;
+	struct dst_entry *dst = route->tuple[dir].dst;
+>>>>>>> master
 
 	ft->dir = dir;
 
@@ -40,6 +46,7 @@ flow_offload_fill_dir(struct flow_offload *flow,
 	ft->l3proto = ctt->src.l3num;
 	ft->l4proto = ctt->dst.protonum;
 
+<<<<<<< HEAD
 	switch (ctt->dst.protonum) {
 	case IPPROTO_TCP:
 	case IPPROTO_UDP:
@@ -47,6 +54,11 @@ flow_offload_fill_dir(struct flow_offload *flow,
 		ft->dst_port = ctt->dst.u.tcp.port;
 		break;
 	}
+=======
+	ft->iifidx = other_dst->dev->ifindex;
+	ft->oifidx = dst->dev->ifindex;
+	ft->dst_cache = dst;
+>>>>>>> master
 }
 
 struct flow_offload *flow_offload_alloc(struct nf_conn *ct)
@@ -280,7 +292,11 @@ int flow_offload_add(struct nf_flowtable *flow_table, struct flow_offload *flow)
 {
 	int err;
 
+<<<<<<< HEAD
 	flow->timeout = nf_flowtable_time_stamp + flow_offload_get_timeout(flow);
+=======
+	flow->timeout = (u32)jiffies + NF_FLOW_TIMEOUT;
+>>>>>>> master
 
 	err = rhashtable_insert_fast(&flow_table->rhashtable,
 				     &flow->tuplehash[0].node,
@@ -297,6 +313,7 @@ int flow_offload_add(struct nf_flowtable *flow_table, struct flow_offload *flow)
 				       nf_flow_offload_rhash_params);
 		return err;
 	}
+<<<<<<< HEAD
 
 	nf_ct_offload_timeout(flow->ct);
 
@@ -304,6 +321,8 @@ int flow_offload_add(struct nf_flowtable *flow_table, struct flow_offload *flow)
 		__set_bit(NF_FLOW_HW, &flow->flags);
 		nf_flow_offload_add(flow_table, flow);
 	}
+=======
+>>>>>>> master
 
 	return 0;
 }

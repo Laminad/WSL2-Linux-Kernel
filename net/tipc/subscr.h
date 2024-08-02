@@ -78,8 +78,14 @@ struct tipc_subscription *tipc_sub_subscribe(struct net *net,
 					     int conid);
 void tipc_sub_unsubscribe(struct tipc_subscription *sub);
 void tipc_sub_report_overlap(struct tipc_subscription *sub,
+<<<<<<< HEAD
 			     struct publication *p,
 			     u32 event, bool must);
+=======
+			     u32 found_lower, u32 found_upper,
+			     u32 event, u32 port, u32 node,
+			     u32 scope, int must);
+>>>>>>> master
 
 int __net_init tipc_topsrv_init_net(struct net *net);
 void __net_exit tipc_topsrv_exit_net(struct net *net);

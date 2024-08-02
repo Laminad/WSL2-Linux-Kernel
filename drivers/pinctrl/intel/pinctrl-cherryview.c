@@ -1515,8 +1515,13 @@ static void chv_init_irq_valid_mask(struct gpio_chip *chip,
 		intsel &= CHV_PADCTRL0_INTSEL_MASK;
 		intsel >>= CHV_PADCTRL0_INTSEL_SHIFT;
 
+<<<<<<< HEAD
 		if (intsel >= community->nirqs)
 			clear_bit(desc->number, valid_mask);
+=======
+		if (need_valid_mask && intsel >= community->nirqs)
+			clear_bit(desc->number, chip->irq.valid_mask);
+>>>>>>> master
 	}
 }
 

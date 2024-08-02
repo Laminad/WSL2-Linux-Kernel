@@ -606,9 +606,47 @@ static int zip_regs_show(struct seq_file *s, void *unused)
 	return 0;
 }
 
+<<<<<<< HEAD
 DEFINE_SHOW_ATTRIBUTE(zip_stats);
 DEFINE_SHOW_ATTRIBUTE(zip_clear);
 DEFINE_SHOW_ATTRIBUTE(zip_regs);
+=======
+static int zip_stats_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, zip_show_stats, NULL);
+}
+
+static const struct file_operations zip_stats_fops = {
+	.owner = THIS_MODULE,
+	.open  = zip_stats_open,
+	.read  = seq_read,
+	.release = single_release,
+};
+
+static int zip_clear_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, zip_clear_stats, NULL);
+}
+
+static const struct file_operations zip_clear_fops = {
+	.owner = THIS_MODULE,
+	.open  = zip_clear_open,
+	.read  = seq_read,
+	.release = single_release,
+};
+
+static int zip_regs_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, zip_print_regs, NULL);
+}
+
+static const struct file_operations zip_regs_fops = {
+	.owner = THIS_MODULE,
+	.open  = zip_regs_open,
+	.read  = seq_read,
+	.release = single_release,
+};
+>>>>>>> master
 
 /* Root directory for thunderx_zip debugfs entry */
 static struct dentry *zip_debugfs_root;

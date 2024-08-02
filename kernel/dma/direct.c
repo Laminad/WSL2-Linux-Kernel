@@ -578,17 +578,39 @@ int dma_direct_mmap(struct device *dev, struct vm_area_struct *vma,
 
 int dma_direct_supported(struct device *dev, u64 mask)
 {
+<<<<<<< HEAD
 	u64 min_mask = (max_pfn - 1) << PAGE_SHIFT;
 
+=======
+#ifdef CONFIG_ZONE_DMA
+	/*
+	 * This check needs to be against the actual bit mask value, so
+	 * use __phys_to_dma() here so that the SME encryption mask isn't
+	 * part of the check.
+	 */
+	if (mask < __phys_to_dma(dev, DMA_BIT_MASK(ARCH_ZONE_DMA_BITS)))
+		return 0;
+#else
+>>>>>>> master
 	/*
 	 * Because 32-bit DMA masks are so common we expect every architecture
 	 * to be able to satisfy them - either by not supporting more physical
 	 * memory, or by providing a ZONE_DMA32.  If neither is the case, the
 	 * architecture needs to use an IOMMU instead of the direct mapping.
+	 *
+	 * This check needs to be against the actual bit mask value, so
+	 * use __phys_to_dma() here so that the SME encryption mask isn't
+	 * part of the check.
 	 */
+<<<<<<< HEAD
 	if (mask >= DMA_BIT_MASK(32))
 		return 1;
 
+=======
+	if (mask < __phys_to_dma(dev, DMA_BIT_MASK(32)))
+		return 0;
+#endif
+>>>>>>> master
 	/*
 	 * This check needs to be against the actual bit mask value, so use
 	 * phys_to_dma_unencrypted() here so that the SME encryption mask isn't

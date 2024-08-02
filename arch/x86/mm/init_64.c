@@ -622,7 +622,11 @@ phys_pud_init(pud_t *pud_page, unsigned long paddr, unsigned long paddr_end,
 				paddr_last = phys_pmd_init(pmd, paddr,
 							   paddr_end,
 							   page_size_mask,
+<<<<<<< HEAD
 							   prot, init);
+=======
+							   prot);
+>>>>>>> master
 				continue;
 			}
 			/*
@@ -705,8 +709,14 @@ phys_p4d_init(p4d_t *p4d_page, unsigned long paddr, unsigned long paddr_end,
 
 		if (!p4d_none(*p4d)) {
 			pud = pud_offset(p4d, 0);
+<<<<<<< HEAD
 			paddr_last = phys_pud_init(pud, paddr, __pa(vaddr_end),
 					page_size_mask, prot, init);
+=======
+			paddr_last = phys_pud_init(pud, paddr,
+					paddr_end,
+					page_size_mask);
+>>>>>>> master
 			continue;
 		}
 

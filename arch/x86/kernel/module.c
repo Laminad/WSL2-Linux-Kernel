@@ -74,12 +74,20 @@ void *module_alloc(unsigned long size)
 		return NULL;
 
 	p = __vmalloc_node_range(size, MODULE_ALIGN,
+<<<<<<< HEAD
 				 MODULES_VADDR + get_module_load_offset(),
 				 MODULES_END, gfp_mask, PAGE_KERNEL,
 				 VM_FLUSH_RESET_PERMS | VM_DEFER_KMEMLEAK,
 				 NUMA_NO_NODE, __builtin_return_address(0));
 
 	if (p && (kasan_alloc_module_shadow(p, size, gfp_mask) < 0)) {
+=======
+				    MODULES_VADDR + get_module_load_offset(),
+				    MODULES_END, GFP_KERNEL,
+				    PAGE_KERNEL, 0, NUMA_NO_NODE,
+				    __builtin_return_address(0));
+	if (p && (kasan_module_alloc(p, size) < 0)) {
+>>>>>>> master
 		vfree(p);
 		return NULL;
 	}

@@ -1779,8 +1779,24 @@ static int vxlan_rcv(struct sock *sk, struct sk_buff *skb)
 		goto drop;
 	}
 
+<<<<<<< HEAD:drivers/net/vxlan/vxlan_core.c
 	/* Get the outer header. */
 	oiph = skb->head + nh;
+=======
+	rcu_read_lock();
+
+	if (unlikely(!(vxlan->dev->flags & IFF_UP))) {
+		rcu_read_unlock();
+		atomic_long_inc(&vxlan->dev->rx_dropped);
+		goto drop;
+	}
+
+	stats = this_cpu_ptr(vxlan->dev->tstats);
+	u64_stats_update_begin(&stats->syncp);
+	stats->rx_packets++;
+	stats->rx_bytes += skb->len;
+	u64_stats_update_end(&stats->syncp);
+>>>>>>> master:drivers/net/vxlan.c
 
 	if (!vxlan_ecn_decapsulate(vs, oiph, skb)) {
 		DEV_STATS_INC(vxlan->dev, rx_frame_errors);
@@ -2376,6 +2392,7 @@ static void vxlan_encap_bypass(struct sk_buff *skb, struct vxlan_dev *src_vxlan,
 	if (unlikely(!(dev->flags & IFF_UP))) {
 		kfree_skb(skb);
 		goto drop;
+<<<<<<< HEAD:drivers/net/vxlan/vxlan_core.c
 	}
 
 	if ((dst_vxlan->cfg.flags & VXLAN_F_LEARN) && snoop)
@@ -2394,6 +2411,27 @@ drop:
 		vxlan_vnifilter_count(dst_vxlan, vni, NULL,
 				      VXLAN_VNI_STATS_RX_DROPS, 0);
 	}
+=======
+	}
+
+	if (dst_vxlan->cfg.flags & VXLAN_F_LEARN)
+		vxlan_snoop(dev, &loopback, eth_hdr(skb)->h_source, 0, vni);
+
+	u64_stats_update_begin(&tx_stats->syncp);
+	tx_stats->tx_packets++;
+	tx_stats->tx_bytes += len;
+	u64_stats_update_end(&tx_stats->syncp);
+
+	if (netif_rx(skb) == NET_RX_SUCCESS) {
+		u64_stats_update_begin(&rx_stats->syncp);
+		rx_stats->rx_packets++;
+		rx_stats->rx_bytes += len;
+		u64_stats_update_end(&rx_stats->syncp);
+	} else {
+drop:
+		dev->stats.rx_dropped++;
+	}
+>>>>>>> master:drivers/net/vxlan.c
 	rcu_read_unlock();
 }
 
@@ -3012,11 +3050,14 @@ static void vxlan_uninit(struct net_device *dev)
 {
 	struct vxlan_dev *vxlan = netdev_priv(dev);
 
+<<<<<<< HEAD:drivers/net/vxlan/vxlan_core.c
 	vxlan_mdb_fini(vxlan);
 
 	if (vxlan->cfg.flags & VXLAN_F_VNIFILTER)
 		vxlan_vnigroup_uninit(vxlan);
 
+=======
+>>>>>>> master:drivers/net/vxlan.c
 	gro_cells_destroy(&vxlan->gro_cells);
 
 	vxlan_fdb_delete_default(vxlan, vxlan->cfg.vni);

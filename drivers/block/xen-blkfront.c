@@ -1908,9 +1908,15 @@ static int negotiate_mq(struct blkfront_info *info)
 	if (!info->nr_rings)
 		info->nr_rings = 1;
 
+<<<<<<< HEAD
 	info->rinfo_size = struct_size(info->rinfo, shadow,
 				       BLK_RING_SIZE(info));
 	info->rinfo = kvcalloc(info->nr_rings, info->rinfo_size, GFP_KERNEL);
+=======
+	info->rinfo = kvcalloc(info->nr_rings,
+			       sizeof(struct blkfront_ring_info),
+			       GFP_KERNEL);
+>>>>>>> master
 	if (!info->rinfo) {
 		xenbus_dev_fatal(info->xbdev, -ENOMEM, "allocating ring_info structure");
 		info->nr_rings = 0;
@@ -2207,15 +2213,26 @@ static int blkfront_setup_indirect(struct blkfront_ring_info *rinfo)
 		rinfo->shadow[i].grants_used =
 			kvcalloc(grants,
 				 sizeof(rinfo->shadow[i].grants_used[0]),
+<<<<<<< HEAD
 				 GFP_KERNEL);
 		rinfo->shadow[i].sg = kvcalloc(psegs,
 					       sizeof(rinfo->shadow[i].sg[0]),
 					       GFP_KERNEL);
+=======
+				 GFP_NOIO);
+		rinfo->shadow[i].sg = kvcalloc(psegs,
+					       sizeof(rinfo->shadow[i].sg[0]),
+					       GFP_NOIO);
+>>>>>>> master
 		if (info->max_indirect_segments)
 			rinfo->shadow[i].indirect_grants =
 				kvcalloc(INDIRECT_GREFS(grants),
 					 sizeof(rinfo->shadow[i].indirect_grants[0]),
+<<<<<<< HEAD
 					 GFP_KERNEL);
+=======
+					 GFP_NOIO);
+>>>>>>> master
 		if ((rinfo->shadow[i].grants_used == NULL) ||
 			(rinfo->shadow[i].sg == NULL) ||
 		     (info->max_indirect_segments &&
@@ -2474,12 +2491,17 @@ static void blkfront_remove(struct xenbus_device *xbdev)
 
 	dev_dbg(&xbdev->dev, "%s removed", xbdev->nodename);
 
+<<<<<<< HEAD
 	if (info->gd)
 		del_gendisk(info->gd);
 
 	mutex_lock(&blkfront_mutex);
 	list_del(&info->info_list);
 	mutex_unlock(&blkfront_mutex);
+=======
+	if (!info)
+		return 0;
+>>>>>>> master
 
 	blkif_free(info, 0);
 	if (info->gd) {

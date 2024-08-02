@@ -761,7 +761,16 @@ static int rawv6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	if (msg->msg_flags & MSG_OOB)
 		return -EOPNOTSUPP;
 
+<<<<<<< HEAD
 	hdrincl = inet_test_bit(HDRINCL, sk);
+=======
+	/* hdrincl should be READ_ONCE(inet->hdrincl)
+	 * but READ_ONCE() doesn't work with bit fields.
+	 * Doing this indirectly yields the same result.
+	 */
+	hdrincl = inet->hdrincl;
+	hdrincl = READ_ONCE(hdrincl);
+>>>>>>> master
 
 	/*
 	 *	Get and verify the address.
@@ -856,7 +865,10 @@ static int rawv6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	opt = ipv6_fixup_options(&opt_space, opt);
 
 	fl6.flowi6_proto = proto;
+<<<<<<< HEAD
 	fl6.flowi6_mark = ipc6.sockc.mark;
+=======
+>>>>>>> master
 
 	if (!hdrincl) {
 		rfv.msg = msg;

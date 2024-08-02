@@ -73,6 +73,10 @@ static int sun4i_drv_bind(struct device *dev)
 		goto free_drm;
 	}
 
+<<<<<<< HEAD
+=======
+	dev_set_drvdata(dev, drm);
+>>>>>>> master
 	drm->dev_private = drv;
 	INIT_LIST_HEAD(&drv->frontend_list);
 	INIT_LIST_HEAD(&drv->engine_list);
@@ -411,6 +415,11 @@ static int sun4i_drv_probe(struct platform_device *pdev)
 static void sun4i_drv_remove(struct platform_device *pdev)
 {
 	component_master_del(&pdev->dev, &sun4i_drv_master_ops);
+<<<<<<< HEAD
+=======
+
+	return 0;
+>>>>>>> master
 }
 
 static const struct of_device_id sun4i_drv_of_table[] = {

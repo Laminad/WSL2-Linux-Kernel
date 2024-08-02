@@ -474,7 +474,23 @@ static int mthca_create_qp(struct ib_qp *ibqp,
 			if (ib_copy_from_udata(&ucmd, udata, sizeof(ucmd)))
 				return -EFAULT;
 
+<<<<<<< HEAD
 			err = mthca_map_user_db(dev, &context->uar,
+=======
+		qp = kzalloc(sizeof(*qp), GFP_KERNEL);
+		if (!qp)
+			return ERR_PTR(-ENOMEM);
+
+		if (pd->uobject) {
+			context = to_mucontext(pd->uobject->context);
+
+			if (ib_copy_from_udata(&ucmd, udata, sizeof ucmd)) {
+				kfree(qp);
+				return ERR_PTR(-EFAULT);
+			}
+
+			err = mthca_map_user_db(to_mdev(pd->device), &context->uar,
+>>>>>>> master
 						context->db_tab,
 						ucmd.sq_db_index,
 						ucmd.sq_db_page);
@@ -516,9 +532,19 @@ static int mthca_create_qp(struct ib_qp *ibqp,
 	case IB_QPT_SMI:
 	case IB_QPT_GSI:
 	{
+<<<<<<< HEAD
 		qp->sqp = kzalloc(sizeof(struct mthca_sqp), GFP_KERNEL);
 		if (!qp->sqp)
 			return -ENOMEM;
+=======
+		/* Don't allow userspace to create special QPs */
+		if (pd->uobject)
+			return ERR_PTR(-EINVAL);
+
+		qp = kzalloc(sizeof(struct mthca_sqp), GFP_KERNEL);
+		if (!qp)
+			return ERR_PTR(-ENOMEM);
+>>>>>>> master
 
 		qp->ibqp.qp_num = init_attr->qp_type == IB_QPT_SMI ? 0 : 1;
 

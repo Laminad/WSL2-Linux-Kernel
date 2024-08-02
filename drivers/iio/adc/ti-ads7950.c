@@ -72,7 +72,10 @@ struct ti_ads7950_state {
 
 	/* Lock to protect the spi xfer buffers */
 	struct mutex		slock;
+<<<<<<< HEAD
 	struct gpio_chip	chip;
+=======
+>>>>>>> master
 
 	struct regulator	*reg;
 	unsigned int		vref_mv;
@@ -329,8 +332,14 @@ static int ti_ads7950_scan_direct(struct iio_dev *indio_dev, unsigned int ch)
 	int ret, cmd;
 
 	mutex_lock(&st->slock);
+<<<<<<< HEAD
 	cmd = TI_ADS7950_MAN_CMD(TI_ADS7950_CR_CHAN(ch));
 	st->single_tx = cmd;
+=======
+
+	cmd = TI_ADS7950_CR_WRITE | TI_ADS7950_CR_CHAN(ch) | st->settings;
+	st->single_tx = cpu_to_be16(cmd);
+>>>>>>> master
 
 	ret = spi_sync(st->spi, &st->scan_single_msg);
 	if (ret)
@@ -600,8 +609,13 @@ static int ti_ads7950_probe(struct spi_device *spi)
 
 	st->reg = devm_regulator_get(&spi->dev, "vref");
 	if (IS_ERR(st->reg)) {
+<<<<<<< HEAD
 		ret = dev_err_probe(&spi->dev, PTR_ERR(st->reg),
 				     "Failed to get regulator \"vref\"\n");
+=======
+		dev_err(&spi->dev, "Failed get get regulator \"vref\"\n");
+		ret = PTR_ERR(st->reg);
+>>>>>>> master
 		goto error_destroy_mutex;
 	}
 
@@ -673,6 +687,11 @@ static void ti_ads7950_remove(struct spi_device *spi)
 	iio_triggered_buffer_cleanup(indio_dev);
 	regulator_disable(st->reg);
 	mutex_destroy(&st->slock);
+<<<<<<< HEAD
+=======
+
+	return 0;
+>>>>>>> master
 }
 
 static const struct spi_device_id ti_ads7950_id[] = {

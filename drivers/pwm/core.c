@@ -302,9 +302,34 @@ int pwmchip_add(struct pwm_chip *chip)
 	if (IS_ENABLED(CONFIG_OF))
 		of_pwmchip_add(chip);
 
+<<<<<<< HEAD
 	pwmchip_sysfs_export(chip);
 
 	return 0;
+=======
+out:
+	mutex_unlock(&pwm_lock);
+
+	if (!ret)
+		pwmchip_sysfs_export(chip);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(pwmchip_add_with_polarity);
+
+/**
+ * pwmchip_add() - register a new PWM chip
+ * @chip: the PWM chip to add
+ *
+ * Register a new PWM chip. If chip->base < 0 then a dynamically assigned base
+ * will be used. The initial polarity for all channels is normal.
+ *
+ * Returns: 0 on success or a negative error code on failure.
+ */
+int pwmchip_add(struct pwm_chip *chip)
+{
+	return pwmchip_add_with_polarity(chip, PWM_POLARITY_NORMAL);
+>>>>>>> master
 }
 EXPORT_SYMBOL_GPL(pwmchip_add);
 
@@ -316,7 +341,27 @@ EXPORT_SYMBOL_GPL(pwmchip_add);
  */
 void pwmchip_remove(struct pwm_chip *chip)
 {
+<<<<<<< HEAD
 	pwmchip_sysfs_unexport(chip);
+=======
+	unsigned int i;
+	int ret = 0;
+
+	pwmchip_sysfs_unexport(chip);
+
+	mutex_lock(&pwm_lock);
+
+	for (i = 0; i < chip->npwm; i++) {
+		struct pwm_device *pwm = &chip->pwms[i];
+
+		if (test_bit(PWMF_REQUESTED, &pwm->flags)) {
+			ret = -EBUSY;
+			goto out;
+		}
+	}
+
+	list_del_init(&chip->list);
+>>>>>>> master
 
 	if (IS_ENABLED(CONFIG_OF))
 		of_pwmchip_remove(chip);
@@ -327,6 +372,10 @@ void pwmchip_remove(struct pwm_chip *chip)
 
 	free_pwms(chip);
 
+<<<<<<< HEAD
+=======
+out:
+>>>>>>> master
 	mutex_unlock(&pwm_lock);
 }
 EXPORT_SYMBOL_GPL(pwmchip_remove);

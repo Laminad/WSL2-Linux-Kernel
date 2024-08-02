@@ -242,10 +242,14 @@ $(OUTPUT)test-libpython.bin:
 	$(BUILD) $(FLAGS_PYTHON_EMBED)
 
 $(OUTPUT)test-libbfd.bin:
+<<<<<<< HEAD
 	$(BUILD_BFD)
 
 $(OUTPUT)test-libbfd-buildid.bin:
 	$(BUILD_BFD) || $(BUILD_BFD) -liberty || $(BUILD_BFD) -liberty -lz
+=======
+	$(BUILD) -DPACKAGE='"perf"' -lbfd -ldl
+>>>>>>> master
 
 $(OUTPUT)test-disassembler-four-args.bin:
 	$(BUILD_BFD) -lopcodes || $(BUILD_BFD) -lopcodes -liberty || \

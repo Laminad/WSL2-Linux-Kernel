@@ -1333,7 +1333,14 @@ static struct sk_buff *iavf_construct_skb(struct iavf_ring *rx_ring,
 		return NULL;
 	/* prefetch first cache line of first page */
 	va = page_address(rx_buffer->page) + rx_buffer->page_offset;
+<<<<<<< HEAD:drivers/net/ethernet/intel/iavf/iavf_txrx.c
 	net_prefetch(va);
+=======
+	prefetch(va);
+#if L1_CACHE_BYTES < 128
+	prefetch(va + L1_CACHE_BYTES);
+#endif
+>>>>>>> master:drivers/net/ethernet/intel/i40evf/i40e_txrx.c
 
 	/* allocate a skb to store the frags */
 	skb = __napi_alloc_skb(&rx_ring->q_vector->napi,
@@ -1397,8 +1404,15 @@ static struct sk_buff *iavf_build_skb(struct iavf_ring *rx_ring,
 		return NULL;
 	/* prefetch first cache line of first page */
 	va = page_address(rx_buffer->page) + rx_buffer->page_offset;
+<<<<<<< HEAD:drivers/net/ethernet/intel/iavf/iavf_txrx.c
 	net_prefetch(va);
 
+=======
+	prefetch(va);
+#if L1_CACHE_BYTES < 128
+	prefetch(va + L1_CACHE_BYTES);
+#endif
+>>>>>>> master:drivers/net/ethernet/intel/i40evf/i40e_txrx.c
 	/* build an skb around the page buffer */
 	skb = napi_build_skb(va - IAVF_SKB_PAD, truesize);
 	if (unlikely(!skb))

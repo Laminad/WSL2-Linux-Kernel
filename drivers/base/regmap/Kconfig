@@ -71,10 +71,13 @@ config REGMAP_RAM
 config REGMAP_SOUNDWIRE
 	tristate
 	depends on SOUNDWIRE
+<<<<<<< HEAD
 
 config REGMAP_SOUNDWIRE_MBQ
 	tristate
 	depends on SOUNDWIRE
+=======
+>>>>>>> master
 
 config REGMAP_SCCB
 	tristate

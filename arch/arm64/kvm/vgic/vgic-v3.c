@@ -340,7 +340,11 @@ retry:
 	if (status) {
 		/* clear consumed data */
 		val &= ~(1 << bit_nr);
+<<<<<<< HEAD:arch/arm64/kvm/vgic/vgic-v3.c
 		ret = vgic_write_guest_lock(kvm, ptr, &val, 1);
+=======
+		ret = kvm_write_guest_lock(kvm, ptr, &val, 1);
+>>>>>>> master:virt/kvm/arm/vgic/vgic-v3.c
 		if (ret)
 			return ret;
 	}
@@ -435,7 +439,11 @@ int vgic_v3_save_pending_tables(struct kvm *kvm)
 		else
 			val &= ~(1 << bit_nr);
 
+<<<<<<< HEAD:arch/arm64/kvm/vgic/vgic-v3.c
 		ret = vgic_write_guest_lock(kvm, ptr, &val, 1);
+=======
+		ret = kvm_write_guest_lock(kvm, ptr, &val, 1);
+>>>>>>> master:virt/kvm/arm/vgic/vgic-v3.c
 		if (ret)
 			goto out;
 	}
@@ -745,11 +753,21 @@ void vgic_v3_vmcr_sync(struct kvm_vcpu *vcpu)
 		cpu_if->vgic_vmcr = kvm_call_hyp_ret(__vgic_v3_read_vmcr);
 }
 
-void vgic_v3_put(struct kvm_vcpu *vcpu)
+void vgic_v3_vmcr_sync(struct kvm_vcpu *vcpu)
 {
 	struct vgic_v3_cpu_if *cpu_if = &vcpu->arch.vgic_cpu.vgic_v3;
 
+<<<<<<< HEAD:arch/arm64/kvm/vgic/vgic-v3.c
 	WARN_ON(vgic_v4_put(vcpu));
+=======
+	if (likely(cpu_if->vgic_sre))
+		cpu_if->vgic_vmcr = kvm_call_hyp(__vgic_v3_read_vmcr);
+}
+
+void vgic_v3_put(struct kvm_vcpu *vcpu)
+{
+	vgic_v3_vmcr_sync(vcpu);
+>>>>>>> master:virt/kvm/arm/vgic/vgic-v3.c
 
 	vgic_v3_vmcr_sync(vcpu);
 

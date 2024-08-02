@@ -1993,12 +1993,23 @@ static int ieee80211_skb_resize(struct ieee80211_sub_if_data *sdata,
 				enum ieee80211_encrypt encrypt)
 {
 	struct ieee80211_local *local = sdata->local;
+<<<<<<< HEAD
 	bool enc_tailroom;
 	int tail_need = 0;
 
 	enc_tailroom = encrypt == ENCRYPT_MGMT ||
 		       (encrypt == ENCRYPT_DATA &&
 			sdata->crypto_tx_tailroom_needed_cnt);
+=======
+	struct ieee80211_hdr *hdr;
+	bool enc_tailroom;
+	int tail_need = 0;
+
+	hdr = (struct ieee80211_hdr *) skb->data;
+	enc_tailroom = may_encrypt &&
+		       (sdata->crypto_tx_tailroom_needed_cnt ||
+			ieee80211_is_mgmt(hdr->frame_control));
+>>>>>>> master
 
 	if (enc_tailroom) {
 		tail_need = IEEE80211_ENCRYPT_TAILROOM;
@@ -3396,9 +3407,14 @@ static bool ieee80211_amsdu_aggregate(struct ieee80211_sub_if_data *sdata,
 	int subframe_len = skb->len - ETH_ALEN;
 	u8 max_subframes = sta->sta.max_amsdu_subframes;
 	int max_frags = local->hw.max_tx_fragments;
+<<<<<<< HEAD
 	int max_amsdu_len = sta->sta.cur->max_amsdu_len;
 	int orig_truesize;
 	u32 flow_idx;
+=======
+	int max_amsdu_len = sta->sta.max_amsdu_len;
+	int orig_truesize;
+>>>>>>> master
 	__be16 len;
 	void *data;
 	bool ret = false;
@@ -4282,11 +4298,21 @@ void __ieee80211_subif_start_xmit(struct sk_buff *skb,
 	if (IS_ERR(sta))
 		sta = NULL;
 
+<<<<<<< HEAD
 	skb_set_queue_mapping(skb, ieee80211_select_queue(sdata, sta, skb));
 	ieee80211_aggr_check(sdata, sta, skb);
 
 	if (sta) {
 		struct ieee80211_fast_tx *fast_tx;
+=======
+		/* We need a bit of data queued to build aggregates properly, so
+		 * instruct the TCP stack to allow more than a single ms of data
+		 * to be queued in the stack. The value is a bit-shift of 1
+		 * second, so 7 is ~8ms of queued data. Only affects local TCP
+		 * sockets.
+		 */
+		sk_pacing_shift_update(skb->sk, 7);
+>>>>>>> master
 
 		fast_tx = rcu_dereference(sta->fast_tx);
 

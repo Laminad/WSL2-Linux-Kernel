@@ -13,7 +13,12 @@
 #include <bpf/bpf.h>
 
 #include "cgroup_helpers.h"
+<<<<<<< HEAD
 #include <bpf/bpf_endian.h>
+=======
+#include "bpf_endian.h"
+#include "bpf_rlimit.h"
+>>>>>>> master
 #include "bpf_util.h"
 
 #define CG_PATH		"/foo"

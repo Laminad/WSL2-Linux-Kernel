@@ -831,7 +831,11 @@ static void bcm2835_timeout(struct work_struct *work)
 		dev_err(dev, "timeout waiting for hardware interrupt.\n");
 		bcm2835_dumpregs(host);
 
+<<<<<<< HEAD
 		bcm2835_reset(mmc_from_priv(host));
+=======
+		bcm2835_reset(host->mmc);
+>>>>>>> master
 
 		if (host->data) {
 			host->data->error = -ETIMEDOUT;

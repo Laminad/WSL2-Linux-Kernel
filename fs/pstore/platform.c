@@ -147,28 +147,140 @@ static void pstore_timer_kick(void)
 	mod_timer(&pstore_timer, jiffies + msecs_to_jiffies(pstore_update_ms));
 }
 
+<<<<<<< HEAD
 static bool pstore_cannot_block_path(enum kmsg_dump_reason reason)
+=======
+/*
+ * Should pstore_dump() wait for a concurrent pstore_dump()? If
+ * not, the current pstore_dump() will report a failure to dump
+ * and return.
+ */
+static bool pstore_cannot_wait(enum kmsg_dump_reason reason)
+>>>>>>> master
 {
-	/*
-	 * In case of NMI path, pstore shouldn't be blocked
-	 * regardless of reason.
-	 */
+	/* In NMI path, pstore shouldn't block regardless of reason. */
 	if (in_nmi())
 		return true;
 
 	switch (reason) {
 	/* In panic case, other cpus are stopped by smp_send_stop(). */
 	case KMSG_DUMP_PANIC:
+<<<<<<< HEAD
 	/*
 	 * Emergency restart shouldn't be blocked by spinning on
 	 * pstore_info::buf_lock.
 	 */
+=======
+	/* Emergency restart shouldn't be blocked. */
+>>>>>>> master
 	case KMSG_DUMP_EMERG:
 		return true;
 	default:
 		return false;
 	}
 }
+<<<<<<< HEAD
+=======
+
+#if IS_ENABLED(CONFIG_PSTORE_DEFLATE_COMPRESS)
+static int zbufsize_deflate(size_t size)
+{
+	size_t cmpr;
+
+	switch (size) {
+	/* buffer range for efivars */
+	case 1000 ... 2000:
+		cmpr = 56;
+		break;
+	case 2001 ... 3000:
+		cmpr = 54;
+		break;
+	case 3001 ... 3999:
+		cmpr = 52;
+		break;
+	/* buffer range for nvram, erst */
+	case 4000 ... 10000:
+		cmpr = 45;
+		break;
+	default:
+		cmpr = 60;
+		break;
+	}
+
+	return (size * 100) / cmpr;
+}
+#endif
+
+#if IS_ENABLED(CONFIG_PSTORE_LZO_COMPRESS)
+static int zbufsize_lzo(size_t size)
+{
+	return lzo1x_worst_compress(size);
+}
+#endif
+
+#if IS_ENABLED(CONFIG_PSTORE_LZ4_COMPRESS) || IS_ENABLED(CONFIG_PSTORE_LZ4HC_COMPRESS)
+static int zbufsize_lz4(size_t size)
+{
+	return LZ4_compressBound(size);
+}
+#endif
+
+#if IS_ENABLED(CONFIG_PSTORE_842_COMPRESS)
+static int zbufsize_842(size_t size)
+{
+	return size;
+}
+#endif
+
+#if IS_ENABLED(CONFIG_PSTORE_ZSTD_COMPRESS)
+static int zbufsize_zstd(size_t size)
+{
+	return ZSTD_compressBound(size);
+}
+#endif
+
+static const struct pstore_zbackend *zbackend __ro_after_init;
+
+static const struct pstore_zbackend zbackends[] = {
+#if IS_ENABLED(CONFIG_PSTORE_DEFLATE_COMPRESS)
+	{
+		.zbufsize	= zbufsize_deflate,
+		.name		= "deflate",
+	},
+#endif
+#if IS_ENABLED(CONFIG_PSTORE_LZO_COMPRESS)
+	{
+		.zbufsize	= zbufsize_lzo,
+		.name		= "lzo",
+	},
+#endif
+#if IS_ENABLED(CONFIG_PSTORE_LZ4_COMPRESS)
+	{
+		.zbufsize	= zbufsize_lz4,
+		.name		= "lz4",
+	},
+#endif
+#if IS_ENABLED(CONFIG_PSTORE_LZ4HC_COMPRESS)
+	{
+		.zbufsize	= zbufsize_lz4,
+		.name		= "lz4hc",
+	},
+#endif
+#if IS_ENABLED(CONFIG_PSTORE_842_COMPRESS)
+	{
+		.zbufsize	= zbufsize_842,
+		.name		= "842",
+	},
+#endif
+#if IS_ENABLED(CONFIG_PSTORE_ZSTD_COMPRESS)
+	{
+		.zbufsize	= zbufsize_zstd,
+		.name		= "zstd",
+	},
+#endif
+	{ }
+};
+>>>>>>> master
 
 static int pstore_compress(const void *in, void *out,
 			   unsigned int inlen, unsigned int outlen)
@@ -203,6 +315,7 @@ static int pstore_compress(const void *in, void *out,
 
 static void allocate_buf_for_compression(void)
 {
+<<<<<<< HEAD
 	size_t compressed_size;
 	char *buf;
 
@@ -245,16 +358,71 @@ static void allocate_buf_for_compression(void)
 	max_compressed_size = compressed_size;
 
 	pr_info("Using crash dump compression: %s\n", compress);
+=======
+	struct crypto_comp *ctx;
+	int size;
+	char *buf;
+
+	/* Skip if not built-in or compression backend not selected yet. */
+	if (!IS_ENABLED(CONFIG_PSTORE_COMPRESS) || !zbackend)
+		return;
+
+	/* Skip if no pstore backend yet or compression init already done. */
+	if (!psinfo || tfm)
+		return;
+
+	if (!crypto_has_comp(zbackend->name, 0, 0)) {
+		pr_err("Unknown compression: %s\n", zbackend->name);
+		return;
+	}
+
+	size = zbackend->zbufsize(psinfo->bufsize);
+	if (size <= 0) {
+		pr_err("Invalid compression size for %s: %d\n",
+		       zbackend->name, size);
+		return;
+	}
+
+	buf = kmalloc(size, GFP_KERNEL);
+	if (!buf) {
+		pr_err("Failed %d byte compression buffer allocation for: %s\n",
+		       size, zbackend->name);
+		return;
+	}
+
+	ctx = crypto_alloc_comp(zbackend->name, 0, 0);
+	if (IS_ERR_OR_NULL(ctx)) {
+		kfree(buf);
+		pr_err("crypto_alloc_comp('%s') failed: %ld\n", zbackend->name,
+		       PTR_ERR(ctx));
+		return;
+	}
+
+	/* A non-NULL big_oops_buf indicates compression is available. */
+	tfm = ctx;
+	big_oops_buf_sz = size;
+	big_oops_buf = buf;
+
+	pr_info("Using compression: %s\n", zbackend->name);
+>>>>>>> master
 }
 
 static void free_buf_for_compression(void)
 {
+<<<<<<< HEAD
 	if (IS_ENABLED(CONFIG_PSTORE_COMPRESS) && compress_workspace) {
 		vfree(compress_workspace);
 		compress_workspace = NULL;
 	}
 
 	kvfree(big_oops_buf);
+=======
+	if (IS_ENABLED(CONFIG_PSTORE_COMPRESS) && tfm) {
+		crypto_free_comp(tfm);
+		tfm = NULL;
+	}
+	kfree(big_oops_buf);
+>>>>>>> master
 	big_oops_buf = NULL;
 	max_compressed_size = 0;
 }
@@ -281,12 +449,16 @@ static void pstore_dump(struct kmsg_dumper *dumper,
 	unsigned long	total = 0;
 	const char	*why;
 	unsigned int	part = 1;
+<<<<<<< HEAD
 	unsigned long	flags = 0;
 	int		saved_ret = 0;
+=======
+>>>>>>> master
 	int		ret;
 
 	why = kmsg_dump_reason_str(reason);
 
+<<<<<<< HEAD
 	if (pstore_cannot_block_path(reason)) {
 		if (!spin_trylock_irqsave(&psinfo->buf_lock, flags)) {
 			pr_err("dump skipped in %s path because of concurrent dump\n",
@@ -299,6 +471,21 @@ static void pstore_dump(struct kmsg_dumper *dumper,
 
 	kmsg_dump_rewind(&iter);
 
+=======
+	if (down_trylock(&psinfo->buf_lock)) {
+		/* Failed to acquire lock: give up if we cannot wait. */
+		if (pstore_cannot_wait(reason)) {
+			pr_err("dump skipped in %s path: may corrupt error record\n",
+				in_nmi() ? "NMI" : why);
+			return;
+		}
+		if (down_interruptible(&psinfo->buf_lock)) {
+			pr_err("could not grab semaphore?!\n");
+			return;
+		}
+	}
+
+>>>>>>> master
 	oopscount++;
 	while (total < kmsg_bytes) {
 		char *dst;
@@ -315,8 +502,18 @@ static void pstore_dump(struct kmsg_dumper *dumper,
 		record.part = part;
 		record.buf = psinfo->buf;
 
+<<<<<<< HEAD
 		dst = big_oops_buf ?: psinfo->buf;
 		dst_size = max_compressed_size ?: psinfo->bufsize;
+=======
+		if (big_oops_buf) {
+			dst = big_oops_buf;
+			dst_size = big_oops_buf_sz;
+		} else {
+			dst = psinfo->buf;
+			dst_size = psinfo->bufsize;
+		}
+>>>>>>> master
 
 		/* Write dump header. */
 		header_size = snprintf(dst, dst_size, "%s#%d Part%u\n", why,
@@ -364,12 +561,17 @@ static void pstore_dump(struct kmsg_dumper *dumper,
 		total += record.size;
 		part++;
 	}
+<<<<<<< HEAD
 	spin_unlock_irqrestore(&psinfo->buf_lock, flags);
 
 	if (saved_ret) {
 		pr_err_once("backend (%s) writing error (%d)\n", psinfo->name,
 			    saved_ret);
 	}
+=======
+
+	up(&psinfo->buf_lock);
+>>>>>>> master
 }
 
 static struct kmsg_dumper pstore_dumper = {
@@ -394,12 +596,18 @@ static void pstore_console_write(struct console *con, const char *s, unsigned c)
 {
 	struct pstore_record record;
 
+<<<<<<< HEAD
 	if (!c)
 		return;
 
 	pstore_record_init(&record, psinfo);
 	record.type = PSTORE_TYPE_CONSOLE;
 
+=======
+	pstore_record_init(&record, psinfo);
+	record.type = PSTORE_TYPE_CONSOLE;
+
+>>>>>>> master
 	record.buf = (char *)s;
 	record.size = c;
 	psinfo->write(&record);
@@ -503,7 +711,23 @@ int pstore_register(struct pstore_info *psi)
 		psi->write_user = pstore_write_user_compat;
 	psinfo = psi;
 	mutex_init(&psinfo->read_mutex);
+<<<<<<< HEAD
 	spin_lock_init(&psinfo->buf_lock);
+=======
+	sema_init(&psinfo->buf_lock, 1);
+	spin_unlock(&pstore_lock);
+
+	if (owner && !try_module_get(owner)) {
+		psinfo = NULL;
+		return -EINVAL;
+	}
+
+	if (psi->flags & PSTORE_FLAGS_DMESG)
+		allocate_buf_for_compression();
+
+	if (pstore_is_mounted())
+		pstore_get_records(0);
+>>>>>>> master
 
 	if (psi->flags & PSTORE_FLAGS_DMESG)
 		allocate_buf_for_compression();
@@ -750,15 +974,58 @@ static int __init pstore_init(void)
 	if (ret)
 		free_buf_for_compression();
 
+<<<<<<< HEAD
 	return ret;
+=======
+	for (step = zbackends; step->name; step++) {
+		if (!strcmp(compress, step->name)) {
+			zbackend = step;
+			return;
+		}
+	}
+>>>>>>> master
 }
 late_initcall(pstore_init);
 
+<<<<<<< HEAD
+=======
+static int __init pstore_init(void)
+{
+	int ret;
+
+	pstore_choose_compression();
+
+	/*
+	 * Check if any pstore backends registered earlier but did not
+	 * initialize compression because crypto was not ready. If so,
+	 * initialize compression now.
+	 */
+	allocate_buf_for_compression();
+
+	ret = pstore_init_fs();
+	if (ret)
+		return ret;
+
+	return 0;
+}
+late_initcall(pstore_init);
+
+>>>>>>> master
 static void __exit pstore_exit(void)
 {
 	pstore_exit_fs();
 }
 module_exit(pstore_exit)
+<<<<<<< HEAD
 
+=======
+
+module_param(compress, charp, 0444);
+MODULE_PARM_DESC(compress, "Pstore compression to use");
+
+module_param(backend, charp, 0444);
+MODULE_PARM_DESC(backend, "Pstore backend to use");
+
+>>>>>>> master
 MODULE_AUTHOR("Tony Luck <tony.luck@intel.com>");
 MODULE_LICENSE("GPL");

@@ -113,10 +113,23 @@ static void _free_sdei_scs(unsigned long * __percpu *ptr, int cpu)
 {
 	void *s;
 
+<<<<<<< HEAD
 	s = per_cpu(*ptr, cpu);
 	if (s) {
 		per_cpu(*ptr, cpu) = NULL;
 		scs_free(s);
+=======
+	if (!low)
+		return false;
+
+	if (sp < low || sp >= high)
+		return false;
+
+	if (info) {
+		info->low = low;
+		info->high = high;
+		info->type = STACK_TYPE_SDEI_NORMAL;
+>>>>>>> master
 	}
 }
 
@@ -124,9 +137,22 @@ static void free_sdei_scs(void)
 {
 	int cpu;
 
+<<<<<<< HEAD
 	for_each_possible_cpu(cpu) {
 		_free_sdei_scs(&sdei_shadow_call_stack_normal_ptr, cpu);
 		_free_sdei_scs(&sdei_shadow_call_stack_critical_ptr, cpu);
+=======
+	if (!low)
+		return false;
+
+	if (sp < low || sp >= high)
+		return false;
+
+	if (info) {
+		info->low = low;
+		info->high = high;
+		info->type = STACK_TYPE_SDEI_CRITICAL;
+>>>>>>> master
 	}
 }
 

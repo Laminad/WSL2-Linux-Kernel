@@ -641,7 +641,11 @@ static int mlx5i_close(struct net_device *netdev)
 	clear_bit(MLX5E_STATE_OPENED, &epriv->state);
 
 	netif_carrier_off(epriv->netdev);
+<<<<<<< HEAD
 	mlx5_fs_remove_rx_underlay_qpn(mdev, ipriv->qpn);
+=======
+	mlx5_fs_remove_rx_underlay_qpn(mdev, ipriv->qp.qpn);
+>>>>>>> master
 	mlx5e_deactivate_priv_channels(epriv);
 	mlx5e_close_channels(&epriv->channels);
 	mlx5i_uninit_underlay_qp(epriv);
@@ -787,11 +791,14 @@ static int mlx5_rdma_setup_rn(struct ib_device *ibdev, u32 port_num,
 	if (err)
 		goto destroy_mdev_resources;
 
+<<<<<<< HEAD
 	epriv->profile = prof;
 	epriv->ppriv = ipriv;
 
 	prof->init(mdev, netdev);
 
+=======
+>>>>>>> master
 	err = mlx5e_attach_netdev(epriv);
 	if (err)
 		goto detach;
@@ -811,10 +818,16 @@ static int mlx5_rdma_setup_rn(struct ib_device *ibdev, u32 port_num,
 	return 0;
 
 detach:
+<<<<<<< HEAD
 	prof->cleanup(epriv);
 	if (ipriv->sub_interface)
 		return err;
 destroy_mdev_resources:
+=======
+	profile->cleanup(epriv);
+	if (ipriv->sub_interface)
+		return NULL;
+>>>>>>> master
 	mlx5e_destroy_mdev_resources(mdev);
 destroy_ht:
 	mlx5i_pkey_qpn_ht_cleanup(netdev);

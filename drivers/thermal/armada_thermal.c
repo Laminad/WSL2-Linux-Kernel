@@ -399,7 +399,13 @@ static int armada_get_temp_legacy(struct thermal_zone_device *thermal,
 	int ret;
 
 	/* Valid check */
+<<<<<<< HEAD
 	if (!armada_is_valid(priv))
+=======
+	if (!armada_is_valid(priv)) {
+		dev_err(priv->dev,
+			"Temperature sensor reading not valid\n");
+>>>>>>> master
 		return -EIO;
 
 	/* Do the actual reading */

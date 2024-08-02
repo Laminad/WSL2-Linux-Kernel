@@ -608,10 +608,14 @@ static int __init acpi_pcc_probe(void)
 			pr_warn("Error parsing PCC subspaces from PCCT\n");
 		else
 			pr_warn("Invalid PCCT: %d PCC subspaces\n", count);
+<<<<<<< HEAD
 
 		rc = -EINVAL;
 	} else {
 		pcc_chan_count = count;
+=======
+		return -EINVAL;
+>>>>>>> master
 	}
 
 	acpi_put_table(pcct_tbl);

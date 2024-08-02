@@ -1098,6 +1098,23 @@ int ceph_is_any_caps(struct inode *inode)
 	return ret;
 }
 
+<<<<<<< HEAD
+=======
+static void drop_inode_snap_realm(struct ceph_inode_info *ci)
+{
+	struct ceph_snap_realm *realm = ci->i_snap_realm;
+	spin_lock(&realm->inodes_with_caps_lock);
+	list_del_init(&ci->i_snap_realm_item);
+	ci->i_snap_realm_counter++;
+	ci->i_snap_realm = NULL;
+	if (realm->ino == ci->i_vino.ino)
+		realm->inode = NULL;
+	spin_unlock(&realm->inodes_with_caps_lock);
+	ceph_put_snap_realm(ceph_sb_to_client(ci->vfs_inode.i_sb)->mdsc,
+			    realm);
+}
+
+>>>>>>> master
 /*
  * Remove a cap.  Take steps to deal with a racing iterate_session_caps.
  *
@@ -1122,6 +1139,11 @@ void __ceph_remove_cap(struct ceph_cap *cap, bool queue_release)
 	dout("__ceph_remove_cap %p from %p\n", cap, &ci->netfs.inode);
 
 	mdsc = ceph_inode_to_fs_client(&ci->netfs.inode)->mdsc;
+
+	/* remove from inode's cap rbtree, and clear auth cap */
+	rb_erase(&cap->ci_node, &ci->i_caps);
+	if (ci->i_auth_cap == cap)
+		ci->i_auth_cap = NULL;
 
 	/* remove from inode's cap rbtree, and clear auth cap */
 	rb_erase(&cap->ci_node, &ci->i_caps);
@@ -1372,7 +1394,13 @@ static void __prep_cap(struct cap_msg_args *arg, struct ceph_cap *cap,
 		       int flushing, u64 flush_tid, u64 oldest_flush_tid)
 {
 	struct ceph_inode_info *ci = cap->ci;
+<<<<<<< HEAD
 	struct inode *inode = &ci->netfs.inode;
+=======
+	struct inode *inode = &ci->vfs_inode;
+	struct ceph_buffer *old_blob = NULL;
+	struct cap_msg_args arg;
+>>>>>>> master
 	int held, revoking;
 
 	lockdep_assert_held(&ci->i_ceph_lock);
@@ -1416,9 +1444,15 @@ static void __prep_cap(struct cap_msg_args *arg, struct ceph_cap *cap,
 	}
 
 	if (flushing & CEPH_CAP_XATTR_EXCL) {
+<<<<<<< HEAD
 		arg->old_xattr_buf = __ceph_build_xattrs_blob(ci);
 		arg->xattr_version = ci->i_xattrs.version;
 		arg->xattr_buf = ceph_buffer_get(ci->i_xattrs.blob);
+=======
+		old_blob = __ceph_build_xattrs_blob(ci);
+		arg.xattr_version = ci->i_xattrs.version;
+		arg.xattr_buf = ci->i_xattrs.blob;
+>>>>>>> master
 	} else {
 		arg->xattr_buf = NULL;
 		arg->old_xattr_buf = NULL;
@@ -1477,6 +1511,7 @@ static void __prep_cap(struct cap_msg_args *arg, struct ceph_cap *cap,
 #define CAP_MSG_FIXED_FIELDS (sizeof(struct ceph_mds_caps) + \
 		      4 + 8 + 4 + 4 + 8 + 4 + 4 + 4 + 8 + 8 + 4 + 8 + 8 + 4 + 4 + 8)
 
+<<<<<<< HEAD
 static inline int cap_msg_size(struct cap_msg_args *arg)
 {
 	return CAP_MSG_FIXED_FIELDS + arg->fscrypt_auth_len;
@@ -1511,6 +1546,14 @@ static void __send_cap(struct cap_msg_args *arg, struct ceph_inode_info *ci)
 		__cap_delay_requeue(arg->session->s_mdsc, ci);
 		spin_unlock(&ci->i_ceph_lock);
 		return;
+=======
+	ceph_buffer_put(old_blob);
+
+	ret = send_cap_msg(&arg);
+	if (ret < 0) {
+		dout("error sending cap msg, must requeue %p\n", inode);
+		delayed = 1;
+>>>>>>> master
 	}
 
 	encode_cap_msg(msg, arg);

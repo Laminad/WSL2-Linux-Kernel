@@ -581,7 +581,11 @@ static int ice_init_check_adminq(struct ice_hw *hw)
 		goto init_ctrlq_free_rq;
 
 	if (!ice_aq_ver_check(hw)) {
+<<<<<<< HEAD
 		status = -EIO;
+=======
+		status = ICE_ERR_FW_API_VER;
+>>>>>>> master
 		goto init_ctrlq_free_rq;
 	}
 

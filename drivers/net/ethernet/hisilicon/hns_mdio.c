@@ -330,12 +330,28 @@ static int hns_mdio_read_c22(struct mii_bus *bus, int phy_id, int regnum)
 
 	hns_mdio_cmd_write(mdio_dev, false, MDIO_C22_READ, phy_id, reg);
 
+<<<<<<< HEAD
 	/* Step 2: waiting for MDIO_COMMAND_REG 's mdio_start==0,*/
 	/* check for read or write opt is finished */
 	ret = hns_mdio_wait_ready(bus);
 	if (ret) {
 		dev_err(&bus->dev, "MDIO bus is busy\n");
 		return ret;
+=======
+		/* Step 2; config the cmd-reg to write addr*/
+		hns_mdio_cmd_write(mdio_dev, is_c45,
+				   MDIO_C45_WRITE_ADDR, phy_id, devad);
+
+		/* Step 3: check for read or write opt is finished */
+		ret = hns_mdio_wait_ready(bus);
+		if (ret) {
+			dev_err(&bus->dev, "MDIO bus is busy\n");
+			return ret;
+		}
+
+		hns_mdio_cmd_write(mdio_dev, is_c45,
+				   MDIO_C45_READ, phy_id, devad);
+>>>>>>> master
 	}
 
 	reg_val = MDIO_GET_REG_BIT(mdio_dev, MDIO_STA_REG, MDIO_STATE_STA_B);

@@ -911,8 +911,13 @@ static void test_ahash_speed_common(const char *algo, unsigned int secs,
 			break;
 		}
 
+<<<<<<< HEAD
 		if (klen)
 			crypto_ahash_setkey(tfm, tvmem[0], klen);
+=======
+		if (speed[i].klen)
+			crypto_ahash_setkey(tfm, tvmem[0], speed[i].klen);
+>>>>>>> master
 
 		pr_info("test%3u "
 			"(%5u byte blocks,%5u bytes per update,%4u updates): ",
@@ -1518,6 +1523,7 @@ static int do_test(const char *alg, u32 type, u32 mask, int m, u32 num_mb)
 		break;
 
 	case 10:
+<<<<<<< HEAD
 		ret = min(ret, tcrypt_test("ecb(aes)"));
 		ret = min(ret, tcrypt_test("cbc(aes)"));
 		ret = min(ret, tcrypt_test("lrw(aes)"));
@@ -1527,6 +1533,15 @@ static int do_test(const char *alg, u32 type, u32 mask, int m, u32 num_mb)
 		ret = min(ret, tcrypt_test("ofb(aes)"));
 		ret = min(ret, tcrypt_test("cfb(aes)"));
 		ret = min(ret, tcrypt_test("xctr(aes)"));
+=======
+		ret += tcrypt_test("ecb(aes)");
+		ret += tcrypt_test("cbc(aes)");
+		ret += tcrypt_test("lrw(aes)");
+		ret += tcrypt_test("xts(aes)");
+		ret += tcrypt_test("ctr(aes)");
+		ret += tcrypt_test("rfc3686(ctr(aes))");
+		ret += tcrypt_test("cfb(aes)");
+>>>>>>> master
 		break;
 
 	case 11:

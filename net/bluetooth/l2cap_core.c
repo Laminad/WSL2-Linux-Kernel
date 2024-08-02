@@ -1415,6 +1415,7 @@ static bool l2cap_check_enc_key_size(struct hci_conn *hcon)
 	 * that have no key size requirements. Ensure that the link is
 	 * actually encrypted before enforcing a key size.
 	 */
+<<<<<<< HEAD
 	int min_key_size = hcon->hdev->min_enc_key_size;
 
 	/* On FIPS security level, key size must be 16 bytes */
@@ -1423,6 +1424,10 @@ static bool l2cap_check_enc_key_size(struct hci_conn *hcon)
 
 	return (!test_bit(HCI_CONN_ENCRYPT, &hcon->flags) ||
 		hcon->enc_key_size >= min_key_size);
+=======
+	return (!test_bit(HCI_CONN_ENCRYPT, &hcon->flags) ||
+		hcon->enc_key_size >= HCI_MIN_ENC_KEY_SIZE);
+>>>>>>> master
 }
 
 static void l2cap_do_start(struct l2cap_chan *chan)
@@ -3436,7 +3441,17 @@ static int l2cap_parse_conf_req(struct l2cap_chan *chan, void *data, size_t data
 		case L2CAP_CONF_EWS:
 			if (olen != 2)
 				break;
+<<<<<<< HEAD
 			return -ECONNREFUSED;
+=======
+			if (!(chan->conn->local_fixed_chan & L2CAP_FC_A2MP))
+				return -ECONNREFUSED;
+			set_bit(FLAG_EXT_CTRL, &chan->flags);
+			set_bit(CONF_EWS_RECV, &chan->conf_state);
+			chan->tx_win_max = L2CAP_DEFAULT_EXT_WINDOW;
+			chan->remote_tx_win = val;
+			break;
+>>>>>>> master
 
 		default:
 			if (hint)
@@ -4487,11 +4502,24 @@ static inline int l2cap_disconnect_rsp(struct l2cap_conn *conn,
 		return 0;
 	}
 
+<<<<<<< HEAD
 	if (chan->state != BT_DISCONN) {
 		l2cap_chan_unlock(chan);
 		l2cap_chan_put(chan);
 		return 0;
 	}
+=======
+	l2cap_chan_lock(chan);
+
+	if (chan->state != BT_DISCONN) {
+		l2cap_chan_unlock(chan);
+		mutex_unlock(&conn->chan_lock);
+		return 0;
+	}
+
+	l2cap_chan_hold(chan);
+	l2cap_chan_del(chan, 0);
+>>>>>>> master
 
 	l2cap_chan_unlock(chan);
 	mutex_lock(&conn->chan_lock);

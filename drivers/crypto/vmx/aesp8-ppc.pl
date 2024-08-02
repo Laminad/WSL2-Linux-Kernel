@@ -1375,7 +1375,11 @@ Loop_ctr32_enc:
 	addi		$idx,$idx,16
 	bdnz		Loop_ctr32_enc
 
+<<<<<<< HEAD
 	vadduqm		$ivec,$ivec,$one	# Kernel change for 128-bit
+=======
+	vadduqm		$ivec,$ivec,$one
+>>>>>>> master
 	 vmr		$dat,$inptail
 	 lvx		$inptail,0,$inp
 	 addi		$inp,$inp,16

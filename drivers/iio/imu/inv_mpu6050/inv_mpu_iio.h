@@ -78,6 +78,7 @@ enum inv_devices {
 	INV_MPU9250,
 	INV_MPU9255,
 	INV_ICM20608,
+<<<<<<< HEAD
 	INV_ICM20608D,
 	INV_ICM20609,
 	INV_ICM20689,
@@ -85,6 +86,9 @@ enum inv_devices {
 	INV_ICM20602,
 	INV_ICM20690,
 	INV_IAM20680,
+=======
+	INV_ICM20602,
+>>>>>>> master
 	INV_NUM_PARTS
 };
 
@@ -141,7 +145,10 @@ struct inv_mpu6050_chip_config {
  *  @reg:   register map of the chip.
  *  @config:    configuration of the chip.
  *  @fifo_size:	size of the FIFO in bytes.
+<<<<<<< HEAD
  *  @temp:	offset and scale to apply to raw temperature.
+=======
+>>>>>>> master
  */
 struct inv_mpu6050_hw {
 	u8 whoami;
@@ -149,6 +156,7 @@ struct inv_mpu6050_hw {
 	const struct inv_mpu6050_reg_map *reg;
 	const struct inv_mpu6050_chip_config *config;
 	size_t fifo_size;
+<<<<<<< HEAD
 	struct {
 		int offset;
 		int scale;
@@ -157,6 +165,8 @@ struct inv_mpu6050_hw {
 		unsigned int accel;
 		unsigned int gyro;
 	} startup_time;
+=======
+>>>>>>> master
 };
 
 /*
@@ -310,11 +320,16 @@ struct inv_mpu6050_state {
 #define INV_MPU6050_BYTES_PER_3AXIS_SENSOR   6
 #define INV_MPU6050_FIFO_COUNT_BYTE          2
 
+<<<<<<< HEAD
 /* MPU9X50 9-axis magnetometer */
 #define INV_MPU9X50_BYTES_MAGN               7
 
 /* FIFO temperature sample size */
 #define INV_MPU6050_BYTES_PER_TEMP_SENSOR   2
+=======
+/* ICM20602 FIFO samples include temperature readings */
+#define INV_ICM20602_BYTES_PER_TEMP_SENSOR   2
+>>>>>>> master
 
 /* mpu6500 registers */
 #define INV_MPU6500_REG_ACCEL_CONFIG_2      0x1D
@@ -352,11 +367,19 @@ struct inv_mpu6050_state {
 #define INV_ICM20690_GYRO_CONFIG_FSR_SHIFT   2
 #define INV_MPU6050_ACCL_CONFIG_FSR_SHIFT    3
 
+<<<<<<< HEAD
 #define INV_MPU6500_TEMP_OFFSET              7011
 #define INV_MPU6500_TEMP_SCALE               2995178
 
 #define INV_ICM20608_TEMP_OFFSET	     8170
 #define INV_ICM20608_TEMP_SCALE		     3059976
+=======
+#define INV_ICM20602_TEMP_OFFSET	     8170
+#define INV_ICM20602_TEMP_SCALE		     3060
+
+/* 6 + 6 round up and plus 8 */
+#define INV_MPU6050_OUTPUT_DATA_SIZE         24
+>>>>>>> master
 
 #define INV_MPU6050_REG_INT_PIN_CFG	0x37
 #define INV_MPU6050_ACTIVE_HIGH		0x00
@@ -394,6 +417,7 @@ struct inv_mpu6050_state {
 #define INV_MPU9255_WHOAMI_VALUE		0x73
 #define INV_MPU6515_WHOAMI_VALUE		0x74
 #define INV_ICM20608_WHOAMI_VALUE		0xAF
+<<<<<<< HEAD
 #define INV_ICM20608D_WHOAMI_VALUE		0xAE
 #define INV_ICM20609_WHOAMI_VALUE		0xA6
 #define INV_ICM20689_WHOAMI_VALUE		0x98
@@ -401,6 +425,9 @@ struct inv_mpu6050_state {
 #define INV_ICM20602_WHOAMI_VALUE		0x12
 #define INV_ICM20690_WHOAMI_VALUE		0x20
 #define INV_IAM20680_WHOAMI_VALUE		0xA9
+=======
+#define INV_ICM20602_WHOAMI_VALUE		0x12
+>>>>>>> master
 
 /* scan element definition for generic MPU6xxx devices */
 enum inv_mpu6050_scan {
@@ -417,6 +444,18 @@ enum inv_mpu6050_scan {
 	INV_MPU9X50_SCAN_MAGN_Y,
 	INV_MPU9X50_SCAN_MAGN_Z,
 	INV_MPU9X50_SCAN_TIMESTAMP,
+};
+
+/* scan element definition for ICM20602, which includes temperature */
+enum inv_icm20602_scan {
+	INV_ICM20602_SCAN_ACCL_X,
+	INV_ICM20602_SCAN_ACCL_Y,
+	INV_ICM20602_SCAN_ACCL_Z,
+	INV_ICM20602_SCAN_TEMP,
+	INV_ICM20602_SCAN_GYRO_X,
+	INV_ICM20602_SCAN_GYRO_Y,
+	INV_ICM20602_SCAN_GYRO_Z,
+	INV_ICM20602_SCAN_TIMESTAMP,
 };
 
 enum inv_mpu6050_filter_e {

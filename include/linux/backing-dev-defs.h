@@ -189,6 +189,11 @@ struct backing_dev_info {
 	struct radix_tree_root cgwb_tree; /* radix tree of active cgroup wbs */
 	struct mutex cgwb_release_mutex;  /* protect shutdown of wb structs */
 	struct rw_semaphore wb_switch_rwsem; /* no cgwb switch while syncing */
+<<<<<<< HEAD
+=======
+#else
+	struct bdi_writeback_congested *wb_congested;
+>>>>>>> master
 #endif
 	wait_queue_head_t wb_waitq;
 
@@ -256,7 +261,20 @@ static inline void wb_put_many(struct bdi_writeback *wb, unsigned long nr)
  */
 static inline void wb_put(struct bdi_writeback *wb)
 {
+<<<<<<< HEAD
 	wb_put_many(wb, 1);
+=======
+	if (WARN_ON_ONCE(!wb->bdi)) {
+		/*
+		 * A driver bug might cause a file to be removed before bdi was
+		 * initialized.
+		 */
+		return;
+	}
+
+	if (wb != &wb->bdi->wb)
+		percpu_ref_put(&wb->refcnt);
+>>>>>>> master
 }
 
 /**

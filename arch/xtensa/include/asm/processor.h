@@ -20,7 +20,21 @@
 #include <asm/types.h>
 #include <asm/regs.h>
 
+<<<<<<< HEAD
 #define ARCH_SLAB_MINALIGN XTENSA_STACK_ALIGNMENT
+=======
+/* Assertions. */
+
+#if (XCHAL_HAVE_WINDOWED != 1)
+# error Linux requires the Xtensa Windowed Registers Option.
+#endif
+
+/* Xtensa ABI requires stack alignment to be at least 16 */
+
+#define STACK_ALIGN (XCHAL_DATA_WIDTH > 16 ? XCHAL_DATA_WIDTH : 16)
+
+#define ARCH_SLAB_MINALIGN STACK_ALIGN
+>>>>>>> master
 
 /*
  * User space process size: 1 GB.

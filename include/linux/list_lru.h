@@ -52,7 +52,10 @@ struct list_lru {
 	struct list_head	list;
 	int			shrinker_id;
 	bool			memcg_aware;
+<<<<<<< HEAD
 	struct xarray		xa;
+=======
+>>>>>>> master
 #endif
 };
 

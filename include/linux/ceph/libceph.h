@@ -89,6 +89,7 @@ struct ceph_options {
 #define CEPH_MSG_MAX_MIDDLE_LEN	(16*1024*1024)
 
 /*
+<<<<<<< HEAD
  * The largest possible rbd data object is 32M.
  * The largest possible rbd object map object is 64M.
  *
@@ -96,6 +97,13 @@ struct ceph_options {
  * rsize and wsize mount options anyway.
  */
 #define CEPH_MSG_MAX_DATA_LEN	(64*1024*1024)
+=======
+ * Handle the largest possible rbd object in one message.
+ * There is no limit on the size of cephfs objects, but it has to obey
+ * rsize and wsize mount options anyway.
+ */
+#define CEPH_MSG_MAX_DATA_LEN	(32*1024*1024)
+>>>>>>> master
 
 #define CEPH_AUTH_NAME_DEFAULT   "guest"
 

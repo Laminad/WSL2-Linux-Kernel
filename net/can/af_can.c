@@ -883,6 +883,12 @@ static __init int can_init(void)
 	err = sock_register(&can_family_ops);
 	if (err)
 		goto out_sock;
+<<<<<<< HEAD
+=======
+	err = register_netdevice_notifier(&can_netdev_notifier);
+	if (err)
+		goto out_notifier;
+>>>>>>> master
 
 	dev_add_pack(&can_packet);
 	dev_add_pack(&canfd_packet);
@@ -890,6 +896,11 @@ static __init int can_init(void)
 
 	return 0;
 
+<<<<<<< HEAD
+=======
+out_notifier:
+	sock_unregister(PF_CAN);
+>>>>>>> master
 out_sock:
 	unregister_pernet_subsys(&can_pernet_ops);
 out_pernet:

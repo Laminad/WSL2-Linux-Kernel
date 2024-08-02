@@ -542,6 +542,10 @@ smb2_tcon_has_lease(struct cifs_tcon *tcon, struct smb2_lease_break *rsp)
 {
 	__u8 lease_state;
 	struct cifsFileInfo *cfile;
+<<<<<<< HEAD:fs/smb/client/smb2misc.c
+=======
+	struct cifs_pending_open *open;
+>>>>>>> master:fs/cifs/smb2misc.c
 	struct cifsInodeInfo *cinode;
 	int ack_req = le32_to_cpu(rsp->Flags &
 				  SMB2_NOTIFY_BREAK_LEASE_FLAG_ACK_REQUIRED);
@@ -557,7 +561,11 @@ smb2_tcon_has_lease(struct cifs_tcon *tcon, struct smb2_lease_break *rsp)
 
 		cifs_dbg(FYI, "found in the open list\n");
 		cifs_dbg(FYI, "lease key match, lease break 0x%x\n",
+<<<<<<< HEAD:fs/smb/client/smb2misc.c
 			 lease_state);
+=======
+			 le32_to_cpu(rsp->NewLeaseState));
+>>>>>>> master:fs/cifs/smb2misc.c
 
 		if (ack_req)
 			cfile->oplock_break_cancelled = false;
@@ -566,10 +574,27 @@ smb2_tcon_has_lease(struct cifs_tcon *tcon, struct smb2_lease_break *rsp)
 
 		set_bit(CIFS_INODE_PENDING_OPLOCK_BREAK, &cinode->flags);
 
+<<<<<<< HEAD:fs/smb/client/smb2misc.c
 		cfile->oplock_epoch = le16_to_cpu(rsp->Epoch);
 		cfile->oplock_level = lease_state;
 
 		cifs_queue_oplock_break(cfile);
+=======
+		/*
+		 * Set or clear flags depending on the lease state being READ.
+		 * HANDLE caching flag should be added when the client starts
+		 * to defer closing remote file handles with HANDLE leases.
+		 */
+		if (lease_state & SMB2_LEASE_READ_CACHING_HE)
+			set_bit(CIFS_INODE_DOWNGRADE_OPLOCK_TO_L2,
+				&cinode->flags);
+		else
+			clear_bit(CIFS_INODE_DOWNGRADE_OPLOCK_TO_L2,
+				  &cinode->flags);
+
+		cifs_queue_oplock_break(cfile);
+		kfree(lw);
+>>>>>>> master:fs/cifs/smb2misc.c
 		return true;
 	}
 

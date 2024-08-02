@@ -1637,7 +1637,38 @@ static int dma_buf_debug_show(struct seq_file *s, void *unused)
 				buf_obj->name ?: "<none>");
 		spin_unlock(&buf_obj->name_lock);
 
+<<<<<<< HEAD
 		dma_resv_describe(buf_obj->resv, s);
+=======
+		robj = buf_obj->resv;
+		while (true) {
+			seq = read_seqcount_begin(&robj->seq);
+			rcu_read_lock();
+			fobj = rcu_dereference(robj->fence);
+			shared_count = fobj ? fobj->shared_count : 0;
+			fence = rcu_dereference(robj->fence_excl);
+			if (!read_seqcount_retry(&robj->seq, seq))
+				break;
+			rcu_read_unlock();
+		}
+
+		if (fence)
+			seq_printf(s, "\tExclusive fence: %s %s %ssignalled\n",
+				   fence->ops->get_driver_name(fence),
+				   fence->ops->get_timeline_name(fence),
+				   dma_fence_is_signaled(fence) ? "" : "un");
+		for (i = 0; i < shared_count; i++) {
+			fence = rcu_dereference(fobj->shared[i]);
+			if (!dma_fence_get_rcu(fence))
+				continue;
+			seq_printf(s, "\tShared fence: %s %s %ssignalled\n",
+				   fence->ops->get_driver_name(fence),
+				   fence->ops->get_timeline_name(fence),
+				   dma_fence_is_signaled(fence) ? "" : "un");
+			dma_fence_put(fence);
+		}
+		rcu_read_unlock();
+>>>>>>> master
 
 		seq_puts(s, "\tAttached Devices:\n");
 		attach_count = 0;

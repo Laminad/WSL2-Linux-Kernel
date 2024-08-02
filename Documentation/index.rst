@@ -99,7 +99,12 @@ Architecture-specific documentation
 .. toctree::
    :maxdepth: 2
 
+<<<<<<< HEAD
    arch/index
+=======
+   sh/index
+   x86/index
+>>>>>>> master
 
 
 Other documentation

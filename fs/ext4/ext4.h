@@ -547,10 +547,13 @@ struct flex_groups {
 /* The only flags that should be swapped */
 #define EXT4_FL_SHOULD_SWAP (EXT4_HUGE_FILE_FL | EXT4_EXTENTS_FL)
 
+<<<<<<< HEAD
 /* Flags which are mutually exclusive to DAX */
 #define EXT4_DAX_MUT_EXCL (EXT4_VERITY_FL | EXT4_ENCRYPT_FL |\
 			   EXT4_JOURNAL_DATA_FL | EXT4_INLINE_DATA_FL)
 
+=======
+>>>>>>> master
 /* Mask out flags that are inappropriate for the given type of inode. */
 static inline __u32 ext4_mask_flags(umode_t mode, __u32 flags)
 {
@@ -1544,7 +1547,11 @@ struct ext4_sb_info {
 	int s_jquota_fmt;			/* Format of quota to use */
 #endif
 	unsigned int s_want_extra_isize; /* New inodes should reserve # bytes */
+<<<<<<< HEAD
 	struct ext4_system_blocks __rcu *s_system_blks;
+=======
+	struct ext4_system_blocks __rcu *system_blks;
+>>>>>>> master
 
 #ifdef EXTENTS_STATS
 	/* ext4 extents stats */
@@ -2040,6 +2047,8 @@ static inline bool ext4_verity_in_progress(struct inode *inode)
 #define EXT4_FEATURE_INCOMPAT_INLINE_DATA	0x8000 /* data in inode */
 #define EXT4_FEATURE_INCOMPAT_ENCRYPT		0x10000
 #define EXT4_FEATURE_INCOMPAT_CASEFOLD		0x20000
+
+extern void ext4_update_dynamic_rev(struct super_block *sb);
 
 extern void ext4_update_dynamic_rev(struct super_block *sb);
 
@@ -2961,9 +2970,13 @@ int do_journal_get_write_access(handle_t *handle, struct inode *inode,
 typedef enum {
 	EXT4_IGET_NORMAL =	0,
 	EXT4_IGET_SPECIAL =	0x0001, /* OK to iget a system inode */
+<<<<<<< HEAD
 	EXT4_IGET_HANDLE = 	0x0002,	/* Inode # is from a handle */
 	EXT4_IGET_BAD =		0x0004, /* Allow to iget a bad inode */
 	EXT4_IGET_EA_INODE =	0x0008	/* Inode should contain an EA value */
+=======
+	EXT4_IGET_HANDLE = 	0x0002	/* Inode # is from a handle */
+>>>>>>> master
 } ext4_iget_flags;
 
 extern struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
@@ -3068,6 +3081,7 @@ extern unsigned int ext4_list_backups(struct super_block *sb,
 
 /* super.c */
 extern struct buffer_head *ext4_sb_bread(struct super_block *sb,
+<<<<<<< HEAD
 					 sector_t block, blk_opf_t op_flags);
 extern struct buffer_head *ext4_sb_bread_unmovable(struct super_block *sb,
 						   sector_t block);
@@ -3077,6 +3091,9 @@ extern int ext4_read_bh(struct buffer_head *bh, blk_opf_t op_flags,
 			bh_end_io_t *end_io);
 extern int ext4_read_bh_lock(struct buffer_head *bh, blk_opf_t op_flags, bool wait);
 extern void ext4_sb_breadahead_unmovable(struct super_block *sb, sector_t block);
+=======
+					 sector_t block, int op_flags);
+>>>>>>> master
 extern int ext4_seq_options_show(struct seq_file *seq, void *offset);
 extern int ext4_calculate_overhead(struct super_block *sb);
 extern __le32 ext4_superblock_csum(struct super_block *sb,
@@ -3214,6 +3231,15 @@ do {									\
 
 #endif
 
+<<<<<<< HEAD
+=======
+extern int ext4_update_compat_feature(handle_t *handle, struct super_block *sb,
+					__u32 compat);
+extern int ext4_update_rocompat_feature(handle_t *handle,
+					struct super_block *sb,	__u32 rocompat);
+extern int ext4_update_incompat_feature(handle_t *handle,
+					struct super_block *sb,	__u32 incompat);
+>>>>>>> master
 extern ext4_fsblk_t ext4_block_bitmap(struct super_block *sb,
 				      struct ext4_group_desc *bg);
 extern ext4_fsblk_t ext4_inode_bitmap(struct super_block *sb,

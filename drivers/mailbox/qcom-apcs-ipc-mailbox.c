@@ -82,6 +82,11 @@ static int qcom_apcs_ipc_probe(struct platform_device *pdev)
 	void __iomem *base;
 	unsigned long i;
 	int ret;
+	const struct of_device_id apcs_clk_match_table[] = {
+		{ .compatible = "qcom,msm8916-apcs-kpss-global", },
+		{ .compatible = "qcom,qcs404-apcs-apps-global", },
+		{}
+	};
 
 	apcs = devm_kzalloc(&pdev->dev, sizeof(*apcs), GFP_KERNEL);
 	if (!apcs)
@@ -115,7 +120,11 @@ static int qcom_apcs_ipc_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+<<<<<<< HEAD
 	if (apcs_data->clk_name) {
+=======
+	if (of_match_device(apcs_clk_match_table, &pdev->dev)) {
+>>>>>>> master
 		apcs->clk = platform_device_register_data(&pdev->dev,
 							  apcs_data->clk_name,
 							  PLATFORM_DEVID_AUTO,

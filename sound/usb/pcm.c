@@ -308,15 +308,108 @@ static int snd_usb_pcm_sync_stop(struct snd_pcm_substream *substream)
 	return 0;
 }
 
+<<<<<<< HEAD
 /* Set up sync endpoint */
 int snd_usb_audioformat_set_sync_ep(struct snd_usb_audio *chip,
 				    struct audioformat *fmt)
+=======
+/* Setup an implicit feedback endpoint from a quirk. Returns 0 if no quirk
+ * applies. Returns 1 if a quirk was found.
+ */
+static int set_sync_ep_implicit_fb_quirk(struct snd_usb_substream *subs,
+					 struct usb_device *dev,
+					 struct usb_interface_descriptor *altsd,
+					 unsigned int attr)
+>>>>>>> master
 {
 	struct usb_device *dev = chip->dev;
 	struct usb_host_interface *alts;
+<<<<<<< HEAD
 	struct usb_interface_descriptor *altsd;
 	unsigned int ep, attr, sync_attr;
 	bool is_playback;
+=======
+	struct usb_interface *iface;
+	unsigned int ep;
+	unsigned int ifnum;
+
+	/* Implicit feedback sync EPs consumers are always playback EPs */
+	if (subs->direction != SNDRV_PCM_STREAM_PLAYBACK)
+		return 0;
+
+	switch (subs->stream->chip->usb_id) {
+	case USB_ID(0x0763, 0x2030): /* M-Audio Fast Track C400 */
+	case USB_ID(0x0763, 0x2031): /* M-Audio Fast Track C600 */
+		ep = 0x81;
+		ifnum = 3;
+		goto add_sync_ep_from_ifnum;
+	case USB_ID(0x0763, 0x2080): /* M-Audio FastTrack Ultra */
+	case USB_ID(0x0763, 0x2081):
+		ep = 0x81;
+		ifnum = 2;
+		goto add_sync_ep_from_ifnum;
+	case USB_ID(0x2466, 0x8003): /* Fractal Audio Axe-Fx II */
+		ep = 0x86;
+		ifnum = 2;
+		goto add_sync_ep_from_ifnum;
+	case USB_ID(0x2466, 0x8010): /* Fractal Audio Axe-Fx III */
+		ep = 0x81;
+		ifnum = 2;
+		goto add_sync_ep_from_ifnum;
+	case USB_ID(0x1397, 0x0001): /* Behringer UFX1604 */
+	case USB_ID(0x1397, 0x0002): /* Behringer UFX1204 */
+		ep = 0x81;
+		ifnum = 1;
+		goto add_sync_ep_from_ifnum;
+	case USB_ID(0x0582, 0x01d8): /* BOSS Katana */
+		/* BOSS Katana amplifiers do not need quirks */
+		return 0;
+	}
+
+	if (attr == USB_ENDPOINT_SYNC_ASYNC &&
+	    altsd->bInterfaceClass == USB_CLASS_VENDOR_SPEC &&
+	    altsd->bInterfaceProtocol == 2 &&
+	    altsd->bNumEndpoints == 1 &&
+	    USB_ID_VENDOR(subs->stream->chip->usb_id) == 0x0582 /* Roland */ &&
+	    search_roland_implicit_fb(dev, altsd->bInterfaceNumber + 1,
+				      altsd->bAlternateSetting,
+				      &alts, &ep) >= 0) {
+		goto add_sync_ep;
+	}
+
+	/* No quirk */
+	return 0;
+
+add_sync_ep_from_ifnum:
+	iface = usb_ifnum_to_if(dev, ifnum);
+
+	if (!iface || iface->num_altsetting == 0)
+		return -EINVAL;
+
+	alts = &iface->altsetting[1];
+
+add_sync_ep:
+	subs->sync_endpoint = snd_usb_add_endpoint(subs->stream->chip,
+						   alts, ep, !subs->direction,
+						   SND_USB_ENDPOINT_TYPE_DATA);
+	if (!subs->sync_endpoint)
+		return -EINVAL;
+
+	subs->data_endpoint->sync_master = subs->sync_endpoint;
+
+	return 1;
+}
+
+static int set_sync_endpoint(struct snd_usb_substream *subs,
+			     struct audioformat *fmt,
+			     struct usb_device *dev,
+			     struct usb_host_interface *alts,
+			     struct usb_interface_descriptor *altsd)
+{
+	int is_playback = subs->direction == SNDRV_PCM_STREAM_PLAYBACK;
+	unsigned int ep, attr;
+	bool implicit_fb;
+>>>>>>> master
 	int err;
 
 	if (fmt->sync_ep)
@@ -335,7 +428,33 @@ int snd_usb_audioformat_set_sync_ep(struct snd_usb_audio *chip,
 	 * Generic sync EP handling
 	 */
 
+<<<<<<< HEAD
 	if (fmt->ep_idx > 0 || altsd->bNumEndpoints < 2)
+=======
+	if ((is_playback && (attr != USB_ENDPOINT_SYNC_ASYNC)) ||
+		(!is_playback && (attr != USB_ENDPOINT_SYNC_ADAPTIVE))) {
+
+		/*
+		 * In these modes the notion of sync_endpoint is irrelevant.
+		 * Reset pointers to avoid using stale data from previously
+		 * used settings, e.g. when configuration and endpoints were
+		 * changed
+		 */
+
+		subs->sync_endpoint = NULL;
+		subs->data_endpoint->sync_master = NULL;
+	}
+
+	err = set_sync_ep_implicit_fb_quirk(subs, dev, altsd, attr);
+	if (err < 0)
+		return err;
+
+	/* endpoint set by quirk */
+	if (err > 0)
+		return 0;
+
+	if (altsd->bNumEndpoints < 2)
+>>>>>>> master
 		return 0;
 
 	is_playback = !(get_endpoint(alts, 0)->bEndpointAddress & USB_DIR_IN);

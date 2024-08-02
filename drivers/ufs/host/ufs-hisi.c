@@ -19,8 +19,13 @@
 #include "ufshcd-pltfrm.h"
 #include <ufs/unipro.h>
 #include "ufs-hisi.h"
+<<<<<<< HEAD:drivers/ufs/host/ufs-hisi.c
 #include <ufs/ufshci.h>
 #include <ufs/ufs_quirks.h>
+=======
+#include "ufshci.h"
+#include "ufs_quirks.h"
+>>>>>>> master:drivers/scsi/ufs/ufs-hisi.c
 
 static int ufs_hisi_check_hibern8(struct ufs_hba *hba)
 {
@@ -300,6 +305,7 @@ static void ufs_hisi_set_dev_cap(struct ufs_dev_params *hisi_param)
 
 static void ufs_hisi_pwr_change_pre_change(struct ufs_hba *hba)
 {
+<<<<<<< HEAD:drivers/ufs/host/ufs-hisi.c
 	struct ufs_hisi_host *host = ufshcd_get_variant(hba);
 
 	if (host->caps & UFS_HISI_CAP_PHY10nm) {
@@ -322,6 +328,8 @@ static void ufs_hisi_pwr_change_pre_change(struct ufs_hba *hba)
 		ufshcd_dme_set(hba, UIC_ARG_MIB_SEL(0xd085, 0x0), 0x01);
 	}
 
+=======
+>>>>>>> master:drivers/scsi/ufs/ufs-hisi.c
 	if (hba->dev_quirks & UFS_DEVICE_QUIRK_HOST_VS_DEBUGSAVECONFIGTIME) {
 		pr_info("ufs flash device must set VS_DebugSaveConfigTime 0x10\n");
 		/* VS_DebugSaveConfigTime */
@@ -479,11 +487,18 @@ static int ufs_hisi_init_common(struct ufs_hba *hba)
 	host->hba = hba;
 	ufshcd_set_variant(hba, host);
 
+<<<<<<< HEAD:drivers/ufs/host/ufs-hisi.c
 	host->rst = devm_reset_control_get(dev, "rst");
 	if (IS_ERR(host->rst)) {
 		dev_err(dev, "%s: failed to get reset control\n", __func__);
 		err = PTR_ERR(host->rst);
 		goto error;
+=======
+	host->rst  = devm_reset_control_get(dev, "rst");
+	if (IS_ERR(host->rst)) {
+		dev_err(dev, "%s: failed to get reset control\n", __func__);
+		return PTR_ERR(host->rst);
+>>>>>>> master:drivers/scsi/ufs/ufs-hisi.c
 	}
 
 	ufs_hisi_set_pm_lvl(hba);

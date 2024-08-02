@@ -99,9 +99,114 @@ static struct drm_gem_object *vgem_gem_create_object(struct drm_device *dev, siz
 	if (!obj)
 		return ERR_PTR(-ENOMEM);
 
+<<<<<<< HEAD
 	/*
 	 * vgem doesn't have any begin/end cpu access ioctls, therefore must use
 	 * coherent memory or dma-buf sharing just wont work.
+=======
+	ret = drm_gem_object_init(dev, &obj->base, roundup(size, PAGE_SIZE));
+	if (ret) {
+		kfree(obj);
+		return ERR_PTR(ret);
+	}
+
+	mutex_init(&obj->pages_lock);
+
+	return obj;
+}
+
+static void __vgem_gem_destroy(struct drm_vgem_gem_object *obj)
+{
+	drm_gem_object_release(&obj->base);
+	kfree(obj);
+}
+
+static struct drm_gem_object *vgem_gem_create(struct drm_device *dev,
+					      struct drm_file *file,
+					      unsigned int *handle,
+					      unsigned long size)
+{
+	struct drm_vgem_gem_object *obj;
+	int ret;
+
+	obj = __vgem_gem_create(dev, size);
+	if (IS_ERR(obj))
+		return ERR_CAST(obj);
+
+	ret = drm_gem_handle_create(file, &obj->base, handle);
+	drm_gem_object_put_unlocked(&obj->base);
+	if (ret)
+		return ERR_PTR(ret);
+
+	return &obj->base;
+}
+
+static int vgem_gem_dumb_create(struct drm_file *file, struct drm_device *dev,
+				struct drm_mode_create_dumb *args)
+{
+	struct drm_gem_object *gem_object;
+	u64 pitch, size;
+
+	pitch = args->width * DIV_ROUND_UP(args->bpp, 8);
+	size = args->height * pitch;
+	if (size == 0)
+		return -EINVAL;
+
+	gem_object = vgem_gem_create(dev, file, &args->handle, size);
+	if (IS_ERR(gem_object))
+		return PTR_ERR(gem_object);
+
+	args->size = gem_object->size;
+	args->pitch = pitch;
+
+	DRM_DEBUG_DRIVER("Created object of size %lld\n", size);
+
+	return 0;
+}
+
+static int vgem_gem_dumb_map(struct drm_file *file, struct drm_device *dev,
+			     uint32_t handle, uint64_t *offset)
+{
+	struct drm_gem_object *obj;
+	int ret;
+
+	obj = drm_gem_object_lookup(file, handle);
+	if (!obj)
+		return -ENOENT;
+
+	if (!obj->filp) {
+		ret = -EINVAL;
+		goto unref;
+	}
+
+	ret = drm_gem_create_mmap_offset(obj);
+	if (ret)
+		goto unref;
+
+	*offset = drm_vma_node_offset_addr(&obj->vma_node);
+unref:
+	drm_gem_object_put_unlocked(obj);
+
+	return ret;
+}
+
+static struct drm_ioctl_desc vgem_ioctls[] = {
+	DRM_IOCTL_DEF_DRV(VGEM_FENCE_ATTACH, vgem_fence_attach_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(VGEM_FENCE_SIGNAL, vgem_fence_signal_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
+};
+
+static int vgem_mmap(struct file *filp, struct vm_area_struct *vma)
+{
+	unsigned long flags = vma->vm_flags;
+	int ret;
+
+	ret = drm_gem_mmap(filp, vma);
+	if (ret)
+		return ret;
+
+	/* Keep the WC mmaping set by drm_gem_mmap() but our pages
+	 * are ordinary and not special.
+>>>>>>> master
 	 */
 	obj->map_wc = true;
 
@@ -135,13 +240,25 @@ static int __init vgem_init(void)
 	if (IS_ERR(pdev))
 		return PTR_ERR(pdev);
 
+<<<<<<< HEAD
 	if (!devres_open_group(&pdev->dev, NULL, GFP_KERNEL)) {
 		ret = -ENOMEM;
 		goto out_unregister;
+=======
+	vgem_device->platform =
+		platform_device_register_simple("vgem", -1, NULL, 0);
+	if (IS_ERR(vgem_device->platform)) {
+		ret = PTR_ERR(vgem_device->platform);
+		goto out_free;
+>>>>>>> master
 	}
 
 	dma_coerce_mask_and_coherent(&pdev->dev,
 				     DMA_BIT_MASK(64));
+	ret = drm_dev_init(&vgem_device->drm, &vgem_driver,
+			   &vgem_device->platform->dev);
+	if (ret)
+		goto out_unregister;
 
 	vgem_device = devm_drm_dev_alloc(&pdev->dev, &vgem_driver,
 					 struct vgem_device, drm);
@@ -154,6 +271,7 @@ static int __init vgem_init(void)
 	/* Final step: expose the device/driver to userspace */
 	ret = drm_dev_register(&vgem_device->drm, 0);
 	if (ret)
+<<<<<<< HEAD
 		goto out_devres;
 
 	return 0;
@@ -162,6 +280,18 @@ out_devres:
 	devres_release_group(&pdev->dev, NULL);
 out_unregister:
 	platform_device_unregister(pdev);
+=======
+		goto out_fini;
+
+	return 0;
+
+out_fini:
+	drm_dev_fini(&vgem_device->drm);
+out_unregister:
+	platform_device_unregister(vgem_device->platform);
+out_free:
+	kfree(vgem_device);
+>>>>>>> master
 	return ret;
 }
 

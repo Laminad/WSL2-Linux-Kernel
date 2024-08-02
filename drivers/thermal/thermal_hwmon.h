@@ -26,12 +26,15 @@ thermal_add_hwmon_sysfs(struct thermal_zone_device *tz)
 	return 0;
 }
 
+<<<<<<< HEAD
 static inline int
 devm_thermal_add_hwmon_sysfs(struct device *dev, struct thermal_zone_device *tz)
 {
 	return 0;
 }
 
+=======
+>>>>>>> master
 static inline void
 thermal_remove_hwmon_sysfs(struct thermal_zone_device *tz)
 {

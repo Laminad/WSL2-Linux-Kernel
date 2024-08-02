@@ -137,8 +137,21 @@ void synchronize_irq(unsigned int irq)
 {
 	struct irq_desc *desc = irq_to_desc(irq);
 
+<<<<<<< HEAD
 	if (desc)
 		__synchronize_irq(desc);
+=======
+	if (desc) {
+		__synchronize_hardirq(desc, true);
+		/*
+		 * We made sure that no hardirq handler is
+		 * running. Now verify that no threaded handlers are
+		 * active.
+		 */
+		wait_event(desc->wait_for_threads,
+			   !atomic_read(&desc->threads_active));
+	}
+>>>>>>> master
 }
 EXPORT_SYMBOL(synchronize_irq);
 
@@ -576,10 +589,14 @@ irq_set_affinity_notifier(unsigned int irq, struct irq_affinity_notify *notify)
 	raw_spin_unlock_irqrestore(&desc->lock, flags);
 
 	if (old_notify) {
+<<<<<<< HEAD
 		if (cancel_work_sync(&old_notify->work)) {
 			/* Pending work had a ref, put that one too */
 			kref_put(&old_notify->kref, old_notify->release);
 		}
+=======
+		cancel_work_sync(&old_notify->work);
+>>>>>>> master
 		kref_put(&old_notify->kref, old_notify->release);
 	}
 
@@ -1944,7 +1961,11 @@ static struct irqaction *__free_irq(struct irq_desc *desc, void *dev_id)
 	 * supports it also make sure that there is no (not yet serviced)
 	 * interrupt in flight at the hardware level.
 	 */
+<<<<<<< HEAD
 	__synchronize_irq(desc);
+=======
+	__synchronize_hardirq(desc, true);
+>>>>>>> master
 
 #ifdef CONFIG_DEBUG_SHIRQ
 	/*
@@ -2636,6 +2657,28 @@ int __request_percpu_irq(unsigned int irq, irq_handler_t handler,
 	return retval;
 }
 EXPORT_SYMBOL_GPL(__request_percpu_irq);
+
+int __irq_get_irqchip_state(struct irq_data *data, enum irqchip_irq_state which,
+			    bool *state)
+{
+	struct irq_chip *chip;
+	int err = -EINVAL;
+
+	do {
+		chip = irq_data_get_irq_chip(data);
+		if (chip->irq_get_irqchip_state)
+			break;
+#ifdef CONFIG_IRQ_DOMAIN_HIERARCHY
+		data = data->parent_data;
+#else
+		data = NULL;
+#endif
+	} while (data);
+
+	if (data)
+		err = chip->irq_get_irqchip_state(data, which, state);
+	return err;
+}
 
 /**
  *	request_percpu_nmi - allocate a percpu interrupt line for NMI delivery

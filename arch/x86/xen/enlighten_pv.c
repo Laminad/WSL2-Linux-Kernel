@@ -695,14 +695,25 @@ struct trap_array_entry {
 	.ist_okay	= ist_ok }
 
 static struct trap_array_entry trap_array[] = {
+<<<<<<< HEAD
 	TRAP_ENTRY_REDIR(exc_debug,			true  ),
 	TRAP_ENTRY_REDIR(exc_double_fault,		true  ),
+=======
+	{ debug,                       xen_xendebug,                    true },
+	{ double_fault,                xen_double_fault,                true },
+>>>>>>> master
 #ifdef CONFIG_X86_MCE
 	TRAP_ENTRY_REDIR(exc_machine_check,		true  ),
 #endif
+<<<<<<< HEAD
 	TRAP_ENTRY_REDIR(exc_nmi,			true  ),
 	TRAP_ENTRY(exc_int3,				false ),
 	TRAP_ENTRY(exc_overflow,			false ),
+=======
+	{ nmi,                         xen_xennmi,                      true },
+	{ int3,                        xen_int3,                        false },
+	{ overflow,                    xen_overflow,                    false },
+>>>>>>> master
 #ifdef CONFIG_IA32_EMULATION
 	TRAP_ENTRY(int80_emulation,			false ),
 #endif

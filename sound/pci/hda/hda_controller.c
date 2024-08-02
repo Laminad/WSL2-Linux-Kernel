@@ -609,6 +609,13 @@ static int azx_pcm_open(struct snd_pcm_substream *substream)
 				     20,
 				     178000000);
 
+	/* by some reason, the playback stream stalls on PulseAudio with
+	 * tsched=1 when a capture stream triggers.  Until we figure out the
+	 * real cause, disable tsched mode by telling the PCM info flag.
+	 */
+	if (chip->driver_caps & AZX_DCAPS_AMD_WORKAROUND)
+		runtime->hw.info |= SNDRV_PCM_INFO_BATCH;
+
 	if (chip->align_buffer_size)
 		/* constrain buffer sizes to be multiple of 128
 		   bytes. This is more efficient in terms of memory
@@ -817,7 +824,7 @@ static int azx_rirb_get_response(struct hdac_bus *bus, unsigned int addr,
 		return -EAGAIN; /* give a chance to retry */
 	}
 
-	dev_err(chip->card->dev,
+	dev_WARN(chip->card->dev,
 		"azx_get_response timeout, switching to single_cmd mode: last cmd=0x%08x\n",
 		bus->last_cmd[addr]);
 	chip->single_cmd = 1;

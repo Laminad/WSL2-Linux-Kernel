@@ -2163,6 +2163,7 @@ lpfc_nvme_create_localport(struct lpfc_vport *vport)
 	 */
 	lpfc_nvme_template.max_sgl_segments = phba->cfg_nvme_seg_cnt + 1;
 
+<<<<<<< HEAD
 	/* Advertise how many hw queues we support based on cfg_hdw_queue,
 	 * which will not exceed cpu count.
 	 */
@@ -2170,6 +2171,15 @@ lpfc_nvme_create_localport(struct lpfc_vport *vport)
 
 	if (!IS_ENABLED(CONFIG_NVME_FC))
 		return ret;
+=======
+	if (!IS_ENABLED(CONFIG_NVME_FC))
+		return ret;
+
+	cstat = kmalloc((sizeof(struct lpfc_nvme_ctrl_stat) *
+			phba->cfg_nvme_io_channel), GFP_KERNEL);
+	if (!cstat)
+		return -ENOMEM;
+>>>>>>> master
 
 	/* localport is allocated from the stack, but the registration
 	 * call allocates heap memory as well as the private area.
@@ -2303,8 +2313,11 @@ lpfc_nvme_destroy_localport(struct lpfc_vport *vport)
 		return;
 
 	localport = vport->localport;
+<<<<<<< HEAD
 	if (!localport)
 		return;
+=======
+>>>>>>> master
 	lport = (struct lpfc_nvme_lport *)localport->private;
 
 	lpfc_printf_vlog(vport, KERN_INFO, LOG_NVME,
@@ -2322,6 +2335,10 @@ lpfc_nvme_destroy_localport(struct lpfc_vport *vport)
 	 */
 	lpfc_nvme_lport_unreg_wait(vport, lport, &lport_unreg_cmp);
 	vport->localport = NULL;
+<<<<<<< HEAD
+=======
+	kfree(cstat);
+>>>>>>> master
 
 	/* Regardless of the unregister upcall response, clear
 	 * nvmei_support.  All rports are unregistered and the

@@ -548,7 +548,11 @@ cifs_show_options(struct seq_file *s, struct dentry *root)
 
 	if (tcon->no_lease)
 		seq_puts(s, ",nolease");
+<<<<<<< HEAD:fs/smb/client/cifsfs.c
 	if (cifs_sb->ctx->multiuser)
+=======
+	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MULTIUSER)
+>>>>>>> master:fs/cifs/cifsfs.c
 		seq_puts(s, ",multiuser");
 	else if (tcon->ses->user_name)
 		seq_show_option(s, "username", tcon->ses->user_name);
@@ -1275,9 +1279,14 @@ static loff_t cifs_remap_file_range(struct file *src_file, loff_t off,
 	struct cifsInodeInfo *src_cifsi = CIFS_I(src_inode);
 	struct cifsInodeInfo *target_cifsi = CIFS_I(target_inode);
 	struct cifsFileInfo *smb_file_src = src_file->private_data;
+<<<<<<< HEAD:fs/smb/client/cifsfs.c
 	struct cifsFileInfo *smb_file_target = dst_file->private_data;
 	struct cifs_tcon *target_tcon, *src_tcon;
 	unsigned long long destend, fstart, fend, new_size;
+=======
+	struct cifsFileInfo *smb_file_target;
+	struct cifs_tcon *target_tcon;
+>>>>>>> master:fs/cifs/cifsfs.c
 	unsigned int xid;
 	int rc;
 
@@ -1296,7 +1305,11 @@ static loff_t cifs_remap_file_range(struct file *src_file, loff_t off,
 		goto out;
 	}
 
+<<<<<<< HEAD:fs/smb/client/cifsfs.c
 	src_tcon = tlink_tcon(smb_file_src->tlink);
+=======
+	smb_file_target = dst_file->private_data;
+>>>>>>> master:fs/cifs/cifsfs.c
 	target_tcon = tlink_tcon(smb_file_target->tlink);
 
 	/*

@@ -181,13 +181,21 @@ static irqreturn_t mv88e6xxx_g1_irq_thread_work(struct mv88e6xxx_chip *chip)
 			}
 		}
 
+<<<<<<< HEAD
 		mv88e6xxx_reg_lock(chip);
+=======
+		mutex_lock(&chip->reg_lock);
+>>>>>>> master
 		err = mv88e6xxx_g1_read(chip, MV88E6XXX_G1_CTL1, &ctl1);
 		if (err)
 			goto unlock;
 		err = mv88e6xxx_g1_read(chip, MV88E6XXX_G1_STS, &reg);
 unlock:
+<<<<<<< HEAD
 		mv88e6xxx_reg_unlock(chip);
+=======
+		mutex_unlock(&chip->reg_lock);
+>>>>>>> master
 		if (err)
 			goto out;
 		ctl1 &= GENMASK(chip->g1_irq.nirqs, 0);
@@ -356,6 +364,7 @@ static int mv88e6xxx_g1_irq_setup(struct mv88e6xxx_chip *chip)
 	 */
 	irq_set_lockdep_class(chip->irq, &lock_key, &request_key);
 
+<<<<<<< HEAD
 	snprintf(chip->irq_name, sizeof(chip->irq_name),
 		 "mv88e6xxx-%s", dev_name(chip->dev));
 
@@ -365,6 +374,14 @@ static int mv88e6xxx_g1_irq_setup(struct mv88e6xxx_chip *chip)
 				   IRQF_ONESHOT | IRQF_SHARED,
 				   chip->irq_name, chip);
 	mv88e6xxx_reg_lock(chip);
+=======
+	mutex_unlock(&chip->reg_lock);
+	err = request_threaded_irq(chip->irq, NULL,
+				   mv88e6xxx_g1_irq_thread_fn,
+				   IRQF_ONESHOT,
+				   dev_name(chip->dev), chip);
+	mutex_lock(&chip->reg_lock);
+>>>>>>> master
 	if (err)
 		mv88e6xxx_g1_irq_free_common(chip);
 
@@ -1833,7 +1850,59 @@ static int mv88e6xxx_atu_new(struct mv88e6xxx_chip *chip, u16 *fid)
 static int mv88e6xxx_stu_loadpurge(struct mv88e6xxx_chip *chip,
 				   struct mv88e6xxx_stu_entry *entry)
 {
+<<<<<<< HEAD
 	if (!chip->info->ops->stu_loadpurge)
+=======
+	int err;
+
+	if (!vid)
+		return -EOPNOTSUPP;
+
+	entry->vid = vid - 1;
+	entry->valid = false;
+
+	err = mv88e6xxx_vtu_getnext(chip, entry);
+	if (err)
+		return err;
+
+	if (entry->vid == vid && entry->valid)
+		return 0;
+
+	if (new) {
+		int i;
+
+		/* Initialize a fresh VLAN entry */
+		memset(entry, 0, sizeof(*entry));
+		entry->valid = true;
+		entry->vid = vid;
+
+		/* Exclude all ports */
+		for (i = 0; i < mv88e6xxx_num_ports(chip); ++i)
+			entry->member[i] =
+				MV88E6XXX_G1_VTU_DATA_MEMBER_TAG_NON_MEMBER;
+
+		return mv88e6xxx_atu_new(chip, &entry->fid);
+	}
+
+	/* switchdev expects -EOPNOTSUPP to honor software VLANs */
+	return -EOPNOTSUPP;
+}
+
+static int mv88e6xxx_port_check_hw_vlan(struct dsa_switch *ds, int port,
+					u16 vid_begin, u16 vid_end)
+{
+	struct mv88e6xxx_chip *chip = ds->priv;
+	struct mv88e6xxx_vtu_entry vlan = {
+		.vid = vid_begin - 1,
+	};
+	int i, err;
+
+	/* DSA and CPU ports have to be members of multiple vlans */
+	if (dsa_is_dsa_port(ds, port) || dsa_is_cpu_port(ds, port))
+		return 0;
+
+	if (!vid_begin)
+>>>>>>> master
 		return -EOPNOTSUPP;
 
 	return chip->info->ops->stu_loadpurge(chip, entry);
@@ -3524,6 +3593,61 @@ static int mv88e6xxx_stats_setup(struct mv88e6xxx_chip *chip)
 	return mv88e6xxx_g1_stats_clear(chip);
 }
 
+<<<<<<< HEAD
+=======
+/* The mv88e6390 has some hidden registers used for debug and
+ * development. The errata also makes use of them.
+ */
+static int mv88e6390_hidden_write(struct mv88e6xxx_chip *chip, int port,
+				  int reg, u16 val)
+{
+	u16 ctrl;
+	int err;
+
+	err = mv88e6xxx_port_write(chip, PORT_RESERVED_1A_DATA_PORT,
+				   PORT_RESERVED_1A, val);
+	if (err)
+		return err;
+
+	ctrl = PORT_RESERVED_1A_BUSY | PORT_RESERVED_1A_WRITE |
+	       PORT_RESERVED_1A_BLOCK | port << PORT_RESERVED_1A_PORT_SHIFT |
+	       reg;
+
+	return mv88e6xxx_port_write(chip, PORT_RESERVED_1A_CTRL_PORT,
+				    PORT_RESERVED_1A, ctrl);
+}
+
+static int mv88e6390_hidden_wait(struct mv88e6xxx_chip *chip)
+{
+	return mv88e6xxx_wait(chip, PORT_RESERVED_1A_CTRL_PORT,
+			      PORT_RESERVED_1A, PORT_RESERVED_1A_BUSY);
+}
+
+
+static int mv88e6390_hidden_read(struct mv88e6xxx_chip *chip, int port,
+				  int reg, u16 *val)
+{
+	u16 ctrl;
+	int err;
+
+	ctrl = PORT_RESERVED_1A_BUSY | PORT_RESERVED_1A_READ |
+	       PORT_RESERVED_1A_BLOCK | port << PORT_RESERVED_1A_PORT_SHIFT |
+	       reg;
+
+	err = mv88e6xxx_port_write(chip, PORT_RESERVED_1A_CTRL_PORT,
+				   PORT_RESERVED_1A, ctrl);
+	if (err)
+		return err;
+
+	err = mv88e6390_hidden_wait(chip);
+	if (err)
+		return err;
+
+	return 	mv88e6xxx_port_read(chip, PORT_RESERVED_1A_DATA_PORT,
+				    PORT_RESERVED_1A, val);
+}
+
+>>>>>>> master
 /* Check if the errata has already been applied. */
 static bool mv88e6390_setup_errata_applied(struct mv88e6xxx_chip *chip)
 {
@@ -3532,7 +3656,11 @@ static bool mv88e6390_setup_errata_applied(struct mv88e6xxx_chip *chip)
 	u16 val;
 
 	for (port = 0; port < mv88e6xxx_num_ports(chip); port++) {
+<<<<<<< HEAD
 		err = mv88e6xxx_port_hidden_read(chip, 0xf, port, 0, &val);
+=======
+		err = mv88e6390_hidden_read(chip, port, 0, &val);
+>>>>>>> master
 		if (err) {
 			dev_err(chip->dev,
 				"Error reading hidden register: %d\n", err);
@@ -3565,7 +3693,11 @@ static int mv88e6390_setup_errata(struct mv88e6xxx_chip *chip)
 	}
 
 	for (port = 0; port < mv88e6xxx_num_ports(chip); port++) {
+<<<<<<< HEAD
 		err = mv88e6xxx_port_hidden_write(chip, 0xf, port, 0, 0x01c0);
+=======
+		err = mv88e6390_hidden_write(chip, port, 0, 0x01c0);
+>>>>>>> master
 		if (err)
 			return err;
 	}
@@ -3573,6 +3705,7 @@ static int mv88e6390_setup_errata(struct mv88e6xxx_chip *chip)
 	return mv88e6xxx_software_reset(chip);
 }
 
+<<<<<<< HEAD
 /* prod_id for switch families which do not have a PHY model number */
 static const u16 family_prod_id_table[] = {
 	[MV88E6XXX_FAMILY_6341] = MV88E6XXX_PORT_SWITCH_ID_PROD_6341,
@@ -3789,6 +3922,8 @@ static void mv88e6xxx_teardown(struct dsa_switch *ds)
 	mv88e6xxx_mdios_unregister(chip);
 }
 
+=======
+>>>>>>> master
 static int mv88e6xxx_setup(struct dsa_switch *ds)
 {
 	struct mv88e6xxx_chip *chip = ds->priv;
@@ -3813,6 +3948,12 @@ static int mv88e6xxx_setup(struct dsa_switch *ds)
 				      ds->dst->last_switch - 1;
 
 	mv88e6xxx_reg_lock(chip);
+
+	if (chip->info->ops->setup_errata) {
+		err = chip->info->ops->setup_errata(chip);
+		if (err)
+			goto unlock;
+	}
 
 	if (chip->info->ops->setup_errata) {
 		err = chip->info->ops->setup_errata(chip);
@@ -4322,7 +4463,10 @@ static const struct mv88e6xxx_ops mv88e6161_ops = {
 	.port_disable_learn_limit = mv88e6xxx_port_disable_learn_limit,
 	.port_disable_pri_override = mv88e6xxx_port_disable_pri_override,
 	.port_get_cmode = mv88e6185_port_get_cmode,
+<<<<<<< HEAD
 	.port_setup_message_port = mv88e6xxx_setup_message_port,
+=======
+>>>>>>> master
 	.stats_snapshot = mv88e6xxx_g1_stats_snapshot,
 	.stats_set_histogram = mv88e6095_g1_stats_set_histogram,
 	.stats_get_sset_count = mv88e6095_stats_get_sset_count,
@@ -6382,6 +6526,33 @@ static struct mv88e6xxx_chip *mv88e6xxx_alloc_chip(struct device *dev)
 	return chip;
 }
 
+<<<<<<< HEAD
+=======
+static int mv88e6xxx_smi_init(struct mv88e6xxx_chip *chip,
+			      struct mii_bus *bus, int sw_addr)
+{
+	if (sw_addr == 0)
+		chip->smi_ops = &mv88e6xxx_smi_single_chip_ops;
+	else if (chip->info->multi_chip)
+		chip->smi_ops = &mv88e6xxx_smi_multi_chip_ops;
+	else
+		return -EINVAL;
+
+	chip->bus = bus;
+	chip->sw_addr = sw_addr;
+
+	return 0;
+}
+
+static void mv88e6xxx_ports_cmode_init(struct mv88e6xxx_chip *chip)
+{
+	int i;
+
+	for (i = 0; i < mv88e6xxx_num_ports(chip); i++)
+		chip->ports[i].cmode = MV88E6XXX_PORT_STS_CMODE_INVALID;
+}
+
+>>>>>>> master
 static enum dsa_tag_protocol mv88e6xxx_get_tag_protocol(struct dsa_switch *ds,
 							int port,
 							enum dsa_tag_protocol m)
@@ -6420,6 +6591,7 @@ static int mv88e6xxx_change_tag_protocol(struct dsa_switch *ds,
 	old_protocol = chip->tag_protocol;
 	chip->tag_protocol = proto;
 
+<<<<<<< HEAD
 	mv88e6xxx_reg_lock(chip);
 	dsa_switch_for_each_cpu_port(cpu_dp, ds) {
 		err = mv88e6xxx_setup_port_mode(chip, cpu_dp->index);
@@ -6429,6 +6601,49 @@ static int mv88e6xxx_change_tag_protocol(struct dsa_switch *ds,
 		}
 	}
 	mv88e6xxx_reg_unlock(chip);
+=======
+	/* Legacy SMI probing will only support chips similar to 88E6085 */
+	chip->info = &mv88e6xxx_table[MV88E6085];
+
+	err = mv88e6xxx_smi_init(chip, bus, sw_addr);
+	if (err)
+		goto free;
+
+	err = mv88e6xxx_detect(chip);
+	if (err)
+		goto free;
+
+	mv88e6xxx_ports_cmode_init(chip);
+
+	mutex_lock(&chip->reg_lock);
+	err = mv88e6xxx_switch_reset(chip);
+	mutex_unlock(&chip->reg_lock);
+	if (err)
+		goto free;
+
+	mv88e6xxx_phy_init(chip);
+
+	err = mv88e6xxx_mdios_register(chip, NULL);
+	if (err)
+		goto free;
+
+	*priv = chip;
+
+	return chip->info->name;
+free:
+	devm_kfree(dsa_dev, chip);
+
+	return NULL;
+}
+#endif
+
+static int mv88e6xxx_port_mdb_prepare(struct dsa_switch *ds, int port,
+				      const struct switchdev_obj_port_mdb *mdb)
+{
+	/* We don't need any dynamic resource from the kernel (yet),
+	 * so skip the prepare phase.
+	 */
+>>>>>>> master
 
 	return 0;
 
@@ -7083,7 +7298,11 @@ static int mv88e6xxx_probe(struct mdio_device *mdiodev)
 		goto out;
 	}
 	if (chip->reset)
+<<<<<<< HEAD
 		usleep_range(10000, 20000);
+=======
+		usleep_range(1000, 2000);
+>>>>>>> master
 
 	/* Detect if the device is configured in single chip addressing mode,
 	 * otherwise continue with address specific smi init/detection.
@@ -7104,6 +7323,7 @@ static int mv88e6xxx_probe(struct mdio_device *mdiodev)
 	else
 		chip->tag_protocol = DSA_TAG_PROTO_DSA;
 
+	mv88e6xxx_ports_cmode_init(chip);
 	mv88e6xxx_phy_init(chip);
 
 	if (chip->info->ops->get_eeprom) {

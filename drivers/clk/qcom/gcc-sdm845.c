@@ -34,6 +34,140 @@ enum {
 	P_SLEEP_CLK,
 };
 
+<<<<<<< HEAD
+=======
+static const struct parent_map gcc_parent_map_0[] = {
+	{ P_BI_TCXO, 0 },
+	{ P_GPLL0_OUT_MAIN, 1 },
+	{ P_GPLL0_OUT_EVEN, 6 },
+	{ P_CORE_BI_PLL_TEST_SE, 7 },
+};
+
+static const char * const gcc_parent_names_0[] = {
+	"bi_tcxo",
+	"gpll0",
+	"gpll0_out_even",
+	"core_bi_pll_test_se",
+};
+
+static const struct parent_map gcc_parent_map_1[] = {
+	{ P_BI_TCXO, 0 },
+	{ P_GPLL0_OUT_MAIN, 1 },
+	{ P_SLEEP_CLK, 5 },
+	{ P_GPLL0_OUT_EVEN, 6 },
+	{ P_CORE_BI_PLL_TEST_SE, 7 },
+};
+
+static const char * const gcc_parent_names_1[] = {
+	"bi_tcxo",
+	"gpll0",
+	"core_pi_sleep_clk",
+	"gpll0_out_even",
+	"core_bi_pll_test_se",
+};
+
+static const struct parent_map gcc_parent_map_2[] = {
+	{ P_BI_TCXO, 0 },
+	{ P_SLEEP_CLK, 5 },
+	{ P_CORE_BI_PLL_TEST_SE, 7 },
+};
+
+static const char * const gcc_parent_names_2[] = {
+	"bi_tcxo",
+	"core_pi_sleep_clk",
+	"core_bi_pll_test_se",
+};
+
+static const struct parent_map gcc_parent_map_3[] = {
+	{ P_BI_TCXO, 0 },
+	{ P_GPLL0_OUT_MAIN, 1 },
+	{ P_CORE_BI_PLL_TEST_SE, 7 },
+};
+
+static const char * const gcc_parent_names_3[] = {
+	"bi_tcxo",
+	"gpll0",
+	"core_bi_pll_test_se",
+};
+
+static const struct parent_map gcc_parent_map_4[] = {
+	{ P_BI_TCXO, 0 },
+	{ P_CORE_BI_PLL_TEST_SE, 7 },
+};
+
+static const char * const gcc_parent_names_4[] = {
+	"bi_tcxo",
+	"core_bi_pll_test_se",
+};
+
+static const struct parent_map gcc_parent_map_5[] = {
+	{ P_BI_TCXO, 0 },
+	{ P_GPLL0_OUT_MAIN, 1 },
+	{ P_GPLL4_OUT_MAIN, 5 },
+	{ P_GPLL0_OUT_EVEN, 6 },
+	{ P_CORE_BI_PLL_TEST_SE, 7 },
+};
+
+static const char * const gcc_parent_names_5[] = {
+	"bi_tcxo",
+	"gpll0",
+	"gpll4",
+	"gpll0_out_even",
+	"core_bi_pll_test_se",
+};
+
+static const struct parent_map gcc_parent_map_6[] = {
+	{ P_BI_TCXO, 0 },
+	{ P_GPLL0_OUT_MAIN, 1 },
+	{ P_AUD_REF_CLK, 2 },
+	{ P_GPLL0_OUT_EVEN, 6 },
+	{ P_CORE_BI_PLL_TEST_SE, 7 },
+};
+
+static const char * const gcc_parent_names_6[] = {
+	"bi_tcxo",
+	"gpll0",
+	"aud_ref_clk",
+	"gpll0_out_even",
+	"core_bi_pll_test_se",
+};
+
+static const char * const gcc_parent_names_7_ao[] = {
+	"bi_tcxo_ao",
+	"gpll0",
+	"gpll0_out_even",
+	"core_bi_pll_test_se",
+};
+
+static const char * const gcc_parent_names_8[] = {
+	"bi_tcxo",
+	"gpll0",
+	"core_bi_pll_test_se",
+};
+
+static const char * const gcc_parent_names_8_ao[] = {
+	"bi_tcxo_ao",
+	"gpll0",
+	"core_bi_pll_test_se",
+};
+
+static const struct parent_map gcc_parent_map_10[] = {
+	{ P_BI_TCXO, 0 },
+	{ P_GPLL0_OUT_MAIN, 1 },
+	{ P_GPLL4_OUT_MAIN, 5 },
+	{ P_GPLL0_OUT_EVEN, 6 },
+	{ P_CORE_BI_PLL_TEST_SE, 7 },
+};
+
+static const char * const gcc_parent_names_10[] = {
+	"bi_tcxo",
+	"gpll0",
+	"gpll4",
+	"gpll0_out_even",
+	"core_bi_pll_test_se",
+};
+
+>>>>>>> master
 static struct clk_alpha_pll gpll0 = {
 	.offset = 0x0,
 	.regs = clk_alpha_pll_regs[CLK_ALPHA_PLL_TYPE_FABIA],
@@ -238,8 +372,13 @@ static struct clk_rcg2 gcc_cpuss_ahb_clk_src = {
 	.freq_tbl = ftbl_gcc_cpuss_ahb_clk_src,
 	.clkr.hw.init = &(struct clk_init_data){
 		.name = "gcc_cpuss_ahb_clk_src",
+<<<<<<< HEAD
 		.parent_data = gcc_parent_data_7_ao,
 		.num_parents = ARRAY_SIZE(gcc_parent_data_7_ao),
+=======
+		.parent_names = gcc_parent_names_7_ao,
+		.num_parents = 4,
+>>>>>>> master
 		.ops = &clk_rcg2_ops,
 	},
 };
@@ -257,6 +396,7 @@ static struct clk_rcg2 gcc_cpuss_rbcpr_clk_src = {
 	.freq_tbl = ftbl_gcc_cpuss_rbcpr_clk_src,
 	.clkr.hw.init = &(struct clk_init_data){
 		.name = "gcc_cpuss_rbcpr_clk_src",
+<<<<<<< HEAD
 		.parent_data = gcc_parent_data_8_ao,
 		.num_parents = ARRAY_SIZE(gcc_parent_data_8_ao),
 		.ops = &clk_rcg2_ops,
@@ -279,6 +419,10 @@ static struct clk_rcg2 gcc_sdm670_cpuss_rbcpr_clk_src = {
 		.name = "gcc_cpuss_rbcpr_clk_src",
 		.parent_data = gcc_parent_data_8_ao,
 		.num_parents = ARRAY_SIZE(gcc_parent_data_8_ao),
+=======
+		.parent_names = gcc_parent_names_8_ao,
+		.num_parents = 3,
+>>>>>>> master
 		.ops = &clk_rcg2_ops,
 	},
 };
@@ -773,8 +917,13 @@ static struct clk_rcg2 gcc_sdcc2_apps_clk_src = {
 	.freq_tbl = ftbl_gcc_sdcc2_apps_clk_src,
 	.clkr.hw.init = &(struct clk_init_data){
 		.name = "gcc_sdcc2_apps_clk_src",
+<<<<<<< HEAD
 		.parent_data = gcc_parent_data_10,
 		.num_parents = ARRAY_SIZE(gcc_parent_data_10),
+=======
+		.parent_names = gcc_parent_names_10,
+		.num_parents = 5,
+>>>>>>> master
 		.ops = &clk_rcg2_floor_ops,
 	},
 };
@@ -797,6 +946,7 @@ static struct clk_rcg2 gcc_sdcc4_apps_clk_src = {
 	.freq_tbl = ftbl_gcc_sdcc4_apps_clk_src,
 	.clkr.hw.init = &(struct clk_init_data){
 		.name = "gcc_sdcc4_apps_clk_src",
+<<<<<<< HEAD
 		.parent_data = gcc_parent_data_0,
 		.num_parents = ARRAY_SIZE(gcc_parent_data_0),
 		.ops = &clk_rcg2_floor_ops,
@@ -824,6 +974,10 @@ static struct clk_rcg2 gcc_sdm670_sdcc4_apps_clk_src = {
 		.name = "gcc_sdcc4_apps_clk_src",
 		.parent_data = gcc_parent_data_0,
 		.num_parents = ARRAY_SIZE(gcc_parent_data_0),
+=======
+		.parent_names = gcc_parent_names_0,
+		.num_parents = 4,
+>>>>>>> master
 		.ops = &clk_rcg2_floor_ops,
 	},
 };

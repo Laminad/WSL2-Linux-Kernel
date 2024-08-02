@@ -107,6 +107,7 @@ static void idletimer_tg_expired(struct timer_list *t)
 	schedule_work(&timer->work);
 }
 
+<<<<<<< HEAD
 static enum alarmtimer_restart idletimer_tg_alarmproc(struct alarm *alarm,
 							  ktime_t now)
 {
@@ -117,6 +118,8 @@ static enum alarmtimer_restart idletimer_tg_alarmproc(struct alarm *alarm,
 	return ALARMTIMER_NORESTART;
 }
 
+=======
+>>>>>>> master
 static int idletimer_check_sysfs_name(const char *name, unsigned int size)
 {
 	int ret;

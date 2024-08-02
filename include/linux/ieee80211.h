@@ -4542,6 +4542,7 @@ static inline bool ieee80211_action_contains_tpc(struct sk_buff *skb)
 	return true;
 }
 
+<<<<<<< HEAD
 static inline bool ieee80211_is_timing_measurement(struct sk_buff *skb)
 {
 	struct ieee80211_mgmt *mgmt = (void *)skb->data;
@@ -4576,6 +4577,8 @@ static inline bool ieee80211_is_ftm(struct sk_buff *skb)
 	return false;
 }
 
+=======
+>>>>>>> master
 struct element {
 	u8 id;
 	u8 datalen;
@@ -4595,8 +4598,13 @@ struct element {
 	for_each_element(element, data, datalen)			\
 		if (element->id == (_id))
 
+<<<<<<< HEAD
 #define for_each_element_extid(element, extid, _data, _datalen)		\
 	for_each_element(element, _data, _datalen)			\
+=======
+#define for_each_element_extid(element, extid, data, datalen)		\
+	for_each_element(element, data, datalen)			\
+>>>>>>> master
 		if (element->id == WLAN_EID_EXTENSION &&		\
 		    element->datalen > 0 &&				\
 		    element->data[0] == (extid))
@@ -4629,6 +4637,7 @@ static inline bool for_each_element_completed(const struct element *element,
 	return (const u8 *)element == (const u8 *)data + datalen;
 }
 
+<<<<<<< HEAD
 /*
  * RSNX Capabilities:
  * bits 0-3: Field length (n-1)
@@ -5163,4 +5172,6 @@ static inline bool ieee80211_mle_reconf_sta_prof_size_ok(const u8 *data,
 				 _data + ieee80211_mle_common_size(_data),\
 				 _len - ieee80211_mle_common_size(_data))
 
+=======
+>>>>>>> master
 #endif /* LINUX_IEEE80211_H */

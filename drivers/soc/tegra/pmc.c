@@ -972,7 +972,11 @@ EXPORT_SYMBOL(tegra_powergate_power_off);
  */
 static int tegra_powergate_is_powered(struct tegra_pmc *pmc, unsigned int id)
 {
+<<<<<<< HEAD
 	if (!tegra_powergate_is_valid(pmc, id))
+=======
+	if (!tegra_powergate_is_valid(id))
+>>>>>>> master
 		return -EINVAL;
 
 	return tegra_powergate_state(id);

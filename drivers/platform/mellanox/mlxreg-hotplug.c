@@ -380,11 +380,16 @@ mlxreg_hotplug_work_helper(struct mlxreg_hotplug_priv_data *priv,
 	for_each_set_bit(bit, &asserted, 8) {
 		int pos;
 
+<<<<<<< HEAD
 		pos = mlxreg_hotplug_item_label_index_get(item->mask, bit);
 		if (pos < 0)
 			goto out;
 
 		data = item->data + pos;
+=======
+	for_each_set_bit(bit, &asserted, 8) {
+		data = item->data + bit;
+>>>>>>> master
 		if (regval & BIT(bit)) {
 			if (item->inversed)
 				mlxreg_hotplug_device_destroy(priv, data, item->kind);

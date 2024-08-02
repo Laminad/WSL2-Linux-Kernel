@@ -34,7 +34,11 @@ static int crct10dif_update(struct shash_desc *desc, const u8 *data,
 {
 	u16 *crc = shash_desc_ctx(desc);
 
+<<<<<<< HEAD
 	if (length >= CRC_T10DIF_PMULL_CHUNK_SIZE && crypto_simd_usable()) {
+=======
+	if (length >= CRC_T10DIF_PMULL_CHUNK_SIZE && may_use_simd()) {
+>>>>>>> master
 		kernel_neon_begin();
 		*crc = crc_t10dif_pmull(*crc, data, length);
 		kernel_neon_end();

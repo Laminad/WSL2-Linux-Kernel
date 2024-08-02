@@ -79,6 +79,7 @@ static int hclge_ieee_getets(struct hnae3_handle *h, struct ieee_ets *ets)
 static int hclge_dcb_common_validate(struct hclge_dev *hdev, u8 num_tc,
 				     u8 *prio_tc)
 {
+<<<<<<< HEAD
 	int i;
 
 	if (num_tc > hdev->tc_max) {
@@ -111,6 +112,11 @@ static u8 hclge_ets_tc_changed(struct hclge_dev *hdev, struct ieee_ets *ets,
 			       bool *changed)
 {
 	u8 max_tc_id = 0;
+=======
+	bool has_ets_tc = false;
+	u32 total_ets_bw = 0;
+	u8 max_tc = 0;
+>>>>>>> master
 	u8 i;
 
 	for (i = 0; i < HNAE3_MAX_USER_PRIO; i++) {

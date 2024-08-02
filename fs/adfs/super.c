@@ -365,6 +365,11 @@ static int adfs_fill_super(struct super_block *sb, void *data, int silent)
 {
 	struct adfs_discrecord *dr;
 	struct object_info root_obj;
+<<<<<<< HEAD
+=======
+	unsigned char *b_data;
+	unsigned int blocksize;
+>>>>>>> master
 	struct adfs_sb_info *asb;
 	struct inode *root;
 	int ret = -EINVAL;
@@ -403,7 +408,82 @@ static int adfs_fill_super(struct super_block *sb, void *data, int silent)
 	if (ret)
 		goto error;
 
+<<<<<<< HEAD
 	/* set up enough so that we can read an inode */
+=======
+	b_data = bh->b_data + (ADFS_DISCRECORD % BLOCK_SIZE);
+
+	if (adfs_checkbblk(b_data)) {
+		if (!silent)
+			printk("VFS: Can't find an adfs filesystem on dev "
+				"%s.\n", sb->s_id);
+		ret = -EINVAL;
+		goto error_free_bh;
+	}
+
+	dr = (struct adfs_discrecord *)(b_data + ADFS_DR_OFFSET);
+
+	/*
+	 * Do some sanity checks on the ADFS disc record
+	 */
+	if (adfs_checkdiscrecord(dr)) {
+		if (!silent)
+			printk("VPS: Can't find an adfs filesystem on dev "
+				"%s.\n", sb->s_id);
+		ret = -EINVAL;
+		goto error_free_bh;
+	}
+
+	blocksize = 1 << dr->log2secsize;
+	brelse(bh);
+
+	if (sb_set_blocksize(sb, blocksize)) {
+		bh = sb_bread(sb, ADFS_DISCRECORD / sb->s_blocksize);
+		if (!bh) {
+			adfs_error(sb, "couldn't read superblock on "
+				"2nd try.");
+			ret = -EIO;
+			goto error;
+		}
+		b_data = bh->b_data + (ADFS_DISCRECORD % sb->s_blocksize);
+		if (adfs_checkbblk(b_data)) {
+			adfs_error(sb, "disc record mismatch, very weird!");
+			ret = -EINVAL;
+			goto error_free_bh;
+		}
+		dr = (struct adfs_discrecord *)(b_data + ADFS_DR_OFFSET);
+	} else {
+		if (!silent)
+			printk(KERN_ERR "VFS: Unsupported blocksize on dev "
+				"%s.\n", sb->s_id);
+		ret = -EINVAL;
+		goto error;
+	}
+
+	/*
+	 * blocksize on this device should now be set to the ADFS log2secsize
+	 */
+
+	sb->s_magic		= ADFS_SUPER_MAGIC;
+	asb->s_idlen		= dr->idlen;
+	asb->s_map_size		= dr->nzones | (dr->nzones_high << 8);
+	asb->s_map2blk		= dr->log2bpmb - dr->log2secsize;
+	asb->s_size    		= adfs_discsize(dr, sb->s_blocksize_bits);
+	asb->s_version 		= dr->format_version;
+	asb->s_log2sharesize	= dr->log2sharesize;
+
+	asb->s_map = adfs_read_map(sb, dr);
+	if (IS_ERR(asb->s_map)) {
+		ret =  PTR_ERR(asb->s_map);
+		goto error_free_bh;
+	}
+
+	brelse(bh);
+
+	/*
+	 * set up enough so that we can read an inode
+	 */
+>>>>>>> master
 	sb->s_op = &adfs_sops;
 
 	dr = adfs_map_discrecord(asb->s_map);

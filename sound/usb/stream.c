@@ -1055,7 +1055,13 @@ found_clock:
 
 		pd = kzalloc(sizeof(*pd), GFP_KERNEL);
 		if (!pd) {
+<<<<<<< HEAD
 			audioformat_free(fp);
+=======
+			kfree(fp->chmap);
+			kfree(fp->rate_table);
+			kfree(fp);
+>>>>>>> master
 			return NULL;
 		}
 		pd->pd_id = (stream == SNDRV_PCM_STREAM_PLAYBACK) ?

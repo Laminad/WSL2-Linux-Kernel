@@ -58,7 +58,11 @@ static int hclge_shaper_para_calc(u32 ir, u8 shaper_level,
 
 	/* Calc tick */
 	if (shaper_level >= HCLGE_SHAPER_LVL_CNT ||
+<<<<<<< HEAD
 	    ir > max_tm_rate)
+=======
+	    ir > HCLGE_ETHER_MAX_RATE)
+>>>>>>> master
 		return -EINVAL;
 
 	tick = tick_array[shaper_level];
@@ -1518,6 +1522,7 @@ static int hclge_pfc_setup_hw(struct hclge_dev *hdev)
  */
 static int hclge_bp_setup_hw(struct hclge_dev *hdev, u8 tc)
 {
+<<<<<<< HEAD
 	u16 grp_id_shift = HCLGE_BP_GRP_ID_S;
 	u16 grp_id_mask = HCLGE_BP_GRP_ID_M;
 	u8 grp_num = HCLGE_BP_GRP_NUM;
@@ -1530,6 +1535,11 @@ static int hclge_bp_setup_hw(struct hclge_dev *hdev, u8 tc)
 	}
 
 	for (i = 0; i < grp_num; i++) {
+=======
+	int i;
+
+	for (i = 0; i < HCLGE_BP_GRP_NUM; i++) {
+>>>>>>> master
 		u32 qs_bitmap = 0;
 		int k, ret;
 

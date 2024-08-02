@@ -152,9 +152,13 @@ extern void __init dmi_check_skip_isa_align(void);
 extern int __init pci_acpi_init(void);
 #else
 static inline int  __init pci_acpi_init(void)
+<<<<<<< HEAD
 {
 	return -EINVAL;
 }
+=======
+{ return -EINVAL; }
+>>>>>>> master
 #endif
 extern void __init pcibios_irq_init(void);
 extern int __init pcibios_init(void);

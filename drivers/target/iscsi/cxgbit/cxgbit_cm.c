@@ -717,7 +717,11 @@ void cxgbit_abort_conn(struct cxgbit_sock *csk)
 
 static void __cxgbit_free_conn(struct cxgbit_sock *csk)
 {
+<<<<<<< HEAD
 	struct iscsit_conn *conn = csk->conn;
+=======
+	struct iscsi_conn *conn = csk->conn;
+>>>>>>> master
 	bool release = false;
 
 	pr_debug("%s: state %d\n",
@@ -751,7 +755,11 @@ static void __cxgbit_free_conn(struct cxgbit_sock *csk)
 		cxgbit_put_csk(csk);
 }
 
+<<<<<<< HEAD
 void cxgbit_free_conn(struct iscsit_conn *conn)
+=======
+void cxgbit_free_conn(struct iscsi_conn *conn)
+>>>>>>> master
 {
 	__cxgbit_free_conn(conn->context);
 }

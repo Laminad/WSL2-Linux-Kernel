@@ -301,9 +301,15 @@ static int bpf_jit_emit_tail_call(u32 *image, struct codegen_context *ctx, u32 o
 	 * if (tail_call_cnt >= MAX_TAIL_CALL_CNT)
 	 *   goto out;
 	 */
+<<<<<<< HEAD
 	EMIT(PPC_RAW_LD(bpf_to_ppc(TMP_REG_1), _R1, bpf_jit_stack_tailcallcnt(ctx)));
 	EMIT(PPC_RAW_CMPLWI(bpf_to_ppc(TMP_REG_1), MAX_TAIL_CALL_CNT));
 	PPC_BCC_SHORT(COND_GE, out);
+=======
+	PPC_BPF_LL(b2p[TMP_REG_1], 1, bpf_jit_stack_tailcallcnt(ctx));
+	PPC_CMPLWI(b2p[TMP_REG_1], MAX_TAIL_CALL_CNT);
+	PPC_BCC(COND_GT, out);
+>>>>>>> master
 
 	/*
 	 * tail_call_cnt++;
@@ -312,9 +318,15 @@ static int bpf_jit_emit_tail_call(u32 *image, struct codegen_context *ctx, u32 o
 	EMIT(PPC_RAW_STD(bpf_to_ppc(TMP_REG_1), _R1, bpf_jit_stack_tailcallcnt(ctx)));
 
 	/* prog = array->ptrs[index]; */
+<<<<<<< HEAD
 	EMIT(PPC_RAW_MULI(bpf_to_ppc(TMP_REG_1), b2p_index, 8));
 	EMIT(PPC_RAW_ADD(bpf_to_ppc(TMP_REG_1), bpf_to_ppc(TMP_REG_1), b2p_bpf_array));
 	EMIT(PPC_RAW_LD(bpf_to_ppc(TMP_REG_1), bpf_to_ppc(TMP_REG_1), offsetof(struct bpf_array, ptrs)));
+=======
+	PPC_MULI(b2p[TMP_REG_1], b2p_index, 8);
+	PPC_ADD(b2p[TMP_REG_1], b2p[TMP_REG_1], b2p_bpf_array);
+	PPC_BPF_LL(b2p[TMP_REG_1], b2p[TMP_REG_1], offsetof(struct bpf_array, ptrs));
+>>>>>>> master
 
 	/*
 	 * if (prog == NULL)
@@ -324,10 +336,22 @@ static int bpf_jit_emit_tail_call(u32 *image, struct codegen_context *ctx, u32 o
 	PPC_BCC_SHORT(COND_EQ, out);
 
 	/* goto *(prog->bpf_func + prologue_size); */
+<<<<<<< HEAD
 	EMIT(PPC_RAW_LD(bpf_to_ppc(TMP_REG_1), bpf_to_ppc(TMP_REG_1), offsetof(struct bpf_prog, bpf_func)));
 	EMIT(PPC_RAW_ADDI(bpf_to_ppc(TMP_REG_1), bpf_to_ppc(TMP_REG_1),
 			FUNCTION_DESCR_SIZE + bpf_tailcall_prologue_size));
 	EMIT(PPC_RAW_MTCTR(bpf_to_ppc(TMP_REG_1)));
+=======
+	PPC_BPF_LL(b2p[TMP_REG_1], b2p[TMP_REG_1], offsetof(struct bpf_prog, bpf_func));
+#ifdef PPC64_ELF_ABI_v1
+	/* skip past the function descriptor */
+	PPC_ADDI(b2p[TMP_REG_1], b2p[TMP_REG_1],
+			FUNCTION_DESCR_SIZE + BPF_TAILCALL_PROLOGUE_SIZE);
+#else
+	PPC_ADDI(b2p[TMP_REG_1], b2p[TMP_REG_1], BPF_TAILCALL_PROLOGUE_SIZE);
+#endif
+	PPC_MTCTR(b2p[TMP_REG_1]);
+>>>>>>> master
 
 	/* tear down stack, restore NVRs, ... */
 	bpf_jit_emit_common_epilogue(image, ctx);
@@ -476,11 +500,20 @@ int bpf_jit_build_body(struct bpf_prog *fp, u32 *image, struct codegen_context *
 		case BPF_ALU64 | BPF_DIV | BPF_X: /* dst /= src */
 		case BPF_ALU64 | BPF_MOD | BPF_X: /* dst %= src */
 			if (BPF_OP(code) == BPF_MOD) {
+<<<<<<< HEAD
 				EMIT(PPC_RAW_DIVDU(tmp1_reg, dst_reg, src_reg));
 				EMIT(PPC_RAW_MULD(tmp1_reg, src_reg, tmp1_reg));
 				EMIT(PPC_RAW_SUB(dst_reg, dst_reg, tmp1_reg));
 			} else
 				EMIT(PPC_RAW_DIVDU(dst_reg, dst_reg, src_reg));
+=======
+				PPC_DIVDU(b2p[TMP_REG_1], dst_reg, src_reg);
+				PPC_MULD(b2p[TMP_REG_1], src_reg,
+						b2p[TMP_REG_1]);
+				PPC_SUB(dst_reg, dst_reg, b2p[TMP_REG_1]);
+			} else
+				PPC_DIVDU(dst_reg, dst_reg, src_reg);
+>>>>>>> master
 			break;
 		case BPF_ALU | BPF_MOD | BPF_K: /* (u32) dst %= (u32) imm */
 		case BPF_ALU | BPF_DIV | BPF_K: /* (u32) dst /= (u32) imm */
@@ -509,11 +542,24 @@ int bpf_jit_build_body(struct bpf_prog *fp, u32 *image, struct codegen_context *
 				break;
 			case BPF_ALU64:
 				if (BPF_OP(code) == BPF_MOD) {
+<<<<<<< HEAD
 					EMIT(PPC_RAW_DIVDU(tmp2_reg, dst_reg, tmp1_reg));
 					EMIT(PPC_RAW_MULD(tmp1_reg, tmp1_reg, tmp2_reg));
 					EMIT(PPC_RAW_SUB(dst_reg, dst_reg, tmp1_reg));
 				} else
 					EMIT(PPC_RAW_DIVDU(dst_reg, dst_reg, tmp1_reg));
+=======
+					PPC_DIVDU(b2p[TMP_REG_2], dst_reg,
+							b2p[TMP_REG_1]);
+					PPC_MULD(b2p[TMP_REG_1],
+							b2p[TMP_REG_1],
+							b2p[TMP_REG_2]);
+					PPC_SUB(dst_reg, dst_reg,
+							b2p[TMP_REG_1]);
+				} else
+					PPC_DIVDU(dst_reg, dst_reg,
+							b2p[TMP_REG_1]);
+>>>>>>> master
 				break;
 			}
 			goto bpf_alu32_trunc;
@@ -686,6 +732,7 @@ bpf_alu32_trunc:
 				EMIT(PPC_RAW_MR(dst_reg, tmp1_reg));
 				break;
 			case 64:
+<<<<<<< HEAD
 				/* Store the value to stack and then use byte-reverse loads */
 				EMIT(PPC_RAW_STD(dst_reg, _R1, bpf_jit_stack_local(ctx)));
 				EMIT(PPC_RAW_ADDI(tmp1_reg, _R1, bpf_jit_stack_local(ctx)));
@@ -701,6 +748,19 @@ bpf_alu32_trunc:
 						EMIT(PPC_RAW_SLDI(tmp2_reg, tmp2_reg, 32));
 					EMIT(PPC_RAW_OR(dst_reg, dst_reg, tmp2_reg));
 				}
+=======
+				/*
+				 * Way easier and faster(?) to store the value
+				 * into stack and then use ldbrx
+				 *
+				 * ctx->seen will be reliable in pass2, but
+				 * the instructions generated will remain the
+				 * same across all passes
+				 */
+				PPC_BPF_STL(dst_reg, 1, bpf_jit_stack_local(ctx));
+				PPC_ADDI(b2p[TMP_REG_1], 1, bpf_jit_stack_local(ctx));
+				PPC_LDBRX(dst_reg, 0, b2p[TMP_REG_1]);
+>>>>>>> master
 				break;
 			}
 			break;
@@ -791,6 +851,10 @@ emit_clear:
 			} else {
 				EMIT(PPC_RAW_STD(src_reg, dst_reg, off));
 			}
+<<<<<<< HEAD
+=======
+			PPC_BPF_STL(src_reg, dst_reg, off);
+>>>>>>> master
 			break;
 
 		/*
@@ -902,6 +966,7 @@ emit_clear:
 		case BPF_LDX | BPF_PROBE_MEM | BPF_W:
 		/* dst = *(u64 *)(ul) (src + off) */
 		case BPF_LDX | BPF_MEM | BPF_DW:
+<<<<<<< HEAD
 		case BPF_LDX | BPF_PROBE_MEM | BPF_DW:
 			/*
 			 * As PTR_TO_BTF_ID that uses BPF_PROBE_MEM mode could either be a valid
@@ -957,6 +1022,9 @@ emit_clear:
 				if (ret)
 					return ret;
 			}
+=======
+			PPC_BPF_LL(dst_reg, src_reg, off);
+>>>>>>> master
 			break;
 
 		/*

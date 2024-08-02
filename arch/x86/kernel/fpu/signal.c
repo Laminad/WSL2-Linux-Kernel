@@ -348,8 +348,44 @@ static bool __fpu_restore_sig(void __user *buf, void __user *buf_fx,
 		if (!check_xstate_in_sigframe(buf_fx, &fx_sw_user))
 			return false;
 
+<<<<<<< HEAD
 		fx_only = !fx_sw_user.magic1;
 		user_xfeatures = fx_sw_user.xfeatures;
+=======
+		/*
+		 * Drop the current fpu which clears fpu->initialized. This ensures
+		 * that any context-switch during the copy of the new state,
+		 * avoids the intermediate state from getting restored/saved.
+		 * Thus avoiding the new restored state from getting corrupted.
+		 * We will be ready to restore/save the state only after
+		 * fpu->initialized is again set.
+		 */
+		fpu__drop(fpu);
+
+		if (using_compacted_format()) {
+			err = copy_user_to_xstate(&fpu->state.xsave, buf_fx);
+		} else {
+			err = __copy_from_user(&fpu->state.xsave, buf_fx, state_size);
+
+			if (!err && state_size > offsetof(struct xregs_state, header))
+				err = validate_xstate_header(&fpu->state.xsave.header);
+		}
+
+		if (err || __copy_from_user(&env, buf, sizeof(env))) {
+			fpstate_init(&fpu->state);
+			trace_x86_fpu_init_state(fpu);
+			err = -1;
+		} else {
+			sanitize_restored_xstate(tsk, &env, xfeatures, fx_only);
+		}
+
+		local_bh_disable();
+		fpu->initialized = 1;
+		fpu__restore(fpu);
+		local_bh_enable();
+
+		return err;
+>>>>>>> master
 	} else {
 		user_xfeatures = XFEATURE_MASK_FPSSE;
 	}

@@ -643,7 +643,11 @@ out_free:
 	kfree(inverts);
 	if (prog_stack) {
 		for (i = 0; prog_stack[i].pred; i++)
+<<<<<<< HEAD
 			free_predicate(prog_stack[i].pred);
+=======
+			kfree(prog_stack[i].pred);
+>>>>>>> master
 		kfree(prog_stack);
 	}
 	return ERR_PTR(ret);
@@ -2297,7 +2301,11 @@ static int create_filter(struct trace_array *tr,
 
 	err = process_preds(call, filter_string, *filterp, pe);
 	if (err && set_str)
+<<<<<<< HEAD
 		append_filter_err(tr, pe, *filterp);
+=======
+		append_filter_err(pe, *filterp);
+>>>>>>> master
 	create_filter_finish(pe);
 
 	return err;

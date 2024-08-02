@@ -556,7 +556,11 @@ void ccp_dev_suspend(struct sp_device *sp)
 
 	/* If there's no device there's nothing to do */
 	if (!ccp)
+<<<<<<< HEAD
 		return;
+=======
+		return 0;
+>>>>>>> master
 
 	spin_lock_irqsave(&ccp->cmd_lock, flags);
 
@@ -582,7 +586,11 @@ void ccp_dev_resume(struct sp_device *sp)
 
 	/* If there's no device there's nothing to do */
 	if (!ccp)
+<<<<<<< HEAD
 		return;
+=======
+		return 0;
+>>>>>>> master
 
 	spin_lock_irqsave(&ccp->cmd_lock, flags);
 

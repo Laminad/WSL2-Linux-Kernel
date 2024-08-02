@@ -498,6 +498,7 @@ static void dpu_kms_wait_for_commit_done(struct msm_kms *kms,
 	}
 }
 
+<<<<<<< HEAD
 static void dpu_kms_wait_flush(struct msm_kms *kms, unsigned crtc_mask)
 {
 	struct dpu_kms *dpu_kms = to_dpu_kms(kms);
@@ -507,16 +508,34 @@ static void dpu_kms_wait_flush(struct msm_kms *kms, unsigned crtc_mask)
 		dpu_kms_wait_for_commit_done(kms, crtc);
 }
 
+=======
+>>>>>>> master
 static int _dpu_kms_initialize_dsi(struct drm_device *dev,
 				    struct msm_drm_private *priv,
 				    struct dpu_kms *dpu_kms)
 {
 	struct drm_encoder *encoder = NULL;
+<<<<<<< HEAD
 	struct msm_display_info info;
 	int i, rc = 0;
 
 	if (!(priv->dsi[0] || priv->dsi[1]))
 		return rc;
+=======
+	int i, rc = 0;
+
+	if (!(priv->dsi[0] || priv->dsi[1]))
+		return rc;
+
+	/*TODO: Support two independent DSI connectors */
+	encoder = dpu_encoder_init(dev, DRM_MODE_ENCODER_DSI);
+	if (IS_ERR(encoder)) {
+		DPU_ERROR("encoder init failed for dsi display\n");
+		return PTR_ERR(encoder);
+	}
+
+	priv->encoders[priv->num_encoders++] = encoder;
+>>>>>>> master
 
 	/*
 	 * We support following confiurations:
@@ -527,6 +546,7 @@ static int _dpu_kms_initialize_dsi(struct drm_device *dev,
 	 * TODO: Support swapping DSI0 and DSI1 in the bonded setup.
 	 */
 	for (i = 0; i < ARRAY_SIZE(priv->dsi); i++) {
+<<<<<<< HEAD
 		int other = (i + 1) % 2;
 
 		if (!priv->dsi[i])
@@ -550,12 +570,17 @@ static int _dpu_kms_initialize_dsi(struct drm_device *dev,
 			DPU_ERROR("encoder init failed for dsi display\n");
 			return PTR_ERR(encoder);
 		}
+=======
+		if (!priv->dsi[i])
+			continue;
+>>>>>>> master
 
 		rc = msm_dsi_modeset_init(priv->dsi[i], dev, encoder);
 		if (rc) {
 			DPU_ERROR("modeset_init failed for dsi[%d], rc = %d\n",
 				i, rc);
 			break;
+<<<<<<< HEAD
 		}
 
 		if (msm_dsi_is_bonded_dsi(priv->dsi[i]) && priv->dsi[other]) {
@@ -565,10 +590,13 @@ static int _dpu_kms_initialize_dsi(struct drm_device *dev,
 					other, rc);
 				break;
 			}
+=======
+>>>>>>> master
 		}
 	}
 
 	return rc;
+<<<<<<< HEAD
 }
 
 static int _dpu_kms_initialize_displayport(struct drm_device *dev,
@@ -668,6 +696,8 @@ static int _dpu_kms_initialize_writeback(struct drm_device *dev,
 	}
 
 	return 0;
+=======
+>>>>>>> master
 }
 
 /**
@@ -682,7 +712,21 @@ static int _dpu_kms_setup_displays(struct drm_device *dev,
 				    struct msm_drm_private *priv,
 				    struct dpu_kms *dpu_kms)
 {
+<<<<<<< HEAD
 	int rc = 0;
+=======
+	/**
+	 * Extend this function to initialize other
+	 * types of displays
+	 */
+
+	return _dpu_kms_initialize_dsi(dev, priv, dpu_kms);
+}
+
+static void _dpu_kms_drm_obj_destroy(struct dpu_kms *dpu_kms)
+{
+	struct msm_drm_private *priv;
+>>>>>>> master
 	int i;
 
 	rc = _dpu_kms_initialize_dsi(dev, priv, dpu_kms);
@@ -746,7 +790,11 @@ static int _dpu_kms_drm_obj_init(struct dpu_kms *dpu_kms)
 	 */
 	ret = _dpu_kms_setup_displays(dev, priv, dpu_kms);
 	if (ret)
+<<<<<<< HEAD
 		return ret;
+=======
+		goto fail;
+>>>>>>> master
 
 	num_encoders = 0;
 	drm_for_each_encoder(encoder, dev)

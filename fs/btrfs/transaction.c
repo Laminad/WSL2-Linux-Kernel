@@ -126,11 +126,14 @@ static const unsigned int btrfs_blocked_trans_types[TRANS_STATE_MAX] = {
 					   __TRANS_JOIN |
 					   __TRANS_JOIN_NOLOCK |
 					   __TRANS_JOIN_NOSTART),
+<<<<<<< HEAD
 	[TRANS_STATE_SUPER_COMMITTED]	= (__TRANS_START |
 					   __TRANS_ATTACH |
 					   __TRANS_JOIN |
 					   __TRANS_JOIN_NOLOCK |
 					   __TRANS_JOIN_NOSTART),
+=======
+>>>>>>> master
 	[TRANS_STATE_COMPLETED]		= (__TRANS_START |
 					   __TRANS_ATTACH |
 					   __TRANS_JOIN |
@@ -802,10 +805,14 @@ struct btrfs_trans_handle *btrfs_join_transaction_spacecache(struct btrfs_root *
 
 /*
  * Similar to regular join but it never starts a transaction when none is
+<<<<<<< HEAD
  * running or when there's a running one at a state >= TRANS_STATE_UNBLOCKED.
  * This is similar to btrfs_attach_transaction() but it allows the join to
  * happen if the transaction commit already started but it's not yet in the
  * "doing" phase (the state is < TRANS_STATE_COMMIT_DOING).
+=======
+ * running or after waiting for the current one to finish.
+>>>>>>> master
  */
 struct btrfs_trans_handle *btrfs_join_transaction_nostart(struct btrfs_root *root)
 {
@@ -2163,11 +2170,31 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans)
 	/* Stop the commit early if ->aborted is set */
 	if (TRANS_ABORTED(cur_trans)) {
 		ret = cur_trans->aborted;
+<<<<<<< HEAD
 		goto lockdep_trans_commit_start_release;
 	}
 
 	btrfs_trans_release_metadata(trans);
 	trans->block_rsv = NULL;
+=======
+		btrfs_end_transaction(trans);
+		return ret;
+	}
+
+	btrfs_trans_release_metadata(trans);
+	trans->block_rsv = NULL;
+
+	/* make a pass through all the delayed refs we have so far
+	 * any runnings procs may add more while we are here
+	 */
+	ret = btrfs_run_delayed_refs(trans, 0);
+	if (ret) {
+		btrfs_end_transaction(trans);
+		return ret;
+	}
+
+	cur_trans = trans->transaction;
+>>>>>>> master
 
 	/*
 	 * We only want one transaction commit doing the flushing so we do not
@@ -2266,16 +2293,26 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans)
 			spin_lock(&fs_info->trans_lock);
 		}
 	} else {
+<<<<<<< HEAD
+=======
+		spin_unlock(&fs_info->trans_lock);
+>>>>>>> master
 		/*
 		 * The previous transaction was aborted and was already removed
 		 * from the list of transactions at fs_info->trans_list. So we
 		 * abort to prevent writing a new superblock that reflects a
 		 * corrupt state (pointing to trees with unwritten nodes/leafs).
 		 */
+<<<<<<< HEAD
 		if (BTRFS_FS_ERROR(fs_info)) {
 			spin_unlock(&fs_info->trans_lock);
 			ret = -EROFS;
 			goto lockdep_release;
+=======
+		if (test_bit(BTRFS_FS_STATE_TRANS_ABORTED, &fs_info->fs_state)) {
+			ret = -EROFS;
+			goto cleanup_transaction;
+>>>>>>> master
 		}
 	}
 
@@ -2563,8 +2600,11 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans)
 
 	kmem_cache_free(btrfs_trans_handle_cachep, trans);
 
+<<<<<<< HEAD
 	update_commit_stats(fs_info, interval);
 
+=======
+>>>>>>> master
 	return ret;
 
 unlock_reloc:

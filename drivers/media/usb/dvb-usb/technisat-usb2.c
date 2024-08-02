@@ -663,7 +663,11 @@ unlock:
 
 		ev.pulse = !ev.pulse;
 		ev.duration = (buf[i] * FIRMWARE_CLOCK_DIVISOR *
+<<<<<<< HEAD
 			       FIRMWARE_CLOCK_TICK) / (1000 * 1000);
+=======
+			       FIRMWARE_CLOCK_TICK) / 1000;
+>>>>>>> master
 		ir_raw_event_store(d->rc_dev, &ev);
 	}
 

@@ -2690,7 +2690,11 @@ static int pma_get_opa_portstatus(struct opa_pma_mad *pmp,
 	unsigned long vl;
 	size_t response_data_size;
 	u32 nports = be32_to_cpu(pmp->mad_hdr.attr_mod) >> 24;
+<<<<<<< HEAD
 	u32 port_num = req->port_num;
+=======
+	u8 port_num = req->port_num;
+>>>>>>> master
 	u8 num_vls = hweight64(vl_select_mask);
 	struct _vls_pctrs *vlinfo;
 	struct hfi1_ibport *ibp = to_iport(ibdev, port);

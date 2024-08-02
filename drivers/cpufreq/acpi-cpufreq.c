@@ -957,6 +957,11 @@ static struct cpufreq_driver acpi_cpufreq_driver = {
 
 static void __init acpi_cpufreq_boost_init(void)
 {
+<<<<<<< HEAD
+=======
+	int ret;
+
+>>>>>>> master
 	if (!(boot_cpu_has(X86_FEATURE_CPB) || boot_cpu_has(X86_FEATURE_IDA))) {
 		pr_debug("Boost capabilities not present in the processor\n");
 		return;

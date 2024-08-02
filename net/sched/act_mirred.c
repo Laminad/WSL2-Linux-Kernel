@@ -147,8 +147,13 @@ static int tcf_mirred_init(struct net *net, struct nlattr *nla,
 			NL_SET_ERR_MSG_MOD(extack, "Specified device does not exist");
 			return -EINVAL;
 		}
+<<<<<<< HEAD
 		ret = tcf_idr_create_from_flags(tn, index, est, a,
 						&act_mirred_ops, bind, flags);
+=======
+		ret = tcf_idr_create(tn, index, est, a,
+				     &act_mirred_ops, bind, true);
+>>>>>>> master
 		if (ret) {
 			tcf_idr_cleanup(tn, index);
 			return ret;
@@ -166,6 +171,9 @@ static int tcf_mirred_init(struct net *net, struct nlattr *nla,
 	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);
 	if (err < 0)
 		goto release_idr;
+
+	if (ret == ACT_P_CREATED)
+		INIT_LIST_HEAD(&m->tcfm_list);
 
 	spin_lock_bh(&m->tcf_lock);
 

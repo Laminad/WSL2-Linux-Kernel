@@ -463,6 +463,14 @@ static void rockchip_drm_platform_shutdown(struct platform_device *pdev)
 		drm_atomic_helper_shutdown(drm);
 }
 
+static void rockchip_drm_platform_shutdown(struct platform_device *pdev)
+{
+	struct drm_device *drm = platform_get_drvdata(pdev);
+
+	if (drm)
+		drm_atomic_helper_shutdown(drm);
+}
+
 static const struct of_device_id rockchip_drm_dt_ids[] = {
 	{ .compatible = "rockchip,display-subsystem", },
 	{ /* sentinel */ },
@@ -471,7 +479,11 @@ MODULE_DEVICE_TABLE(of, rockchip_drm_dt_ids);
 
 static struct platform_driver rockchip_drm_platform_driver = {
 	.probe = rockchip_drm_platform_probe,
+<<<<<<< HEAD
 	.remove_new = rockchip_drm_platform_remove,
+=======
+	.remove = rockchip_drm_platform_remove,
+>>>>>>> master
 	.shutdown = rockchip_drm_platform_shutdown,
 	.driver = {
 		.name = "rockchip-drm",

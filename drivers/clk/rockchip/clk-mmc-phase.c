@@ -51,9 +51,15 @@ static int rockchip_mmc_get_phase(struct clk_hw *hw)
 	u16 degrees;
 	u32 delay_num = 0;
 
+<<<<<<< HEAD
 	/* Constant signal, no measurable phase shift */
 	if (!rate)
 		return 0;
+=======
+	/* See the comment for rockchip_mmc_set_phase below */
+	if (!rate)
+		return -EINVAL;
+>>>>>>> master
 
 	raw_value = readl(mmc_clock->reg) >> (mmc_clock->shift);
 

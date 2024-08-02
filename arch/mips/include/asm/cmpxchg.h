@@ -68,7 +68,11 @@ extern unsigned long __xchg_small(volatile void *ptr, unsigned long val,
 				  unsigned int size);
 
 static __always_inline
+<<<<<<< HEAD
 unsigned long __arch_xchg(volatile void *ptr, unsigned long x, int size)
+=======
+unsigned long __xchg(volatile void *ptr, unsigned long x, int size)
+>>>>>>> master
 {
 	switch (size) {
 	case 1:

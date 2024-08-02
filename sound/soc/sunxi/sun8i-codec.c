@@ -1354,6 +1354,11 @@ static void sun8i_codec_remove(struct platform_device *pdev)
 	pm_runtime_disable(&pdev->dev);
 	if (!pm_runtime_status_suspended(&pdev->dev))
 		sun8i_codec_runtime_suspend(&pdev->dev);
+<<<<<<< HEAD
+=======
+
+	return 0;
+>>>>>>> master
 }
 
 static const struct sun8i_codec_quirks sun8i_a33_quirks = {

@@ -573,12 +573,22 @@ static int mtk8250_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, data);
 
+<<<<<<< HEAD
+=======
+	err = mtk8250_runtime_resume(&pdev->dev);
+	if (err)
+		return err;
+
+>>>>>>> master
 	data->line = serial8250_register_8250_port(&uart);
 	if (data->line < 0)
 		return data->line;
 
+<<<<<<< HEAD
 	data->rx_wakeup_irq = platform_get_irq_optional(pdev, 1);
 
+=======
+>>>>>>> master
 	pm_runtime_set_active(&pdev->dev);
 	pm_runtime_enable(&pdev->dev);
 
@@ -592,6 +602,7 @@ static int mtk8250_remove(struct platform_device *pdev)
 	pm_runtime_get_sync(&pdev->dev);
 
 	serial8250_unregister_port(data->line);
+	mtk8250_runtime_suspend(&pdev->dev);
 
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_put_noidle(&pdev->dev);

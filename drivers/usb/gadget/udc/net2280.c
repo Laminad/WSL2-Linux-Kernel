@@ -1265,7 +1265,11 @@ static int net2280_dequeue(struct usb_ep *_ep, struct usb_request *_req)
 		req = iter;
 		break;
 	}
+<<<<<<< HEAD
 	if (!req) {
+=======
+	if (&req->req != _req) {
+>>>>>>> master
 		ep->stopped = stopped;
 		spin_unlock_irqrestore(&ep->dev->lock, flags);
 		ep_dbg(ep->dev, "%s: Request mismatch\n", __func__);

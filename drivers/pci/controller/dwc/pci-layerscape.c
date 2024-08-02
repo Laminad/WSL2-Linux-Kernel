@@ -82,6 +82,49 @@ static void ls_pcie_drop_msg_tlp(struct ls_pcie *pcie)
 	iowrite32(val, pci->dbi_base + PCIE_STRFMR1);
 }
 
+<<<<<<< HEAD
+=======
+static void ls_pcie_disable_outbound_atus(struct ls_pcie *pcie)
+{
+	int i;
+
+	for (i = 0; i < PCIE_IATU_NUM; i++)
+		dw_pcie_disable_atu(pcie->pci, i, DW_PCIE_REGION_OUTBOUND);
+}
+
+static int ls1021_pcie_link_up(struct dw_pcie *pci)
+{
+	u32 state;
+	struct ls_pcie *pcie = to_ls_pcie(pci);
+
+	if (!pcie->scfg)
+		return 0;
+
+	regmap_read(pcie->scfg, SCFG_PEXMSCPORTSR(pcie->index), &state);
+	state = (state >> LTSSM_STATE_SHIFT) & LTSSM_STATE_MASK;
+
+	if (state < LTSSM_PCIE_L0)
+		return 0;
+
+	return 1;
+}
+
+static int ls_pcie_link_up(struct dw_pcie *pci)
+{
+	struct ls_pcie *pcie = to_ls_pcie(pci);
+	u32 state;
+
+	state = (ioread32(pcie->lut + pcie->drvdata->lut_dbg) >>
+		 pcie->drvdata->ltssm_shift) &
+		 LTSSM_STATE_MASK;
+
+	if (state < LTSSM_PCIE_L0)
+		return 0;
+
+	return 1;
+}
+
+>>>>>>> master
 /* Forward error response of outbound non-posted requests */
 static void ls_pcie_fix_error_response(struct ls_pcie *pcie)
 {

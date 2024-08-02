@@ -1217,7 +1217,16 @@ static unsigned int a6xx_gmu_get_arc_level(struct device *dev,
 	if (IS_ERR(opp))
 		return 0;
 
+<<<<<<< HEAD
 	val = dev_pm_opp_get_level(opp);
+=======
+	np = dev_pm_opp_get_of_node(opp);
+
+	if (np) {
+		of_property_read_u32(np, "opp-level", &val);
+		of_node_put(np);
+	}
+>>>>>>> master
 
 	dev_pm_opp_put(opp);
 

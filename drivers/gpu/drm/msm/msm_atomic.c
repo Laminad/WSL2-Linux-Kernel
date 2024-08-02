@@ -25,7 +25,17 @@ static void vblank_get(struct msm_kms *kms, unsigned crtc_mask)
 	for_each_crtc_mask(kms->dev, crtc, crtc_mask) {
 		if (!crtc->state->active)
 			continue;
+<<<<<<< HEAD
 		drm_crtc_vblank_get(crtc);
+=======
+
+		if (drm_crtc_vblank_get(crtc))
+			continue;
+
+		kms->funcs->wait_for_crtc_commit_done(kms, crtc);
+
+		drm_crtc_vblank_put(crtc);
+>>>>>>> master
 	}
 }
 

@@ -6,7 +6,11 @@
 
 #define __CLOBBERS_MEM(clb...)	"memory", ## clb
 
+<<<<<<< HEAD
 #ifndef __GCC_ASM_FLAG_OUTPUTS__
+=======
+#if !defined(__GCC_ASM_FLAG_OUTPUTS__) && defined(CONFIG_CC_HAS_ASM_GOTO)
+>>>>>>> master
 
 /* Use asm goto */
 
@@ -22,7 +26,14 @@ cc_label:	c = true;						\
 	c;								\
 })
 
+<<<<<<< HEAD
 #else /* defined(__GCC_ASM_FLAG_OUTPUTS__) */
+=======
+#define __BINARY_RMWcc_ARG	" %1, "
+
+
+#else /* defined(__GCC_ASM_FLAG_OUTPUTS__) || !defined(CONFIG_CC_HAS_ASM_GOTO) */
+>>>>>>> master
 
 /* Use flags output or a set instruction */
 
@@ -37,7 +48,13 @@ cc_label:	c = true;						\
 
 #endif /* defined(__GCC_ASM_FLAG_OUTPUTS__) */
 
+<<<<<<< HEAD
 #define GEN_UNARY_RMWcc_4(op, var, cc, arg0)				\
+=======
+#endif /* defined(__GCC_ASM_FLAG_OUTPUTS__) || !defined(CONFIG_CC_HAS_ASM_GOTO) */
+
+#define GEN_UNARY_RMWcc(op, var, arg0, cc)				\
+>>>>>>> master
 	__GEN_RMWcc(op " " arg0, var, cc, __CLOBBERS_MEM())
 
 #define GEN_UNARY_RMWcc_3(op, var, cc)					\

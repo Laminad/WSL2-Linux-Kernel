@@ -101,9 +101,12 @@ static int usb_console_setup(struct console *co, char *options)
 		cflag |= PARENB;
 		break;
 	}
+<<<<<<< HEAD
 
 	if (doflow)
 		cflag |= CRTSCTS;
+=======
+>>>>>>> master
 
 	/*
 	 * no need to check the index here: if the index is wrong, console

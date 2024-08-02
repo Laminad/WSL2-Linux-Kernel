@@ -152,12 +152,48 @@ __register_chrdev_region(unsigned int major, unsigned int baseminor,
 	cd->minorct = minorct;
 	strscpy(cd->name, name, sizeof(cd->name));
 
+<<<<<<< HEAD
 	if (!prev) {
 		cd->next = curr;
 		chrdevs[i] = cd;
 	} else {
 		cd->next = prev->next;
 		prev->next = cd;
+=======
+	i = major_to_index(major);
+
+	for (cp = &chrdevs[i]; *cp; cp = &(*cp)->next)
+		if ((*cp)->major > major ||
+		    ((*cp)->major == major &&
+		     (((*cp)->baseminor >= baseminor) ||
+		      ((*cp)->baseminor + (*cp)->minorct > baseminor))))
+			break;
+
+	/* Check for overlapping minor ranges.  */
+	if (*cp && (*cp)->major == major) {
+		int old_min = (*cp)->baseminor;
+		int old_max = (*cp)->baseminor + (*cp)->minorct - 1;
+		int new_min = baseminor;
+		int new_max = baseminor + minorct - 1;
+
+		/* New driver overlaps from the left.  */
+		if (new_max >= old_min && new_max <= old_max) {
+			ret = -EBUSY;
+			goto out;
+		}
+
+		/* New driver overlaps from the right.  */
+		if (new_min <= old_max && new_min >= old_min) {
+			ret = -EBUSY;
+			goto out;
+		}
+
+		if (new_min < old_min && new_max > old_max) {
+			ret = -EBUSY;
+			goto out;
+		}
+
+>>>>>>> master
 	}
 
 	mutex_unlock(&chrdevs_lock);

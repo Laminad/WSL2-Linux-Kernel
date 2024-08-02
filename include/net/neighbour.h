@@ -459,11 +459,19 @@ static __always_inline int neigh_event_send_probe(struct neighbour *neigh,
 						  const bool immediate_ok)
 {
 	unsigned long now = jiffies;
+<<<<<<< HEAD
 
 	if (READ_ONCE(neigh->used) != now)
 		WRITE_ONCE(neigh->used, now);
 	if (!(READ_ONCE(neigh->nud_state) & (NUD_CONNECTED | NUD_DELAY | NUD_PROBE)))
 		return __neigh_event_send(neigh, skb, immediate_ok);
+=======
+	
+	if (READ_ONCE(neigh->used) != now)
+		WRITE_ONCE(neigh->used, now);
+	if (!(neigh->nud_state&(NUD_CONNECTED|NUD_DELAY|NUD_PROBE)))
+		return __neigh_event_send(neigh, skb);
+>>>>>>> master
 	return 0;
 }
 

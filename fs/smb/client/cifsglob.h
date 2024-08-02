@@ -628,10 +628,89 @@ struct smb_version_values {
 #define HEADER_PREAMBLE_SIZE(server) (server->vals->header_preamble_size)
 #define MID_HEADER_SIZE(server) (HEADER_SIZE(server) - 1 - HEADER_PREAMBLE_SIZE(server))
 
+<<<<<<< HEAD:fs/smb/client/cifsglob.h
 /**
  * CIFS superblock mount flags (mnt_cifs_flags) to consider when
  * trying to reuse existing superblock for a new mount
  */
+=======
+struct smb_vol {
+	char *username;
+	char *password;
+	char *domainname;
+	char *UNC;
+	char *iocharset;  /* local code page for mapping to and from Unicode */
+	char source_rfc1001_name[RFC1001_NAME_LEN_WITH_NULL]; /* clnt nb name */
+	char target_rfc1001_name[RFC1001_NAME_LEN_WITH_NULL]; /* srvr nb name */
+	kuid_t cred_uid;
+	kuid_t linux_uid;
+	kgid_t linux_gid;
+	kuid_t backupuid;
+	kgid_t backupgid;
+	umode_t file_mode;
+	umode_t dir_mode;
+	enum securityEnum sectype; /* sectype requested via mnt opts */
+	bool sign; /* was signing requested via mnt opts? */
+	bool retry:1;
+	bool intr:1;
+	bool setuids:1;
+	bool setuidfromacl:1;
+	bool override_uid:1;
+	bool override_gid:1;
+	bool dynperm:1;
+	bool noperm:1;
+	bool no_psx_acl:1; /* set if posix acl support should be disabled */
+	bool cifs_acl:1;
+	bool backupuid_specified; /* mount option  backupuid  is specified */
+	bool backupgid_specified; /* mount option  backupgid  is specified */
+	bool no_xattr:1;   /* set if xattr (EA) support should be disabled*/
+	bool server_ino:1; /* use inode numbers from server ie UniqueId */
+	bool direct_io:1;
+	bool strict_io:1; /* strict cache behavior */
+	bool remap:1;      /* set to remap seven reserved chars in filenames */
+	bool sfu_remap:1;  /* remap seven reserved chars ala SFU */
+	bool posix_paths:1; /* unset to not ask for posix pathnames. */
+	bool no_linux_ext:1;
+	bool linux_ext:1;
+	bool sfu_emul:1;
+	bool nullauth:1;   /* attempt to authenticate with null user */
+	bool nocase:1;     /* request case insensitive filenames */
+	bool nobrl:1;      /* disable sending byte range locks to srv */
+	bool nohandlecache:1; /* disable caching dir handles if srvr probs */
+	bool mand_lock:1;  /* send mandatory not posix byte range lock reqs */
+	bool seal:1;       /* request transport encryption on share */
+	bool nodfs:1;      /* Do not request DFS, even if available */
+	bool local_lease:1; /* check leases only on local system, not remote */
+	bool noblocksnd:1;
+	bool noautotune:1;
+	bool nostrictsync:1; /* do not force expensive SMBflush on every sync */
+	bool no_lease:1;     /* disable requesting leases */
+	bool fsc:1;	/* enable fscache */
+	bool mfsymlinks:1; /* use Minshall+French Symlinks */
+	bool multiuser:1;
+	bool rwpidforward:1; /* pid forward for read/write operations */
+	bool nosharesock:1;
+	bool persistent:1;
+	bool nopersistent:1;
+	bool resilient:1; /* noresilient not required since not fored for CA */
+	bool domainauto:1;
+	bool rdma:1;
+	unsigned int rsize;
+	unsigned int wsize;
+	bool sockopt_tcp_nodelay:1;
+	unsigned long actimeo; /* attribute cache timeout (jiffies) */
+	struct smb_version_operations *ops;
+	struct smb_version_values *vals;
+	char *prepath;
+	struct sockaddr_storage dstaddr; /* destination address */
+	struct sockaddr_storage srcaddr; /* allow binding to a local IP */
+	struct nls_table *local_nls;
+	unsigned int echo_interval; /* echo interval in secs */
+	__u64 snapshot_time; /* needed for timewarp tokens */
+	unsigned int max_credits; /* smb3 max_credits 10 < credits < 60000 */
+};
+
+>>>>>>> master:fs/cifs/cifsglob.h
 #define CIFS_MOUNT_MASK (CIFS_MOUNT_NO_PERM | CIFS_MOUNT_SET_UID | \
 			 CIFS_MOUNT_SERVER_INUM | CIFS_MOUNT_DIRECT_IO | \
 			 CIFS_MOUNT_NO_XATTR | CIFS_MOUNT_MAP_SPECIAL_CHR | \
@@ -931,7 +1010,11 @@ revert_current_mid(struct TCP_Server_Info *server, const unsigned int val)
 
 static inline void
 revert_current_mid_from_hdr(struct TCP_Server_Info *server,
+<<<<<<< HEAD:fs/smb/client/cifsglob.h
 			    const struct smb2_hdr *shdr)
+=======
+			    const struct smb2_sync_hdr *shdr)
+>>>>>>> master:fs/cifs/cifsglob.h
 {
 	unsigned int num = le16_to_cpu(shdr->CreditCharge);
 
@@ -1261,7 +1344,10 @@ struct cifs_tcon {
 	bool use_resilient:1; /* use resilient instead of durable handles */
 	bool use_persistent:1; /* use persistent instead of durable handles */
 	bool no_lease:1;    /* Do not request leases on files or directories */
+<<<<<<< HEAD:fs/smb/client/cifsglob.h
 	bool use_witness:1; /* use witness protocol */
+=======
+>>>>>>> master:fs/cifs/cifsglob.h
 	__le32 capabilities;
 	__u32 share_flags;
 	__u32 maximal_access;
@@ -1549,8 +1635,12 @@ cifsFileInfo_get_locked(struct cifsFileInfo *cifs_file)
 }
 
 struct cifsFileInfo *cifsFileInfo_get(struct cifsFileInfo *cifs_file);
+<<<<<<< HEAD:fs/smb/client/cifsglob.h
 void _cifsFileInfo_put(struct cifsFileInfo *cifs_file, bool wait_oplock_hdlr,
 		       bool offload);
+=======
+void _cifsFileInfo_put(struct cifsFileInfo *cifs_file, bool wait_oplock_hdlr);
+>>>>>>> master:fs/cifs/cifsglob.h
 void cifsFileInfo_put(struct cifsFileInfo *cifs_file);
 
 #define CIFS_CACHE_READ_FLG	1
@@ -1574,7 +1664,11 @@ struct cifsInodeInfo {
 	struct list_head llist;	/* locks helb by this inode */
 	/*
 	 * NOTE: Some code paths call down_read(lock_sem) twice, so
+<<<<<<< HEAD:fs/smb/client/cifsglob.h
 	 * we must always use cifs_down_write() instead of down_write()
+=======
+	 * we must always use use cifs_down_write() instead of down_write()
+>>>>>>> master:fs/cifs/cifsglob.h
 	 * for this semaphore to avoid deadlocks.
 	 */
 	struct rw_semaphore lock_sem;	/* protect the fields above */
@@ -1708,7 +1802,10 @@ struct mid_q_entry {
 	struct TCP_Server_Info *server;	/* server corresponding to this mid */
 	__u64 mid;		/* multiplex id */
 	__u16 credits;		/* number of credits consumed by this mid */
+<<<<<<< HEAD:fs/smb/client/cifsglob.h
 	__u16 credits_received;	/* number of credits from the response */
+=======
+>>>>>>> master:fs/cifs/cifsglob.h
 	__u32 pid;		/* process id */
 	__u32 sequence_number;  /* for CIFS signing */
 	unsigned long when_alloc;  /* when mid was created */
@@ -1865,6 +1962,7 @@ static inline bool is_retryable_error(int error)
 	return false;
 }
 
+<<<<<<< HEAD:fs/smb/client/cifsglob.h
 static inline bool is_replayable_error(int error)
 {
 	if (error == -EAGAIN || error == -ECONNABORTED)
@@ -1878,6 +1976,8 @@ static inline bool is_replayable_error(int error)
 #define FIND_WR_FSUID_ONLY  1
 #define FIND_WR_WITH_DELETE 2
 
+=======
+>>>>>>> master:fs/cifs/cifsglob.h
 #define   MID_FREE 0
 #define   MID_REQUEST_ALLOCATED 1
 #define   MID_REQUEST_SUBMITTED 2
@@ -1960,6 +2060,7 @@ require use of the stronger protocol */
  * to the locking order. i.e. if two locks are to be held together, the lock that
  * appears higher in this list needs to be taken before the other.
  *
+<<<<<<< HEAD:fs/smb/client/cifsglob.h
  * If you hold a lock that is lower in this list, and you need to take a higher lock
  * (or if you think that one of the functions that you're calling may need to), first
  * drop the lock you hold, pick up the higher lock, then the lower one. This will
@@ -1968,6 +2069,29 @@ require use of the stronger protocol */
  *
  * Also, if you expect a function to be called with a lock held, explicitly document
  * this in the comments on top of your function definition.
+=======
+ *  Spinlocks
+ *  ---------
+ *  GlobalMid_Lock protects:
+ *	list operations on pending_mid_q and oplockQ
+ *      updates to XID counters, multiplex id  and SMB sequence numbers
+ *  tcp_ses_lock protects:
+ *	list operations on tcp and SMB session lists
+ *  tcon->open_file_lock protects the list of open files hanging off the tcon
+ *  inode->open_file_lock protects the openFileList hanging off the inode
+ *  cfile->file_info_lock protects counters and fields in cifs file struct
+ *  f_owner.lock protects certain per file struct operations
+ *  mapping->page_lock protects certain per page operations
+ *
+ *  Note that the cifs_tcon.open_file_lock should be taken before
+ *  not after the cifsInodeInfo.open_file_lock
+ *
+ *  Semaphores
+ *  ----------
+ *  sesSem     operations on smb session
+ *  tconSem    operations on tree connection
+ *  fh_sem      file handle reconnection operations
+>>>>>>> master:fs/cifs/cifsglob.h
  *
  * And also, try to keep the critical sections (lock hold time) to be as minimal as
  * possible. Blocking / calling other functions with a lock held always increase
@@ -2102,7 +2226,10 @@ extern atomic_t mid_count;
 
 void cifs_oplock_break(struct work_struct *work);
 void cifs_queue_oplock_break(struct cifsFileInfo *cfile);
+<<<<<<< HEAD:fs/smb/client/cifsglob.h
 void smb2_deferred_work_close(struct work_struct *work);
+=======
+>>>>>>> master:fs/cifs/cifsglob.h
 
 extern const struct slow_work_ops cifs_oplock_break_ops;
 extern struct workqueue_struct *cifsiod_wq;

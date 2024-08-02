@@ -234,7 +234,20 @@ static enum power_supply_property max14656_battery_props[] = {
 	POWER_SUPPLY_PROP_MANUFACTURER,
 };
 
+<<<<<<< HEAD
 static int max14656_probe(struct i2c_client *client)
+=======
+static void stop_irq_work(void *data)
+{
+	struct max14656_chip *chip = data;
+
+	cancel_delayed_work_sync(&chip->irq_work);
+}
+
+
+static int max14656_probe(struct i2c_client *client,
+			  const struct i2c_device_id *id)
+>>>>>>> master
 {
 	struct i2c_adapter *adapter = client->adapter;
 	struct device *dev = &client->dev;
@@ -278,10 +291,17 @@ static int max14656_probe(struct i2c_client *client)
 		return -EINVAL;
 	}
 
+<<<<<<< HEAD
 	ret = devm_delayed_work_autocancel(dev, &chip->irq_work,
 					   max14656_irq_worker);
 	if (ret) {
 		dev_err(dev, "devm_delayed_work_autocancel %d failed\n", ret);
+=======
+	INIT_DELAYED_WORK(&chip->irq_work, max14656_irq_worker);
+	ret = devm_add_action(dev, stop_irq_work, chip);
+	if (ret) {
+		dev_err(dev, "devm_add_action %d failed\n", ret);
+>>>>>>> master
 		return ret;
 	}
 

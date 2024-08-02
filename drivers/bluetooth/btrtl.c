@@ -1141,7 +1141,11 @@ next:
 	}
 
 	if (!btrtl_dev->ic_info) {
+<<<<<<< HEAD
 		rtl_dev_info(hdev, "unknown IC info, lmp subver %04x, hci rev %04x, hci ver %04x",
+=======
+		rtl_dev_info(hdev, "rtl: unknown IC info, lmp subver %04x, hci rev %04x, hci ver %04x",
+>>>>>>> master
 			    lmp_subver, hci_rev, hci_ver);
 		return btrtl_dev;
 	}
@@ -1228,9 +1232,14 @@ int btrtl_download_firmware(struct hci_dev *hdev,
 	 * to a different value.
 	 */
 	if (!btrtl_dev->ic_info) {
+<<<<<<< HEAD
 		rtl_dev_info(hdev, "assuming no firmware upload needed");
 		err = 0;
 		goto done;
+=======
+		rtl_dev_info(hdev, "rtl: assuming no firmware upload needed\n");
+		return 0;
+>>>>>>> master
 	}
 
 	switch (btrtl_dev->ic_info->lmp_subver) {

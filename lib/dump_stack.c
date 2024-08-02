@@ -102,9 +102,37 @@ asmlinkage __visible void dump_stack_lvl(const char *log_lvl)
 	 * Permit this cpu to perform nested stack dumps while serialising
 	 * against other CPUs
 	 */
+<<<<<<< HEAD
 	printk_cpu_sync_get_irqsave(flags);
 	__dump_stack(log_lvl);
 	printk_cpu_sync_put_irqrestore(flags);
+=======
+retry:
+	local_irq_save(flags);
+	cpu = smp_processor_id();
+	old = atomic_cmpxchg(&dump_lock, -1, cpu);
+	if (old == -1) {
+		was_locked = 0;
+	} else if (old == cpu) {
+		was_locked = 1;
+	} else {
+		local_irq_restore(flags);
+		/*
+		 * Wait for the lock to release before jumping to
+		 * atomic_cmpxchg() in order to mitigate the thundering herd
+		 * problem.
+		 */
+		do { cpu_relax(); } while (atomic_read(&dump_lock) != -1);
+		goto retry;
+	}
+
+	__dump_stack();
+
+	if (!was_locked)
+		atomic_set(&dump_lock, -1);
+
+	local_irq_restore(flags);
+>>>>>>> master
 }
 EXPORT_SYMBOL(dump_stack_lvl);
 

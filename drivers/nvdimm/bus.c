@@ -523,12 +523,17 @@ static void __nd_device_register(struct device *dev, bool sync)
 		set_dev_node(dev, to_nd_region(dev)->numa_node);
 
 	dev->bus = &nvdimm_bus_type;
+<<<<<<< HEAD
 	device_set_pm_not_required(dev);
 	if (dev->parent) {
 		get_device(dev->parent);
 		if (dev_to_node(dev) == NUMA_NO_NODE)
 			set_dev_node(dev, dev_to_node(dev->parent));
 	}
+=======
+	if (dev->parent)
+		get_device(dev->parent);
+>>>>>>> master
 	get_device(dev);
 
 	if (sync)
@@ -1290,7 +1295,11 @@ static const struct file_operations nvdimm_bus_fops = {
 	.owner = THIS_MODULE,
 	.open = nd_open,
 	.unlocked_ioctl = bus_ioctl,
+<<<<<<< HEAD
 	.compat_ioctl = compat_ptr_ioctl,
+=======
+	.compat_ioctl = bus_ioctl,
+>>>>>>> master
 	.llseek = noop_llseek,
 };
 
@@ -1298,7 +1307,11 @@ static const struct file_operations nvdimm_fops = {
 	.owner = THIS_MODULE,
 	.open = nd_open,
 	.unlocked_ioctl = dimm_ioctl,
+<<<<<<< HEAD
 	.compat_ioctl = compat_ptr_ioctl,
+=======
+	.compat_ioctl = dimm_ioctl,
+>>>>>>> master
 	.llseek = noop_llseek,
 };
 

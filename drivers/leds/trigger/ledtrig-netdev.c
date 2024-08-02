@@ -238,7 +238,11 @@ static int set_device_name(struct led_netdev_data *trigger_data,
 		trigger_data->net_dev = NULL;
 	}
 
+<<<<<<< HEAD
 	memcpy(trigger_data->device_name, name, size);
+=======
+	memcpy(trigger_data->device_name, buf, size);
+>>>>>>> master
 	trigger_data->device_name[size] = 0;
 	if (size > 0 && trigger_data->device_name[size - 1] == '\n')
 		trigger_data->device_name[size - 1] = 0;
@@ -444,12 +448,14 @@ static int netdev_trig_notify(struct notifier_block *nb,
 		container_of(nb, struct led_netdev_data, notifier);
 
 	if (evt != NETDEV_UP && evt != NETDEV_DOWN && evt != NETDEV_CHANGE
-	    && evt != NETDEV_REGISTER && evt != NETDEV_UNREGISTER
-	    && evt != NETDEV_CHANGENAME)
+	    && evt != NETDEV_REGISTER && evt != NETDEV_UNREGISTER)
 		return NOTIFY_DONE;
 
 	if (!(dev == trigger_data->net_dev ||
+<<<<<<< HEAD
 	      (evt == NETDEV_CHANGENAME && !strcmp(dev->name, trigger_data->device_name)) ||
+=======
+>>>>>>> master
 	      (evt == NETDEV_REGISTER && !strcmp(dev->name, trigger_data->device_name))))
 		return NOTIFY_DONE;
 

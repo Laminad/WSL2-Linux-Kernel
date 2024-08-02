@@ -221,6 +221,10 @@ static int write_metadata(struct log_writes_c *lc, void *entry,
 	bio = bio_alloc(lc->logdev->bdev, 1, REQ_OP_WRITE, GFP_KERNEL);
 	bio->bi_iter.bi_size = 0;
 	bio->bi_iter.bi_sector = sector;
+<<<<<<< HEAD
+=======
+	bio_set_dev(bio, lc->logdev->bdev);
+>>>>>>> master
 	bio->bi_end_io = (sector == WRITE_LOG_SUPER_SECTOR) ?
 			  log_end_super : log_end_io;
 	bio->bi_private = lc;

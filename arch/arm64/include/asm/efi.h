@@ -85,7 +85,32 @@ static inline unsigned long efi_get_max_initrd_addr(unsigned long image_addr)
 	return (image_addr & ~(SZ_1G - 1UL)) + (1UL << (VA_BITS_MIN - 1));
 }
 
+<<<<<<< HEAD
 static inline unsigned long efi_get_kimg_min_align(void)
+=======
+#define efi_call_early(f, ...)		sys_table_arg->boottime->f(__VA_ARGS__)
+#define __efi_call_early(f, ...)	f(__VA_ARGS__)
+#define efi_call_runtime(f, ...)	sys_table_arg->runtime->f(__VA_ARGS__)
+#define efi_is_64bit()			(true)
+
+#define efi_table_attr(table, attr, instance)				\
+	((table##_t *)instance)->attr
+
+#define efi_call_proto(protocol, f, instance, ...)			\
+	((protocol##_t *)instance)->f(instance, ##__VA_ARGS__)
+
+#define alloc_screen_info(x...)		&screen_info
+
+static inline void free_screen_info(efi_system_table_t *sys_table_arg,
+				    struct screen_info *si)
+{
+}
+
+/* redeclare as 'hidden' so the compiler will generate relative references */
+extern struct screen_info screen_info __attribute__((__visibility__("hidden")));
+
+static inline void efifb_setup_from_dmi(struct screen_info *si, const char *opt)
+>>>>>>> master
 {
 	extern bool efi_nokaslr;
 

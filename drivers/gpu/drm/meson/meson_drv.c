@@ -361,16 +361,23 @@ static int meson_drv_bind_master(struct device *dev, bool has_components)
 	ret = drm_dev_register(drm, 0);
 	if (ret)
 		goto uninstall_irq;
+<<<<<<< HEAD
 
 	drm_fbdev_dma_setup(drm, 32);
+=======
+>>>>>>> master
 
 	return 0;
 
 uninstall_irq:
+<<<<<<< HEAD
 	free_irq(priv->vsync_irq, drm);
 exit_afbcd:
 	if (priv->afbcd.ops)
 		priv->afbcd.ops->exit(priv);
+=======
+	drm_irq_uninstall(drm);
+>>>>>>> master
 free_drm:
 	drm_dev_put(drm);
 
@@ -393,6 +400,7 @@ static void meson_drv_unbind(struct device *dev)
 {
 	struct meson_drm *priv = dev_get_drvdata(dev);
 	struct drm_device *drm = priv->drm;
+<<<<<<< HEAD
 
 	if (priv->canvas) {
 		meson_canvas_free(priv->canvas, priv->canvas_id_osd1);
@@ -400,8 +408,11 @@ static void meson_drv_unbind(struct device *dev)
 		meson_canvas_free(priv->canvas, priv->canvas_id_vd1_1);
 		meson_canvas_free(priv->canvas, priv->canvas_id_vd1_2);
 	}
+=======
+>>>>>>> master
 
 	drm_dev_unregister(drm);
+	drm_irq_uninstall(drm);
 	drm_kms_helper_poll_fini(drm);
 	drm_atomic_helper_shutdown(drm);
 	free_irq(priv->vsync_irq, drm);
@@ -474,6 +485,40 @@ static const struct of_device_id components_dev_match[] = {
 	{}
 };
 
+<<<<<<< HEAD
+=======
+static int meson_probe_remote(struct platform_device *pdev,
+			      struct component_match **match,
+			      struct device_node *parent,
+			      struct device_node *remote)
+{
+	struct device_node *ep, *remote_node;
+	int count = 1;
+
+	/* If node is a connector, return and do not add to match table */
+	if (of_match_node(connectors_match, remote))
+		return 1;
+
+	component_match_add(&pdev->dev, match, compare_of, remote);
+
+	for_each_endpoint_of_node(remote, ep) {
+		remote_node = of_graph_get_remote_port_parent(ep);
+		if (!remote_node ||
+		    remote_node == parent || /* Ignore parent endpoint */
+		    !of_device_is_available(remote_node)) {
+			of_node_put(remote_node);
+			continue;
+		}
+
+		count += meson_probe_remote(pdev, match, remote, remote_node);
+
+		of_node_put(remote_node);
+	}
+
+	return count;
+}
+
+>>>>>>> master
 static int meson_drv_probe(struct platform_device *pdev)
 {
 	struct component_match *match = NULL;
@@ -488,6 +533,7 @@ static int meson_drv_probe(struct platform_device *pdev)
 			continue;
 		}
 
+<<<<<<< HEAD
 		if (of_match_node(components_dev_match, remote)) {
 			component_match_add(&pdev->dev, &match, component_compare_of, remote);
 
@@ -498,6 +544,10 @@ static int meson_drv_probe(struct platform_device *pdev)
 		of_node_put(remote);
 
 		++count;
+=======
+		count += meson_probe_remote(pdev, &match, np, remote);
+		of_node_put(remote);
+>>>>>>> master
 	}
 
 	if (count && !match)

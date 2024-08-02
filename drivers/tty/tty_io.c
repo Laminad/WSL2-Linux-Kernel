@@ -504,6 +504,8 @@ static const struct file_operations hung_up_tty_fops = {
 static DEFINE_SPINLOCK(redirect_lock);
 static struct file *redirect;
 
+extern void tty_sysctl_init(void);
+
 /**
  * tty_wakeup	-	request more data
  * @tty: terminal
@@ -2286,10 +2288,15 @@ static int tiocsti(struct tty_struct *tty, char __user *p)
 	ld = tty_ldisc_ref_wait(tty);
 	if (!ld)
 		return -EIO;
+<<<<<<< HEAD
 	tty_buffer_lock_exclusive(tty->port);
 	if (ld->ops->receive_buf)
 		ld->ops->receive_buf(tty, &ch, &mbz, 1);
 	tty_buffer_unlock_exclusive(tty->port);
+=======
+	if (ld->ops->receive_buf)
+		ld->ops->receive_buf(tty, &ch, &mbz, 1);
+>>>>>>> master
 	tty_ldisc_deref(ld);
 	return 0;
 }
@@ -3620,7 +3627,11 @@ static struct ctl_table tty_table[] = {
  */
 int __init tty_init(void)
 {
+<<<<<<< HEAD
 	register_sysctl_init("dev/tty", tty_table);
+=======
+	tty_sysctl_init();
+>>>>>>> master
 	cdev_init(&tty_cdev, &tty_fops);
 	if (cdev_add(&tty_cdev, MKDEV(TTYAUX_MAJOR, 0), 1) ||
 	    register_chrdev_region(MKDEV(TTYAUX_MAJOR, 0), 1, "/dev/tty") < 0)

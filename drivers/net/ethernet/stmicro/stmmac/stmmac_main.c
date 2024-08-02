@@ -537,7 +537,10 @@ static void stmmac_get_tx_hwtstamp(struct stmmac_priv *priv,
 				   struct dma_desc *p, struct sk_buff *skb)
 {
 	struct skb_shared_hwtstamps shhwtstamp;
+<<<<<<< HEAD
 	bool found = false;
+=======
+>>>>>>> master
 	u64 ns = 0;
 
 	if (!priv->hwts_tx_en)
@@ -627,6 +630,14 @@ static int stmmac_hwtstamp_set(struct net_device *dev, struct ifreq *ifr)
 	u32 snap_type_sel = 0;
 	u32 ts_master_en = 0;
 	u32 ts_event_en = 0;
+<<<<<<< HEAD
+=======
+	u32 sec_inc = 0;
+	u32 value = 0;
+	bool xmac;
+
+	xmac = priv->plat->has_gmac4 || priv->plat->has_xgmac;
+>>>>>>> master
 
 	if (!(priv->dma_cap.time_stamp || priv->adv_ts)) {
 		netdev_alert(priv->dev, "No support for HW time stamping\n");
@@ -1353,6 +1364,7 @@ static void stmmac_clear_rx_descriptors(struct stmmac_priv *priv,
 		if (priv->extend_desc)
 			stmmac_init_rx_desc(priv, &rx_q->dma_erx[i].basic,
 					priv->use_riwt, priv->mode,
+<<<<<<< HEAD
 					(i == dma_conf->dma_rx_size - 1),
 					dma_conf->dma_buf_sz);
 		else
@@ -1360,6 +1372,15 @@ static void stmmac_clear_rx_descriptors(struct stmmac_priv *priv,
 					priv->use_riwt, priv->mode,
 					(i == dma_conf->dma_rx_size - 1),
 					dma_conf->dma_buf_sz);
+=======
+					(i == DMA_RX_SIZE - 1),
+					priv->dma_buf_sz);
+		else
+			stmmac_init_rx_desc(priv, &rx_q->dma_rx[i],
+					priv->use_riwt, priv->mode,
+					(i == DMA_RX_SIZE - 1),
+					priv->dma_buf_sz);
+>>>>>>> master
 }
 
 /**
@@ -2950,10 +2971,15 @@ static int stmmac_init_dma_engine(struct stmmac_priv *priv)
 		stmmac_axi(priv, priv->ioaddr, priv->plat->axi);
 
 	/* DMA CSR Channel configuration */
+<<<<<<< HEAD
 	for (chan = 0; chan < dma_csr_ch; chan++) {
 		stmmac_init_chan(priv, priv->ioaddr, priv->plat->dma_cfg, chan);
 		stmmac_disable_dma_irq(priv, priv->ioaddr, chan, 1, 1);
 	}
+=======
+	for (chan = 0; chan < dma_csr_ch; chan++)
+		stmmac_init_chan(priv, priv->ioaddr, priv->plat->dma_cfg, chan);
+>>>>>>> master
 
 	/* DMA RX Channel Configuration */
 	for (chan = 0; chan < rx_channels_count; chan++) {
@@ -3367,6 +3393,7 @@ static int stmmac_hw_setup(struct net_device *dev, bool ptp_register)
 				    ERR_PTR(ret));
 	}
 
+<<<<<<< HEAD
 	ret = stmmac_init_ptp(priv);
 	if (ret == -EOPNOTSUPP)
 		netdev_info(priv->dev, "PTP not supported by HW\n");
@@ -3380,6 +3407,9 @@ static int stmmac_hw_setup(struct net_device *dev, bool ptp_register)
 	/* Convert the timer from msec to usec */
 	if (!priv->tx_lpi_timer)
 		priv->tx_lpi_timer = eee_timer * 1000;
+=======
+	priv->tx_lpi_timer = STMMAC_DEFAULT_TWT_LS;
+>>>>>>> master
 
 	if (priv->use_riwt) {
 		u32 queue;
@@ -3815,6 +3845,7 @@ static int __stmmac_open(struct net_device *dev,
 	u32 chan;
 	int ret;
 
+<<<<<<< HEAD
 	ret = pm_runtime_resume_and_get(priv->device);
 	if (ret < 0)
 		return ret;
@@ -3824,6 +3855,11 @@ static int __stmmac_open(struct net_device *dev,
 	    (!priv->hw->xpcs ||
 	     xpcs_get_an_mode(priv->hw->xpcs, mode) != DW_AN_C73) &&
 	    !priv->hw->lynx_pcs) {
+=======
+	if (priv->hw->pcs != STMMAC_PCS_RGMII &&
+	    priv->hw->pcs != STMMAC_PCS_TBI &&
+	    priv->hw->pcs != STMMAC_PCS_RTBI) {
+>>>>>>> master
 		ret = stmmac_init_phy(dev);
 		if (ret) {
 			netdev_err(priv->dev,
@@ -3964,8 +4000,11 @@ static int stmmac_release(struct net_device *dev)
 	if (priv->plat->serdes_powerdown)
 		priv->plat->serdes_powerdown(dev, priv->plat->bsp_priv);
 
+<<<<<<< HEAD
 	netif_carrier_off(dev);
 
+=======
+>>>>>>> master
 	stmmac_release_ptp(priv);
 
 	pm_runtime_put(priv->device);
@@ -4291,8 +4330,23 @@ static netdev_tx_t stmmac_tso_xmit(struct sk_buff *skb, struct net_device *dev)
 		u64_stats_inc(&txq_stats->q.tx_set_ic_bit);
 	u64_stats_update_end(&txq_stats->q_syncp);
 
+<<<<<<< HEAD
 	if (priv->sarc_type)
 		stmmac_set_desc_sarc(priv, first, priv->sarc_type);
+=======
+	/* Manage tx mitigation */
+	tx_q->tx_count_frames += nfrags + 1;
+	if (likely(priv->tx_coal_frames > tx_q->tx_count_frames) &&
+	    !(priv->synopsys_id >= DWMAC_CORE_4_00 &&
+	    (skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP) &&
+	    priv->hwts_tx_en)) {
+		stmmac_tx_timer_arm(priv, queue);
+	} else {
+		tx_q->tx_count_frames = 0;
+		stmmac_set_tx_ic(priv, desc);
+		priv->xstats.tx_set_ic_bit++;
+	}
+>>>>>>> master
 
 	skb_tx_timestamp(skb);
 
@@ -4397,6 +4451,9 @@ static netdev_tx_t stmmac_xmit(struct sk_buff *skb, struct net_device *dev)
 	if (priv->tx_path_in_lpi_mode && priv->eee_sw_timer_en)
 		stmmac_disable_eee_mode(priv);
 
+	if (priv->tx_path_in_lpi_mode)
+		stmmac_disable_eee_mode(priv);
+
 	/* Manage oversized TCP frames for GMAC4 device */
 	if (skb_is_gso(skb) && priv->tso) {
 		if (gso & (SKB_GSO_TCPV4 | SKB_GSO_TCPV6))
@@ -4417,9 +4474,12 @@ static netdev_tx_t stmmac_xmit(struct sk_buff *skb, struct net_device *dev)
 		return NETDEV_TX_BUSY;
 	}
 
+<<<<<<< HEAD
 	/* Check if VLAN can be inserted by HW */
 	has_vlan = stmmac_vlan_insert(priv, skb, tx_q);
 
+=======
+>>>>>>> master
 	entry = tx_q->cur_tx;
 	first_entry = entry;
 	WARN_ON(tx_q->tx_skbuff[first_entry]);
@@ -4563,8 +4623,27 @@ static netdev_tx_t stmmac_xmit(struct sk_buff *skb, struct net_device *dev)
 		u64_stats_inc(&txq_stats->q.tx_set_ic_bit);
 	u64_stats_update_end(&txq_stats->q_syncp);
 
+<<<<<<< HEAD
 	if (priv->sarc_type)
 		stmmac_set_desc_sarc(priv, first, priv->sarc_type);
+=======
+	/* According to the coalesce parameter the IC bit for the latest
+	 * segment is reset and the timer re-started to clean the tx status.
+	 * This approach takes care about the fragments: desc is the first
+	 * element in case of no SG.
+	 */
+	tx_q->tx_count_frames += nfrags + 1;
+	if (likely(priv->tx_coal_frames > tx_q->tx_count_frames) &&
+	    !(priv->synopsys_id >= DWMAC_CORE_4_00 &&
+	    (skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP) &&
+	    priv->hwts_tx_en)) {
+		stmmac_tx_timer_arm(priv, queue);
+	} else {
+		tx_q->tx_count_frames = 0;
+		stmmac_set_tx_ic(priv, desc);
+		priv->xstats.tx_set_ic_bit++;
+	}
+>>>>>>> master
 
 	skb_tx_timestamp(skb);
 
@@ -4600,6 +4679,7 @@ static netdev_tx_t stmmac_xmit(struct sk_buff *skb, struct net_device *dev)
 		stmmac_prepare_tx_desc(priv, first, 1, nopaged_len,
 				csum_insertion, priv->mode, 0, last_segment,
 				skb->len);
+<<<<<<< HEAD
 	}
 
 	if (tx_q->tbs & STMMAC_TBS_EN) {
@@ -4610,6 +4690,17 @@ static netdev_tx_t stmmac_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 
 	stmmac_set_tx_owner(priv, first);
+=======
+	} else {
+		stmmac_set_tx_owner(priv, first);
+	}
+
+	/* The own bit must be the latest setting done when prepare the
+	 * descriptor and then barrier is needed to make sure that
+	 * all is coherent before granting the DMA engine.
+	 */
+	wmb();
+>>>>>>> master
 
 	netdev_tx_sent_queue(netdev_get_tx_queue(dev, queue), skb->len);
 
@@ -4711,6 +4802,7 @@ static inline void stmmac_rx_refill(struct stmmac_priv *priv, u32 queue)
 		entry = STMMAC_GET_ENTRY(entry, priv->dma_conf.dma_rx_size);
 	}
 	rx_q->dirty_rx = entry;
+<<<<<<< HEAD
 	rx_q->rx_tail_addr = rx_q->dma_rx_phy +
 			    (rx_q->dirty_rx * sizeof(struct dma_desc));
 	stmmac_set_rx_tail_ptr(priv, priv->ioaddr, rx_q->rx_tail_addr, queue);
@@ -5259,6 +5351,9 @@ read_again:
 	}
 
 	return failure ? limit : (int)count;
+=======
+	stmmac_set_rx_tail_ptr(priv, priv->ioaddr, rx_q->rx_tail_addr, queue);
+>>>>>>> master
 }
 
 /**
@@ -5275,6 +5370,7 @@ static int stmmac_rx(struct stmmac_priv *priv, int limit, u32 queue)
 	struct stmmac_rxq_stats *rxq_stats = &priv->xstats.rxq_stats[queue];
 	struct stmmac_rx_queue *rx_q = &priv->dma_conf.rx_queue[queue];
 	struct stmmac_channel *ch = &priv->channel[queue];
+<<<<<<< HEAD
 	unsigned int count = 0, error = 0, len = 0;
 	int status = 0, coe = priv->hw->rx_csum;
 	unsigned int next_entry = rx_q->cur_rx;
@@ -5284,6 +5380,12 @@ static int stmmac_rx(struct stmmac_priv *priv, int limit, u32 queue)
 	struct stmmac_xdp_buff ctx;
 	int xdp_status = 0;
 	int buf_sz;
+=======
+	unsigned int next_entry = rx_q->cur_rx;
+	int coe = priv->hw->rx_csum;
+	unsigned int count = 0;
+	bool xmac;
+>>>>>>> master
 
 	dma_dir = page_pool_get_dma_dir(rx_q->page_pool);
 	buf_sz = DIV_ROUND_UP(priv->dma_conf.dma_buf_sz, PAGE_SIZE) * PAGE_SIZE;
@@ -5305,6 +5407,7 @@ static int stmmac_rx(struct stmmac_priv *priv, int limit, u32 queue)
 				    rx_q->dma_rx_phy, desc_size);
 	}
 	while (count < limit) {
+<<<<<<< HEAD
 		unsigned int buf1_len = 0, buf2_len = 0;
 		enum pkt_hash_types hash_type;
 		struct stmmac_rx_buffer *buf;
@@ -5331,6 +5434,13 @@ read_again:
 		buf2_len = 0;
 		entry = next_entry;
 		buf = &rx_q->buf_pool[entry];
+=======
+		int entry, status;
+		struct dma_desc *p;
+		struct dma_desc *np;
+>>>>>>> master
+
+		entry = next_entry;
 
 		if (priv->extend_desc)
 			p = (struct dma_desc *)(rx_q->dma_erx + entry);
@@ -5357,6 +5467,7 @@ read_again:
 		if (priv->extend_desc)
 			stmmac_rx_extended_status(priv, &priv->xstats, rx_q->dma_erx + entry);
 		if (unlikely(status == discard_frame)) {
+<<<<<<< HEAD
 			page_pool_recycle_direct(rx_q->page_pool, buf->page);
 			buf->page = NULL;
 			error = 1;
@@ -5521,6 +5632,135 @@ drain_data:
 		rx_packets++;
 		rx_bytes += len;
 		count++;
+=======
+			priv->dev->stats.rx_errors++;
+			if (priv->hwts_rx_en && !priv->extend_desc) {
+				/* DESC2 & DESC3 will be overwritten by device
+				 * with timestamp value, hence reinitialize
+				 * them in stmmac_rx_refill() function so that
+				 * device can reuse it.
+				 */
+				dev_kfree_skb_any(rx_q->rx_skbuff[entry]);
+				rx_q->rx_skbuff[entry] = NULL;
+				dma_unmap_single(priv->device,
+						 rx_q->rx_skbuff_dma[entry],
+						 priv->dma_buf_sz,
+						 DMA_FROM_DEVICE);
+			}
+		} else {
+			struct sk_buff *skb;
+			int frame_len;
+			unsigned int des;
+
+			stmmac_get_desc_addr(priv, p, &des);
+			frame_len = stmmac_get_rx_frame_len(priv, p, coe);
+
+			/*  If frame length is greater than skb buffer size
+			 *  (preallocated during init) then the packet is
+			 *  ignored
+			 */
+			if (frame_len > priv->dma_buf_sz) {
+				if (net_ratelimit())
+					netdev_err(priv->dev,
+						   "len %d larger than size (%d)\n",
+						   frame_len, priv->dma_buf_sz);
+				priv->dev->stats.rx_length_errors++;
+				continue;
+			}
+
+			/* ACS is set; GMAC core strips PAD/FCS for IEEE 802.3
+			 * Type frames (LLC/LLC-SNAP)
+			 *
+			 * llc_snap is never checked in GMAC >= 4, so this ACS
+			 * feature is always disabled and packets need to be
+			 * stripped manually.
+			 */
+			if (unlikely(priv->synopsys_id >= DWMAC_CORE_4_00) ||
+			    unlikely(status != llc_snap))
+				frame_len -= ETH_FCS_LEN;
+
+			if (netif_msg_rx_status(priv)) {
+				netdev_dbg(priv->dev, "\tdesc: %p [entry %d] buff=0x%x\n",
+					   p, entry, des);
+				netdev_dbg(priv->dev, "frame size %d, COE: %d\n",
+					   frame_len, status);
+			}
+
+			/* The zero-copy is always used for all the sizes
+			 * in case of GMAC4 because it needs
+			 * to refill the used descriptors, always.
+			 */
+			if (unlikely(!xmac &&
+				     ((frame_len < priv->rx_copybreak) ||
+				     stmmac_rx_threshold_count(rx_q)))) {
+				skb = netdev_alloc_skb_ip_align(priv->dev,
+								frame_len);
+				if (unlikely(!skb)) {
+					if (net_ratelimit())
+						dev_warn(priv->device,
+							 "packet dropped\n");
+					priv->dev->stats.rx_dropped++;
+					continue;
+				}
+
+				dma_sync_single_for_cpu(priv->device,
+							rx_q->rx_skbuff_dma
+							[entry], frame_len,
+							DMA_FROM_DEVICE);
+				skb_copy_to_linear_data(skb,
+							rx_q->
+							rx_skbuff[entry]->data,
+							frame_len);
+
+				skb_put(skb, frame_len);
+				dma_sync_single_for_device(priv->device,
+							   rx_q->rx_skbuff_dma
+							   [entry], frame_len,
+							   DMA_FROM_DEVICE);
+			} else {
+				skb = rx_q->rx_skbuff[entry];
+				if (unlikely(!skb)) {
+					if (net_ratelimit())
+						netdev_err(priv->dev,
+							   "%s: Inconsistent Rx chain\n",
+							   priv->dev->name);
+					priv->dev->stats.rx_dropped++;
+					continue;
+				}
+				prefetch(skb->data - NET_IP_ALIGN);
+				rx_q->rx_skbuff[entry] = NULL;
+				rx_q->rx_zeroc_thresh++;
+
+				skb_put(skb, frame_len);
+				dma_unmap_single(priv->device,
+						 rx_q->rx_skbuff_dma[entry],
+						 priv->dma_buf_sz,
+						 DMA_FROM_DEVICE);
+			}
+
+			if (netif_msg_pktdata(priv)) {
+				netdev_dbg(priv->dev, "frame received (%dbytes)",
+					   frame_len);
+				print_pkt(skb->data, frame_len);
+			}
+
+			stmmac_get_rx_hwtstamp(priv, p, np, skb);
+
+			stmmac_rx_vlan(priv->dev, skb);
+
+			skb->protocol = eth_type_trans(skb, priv->dev);
+
+			if (unlikely(!coe))
+				skb_checksum_none_assert(skb);
+			else
+				skb->ip_summed = CHECKSUM_UNNECESSARY;
+
+			napi_gro_receive(&ch->napi, skb);
+
+			priv->dev->stats.rx_packets++;
+			priv->dev->stats.rx_bytes += frame_len;
+		}
+>>>>>>> master
 	}
 
 	if (status & rx_not_ls || skb) {
@@ -5551,7 +5791,11 @@ static int stmmac_napi_poll_rx(struct napi_struct *napi, int budget)
 	struct stmmac_channel *ch =
 		container_of(napi, struct stmmac_channel, rx_napi);
 	struct stmmac_priv *priv = ch->priv_data;
+<<<<<<< HEAD
 	struct stmmac_rxq_stats *rxq_stats;
+=======
+	int work_done, rx_done = 0, tx_done = 0;
+>>>>>>> master
 	u32 chan = ch->index;
 	int work_done;
 
@@ -5560,6 +5804,7 @@ static int stmmac_napi_poll_rx(struct napi_struct *napi, int budget)
 	u64_stats_inc(&rxq_stats->napi.poll);
 	u64_stats_update_end(&rxq_stats->napi_syncp);
 
+<<<<<<< HEAD
 	work_done = stmmac_rx(priv, budget, chan);
 	if (work_done < budget && napi_complete_done(napi, work_done)) {
 		unsigned long flags;
@@ -5569,6 +5814,26 @@ static int stmmac_napi_poll_rx(struct napi_struct *napi, int budget)
 		spin_unlock_irqrestore(&ch->lock, flags);
 	}
 
+=======
+	if (ch->has_tx)
+		tx_done = stmmac_tx_clean(priv, budget, chan);
+	if (ch->has_rx)
+		rx_done = stmmac_rx(priv, budget, chan);
+
+	work_done = max(rx_done, tx_done);
+	work_done = min(work_done, budget);
+
+	if (work_done < budget && napi_complete_done(napi, work_done)) {
+		int stat;
+
+		stmmac_enable_dma_irq(priv, priv->ioaddr, chan);
+		stat = stmmac_dma_interrupt_status(priv, priv->ioaddr,
+						   &priv->xstats, chan);
+		if (stat && napi_reschedule(napi))
+			stmmac_disable_dma_irq(priv, priv->ioaddr, chan);
+	}
+
+>>>>>>> master
 	return work_done;
 }
 
@@ -6098,6 +6363,7 @@ static int stmmac_setup_tc(struct net_device *ndev, enum tc_setup_type type,
 }
 
 static u16 stmmac_select_queue(struct net_device *dev, struct sk_buff *skb,
+<<<<<<< HEAD
 			       struct net_device *sb_dev)
 {
 	int gso = skb_shinfo(skb)->gso_type;
@@ -6107,12 +6373,26 @@ static u16 stmmac_select_queue(struct net_device *dev, struct sk_buff *skb,
 		 * There is no way to determine the number of TSO/USO
 		 * capable Queues. Let's use always the Queue 0
 		 * because if TSO/USO is supported then at least this
+=======
+			       struct net_device *sb_dev,
+			       select_queue_fallback_t fallback)
+{
+	if (skb_shinfo(skb)->gso_type & (SKB_GSO_TCPV4 | SKB_GSO_TCPV6)) {
+		/*
+		 * There is no way to determine the number of TSO
+		 * capable Queues. Let's use always the Queue 0
+		 * because if TSO is supported then at least this
+>>>>>>> master
 		 * one will be capable.
 		 */
 		return 0;
 	}
 
+<<<<<<< HEAD
 	return netdev_pick_tx(dev, skb, NULL) % dev->real_num_tx_queues;
+=======
+	return fallback(dev, skb, NULL) % dev->real_num_tx_queues;
+>>>>>>> master
 }
 
 static int stmmac_set_mac_address(struct net_device *ndev, void *addr)
@@ -6972,6 +7252,12 @@ static const struct net_device_ops stmmac_netdev_ops = {
 	.ndo_get_stats64 = stmmac_get_stats64,
 	.ndo_setup_tc = stmmac_setup_tc,
 	.ndo_select_queue = stmmac_select_queue,
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_NET_POLL_CONTROLLER
+	.ndo_poll_controller = stmmac_poll_controller,
+#endif
+>>>>>>> master
 	.ndo_set_mac_address = stmmac_set_mac_address,
 	.ndo_vlan_rx_add_vid = stmmac_vlan_rx_add_vid,
 	.ndo_vlan_rx_kill_vid = stmmac_vlan_rx_kill_vid,
@@ -7389,7 +7675,11 @@ int stmmac_dvr_probe(struct device *device,
 	if (!priv->wq) {
 		dev_err(priv->device, "failed to create workqueue\n");
 		ret = -ENOMEM;
+<<<<<<< HEAD
 		goto error_wq_init;
+=======
+		goto error_wq;
+>>>>>>> master
 	}
 
 	INIT_WORK(&priv->service_task, stmmac_service_task);
@@ -7426,12 +7716,20 @@ int stmmac_dvr_probe(struct device *device,
 	if (ret)
 		goto error_hw_init;
 
+<<<<<<< HEAD
 	/* Only DWMAC core version 5.20 onwards supports HW descriptor prefetch.
 	 */
 	if (priv->synopsys_id < DWMAC_CORE_5_20)
 		priv->plat->dma_cfg->dche = false;
 
 	stmmac_check_ether_addr(priv);
+=======
+	stmmac_check_ether_addr(priv);
+
+	/* Configure real RX and TX queues */
+	netif_set_real_num_rx_queues(ndev, priv->plat->rx_queues_to_use);
+	netif_set_real_num_tx_queues(ndev, priv->plat->tx_queues_to_use);
+>>>>>>> master
 
 	ndev->netdev_ops = &stmmac_netdev_ops;
 
@@ -7551,8 +7849,11 @@ int stmmac_dvr_probe(struct device *device,
 	if (flow_ctrl)
 		priv->flow_ctrl = FLOW_AUTO;	/* RX/TX pause on */
 
+<<<<<<< HEAD
 	ndev->priv_flags |= IFF_LIVE_ADDR_CHANGE;
 
+=======
+>>>>>>> master
 	/* Setup channels NAPI */
 	stmmac_napi_add(ndev);
 
@@ -7611,6 +7912,7 @@ int stmmac_dvr_probe(struct device *device,
 	}
 
 #ifdef CONFIG_DEBUG_FS
+<<<<<<< HEAD
 	stmmac_init_fs(ndev);
 #endif
 
@@ -7622,6 +7924,14 @@ int stmmac_dvr_probe(struct device *device,
 	 */
 	pm_runtime_put(device);
 
+=======
+	ret = stmmac_init_fs(ndev);
+	if (ret < 0)
+		netdev_warn(priv->dev, "%s: failed debugFS registration\n",
+			    __func__);
+#endif
+
+>>>>>>> master
 	return ret;
 
 error_netdev_register:
@@ -7655,7 +7965,14 @@ void stmmac_dvr_remove(struct device *dev)
 
 	netdev_info(priv->dev, "%s: removing driver", __func__);
 
+<<<<<<< HEAD
 	pm_runtime_get_sync(dev);
+=======
+#ifdef CONFIG_DEBUG_FS
+	stmmac_exit_fs(ndev);
+#endif
+	stmmac_stop_all_dma(priv);
+>>>>>>> master
 
 	stmmac_stop_all_dma(priv);
 	stmmac_mac_set(priv, priv->ioaddr, false);
@@ -7724,6 +8041,14 @@ int stmmac_suspend(struct device *dev)
 	} else {
 		stmmac_mac_set(priv, priv->ioaddr, false);
 		pinctrl_pm_select_sleep_state(priv->device);
+<<<<<<< HEAD
+=======
+		/* Disable clock in case of PWM is off */
+		if (priv->plat->clk_ptp_ref)
+			clk_disable_unprepare(priv->plat->clk_ptp_ref);
+		clk_disable_unprepare(priv->plat->pclk);
+		clk_disable_unprepare(priv->plat->stmmac_clk);
+>>>>>>> master
 	}
 
 	mutex_unlock(&priv->lock);
@@ -7818,6 +8143,14 @@ int stmmac_resume(struct device *dev)
 		priv->irq_wake = 0;
 	} else {
 		pinctrl_pm_select_default_state(priv->device);
+<<<<<<< HEAD
+=======
+		/* enable the clk previously disabled */
+		clk_prepare_enable(priv->plat->stmmac_clk);
+		clk_prepare_enable(priv->plat->pclk);
+		if (priv->plat->clk_ptp_ref)
+			clk_prepare_enable(priv->plat->clk_ptp_ref);
+>>>>>>> master
 		/* reset the phy so that it's ready */
 		if (priv->mii)
 			stmmac_mdio_reset(priv->mii);

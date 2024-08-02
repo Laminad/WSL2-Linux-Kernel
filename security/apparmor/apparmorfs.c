@@ -153,16 +153,34 @@ static int aafs_show_path(struct seq_file *seq, struct dentry *dentry)
 	return 0;
 }
 
+<<<<<<< HEAD
 static void aafs_free_inode(struct inode *inode)
 {
 	if (S_ISLNK(inode->i_mode))
 		kfree(inode->i_link);
 	free_inode_nonrcu(inode);
+=======
+static void aafs_i_callback(struct rcu_head *head)
+{
+	struct inode *inode = container_of(head, struct inode, i_rcu);
+	if (S_ISLNK(inode->i_mode))
+		kfree(inode->i_link);
+	free_inode_nonrcu(inode);
+}
+
+static void aafs_destroy_inode(struct inode *inode)
+{
+	call_rcu(&inode->i_rcu, aafs_i_callback);
+>>>>>>> master
 }
 
 static const struct super_operations aafs_super_ops = {
 	.statfs = simple_statfs,
+<<<<<<< HEAD
 	.free_inode = aafs_free_inode,
+=======
+	.destroy_inode = aafs_destroy_inode,
+>>>>>>> master
 	.show_path = aafs_show_path,
 };
 

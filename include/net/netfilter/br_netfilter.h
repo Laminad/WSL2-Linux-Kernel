@@ -52,8 +52,12 @@ static inline struct rtable *bridge_parent_rtable(const struct net_device *dev)
 #endif
 }
 
+<<<<<<< HEAD
 struct net_device *setup_pre_routing(struct sk_buff *skb,
 				     const struct net *net);
+=======
+struct net_device *setup_pre_routing(struct sk_buff *skb);
+>>>>>>> master
 
 #if IS_ENABLED(CONFIG_IPV6)
 int br_validate_ipv6(struct net *net, struct sk_buff *skb);

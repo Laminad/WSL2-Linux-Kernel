@@ -54,7 +54,10 @@ static const struct regmap_config hmc5843_i2c_regmap_config = {
 
 static int hmc5843_i2c_probe(struct i2c_client *cli)
 {
+<<<<<<< HEAD
 	const struct i2c_device_id *id = i2c_client_get_device_id(cli);
+=======
+>>>>>>> master
 	struct regmap *regmap = devm_regmap_init_i2c(cli,
 			&hmc5843_i2c_regmap_config);
 	if (IS_ERR(regmap))

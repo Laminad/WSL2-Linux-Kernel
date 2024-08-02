@@ -789,6 +789,7 @@ int dso__synthesize_plt_symbols(struct dso *dso, struct symsrc *ss)
 
 	ri.is_rela = shdr_rel_plt.sh_type == SHT_RELA;
 
+<<<<<<< HEAD
 	if (lazy_plt) {
 		/*
 		 * Assume a .plt with the same number of entries as the number
@@ -798,6 +799,22 @@ int dso__synthesize_plt_symbols(struct dso *dso, struct symsrc *ss)
 			dso__delete_symbol(dso, plt_sym);
 		else
 			plt_offset += plt_header_size;
+=======
+		case EM_SPARC:
+			plt_header_size = 48;
+			plt_entry_size = 12;
+			break;
+
+		case EM_SPARCV9:
+			plt_header_size = 128;
+			plt_entry_size = 32;
+			break;
+
+		default: /* FIXME: s390/alpha/mips/parisc/poperpc/sh/xtensa need to be checked */
+			plt_header_size = shdr_plt.sh_entsize;
+			plt_entry_size = shdr_plt.sh_entsize;
+			break;
+>>>>>>> master
 	}
 
 	/*

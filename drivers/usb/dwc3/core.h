@@ -701,6 +701,10 @@ struct dwc3_event_buffer {
  * @cancelled_list: list of cancelled requests for this endpoint
  * @pending_list: list of pending requests for this endpoint
  * @started_list: list of started requests on this endpoint
+<<<<<<< HEAD
+=======
+ * @lock: spinlock for endpoint request queue traversal
+>>>>>>> master
  * @regs: pointer to first endpoint register
  * @trb_pool: array of transaction buffers
  * @trb_pool_dma: dma address of @trb_pool
@@ -728,6 +732,10 @@ struct dwc3_ep {
 	struct list_head	pending_list;
 	struct list_head	started_list;
 
+<<<<<<< HEAD
+=======
+	spinlock_t		lock;
+>>>>>>> master
 	void __iomem		*regs;
 
 	struct dwc3_trb		*trb_pool;
@@ -933,6 +941,10 @@ struct dwc3_hwparams {
  *	or unaligned OUT)
  * @direction: IN or OUT direction flag
  * @mapped: true when request has been dma-mapped
+<<<<<<< HEAD
+=======
+ * @started: request is started
+>>>>>>> master
  */
 struct dwc3_request {
 	struct usb_request	request;
@@ -958,11 +970,20 @@ struct dwc3_request {
 	struct dwc3_trb		*trb;
 	dma_addr_t		trb_dma;
 
+<<<<<<< HEAD
 	unsigned int		num_trbs;
 
 	unsigned int		needs_extra_trb:1;
 	unsigned int		direction:1;
 	unsigned int		mapped:1;
+=======
+	unsigned		num_trbs;
+
+	unsigned		needs_extra_trb:1;
+	unsigned		direction:1;
+	unsigned		mapped:1;
+	unsigned		started:1;
+>>>>>>> master
 };
 
 /*

@@ -89,6 +89,21 @@ static irqreturn_t ip6_action(int cpl, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+<<<<<<< HEAD:arch/mips/loongson2ef/lemote-2f/irq.c
+=======
+static struct irqaction ip6_irqaction = {
+	.handler = ip6_action,
+	.name = "cascade",
+	.flags = IRQF_SHARED | IRQF_NO_THREAD,
+};
+
+static struct irqaction cascade_irqaction = {
+	.handler = no_action,
+	.name = "cascade",
+	.flags = IRQF_NO_THREAD | IRQF_NO_SUSPEND,
+};
+
+>>>>>>> master:arch/mips/loongson64/lemote-2f/irq.c
 void __init mach_init_irq(void)
 {
 	/* init all controller

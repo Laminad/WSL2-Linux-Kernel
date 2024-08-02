@@ -75,7 +75,11 @@ static inline void mips_get_syscall_arg(unsigned long *arg,
 	case 4: case 5: case 6: case 7:
 #ifdef CONFIG_MIPS32_O32
 		if (test_tsk_thread_flag(task, TIF_32BIT_REGS))
+<<<<<<< HEAD
 			get_user(*arg, (int *)usp + n);
+=======
+			return get_user(*arg, (int *)usp + n);
+>>>>>>> master
 		else
 #endif
 			*arg = regs->regs[4 + n];

@@ -135,6 +135,7 @@ int __weak of_node_to_nid(struct device_node *np)
 }
 #endif
 
+<<<<<<< HEAD
 #define OF_PHANDLE_CACHE_BITS	7
 #define OF_PHANDLE_CACHE_SZ	BIT(OF_PHANDLE_CACHE_BITS)
 
@@ -145,10 +146,76 @@ static u32 of_phandle_cache_hash(phandle handle)
 	return hash_32(handle, OF_PHANDLE_CACHE_BITS);
 }
 
+=======
+>>>>>>> master
 /*
  * Caller must hold devtree_lock.
  */
+<<<<<<< HEAD
 void __of_phandle_cache_inv_entry(phandle handle)
+=======
+
+static struct device_node **phandle_cache;
+static u32 phandle_cache_mask;
+
+/*
+ * Caller must hold devtree_lock.
+ */
+static void __of_free_phandle_cache(void)
+{
+	u32 cache_entries = phandle_cache_mask + 1;
+	u32 k;
+
+	if (!phandle_cache)
+		return;
+
+	for (k = 0; k < cache_entries; k++)
+		of_node_put(phandle_cache[k]);
+
+	kfree(phandle_cache);
+	phandle_cache = NULL;
+}
+
+int of_free_phandle_cache(void)
+{
+	unsigned long flags;
+
+	raw_spin_lock_irqsave(&devtree_lock, flags);
+
+	__of_free_phandle_cache();
+
+	raw_spin_unlock_irqrestore(&devtree_lock, flags);
+
+	return 0;
+}
+#if !defined(CONFIG_MODULES)
+late_initcall_sync(of_free_phandle_cache);
+#endif
+
+/*
+ * Caller must hold devtree_lock.
+ */
+void __of_free_phandle_cache_entry(phandle handle)
+{
+	phandle masked_handle;
+	struct device_node *np;
+
+	if (!handle)
+		return;
+
+	masked_handle = handle & phandle_cache_mask;
+
+	if (phandle_cache) {
+		np = phandle_cache[masked_handle];
+		if (np && handle == np->phandle) {
+			of_node_put(np);
+			phandle_cache[masked_handle] = NULL;
+		}
+	}
+}
+
+void of_populate_phandle_cache(void)
+>>>>>>> master
 {
 	u32 handle_hash;
 	struct device_node *np;
@@ -156,11 +223,39 @@ void __of_phandle_cache_inv_entry(phandle handle)
 	if (!handle)
 		return;
 
+<<<<<<< HEAD
 	handle_hash = of_phandle_cache_hash(handle);
 
 	np = phandle_cache[handle_hash];
 	if (np && handle == np->phandle)
 		phandle_cache[handle_hash] = NULL;
+=======
+	__of_free_phandle_cache();
+
+	for_each_of_allnodes(np)
+		if (np->phandle && np->phandle != OF_PHANDLE_ILLEGAL)
+			phandles++;
+
+	if (!phandles)
+		goto out;
+
+	cache_entries = roundup_pow_of_two(phandles);
+	phandle_cache_mask = cache_entries - 1;
+
+	phandle_cache = kcalloc(cache_entries, sizeof(*phandle_cache),
+				GFP_ATOMIC);
+	if (!phandle_cache)
+		goto out;
+
+	for_each_of_allnodes(np)
+		if (np->phandle && np->phandle != OF_PHANDLE_ILLEGAL) {
+			of_node_get(np);
+			phandle_cache[np->phandle & phandle_cache_mask] = np;
+		}
+
+out:
+	raw_spin_unlock_irqrestore(&devtree_lock, flags);
+>>>>>>> master
 }
 
 void __init of_core_init(void)
@@ -1072,15 +1167,39 @@ struct device_node *of_find_node_by_phandle(phandle handle)
 
 	raw_spin_lock_irqsave(&devtree_lock, flags);
 
+<<<<<<< HEAD
 	if (phandle_cache[handle_hash] &&
 	    handle == phandle_cache[handle_hash]->phandle)
 		np = phandle_cache[handle_hash];
+=======
+	masked_handle = handle & phandle_cache_mask;
+
+	if (phandle_cache) {
+		if (phandle_cache[masked_handle] &&
+		    handle == phandle_cache[masked_handle]->phandle)
+			np = phandle_cache[masked_handle];
+		if (np && of_node_check_flag(np, OF_DETACHED)) {
+			WARN_ON(1); /* did not uncache np on node removal */
+			of_node_put(np);
+			phandle_cache[masked_handle] = NULL;
+			np = NULL;
+		}
+	}
+>>>>>>> master
 
 	if (!np) {
 		for_each_of_allnodes(np)
 			if (np->phandle == handle &&
 			    !of_node_check_flag(np, OF_DETACHED)) {
+<<<<<<< HEAD
 				phandle_cache[handle_hash] = np;
+=======
+				if (phandle_cache) {
+					/* will put when removed from cache */
+					of_node_get(np);
+					phandle_cache[masked_handle] = np;
+				}
+>>>>>>> master
 				break;
 			}
 	}

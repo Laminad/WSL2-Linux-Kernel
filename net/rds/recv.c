@@ -811,7 +811,11 @@ void rds6_inc_info_copy(struct rds_incoming *inc,
 
 	minfo6.seq = be64_to_cpu(inc->i_hdr.h_sequence);
 	minfo6.len = be32_to_cpu(inc->i_hdr.h_len);
+<<<<<<< HEAD
 	minfo6.tos = inc->i_conn->c_tos;
+=======
+	minfo6.tos = 0;
+>>>>>>> master
 
 	if (flip) {
 		minfo6.laddr = *daddr;

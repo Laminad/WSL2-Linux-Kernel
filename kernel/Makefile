@@ -36,10 +36,17 @@ KCOV_INSTRUMENT_kcov.o := n
 # If sanitizers detect any issues in kcov, it may lead to recursion
 # via printk, etc.
 KASAN_SANITIZE_kcov.o := n
+<<<<<<< HEAD
 KCSAN_SANITIZE_kcov.o := n
 UBSAN_SANITIZE_kcov.o := n
 KMSAN_SANITIZE_kcov.o := n
 CFLAGS_kcov.o := $(call cc-option, -fno-conserve-stack) -fno-stack-protector
+=======
+CFLAGS_kcov.o := $(call cc-option, -fno-conserve-stack -fno-stack-protector)
+
+# cond_syscall is currently not LTO compatible
+CFLAGS_sys_ni.o = $(DISABLE_LTO)
+>>>>>>> master
 
 obj-y += sched/
 obj-y += locking/

@@ -264,6 +264,29 @@ void ext4_sb_breadahead_unmovable(struct super_block *sb, sector_t block)
 	}
 }
 
+/*
+ * This works like sb_bread() except it uses ERR_PTR for error
+ * returns.  Currently with sb_bread it's impossible to distinguish
+ * between ENOMEM and EIO situations (since both result in a NULL
+ * return.
+ */
+struct buffer_head *
+ext4_sb_bread(struct super_block *sb, sector_t block, int op_flags)
+{
+	struct buffer_head *bh = sb_getblk(sb, block);
+
+	if (bh == NULL)
+		return ERR_PTR(-ENOMEM);
+	if (buffer_uptodate(bh))
+		return bh;
+	ll_rw_block(REQ_OP_READ, REQ_META | op_flags, 1, &bh);
+	wait_on_buffer(bh);
+	if (buffer_uptodate(bh))
+		return bh;
+	put_bh(bh);
+	return ERR_PTR(-EIO);
+}
+
 static int ext4_verify_csum_type(struct super_block *sb,
 				 struct ext4_super_block *es)
 {
@@ -525,6 +548,7 @@ static void ext4_journal_commit_callback(journal_t *journal, transaction_t *txn)
 	spin_unlock(&sbi->s_md_lock);
 }
 
+<<<<<<< HEAD
 /*
  * This writepage callback for write_cache_pages()
  * takes care of a few cases after page cleaning.
@@ -607,12 +631,15 @@ static int ext4_journal_finish_inode_data_buffers(struct jbd2_inode *jinode)
 	return ret;
 }
 
+=======
+>>>>>>> master
 static bool system_going_down(void)
 {
 	return system_state == SYSTEM_HALT || system_state == SYSTEM_POWER_OFF
 		|| system_state == SYSTEM_RESTART;
 }
 
+<<<<<<< HEAD
 struct ext4_err_translation {
 	int code;
 	int errno;
@@ -678,6 +705,8 @@ static void save_error_info(struct super_block *sb, int error,
 	spin_unlock(&sbi->s_error_lock);
 }
 
+=======
+>>>>>>> master
 /* Deal with the reporting of failure conditions on a filesystem such as
  * inconsistencies detected or read IO failures.
  *
@@ -714,15 +743,26 @@ static void ext4_handle_error(struct super_block *sb, bool force_ro, int error,
 		if (journal)
 			jbd2_journal_abort(journal, -EIO);
 	}
+<<<<<<< HEAD
 
 	if (!bdev_read_only(sb->s_bdev)) {
 		save_error_info(sb, error, ino, block, func, line);
+=======
+	/*
+	 * We force ERRORS_RO behavior when system is rebooting. Otherwise we
+	 * could panic during 'reboot -f' as the underlying device got already
+	 * disabled.
+	 */
+	if (test_opt(sb, ERRORS_RO) || system_going_down()) {
+		ext4_msg(sb, KERN_CRIT, "Remounting filesystem read-only");
+>>>>>>> master
 		/*
 		 * In case the fs should keep running, we need to writeout
 		 * superblock through the journal. Due to lock ordering
 		 * constraints, it may not be safe to do it right here so we
 		 * defer superblock flushing to a workqueue.
 		 */
+<<<<<<< HEAD
 		if (continue_fs && journal)
 			schedule_work(&EXT4_SB(sb)->s_sb_upd_work);
 		else
@@ -735,6 +775,14 @@ static void ext4_handle_error(struct super_block *sb, bool force_ro, int error,
 	 * disabled.
 	 */
 	if (test_opt(sb, ERRORS_PANIC) && !system_going_down()) {
+=======
+		smp_wmb();
+		sb->s_flags |= SB_RDONLY;
+	} else if (test_opt(sb, ERRORS_PANIC)) {
+		if (EXT4_SB(sb)->s_journal &&
+		  !(EXT4_SB(sb)->s_journal->j_flags & JBD2_REC_ERR))
+			return;
+>>>>>>> master
 		panic("EXT4-fs (device %s): panic forced after error\n",
 			sb->s_id);
 	}
@@ -976,7 +1024,60 @@ void __ext4_std_error(struct super_block *sb, const char *function,
 	}
 	fsnotify_sb_error(sb, NULL, errno ? errno : EFSCORRUPTED);
 
+<<<<<<< HEAD
 	ext4_handle_error(sb, false, -errno, 0, 0, function, line);
+=======
+	save_error_info(sb, function, line);
+	ext4_handle_error(sb);
+}
+
+/*
+ * ext4_abort is a much stronger failure handler than ext4_error.  The
+ * abort function may be used to deal with unrecoverable failures such
+ * as journal IO errors or ENOMEM at a critical moment in log management.
+ *
+ * We unconditionally force the filesystem into an ABORT|READONLY state,
+ * unless the error response on the fs has been set to panic in which
+ * case we take the easy way out and panic immediately.
+ */
+
+void __ext4_abort(struct super_block *sb, const char *function,
+		unsigned int line, const char *fmt, ...)
+{
+	struct va_format vaf;
+	va_list args;
+
+	if (unlikely(ext4_forced_shutdown(EXT4_SB(sb))))
+		return;
+
+	save_error_info(sb, function, line);
+	va_start(args, fmt);
+	vaf.fmt = fmt;
+	vaf.va = &args;
+	printk(KERN_CRIT "EXT4-fs error (device %s): %s:%d: %pV\n",
+	       sb->s_id, function, line, &vaf);
+	va_end(args);
+
+	if (sb_rdonly(sb) == 0) {
+		ext4_msg(sb, KERN_CRIT, "Remounting filesystem read-only");
+		EXT4_SB(sb)->s_mount_flags |= EXT4_MF_FS_ABORTED;
+		/*
+		 * Make sure updated value of ->s_mount_flags will be visible
+		 * before ->s_flags update
+		 */
+		smp_wmb();
+		sb->s_flags |= SB_RDONLY;
+		if (EXT4_SB(sb)->s_journal)
+			jbd2_journal_abort(EXT4_SB(sb)->s_journal, -EIO);
+		save_error_info(sb, function, line);
+	}
+	if (test_opt(sb, ERRORS_PANIC) && !system_going_down()) {
+		if (EXT4_SB(sb)->s_journal &&
+		  !(EXT4_SB(sb)->s_journal->j_flags & JBD2_REC_ERR))
+			return;
+		panic("EXT4-fs panic from previous error\n");
+	}
+>>>>>>> master
 }
 
 void __ext4_msg(struct super_block *sb,
@@ -1338,7 +1439,11 @@ static void ext4_put_super(struct super_block *sb)
 	ext4_flex_groups_free(sbi);
 	ext4_percpu_param_destroy(sbi);
 #ifdef CONFIG_QUOTA
+<<<<<<< HEAD
 	for (int i = 0; i < EXT4_MAXQUOTAS; i++)
+=======
+	for (i = 0; i < EXT4_MAXQUOTAS; i++)
+>>>>>>> master
 		kfree(get_qf_name(sb, sbi, i));
 #endif
 
@@ -1566,6 +1671,26 @@ static struct dentry *ext4_fh_to_parent(struct super_block *sb, struct fid *fid,
 }
 
 static int ext4_nfs_commit_metadata(struct inode *inode)
+<<<<<<< HEAD
+=======
+{
+	struct writeback_control wbc = {
+		.sync_mode = WB_SYNC_ALL
+	};
+
+	trace_ext4_nfs_commit_metadata(inode);
+	return ext4_write_inode(inode, &wbc);
+}
+
+/*
+ * Try to release metadata pages (indirect blocks, directories) which are
+ * mapped via the block device.  Since these pages could have journal heads
+ * which would prevent try_to_free_buffers() from freeing them, we must use
+ * jbd2 layer's try_to_free_buffers() function to release them.
+ */
+static int bdev_try_to_free_page(struct super_block *sb, struct page *page,
+				 gfp_t wait)
+>>>>>>> master
 {
 	struct writeback_control wbc = {
 		.sync_mode = WB_SYNC_ALL
@@ -1827,6 +1952,76 @@ static const struct fs_parameter_spec ext4_param_specs[] = {
 };
 
 #define DEFAULT_JOURNAL_IOPRIO (IOPRIO_PRIO_VALUE(IOPRIO_CLASS_BE, 3))
+<<<<<<< HEAD
+=======
+static const char deprecated_msg[] =
+	"Mount option \"%s\" will be removed by %s\n"
+	"Contact linux-ext4@vger.kernel.org if you think we should keep it.\n";
+
+#ifdef CONFIG_QUOTA
+static int set_qf_name(struct super_block *sb, int qtype, substring_t *args)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	char *qname, *old_qname = get_qf_name(sb, sbi, qtype);
+	int ret = -1;
+
+	if (sb_any_quota_loaded(sb) && !old_qname) {
+		ext4_msg(sb, KERN_ERR,
+			"Cannot change journaled "
+			"quota options when quota turned on");
+		return -1;
+	}
+	if (ext4_has_feature_quota(sb)) {
+		ext4_msg(sb, KERN_INFO, "Journaled quota options "
+			 "ignored when QUOTA feature is enabled");
+		return 1;
+	}
+	qname = match_strdup(args);
+	if (!qname) {
+		ext4_msg(sb, KERN_ERR,
+			"Not enough memory for storing quotafile name");
+		return -1;
+	}
+	if (old_qname) {
+		if (strcmp(old_qname, qname) == 0)
+			ret = 1;
+		else
+			ext4_msg(sb, KERN_ERR,
+				 "%s quota file already specified",
+				 QTYPE2NAME(qtype));
+		goto errout;
+	}
+	if (strchr(qname, '/')) {
+		ext4_msg(sb, KERN_ERR,
+			"quotafile must be on filesystem root");
+		goto errout;
+	}
+	rcu_assign_pointer(sbi->s_qf_names[qtype], qname);
+	set_opt(sb, QUOTA);
+	return 1;
+errout:
+	kfree(qname);
+	return ret;
+}
+
+static int clear_qf_name(struct super_block *sb, int qtype)
+{
+
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	char *old_qname = get_qf_name(sb, sbi, qtype);
+
+	if (sb_any_quota_loaded(sb) && old_qname) {
+		ext4_msg(sb, KERN_ERR, "Cannot change journaled quota options"
+			" when quota turned on");
+		return -1;
+	}
+	rcu_assign_pointer(sbi->s_qf_names[qtype], NULL);
+	synchronize_rcu();
+	kfree(old_qname);
+	return 1;
+}
+#endif
+>>>>>>> master
 
 #define MOPT_SET	0x0001
 #define MOPT_CLEAR	0x0002
@@ -2445,9 +2640,16 @@ static int ext4_parse_param(struct fs_context *fc, struct fs_parameter *param)
 
 static int parse_options(struct fs_context *fc, char *options)
 {
+<<<<<<< HEAD
 	struct fs_parameter param;
 	int ret;
 	char *key;
+=======
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	char *p, __maybe_unused *usr_qf_name, __maybe_unused *grp_qf_name;
+	substring_t args[MAX_OPT_ARGS];
+	int token;
+>>>>>>> master
 
 	if (!options)
 		return 0;
@@ -2610,6 +2812,7 @@ static int ext4_check_quota_consistency(struct fs_context *fc,
 			 "Cannot enable project quota enforcement.");
 		return -EINVAL;
 	}
+<<<<<<< HEAD
 
 	quota_flags = EXT4_MOUNT_QUOTA | EXT4_MOUNT_USRQUOTA |
 		      EXT4_MOUNT_GRPQUOTA | EXT4_MOUNT_PRJQUOTA;
@@ -2617,6 +2820,16 @@ static int ext4_check_quota_consistency(struct fs_context *fc,
 	    ctx->mask_s_mount_opt & quota_flags &&
 	    !ctx_test_mount_opt(ctx, quota_flags))
 		goto err_quota_change;
+=======
+	usr_qf_name = get_qf_name(sb, sbi, USRQUOTA);
+	grp_qf_name = get_qf_name(sb, sbi, GRPQUOTA);
+	if (usr_qf_name || grp_qf_name) {
+		if (test_opt(sb, USRQUOTA) && usr_qf_name)
+			clear_opt(sb, USRQUOTA);
+
+		if (test_opt(sb, GRPQUOTA) && grp_qf_name)
+			clear_opt(sb, GRPQUOTA);
+>>>>>>> master
 
 	if (ctx->spec & EXT4_SPEC_JQUOTA) {
 
@@ -3122,7 +3335,11 @@ static int ext4_setup_super(struct super_block *sb, struct ext4_super_block *es,
 		es->s_max_mnt_count = cpu_to_le16(EXT4_DFL_MAX_MNT_COUNT);
 	le16_add_cpu(&es->s_mnt_count, 1);
 	ext4_update_tstamp(es, s_mtime);
+<<<<<<< HEAD
 	if (sbi->s_journal) {
+=======
+	if (sbi->s_journal)
+>>>>>>> master
 		ext4_set_feature_journal_needs_recovery(sb);
 		if (ext4_has_feature_orphan_file(sb))
 			ext4_set_feature_orphan_present(sb);
@@ -4253,6 +4470,37 @@ int ext4_calculate_overhead(struct super_block *sb)
 	return 0;
 }
 
+static void ext4_clamp_want_extra_isize(struct super_block *sb)
+{
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	struct ext4_super_block *es = sbi->s_es;
+
+	/* determine the minimum size of new large inodes, if present */
+	if (sbi->s_inode_size > EXT4_GOOD_OLD_INODE_SIZE &&
+	    sbi->s_want_extra_isize == 0) {
+		sbi->s_want_extra_isize = sizeof(struct ext4_inode) -
+						     EXT4_GOOD_OLD_INODE_SIZE;
+		if (ext4_has_feature_extra_isize(sb)) {
+			if (sbi->s_want_extra_isize <
+			    le16_to_cpu(es->s_want_extra_isize))
+				sbi->s_want_extra_isize =
+					le16_to_cpu(es->s_want_extra_isize);
+			if (sbi->s_want_extra_isize <
+			    le16_to_cpu(es->s_min_extra_isize))
+				sbi->s_want_extra_isize =
+					le16_to_cpu(es->s_min_extra_isize);
+		}
+	}
+	/* Check if enough inode space is available */
+	if (EXT4_GOOD_OLD_INODE_SIZE + sbi->s_want_extra_isize >
+							sbi->s_inode_size) {
+		sbi->s_want_extra_isize = sizeof(struct ext4_inode) -
+						       EXT4_GOOD_OLD_INODE_SIZE;
+		ext4_msg(sb, KERN_INFO,
+			 "required extra inode space not available");
+	}
+}
+
 static void ext4_set_resv_clusters(struct super_block *sb)
 {
 	ext4_fsblk_t resv_clusters;
@@ -4829,6 +5077,7 @@ static int ext4_check_geometry(struct super_block *sb,
 		ext4_msg(sb, KERN_ERR, "inodes count not valid: %u vs %llu",
 			 le32_to_cpu(es->s_inodes_count),
 			 ((u64)sbi->s_groups_count * sbi->s_inodes_per_group));
+<<<<<<< HEAD
 		return -EINVAL;
 	}
 
@@ -4845,6 +5094,11 @@ static int ext4_group_desc_init(struct super_block *sb,
 	ext4_fsblk_t block;
 	int i;
 
+=======
+		ret = -EINVAL;
+		goto failed_mount;
+	}
+>>>>>>> master
 	db_count = (sbi->s_groups_count + EXT4_DESC_PER_BLOCK(sb) - 1) /
 		   EXT4_DESC_PER_BLOCK(sb);
 	if (ext4_has_feature_meta_bg(sb)) {
@@ -4862,7 +5116,12 @@ static int ext4_group_desc_init(struct super_block *sb,
 					  GFP_KERNEL));
 	if (sbi->s_group_desc == NULL) {
 		ext4_msg(sb, KERN_ERR, "not enough memory");
+<<<<<<< HEAD
 		return -ENOMEM;
+=======
+		ret = -ENOMEM;
+		goto failed_mount;
+>>>>>>> master
 	}
 
 	bgl_lock_init(sbi->s_blockgroup_lock);
@@ -4904,9 +5163,90 @@ static int ext4_load_and_init_journal(struct super_block *sb,
 	struct ext4_sb_info *sbi = EXT4_SB(sb);
 	int err;
 
+<<<<<<< HEAD
 	err = ext4_load_journal(sb, es, ctx->journal_devnum);
 	if (err)
 		return err;
+=======
+	sbi->s_stripe = ext4_get_stripe_size(sbi);
+	sbi->s_extent_max_zeroout_kb = 32;
+
+	/*
+	 * set up enough so that it can read an inode
+	 */
+	sb->s_op = &ext4_sops;
+	sb->s_export_op = &ext4_export_ops;
+	sb->s_xattr = ext4_xattr_handlers;
+#ifdef CONFIG_EXT4_FS_ENCRYPTION
+	sb->s_cop = &ext4_cryptops;
+#endif
+#ifdef CONFIG_QUOTA
+	sb->dq_op = &ext4_quota_operations;
+	if (ext4_has_feature_quota(sb))
+		sb->s_qcop = &dquot_quotactl_sysfile_ops;
+	else
+		sb->s_qcop = &ext4_qctl_operations;
+	sb->s_quota_types = QTYPE_MASK_USR | QTYPE_MASK_GRP | QTYPE_MASK_PRJ;
+#endif
+	memcpy(&sb->s_uuid, es->s_uuid, sizeof(es->s_uuid));
+
+	INIT_LIST_HEAD(&sbi->s_orphan); /* unlinked but open files */
+	mutex_init(&sbi->s_orphan_lock);
+
+	sb->s_root = NULL;
+
+	needs_recovery = (es->s_last_orphan != 0 ||
+			  ext4_has_feature_journal_needs_recovery(sb));
+
+	if (ext4_has_feature_mmp(sb) && !sb_rdonly(sb))
+		if (ext4_multi_mount_protect(sb, le64_to_cpu(es->s_mmp_block)))
+			goto failed_mount3a;
+
+	/*
+	 * The first inode we look at is the journal inode.  Don't try
+	 * root first: it may be modified in the journal!
+	 */
+	if (!test_opt(sb, NOLOAD) && ext4_has_feature_journal(sb)) {
+		err = ext4_load_journal(sb, es, journal_devnum);
+		if (err)
+			goto failed_mount3a;
+	} else if (test_opt(sb, NOLOAD) && !sb_rdonly(sb) &&
+		   ext4_has_feature_journal_needs_recovery(sb)) {
+		ext4_msg(sb, KERN_ERR, "required journal recovery "
+		       "suppressed and not mounted read-only");
+		goto failed_mount_wq;
+	} else {
+		/* Nojournal mode, all journal mount options are illegal */
+		if (test_opt2(sb, EXPLICIT_JOURNAL_CHECKSUM)) {
+			ext4_msg(sb, KERN_ERR, "can't mount with "
+				 "journal_checksum, fs mounted w/o journal");
+			goto failed_mount_wq;
+		}
+		if (test_opt(sb, JOURNAL_ASYNC_COMMIT)) {
+			ext4_msg(sb, KERN_ERR, "can't mount with "
+				 "journal_async_commit, fs mounted w/o journal");
+			goto failed_mount_wq;
+		}
+		if (sbi->s_commit_interval != JBD2_DEFAULT_MAX_COMMIT_AGE*HZ) {
+			ext4_msg(sb, KERN_ERR, "can't mount with "
+				 "commit=%lu, fs mounted w/o journal",
+				 sbi->s_commit_interval / HZ);
+			goto failed_mount_wq;
+		}
+		if (EXT4_MOUNT_DATA_FLAGS &
+		    (sbi->s_mount_opt ^ sbi->s_def_mount_opt)) {
+			ext4_msg(sb, KERN_ERR, "can't mount with "
+				 "data=, fs mounted w/o journal");
+			goto failed_mount_wq;
+		}
+		sbi->s_def_mount_opt &= ~EXT4_MOUNT_JOURNAL_CHECKSUM;
+		clear_opt(sb, JOURNAL_CHECKSUM);
+		clear_opt(sb, DATA_FLAGS);
+		sbi->s_journal = NULL;
+		needs_recovery = 0;
+		goto no_journal;
+	}
+>>>>>>> master
 
 	if (ext4_has_feature_64bit(sb) &&
 	    !jbd2_journal_set_features(EXT4_SB(sb)->s_journal, 0, 0,
@@ -5498,6 +5838,11 @@ static int __ext4_fill_super(struct fs_context *fc, struct super_block *sb)
 	} else if (err)
 		goto failed_mount4a;
 
+<<<<<<< HEAD
+=======
+	ext4_clamp_want_extra_isize(sb);
+
+>>>>>>> master
 	ext4_set_resv_clusters(sb);
 
 	if (test_opt(sb, BLOCK_VALIDITY)) {
@@ -5622,8 +5967,18 @@ failed_mount7:
 	ext4_unregister_li_request(sb);
 failed_mount6:
 	ext4_mb_release(sb);
+<<<<<<< HEAD
 	ext4_flex_groups_free(sbi);
 	ext4_percpu_param_destroy(sbi);
+=======
+	if (sbi->s_flex_groups)
+		kvfree(sbi->s_flex_groups);
+	percpu_counter_destroy(&sbi->s_freeclusters_counter);
+	percpu_counter_destroy(&sbi->s_freeinodes_counter);
+	percpu_counter_destroy(&sbi->s_dirs_counter);
+	percpu_counter_destroy(&sbi->s_dirtyclusters_counter);
+	percpu_free_rwsem(&sbi->s_journal_flag_rwsem);
+>>>>>>> master
 failed_mount5:
 	ext4_ext_release(sb);
 	ext4_release_system_zone(sb);
@@ -6166,6 +6521,7 @@ static void ext4_update_super(struct super_block *sb)
 	spin_unlock(&sbi->s_error_lock);
 
 	ext4_superblock_csum_set(sb);
+<<<<<<< HEAD
 	unlock_buffer(sbh);
 }
 
@@ -6187,6 +6543,10 @@ static int ext4_commit_super(struct super_block *sb)
 		return -EIO;
 	}
 
+=======
+	if (sync)
+		lock_buffer(sbh);
+>>>>>>> master
 	if (buffer_write_io_error(sbh) || !buffer_uptodate(sbh)) {
 		/*
 		 * Oh, dear.  A previous attempt to write the
@@ -6482,6 +6842,7 @@ static int __ext4_remount(struct fs_context *fc, struct super_block *sb)
 
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Changing the DIOREAD_NOLOCK or DELALLOC mount options may cause
 	 * two calls to ext4_should_dioread_nolock() to return inconsistent
@@ -6492,6 +6853,9 @@ static int __ext4_remount(struct fs_context *fc, struct super_block *sb)
 	alloc_ctx = ext4_writepages_down_write(sb);
 	ext4_apply_options(fc, sb);
 	ext4_writepages_up_write(sb, alloc_ctx);
+=======
+	ext4_clamp_want_extra_isize(sb);
+>>>>>>> master
 
 	if ((old_opts.s_mount_opt & EXT4_MOUNT_JOURNAL_CHECKSUM) ^
 	    test_opt(sb, JOURNAL_CHECKSUM)) {
@@ -6944,6 +7308,19 @@ static int ext4_write_info(struct super_block *sb, int type)
 	return ret;
 }
 
+<<<<<<< HEAD
+=======
+/*
+ * Turn on quotas during mount time - we need to find
+ * the quota file and such...
+ */
+static int ext4_quota_on_mount(struct super_block *sb, int type)
+{
+	return dquot_quota_on_mount(sb, get_qf_name(sb, EXT4_SB(sb), type),
+					EXT4_SB(sb)->s_jquota_fmt, type);
+}
+
+>>>>>>> master
 static void lockdep_set_quota_inode(struct inode *inode, int subclass)
 {
 	struct ext4_inode_info *ei = EXT4_I(inode);
@@ -7054,12 +7431,15 @@ static int ext4_quota_enable(struct super_block *sb, int type, int format_id,
 	if (!qf_inums[type])
 		return -EPERM;
 
+<<<<<<< HEAD
 	if (!ext4_check_quota_inum(type, qf_inums[type])) {
 		ext4_error(sb, "Bad quota inum: %lu, type: %d",
 				qf_inums[type], type);
 		return -EUCLEAN;
 	}
 
+=======
+>>>>>>> master
 	qf_inode = ext4_iget(sb, qf_inums[type], EXT4_IGET_SPECIAL);
 	if (IS_ERR(qf_inode)) {
 		ext4_error(sb, "Bad quota inode: %lu, type: %d",
@@ -7070,7 +7450,11 @@ static int ext4_quota_enable(struct super_block *sb, int type, int format_id,
 	/* Don't account quota for quota files to avoid recursion */
 	qf_inode->i_flags |= S_NOQUOTA;
 	lockdep_set_quota_inode(qf_inode, I_DATA_SEM_QUOTA);
+<<<<<<< HEAD
 	err = dquot_load_quota_inode(qf_inode, type, format_id, flags);
+=======
+	err = dquot_enable(qf_inode, type, format_id, flags);
+>>>>>>> master
 	if (err)
 		lockdep_set_quota_inode(qf_inode, I_DATA_SEM_NORMAL);
 	iput(qf_inode);

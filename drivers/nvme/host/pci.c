@@ -1045,6 +1045,7 @@ static inline void nvme_handle_cqe(struct nvme_queue *nvmeq,
 
 static inline void nvme_update_cq_head(struct nvme_queue *nvmeq)
 {
+<<<<<<< HEAD
 	u32 tmp = nvmeq->cq_head + 1;
 
 	if (tmp == nvmeq->q_depth) {
@@ -1052,6 +1053,13 @@ static inline void nvme_update_cq_head(struct nvme_queue *nvmeq)
 		nvmeq->cq_phase ^= 1;
 	} else {
 		nvmeq->cq_head = tmp;
+=======
+	if (nvmeq->cq_head == nvmeq->q_depth - 1) {
+		nvmeq->cq_head = 0;
+		nvmeq->cq_phase = !nvmeq->cq_phase;
+	} else {
+		nvmeq->cq_head++;
+>>>>>>> master
 	}
 }
 
@@ -1283,7 +1291,12 @@ static enum blk_eh_timer_return nvme_timeout(struct request *req)
 	struct nvme_queue *nvmeq = req->mq_hctx->driver_data;
 	struct nvme_dev *dev = nvmeq->dev;
 	struct request *abort_req;
+<<<<<<< HEAD
 	struct nvme_command cmd = { };
+=======
+	struct nvme_command cmd;
+	bool shutdown = false;
+>>>>>>> master
 	u32 csts = readl(dev->bar + NVME_REG_CSTS);
 
 	if (nvme_state_terminal(&dev->ctrl))
@@ -1325,7 +1338,13 @@ static enum blk_eh_timer_return nvme_timeout(struct request *req)
 	 * cancellation error. All outstanding requests are completed on
 	 * shutdown, so we return BLK_EH_DONE.
 	 */
+<<<<<<< HEAD
 	switch (nvme_ctrl_state(&dev->ctrl)) {
+=======
+	switch (dev->ctrl.state) {
+	case NVME_CTRL_DELETING:
+		shutdown = true;
+>>>>>>> master
 	case NVME_CTRL_CONNECTING:
 		nvme_change_ctrl_state(&dev->ctrl, NVME_CTRL_DELETING);
 		fallthrough;
@@ -1333,6 +1352,10 @@ static enum blk_eh_timer_return nvme_timeout(struct request *req)
 		dev_warn_ratelimited(dev->ctrl.device,
 			 "I/O %d QID %d timeout, disable controller\n",
 			 req->tag, nvmeq->qid);
+<<<<<<< HEAD
+=======
+		nvme_dev_disable(dev, shutdown);
+>>>>>>> master
 		nvme_req(req)->flags |= NVME_REQ_CANCELLED;
 		nvme_dev_disable(dev, true);
 		return BLK_EH_DONE;
@@ -2626,9 +2649,15 @@ static void nvme_dev_disable(struct nvme_dev *dev, bool shutdown)
 	 * deadlocking blk-mq hot-cpu notifier.
 	 */
 	if (shutdown) {
+<<<<<<< HEAD
 		nvme_unquiesce_io_queues(&dev->ctrl);
 		if (dev->ctrl.admin_q && !blk_queue_dying(dev->ctrl.admin_q))
 			nvme_unquiesce_admin_queue(&dev->ctrl);
+=======
+		nvme_start_queues(&dev->ctrl);
+		if (dev->ctrl.admin_q && !blk_queue_dying(dev->ctrl.admin_q))
+			blk_mq_unquiesce_queue(dev->ctrl.admin_q);
+>>>>>>> master
 	}
 	mutex_unlock(&dev->shutdown_lock);
 }
@@ -2702,10 +2731,16 @@ static void nvme_reset_work(struct work_struct *work)
 		container_of(work, struct nvme_dev, ctrl.reset_work);
 	bool was_suspend = !!(dev->ctrl.ctrl_config & NVME_CC_SHN_NORMAL);
 	int result;
+<<<<<<< HEAD
 
 	if (nvme_ctrl_state(&dev->ctrl) != NVME_CTRL_RESETTING) {
 		dev_warn(dev->ctrl.device, "ctrl state %d is not RESETTING\n",
 			 dev->ctrl.state);
+=======
+	enum nvme_ctrl_state new_state = NVME_CTRL_LIVE;
+
+	if (WARN_ON(dev->ctrl.state != NVME_CTRL_RESETTING)) {
+>>>>>>> master
 		result = -ENODEV;
 		goto out;
 	}
@@ -2725,6 +2760,7 @@ static void nvme_reset_work(struct work_struct *work)
 	nvme_unquiesce_admin_queue(&dev->ctrl);
 	mutex_unlock(&dev->shutdown_lock);
 
+<<<<<<< HEAD
 	/*
 	 * Introduce CONNECTING state from nvme-fc/rdma transports to mark the
 	 * initializing procedure here.
@@ -2737,15 +2773,77 @@ static void nvme_reset_work(struct work_struct *work)
 	}
 
 	result = nvme_init_ctrl_finish(&dev->ctrl, was_suspend);
+=======
+	mutex_lock(&dev->shutdown_lock);
+	result = nvme_pci_enable(dev);
+>>>>>>> master
 	if (result)
-		goto out;
+		goto out_unlock;
 
+<<<<<<< HEAD
 	nvme_dbbuf_dma_alloc(dev);
 
 	result = nvme_setup_host_mem(dev);
 	if (result < 0)
 		goto out;
 
+=======
+	result = nvme_pci_configure_admin_queue(dev);
+	if (result)
+		goto out_unlock;
+
+	result = nvme_alloc_admin_tags(dev);
+	if (result)
+		goto out_unlock;
+
+	/*
+	 * Limit the max command size to prevent iod->sg allocations going
+	 * over a single page.
+	 */
+	dev->ctrl.max_hw_sectors = NVME_MAX_KB_SZ << 1;
+	dev->ctrl.max_segments = NVME_MAX_SEGS;
+	mutex_unlock(&dev->shutdown_lock);
+
+	/*
+	 * Introduce CONNECTING state from nvme-fc/rdma transports to mark the
+	 * initializing procedure here.
+	 */
+	if (!nvme_change_ctrl_state(&dev->ctrl, NVME_CTRL_CONNECTING)) {
+		dev_warn(dev->ctrl.device,
+			"failed to mark controller CONNECTING\n");
+		result = -EBUSY;
+		goto out;
+	}
+
+	result = nvme_init_identify(&dev->ctrl);
+	if (result)
+		goto out;
+
+	if (dev->ctrl.oacs & NVME_CTRL_OACS_SEC_SUPP) {
+		if (!dev->ctrl.opal_dev)
+			dev->ctrl.opal_dev =
+				init_opal_dev(&dev->ctrl, &nvme_sec_submit);
+		else if (was_suspend)
+			opal_unlock_from_suspend(dev->ctrl.opal_dev);
+	} else {
+		free_opal_dev(dev->ctrl.opal_dev);
+		dev->ctrl.opal_dev = NULL;
+	}
+
+	if (dev->ctrl.oacs & NVME_CTRL_OACS_DBBUF_SUPP) {
+		result = nvme_dbbuf_dma_alloc(dev);
+		if (result)
+			dev_warn(dev->dev,
+				 "unable to allocate dma for dbbuf\n");
+	}
+
+	if (dev->ctrl.hmpre) {
+		result = nvme_setup_host_mem(dev);
+		if (result < 0)
+			goto out;
+	}
+
+>>>>>>> master
 	result = nvme_setup_io_queues(dev);
 	if (result)
 		goto out;
@@ -2775,7 +2873,11 @@ static void nvme_reset_work(struct work_struct *work)
 	 */
 	if (!nvme_change_ctrl_state(&dev->ctrl, NVME_CTRL_LIVE)) {
 		dev_warn(dev->ctrl.device,
+<<<<<<< HEAD
 			"failed to mark controller live state\n");
+=======
+			"failed to mark controller state %d\n", new_state);
+>>>>>>> master
 		result = -ENODEV;
 		goto out;
 	}
@@ -2940,6 +3042,7 @@ static struct nvme_dev *nvme_pci_alloc_dev(struct pci_dev *pdev,
 	struct nvme_dev *dev;
 	int ret = -ENOMEM;
 
+<<<<<<< HEAD
 	dev = kzalloc_node(sizeof(*dev), GFP_KERNEL, node);
 	if (!dev)
 		return ERR_PTR(-ENOMEM);
@@ -3001,6 +3104,11 @@ out_put_device:
 out_free_dev:
 	kfree(dev);
 	return ERR_PTR(ret);
+=======
+	flush_work(&dev->ctrl.reset_work);
+	flush_work(&dev->ctrl.scan_work);
+	nvme_put_ctrl(&dev->ctrl);
+>>>>>>> master
 }
 
 static int nvme_probe(struct pci_dev *pdev, const struct pci_device_id *id)
@@ -3026,9 +3134,15 @@ static int nvme_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 
 	dev_info(dev->ctrl.device, "pci function %s\n", dev_name(&pdev->dev));
 
+<<<<<<< HEAD
 	result = nvme_pci_enable(dev);
 	if (result)
 		goto out_release_iod_mempool;
+=======
+	nvme_reset_ctrl(&dev->ctrl);
+	nvme_get_ctrl(&dev->ctrl);
+	async_schedule(nvme_async_probe, dev);
+>>>>>>> master
 
 	result = nvme_alloc_admin_tag_set(&dev->ctrl, &dev->admin_tagset,
 				&nvme_mq_admin_ops, sizeof(struct nvme_iod));

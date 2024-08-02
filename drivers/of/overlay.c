@@ -303,6 +303,7 @@ static int add_changeset_property(struct overlay_changeset *ovcs,
 {
 	struct property *new_prop = NULL, *prop;
 	int ret = 0;
+	bool check_for_non_overlay_node = false;
 
 	if (target->in_livetree)
 		if (!of_prop_cmp(overlay_prop->name, "name") ||
@@ -314,6 +315,7 @@ static int add_changeset_property(struct overlay_changeset *ovcs,
 		prop = of_find_property(target->np, overlay_prop->name, NULL);
 	else
 		prop = NULL;
+<<<<<<< HEAD
 
 	if (prop) {
 		if (!of_prop_cmp(prop->name, "#address-cells")) {
@@ -333,6 +335,8 @@ static int add_changeset_property(struct overlay_changeset *ovcs,
 			return ret;
 		}
 	}
+=======
+>>>>>>> master
 
 	if (is_symbols_prop) {
 		if (prop)
@@ -346,18 +350,44 @@ static int add_changeset_property(struct overlay_changeset *ovcs,
 		return -ENOMEM;
 
 	if (!prop) {
+<<<<<<< HEAD
+=======
+		check_for_non_overlay_node = true;
+>>>>>>> master
 		if (!target->in_livetree) {
 			new_prop->next = target->np->deadprops;
 			target->np->deadprops = new_prop;
 		}
 		ret = of_changeset_add_property(&ovcs->cset, target->np,
 						new_prop);
+<<<<<<< HEAD
 	} else {
+=======
+	} else if (!of_prop_cmp(prop->name, "#address-cells")) {
+		if (!of_prop_val_eq(prop, new_prop)) {
+			pr_err("ERROR: changing value of #address-cells is not allowed in %pOF\n",
+			       target->np);
+			ret = -EINVAL;
+		}
+	} else if (!of_prop_cmp(prop->name, "#size-cells")) {
+		if (!of_prop_val_eq(prop, new_prop)) {
+			pr_err("ERROR: changing value of #size-cells is not allowed in %pOF\n",
+			       target->np);
+			ret = -EINVAL;
+		}
+	} else {
+		check_for_non_overlay_node = true;
+>>>>>>> master
 		ret = of_changeset_update_property(&ovcs->cset, target->np,
 						   new_prop);
 	}
 
+<<<<<<< HEAD
 	if (!of_node_check_flag(target->np, OF_OVERLAY))
+=======
+	if (check_for_non_overlay_node &&
+	    !of_node_check_flag(target->np, OF_OVERLAY))
+>>>>>>> master
 		pr_err("WARNING: memory leak will occur if overlay removed, property: %pOF/%s\n",
 		       target->np, new_prop->name);
 
@@ -424,9 +454,18 @@ static int add_changeset_node(struct overlay_changeset *ovcs,
 
 		tchild->parent = target->np;
 		tchild->name = __of_get_property(node, "name", NULL);
+<<<<<<< HEAD
 
 		if (!tchild->name)
 			tchild->name = "<NULL>";
+=======
+		tchild->type = __of_get_property(node, "device_type", NULL);
+
+		if (!tchild->name)
+			tchild->name = "<NULL>";
+		if (!tchild->type)
+			tchild->type = "<NULL>";
+>>>>>>> master
 
 		/* ignore obsolete "linux,phandle" */
 		phandle = __of_get_property(node, "phandle", &size);
@@ -516,7 +555,11 @@ static int build_changeset_symbols_node(struct overlay_changeset *ovcs,
 	for_each_property_of_node(overlay_symbols_node, prop) {
 		ret = add_changeset_property(ovcs, target, prop, 1);
 		if (ret) {
+<<<<<<< HEAD
 			pr_debug("Failed to apply symbols prop @%pOF/%s, err=%d\n",
+=======
+			pr_debug("Failed to apply prop @%pOF/%s, err=%d\n",
+>>>>>>> master
 				 target->np, prop->name, ret);
 			return ret;
 		}
@@ -682,8 +725,12 @@ static int build_changeset(struct overlay_changeset *ovcs)
  * 1) "target" property containing the phandle of the target
  * 2) "target-path" property containing the path of the target
  */
+<<<<<<< HEAD
 static struct device_node *find_target(struct device_node *info_node,
 				       struct device_node *target_base)
+=======
+static struct device_node *find_target(struct device_node *info_node)
+>>>>>>> master
 {
 	struct device_node *node;
 	char *target_path;
@@ -801,7 +848,11 @@ static int init_overlay_changeset(struct overlay_changeset *ovcs,
 
 		fragment = &fragments[cnt];
 		fragment->overlay = overlay_node;
+<<<<<<< HEAD
 		fragment->target = find_target(node, target_base);
+=======
+		fragment->target = find_target(node);
+>>>>>>> master
 		if (!fragment->target) {
 			of_node_put(fragment->overlay);
 			ret = -EINVAL;

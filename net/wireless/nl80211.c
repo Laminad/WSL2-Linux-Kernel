@@ -229,6 +229,7 @@ static int validate_beacon_head(const struct nlattr *attr,
 	unsigned int len = nla_len(attr);
 	const struct element *elem;
 	const struct ieee80211_mgmt *mgmt = (void *)data;
+<<<<<<< HEAD
 	unsigned int fixedlen, hdrlen;
 	bool s1g_bcn;
 
@@ -245,11 +246,20 @@ static int validate_beacon_head(const struct nlattr *attr,
 				    u.beacon.variable);
 		hdrlen = offsetof(struct ieee80211_mgmt, u.beacon);
 	}
+=======
+	unsigned int fixedlen = offsetof(struct ieee80211_mgmt,
+					 u.beacon.variable);
+>>>>>>> master
 
 	if (len < fixedlen)
 		goto err;
 
+<<<<<<< HEAD
 	if (ieee80211_hdrlen(mgmt->frame_control) != hdrlen)
+=======
+	if (ieee80211_hdrlen(mgmt->frame_control) !=
+	    offsetof(struct ieee80211_mgmt, u.beacon))
+>>>>>>> master
 		goto err;
 
 	data += fixedlen;
@@ -267,6 +277,7 @@ err:
 	return -EINVAL;
 }
 
+<<<<<<< HEAD
 static int validate_ie_attr(const struct nlattr *attr,
 			    struct netlink_ext_ack *extack)
 {
@@ -294,6 +305,8 @@ static int validate_he_capa(const struct nlattr *attr,
 	return 0;
 }
 
+=======
+>>>>>>> master
 /* policy for the attributes */
 static const struct nla_policy nl80211_policy[NUM_NL80211_ATTR];
 
@@ -538,7 +551,12 @@ static const struct nla_policy nl80211_policy[NUM_NL80211_ATTR] = {
 	[NL80211_ATTR_MNTR_FLAGS] = { /* NLA_NESTED can't be empty */ },
 	[NL80211_ATTR_MESH_ID] = { .type = NLA_BINARY,
 				   .len = IEEE80211_MAX_MESH_ID_LEN },
+<<<<<<< HEAD
 	[NL80211_ATTR_MPATH_NEXT_HOP] = NLA_POLICY_ETH_ADDR_COMPAT,
+=======
+	[NL80211_ATTR_MPATH_NEXT_HOP] = { .type = NLA_BINARY,
+					  .len = ETH_ALEN },
+>>>>>>> master
 
 	/* allow 3 for NUL-termination, we used to declare this NLA_STRING */
 	[NL80211_ATTR_REG_ALPHA2] = NLA_POLICY_RANGE(NLA_BINARY, 2, 3),
@@ -3220,6 +3238,7 @@ static int nl80211_parse_punct_bitmap(struct cfg80211_registered_device *rdev,
 	if (!cfg80211_valid_disable_subchannel_bitmap(punct_bitmap, chandef))
 		return -EINVAL;
 
+<<<<<<< HEAD
 	return 0;
 }
 
@@ -3245,6 +3264,11 @@ int nl80211_parse_chandef(struct cfg80211_registered_device *rdev,
 
 	memset(chandef, 0, sizeof(*chandef));
 	chandef->chan = ieee80211_get_channel_khz(&rdev->wiphy, control_freq);
+=======
+	memset(chandef, 0, sizeof(*chandef));
+
+	chandef->chan = ieee80211_get_channel(&rdev->wiphy, control_freq);
+>>>>>>> master
 	chandef->width = NL80211_CHAN_WIDTH_20_NOHT;
 	chandef->center_freq1 = KHZ_TO_MHZ(control_freq);
 	chandef->freq1_offset = control_freq % 1000;
@@ -3854,6 +3878,10 @@ static int nl80211_send_iface(struct sk_buff *msg, u32 portid, u32 seq, int flag
 	if (rdev->ops->get_channel && !wdev->valid_links) {
 		struct cfg80211_chan_def chandef = {};
 		int ret;
+<<<<<<< HEAD
+=======
+		struct cfg80211_chan_def chandef = {};
+>>>>>>> master
 
 		ret = rdev_get_channel(rdev, wdev, 0, &chandef);
 		if (ret == 0 && nl80211_send_chandef(msg, &chandef))
@@ -5521,6 +5549,12 @@ static int nl80211_parse_beacon(struct cfg80211_registered_device *rdev,
 	bcn->link_id = nl80211_link_id(attrs);
 
 	if (attrs[NL80211_ATTR_BEACON_HEAD]) {
+		int ret = validate_beacon_head(attrs[NL80211_ATTR_BEACON_HEAD],
+					       NULL);
+
+		if (ret)
+			return ret;
+
 		bcn->head = nla_data(attrs[NL80211_ATTR_BEACON_HEAD]);
 		bcn->head_len = nla_len(attrs[NL80211_ATTR_BEACON_HEAD]);
 		if (!bcn->head_len)
@@ -11486,7 +11520,11 @@ static int nl80211_join_ibss(struct sk_buff *skb, struct genl_info *info)
 		int r = validate_pae_over_nl80211(rdev, info);
 
 		if (r < 0) {
+<<<<<<< HEAD
 			kfree_sensitive(connkeys);
+=======
+			kzfree(connkeys);
+>>>>>>> master
 			return r;
 		}
 
@@ -12857,7 +12895,11 @@ static int cfg80211_cqm_rssi_update(struct cfg80211_registered_device *rdev,
 
 	for (i = 0; i < n; i++) {
 		i = array_index_nospec(i, n);
+<<<<<<< HEAD
 		if (last < cqm_config->rssi_thresholds[i])
+=======
+		if (last < wdev->cqm_config->rssi_thresholds[i])
+>>>>>>> master
 			break;
 	}
 
@@ -16972,8 +17014,14 @@ static const struct genl_small_ops nl80211_small_ops[] = {
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = nl80211_associate,
 		.flags = GENL_UNS_ADMIN_PERM,
+<<<<<<< HEAD
 		.internal_flags = IFLAGS(NL80211_FLAG_NEED_NETDEV_UP |
 					 NL80211_FLAG_CLEAR_SKB),
+=======
+		.internal_flags = NL80211_FLAG_NEED_NETDEV_UP |
+				  NL80211_FLAG_NEED_RTNL |
+				  NL80211_FLAG_CLEAR_SKB,
+>>>>>>> master
 	},
 	{
 		.cmd = NL80211_CMD_DEAUTHENTICATE,
@@ -17018,16 +17066,28 @@ static const struct genl_small_ops nl80211_small_ops[] = {
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = nl80211_connect,
 		.flags = GENL_UNS_ADMIN_PERM,
+<<<<<<< HEAD
 		.internal_flags = IFLAGS(NL80211_FLAG_NEED_NETDEV_UP |
 					 NL80211_FLAG_CLEAR_SKB),
+=======
+		.internal_flags = NL80211_FLAG_NEED_NETDEV_UP |
+				  NL80211_FLAG_NEED_RTNL |
+				  NL80211_FLAG_CLEAR_SKB,
+>>>>>>> master
 	},
 	{
 		.cmd = NL80211_CMD_UPDATE_CONNECT_PARAMS,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = nl80211_update_connect_params,
 		.flags = GENL_ADMIN_PERM,
+<<<<<<< HEAD
 		.internal_flags = IFLAGS(NL80211_FLAG_NEED_NETDEV_UP |
 					 NL80211_FLAG_CLEAR_SKB),
+=======
+		.internal_flags = NL80211_FLAG_NEED_NETDEV_UP |
+				  NL80211_FLAG_NEED_RTNL |
+				  NL80211_FLAG_CLEAR_SKB,
+>>>>>>> master
 	},
 	{
 		.cmd = NL80211_CMD_DISCONNECT,
@@ -17055,8 +17115,14 @@ static const struct genl_small_ops nl80211_small_ops[] = {
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = nl80211_setdel_pmksa,
 		.flags = GENL_UNS_ADMIN_PERM,
+<<<<<<< HEAD
 		.internal_flags = IFLAGS(NL80211_FLAG_NEED_NETDEV_UP |
 					 NL80211_FLAG_CLEAR_SKB),
+=======
+		.internal_flags = NL80211_FLAG_NEED_NETDEV_UP |
+				  NL80211_FLAG_NEED_RTNL |
+				  NL80211_FLAG_CLEAR_SKB,
+>>>>>>> master
 	},
 	{
 		.cmd = NL80211_CMD_DEL_PMKSA,
@@ -17371,8 +17437,14 @@ static const struct genl_small_ops nl80211_small_ops[] = {
 		.doit = nl80211_vendor_cmd,
 		.dumpit = nl80211_vendor_cmd_dump,
 		.flags = GENL_UNS_ADMIN_PERM,
+<<<<<<< HEAD
 		.internal_flags = IFLAGS(NL80211_FLAG_NEED_WIPHY |
 					 NL80211_FLAG_CLEAR_SKB),
+=======
+		.internal_flags = NL80211_FLAG_NEED_WIPHY |
+				  NL80211_FLAG_NEED_RTNL |
+				  NL80211_FLAG_CLEAR_SKB,
+>>>>>>> master
 	},
 	{
 		.cmd = NL80211_CMD_SET_QOS_MAP,
@@ -17421,8 +17493,15 @@ static const struct genl_small_ops nl80211_small_ops[] = {
 		.cmd = NL80211_CMD_SET_PMK,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = nl80211_set_pmk,
+<<<<<<< HEAD
 		.internal_flags = IFLAGS(NL80211_FLAG_NEED_NETDEV_UP |
 					 NL80211_FLAG_CLEAR_SKB),
+=======
+		.policy = nl80211_policy,
+		.internal_flags = NL80211_FLAG_NEED_NETDEV_UP |
+				  NL80211_FLAG_NEED_RTNL |
+				  NL80211_FLAG_CLEAR_SKB,
+>>>>>>> master
 	},
 	{
 		.cmd = NL80211_CMD_DEL_PMK,
@@ -19430,6 +19509,7 @@ void cfg80211_ch_switch_notify(struct net_device *dev,
 
 	trace_cfg80211_ch_switch_notify(dev, chandef, link_id, punct_bitmap);
 
+<<<<<<< HEAD
 	switch (wdev->iftype) {
 	case NL80211_IFTYPE_STATION:
 	case NL80211_IFTYPE_P2P_CLIENT:
@@ -19458,6 +19538,17 @@ void cfg80211_ch_switch_notify(struct net_device *dev,
 	nl80211_ch_switch_notify(rdev, dev, link_id, chandef, GFP_KERNEL,
 				 NL80211_CMD_CH_SWITCH_NOTIFY, 0, false,
 				 punct_bitmap);
+=======
+	wdev->chandef = *chandef;
+	wdev->preset_chandef = *chandef;
+
+	if (wdev->iftype == NL80211_IFTYPE_STATION &&
+	    !WARN_ON(!wdev->current_bss))
+		wdev->current_bss->pub.channel = chandef->chan;
+
+	nl80211_ch_switch_notify(rdev, dev, chandef, GFP_KERNEL,
+				 NL80211_CMD_CH_SWITCH_NOTIFY, 0);
+>>>>>>> master
 }
 EXPORT_SYMBOL(cfg80211_ch_switch_notify);
 

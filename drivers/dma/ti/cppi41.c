@@ -747,7 +747,11 @@ static int cppi41_stop_chan(struct dma_chan *chan)
 		struct cppi41_channel *cc, *_ct;
 
 		/*
+<<<<<<< HEAD
 		 * channels might still be in the pending list if
+=======
+		 * channels might still be in the pendling list if
+>>>>>>> master
 		 * cppi41_dma_issue_pending() is called after
 		 * cppi41_runtime_suspend() is called
 		 */

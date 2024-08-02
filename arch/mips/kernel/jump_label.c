@@ -88,6 +88,7 @@ void arch_jump_label_transform(struct jump_entry *e,
 
 	mutex_unlock(&text_mutex);
 }
+<<<<<<< HEAD
 
 #ifdef CONFIG_MODULES
 void jump_label_apply_nops(struct module *mod)
@@ -107,3 +108,5 @@ void jump_label_apply_nops(struct module *mod)
 	}
 }
 #endif
+=======
+>>>>>>> master

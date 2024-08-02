@@ -128,14 +128,22 @@ int gre_parse_header(struct sk_buff *skb, struct tnl_ptk_info *tpi,
 	 * to 0 and sets the configured key in the
 	 * inner erspan header field
 	 */
+<<<<<<< HEAD
 	if ((greh->protocol == htons(ETH_P_ERSPAN) && hdr_len != 4) ||
+=======
+	if (greh->protocol == htons(ETH_P_ERSPAN) ||
+>>>>>>> master
 	    greh->protocol == htons(ETH_P_ERSPAN2)) {
 		struct erspan_base_hdr *ershdr;
 
 		if (!pskb_may_pull(skb, nhs + hdr_len + sizeof(*ershdr)))
 			return -EINVAL;
 
+<<<<<<< HEAD
 		ershdr = (struct erspan_base_hdr *)(skb->data + nhs + hdr_len);
+=======
+		ershdr = (struct erspan_base_hdr *)options;
+>>>>>>> master
 		tpi->key = cpu_to_be32(get_session_id(ershdr));
 	}
 

@@ -1582,23 +1582,32 @@ static void binder_free_transaction(struct binder_transaction *t)
 
 	if (target_proc) {
 		binder_inner_proc_lock(target_proc);
+<<<<<<< HEAD
 		target_proc->outstanding_txns--;
 		if (target_proc->outstanding_txns < 0)
 			pr_warn("%s: Unexpected outstanding_txns %d\n",
 				__func__, target_proc->outstanding_txns);
 		if (!target_proc->outstanding_txns && target_proc->is_frozen)
 			wake_up_interruptible_all(&target_proc->freeze_wait);
+=======
+>>>>>>> master
 		if (t->buffer)
 			t->buffer->transaction = NULL;
 		binder_inner_proc_unlock(target_proc);
 	}
+<<<<<<< HEAD
 	if (trace_binder_txn_latency_free_enabled())
 		binder_txn_latency_free(t);
+=======
+>>>>>>> master
 	/*
 	 * If the transaction has no target_proc, then
 	 * t->buffer->transaction has already been cleared.
 	 */
+<<<<<<< HEAD
 	binder_free_txn_fixups(t);
+=======
+>>>>>>> master
 	kfree(t);
 	binder_stats_deleted(BINDER_STAT_TRANSACTION);
 }
@@ -3255,6 +3264,7 @@ static void binder_transaction(struct binder_proc *proc,
 		t->buffer = NULL;
 		goto err_binder_alloc_buf_failed;
 	}
+<<<<<<< HEAD
 	if (secctx) {
 		int err;
 		size_t buf_offset = ALIGN(tr->data_size, sizeof(void *)) +
@@ -3273,6 +3283,8 @@ static void binder_transaction(struct binder_proc *proc,
 		security_release_secctx(secctx, secctx_sz);
 		secctx = NULL;
 	}
+=======
+>>>>>>> master
 	t->buffer->debug_id = t->debug_id;
 	t->buffer->transaction = t;
 	t->buffer->target_node = target_node;
@@ -4008,7 +4020,39 @@ static int binder_thread_write(struct binder_proc *proc,
 				     proc->pid, thread->pid, (u64)data_ptr,
 				     buffer->debug_id,
 				     buffer->transaction ? "active" : "finished");
+<<<<<<< HEAD
 			binder_free_buf(proc, thread, buffer, false);
+=======
+
+			binder_inner_proc_lock(proc);
+			if (buffer->transaction) {
+				buffer->transaction->buffer = NULL;
+				buffer->transaction = NULL;
+			}
+			binder_inner_proc_unlock(proc);
+			if (buffer->async_transaction && buffer->target_node) {
+				struct binder_node *buf_node;
+				struct binder_work *w;
+
+				buf_node = buffer->target_node;
+				binder_node_inner_lock(buf_node);
+				BUG_ON(!buf_node->has_async_transaction);
+				BUG_ON(buf_node->proc != proc);
+				w = binder_dequeue_work_head_ilocked(
+						&buf_node->async_todo);
+				if (!w) {
+					buf_node->has_async_transaction = false;
+				} else {
+					binder_enqueue_work_ilocked(
+							w, &proc->todo);
+					binder_wakeup_proc_ilocked(proc);
+				}
+				binder_node_inner_unlock(buf_node);
+			}
+			trace_binder_transaction_buffer_release(buffer);
+			binder_transaction_buffer_release(proc, buffer, NULL);
+			binder_alloc_free_buf(&proc->alloc, buffer);
+>>>>>>> master
 			break;
 		}
 
@@ -4497,6 +4541,10 @@ retry:
 			else
 				cmd = BR_TRANSACTION_COMPLETE;
 			binder_inner_proc_unlock(proc);
+<<<<<<< HEAD
+=======
+			cmd = BR_TRANSACTION_COMPLETE;
+>>>>>>> master
 			kfree(w);
 			binder_stats_deleted(BINDER_STAT_TRANSACTION_COMPLETE);
 			if (put_user(cmd, (uint32_t __user *)ptr))

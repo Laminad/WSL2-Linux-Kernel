@@ -135,7 +135,11 @@ static struct netvsc_device *alloc_net_device(void)
 
 	init_waitqueue_head(&net_device->wait_drain);
 	net_device->destroy = false;
+<<<<<<< HEAD
 	net_device->tx_disable = true;
+=======
+	net_device->tx_disable = false;
+>>>>>>> master
 
 	net_device->max_pkt = RNDIS_MAX_PKT_DEFAULT;
 	net_device->pkt_align = RNDIS_PKT_ALIGN_DEFAULT;

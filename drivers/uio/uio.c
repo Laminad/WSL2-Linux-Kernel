@@ -276,7 +276,11 @@ static struct class uio_class = {
 	.dev_groups = uio_groups,
 };
 
+<<<<<<< HEAD
 static bool uio_class_registered;
+=======
+bool uio_class_registered;
+>>>>>>> master
 
 /*
  * device functions

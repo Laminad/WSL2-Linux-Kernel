@@ -1132,14 +1132,24 @@ static int do_replace(struct net *net, sockptr_t arg, unsigned int len)
 	tmp.name[sizeof(tmp.name) - 1] = 0;
 
 	countersize = COUNTER_OFFSET(tmp.nentries) * nr_cpu_ids;
+<<<<<<< HEAD
 	newinfo = __vmalloc(sizeof(*newinfo) + countersize, GFP_KERNEL_ACCOUNT);
+=======
+	newinfo = __vmalloc(sizeof(*newinfo) + countersize, GFP_KERNEL_ACCOUNT,
+			    PAGE_KERNEL);
+>>>>>>> master
 	if (!newinfo)
 		return -ENOMEM;
 
 	if (countersize)
 		memset(newinfo->counters, 0, countersize);
 
+<<<<<<< HEAD
 	newinfo->entries = __vmalloc(tmp.entries_size, GFP_KERNEL_ACCOUNT);
+=======
+	newinfo->entries = __vmalloc(tmp.entries_size, GFP_KERNEL_ACCOUNT,
+				     PAGE_KERNEL);
+>>>>>>> master
 	if (!newinfo->entries) {
 		ret = -ENOMEM;
 		goto free_newinfo;
@@ -1233,6 +1243,14 @@ int ebt_register_table(struct net *net, const struct ebt_table *input_table,
 	ret = translate_table(net, repl->name, newinfo);
 	if (ret != 0)
 		goto free_chainstack;
+<<<<<<< HEAD
+=======
+
+	if (table->check && table->check(newinfo, table->valid_hooks)) {
+		ret = -EINVAL;
+		goto free_chainstack;
+	}
+>>>>>>> master
 
 	table->private = newinfo;
 	rwlock_init(&table->lock);
@@ -1586,7 +1604,91 @@ static int copy_everything_to_user(struct ebt_table *t, void __user *user,
 	   ebt_entry_to_user, entries, tmp.entries);
 }
 
+<<<<<<< HEAD
 #ifdef CONFIG_NETFILTER_XTABLES_COMPAT
+=======
+static int do_ebt_set_ctl(struct sock *sk,
+	int cmd, void __user *user, unsigned int len)
+{
+	int ret;
+	struct net *net = sock_net(sk);
+
+	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+		return -EPERM;
+
+	switch (cmd) {
+	case EBT_SO_SET_ENTRIES:
+		ret = do_replace(net, user, len);
+		break;
+	case EBT_SO_SET_COUNTERS:
+		ret = update_counters(net, user, len);
+		break;
+	default:
+		ret = -EINVAL;
+	}
+	return ret;
+}
+
+static int do_ebt_get_ctl(struct sock *sk, int cmd, void __user *user, int *len)
+{
+	int ret;
+	struct ebt_replace tmp;
+	struct ebt_table *t;
+	struct net *net = sock_net(sk);
+
+	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+		return -EPERM;
+
+	if (copy_from_user(&tmp, user, sizeof(tmp)))
+		return -EFAULT;
+
+	tmp.name[sizeof(tmp.name) - 1] = '\0';
+
+	t = find_table_lock(net, tmp.name, &ret, &ebt_mutex);
+	if (!t)
+		return ret;
+
+	switch (cmd) {
+	case EBT_SO_GET_INFO:
+	case EBT_SO_GET_INIT_INFO:
+		if (*len != sizeof(struct ebt_replace)) {
+			ret = -EINVAL;
+			mutex_unlock(&ebt_mutex);
+			break;
+		}
+		if (cmd == EBT_SO_GET_INFO) {
+			tmp.nentries = t->private->nentries;
+			tmp.entries_size = t->private->entries_size;
+			tmp.valid_hooks = t->valid_hooks;
+		} else {
+			tmp.nentries = t->table->nentries;
+			tmp.entries_size = t->table->entries_size;
+			tmp.valid_hooks = t->table->valid_hooks;
+		}
+		mutex_unlock(&ebt_mutex);
+		if (copy_to_user(user, &tmp, *len) != 0) {
+			ret = -EFAULT;
+			break;
+		}
+		ret = 0;
+		break;
+
+	case EBT_SO_GET_ENTRIES:
+	case EBT_SO_GET_INIT_ENTRIES:
+		ret = copy_everything_to_user(t, user, len, cmd);
+		mutex_unlock(&ebt_mutex);
+		break;
+
+	default:
+		mutex_unlock(&ebt_mutex);
+		ret = -EINVAL;
+	}
+
+	return ret;
+}
+
+#ifdef CONFIG_COMPAT
+>>>>>>> master
 /* 32 bit-userspace compatibility definitions. */
 struct compat_ebt_replace {
 	char name[EBT_TABLE_MAXNAMELEN];
@@ -2083,6 +2185,13 @@ static int ebt_size_mwt(const struct compat_ebt_entry_mwt *match32,
 		if (match_kern)
 			match_kern->match_size = ret;
 
+<<<<<<< HEAD
+=======
+		/* rule should have no remaining data after target */
+		if (type == EBT_COMPAT_TARGET && size_left)
+			return -EINVAL;
+
+>>>>>>> master
 		match32 = (struct compat_ebt_entry_mwt *) buf;
 	} while (size_left);
 

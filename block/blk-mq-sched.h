@@ -8,6 +8,7 @@
 #define MAX_SCHED_RQ (16 * BLKDEV_DEFAULT_RQ)
 
 bool blk_mq_sched_try_merge(struct request_queue *q, struct bio *bio,
+<<<<<<< HEAD
 		unsigned int nr_segs, struct request **merged_request);
 bool blk_mq_sched_bio_merge(struct request_queue *q, struct bio *bio,
 		unsigned int nr_segs);
@@ -15,6 +16,19 @@ bool blk_mq_sched_try_insert_merge(struct request_queue *q, struct request *rq,
 				   struct list_head *free);
 void blk_mq_sched_mark_restart_hctx(struct blk_mq_hw_ctx *hctx);
 void __blk_mq_sched_restart(struct blk_mq_hw_ctx *hctx);
+=======
+				struct request **merged_request);
+bool __blk_mq_sched_bio_merge(struct request_queue *q, struct bio *bio);
+bool blk_mq_sched_try_insert_merge(struct request_queue *q, struct request *rq);
+void blk_mq_sched_mark_restart_hctx(struct blk_mq_hw_ctx *hctx);
+void blk_mq_sched_restart(struct blk_mq_hw_ctx *hctx);
+
+void blk_mq_sched_insert_request(struct request *rq, bool at_head,
+				 bool run_queue, bool async);
+void blk_mq_sched_insert_requests(struct request_queue *q,
+				  struct blk_mq_ctx *ctx,
+				  struct list_head *list, bool run_queue_async);
+>>>>>>> master
 
 void blk_mq_sched_dispatch_requests(struct blk_mq_hw_ctx *hctx);
 

@@ -1148,9 +1148,31 @@ static int lenovo_probe_tpkbd(struct hid_device *hdev)
 
 	hid_set_drvdata(hdev, data_pointer);
 
+<<<<<<< HEAD
 	ret = lenovo_register_leds(hdev);
 	if (ret)
 		goto err;
+=======
+	data_pointer->led_mute.name = name_mute;
+	data_pointer->led_mute.brightness_get = lenovo_led_brightness_get_tpkbd;
+	data_pointer->led_mute.brightness_set = lenovo_led_brightness_set_tpkbd;
+	data_pointer->led_mute.dev = dev;
+	ret = led_classdev_register(dev, &data_pointer->led_mute);
+	if (ret < 0)
+		goto err;
+
+	data_pointer->led_micmute.name = name_micmute;
+	data_pointer->led_micmute.brightness_get =
+		lenovo_led_brightness_get_tpkbd;
+	data_pointer->led_micmute.brightness_set =
+		lenovo_led_brightness_set_tpkbd;
+	data_pointer->led_micmute.dev = dev;
+	ret = led_classdev_register(dev, &data_pointer->led_micmute);
+	if (ret < 0) {
+		led_classdev_unregister(&data_pointer->led_mute);
+		goto err;
+	}
+>>>>>>> master
 
 	lenovo_features_set_tpkbd(hdev);
 

@@ -148,6 +148,81 @@ static void motu_bus_update(struct fw_unit *unit)
 	snd_motu_transaction_reregister(motu);
 }
 
+<<<<<<< HEAD
+=======
+static const struct snd_motu_spec motu_828mk2 = {
+	.name = "828mk2",
+	.protocol = &snd_motu_protocol_v2,
+	.flags = SND_MOTU_SPEC_SUPPORT_CLOCK_X2 |
+		 SND_MOTU_SPEC_TX_MICINST_CHUNK |
+		 SND_MOTU_SPEC_TX_RETURN_CHUNK |
+		 SND_MOTU_SPEC_RX_SEPARETED_MAIN |
+		 SND_MOTU_SPEC_HAS_OPT_IFACE_A |
+		 SND_MOTU_SPEC_RX_MIDI_2ND_Q |
+		 SND_MOTU_SPEC_TX_MIDI_2ND_Q,
+
+	.analog_in_ports = 8,
+	.analog_out_ports = 8,
+};
+
+const struct snd_motu_spec snd_motu_spec_traveler = {
+	.name = "Traveler",
+	.protocol = &snd_motu_protocol_v2,
+	.flags = SND_MOTU_SPEC_SUPPORT_CLOCK_X2 |
+		 SND_MOTU_SPEC_SUPPORT_CLOCK_X4 |
+		 SND_MOTU_SPEC_TX_RETURN_CHUNK |
+		 SND_MOTU_SPEC_HAS_AESEBU_IFACE |
+		 SND_MOTU_SPEC_HAS_OPT_IFACE_A |
+		 SND_MOTU_SPEC_RX_MIDI_2ND_Q |
+		 SND_MOTU_SPEC_TX_MIDI_2ND_Q,
+
+	.analog_in_ports = 8,
+	.analog_out_ports = 8,
+};
+
+static const struct snd_motu_spec motu_828mk3 = {
+	.name = "828mk3",
+	.protocol = &snd_motu_protocol_v3,
+	.flags = SND_MOTU_SPEC_SUPPORT_CLOCK_X2 |
+		 SND_MOTU_SPEC_SUPPORT_CLOCK_X4 |
+		 SND_MOTU_SPEC_TX_MICINST_CHUNK |
+		 SND_MOTU_SPEC_TX_RETURN_CHUNK |
+		 SND_MOTU_SPEC_TX_REVERB_CHUNK |
+		 SND_MOTU_SPEC_RX_SEPARETED_MAIN |
+		 SND_MOTU_SPEC_HAS_OPT_IFACE_A |
+		 SND_MOTU_SPEC_HAS_OPT_IFACE_B |
+		 SND_MOTU_SPEC_RX_MIDI_3RD_Q |
+		 SND_MOTU_SPEC_TX_MIDI_3RD_Q,
+
+	.analog_in_ports = 8,
+	.analog_out_ports = 8,
+};
+
+static const struct snd_motu_spec motu_audio_express = {
+	.name = "AudioExpress",
+	.protocol = &snd_motu_protocol_v3,
+	.flags = SND_MOTU_SPEC_SUPPORT_CLOCK_X2 |
+		 SND_MOTU_SPEC_TX_MICINST_CHUNK |
+		 SND_MOTU_SPEC_TX_RETURN_CHUNK |
+		 SND_MOTU_SPEC_RX_SEPARETED_MAIN |
+		 SND_MOTU_SPEC_RX_MIDI_2ND_Q |
+		 SND_MOTU_SPEC_TX_MIDI_3RD_Q,
+	.analog_in_ports = 2,
+	.analog_out_ports = 4,
+};
+
+static const struct snd_motu_spec motu_4pre = {
+	.name = "4pre",
+	.protocol = &snd_motu_protocol_v3,
+	.flags = SND_MOTU_SPEC_SUPPORT_CLOCK_X2 |
+		 SND_MOTU_SPEC_TX_MICINST_CHUNK |
+		 SND_MOTU_SPEC_TX_RETURN_CHUNK |
+		 SND_MOTU_SPEC_RX_SEPARETED_MAIN,
+	.analog_in_ports = 2,
+	.analog_out_ports = 2,
+};
+
+>>>>>>> master
 #define SND_MOTU_DEV_ENTRY(model, data)			\
 {							\
 	.match_flags	= IEEE1394_MATCH_VENDOR_ID |	\
@@ -160,6 +235,7 @@ static void motu_bus_update(struct fw_unit *unit)
 }
 
 static const struct ieee1394_device_id motu_id_table[] = {
+<<<<<<< HEAD
 	SND_MOTU_DEV_ENTRY(0x000001, &snd_motu_spec_828),
 	SND_MOTU_DEV_ENTRY(0x000002, &snd_motu_spec_896),
 	SND_MOTU_DEV_ENTRY(0x000003, &snd_motu_spec_828mk2),
@@ -175,6 +251,14 @@ static const struct ieee1394_device_id motu_id_table[] = {
 	SND_MOTU_DEV_ENTRY(0x000033, &snd_motu_spec_audio_express),
 	SND_MOTU_DEV_ENTRY(0x000039, &snd_motu_spec_track16),
 	SND_MOTU_DEV_ENTRY(0x000045, &snd_motu_spec_4pre),
+=======
+	SND_MOTU_DEV_ENTRY(0x000003, &motu_828mk2),
+	SND_MOTU_DEV_ENTRY(0x000009, &snd_motu_spec_traveler),
+	SND_MOTU_DEV_ENTRY(0x000015, &motu_828mk3),	/* FireWire only. */
+	SND_MOTU_DEV_ENTRY(0x000035, &motu_828mk3),	/* Hybrid. */
+	SND_MOTU_DEV_ENTRY(0x000033, &motu_audio_express),
+	SND_MOTU_DEV_ENTRY(0x000045, &motu_4pre),
+>>>>>>> master
 	{ }
 };
 MODULE_DEVICE_TABLE(ieee1394, motu_id_table);

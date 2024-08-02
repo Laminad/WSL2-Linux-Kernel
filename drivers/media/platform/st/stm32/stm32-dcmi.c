@@ -1910,9 +1910,16 @@ static int dcmi_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	dcmi->rstc = devm_reset_control_get_exclusive(&pdev->dev, NULL);
+<<<<<<< HEAD:drivers/media/platform/st/stm32/stm32-dcmi.c
 	if (IS_ERR(dcmi->rstc))
 		return dev_err_probe(&pdev->dev, PTR_ERR(dcmi->rstc),
 				     "Could not get reset control\n");
+=======
+	if (IS_ERR(dcmi->rstc)) {
+		dev_err(&pdev->dev, "Could not get reset control\n");
+		return PTR_ERR(dcmi->rstc);
+	}
+>>>>>>> master:drivers/media/platform/stm32/stm32-dcmi.c
 
 	/* Get bus characteristics from devicetree */
 	np = of_graph_get_next_endpoint(np, NULL);
@@ -1945,18 +1952,46 @@ static int dcmi_probe(struct platform_device *pdev)
 	dcmi->bus.data_shift = ep.bus.parallel.data_shift;
 	dcmi->bus_type = ep.bus_type;
 
+<<<<<<< HEAD:drivers/media/platform/st/stm32/stm32-dcmi.c
 	dcmi->irq = platform_get_irq(pdev, 0);
 	if (dcmi->irq < 0)
 		return dcmi->irq;
+=======
+	irq = platform_get_irq(pdev, 0);
+	if (irq <= 0) {
+		if (irq != -EPROBE_DEFER)
+			dev_err(&pdev->dev, "Could not get irq\n");
+		return irq ? irq : -ENXIO;
+	}
+>>>>>>> master:drivers/media/platform/stm32/stm32-dcmi.c
 
 	dcmi->regs = devm_platform_get_and_ioremap_resource(pdev, 0, &dcmi->res);
 	if (IS_ERR(dcmi->regs))
 		return PTR_ERR(dcmi->regs);
+<<<<<<< HEAD:drivers/media/platform/st/stm32/stm32-dcmi.c
 
 	mclk = devm_clk_get(&pdev->dev, "mclk");
 	if (IS_ERR(mclk))
 		return dev_err_probe(&pdev->dev, PTR_ERR(mclk),
 				     "Unable to get mclk\n");
+=======
+	}
+
+	ret = devm_request_threaded_irq(&pdev->dev, irq, dcmi_irq_callback,
+					dcmi_irq_thread, IRQF_ONESHOT,
+					dev_name(&pdev->dev), dcmi);
+	if (ret) {
+		dev_err(&pdev->dev, "Unable to request irq %d\n", irq);
+		return ret;
+	}
+
+	mclk = devm_clk_get(&pdev->dev, "mclk");
+	if (IS_ERR(mclk)) {
+		if (PTR_ERR(mclk) != -EPROBE_DEFER)
+			dev_err(&pdev->dev, "Unable to get mclk\n");
+		return PTR_ERR(mclk);
+	}
+>>>>>>> master:drivers/media/platform/stm32/stm32-dcmi.c
 
 	chan = dma_request_chan(&pdev->dev, "tx");
 	if (IS_ERR(chan))

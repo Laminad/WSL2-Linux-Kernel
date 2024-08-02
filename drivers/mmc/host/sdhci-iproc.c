@@ -381,7 +381,11 @@ static int sdhci_iproc_probe(struct platform_device *pdev)
 	if (ret)
 		goto err;
 
+<<<<<<< HEAD
 	sdhci_get_property(pdev);
+=======
+	sdhci_get_of_property(pdev);
+>>>>>>> master
 
 	host->mmc->caps |= iproc_host->data->mmc_caps;
 

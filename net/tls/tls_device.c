@@ -65,7 +65,11 @@ static void tls_device_free_ctx(struct tls_context *ctx)
 	if (ctx->rx_conf == TLS_HW)
 		kfree(tls_offload_ctx_rx(ctx));
 
+<<<<<<< HEAD
 	tls_ctx_free(NULL, ctx);
+=======
+	tls_ctx_free(ctx);
+>>>>>>> master
 }
 
 static void tls_device_tx_del_task(struct work_struct *work)
@@ -681,6 +685,7 @@ static int tls_device_push_pending_record(struct sock *sk, int flags)
 	return tls_push_data(sk, &iter, 0, flags, TLS_RECORD_TYPE_DATA);
 }
 
+<<<<<<< HEAD
 void tls_device_write_space(struct sock *sk, struct tls_context *ctx)
 {
 	if (tls_is_partially_sent_record(ctx)) {
@@ -769,6 +774,22 @@ tls_device_rx_resync_async(struct tls_offload_resync_async *resync_async,
 }
 
 void tls_device_rx_resync_new_rec(struct sock *sk, u32 rcd_len, u32 seq)
+=======
+static void tls_device_resync_rx(struct tls_context *tls_ctx,
+				 struct sock *sk, u32 seq, u64 rcd_sn)
+{
+	struct net_device *netdev;
+
+	if (WARN_ON(test_and_set_bit(TLS_RX_SYNC_RUNNING, &tls_ctx->flags)))
+		return;
+	netdev = READ_ONCE(tls_ctx->netdev);
+	if (netdev)
+		netdev->tlsdev_ops->tls_dev_resync_rx(netdev, sk, seq, rcd_sn);
+	clear_bit_unlock(TLS_RX_SYNC_RUNNING, &tls_ctx->flags);
+}
+
+void handle_device_resync(struct sock *sk, u32 seq, u64 rcd_sn)
+>>>>>>> master
 {
 	struct tls_context *tls_ctx = tls_get_ctx(sk);
 	struct tls_offload_context_rx *rx_ctx;
@@ -788,6 +809,7 @@ void tls_device_rx_resync_new_rec(struct sock *sk, u32 rcd_len, u32 seq)
 	rx_ctx = tls_offload_ctx_rx(tls_ctx);
 	memcpy(rcd_sn, tls_ctx->rx.rec_seq, prot->rec_seq_size);
 
+<<<<<<< HEAD
 	switch (rx_ctx->resync_type) {
 	case TLS_OFFLOAD_SYNC_TYPE_DRIVER_REQ:
 		resync_req = atomic64_read(&rx_ctx->resync_req);
@@ -831,12 +853,20 @@ void tls_device_rx_resync_new_rec(struct sock *sk, u32 rcd_len, u32 seq)
 	}
 
 	tls_device_resync_rx(tls_ctx, sk, seq, rcd_sn);
+=======
+	if (unlikely(is_req_pending) && req_seq == seq &&
+	    atomic64_try_cmpxchg(&rx_ctx->resync_req, &resync_req, 0)) {
+		seq += TLS_HEADER_SIZE - 1;
+		tls_device_resync_rx(tls_ctx, sk, seq, rcd_sn);
+	}
+>>>>>>> master
 }
 
 static void tls_device_core_ctrl_rx_resync(struct tls_context *tls_ctx,
 					   struct tls_offload_context_rx *ctx,
 					   struct sock *sk, struct sk_buff *skb)
 {
+<<<<<<< HEAD
 	struct strp_msg *rxm;
 
 	/* device will request resyncs by itself based on stream scan */
@@ -887,6 +917,11 @@ tls_device_reencrypt(struct sock *sk, struct tls_context *tls_ctx)
 	const struct tls_cipher_desc *cipher_desc;
 	int err, offset, copy, data_len, pos;
 	struct sk_buff *skb, *skb_iter;
+=======
+	struct strp_msg *rxm = strp_msg(skb);
+	int err = 0, offset = rxm->offset, copy, nsg, data_len, pos;
+	struct sk_buff *skb_iter, *unused;
+>>>>>>> master
 	struct scatterlist sg[1];
 	struct strp_msg *rxm;
 	char *orig_buf, *buf;
@@ -929,16 +964,25 @@ tls_device_reencrypt(struct sock *sk, struct tls_context *tls_ctx)
 	else
 		err = 0;
 
+<<<<<<< HEAD
 	data_len = rxm->full_len - cipher_desc->tag;
+=======
+	data_len = rxm->full_len - TLS_CIPHER_AES_GCM_128_TAG_SIZE;
+>>>>>>> master
 
 	if (skb_pagelen(skb) > offset) {
 		copy = min_t(int, skb_pagelen(skb) - offset, data_len);
 
+<<<<<<< HEAD
 		if (skb->decrypted) {
 			err = skb_store_bits(skb, offset, buf, copy);
 			if (err)
 				goto free_buf;
 		}
+=======
+		if (skb->decrypted)
+			skb_store_bits(skb, offset, buf, copy);
+>>>>>>> master
 
 		offset += copy;
 		buf += copy;
@@ -961,11 +1005,16 @@ tls_device_reencrypt(struct sock *sk, struct tls_context *tls_ctx)
 		copy = min_t(int, skb_iter->len - frag_pos,
 			     data_len + rxm->offset - offset);
 
+<<<<<<< HEAD
 		if (skb_iter->decrypted) {
 			err = skb_store_bits(skb_iter, frag_pos, buf, copy);
 			if (err)
 				goto free_buf;
 		}
+=======
+		if (skb_iter->decrypted)
+			skb_store_bits(skb_iter, frag_pos, buf, copy);
+>>>>>>> master
 
 		offset += copy;
 		buf += copy;
@@ -1359,6 +1408,15 @@ static int tls_device_down(struct net_device *netdev)
 		    !test_bit(TLS_RX_DEV_CLOSED, &ctx->flags))
 			netdev->tlsdev_ops->tls_dev_del(netdev, ctx,
 							TLS_OFFLOAD_CTX_DIR_RX);
+<<<<<<< HEAD
+=======
+		WRITE_ONCE(ctx->netdev, NULL);
+		smp_mb__before_atomic(); /* pairs with test_and_set_bit() */
+		while (test_bit(TLS_RX_SYNC_RUNNING, &ctx->flags))
+			usleep_range(10, 200);
+		dev_put(netdev);
+		list_del_init(&ctx->list);
+>>>>>>> master
 
 		dev_put(netdev);
 

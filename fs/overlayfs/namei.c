@@ -18,7 +18,10 @@
 
 struct ovl_lookup_data {
 	struct super_block *sb;
+<<<<<<< HEAD
 	struct vfsmount *mnt;
+=======
+>>>>>>> master
 	struct qstr name;
 	bool is_dir;
 	bool opaque;

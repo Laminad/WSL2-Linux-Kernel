@@ -344,6 +344,7 @@ int fscrypt_prepare_inline_crypt_key(struct fscrypt_prepared_key *prep_key,
 				     const u8 *raw_key,
 				     const struct fscrypt_info *ci);
 
+<<<<<<< HEAD
 void fscrypt_destroy_inline_crypt_key(struct super_block *sb,
 				      struct fscrypt_prepared_key *prep_key);
 
@@ -378,6 +379,8 @@ static inline int fscrypt_select_encryption_impl(struct fscrypt_info *ci)
 static inline bool
 fscrypt_using_inline_encryption(const struct fscrypt_info *ci)
 {
+=======
+>>>>>>> master
 	return false;
 }
 

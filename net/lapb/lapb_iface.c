@@ -179,12 +179,15 @@ int lapb_unregister(struct net_device *dev)
 	if (!lapb)
 		goto out;
 	lapb_put(lapb);
+<<<<<<< HEAD
 
 	/* Wait for other refs to "lapb" to drop */
 	while (refcount_read(&lapb->refcnt) > 2)
 		usleep_range(1, 10);
 
 	spin_lock_bh(&lapb->lock);
+=======
+>>>>>>> master
 
 	lapb_stop_t1timer(lapb);
 	lapb_stop_t2timer(lapb);

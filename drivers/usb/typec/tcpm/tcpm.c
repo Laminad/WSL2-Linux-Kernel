@@ -464,6 +464,7 @@ struct tcpm_port {
 	/* port belongs to a self powered device */
 	bool self_powered;
 
+<<<<<<< HEAD:drivers/usb/typec/tcpm/tcpm.c
 	/* Sink FRS */
 	enum frs_typec_current new_source_frs_current;
 
@@ -492,6 +493,8 @@ struct tcpm_port {
 	 * transitions.
 	 */
 	bool potential_contaminant;
+=======
+>>>>>>> master:drivers/usb/typec/tcpm.c
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *dentry;
 	struct mutex logbuffer_lock;	/* log buffer access lock */
@@ -571,6 +574,12 @@ static enum tcpm_state tcpm_default_state(struct tcpm_port *port)
 			return SNK_UNATTACHED;
 		else if (port->try_role == TYPEC_SOURCE)
 			return SRC_UNATTACHED;
+<<<<<<< HEAD:drivers/usb/typec/tcpm/tcpm.c
+=======
+		else if (port->tcpc->config &&
+			 port->tcpc->config->default_role == TYPEC_SINK)
+			return SNK_UNATTACHED;
+>>>>>>> master:drivers/usb/typec/tcpm.c
 		/* Fall through to return SRC_UNATTACHED */
 	} else if (port->port_type == TYPEC_PORT_SNK) {
 		return SNK_UNATTACHED;
@@ -777,6 +786,10 @@ static void tcpm_debugfs_exit(struct tcpm_port *port)
 	mutex_unlock(&port->logbuffer_lock);
 
 	debugfs_remove(port->dentry);
+	if (list_empty(&rootdir->d_subdirs)) {
+		debugfs_remove(rootdir);
+		rootdir = NULL;
+	}
 }
 
 #else
@@ -1672,7 +1685,12 @@ static int tcpm_pd_svdm(struct tcpm_port *port, struct typec_altmode *adev,
 			break;
 		case CMD_ATTENTION:
 			/* Attention command does not have response */
+<<<<<<< HEAD:drivers/usb/typec/tcpm/tcpm.c
 			*adev_action = ADEV_ATTENTION;
+=======
+			if (adev)
+				typec_altmode_attention(adev, p[1]);
+>>>>>>> master:drivers/usb/typec/tcpm.c
 			return 0;
 		default:
 			break;
@@ -1731,6 +1749,7 @@ static int tcpm_pd_svdm(struct tcpm_port *port, struct typec_altmode *adev,
 			}
 			break;
 		case CMD_ENTER_MODE:
+<<<<<<< HEAD:drivers/usb/typec/tcpm/tcpm.c
 			if (adev && pdev)
 				*adev_action = ADEV_QUEUE_VDM_SEND_EXIT_MODE_ON_FAIL;
 			return 0;
@@ -1742,6 +1761,28 @@ static int tcpm_pd_svdm(struct tcpm_port *port, struct typec_altmode *adev,
 			}
 			break;
 		case VDO_CMD_VENDOR(0) ... VDO_CMD_VENDOR(15):
+=======
+			if (adev && pdev) {
+				typec_altmode_update_active(pdev, true);
+
+				if (typec_altmode_vdm(adev, p[0], &p[1], cnt)) {
+					response[0] = VDO(adev->svid, 1,
+							  CMD_EXIT_MODE);
+					response[0] |= VDO_OPOS(adev->mode);
+					return 1;
+				}
+			}
+			return 0;
+		case CMD_EXIT_MODE:
+			if (adev && pdev) {
+				typec_altmode_update_active(pdev, false);
+
+				/* Back to USB Operation */
+				WARN_ON(typec_altmode_notify(adev,
+							     TYPEC_STATE_USB,
+							     NULL));
+			}
+>>>>>>> master:drivers/usb/typec/tcpm.c
 			break;
 		default:
 			/* Unrecognized SVDM */
@@ -1762,8 +1803,16 @@ static int tcpm_pd_svdm(struct tcpm_port *port, struct typec_altmode *adev,
 			break;
 		case CMD_ENTER_MODE:
 			/* Back to USB Operation */
+<<<<<<< HEAD:drivers/usb/typec/tcpm/tcpm.c
 			*adev_action = ADEV_NOTIFY_USB_AND_QUEUE_VDM;
 			return 0;
+=======
+			if (adev)
+				WARN_ON(typec_altmode_notify(adev,
+							     TYPEC_STATE_USB,
+							     NULL));
+			break;
+>>>>>>> master:drivers/usb/typec/tcpm.c
 		default:
 			/* Unrecognized SVDM */
 			response[0] = p[0] | VDO_CMDT(CMDT_RSP_NAK);
@@ -1782,7 +1831,13 @@ static int tcpm_pd_svdm(struct tcpm_port *port, struct typec_altmode *adev,
 	}
 
 	/* Informing the alternate mode drivers about everything */
+<<<<<<< HEAD:drivers/usb/typec/tcpm/tcpm.c
 	*adev_action = ADEV_QUEUE_VDM;
+=======
+	if (adev)
+		typec_altmode_vdm(adev, p[0], &p[1], cnt);
+
+>>>>>>> master:drivers/usb/typec/tcpm.c
 	return rlen;
 }
 
@@ -4508,6 +4563,7 @@ static void run_state_machine(struct tcpm_port *port)
 		tcpm_set_vconn(port, false);
 		tcpm_set_vbus(port, false);
 		tcpm_set_roles(port, port->self_powered, TYPEC_SOURCE,
+<<<<<<< HEAD:drivers/usb/typec/tcpm/tcpm.c
 			       tcpm_data_role_for_source(port));
 		/*
 		 * If tcpc fails to notify vbus off, TCPM will wait for PD_T_SAFE_0V +
@@ -4521,6 +4577,10 @@ static void run_state_machine(struct tcpm_port *port)
 		 * The transition to vSafe5V Shall occur within tSrcTurnOn(t4).
 		 */
 		tcpm_set_state(port, SRC_HARD_RESET_VBUS_ON, PD_T_SAFE_0V + PD_T_SRC_RECOVER);
+=======
+			       TYPEC_HOST);
+		tcpm_set_state(port, SRC_HARD_RESET_VBUS_ON, PD_T_SRC_RECOVER);
+>>>>>>> master:drivers/usb/typec/tcpm.c
 		break;
 	case SRC_HARD_RESET_VBUS_ON:
 		tcpm_set_vconn(port, true);
@@ -4537,10 +4597,16 @@ static void run_state_machine(struct tcpm_port *port)
 		tcpm_set_auto_vbus_discharge_threshold(port, TYPEC_PWR_MODE_USB, false, 0);
 		memset(&port->pps_data, 0, sizeof(port->pps_data));
 		tcpm_set_vconn(port, false);
+<<<<<<< HEAD:drivers/usb/typec/tcpm/tcpm.c
 		if (port->pd_capable)
 			tcpm_set_charge(port, false);
 		tcpm_set_roles(port, port->self_powered, TYPEC_SINK,
 			       tcpm_data_role_for_sink(port));
+=======
+		tcpm_set_charge(port, false);
+		tcpm_set_roles(port, port->self_powered, TYPEC_SINK,
+			       TYPEC_DEVICE);
+>>>>>>> master:drivers/usb/typec/tcpm.c
 		/*
 		 * VBUS may or may not toggle, depending on the adapter.
 		 * If it doesn't toggle, transition to SNK_HARD_RESET_SINK_ON
@@ -5810,7 +5876,11 @@ static int tcpm_try_role(struct typec_port *p, int role)
 	mutex_lock(&port->lock);
 	if (tcpc->try_role)
 		ret = tcpc->try_role(tcpc, role);
+<<<<<<< HEAD:drivers/usb/typec/tcpm/tcpm.c
 	if (!ret)
+=======
+	if (!ret && (!tcpc->config || !tcpc->config->try_role_hw))
+>>>>>>> master:drivers/usb/typec/tcpm.c
 		port->try_role = role;
 	port->try_src_count = 0;
 	port->try_snk_count = 0;
@@ -5848,6 +5918,7 @@ static int tcpm_pps_set_op_curr(struct tcpm_port *port, u16 req_op_curr)
 		goto port_unlock;
 	}
 
+<<<<<<< HEAD:drivers/usb/typec/tcpm/tcpm.c
 	port->upcoming_state = SNK_NEGOTIATE_PPS_CAPABILITIES;
 	ret = tcpm_ams_start(port, POWER_NEGOTIATION);
 	if (ret == -EAGAIN) {
@@ -5857,6 +5928,10 @@ static int tcpm_pps_set_op_curr(struct tcpm_port *port, u16 req_op_curr)
 
 	/* Round down operating current to align with PPS valid steps */
 	req_op_curr = req_op_curr - (req_op_curr % RDO_PROG_CURR_MA_STEP);
+=======
+	/* Round down operating current to align with PPS valid steps */
+	op_curr = op_curr - (op_curr % RDO_PROG_CURR_MA_STEP);
+>>>>>>> master:drivers/usb/typec/tcpm.c
 
 	reinit_completion(&port->pps_complete);
 	port->pps_data.req_op_curr = req_op_curr;
@@ -5904,6 +5979,7 @@ static int tcpm_pps_set_out_volt(struct tcpm_port *port, u16 req_out_volt)
 		goto port_unlock;
 	}
 
+<<<<<<< HEAD:drivers/usb/typec/tcpm/tcpm.c
 	port->upcoming_state = SNK_NEGOTIATE_PPS_CAPABILITIES;
 	ret = tcpm_ams_start(port, POWER_NEGOTIATION);
 	if (ret == -EAGAIN) {
@@ -5913,6 +5989,10 @@ static int tcpm_pps_set_out_volt(struct tcpm_port *port, u16 req_out_volt)
 
 	/* Round down output voltage to align with PPS valid steps */
 	req_out_volt = req_out_volt - (req_out_volt % RDO_PROG_VOLT_MV_STEP);
+=======
+	/* Round down output voltage to align with PPS valid steps */
+	out_volt = out_volt - (out_volt % RDO_PROG_VOLT_MV_STEP);
+>>>>>>> master:drivers/usb/typec/tcpm.c
 
 	reinit_completion(&port->pps_complete);
 	port->pps_data.req_out_volt = req_out_volt;
@@ -6228,12 +6308,43 @@ sink:
 		return -EINVAL;
 	port->operating_snk_mw = mw / 1000;
 
+<<<<<<< HEAD:drivers/usb/typec/tcpm/tcpm.c
 	/* FRS can only be supported by DRP ports */
 	if (port->port_type == TYPEC_PORT_DRP) {
 		ret = fwnode_property_read_u32(fwnode, "new-source-frs-typec-current",
 					       &frs_current);
 		if (ret >= 0 && frs_current <= FRS_5V_3A)
 			port->new_source_frs_current = frs_current;
+=======
+	port->self_powered = fwnode_property_read_bool(fwnode, "self-powered");
+
+	return 0;
+}
+
+int tcpm_update_source_capabilities(struct tcpm_port *port, const u32 *pdo,
+				    unsigned int nr_pdo)
+{
+	if (tcpm_validate_caps(port, pdo, nr_pdo))
+		return -EINVAL;
+
+	mutex_lock(&port->lock);
+	port->nr_src_pdo = tcpm_copy_pdos(port->src_pdo, pdo, nr_pdo);
+	switch (port->state) {
+	case SRC_UNATTACHED:
+	case SRC_ATTACH_WAIT:
+	case SRC_TRYWAIT:
+		tcpm_set_cc(port, tcpm_rp_cc(port));
+		break;
+	case SRC_SEND_CAPABILITIES:
+	case SRC_NEGOTIATE_CAPABILITIES:
+	case SRC_READY:
+	case SRC_WAIT_NEW_CAPABILITIES:
+		tcpm_set_cc(port, tcpm_rp_cc(port));
+		tcpm_set_state(port, SRC_SEND_CAPABILITIES, 0);
+		break;
+	default:
+		break;
+>>>>>>> master:drivers/usb/typec/tcpm.c
 	}
 
 	/* sink-vdos is optional */
@@ -6539,9 +6650,16 @@ static enum hrtimer_restart vdm_state_machine_timer_handler(struct hrtimer *time
 	return HRTIMER_NORESTART;
 }
 
+<<<<<<< HEAD:drivers/usb/typec/tcpm/tcpm.c
 static enum hrtimer_restart enable_frs_timer_handler(struct hrtimer *timer)
 {
 	struct tcpm_port *port = container_of(timer, struct tcpm_port, enable_frs_timer);
+=======
+	port->typec_caps.prefer_role = tcfg->default_role;
+	port->typec_caps.type = tcfg->type;
+	port->typec_caps.data = tcfg->data;
+	port->self_powered = tcfg->self_powered;
+>>>>>>> master:drivers/usb/typec/tcpm.c
 
 	if (port->registered)
 		kthread_queue_work(port->wq, &port->enable_frs);

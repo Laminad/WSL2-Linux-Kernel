@@ -82,6 +82,13 @@ nfp_devlink_port_split(struct devlink *devlink, struct devlink_port *port,
 	lanes = eth_port.port_lanes / count;
 	if (eth_port.lanes == 10 && count == 2)
 		lanes = 8 / count;
+<<<<<<< HEAD
+=======
+
+	ret = nfp_devlink_set_lanes(pf, eth_port.index, lanes);
+out:
+	mutex_unlock(&pf->lock);
+>>>>>>> master
 
 	return nfp_devlink_set_lanes(pf, eth_port.index, lanes);
 }
@@ -108,6 +115,13 @@ nfp_devlink_port_unsplit(struct devlink *devlink, struct devlink_port *port,
 	lanes = eth_port.port_lanes;
 	if (eth_port.port_lanes == 8)
 		lanes = 10;
+<<<<<<< HEAD
+=======
+
+	ret = nfp_devlink_set_lanes(pf, eth_port.index, lanes);
+out:
+	mutex_unlock(&pf->lock);
+>>>>>>> master
 
 	return nfp_devlink_set_lanes(pf, eth_port.index, lanes);
 }

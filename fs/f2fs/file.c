@@ -1007,7 +1007,11 @@ int f2fs_setattr(struct mnt_idmap *idmap, struct dentry *dentry,
 		spin_lock(&F2FS_I(inode)->i_size_lock);
 		inode->i_mtime = inode_set_ctime_current(inode);
 		F2FS_I(inode)->last_disk_size = i_size_read(inode);
+<<<<<<< HEAD
 		spin_unlock(&F2FS_I(inode)->i_size_lock);
+=======
+		up_write(&F2FS_I(inode)->i_sem);
+>>>>>>> master
 	}
 
 	__setattr_copy(idmap, inode, attr);
@@ -2090,13 +2094,26 @@ static int f2fs_ioc_start_atomic_write(struct file *filp, bool truncate)
 	 * f2fs_is_atomic_file.
 	 */
 	if (get_dirty_pages(inode))
+<<<<<<< HEAD
 		f2fs_warn(sbi, "Unexpected flush for atomic writes: ino=%lu, npages=%u",
 			  inode->i_ino, get_dirty_pages(inode));
+=======
+		f2fs_msg(F2FS_I_SB(inode)->sb, KERN_WARNING,
+		"Unexpected flush for atomic writes: ino=%lu, npages=%u",
+					inode->i_ino, get_dirty_pages(inode));
+>>>>>>> master
 	ret = filemap_write_and_wait_range(inode->i_mapping, 0, LLONG_MAX);
 	if (ret) {
 		f2fs_up_write(&fi->i_gc_rwsem[WRITE]);
 		goto out;
 	}
+<<<<<<< HEAD
+=======
+
+	set_inode_flag(inode, FI_ATOMIC_FILE);
+	clear_inode_flag(inode, FI_ATOMIC_REVOKE_REQUEST);
+	up_write(&F2FS_I(inode)->i_gc_rwsem[WRITE]);
+>>>>>>> master
 
 	/* Check if the inode already has a COW inode */
 	if (fi->cow_inode == NULL) {
@@ -2981,9 +2998,17 @@ static int f2fs_ioc_flush_device(struct file *filp, unsigned long arg)
 		return -EFAULT;
 
 	if (!f2fs_is_multi_device(sbi) || sbi->s_ndevs - 1 <= range.dev_num ||
+<<<<<<< HEAD
 			__is_large_section(sbi)) {
 		f2fs_warn(sbi, "Can't flush %u in %d for SEGS_PER_SEC %u != 1",
 			  range.dev_num, sbi->s_ndevs, SEGS_PER_SEC(sbi));
+=======
+			sbi->segs_per_sec != 1) {
+		f2fs_msg(sbi->sb, KERN_WARNING,
+			"Can't flush %u in %d for segs_per_sec %u != 1\n",
+				range.dev_num, sbi->s_ndevs,
+				sbi->segs_per_sec);
+>>>>>>> master
 		return -EINVAL;
 	}
 

@@ -1085,7 +1085,11 @@ static PyObject *pyrf_evlist__get_pollfd(struct pyrf_evlist *pevlist,
 
 		file = PyFile_FromFile(fp, "perf", "r", NULL);
 #else
+<<<<<<< HEAD
 		file = PyFile_FromFd(evlist->core.pollfd.entries[i].fd, "perf", "r", -1,
+=======
+		file = PyFile_FromFd(evlist->pollfd.entries[i].fd, "perf", "r", -1,
+>>>>>>> master
 				     NULL, NULL, NULL, 0);
 #endif
 		if (file == NULL)

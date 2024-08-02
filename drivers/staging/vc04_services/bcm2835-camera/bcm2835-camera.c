@@ -345,6 +345,7 @@ static void buffer_cb(struct vchiq_mmal_instance *instance,
 		if (dev->capture.frame_count) {
 			/* empty buffer whilst capturing - expected to be an
 			 * EOS, so grab another frame
+<<<<<<< HEAD
 			 */
 			if (is_capturing(dev)) {
 				v4l2_dbg(1, bcm2835_v4l2_debug, &dev->v4l2_dev,
@@ -364,6 +365,26 @@ static void buffer_cb(struct vchiq_mmal_instance *instance,
 			/* stopping streaming.
 			 * return buffer, and signal frame completion
 			 */
+=======
+			 */
+			if (is_capturing(dev)) {
+				v4l2_dbg(1, bcm2835_v4l2_debug, &dev->v4l2_dev,
+					 "Grab another frame");
+				vchiq_mmal_port_parameter_set(
+					instance,
+					dev->capture.camera_port,
+					MMAL_PARAMETER_CAPTURE,
+					&dev->capture.frame_count,
+					sizeof(dev->capture.frame_count));
+			}
+			if (vchiq_mmal_submit_buffer(instance, port, buf))
+				v4l2_dbg(1, bcm2835_v4l2_debug, &dev->v4l2_dev,
+					 "Failed to return EOS buffer");
+		} else {
+			/* stopping streaming.
+			 * return buffer, and signal frame completion
+			 */
+>>>>>>> master
 			vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
 			complete(&dev->capture.frame_cmplt);
 		}
@@ -594,7 +615,11 @@ static void stop_streaming(struct vb2_queue *vq)
 {
 	int ret;
 	unsigned long timeout;
+<<<<<<< HEAD
 	struct bcm2835_mmal_dev *dev = vb2_get_drv_priv(vq);
+=======
+	struct bm2835_mmal_dev *dev = vb2_get_drv_priv(vq);
+>>>>>>> master
 	struct vchiq_mmal_port *port = dev->capture.port;
 
 	v4l2_dbg(1, bcm2835_v4l2_debug, &dev->v4l2_dev, "%s: dev:%p\n",

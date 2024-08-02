@@ -860,6 +860,7 @@ static int qeth_l2_switchdev_event(struct notifier_block *unused,
 	      event == SWITCHDEV_FDB_DEL_TO_DEVICE))
 		return NOTIFY_DONE;
 
+<<<<<<< HEAD
 	dstdev = switchdev_notifier_info_to_dev(info);
 	brdev = netdev_master_upper_dev_get_rcu(dstdev);
 	if (!brdev || !netif_is_bridge_master(brdev))
@@ -884,6 +885,14 @@ static int qeth_l2_switchdev_event(struct notifier_block *unused,
 		lowerdev = netdev_next_lower_dev_rcu(brdev, &iter);
 	}
 	return NOTIFY_DONE;
+=======
+	if (cgdev->state == CCWGROUP_ONLINE)
+		qeth_l2_set_offline(cgdev);
+
+	cancel_work_sync(&card->close_dev_work);
+	if (qeth_netdev_is_registered(card->dev))
+		unregister_netdev(card->dev);
+>>>>>>> master
 }
 
 static struct notifier_block qeth_l2_sw_notifier = {
@@ -1087,9 +1096,17 @@ static const struct net_device_ops qeth_l2_osa_netdev_ops = {
 
 static int qeth_l2_setup_netdev(struct qeth_card *card)
 {
+<<<<<<< HEAD
 	card->dev->netdev_ops = IS_IQD(card) ? &qeth_l2_iqd_netdev_ops :
 					       &qeth_l2_osa_netdev_ops;
 	card->dev->needed_headroom = sizeof(struct qeth_hdr);
+=======
+	int rc;
+
+	if (qeth_netdev_is_registered(card->dev))
+		return 0;
+
+>>>>>>> master
 	card->dev->priv_flags |= IFF_UNICAST_FLT;
 
 	if (IS_OSM(card)) {
@@ -1829,7 +1846,11 @@ static void qeth_bridgeport_an_set_cb(void *priv,
 	u8 code;
 
 	code = IPA_ADDR_CHANGE_CODE_MACADDR;
+<<<<<<< HEAD
 	if (entry->addr_lnid.lnid < VLAN_N_VID)
+=======
+	if (l2entry->addr_lnid.lnid < VLAN_N_VID)
+>>>>>>> master
 		code |= IPA_ADDR_CHANGE_CODE_VLANID;
 	qeth_bridge_emit_host_event(card, anev_reg_unreg, code,
 				    (struct net_if_token *)&entry->nit,

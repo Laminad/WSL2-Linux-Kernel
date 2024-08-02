@@ -187,6 +187,10 @@ static noinline void nft_update_chain_stats(const struct nft_chain *chain,
 
 	base_chain = nft_base_chain(chain);
 
+<<<<<<< HEAD
+=======
+	rcu_read_lock();
+>>>>>>> master
 	pstats = READ_ONCE(base_chain->stats);
 	if (pstats) {
 		local_bh_disable();
@@ -197,6 +201,10 @@ static noinline void nft_update_chain_stats(const struct nft_chain *chain,
 		u64_stats_update_end(&stats->syncp);
 		local_bh_enable();
 	}
+<<<<<<< HEAD
+=======
+	rcu_read_unlock();
+>>>>>>> master
 }
 
 struct nft_jumpstack {

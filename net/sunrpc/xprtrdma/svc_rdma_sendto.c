@@ -578,14 +578,145 @@ static int svc_rdma_iov_dma_map(void *data, const struct kvec *iov)
  * On failure, any DMA mappings that have been already done must be
  * unmapped by the caller.
  */
+<<<<<<< HEAD
 static int svc_rdma_xb_dma_map(const struct xdr_buf *xdr, void *data)
+=======
+void svc_rdma_sync_reply_hdr(struct svcxprt_rdma *rdma,
+			     struct svc_rdma_send_ctxt *ctxt,
+			     unsigned int len)
+{
+	ctxt->sc_sges[0].length = len;
+	ctxt->sc_send_wr.num_sge++;
+	ib_dma_sync_single_for_device(rdma->sc_pd->device,
+				      ctxt->sc_sges[0].addr, len,
+				      DMA_TO_DEVICE);
+}
+
+/* If the xdr_buf has more elements than the device can
+ * transmit in a single RDMA Send, then the reply will
+ * have to be copied into a bounce buffer.
+ */
+static bool svc_rdma_pull_up_needed(struct svcxprt_rdma *rdma,
+				    struct xdr_buf *xdr,
+				    __be32 *wr_lst)
+{
+	int elements;
+
+	/* xdr->head */
+	elements = 1;
+
+	/* xdr->pages */
+	if (!wr_lst) {
+		unsigned int remaining;
+		unsigned long pageoff;
+
+		pageoff = xdr->page_base & ~PAGE_MASK;
+		remaining = xdr->page_len;
+		while (remaining) {
+			++elements;
+			remaining -= min_t(u32, PAGE_SIZE - pageoff,
+					   remaining);
+			pageoff = 0;
+		}
+	}
+
+	/* xdr->tail */
+	if (xdr->tail[0].iov_len)
+		++elements;
+
+	/* assume 1 SGE is needed for the transport header */
+	return elements >= rdma->sc_max_send_sges;
+}
+
+/* The device is not capable of sending the reply directly.
+ * Assemble the elements of @xdr into the transport header
+ * buffer.
+ */
+static int svc_rdma_pull_up_reply_msg(struct svcxprt_rdma *rdma,
+				      struct svc_rdma_send_ctxt *ctxt,
+				      struct xdr_buf *xdr, __be32 *wr_lst)
+{
+	unsigned char *dst, *tailbase;
+	unsigned int taillen;
+
+	dst = ctxt->sc_xprt_buf;
+	dst += ctxt->sc_sges[0].length;
+
+	memcpy(dst, xdr->head[0].iov_base, xdr->head[0].iov_len);
+	dst += xdr->head[0].iov_len;
+
+	tailbase = xdr->tail[0].iov_base;
+	taillen = xdr->tail[0].iov_len;
+	if (wr_lst) {
+		u32 xdrpad;
+
+		xdrpad = xdr_padsize(xdr->page_len);
+		if (taillen && xdrpad) {
+			tailbase += xdrpad;
+			taillen -= xdrpad;
+		}
+	} else {
+		unsigned int len, remaining;
+		unsigned long pageoff;
+		struct page **ppages;
+
+		ppages = xdr->pages + (xdr->page_base >> PAGE_SHIFT);
+		pageoff = xdr->page_base & ~PAGE_MASK;
+		remaining = xdr->page_len;
+		while (remaining) {
+			len = min_t(u32, PAGE_SIZE - pageoff, remaining);
+
+			memcpy(dst, page_address(*ppages), len);
+			remaining -= len;
+			dst += len;
+			pageoff = 0;
+		}
+	}
+
+	if (taillen)
+		memcpy(dst, tailbase, taillen);
+
+	ctxt->sc_sges[0].length += xdr->len;
+	ib_dma_sync_single_for_device(rdma->sc_pd->device,
+				      ctxt->sc_sges[0].addr,
+				      ctxt->sc_sges[0].length,
+				      DMA_TO_DEVICE);
+
+	return 0;
+}
+
+/* svc_rdma_map_reply_msg - Map the buffer holding RPC message
+ * @rdma: controlling transport
+ * @ctxt: send_ctxt for the Send WR
+ * @xdr: prepared xdr_buf containing RPC message
+ * @wr_lst: pointer to Call header's Write list, or NULL
+ *
+ * Load the xdr_buf into the ctxt's sge array, and DMA map each
+ * element as it is added.
+ *
+ * Returns zero on success, or a negative errno on failure.
+ */
+int svc_rdma_map_reply_msg(struct svcxprt_rdma *rdma,
+			   struct svc_rdma_send_ctxt *ctxt,
+			   struct xdr_buf *xdr, __be32 *wr_lst)
+>>>>>>> master
 {
 	unsigned int len, remaining;
 	unsigned long pageoff;
 	struct page **ppages;
 	int ret;
 
+<<<<<<< HEAD
 	ret = svc_rdma_iov_dma_map(data, &xdr->head[0]);
+=======
+	if (svc_rdma_pull_up_needed(rdma, xdr, wr_lst))
+		return svc_rdma_pull_up_reply_msg(rdma, ctxt, xdr, wr_lst);
+
+	++ctxt->sc_cur_sge_no;
+	ret = svc_rdma_dma_map_buf(rdma, ctxt,
+				   xdr->head[0].iov_base,
+				   xdr->head[0].iov_len);
+>>>>>>> master
 	if (ret < 0)
 		return ret;
 
@@ -595,7 +726,13 @@ static int svc_rdma_xb_dma_map(const struct xdr_buf *xdr, void *data)
 	while (remaining) {
 		len = min_t(u32, PAGE_SIZE - pageoff, remaining);
 
+<<<<<<< HEAD
 		ret = svc_rdma_page_dma_map(data, *ppages++, pageoff, len);
+=======
+		++ctxt->sc_cur_sge_no;
+		ret = svc_rdma_dma_map_page(rdma, ctxt, *ppages++,
+					    page_off, len);
+>>>>>>> master
 		if (ret < 0)
 			return ret;
 
@@ -603,6 +740,7 @@ static int svc_rdma_xb_dma_map(const struct xdr_buf *xdr, void *data)
 		pageoff = 0;
 	}
 
+<<<<<<< HEAD
 	ret = svc_rdma_iov_dma_map(data, &xdr->tail[0]);
 	if (ret < 0)
 		return ret;
@@ -640,6 +778,16 @@ static int svc_rdma_xb_count_sges(const struct xdr_buf *xdr,
 		++args->pd_num_sges;
 		remaining -= min_t(u32, PAGE_SIZE - offset, remaining);
 		offset = 0;
+=======
+	base = xdr->tail[0].iov_base;
+	len = xdr->tail[0].iov_len;
+tail:
+	if (len) {
+		++ctxt->sc_cur_sge_no;
+		ret = svc_rdma_dma_map_buf(rdma, ctxt, base, len);
+		if (ret < 0)
+			return ret;
+>>>>>>> master
 	}
 
 	if (xdr->tail[0].iov_len)

@@ -69,8 +69,77 @@ static const struct stmmac_pci_info stmmac_pci_info = {
 	.setup = stmmac_default_data,
 };
 
+<<<<<<< HEAD
 static int snps_gmac5_default_data(struct pci_dev *pdev,
 				   struct plat_stmmacenet_data *plat)
+=======
+static const struct stmmac_pci_func_data galileo_stmmac_func_data[] = {
+	{
+		.func = 6,
+		.phy_addr = 1,
+	},
+};
+
+static const struct stmmac_pci_dmi_data galileo_stmmac_dmi_data = {
+	.func = galileo_stmmac_func_data,
+	.nfuncs = ARRAY_SIZE(galileo_stmmac_func_data),
+};
+
+static const struct stmmac_pci_func_data iot2040_stmmac_func_data[] = {
+	{
+		.func = 6,
+		.phy_addr = 1,
+	},
+	{
+		.func = 7,
+		.phy_addr = 1,
+	},
+};
+
+static const struct stmmac_pci_dmi_data iot2040_stmmac_dmi_data = {
+	.func = iot2040_stmmac_func_data,
+	.nfuncs = ARRAY_SIZE(iot2040_stmmac_func_data),
+};
+
+static const struct dmi_system_id quark_pci_dmi[] = {
+	{
+		.matches = {
+			DMI_EXACT_MATCH(DMI_BOARD_NAME, "Galileo"),
+		},
+		.driver_data = (void *)&galileo_stmmac_dmi_data,
+	},
+	{
+		.matches = {
+			DMI_EXACT_MATCH(DMI_BOARD_NAME, "GalileoGen2"),
+		},
+		.driver_data = (void *)&galileo_stmmac_dmi_data,
+	},
+	/*
+	 * There are 2 types of SIMATIC IOT2000: IOT20202 and IOT2040.
+	 * The asset tag "6ES7647-0AA00-0YA2" is only for IOT2020 which
+	 * has only one pci network device while other asset tags are
+	 * for IOT2040 which has two.
+	 */
+	{
+		.matches = {
+			DMI_EXACT_MATCH(DMI_BOARD_NAME, "SIMATIC IOT2000"),
+			DMI_EXACT_MATCH(DMI_BOARD_ASSET_TAG,
+					"6ES7647-0AA00-0YA2"),
+		},
+		.driver_data = (void *)&galileo_stmmac_dmi_data,
+	},
+	{
+		.matches = {
+			DMI_EXACT_MATCH(DMI_BOARD_NAME, "SIMATIC IOT2000"),
+		},
+		.driver_data = (void *)&iot2040_stmmac_dmi_data,
+	},
+	{}
+};
+
+static int quark_default_data(struct pci_dev *pdev,
+			      struct plat_stmmacenet_data *plat)
+>>>>>>> master
 {
 	int i;
 
@@ -235,12 +304,21 @@ static void stmmac_pci_remove(struct pci_dev *pdev)
 
 	stmmac_dvr_remove(&pdev->dev);
 
+<<<<<<< HEAD
 	for (i = 0; i < PCI_STD_NUM_BARS; i++) {
+=======
+	for (i = 0; i <= PCI_STD_RESOURCE_END; i++) {
+>>>>>>> master
 		if (pci_resource_len(pdev, i) == 0)
 			continue;
 		pcim_iounmap_regions(pdev, BIT(i));
 		break;
 	}
+<<<<<<< HEAD
+=======
+
+	pci_disable_device(pdev);
+>>>>>>> master
 }
 
 static int __maybe_unused stmmac_pci_suspend(struct device *dev)

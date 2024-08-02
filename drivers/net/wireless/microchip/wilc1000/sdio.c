@@ -771,7 +771,14 @@ static int wilc_sdio_read_int(struct wilc *wilc, u32 *int_status)
 	/**
 	 *      Read IRQ flags
 	 **/
+<<<<<<< HEAD:drivers/net/wireless/microchip/wilc1000/sdio.c
 	if (!sdio_priv->irq_gpio) {
+=======
+	if (!g_sdio.irq_gpio) {
+		int i;
+
+		cmd.read_write = 0;
+>>>>>>> master:drivers/staging/wilc1000/wilc_sdio.c
 		cmd.function = 1;
 		cmd.address = WILC_SDIO_EXT_IRQ_FLAG_REG;
 	} else {

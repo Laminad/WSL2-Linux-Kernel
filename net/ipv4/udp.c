@@ -402,6 +402,15 @@ static int compute_score(struct sock *sk, struct net *net,
 	if (sk->sk_bound_dev_if)
 		score += 4;
 
+<<<<<<< HEAD
+=======
+		if (!dev_match)
+			return -1;
+		if (sk->sk_bound_dev_if)
+			score += 4;
+	}
+
+>>>>>>> master
 	if (READ_ONCE(sk->sk_incoming_cpu) == raw_smp_processor_id())
 		score++;
 	return score;
@@ -439,6 +448,18 @@ rescore:
 		score = compute_score(need_rescore ? result : sk, net, saddr,
 				      sport, daddr, hnum, dif, sdif);
 		if (score > badness) {
+<<<<<<< HEAD
+=======
+			if (sk->sk_reuseport &&
+			    sk->sk_state != TCP_ESTABLISHED) {
+				hash = udp_ehashfn(net, daddr, hnum,
+						   saddr, sport);
+				result = reuseport_select_sock(sk, hash, skb,
+							sizeof(struct udphdr));
+				if (result && !reuseport_has_conns(sk, false))
+					return result;
+			}
+>>>>>>> master
 			badness = score;
 
 			if (need_rescore)
@@ -545,6 +566,7 @@ static inline struct sock *__udp4_lib_lookup_skb(struct sk_buff *skb,
 struct sock *udp4_lib_lookup_skb(const struct sk_buff *skb,
 				 __be16 sport, __be16 dport)
 {
+<<<<<<< HEAD
 	const u16 offset = NAPI_GRO_CB(skb)->network_offsets[skb->encapsulation];
 	const struct iphdr *iph = (struct iphdr *)(skb->data + offset);
 	struct net *net = dev_net(skb->dev);
@@ -555,6 +577,13 @@ struct sock *udp4_lib_lookup_skb(const struct sk_buff *skb,
 	return __udp4_lib_lookup(net, iph->saddr, sport,
 				 iph->daddr, dport, iif,
 				 sdif, net->ipv4.udp_table, NULL);
+=======
+	const struct iphdr *iph = ip_hdr(skb);
+
+	return __udp4_lib_lookup(dev_net(skb->dev), iph->saddr, sport,
+				 iph->daddr, dport, inet_iif(skb),
+				 inet_sdif(skb), &udp_table, NULL);
+>>>>>>> master
 }
 
 /* Must be called under rcu_read_lock().
@@ -932,7 +961,11 @@ static int udp_send_skb(struct sk_buff *skb, struct flowi4 *fl4,
 			kfree_skb(skb);
 			return -EINVAL;
 		}
+<<<<<<< HEAD
 		if (datalen > cork->gso_size * UDP_MAX_SEGMENTS) {
+=======
+		if (skb->len > cork->gso_size * UDP_MAX_SEGMENTS) {
+>>>>>>> master
 			kfree_skb(skb);
 			return -EINVAL;
 		}
@@ -1886,9 +1919,15 @@ try_again:
 		memset(sin->sin_zero, 0, sizeof(sin->sin_zero));
 		*addr_len = sizeof(*sin);
 
+<<<<<<< HEAD
 		BPF_CGROUP_RUN_PROG_UDP4_RECVMSG_LOCK(sk,
 						      (struct sockaddr *)sin,
 						      addr_len);
+=======
+		if (cgroup_bpf_enabled)
+			BPF_CGROUP_RUN_PROG_UDP4_RECVMSG_LOCK(sk,
+							(struct sockaddr *)sin);
+>>>>>>> master
 	}
 
 	if (udp_test_bit(GRO_ENABLED, sk))

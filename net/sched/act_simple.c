@@ -130,7 +130,11 @@ static int tcf_simp_init(struct net *net, struct nlattr *nla,
 
 	if (!exists) {
 		ret = tcf_idr_create(tn, index, est, a,
+<<<<<<< HEAD
 				     &act_simp_ops, bind, false, flags);
+=======
+				     &act_simp_ops, bind, false);
+>>>>>>> master
 		if (ret) {
 			tcf_idr_cleanup(tn, index);
 			return ret;

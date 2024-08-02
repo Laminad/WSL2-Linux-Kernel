@@ -1396,6 +1396,25 @@ static struct nfs4_opendata *nfs4_opendata_alloc(struct dentry *dentry,
 
 			memcpy(p->o_arg.u.verifier.data, c->verf,
 					sizeof(p->o_arg.u.verifier.data));
+<<<<<<< HEAD
+=======
+		}
+	}
+	/* don't put an ACCESS op in OPEN compound if O_EXCL, because ACCESS
+	 * will return permission denied for all bits until close */
+	if (!(flags & O_EXCL)) {
+		/* ask server to check for all possible rights as results
+		 * are cached */
+		switch (p->o_arg.claim) {
+		default:
+			break;
+		case NFS4_OPEN_CLAIM_NULL:
+		case NFS4_OPEN_CLAIM_FH:
+			p->o_arg.access = NFS4_ACCESS_READ |
+				NFS4_ACCESS_MODIFY |
+				NFS4_ACCESS_EXTEND |
+				NFS4_ACCESS_EXECUTE;
+>>>>>>> master
 		}
 	}
 	/* ask server to check for all possible rights as results
@@ -2265,6 +2284,10 @@ static int nfs4_handle_delegation_recall_error(struct nfs_server *server, struct
 		case -NFS4ERR_BAD_HIGH_SLOT:
 		case -NFS4ERR_CONN_NOT_BOUND_TO_SESSION:
 		case -NFS4ERR_DEADSESSION:
+<<<<<<< HEAD
+=======
+			nfs4_schedule_session_recovery(server->nfs_client->cl_session, err);
+>>>>>>> master
 			return -EAGAIN;
 		case -NFS4ERR_STALE_CLIENTID:
 		case -NFS4ERR_STALE_STATEID:
@@ -3107,6 +3130,7 @@ static int _nfs4_open_and_get_state(struct nfs4_opendata *opendata,
 	}
 
 out:
+<<<<<<< HEAD
 	if (!opendata->cancelled) {
 		if (opendata->lgp) {
 			nfs4_lgopen_release(opendata->lgp);
@@ -3114,6 +3138,10 @@ out:
 		}
 		nfs4_sequence_free_slot(&opendata->o_res.seq_res);
 	}
+=======
+	if (!opendata->cancelled)
+		nfs4_sequence_free_slot(&opendata->o_res.seq_res);
+>>>>>>> master
 	return ret;
 }
 
@@ -7464,8 +7492,12 @@ nfs4_retry_setlk_simple(struct nfs4_state *state, int cmd,
 #ifdef CONFIG_NFS_V4_1
 struct nfs4_lock_waiter {
 	struct inode		*inode;
+<<<<<<< HEAD
 	struct nfs_lowner	owner;
 	wait_queue_entry_t	wait;
+=======
+	struct nfs_lowner	*owner;
+>>>>>>> master
 };
 
 static int
@@ -7489,16 +7521,31 @@ nfs4_wake_lock_waiter(wait_queue_entry_t *wait, unsigned int mode, int flags, vo
 			return 0;
 	}
 
+<<<<<<< HEAD
 	return woken_wake_function(wait, mode, flags, key);
+=======
+	/* override "private" so we can use default_wake_function */
+	wait->private = waiter->task;
+	ret = woken_wake_function(wait, mode, flags, key);
+	if (ret)
+		list_del_init(&wait->entry);
+	wait->private = waiter;
+	return ret;
+>>>>>>> master
 }
 
 static int
 nfs4_retry_setlk(struct nfs4_state *state, int cmd, struct file_lock *request)
 {
+<<<<<<< HEAD
+=======
+	int status = -ERESTARTSYS;
+>>>>>>> master
 	struct nfs4_lock_state *lsp = request->fl_u.nfs4_fl.owner;
 	struct nfs_server *server = NFS_SERVER(state->inode);
 	struct nfs_client *clp = server->nfs_client;
 	wait_queue_head_t *q = &clp->cl_lock_waitq;
+<<<<<<< HEAD
 	struct nfs4_lock_waiter waiter = {
 		.inode = state->inode,
 		.owner = { .clientid = clp->cl_clientid,
@@ -7506,11 +7553,21 @@ nfs4_retry_setlk(struct nfs4_state *state, int cmd, struct file_lock *request)
 			   .s_dev = server->s_dev },
 	};
 	int status;
+=======
+	struct nfs_lowner owner = { .clientid = clp->cl_clientid,
+				    .id = lsp->ls_seqid.owner_id,
+				    .s_dev = server->s_dev };
+	struct nfs4_lock_waiter waiter = { .task  = current,
+					   .inode = state->inode,
+					   .owner = &owner};
+	wait_queue_entry_t wait;
+>>>>>>> master
 
 	/* Don't bother with waitqueue if we don't expect a callback */
 	if (!test_bit(NFS_STATE_MAY_NOTIFY_LOCK, &state->flags))
 		return nfs4_retry_setlk_simple(state, cmd, request);
 
+<<<<<<< HEAD
 	init_wait(&waiter.wait);
 	waiter.wait.func = nfs4_wake_lock_waiter;
 	add_wait_queue(q, &waiter.wait);
@@ -7518,14 +7575,34 @@ nfs4_retry_setlk(struct nfs4_state *state, int cmd, struct file_lock *request)
 	do {
 		status = nfs4_proc_setlk(state, cmd, request);
 		if (status != -EAGAIN || IS_SETLK(cmd))
+=======
+	init_wait(&wait);
+	wait.private = &waiter;
+	wait.func = nfs4_wake_lock_waiter;
+
+	while(!signalled()) {
+		add_wait_queue(q, &wait);
+		status = nfs4_proc_setlk(state, cmd, request);
+		if ((status != -EAGAIN) || IS_SETLK(cmd)) {
+			finish_wait(q, &wait);
+>>>>>>> master
 			break;
+		}
 
 		status = -ERESTARTSYS;
+<<<<<<< HEAD
 		wait_woken(&waiter.wait, TASK_INTERRUPTIBLE|TASK_FREEZABLE,
 			   NFS4_LOCK_MAXTIMEOUT);
 	} while (!signalled());
 
 	remove_wait_queue(q, &waiter.wait);
+=======
+		freezer_do_not_count();
+		wait_woken(&wait, TASK_INTERRUPTIBLE, NFS4_LOCK_MAXTIMEOUT);
+		freezer_count();
+		finish_wait(q, &wait);
+	}
+>>>>>>> master
 
 	return status;
 }

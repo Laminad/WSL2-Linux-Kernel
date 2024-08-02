@@ -525,6 +525,7 @@ vm_fault_t handle_userfault(struct vm_fault *vmf, unsigned long reason)
 
 	blocking_state = userfaultfd_get_blocking_state(vmf->flags);
 
+<<<<<<< HEAD
         /*
          * Take the vma lock now, in order to safely call
          * userfaultfd_huge_must_wait() later. Since acquiring the
@@ -534,6 +535,8 @@ vm_fault_t handle_userfault(struct vm_fault *vmf, unsigned long reason)
 	if (is_vm_hugetlb_page(vma))
 		hugetlb_vma_lock_read(vma);
 
+=======
+>>>>>>> master
 	spin_lock_irq(&ctx->fault_pending_wqh.lock);
 	/*
 	 * After the __add_wait_queue the uwq is visible to userland
@@ -654,8 +657,15 @@ static void userfaultfd_event_wait_completion(struct userfaultfd_ctx *ctx,
 		VMA_ITERATOR(vmi, mm, 0);
 
 		/* the various vma->vm_userfaultfd_ctx still points to it */
+<<<<<<< HEAD
 		mmap_write_lock(mm);
 		for_each_vma(vmi, vma) {
+=======
+		down_write(&mm->mmap_sem);
+		/* no task can run (and in turn coredump) yet */
+		VM_WARN_ON(!mmget_still_valid(mm));
+		for (vma = mm->mmap; vma; vma = vma->vm_next)
+>>>>>>> master
 			if (vma->vm_userfaultfd_ctx.ctx == release_new_ctx) {
 				vma_start_write(vma);
 				vma->vm_userfaultfd_ctx = NULL_VM_UFFD_CTX;
@@ -772,12 +782,20 @@ void mremap_userfaultfd_prep(struct vm_area_struct *vma,
 	if (ctx->features & UFFD_FEATURE_EVENT_REMAP) {
 		vm_ctx->ctx = ctx;
 		userfaultfd_ctx_get(ctx);
+<<<<<<< HEAD
 		atomic_inc(&ctx->mmap_changing);
 	} else {
 		/* Drop uffd context if remap feature not enabled */
 		vma_start_write(vma);
 		vma->vm_userfaultfd_ctx = NULL_VM_UFFD_CTX;
 		userfaultfd_set_vm_flags(vma, vma->vm_flags & ~__VM_UFFD_FLAGS);
+=======
+		WRITE_ONCE(ctx->mmap_changing, true);
+	} else {
+		/* Drop uffd context if remap feature not enabled */
+		vma->vm_userfaultfd_ctx = NULL_VM_UFFD_CTX;
+		vma->vm_flags &= ~(VM_UFFD_WP | VM_UFFD_MISSING);
+>>>>>>> master
 	}
 }
 
@@ -896,7 +914,11 @@ static int userfaultfd_release(struct inode *inode, struct file *file)
 	/* len == 0 means wake all */
 	struct userfaultfd_wake_range range = { .len = 0, };
 	unsigned long new_flags;
+<<<<<<< HEAD
 	VMA_ITERATOR(vmi, mm, 0);
+=======
+	bool still_valid;
+>>>>>>> master
 
 	WRITE_ONCE(ctx->released, true);
 
@@ -911,7 +933,12 @@ static int userfaultfd_release(struct inode *inode, struct file *file)
 	 * it's critical that released is set to true (above), before
 	 * taking the mmap_lock for writing.
 	 */
+<<<<<<< HEAD
 	mmap_write_lock(mm);
+=======
+	down_write(&mm->mmap_sem);
+	still_valid = mmget_still_valid(mm);
+>>>>>>> master
 	prev = NULL;
 	for_each_vma(vmi, vma) {
 		cond_resched();
@@ -921,6 +948,7 @@ static int userfaultfd_release(struct inode *inode, struct file *file)
 			prev = vma;
 			continue;
 		}
+<<<<<<< HEAD
 		/* Reset ptes for the whole vma range if wr-protected */
 		if (userfaultfd_wp(vma))
 			uffd_wp_range(vma, vma->vm_start,
@@ -939,6 +967,21 @@ static int userfaultfd_release(struct inode *inode, struct file *file)
 
 		vma_start_write(vma);
 		userfaultfd_set_vm_flags(vma, new_flags);
+=======
+		new_flags = vma->vm_flags & ~(VM_UFFD_MISSING | VM_UFFD_WP);
+		if (still_valid) {
+			prev = vma_merge(mm, prev, vma->vm_start, vma->vm_end,
+					 new_flags, vma->anon_vma,
+					 vma->vm_file, vma->vm_pgoff,
+					 vma_policy(vma),
+					 NULL_VM_UFFD_CTX);
+			if (prev)
+				vma = prev;
+			else
+				prev = vma;
+		}
+		vma->vm_flags = new_flags;
+>>>>>>> master
 		vma->vm_userfaultfd_ctx = NULL_VM_UFFD_CTX;
 	}
 	mmap_write_unlock(mm);
@@ -1159,7 +1202,11 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
 	spin_unlock_irq(&ctx->fd_wqh.lock);
 
 	if (!ret && msg->event == UFFD_EVENT_FORK) {
+<<<<<<< HEAD
 		ret = resolve_userfault_fork(fork_nctx, inode, msg);
+=======
+		ret = resolve_userfault_fork(ctx, fork_nctx, msg);
+>>>>>>> master
 		spin_lock_irq(&ctx->event_wqh.lock);
 		if (!list_empty(&fork_event)) {
 			/*
@@ -1371,6 +1418,17 @@ static int userfaultfd_register(struct userfaultfd_ctx *ctx,
 	if (!mmget_not_zero(mm))
 		goto out;
 
+<<<<<<< HEAD
+=======
+	down_write(&mm->mmap_sem);
+	if (!mmget_still_valid(mm))
+		goto out_unlock;
+	vma = find_vma_prev(mm, start, &prev);
+	if (!vma)
+		goto out_unlock;
+
+	/* check that there's at least one vma in the range */
+>>>>>>> master
 	ret = -EINVAL;
 	mmap_write_lock(mm);
 	vma_iter_init(&vmi, mm, start);
@@ -1583,7 +1641,18 @@ static int userfaultfd_unregister(struct userfaultfd_ctx *ctx,
 	if (!mmget_not_zero(mm))
 		goto out;
 
+<<<<<<< HEAD
 	mmap_write_lock(mm);
+=======
+	down_write(&mm->mmap_sem);
+	if (!mmget_still_valid(mm))
+		goto out_unlock;
+	vma = find_vma_prev(mm, start, &prev);
+	if (!vma)
+		goto out_unlock;
+
+	/* check that there's at least one vma in the range */
+>>>>>>> master
 	ret = -EINVAL;
 	vma_iter_init(&vmi, mm, start);
 	vma = vma_find(&vmi, end);

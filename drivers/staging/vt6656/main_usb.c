@@ -485,7 +485,11 @@ static void vnt_free_int_bufs(struct vnt_private *priv)
 
 static int vnt_alloc_bufs(struct vnt_private *priv)
 {
+<<<<<<< HEAD
 	int ret;
+=======
+	int ret = 0;
+>>>>>>> master
 	struct vnt_usb_send_context *tx_context;
 	struct vnt_rcb *rcb;
 	int ii;
@@ -502,6 +506,17 @@ static int vnt_alloc_bufs(struct vnt_private *priv)
 		priv->tx_context[ii] = tx_context;
 		tx_context->priv = priv;
 		tx_context->pkt_no = ii;
+<<<<<<< HEAD
+=======
+
+		/* allocate URBs */
+		tx_context->urb = usb_alloc_urb(0, GFP_KERNEL);
+		if (!tx_context->urb) {
+			ret = -ENOMEM;
+			goto free_tx;
+		}
+
+>>>>>>> master
 		tx_context->in_use = false;
 	}
 
@@ -528,6 +543,12 @@ static int vnt_alloc_bufs(struct vnt_private *priv)
 			ret = -ENOMEM;
 			goto free_rx_tx;
 		}
+<<<<<<< HEAD
+=======
+
+		rcb->in_use = false;
+
+>>>>>>> master
 		/* submit rx urb */
 		ret = vnt_submit_rx_urb(priv, rcb);
 		if (ret)

@@ -2493,8 +2493,14 @@ static int finish_parity_scrub(struct btrfs_raid_bio *rbio)
 			bitmap_clear(&rbio->dbitmap, sectornr, 1);
 		kunmap_local(parity);
 
+<<<<<<< HEAD
 		for (stripe = nr_data - 1; stripe >= 0; stripe--)
 			kunmap_local(pointers[stripe]);
+=======
+		for (stripe = 0; stripe < nr_data; stripe++)
+			kunmap(page_in_rbio(rbio, stripe, pagenr, 0));
+		kunmap(p_page);
+>>>>>>> master
 	}
 
 	kunmap_local(pointers[nr_data]);

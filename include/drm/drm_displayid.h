@@ -22,8 +22,30 @@
 #ifndef DRM_DISPLAYID_H
 #define DRM_DISPLAYID_H
 
+<<<<<<< HEAD
 #include <linux/types.h>
 #include <linux/bits.h>
+=======
+#define DATA_BLOCK_PRODUCT_ID 0x00
+#define DATA_BLOCK_DISPLAY_PARAMETERS 0x01
+#define DATA_BLOCK_COLOR_CHARACTERISTICS 0x02
+#define DATA_BLOCK_TYPE_1_DETAILED_TIMING 0x03
+#define DATA_BLOCK_TYPE_2_DETAILED_TIMING 0x04
+#define DATA_BLOCK_TYPE_3_SHORT_TIMING 0x05
+#define DATA_BLOCK_TYPE_4_DMT_TIMING 0x06
+#define DATA_BLOCK_VESA_TIMING 0x07
+#define DATA_BLOCK_CEA_TIMING 0x08
+#define DATA_BLOCK_VIDEO_TIMING_RANGE 0x09
+#define DATA_BLOCK_PRODUCT_SERIAL_NUMBER 0x0a
+#define DATA_BLOCK_GP_ASCII_STRING 0x0b
+#define DATA_BLOCK_DISPLAY_DEVICE_DATA 0x0c
+#define DATA_BLOCK_INTERFACE_POWER_SEQUENCING 0x0d
+#define DATA_BLOCK_TRANSFER_CHARACTERISTICS 0x0e
+#define DATA_BLOCK_DISPLAY_INTERFACE 0x0f
+#define DATA_BLOCK_STEREO_DISPLAY_INTERFACE 0x10
+#define DATA_BLOCK_TILED_DISPLAY 0x12
+#define DATA_BLOCK_CTA 0x81
+>>>>>>> master
 
 struct drm_edid;
 
@@ -128,6 +150,7 @@ struct displayid_detailed_timing_block {
 	struct displayid_detailed_timings_1 timings[];
 };
 
+<<<<<<< HEAD
 #define DISPLAYID_VESA_MSO_OVERLAP	GENMASK(3, 0)
 #define DISPLAYID_VESA_MSO_MODE		GENMASK(6, 5)
 
@@ -165,5 +188,14 @@ void displayid_iter_end(struct displayid_iter *iter);
 
 u8 displayid_version(const struct displayid_iter *iter);
 u8 displayid_primary_use(const struct displayid_iter *iter);
+=======
+#define for_each_displayid_db(displayid, block, idx, length) \
+	for ((block) = (struct displayid_block *)&(displayid)[idx]; \
+	     (idx) + sizeof(struct displayid_block) <= (length) && \
+	     (idx) + sizeof(struct displayid_block) + (block)->num_bytes <= (length) && \
+	     (block)->num_bytes > 0; \
+	     (idx) += (block)->num_bytes + sizeof(struct displayid_block), \
+	     (block) = (struct displayid_block *)&(displayid)[idx])
+>>>>>>> master
 
 #endif

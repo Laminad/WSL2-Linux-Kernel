@@ -947,9 +947,26 @@ static int m_can_rx_handler(struct net_device *dev, int quota, u32 irqstatus)
 	 * whether MCAN_ECR.RP = ’1’ and MCAN_ECR.REC = 127.
 	 * In this case, reset MCAN_IR.MRAF. No further action is required.
 	 */
+<<<<<<< HEAD
 	if (cdev->version <= 31 && irqstatus & IR_MRAF &&
 	    m_can_read(cdev, M_CAN_ECR) & ECR_RP) {
 		struct can_berr_counter bec;
+=======
+	if ((priv->version <= 31) && (irqstatus & IR_MRAF) &&
+	    (m_can_read(priv, M_CAN_ECR) & ECR_RP)) {
+		struct can_berr_counter bec;
+
+		__m_can_get_berr_counter(dev, &bec);
+		if (bec.rxerr == 127) {
+			m_can_write(priv, M_CAN_IR, IR_MRAF);
+			irqstatus &= ~IR_MRAF;
+		}
+	}
+
+	psr = m_can_read(priv, M_CAN_PSR);
+	if (irqstatus & IR_ERR_STATE)
+		work_done += m_can_handle_state_errors(dev, psr);
+>>>>>>> master
 
 		__m_can_get_berr_counter(dev, &bec);
 		if (bec.rxerr == 127) {

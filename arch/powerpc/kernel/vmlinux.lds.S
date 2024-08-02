@@ -244,7 +244,11 @@ SECTIONS
 	}
 #endif /* CONFIG_PPC_BARRIER_NOSPEC */
 
+<<<<<<< HEAD
 #ifdef CONFIG_PPC_E500
+=======
+#ifdef CONFIG_PPC_FSL_BOOK3E
+>>>>>>> master
 	. = ALIGN(8);
 	__spec_btb_flush_fixup : AT(ADDR(__spec_btb_flush_fixup) - LOAD_OFFSET) {
 		__start__btb_flush_fixup = .;
@@ -252,6 +256,10 @@ SECTIONS
 		__stop__btb_flush_fixup = .;
 	}
 #endif
+<<<<<<< HEAD
+=======
+	EXCEPTION_TABLE(0)
+>>>>>>> master
 
 	/*
 	 * Various code relies on __init_begin being at the strict RWX boundary.
@@ -369,6 +377,16 @@ SECTIONS
 		DATA_DATA
 		*(.data.rel*)
 #ifdef CONFIG_PPC32
+<<<<<<< HEAD
+=======
+	.data : AT(ADDR(.data) - LOAD_OFFSET) {
+		DATA_DATA
+#ifdef CONFIG_UBSAN
+		*(.data..Lubsan_data*)
+		*(.data..Lubsan_type*)
+#endif
+		*(.data.rel*)
+>>>>>>> master
 		*(SDATA_MAIN)
 #endif
 	}

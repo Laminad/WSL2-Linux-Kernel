@@ -308,7 +308,11 @@ static int tcf_bpf_init(struct net *net, struct nlattr *nla,
 	ret = tcf_idr_check_alloc(tn, &index, act, bind);
 	if (!ret) {
 		ret = tcf_idr_create(tn, index, est, act,
+<<<<<<< HEAD
 				     &act_bpf_ops, bind, true, flags);
+=======
+				     &act_bpf_ops, bind, true);
+>>>>>>> master
 		if (ret < 0) {
 			tcf_idr_cleanup(tn, index);
 			return ret;

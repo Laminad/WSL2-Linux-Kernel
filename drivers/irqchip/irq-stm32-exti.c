@@ -804,8 +804,12 @@ stm32_exti_chip_data *stm32_exti_chip_init(struct stm32_exti_host_data *h_data,
 	 * clear registers to avoid residue
 	 */
 	writel_relaxed(0, base + stm32_bank->imr_ofst);
+<<<<<<< HEAD
 	if (stm32_bank->emr_ofst != UNDEF_REG)
 		writel_relaxed(0, base + stm32_bank->emr_ofst);
+=======
+	writel_relaxed(0, base + stm32_bank->emr_ofst);
+>>>>>>> master
 
 	pr_info("%pOF: bank%d\n", node, bank_idx);
 

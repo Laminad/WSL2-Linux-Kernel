@@ -779,7 +779,10 @@ kthread_err:
 	pr_warn("Could not allocate kthread for %s\n", queue->name);
 	err = PTR_ERR(task);
 err:
+<<<<<<< HEAD
 	xenvif_disconnect_queue(queue);
+=======
+>>>>>>> master
 	return err;
 }
 

@@ -122,10 +122,79 @@
 	vmull.p64	q9, \reg2\()h, FOLD_CONST_H
 	vmull.p64	\reg2, \reg2\()l, FOLD_CONST_L
 
+<<<<<<< HEAD
 CPU_LE(	vrev64.8	q11, q11	)
 CPU_LE(	vrev64.8	q12, q12	)
 	vswp		q11l, q11h
 	vswp		q12l, q12h
+=======
+	// for sizes less than 128, we can't fold 64B at a time...
+	blt		_less_than_128
+
+	// load the initial crc value
+	// crc value does not need to be byte-reflected, but it needs
+	// to be moved to the high part of the register.
+	// because data will be byte-reflected and will align with
+	// initial crc at correct place.
+	vmov		s0, arg1_low32		// initial crc
+	vext.8		q10, qzr, q0, #4
+
+	// receive the initial 64B data, xor the initial crc value
+	vld1.64		{q0-q1}, [arg2]!
+	vld1.64		{q2-q3}, [arg2]!
+	vld1.64		{q4-q5}, [arg2]!
+	vld1.64		{q6-q7}, [arg2]!
+CPU_LE(	vrev64.8	q0, q0			)
+CPU_LE(	vrev64.8	q1, q1			)
+CPU_LE(	vrev64.8	q2, q2			)
+CPU_LE(	vrev64.8	q3, q3			)
+CPU_LE(	vrev64.8	q4, q4			)
+CPU_LE(	vrev64.8	q5, q5			)
+CPU_LE(	vrev64.8	q6, q6			)
+CPU_LE(	vrev64.8	q7, q7			)
+
+	vswp		d0, d1
+	vswp		d2, d3
+	vswp		d4, d5
+	vswp		d6, d7
+	vswp		d8, d9
+	vswp		d10, d11
+	vswp		d12, d13
+	vswp		d14, d15
+
+	// XOR the initial_crc value
+	veor.8		q0, q0, q10
+
+	adr		ip, rk3
+	vld1.64		{q10}, [ip, :128]	// xmm10 has rk3 and rk4
+
+	//
+	// we subtract 256 instead of 128 to save one instruction from the loop
+	//
+	sub		arg3, arg3, #256
+
+	// at this section of the code, there is 64*x+y (0<=y<64) bytes of
+	// buffer. The _fold_64_B_loop will fold 64B at a time
+	// until we have 64+y Bytes of buffer
+
+
+	// fold 64B at a time. This section of the code folds 4 vector
+	// registers in parallel
+_fold_64_B_loop:
+
+	.macro		fold64, reg1, reg2
+	vld1.64		{q11-q12}, [arg2]!
+
+	vmull.p64	q8, \reg1\()h, d21
+	vmull.p64	\reg1, \reg1\()l, d20
+	vmull.p64	q9, \reg2\()h, d21
+	vmull.p64	\reg2, \reg2\()l, d20
+
+CPU_LE(	vrev64.8	q11, q11		)
+CPU_LE(	vrev64.8	q12, q12		)
+	vswp		d22, d23
+	vswp		d24, d25
+>>>>>>> master
 
 	veor.8		\reg1, \reg1, q8
 	veor.8		\reg2, \reg2, q9
@@ -234,9 +303,16 @@ CPU_LE(	vrev64.8	q7, q7	)
 	vmull.p64	q8, q7l, FOLD_CONST_L
 	vmull.p64	q7, q7h, FOLD_CONST_H
 	veor.8		q7, q7, q8
+<<<<<<< HEAD
 	vld1.64		{q0}, [buf]!
 CPU_LE(	vrev64.8	q0, q0	)
 	vswp		q0l, q0h
+=======
+
+	vld1.64		{q0}, [arg2]!
+CPU_LE(	vrev64.8	q0, q0		)
+	vswp		d0, d1
+>>>>>>> master
 	veor.8		q7, q7, q0
 	subs		len, len, #16
 	bge		.Lfold_16_bytes_loop
@@ -326,10 +402,17 @@ CPU_LE(	vrev64.8	q0, q0	)
 
 	__adrl		fold_consts_ptr, .Lfold_across_16_bytes_consts
 
+<<<<<<< HEAD
 	// Load the first 16 data bytes.
 	vld1.64		{q7}, [buf]!
 CPU_LE(	vrev64.8	q7, q7	)
 	vswp		q7l, q7h
+=======
+	vld1.64		{q7}, [arg2]!
+CPU_LE(	vrev64.8	q7, q7		)
+	vswp		d14, d15
+	veor.8		q7, q7, q0
+>>>>>>> master
 
 	// XOR the first 16 data *bits* with the initial CRC value.
 	vmov.i8		q0h, #0

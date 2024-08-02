@@ -52,9 +52,14 @@ static int psp_securedisplay_terminate(struct psp_context *psp);
 static int psp_ring_init(struct psp_context *psp,
 			 enum psp_ring_type ring_type)
 {
+<<<<<<< HEAD
 	int ret = 0;
 	struct psp_ring *ring;
 	struct amdgpu_device *adev = psp->adev;
+=======
+	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct psp_context *psp = &adev->psp;
+>>>>>>> master
 
 	ring = &psp->km_ring;
 
@@ -73,6 +78,7 @@ static int psp_ring_init(struct psp_context *psp,
 		return ret;
 	}
 
+<<<<<<< HEAD
 	return 0;
 }
 
@@ -164,6 +170,12 @@ static int psp_early_init(void *handle)
 
 	switch (adev->ip_versions[MP0_HWIP][0]) {
 	case IP_VERSION(9, 0, 0):
+=======
+	switch (adev->asic_type) {
+	case CHIP_VEGA10:
+	case CHIP_VEGA12:
+	case CHIP_VEGA20:
+>>>>>>> master
 		psp_v3_1_set_psp_funcs(psp);
 		psp->autoload_supported = false;
 		break;
@@ -232,6 +244,7 @@ static int psp_early_init(void *handle)
 
 	psp_check_pmfw_centralized_cstate_management(psp);
 
+<<<<<<< HEAD
 	if (amdgpu_sriov_vf(adev))
 		return psp_init_sriov_microcode(psp);
 	else
@@ -293,6 +306,21 @@ static int psp_memory_training_init(struct psp_context *psp)
 	if (ctx->init != PSP_MEM_TRAIN_RESERVE_SUCCESS) {
 		DRM_DEBUG("memory training is not supported!\n");
 		return 0;
+=======
+	return 0;
+}
+
+static int psp_sw_init(void *handle)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct psp_context *psp = &adev->psp;
+	int ret;
+
+	ret = psp_init_microcode(psp);
+	if (ret) {
+		DRM_ERROR("Failed to load psp firmware!\n");
+		return ret;
+>>>>>>> master
 	}
 
 	ctx->sys_cache = kzalloc(ctx->train_data_size, GFP_KERNEL);

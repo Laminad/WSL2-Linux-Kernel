@@ -94,6 +94,10 @@ static enum fault_type get_fault_type(struct pt_regs *regs)
 		/* access register mode, not used in the kernel */
 		return USER_FAULT;
 	}
+	if (trans_exc_code == 1) {
+		/* access register mode, not used in the kernel */
+		return USER_FAULT;
+	}
 	/* home space exception -> access via kernel ASCE */
 	return KERNEL_FAULT;
 }

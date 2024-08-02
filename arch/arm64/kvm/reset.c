@@ -25,6 +25,10 @@
 #include <asm/ptrace.h>
 #include <asm/kvm_arm.h>
 #include <asm/kvm_asm.h>
+<<<<<<< HEAD
+=======
+#include <asm/kvm_coproc.h>
+>>>>>>> master
 #include <asm/kvm_emulate.h>
 #include <asm/kvm_mmu.h>
 #include <asm/kvm_nested.h>
@@ -190,15 +194,25 @@ static int kvm_vcpu_enable_ptrauth(struct kvm_vcpu *vcpu)
  * kvm_reset_vcpu - sets core registers and sys_regs to reset value
  * @vcpu: The VCPU pointer
  *
+<<<<<<< HEAD
  * This function sets the registers on the virtual CPU struct to their
  * architecturally defined reset values, except for registers whose reset is
  * deferred until kvm_arm_vcpu_finalize().
+=======
+ * This function finds the right table above and sets the registers on
+ * the virtual CPU struct to their architecturally defined reset
+ * values.
+>>>>>>> master
  *
  * Note: This function can be called from two paths: The KVM_ARM_VCPU_INIT
  * ioctl or as part of handling a request issued by another VCPU in the PSCI
  * handling code.  In the first case, the VCPU will not be loaded, and in the
  * second case the VCPU will be loaded.  Because this function operates purely
+<<<<<<< HEAD
  * on the memory-backed values of system registers, we want to do a full put if
+=======
+ * on the memory-backed valus of system registers, we want to do a full put if
+>>>>>>> master
  * we were loaded (handling a request) and load the values back at the end of
  * the function.  Otherwise we leave the state alone.  In both cases, we
  * disable preemption around the vcpu reset as we would otherwise race with
@@ -206,6 +220,7 @@ static int kvm_vcpu_enable_ptrauth(struct kvm_vcpu *vcpu)
  */
 int kvm_reset_vcpu(struct kvm_vcpu *vcpu)
 {
+<<<<<<< HEAD
 	struct vcpu_reset_state reset_state;
 	int ret;
 	bool loaded;
@@ -235,6 +250,28 @@ int kvm_reset_vcpu(struct kvm_vcpu *vcpu)
 			ret = kvm_vcpu_enable_sve(vcpu);
 			if (ret)
 				goto out;
+=======
+	const struct kvm_regs *cpu_reset;
+	int ret = -EINVAL;
+	bool loaded;
+
+	/* Reset PMU outside of the non-preemptible section */
+	kvm_pmu_vcpu_reset(vcpu);
+
+	preempt_disable();
+	loaded = (vcpu->cpu != -1);
+	if (loaded)
+		kvm_arch_vcpu_put(vcpu);
+
+	switch (vcpu->arch.target) {
+	default:
+		if (test_bit(KVM_ARM_VCPU_EL1_32BIT, vcpu->arch.features)) {
+			if (!cpu_has_32bit_el1())
+				goto out;
+			cpu_reset = &default_regs_reset32;
+		} else {
+			cpu_reset = &default_regs_reset;
+>>>>>>> master
 		}
 	} else {
 		kvm_vcpu_reset_sve(vcpu);
@@ -276,8 +313,29 @@ int kvm_reset_vcpu(struct kvm_vcpu *vcpu)
 	 * Additional reset state handling that PSCI may have imposed on us.
 	 * Must be done after all the sys_reg reset.
 	 */
+<<<<<<< HEAD
 	if (reset_state.reset) {
 		unsigned long target_pc = reset_state.pc;
+=======
+	if (vcpu->arch.reset_state.reset) {
+		unsigned long target_pc = vcpu->arch.reset_state.pc;
+
+		/* Gracefully handle Thumb2 entry point */
+		if (vcpu_mode_is_32bit(vcpu) && (target_pc & 1)) {
+			target_pc &= ~1UL;
+			vcpu_set_thumb(vcpu);
+		}
+
+		/* Propagate caller endianness */
+		if (vcpu->arch.reset_state.be)
+			kvm_vcpu_set_be(vcpu);
+
+		*vcpu_pc(vcpu) = target_pc;
+		vcpu_set_reg(vcpu, 0, vcpu->arch.reset_state.r0);
+
+		vcpu->arch.reset_state.reset = false;
+	}
+>>>>>>> master
 
 		/* Gracefully handle Thumb2 entry point */
 		if (vcpu_mode_is_32bit(vcpu) && (target_pc & 1)) {
@@ -300,6 +358,7 @@ out:
 		kvm_arch_vcpu_load(vcpu, smp_processor_id());
 	preempt_enable();
 	return ret;
+<<<<<<< HEAD
 }
 
 u32 get_kvm_ipa_limit(void)
@@ -349,4 +408,6 @@ int __init kvm_set_ipa_limit(void)
 		  " (Reduced IPA size, limited VM/VMM compatibility)" : ""));
 
 	return 0;
+=======
+>>>>>>> master
 }

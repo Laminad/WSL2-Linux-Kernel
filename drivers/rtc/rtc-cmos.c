@@ -482,8 +482,40 @@ struct cmos_set_alarm_callback_param {
 static void cmos_set_alarm_callback(unsigned char __always_unused seconds,
 				    void *param_in)
 {
+<<<<<<< HEAD
 	struct cmos_set_alarm_callback_param *p =
 		(struct cmos_set_alarm_callback_param *)param_in;
+=======
+	struct cmos_rtc	*cmos = dev_get_drvdata(dev);
+	unsigned char mon, mday, hrs, min, sec, rtc_control;
+	int ret;
+
+	/* This not only a rtc_op, but also called directly */
+	if (!is_valid_irq(cmos->irq))
+		return -EIO;
+
+	ret = cmos_validate_alarm(dev, t);
+	if (ret < 0)
+		return ret;
+
+	mon = t->time.tm_mon + 1;
+	mday = t->time.tm_mday;
+	hrs = t->time.tm_hour;
+	min = t->time.tm_min;
+	sec = t->time.tm_sec;
+
+	rtc_control = CMOS_READ(RTC_CONTROL);
+	if (!(rtc_control & RTC_DM_BINARY) || RTC_ALWAYS_BCD) {
+		/* Writing 0xff means "don't care" or "match all".  */
+		mon = (mon <= 12) ? bin2bcd(mon) : 0xff;
+		mday = (mday >= 1 && mday <= 31) ? bin2bcd(mday) : 0xff;
+		hrs = (hrs < 24) ? bin2bcd(hrs) : 0xff;
+		min = (min < 60) ? bin2bcd(min) : 0xff;
+		sec = (sec < 60) ? bin2bcd(sec) : 0xff;
+	}
+
+	spin_lock_irq(&rtc_lock);
+>>>>>>> master
 
 	/* next rtc irq must not be from previous alarm setting */
 	cmos_irq_disable(p->cmos, RTC_AIE);
@@ -627,6 +659,12 @@ static const struct rtc_class_ops cmos_rtc_ops = {
 	.set_alarm		= cmos_set_alarm,
 	.proc			= cmos_procfs,
 	.alarm_irq_enable	= cmos_alarm_irq_enable,
+};
+
+static const struct rtc_class_ops cmos_rtc_ops_no_alarm = {
+	.read_time		= cmos_read_time,
+	.set_time		= cmos_set_time,
+	.proc			= cmos_procfs,
 };
 
 /*----------------------------------------------------------------*/
@@ -1098,6 +1136,7 @@ cmos_do_probe(struct device *dev, struct resource *ports, int rtc_irq)
 			dev_dbg(dev, "IRQ %d is already in use\n", rtc_irq);
 			goto cleanup1;
 		}
+<<<<<<< HEAD
 	} else {
 		clear_bit(RTC_FEATURE_ALARM, cmos_rtc.rtc->features);
 	}
@@ -1105,6 +1144,16 @@ cmos_do_probe(struct device *dev, struct resource *ports, int rtc_irq)
 	cmos_rtc.rtc->ops = &cmos_rtc_ops;
 
 	retval = devm_rtc_register_device(cmos_rtc.rtc);
+=======
+
+		cmos_rtc.rtc->ops = &cmos_rtc_ops;
+	} else {
+		cmos_rtc.rtc->ops = &cmos_rtc_ops_no_alarm;
+	}
+
+	cmos_rtc.rtc->nvram_old_abi = true;
+	retval = rtc_register_device(cmos_rtc.rtc);
+>>>>>>> master
 	if (retval)
 		goto cleanup2;
 
@@ -1303,7 +1352,10 @@ static void cmos_check_wkalrm(struct device *dev)
 	 * ACK the rtc irq here
 	 */
 	if (t_now >= cmos->alarm_expires && cmos_use_acpi_alarm()) {
+<<<<<<< HEAD
 		local_irq_disable();
+=======
+>>>>>>> master
 		cmos_interrupt(0, (void *)cmos->rtc);
 		local_irq_enable();
 		return;
@@ -1385,6 +1437,167 @@ static SIMPLE_DEV_PM_OPS(cmos_pm_ops, cmos_suspend, cmos_resume);
  * predate even PNPBIOS should set up platform_bus devices.
  */
 
+<<<<<<< HEAD
+=======
+#ifdef	CONFIG_ACPI
+
+#include <linux/acpi.h>
+
+static u32 rtc_handler(void *context)
+{
+	struct device *dev = context;
+	struct cmos_rtc *cmos = dev_get_drvdata(dev);
+	unsigned char rtc_control = 0;
+	unsigned char rtc_intr;
+	unsigned long flags;
+
+
+	/*
+	 * Always update rtc irq when ACPI is used as RTC Alarm.
+	 * Or else, ACPI SCI is enabled during suspend/resume only,
+	 * update rtc irq in that case.
+	 */
+	if (cmos_use_acpi_alarm())
+		cmos_interrupt(0, (void *)cmos->rtc);
+	else {
+		/* Fix me: can we use cmos_interrupt() here as well? */
+		spin_lock_irqsave(&rtc_lock, flags);
+		if (cmos_rtc.suspend_ctrl)
+			rtc_control = CMOS_READ(RTC_CONTROL);
+		if (rtc_control & RTC_AIE) {
+			cmos_rtc.suspend_ctrl &= ~RTC_AIE;
+			CMOS_WRITE(rtc_control, RTC_CONTROL);
+			rtc_intr = CMOS_READ(RTC_INTR_FLAGS);
+			rtc_update_irq(cmos->rtc, 1, rtc_intr);
+		}
+		spin_unlock_irqrestore(&rtc_lock, flags);
+	}
+
+	pm_wakeup_hard_event(dev);
+	acpi_clear_event(ACPI_EVENT_RTC);
+	acpi_disable_event(ACPI_EVENT_RTC, 0);
+	return ACPI_INTERRUPT_HANDLED;
+}
+
+static inline void rtc_wake_setup(struct device *dev)
+{
+	acpi_install_fixed_event_handler(ACPI_EVENT_RTC, rtc_handler, dev);
+	/*
+	 * After the RTC handler is installed, the Fixed_RTC event should
+	 * be disabled. Only when the RTC alarm is set will it be enabled.
+	 */
+	acpi_clear_event(ACPI_EVENT_RTC);
+	acpi_disable_event(ACPI_EVENT_RTC, 0);
+}
+
+static void rtc_wake_on(struct device *dev)
+{
+	acpi_clear_event(ACPI_EVENT_RTC);
+	acpi_enable_event(ACPI_EVENT_RTC, 0);
+}
+
+static void rtc_wake_off(struct device *dev)
+{
+	acpi_disable_event(ACPI_EVENT_RTC, 0);
+}
+
+#ifdef CONFIG_X86
+/* Enable use_acpi_alarm mode for Intel platforms no earlier than 2015 */
+static void use_acpi_alarm_quirks(void)
+{
+	int year;
+
+	if (boot_cpu_data.x86_vendor != X86_VENDOR_INTEL)
+		return;
+
+	if (!(acpi_gbl_FADT.flags & ACPI_FADT_LOW_POWER_S0))
+		return;
+
+	if (!is_hpet_enabled())
+		return;
+
+	if (dmi_get_date(DMI_BIOS_DATE, &year, NULL, NULL) && year >= 2015)
+		use_acpi_alarm = true;
+}
+#else
+static inline void use_acpi_alarm_quirks(void) { }
+#endif
+
+/* Every ACPI platform has a mc146818 compatible "cmos rtc".  Here we find
+ * its device node and pass extra config data.  This helps its driver use
+ * capabilities that the now-obsolete mc146818 didn't have, and informs it
+ * that this board's RTC is wakeup-capable (per ACPI spec).
+ */
+static struct cmos_rtc_board_info acpi_rtc_info;
+
+static void cmos_wake_setup(struct device *dev)
+{
+	if (acpi_disabled)
+		return;
+
+	use_acpi_alarm_quirks();
+
+	rtc_wake_setup(dev);
+	acpi_rtc_info.wake_on = rtc_wake_on;
+	acpi_rtc_info.wake_off = rtc_wake_off;
+
+	/* workaround bug in some ACPI tables */
+	if (acpi_gbl_FADT.month_alarm && !acpi_gbl_FADT.day_alarm) {
+		dev_dbg(dev, "bogus FADT month_alarm (%d)\n",
+			acpi_gbl_FADT.month_alarm);
+		acpi_gbl_FADT.month_alarm = 0;
+	}
+
+	acpi_rtc_info.rtc_day_alarm = acpi_gbl_FADT.day_alarm;
+	acpi_rtc_info.rtc_mon_alarm = acpi_gbl_FADT.month_alarm;
+	acpi_rtc_info.rtc_century = acpi_gbl_FADT.century;
+
+	/* NOTE:  S4_RTC_WAKE is NOT currently useful to Linux */
+	if (acpi_gbl_FADT.flags & ACPI_FADT_S4_RTC_WAKE)
+		dev_info(dev, "RTC can wake from S4\n");
+
+	dev->platform_data = &acpi_rtc_info;
+
+	/* RTC always wakes from S1/S2/S3, and often S4/STD */
+	device_init_wakeup(dev, 1);
+}
+
+static void cmos_check_acpi_rtc_status(struct device *dev,
+				       unsigned char *rtc_control)
+{
+	struct cmos_rtc *cmos = dev_get_drvdata(dev);
+	acpi_event_status rtc_status;
+	acpi_status status;
+
+	if (acpi_gbl_FADT.flags & ACPI_FADT_FIXED_RTC)
+		return;
+
+	status = acpi_get_event_status(ACPI_EVENT_RTC, &rtc_status);
+	if (ACPI_FAILURE(status)) {
+		dev_err(dev, "Could not get RTC status\n");
+	} else if (rtc_status & ACPI_EVENT_FLAG_SET) {
+		unsigned char mask;
+		*rtc_control &= ~RTC_AIE;
+		CMOS_WRITE(*rtc_control, RTC_CONTROL);
+		mask = CMOS_READ(RTC_INTR_FLAGS);
+		rtc_update_irq(cmos->rtc, 1, mask);
+	}
+}
+
+#else
+
+static void cmos_wake_setup(struct device *dev)
+{
+}
+
+static void cmos_check_acpi_rtc_status(struct device *dev,
+				       unsigned char *rtc_control)
+{
+}
+
+#endif
+
+>>>>>>> master
 #ifdef	CONFIG_PNP
 
 #include <linux/pnp.h>

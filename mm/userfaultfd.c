@@ -73,6 +73,7 @@ int mfill_atomic_install_pte(pmd_t *dst_pmd,
 			     bool newly_allocated, uffd_flags_t flags)
 {
 	int ret;
+<<<<<<< HEAD
 	struct mm_struct *dst_mm = dst_vma->vm_mm;
 	pte_t _dst_pte, *dst_pte;
 	bool writable = dst_vma->vm_flags & VM_WRITE;
@@ -80,6 +81,11 @@ int mfill_atomic_install_pte(pmd_t *dst_pmd,
 	bool page_in_cache = page_mapping(page);
 	spinlock_t *ptl;
 	struct folio *folio;
+=======
+	struct page *page;
+	pgoff_t offset, max_off;
+	struct inode *inode;
+>>>>>>> master
 
 	_dst_pte = mk_pte(page, dst_vma->vm_page_prot);
 	_dst_pte = pte_mkdirty(_dst_pte);
@@ -95,6 +101,7 @@ int mfill_atomic_install_pte(pmd_t *dst_pmd,
 	if (!dst_pte)
 		goto out;
 
+<<<<<<< HEAD
 	if (mfill_file_over_size(dst_vma, dst_addr)) {
 		ret = -EFAULT;
 		goto out_unlock;
@@ -115,6 +122,15 @@ int mfill_atomic_install_pte(pmd_t *dst_pmd,
 		if (newly_allocated)
 			folio_add_lru(folio);
 		page_add_file_rmap(page, dst_vma, false);
+=======
+		/* fallback to copy_from_user outside mmap_sem */
+		if (unlikely(ret)) {
+			ret = -ENOENT;
+			*pagep = page;
+			/* don't free the page */
+			goto out;
+		}
+>>>>>>> master
 	} else {
 		page_add_new_anon_rmap(page, dst_vma, dst_addr);
 		folio_add_lru_vma(folio, dst_vma);
@@ -124,12 +140,88 @@ int mfill_atomic_install_pte(pmd_t *dst_pmd,
 	 * Must happen after rmap, as mm_counter() checks mapping (via
 	 * PageAnon()), which is set by __page_set_anon_rmap().
 	 */
+<<<<<<< HEAD
 	inc_mm_counter(dst_mm, mm_counter(page));
+=======
+	__SetPageUptodate(page);
+
+	ret = -ENOMEM;
+	if (mem_cgroup_try_charge(page, dst_mm, GFP_KERNEL, &memcg, false))
+		goto out_release;
+
+	_dst_pte = mk_pte(page, dst_vma->vm_page_prot);
+	if (dst_vma->vm_flags & VM_WRITE)
+		_dst_pte = pte_mkwrite(pte_mkdirty(_dst_pte));
+
+	dst_pte = pte_offset_map_lock(dst_mm, dst_pmd, dst_addr, &ptl);
+	if (dst_vma->vm_file) {
+		/* the shmem MAP_PRIVATE case requires checking the i_size */
+		inode = dst_vma->vm_file->f_inode;
+		offset = linear_page_index(dst_vma, dst_addr);
+		max_off = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
+		ret = -EFAULT;
+		if (unlikely(offset >= max_off))
+			goto out_release_uncharge_unlock;
+	}
+	ret = -EEXIST;
+	if (!pte_none(*dst_pte))
+		goto out_release_uncharge_unlock;
+
+	inc_mm_counter(dst_mm, MM_ANONPAGES);
+	page_add_new_anon_rmap(page, dst_vma, dst_addr, false);
+	mem_cgroup_commit_charge(page, memcg, false, false);
+	lru_cache_add_active_or_unevictable(page, dst_vma);
+>>>>>>> master
 
 	set_pte_at(dst_mm, dst_addr, dst_pte, _dst_pte);
 
 	/* No need to invalidate - it was non-present before */
 	update_mmu_cache(dst_vma, dst_addr, dst_pte);
+<<<<<<< HEAD
+=======
+
+	pte_unmap_unlock(dst_pte, ptl);
+	ret = 0;
+out:
+	return ret;
+out_release_uncharge_unlock:
+	pte_unmap_unlock(dst_pte, ptl);
+	mem_cgroup_cancel_charge(page, memcg, false);
+out_release:
+	put_page(page);
+	goto out;
+}
+
+static int mfill_zeropage_pte(struct mm_struct *dst_mm,
+			      pmd_t *dst_pmd,
+			      struct vm_area_struct *dst_vma,
+			      unsigned long dst_addr)
+{
+	pte_t _dst_pte, *dst_pte;
+	spinlock_t *ptl;
+	int ret;
+	pgoff_t offset, max_off;
+	struct inode *inode;
+
+	_dst_pte = pte_mkspecial(pfn_pte(my_zero_pfn(dst_addr),
+					 dst_vma->vm_page_prot));
+	dst_pte = pte_offset_map_lock(dst_mm, dst_pmd, dst_addr, &ptl);
+	if (dst_vma->vm_file) {
+		/* the shmem MAP_PRIVATE case requires checking the i_size */
+		inode = dst_vma->vm_file->f_inode;
+		offset = linear_page_index(dst_vma, dst_addr);
+		max_off = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
+		ret = -EFAULT;
+		if (unlikely(offset >= max_off))
+			goto out_unlock;
+	}
+	ret = -EEXIST;
+	if (!pte_none(*dst_pte))
+		goto out_unlock;
+	set_pte_at(dst_mm, dst_addr, dst_pte, _dst_pte);
+	/* No need to invalidate - it was non-present before */
+	update_mmu_cache(dst_vma, dst_addr, dst_pte);
+>>>>>>> master
 	ret = 0;
 out_unlock:
 	pte_unmap_unlock(dst_pte, ptl);
@@ -441,6 +533,20 @@ retry:
 		dst_vma = find_dst_vma(dst_mm, dst_start, len);
 		if (!dst_vma || !is_vm_hugetlb_page(dst_vma))
 			goto out_unlock;
+<<<<<<< HEAD
+=======
+		/*
+		 * Check the vma is registered in uffd, this is
+		 * required to enforce the VM_MAYWRITE check done at
+		 * uffd registration time.
+		 */
+		if (!dst_vma->vm_userfaultfd_ctx.ctx)
+			goto out_unlock;
+
+		if (dst_start < dst_vma->vm_start ||
+		    dst_start + len > dst_vma->vm_end)
+			goto out_unlock;
+>>>>>>> master
 
 		err = -EINVAL;
 		if (vma_hpagesize != vma_kernel_pagesize(dst_vma))
@@ -469,7 +575,11 @@ retry:
 		 */
 		idx = linear_page_index(dst_vma, dst_addr);
 		mapping = dst_vma->vm_file->f_mapping;
+<<<<<<< HEAD
 		hash = hugetlb_fault_mutex_hash(mapping, idx);
+=======
+		hash = hugetlb_fault_mutex_hash(h, mapping, idx, dst_addr);
+>>>>>>> master
 		mutex_lock(&hugetlb_fault_mutex_table[hash]);
 		hugetlb_vma_lock_read(dst_vma);
 
@@ -498,8 +608,13 @@ retry:
 		cond_resched();
 
 		if (unlikely(err == -ENOENT)) {
+<<<<<<< HEAD
 			mmap_read_unlock(dst_mm);
 			BUG_ON(!folio);
+=======
+			up_read(&dst_mm->mmap_sem);
+			BUG_ON(!page);
+>>>>>>> master
 
 			err = copy_folio_from_user(folio,
 						   (const void __user *)src_addr, true);
@@ -564,6 +679,7 @@ static __always_inline ssize_t mfill_atomic_pte(pmd_t *dst_pmd,
 {
 	ssize_t err;
 
+<<<<<<< HEAD
 	if (uffd_flags_mode_is(flags, MFILL_ATOMIC_CONTINUE)) {
 		return mfill_atomic_pte_continue(dst_pmd, dst_vma,
 						 dst_addr, flags);
@@ -572,6 +688,8 @@ static __always_inline ssize_t mfill_atomic_pte(pmd_t *dst_pmd,
 					       dst_addr, flags);
 	}
 
+=======
+>>>>>>> master
 	/*
 	 * The normal page fault path for a shmem will invoke the
 	 * fault, fill the hole in the file and COW it right away. The
@@ -583,10 +701,16 @@ static __always_inline ssize_t mfill_atomic_pte(pmd_t *dst_pmd,
 	 * and not in the radix tree.
 	 */
 	if (!(dst_vma->vm_flags & VM_SHARED)) {
+<<<<<<< HEAD
 		if (uffd_flags_mode_is(flags, MFILL_ATOMIC_COPY))
 			err = mfill_atomic_pte_copy(dst_pmd, dst_vma,
 						    dst_addr, src_addr,
 						    flags, foliop);
+=======
+		if (!zeropage)
+			err = mcopy_atomic_pte(dst_mm, dst_pmd, dst_vma,
+					       dst_addr, src_addr, page);
+>>>>>>> master
 		else
 			err = mfill_atomic_pte_zeropage(dst_pmd,
 						 dst_vma, dst_addr);
@@ -647,6 +771,20 @@ retry:
 	dst_vma = find_dst_vma(dst_mm, dst_start, len);
 	if (!dst_vma)
 		goto out_unlock;
+<<<<<<< HEAD
+=======
+	/*
+	 * Check the vma is registered in uffd, this is required to
+	 * enforce the VM_MAYWRITE check done at uffd registration
+	 * time.
+	 */
+	if (!dst_vma->vm_userfaultfd_ctx.ctx)
+		goto out_unlock;
+
+	if (dst_start < dst_vma->vm_start ||
+	    dst_start + len > dst_vma->vm_end)
+		goto out_unlock;
+>>>>>>> master
 
 	err = -EINVAL;
 	/*
@@ -726,7 +864,11 @@ retry:
 		cond_resched();
 
 		if (unlikely(err == -ENOENT)) {
+<<<<<<< HEAD
 			void *kaddr;
+=======
+			void *page_kaddr;
+>>>>>>> master
 
 			mmap_read_unlock(dst_mm);
 			BUG_ON(!folio);

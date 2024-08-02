@@ -350,7 +350,11 @@ static void nft_dynset_activate(const struct nft_ctx *ctx,
 {
 	struct nft_dynset *priv = nft_expr_priv(expr);
 
+<<<<<<< HEAD
 	nf_tables_activate_set(ctx, priv->set);
+=======
+	priv->set->use++;
+>>>>>>> master
 }
 
 static void nft_dynset_destroy(const struct nft_ctx *ctx,
@@ -359,8 +363,13 @@ static void nft_dynset_destroy(const struct nft_ctx *ctx,
 	struct nft_dynset *priv = nft_expr_priv(expr);
 	int i;
 
+<<<<<<< HEAD
 	for (i = 0; i < priv->num_exprs; i++)
 		nft_expr_destroy(ctx, priv->expr_array[i]);
+=======
+	if (priv->expr != NULL)
+		nft_expr_destroy(ctx, priv->expr);
+>>>>>>> master
 
 	nf_tables_destroy_set(ctx, priv->set);
 }

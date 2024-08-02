@@ -57,7 +57,15 @@ SECTIONS
 		_etext = .;		/* End of text section */
 	} :text = 0x0700
 
+<<<<<<< HEAD
 	RO_DATA(PAGE_SIZE)
+=======
+	NOTES :text :note
+
+	.dummy : { *(.dummy) } :data
+
+	RO_DATA_SECTION(PAGE_SIZE)
+>>>>>>> master
 
 	. = ALIGN(PAGE_SIZE);
 	_sdata = .;		/* Start of data section */

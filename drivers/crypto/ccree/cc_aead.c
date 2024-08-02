@@ -232,8 +232,12 @@ static void cc_aead_complete(struct device *dev, void *cc_req, int err)
 			/* In case of payload authentication failure, MUST NOT
 			 * revealed the decrypted message --> zero its memory.
 			 */
+<<<<<<< HEAD
 			sg_zero_buffer(areq->dst, sg_nents(areq->dst),
 				       areq->cryptlen, areq->assoclen);
+=======
+			cc_zero_sgl(areq->dst, areq->cryptlen);
+>>>>>>> master
 			err = -EBADMSG;
 		}
 	/*ENCRYPT*/
@@ -444,11 +448,20 @@ static int cc_get_plain_hmac_key(struct crypto_aead *tfm, const u8 *authkey,
 		if (!key)
 			return -ENOMEM;
 
+<<<<<<< HEAD
 		key_dma_addr = dma_map_single(dev, key, keylen, DMA_TO_DEVICE);
 		if (dma_mapping_error(dev, key_dma_addr)) {
 			dev_err(dev, "Mapping key va=0x%p len=%u for DMA failed\n",
 				key, keylen);
 			kfree_sensitive(key);
+=======
+		key_dma_addr = dma_map_single(dev, (void *)key, keylen,
+					      DMA_TO_DEVICE);
+		if (dma_mapping_error(dev, key_dma_addr)) {
+			dev_err(dev, "Mapping key va=0x%p len=%u for DMA failed\n",
+				key, keylen);
+			kzfree(key);
+>>>>>>> master
 			return -ENOMEM;
 		}
 		if (keylen > blocksize) {
@@ -533,7 +546,11 @@ static int cc_get_plain_hmac_key(struct crypto_aead *tfm, const u8 *authkey,
 	if (key_dma_addr)
 		dma_unmap_single(dev, key_dma_addr, keylen, DMA_TO_DEVICE);
 
+<<<<<<< HEAD
 	kfree_sensitive(key);
+=======
+	kzfree(key);
+>>>>>>> master
 
 	return rc;
 }
@@ -559,7 +576,11 @@ static int cc_aead_setkey(struct crypto_aead *tfm, const u8 *key,
 
 		rc = crypto_authenc_extractkeys(&keys, key, keylen);
 		if (rc)
+<<<<<<< HEAD
 			return rc;
+=======
+			goto badkey;
+>>>>>>> master
 		enckey = keys.enckey;
 		authkey = keys.authkey;
 		ctx->enc_keylen = keys.enckeylen;
@@ -567,6 +588,7 @@ static int cc_aead_setkey(struct crypto_aead *tfm, const u8 *key,
 
 		if (ctx->cipher_mode == DRV_CIPHER_CTR) {
 			/* the nonce is stored in bytes at end of key */
+			rc = -EINVAL;
 			if (ctx->enc_keylen <
 			    (AES_MIN_KEY_SIZE + CTR_RFC3686_NONCE_SIZE))
 				return -EINVAL;

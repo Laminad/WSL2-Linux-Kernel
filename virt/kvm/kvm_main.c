@@ -48,10 +48,14 @@
 #include <linux/slab.h>
 #include <linux/sort.h>
 #include <linux/bsearch.h>
+<<<<<<< HEAD
 #include <linux/io.h>
 #include <linux/lockdep.h>
 #include <linux/kthread.h>
 #include <linux/suspend.h>
+=======
+#include <linux/kthread.h>
+>>>>>>> master
 
 #include <asm/processor.h>
 #include <asm/ioctl.h>
@@ -103,6 +107,10 @@ EXPORT_SYMBOL_GPL(halt_poll_ns_shrink);
  */
 
 DEFINE_MUTEX(kvm_lock);
+<<<<<<< HEAD
+=======
+static DEFINE_RAW_SPINLOCK(kvm_count_lock);
+>>>>>>> master
 LIST_HEAD(vm_list);
 
 static struct kmem_cache *kvm_vcpu_cache;
@@ -1086,12 +1094,20 @@ static int kvm_create_vm_debugfs(struct kvm *kvm, const char *fdname)
 			goto out_err;
 
 		stat_data->kvm = kvm;
+<<<<<<< HEAD
 		stat_data->desc = pdesc;
 		stat_data->kind = KVM_STAT_VM;
 		kvm->debugfs_stat_data[i] = stat_data;
 		debugfs_create_file(pdesc->name, kvm_stats_debugfs_mode(pdesc),
 				    kvm->debugfs_dentry, stat_data,
 				    &stat_fops_per_vm);
+=======
+		stat_data->offset = p->offset;
+		stat_data->mode = p->mode ? p->mode : 0644;
+		kvm->debugfs_stat_data[p - debugfs_entries] = stat_data;
+		debugfs_create_file(p->name, stat_data->mode, kvm->debugfs_dentry,
+				    stat_data, stat_fops_per_vm[p->kind]);
+>>>>>>> master
 	}
 
 	for (i = 0; i < kvm_vcpu_stats_header.num_desc; ++i) {
@@ -1129,6 +1145,18 @@ int __weak kvm_arch_post_init_vm(struct kvm *kvm)
 }
 
 /*
+<<<<<<< HEAD
+=======
+ * Called after the VM is otherwise initialized, but just before adding it to
+ * the vm_list.
+ */
+int __weak kvm_arch_post_init_vm(struct kvm *kvm)
+{
+	return 0;
+}
+
+/*
+>>>>>>> master
  * Called just after removing the VM from the vm_list, but before doing any
  * other destruction.
  */
@@ -1136,6 +1164,7 @@ void __weak kvm_arch_pre_destroy_vm(struct kvm *kvm)
 {
 }
 
+<<<<<<< HEAD
 /*
  * Called after per-vm debugfs created.  When called kvm->debugfs_dentry should
  * be setup already, so we can create arch-specific debugfs entries under it.
@@ -1148,6 +1177,9 @@ int __weak kvm_arch_create_vm_debugfs(struct kvm *kvm)
 }
 
 static struct kvm *kvm_create_vm(unsigned long type, const char *fdname)
+=======
+static struct kvm *kvm_create_vm(unsigned long type)
+>>>>>>> master
 {
 	struct kvm *kvm = kvm_arch_alloc_vm();
 	struct kvm_memslots *slots;
@@ -1231,10 +1263,41 @@ static struct kvm *kvm_create_vm(unsigned long type, const char *fdname)
 	INIT_HLIST_HEAD(&kvm->irq_ack_notifier_list);
 #endif
 
+<<<<<<< HEAD
+=======
+	BUILD_BUG_ON(KVM_MEM_SLOTS_NUM > SHRT_MAX);
+
+	r = -ENOMEM;
+	for (i = 0; i < KVM_ADDRESS_SPACE_NUM; i++) {
+		struct kvm_memslots *slots = kvm_alloc_memslots();
+		if (!slots)
+			goto out_err_no_srcu;
+		/*
+		 * Generations must be different for each address space.
+		 * Init kvm generation close to the maximum to easily test the
+		 * code of handling generation number wrap-around.
+		 */
+		slots->generation = i * 2 - 150;
+		rcu_assign_pointer(kvm->memslots[i], slots);
+	}
+
+	if (init_srcu_struct(&kvm->srcu))
+		goto out_err_no_srcu;
+	if (init_srcu_struct(&kvm->irq_srcu))
+		goto out_err_no_irq_srcu;
+	for (i = 0; i < KVM_NR_BUSES; i++) {
+		rcu_assign_pointer(kvm->buses[i],
+			kzalloc(sizeof(struct kvm_io_bus), GFP_KERNEL));
+		if (!kvm->buses[i])
+			goto out_err_no_mmu_notifier;
+	}
+
+>>>>>>> master
 	r = kvm_init_mmu_notifier(kvm);
 	if (r)
 		goto out_err_no_mmu_notifier;
 
+<<<<<<< HEAD
 	r = kvm_coalesced_mmio_init(kvm);
 	if (r < 0)
 		goto out_no_coalesced_mmio;
@@ -1243,6 +1306,8 @@ static struct kvm *kvm_create_vm(unsigned long type, const char *fdname)
 	if (r)
 		goto out_err_no_debugfs;
 
+=======
+>>>>>>> master
 	r = kvm_arch_post_init_vm(kvm);
 	if (r)
 		goto out_err;
@@ -1257,15 +1322,19 @@ static struct kvm *kvm_create_vm(unsigned long type, const char *fdname)
 	return kvm;
 
 out_err:
+<<<<<<< HEAD
 	kvm_destroy_vm_debugfs(kvm);
 out_err_no_debugfs:
 	kvm_coalesced_mmio_free(kvm);
 out_no_coalesced_mmio:
+=======
+>>>>>>> master
 #if defined(CONFIG_MMU_NOTIFIER) && defined(KVM_ARCH_WANT_MMU_NOTIFIER)
 	if (kvm->mmu_notifier.ops)
 		mmu_notifier_unregister(&kvm->mmu_notifier, current->mm);
 #endif
 out_err_no_mmu_notifier:
+<<<<<<< HEAD
 	hardware_disable_all();
 out_err_no_disable:
 	kvm_arch_destroy_vm(kvm);
@@ -1273,6 +1342,8 @@ out_err_no_arch_destroy_vm:
 	WARN_ON_ONCE(!refcount_dec_and_test(&kvm->users_count));
 	for (i = 0; i < KVM_NR_BUSES; i++)
 		kfree(kvm_get_bus(kvm, i));
+=======
+>>>>>>> master
 	cleanup_srcu_struct(&kvm->irq_srcu);
 out_err_no_irq_srcu:
 	cleanup_srcu_struct(&kvm->srcu);
@@ -1561,6 +1632,7 @@ static int check_memory_region_flags(const struct kvm_userspace_memory_region *m
 
 static void kvm_swap_active_memslots(struct kvm *kvm, int as_id)
 {
+<<<<<<< HEAD
 	struct kvm_memslots *slots = kvm_get_inactive_memslots(kvm, as_id);
 
 	/* Grab the generation from the activate memslots. */
@@ -1568,6 +1640,10 @@ static void kvm_swap_active_memslots(struct kvm *kvm, int as_id)
 
 	WARN_ON(gen & KVM_MEMSLOT_GEN_UPDATE_IN_PROGRESS);
 	slots->generation = gen | KVM_MEMSLOT_GEN_UPDATE_IN_PROGRESS;
+=======
+	struct kvm_memslots *old_memslots = __kvm_memslots(kvm, as_id);
+	u64 gen;
+>>>>>>> master
 
 	/*
 	 * Do not store the new memslots while there are invalidations in
@@ -1610,9 +1686,17 @@ static void kvm_swap_active_memslots(struct kvm *kvm, int as_id)
 	 * space 0 will use generations 0, 2, 4, ... while address space 1 will
 	 * use generations 1, 3, 5, ...
 	 */
+<<<<<<< HEAD
 	gen += KVM_ADDRESS_SPACE_NUM;
 
 	kvm_arch_memslots_updated(kvm, gen);
+=======
+	gen = slots->generation + KVM_ADDRESS_SPACE_NUM * 2 - 1;
+
+	kvm_arch_memslots_updated(kvm, gen);
+
+	slots->generation = gen;
+>>>>>>> master
 
 	slots->generation = gen;
 }
@@ -3763,11 +3847,14 @@ static bool vcpu_dy_runnable(struct kvm_vcpu *vcpu)
 	return false;
 }
 
+<<<<<<< HEAD
 bool __weak kvm_arch_dy_has_pending_interrupt(struct kvm_vcpu *vcpu)
 {
 	return false;
 }
 
+=======
+>>>>>>> master
 void kvm_vcpu_on_spin(struct kvm_vcpu *me, bool yield_to_kernel_mode)
 {
 	struct kvm *kvm = me->kvm;
@@ -3798,7 +3885,11 @@ void kvm_vcpu_on_spin(struct kvm_vcpu *me, bool yield_to_kernel_mode)
 				continue;
 			if (vcpu == me)
 				continue;
+<<<<<<< HEAD
 			if (kvm_vcpu_is_blocking(vcpu) && !vcpu_dy_runnable(vcpu))
+=======
+			if (swait_active(&vcpu->wq) && !vcpu_dy_runnable(vcpu))
+>>>>>>> master
 				continue;
 			if (READ_ONCE(vcpu->preempted) && yield_to_kernel_mode &&
 			    !kvm_arch_dy_has_pending_interrupt(vcpu) &&
@@ -4398,7 +4489,11 @@ static long kvm_device_ioctl(struct file *filp, unsigned int ioctl,
 {
 	struct kvm_device *dev = filp->private_data;
 
+<<<<<<< HEAD
 	if (dev->kvm->mm != current->mm || dev->kvm->vm_dead)
+=======
+	if (dev->kvm->mm != current->mm)
+>>>>>>> master
 		return -EIO;
 
 	switch (ioctl) {
@@ -4515,7 +4610,11 @@ static int kvm_ioctl_create_device(struct kvm *kvm,
 	kvm_get_kvm(kvm);
 	ret = anon_inode_getfd(ops->name, &kvm_device_fops, dev, O_RDWR | O_CLOEXEC);
 	if (ret < 0) {
+<<<<<<< HEAD
 		kvm_put_kvm_no_destroy(kvm);
+=======
+		kvm_put_kvm(kvm);
+>>>>>>> master
 		mutex_lock(&kvm->lock);
 		list_del(&dev->vm_node);
 		if (ops->release)
@@ -4566,6 +4665,7 @@ static int kvm_vm_ioctl_check_extension_generic(struct kvm *kvm, long arg)
 	case KVM_CAP_MULTI_ADDRESS_SPACE:
 		return KVM_ADDRESS_SPACE_NUM;
 #endif
+<<<<<<< HEAD
 	case KVM_CAP_NR_MEMSLOTS:
 		return KVM_USER_MEM_SLOTS;
 	case KVM_CAP_DIRTY_LOG_RING:
@@ -4586,6 +4686,8 @@ static int kvm_vm_ioctl_check_extension_generic(struct kvm *kvm, long arg)
 	case KVM_CAP_BINARY_STATS_FD:
 	case KVM_CAP_SYSTEM_EVENT_DATA:
 		return 1;
+=======
+>>>>>>> master
 	default:
 		break;
 	}
@@ -5678,10 +5780,16 @@ static int kvm_debugfs_open(struct inode *inode, struct file *file,
 	if (!kvm_get_kvm_safe(stat_data->kvm))
 		return -ENOENT;
 
+<<<<<<< HEAD
 	ret = simple_attr_open(inode, file, get,
 			       kvm_stats_debugfs_mode(stat_data->desc) & 0222
 			       ? set : NULL, fmt);
 	if (ret)
+=======
+	if (simple_attr_open(inode, file, get,
+			     stat_data->mode & S_IWUGO ? set : NULL,
+			     fmt)) {
+>>>>>>> master
 		kvm_put_kvm(stat_data->kvm);
 
 	return ret;
@@ -5923,6 +6031,7 @@ static void kvm_init_debug(void)
 
 	kvm_debugfs_dir = debugfs_create_dir("kvm", NULL);
 
+<<<<<<< HEAD
 	for (i = 0; i < kvm_vm_stats_header.num_desc; ++i) {
 		pdesc = &kvm_vm_stats_desc[i];
 		if (kvm_stats_debugfs_mode(pdesc) & 0222)
@@ -5943,6 +6052,14 @@ static void kvm_init_debug(void)
 		debugfs_create_file(pdesc->name, kvm_stats_debugfs_mode(pdesc),
 				kvm_debugfs_dir,
 				(void *)(long)pdesc->desc.offset, fops);
+=======
+	kvm_debugfs_num_entries = 0;
+	for (p = debugfs_entries; p->name; ++p, kvm_debugfs_num_entries++) {
+		int mode = p->mode ? p->mode : 0644;
+		debugfs_create_file(p->name, mode, kvm_debugfs_dir,
+				    (void *)(long)p->offset,
+				    stat_fops[p->kind]);
+>>>>>>> master
 	}
 }
 
@@ -6179,7 +6296,10 @@ static int kvm_vm_worker_thread(void *context)
 	 * we have to locally copy anything that is needed beyond initialization
 	 */
 	struct kvm_vm_worker_thread_context *init_context = context;
+<<<<<<< HEAD
 	struct task_struct *parent;
+=======
+>>>>>>> master
 	struct kvm *kvm = init_context->kvm;
 	kvm_vm_thread_fn_t thread_fn = init_context->thread_fn;
 	uintptr_t data = init_context->data;
@@ -6206,7 +6326,11 @@ init_complete:
 	init_context = NULL;
 
 	if (err)
+<<<<<<< HEAD
 		goto out;
+=======
+		return err;
+>>>>>>> master
 
 	/* Wait to be woken up by the spawner before proceeding. */
 	kthread_parkme();
@@ -6214,6 +6338,7 @@ init_complete:
 	if (!kthread_should_stop())
 		err = thread_fn(kvm, data);
 
+<<<<<<< HEAD
 out:
 	/*
 	 * Move kthread back to its original cgroup to prevent it lingering in
@@ -6233,6 +6358,8 @@ out:
 	cgroup_attach_task_all(parent, current);
 	put_task_struct(parent);
 
+=======
+>>>>>>> master
 	return err;
 }
 

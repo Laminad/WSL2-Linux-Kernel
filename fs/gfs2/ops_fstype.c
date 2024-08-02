@@ -80,8 +80,15 @@ static struct gfs2_sbd *init_sbd(struct super_block *sb)
 
 	sdp->sd_vfs = sb;
 	sdp->sd_lkstats = alloc_percpu(struct gfs2_pcpu_lkstats);
+<<<<<<< HEAD
 	if (!sdp->sd_lkstats)
 		goto fail;
+=======
+	if (!sdp->sd_lkstats) {
+		kfree(sdp);
+		return NULL;
+	}
+>>>>>>> master
 	sb->s_fs_info = sdp;
 
 	set_bit(SDF_NOJOURNALID, &sdp->sd_flags);
@@ -1686,10 +1693,17 @@ static int gfs2_meta_get_tree(struct fs_context *fc)
 	struct path path;
 	int error;
 
+<<<<<<< HEAD
 	if (!fc->source || !*fc->source)
 		return -EINVAL;
 
 	error = kern_path(fc->source, LOOKUP_FOLLOW, &path);
+=======
+	if (!dev_name || !*dev_name)
+		return ERR_PTR(-EINVAL);
+
+	error = kern_path(dev_name, LOOKUP_FOLLOW, &path);
+>>>>>>> master
 	if (error) {
 		pr_warn("path_lookup on %s returned error %d\n",
 		        fc->source, error);

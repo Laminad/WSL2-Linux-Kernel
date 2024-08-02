@@ -133,6 +133,7 @@ static u32 handle[] = {
 
 static unsigned long dimm_fail_cmd_flags[ARRAY_SIZE(handle)];
 static int dimm_fail_cmd_code[ARRAY_SIZE(handle)];
+<<<<<<< HEAD
 struct nfit_test_sec {
 	u8 state;
 	u8 ext_state;
@@ -141,6 +142,8 @@ struct nfit_test_sec {
 	u8 master_passphrase[32];
 	u64 overwrite_end_time;
 } dimm_sec_info[NUM_DCR];
+=======
+>>>>>>> master
 
 static const struct nd_intel_smart smart_def = {
 	.flags = ND_INTEL_SMART_HEALTH_VALID
@@ -219,8 +222,11 @@ static struct workqueue_struct *nfit_wq;
 
 static struct gen_pool *nfit_pool;
 
+<<<<<<< HEAD
 static const char zero_key[NVDIMM_PASSPHRASE_LEN];
 
+=======
+>>>>>>> master
 static struct nfit_test *to_nfit_test(struct device *dev)
 {
 	struct platform_device *pdev = to_platform_device(dev);

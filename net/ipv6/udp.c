@@ -156,6 +156,15 @@ static int compute_score(struct sock *sk, struct net *net,
 	if (bound_dev_if)
 		score++;
 
+<<<<<<< HEAD
+=======
+		if (!dev_match)
+			return -1;
+		if (sk->sk_bound_dev_if)
+			score++;
+	}
+
+>>>>>>> master
 	if (READ_ONCE(sk->sk_incoming_cpu) == raw_smp_processor_id())
 		score++;
 
@@ -181,6 +190,20 @@ rescore:
 		score = compute_score(need_rescore ? result : sk, net, saddr,
 				      sport, daddr, hnum, dif, sdif);
 		if (score > badness) {
+<<<<<<< HEAD
+=======
+			if (sk->sk_reuseport &&
+			    sk->sk_state != TCP_ESTABLISHED) {
+				hash = udp6_ehashfn(net, daddr, hnum,
+						    saddr, sport);
+
+				result = reuseport_select_sock(sk, hash, skb,
+							sizeof(struct udphdr));
+				if (result && !reuseport_has_conns(sk, false))
+					return result;
+			}
+			result = sk;
+>>>>>>> master
 			badness = score;
 
 			if (need_rescore)
@@ -292,11 +315,17 @@ struct sock *udp6_lib_lookup_skb(const struct sk_buff *skb,
 	struct net *net = dev_net(skb->dev);
 	int iif, sdif;
 
+<<<<<<< HEAD
 	inet6_get_iif_sdif(skb, &iif, &sdif);
 
 	return __udp6_lib_lookup(net, &iph->saddr, sport,
 				 &iph->daddr, dport, iif,
 				 sdif, net->ipv4.udp_table, NULL);
+=======
+	return __udp6_lib_lookup(dev_net(skb->dev), &iph->saddr, sport,
+				 &iph->daddr, dport, inet6_iif(skb),
+				 inet6_sdif(skb), &udp_table, NULL);
+>>>>>>> master
 }
 
 /* Must be called under rcu_read_lock().
@@ -422,9 +451,15 @@ try_again:
 		}
 		*addr_len = sizeof(*sin6);
 
+<<<<<<< HEAD
 		BPF_CGROUP_RUN_PROG_UDP6_RECVMSG_LOCK(sk,
 						      (struct sockaddr *)sin6,
 						      addr_len);
+=======
+		if (cgroup_bpf_enabled)
+			BPF_CGROUP_RUN_PROG_UDP6_RECVMSG_LOCK(sk,
+						(struct sockaddr *)sin6);
+>>>>>>> master
 	}
 
 	if (udp_test_bit(GRO_ENABLED, sk))
@@ -583,6 +618,7 @@ int __udp6_lib_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 	struct net *net = dev_net(skb->dev);
 
 	sk = __udp6_lib_lookup(net, daddr, uh->dest, saddr, uh->source,
+<<<<<<< HEAD
 			       inet6_iif(skb), inet6_sdif(skb), udptable, NULL);
 
 	if (!sk || READ_ONCE(udp_sk(sk)->encap_type)) {
@@ -603,6 +639,13 @@ int __udp6_lib_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 		}
 
 		tunnel = true;
+=======
+			       inet6_iif(skb), 0, udptable, NULL);
+	if (!sk) {
+		__ICMP6_INC_STATS(net, __in6_dev_get(skb->dev),
+				  ICMP6_MIB_INERRORS);
+		return;
+>>>>>>> master
 	}
 
 	harderr = icmpv6_err_convert(type, code, &err);
@@ -1253,11 +1296,19 @@ static int udp_v6_send_skb(struct sk_buff *skb, struct flowi6 *fl6,
 			kfree_skb(skb);
 			return -EINVAL;
 		}
+<<<<<<< HEAD
 		if (datalen > cork->gso_size * UDP_MAX_SEGMENTS) {
 			kfree_skb(skb);
 			return -EINVAL;
 		}
 		if (udp_get_no_check6_tx(sk)) {
+=======
+		if (skb->len > cork->gso_size * UDP_MAX_SEGMENTS) {
+			kfree_skb(skb);
+			return -EINVAL;
+		}
+		if (udp_sk(sk)->no_check6_tx) {
+>>>>>>> master
 			kfree_skb(skb);
 			return -EINVAL;
 		}
@@ -1515,12 +1566,20 @@ do_udp_sendmsg:
 	opt = ipv6_fixup_options(&opt_space, opt);
 	ipc6.opt = opt;
 
+<<<<<<< HEAD
 	fl6->flowi6_proto = sk->sk_protocol;
 	fl6->flowi6_mark = ipc6.sockc.mark;
 	fl6->daddr = *daddr;
 	if (ipv6_addr_any(&fl6->saddr) && !ipv6_addr_any(&np->saddr))
 		fl6->saddr = np->saddr;
 	fl6->fl6_sport = inet->inet_sport;
+=======
+	fl6.flowi6_proto = sk->sk_protocol;
+	fl6.daddr = *daddr;
+	if (ipv6_addr_any(&fl6.saddr) && !ipv6_addr_any(&np->saddr))
+		fl6.saddr = np->saddr;
+	fl6.fl6_sport = inet->inet_sport;
+>>>>>>> master
 
 	if (cgroup_bpf_enabled(CGROUP_UDP6_SENDMSG) && !connected) {
 		err = BPF_CGROUP_RUN_PROG_UDP6_SENDMSG_LOCK(sk,
@@ -1547,10 +1606,17 @@ do_udp_sendmsg:
 		}
 	}
 
+<<<<<<< HEAD
 	if (ipv6_addr_any(&fl6->daddr))
 		fl6->daddr.s6_addr[15] = 0x1; /* :: means loopback (BSD'ism) */
 
 	final_p = fl6_update_dst(fl6, opt, &final);
+=======
+	if (ipv6_addr_any(&fl6.daddr))
+		fl6.daddr.s6_addr[15] = 0x1; /* :: means loopback (BSD'ism) */
+
+	final_p = fl6_update_dst(&fl6, opt, &final);
+>>>>>>> master
 	if (final_p)
 		connected = false;
 

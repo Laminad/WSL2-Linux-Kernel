@@ -130,17 +130,25 @@ extern void cleanup_module(void);
 #define module_init(initfn)					\
 	static inline initcall_t __maybe_unused __inittest(void)		\
 	{ return initfn; }					\
+<<<<<<< HEAD
 	int init_module(void) __copy(initfn)			\
 		__attribute__((alias(#initfn)));		\
 	___ADDRESSABLE(init_module, __initdata);
+=======
+	int init_module(void) __copy(initfn) __attribute__((alias(#initfn)));
+>>>>>>> master
 
 /* This is only required if you want to be unloadable. */
 #define module_exit(exitfn)					\
 	static inline exitcall_t __maybe_unused __exittest(void)		\
 	{ return exitfn; }					\
+<<<<<<< HEAD
 	void cleanup_module(void) __copy(exitfn)		\
 		__attribute__((alias(#exitfn)));		\
 	___ADDRESSABLE(cleanup_module, __exitdata);
+=======
+	void cleanup_module(void) __copy(exitfn) __attribute__((alias(#exitfn)));
+>>>>>>> master
 
 #endif
 
@@ -499,6 +507,7 @@ struct module {
 	unsigned int num_tracepoints;
 	tracepoint_ptr_t *tracepoints_ptrs;
 #endif
+<<<<<<< HEAD
 #ifdef CONFIG_TREE_SRCU
 	unsigned int num_srcu_structs;
 	struct srcu_struct **srcu_struct_ptrs;
@@ -511,6 +520,8 @@ struct module {
 	unsigned int btf_data_size;
 	void *btf_data;
 #endif
+=======
+>>>>>>> master
 #ifdef CONFIG_JUMP_LABEL
 	struct jump_entry *jump_entries;
 	unsigned int num_jump_entries;

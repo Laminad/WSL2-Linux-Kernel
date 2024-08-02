@@ -329,7 +329,12 @@ static void imx_uart_rts_inactive(struct imx_port *sport, u32 *ucr2)
 	mctrl_gpio_set(sport->gpios, sport->port.mctrl & ~TIOCM_RTS);
 }
 
+<<<<<<< HEAD
 static void start_hrtimer_ms(struct hrtimer *hrt, unsigned long msec)
+=======
+/* called with port.lock taken and irqs caller dependent */
+static void imx_uart_rts_auto(struct imx_port *sport, u32 *ucr2)
+>>>>>>> master
 {
        hrtimer_start(hrt, ms_to_ktime(msec), HRTIMER_MODE_REL);
 }
@@ -1685,6 +1690,7 @@ imx_uart_set_termios(struct uart_port *port, struct ktermios *termios,
 
 	spin_lock_irqsave(&sport->port.lock, flags);
 
+<<<<<<< HEAD
 	/*
 	 * Read current UCR2 and save it for future use, then clear all the bits
 	 * except those we will or may need to preserve.
@@ -1705,10 +1711,41 @@ imx_uart_set_termios(struct uart_port *port, struct ktermios *termios,
 		 * it under manual control and keep transmitter
 		 * disabled.
 		 */
+=======
+	if ((termios->c_cflag & CSIZE) == CS8)
+		ucr2 = UCR2_WS | UCR2_SRST | UCR2_IRTS;
+	else
+		ucr2 = UCR2_SRST | UCR2_IRTS;
+
+	if (termios->c_cflag & CRTSCTS) {
+		if (sport->have_rtscts) {
+			ucr2 &= ~UCR2_IRTS;
+
+			if (port->rs485.flags & SER_RS485_ENABLED) {
+				/*
+				 * RTS is mandatory for rs485 operation, so keep
+				 * it under manual control and keep transmitter
+				 * disabled.
+				 */
+				if (port->rs485.flags &
+				    SER_RS485_RTS_AFTER_SEND)
+					imx_uart_rts_active(sport, &ucr2);
+				else
+					imx_uart_rts_inactive(sport, &ucr2);
+			} else {
+				imx_uart_rts_auto(sport, &ucr2);
+			}
+		} else {
+			termios->c_cflag &= ~CRTSCTS;
+		}
+	} else if (port->rs485.flags & SER_RS485_ENABLED) {
+		/* disable transmitter */
+>>>>>>> master
 		if (port->rs485.flags & SER_RS485_RTS_AFTER_SEND)
 			imx_uart_rts_active(sport, &ucr2);
 		else
 			imx_uart_rts_inactive(sport, &ucr2);
+<<<<<<< HEAD
 
 	} else if (termios->c_cflag & CRTSCTS) {
 		/*
@@ -1721,6 +1758,11 @@ imx_uart_set_termios(struct uart_port *port, struct ktermios *termios,
 
 	if (termios->c_cflag & CRTSCTS)
 		ucr2 &= ~UCR2_IRTS;
+=======
+	}
+
+
+>>>>>>> master
 	if (termios->c_cflag & CSTOPB)
 		ucr2 |= UCR2_STPB;
 	if (termios->c_cflag & PARENB) {

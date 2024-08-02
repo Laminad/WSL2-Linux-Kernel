@@ -17,7 +17,10 @@ ccflags-vdso := \
 	$(filter -march=%,$(KBUILD_CFLAGS)) \
 	$(filter -m%-float,$(KBUILD_CFLAGS)) \
 	$(filter -mno-loongson-%,$(KBUILD_CFLAGS)) \
+<<<<<<< HEAD
 	$(CLANG_FLAGS) \
+=======
+>>>>>>> master
 	-D__VDSO__
 
 ifndef CONFIG_64BIT

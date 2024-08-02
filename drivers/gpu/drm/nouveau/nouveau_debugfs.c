@@ -183,8 +183,12 @@ nouveau_debugfs_pstate_set(struct file *file, const char __user *ubuf,
 	}
 
 	ret = pm_runtime_get_sync(drm->dev);
+<<<<<<< HEAD
 	if (ret < 0 && ret != -EACCES) {
 		pm_runtime_put_autosuspend(drm->dev);
+=======
+	if (ret < 0 && ret != -EACCES)
+>>>>>>> master
 		return ret;
 	}
 

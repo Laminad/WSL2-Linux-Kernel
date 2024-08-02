@@ -262,7 +262,11 @@ ipv4_connected:
 		goto out;
 	}
 
+<<<<<<< HEAD
 	reuseport_has_conns_set(sk);
+=======
+	reuseport_has_conns(sk, true);
+>>>>>>> master
 	sk->sk_state = TCP_ESTABLISHED;
 	sk_set_txhash(sk);
 out:

@@ -1213,9 +1213,27 @@ void __init adjust_lowmem_bounds(void)
 	 * The first usable region must be PMD aligned. Mark its start
 	 * as MEMBLOCK_NOMAP if it isn't
 	 */
+<<<<<<< HEAD
 	for_each_mem_range(i, &block_start, &block_end) {
 		if (!IS_ALIGNED(block_start, PMD_SIZE)) {
 			phys_addr_t len;
+=======
+	for_each_memblock(memory, reg) {
+		if (!memblock_is_nomap(reg)) {
+			if (!IS_ALIGNED(reg->base, PMD_SIZE)) {
+				phys_addr_t len;
+
+				len = round_up(reg->base, PMD_SIZE) - reg->base;
+				memblock_mark_nomap(reg->base, len);
+			}
+			break;
+		}
+	}
+
+	for_each_memblock(memory, reg) {
+		phys_addr_t block_start = reg->base;
+		phys_addr_t block_end = reg->base + reg->size;
+>>>>>>> master
 
 			len = round_up(block_start, PMD_SIZE) - block_start;
 			memblock_mark_nomap(block_start, len);

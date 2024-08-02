@@ -85,8 +85,80 @@ static int prepare_tx(struct cros_ec_device *ec_dev,
 	return sizeof(*request) + msg->outsize;
 }
 
+<<<<<<< HEAD
 static int prepare_tx_legacy(struct cros_ec_device *ec_dev,
 			     struct cros_ec_command *msg)
+=======
+static int send_command(struct cros_ec_device *ec_dev,
+			struct cros_ec_command *msg)
+{
+	int ret;
+	int (*xfer_fxn)(struct cros_ec_device *ec, struct cros_ec_command *msg);
+
+	if (ec_dev->proto_version > 2)
+		xfer_fxn = ec_dev->pkt_xfer;
+	else
+		xfer_fxn = ec_dev->cmd_xfer;
+
+	if (!xfer_fxn) {
+		/*
+		 * This error can happen if a communication error happened and
+		 * the EC is trying to use protocol v2, on an underlying
+		 * communication mechanism that does not support v2.
+		 */
+		dev_err_once(ec_dev->dev,
+			     "missing EC transfer API, cannot send command\n");
+		return -EIO;
+	}
+
+	ret = (*xfer_fxn)(ec_dev, msg);
+	if (msg->result == EC_RES_IN_PROGRESS) {
+		int i;
+		struct cros_ec_command *status_msg;
+		struct ec_response_get_comms_status *status;
+
+		status_msg = kmalloc(sizeof(*status_msg) + sizeof(*status),
+				     GFP_KERNEL);
+		if (!status_msg)
+			return -ENOMEM;
+
+		status_msg->version = 0;
+		status_msg->command = EC_CMD_GET_COMMS_STATUS;
+		status_msg->insize = sizeof(*status);
+		status_msg->outsize = 0;
+
+		/*
+		 * Query the EC's status until it's no longer busy or
+		 * we encounter an error.
+		 */
+		for (i = 0; i < EC_COMMAND_RETRIES; i++) {
+			usleep_range(10000, 11000);
+
+			ret = (*xfer_fxn)(ec_dev, status_msg);
+			if (ret == -EAGAIN)
+				continue;
+			if (ret < 0)
+				break;
+
+			msg->result = status_msg->result;
+			if (status_msg->result != EC_RES_SUCCESS)
+				break;
+
+			status = (struct ec_response_get_comms_status *)
+				 status_msg->data;
+			if (!(status->flags & EC_COMMS_STATUS_PROCESSING))
+				break;
+		}
+
+		kfree(status_msg);
+	}
+
+	return ret;
+}
+
+int cros_ec_prepare_tx(struct cros_ec_device *ec_dev,
+		       struct cros_ec_command *msg)
+>>>>>>> master
 {
 	u8 *out;
 	u8 csum;
@@ -842,6 +914,7 @@ int cros_ec_get_next_event(struct cros_ec_device *ec_dev,
 		 * Sensor events need to be parsed by the sensor sub-device.
 		 * Defer them, and don't report the wakeup here.
 		 */
+<<<<<<< HEAD
 		if (event_type == EC_MKBP_EVENT_SENSOR_FIFO) {
 			*wake_event = false;
 		} else if (host_event) {
@@ -852,6 +925,17 @@ int cros_ec_get_next_event(struct cros_ec_device *ec_dev,
 			if (!(host_event & ec_dev->host_event_wake_mask))
 				*wake_event = false;
 		}
+=======
+		if (event_type == EC_MKBP_EVENT_SENSOR_FIFO)
+			*wake_event = false;
+		/* Masked host-events should not count as wake events. */
+		else if (host_event &&
+			 !(host_event & ec_dev->host_event_wake_mask))
+			*wake_event = false;
+		/* Consider all other events as wake events. */
+		else
+			*wake_event = true;
+>>>>>>> master
 	}
 
 	return ret;

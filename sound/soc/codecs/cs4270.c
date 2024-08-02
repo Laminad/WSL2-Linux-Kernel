@@ -636,7 +636,11 @@ static const struct regmap_config cs4270_regmap = {
 	.max_register =		CS4270_LASTREG,
 	.reg_defaults =		cs4270_reg_defaults,
 	.num_reg_defaults =	ARRAY_SIZE(cs4270_reg_defaults),
+<<<<<<< HEAD
 	.cache_type =		REGCACHE_MAPLE,
+=======
+	.cache_type =		REGCACHE_RBTREE,
+>>>>>>> master
 	.write_flag_mask =	CS4270_I2C_INCR,
 
 	.readable_reg =		cs4270_reg_is_readable,

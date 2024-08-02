@@ -42,12 +42,15 @@ SECTIONS
 #endif
 	_startcode_end = .;
 
+<<<<<<< HEAD
 	/* vmlinux.bin.gz is here */
 	. = ALIGN(8);
 	.rodata.compressed : {
 		*(.rodata.compressed)
 	}
 
+=======
+>>>>>>> master
 	/* bootloader code and data starts at least behind area of extracted kernel */
 	. = MAX(ABSOLUTE(.), (SZ_end - SZparisc_kernel_start + KERNEL_BINARY_TEXT_START));
 

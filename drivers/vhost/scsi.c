@@ -1045,7 +1045,14 @@ vhost_scsi_handle_vq(struct vhost_scsi *vs, struct vhost_virtqueue *vq)
 	struct iov_iter in_iter, prot_iter, data_iter;
 	u64 tag;
 	u32 exp_data_len, data_direction;
+<<<<<<< HEAD
 	int ret, prot_bytes, i, c = 0;
+=======
+	unsigned int out = 0, in = 0;
+	int head, ret, prot_bytes, c = 0;
+	size_t req_size, rsp_size = sizeof(struct virtio_scsi_cmd_resp);
+	size_t out_size, in_size;
+>>>>>>> master
 	u16 lun;
 	u8 task_attr;
 	bool t10_pi = vhost_has_feature(vq, VIRTIO_SCSI_F_T10_PI);
@@ -1066,10 +1073,38 @@ vhost_scsi_handle_vq(struct vhost_scsi *vs, struct vhost_virtqueue *vq)
 	vhost_disable_notify(&vs->dev, vq);
 
 	do {
+<<<<<<< HEAD
 		ret = vhost_scsi_get_desc(vs, vq, &vc);
 		if (ret)
 			goto err;
 
+=======
+		head = vhost_get_vq_desc(vq, vq->iov,
+					 ARRAY_SIZE(vq->iov), &out, &in,
+					 NULL, NULL);
+		pr_debug("vhost_get_vq_desc: head: %d, out: %u in: %u\n",
+			 head, out, in);
+		/* On error, stop handling until the next kick. */
+		if (unlikely(head < 0))
+			break;
+		/* Nothing new?  Wait for eventfd to tell us they refilled. */
+		if (head == vq->num) {
+			if (unlikely(vhost_enable_notify(&vs->dev, vq))) {
+				vhost_disable_notify(&vs->dev, vq);
+				continue;
+			}
+			break;
+		}
+		/*
+		 * Check for a sane response buffer so we can report early
+		 * errors back to the guest.
+		 */
+		if (unlikely(vq->iov[out].iov_len < rsp_size)) {
+			vq_err(vq, "Expecting at least virtio_scsi_cmd_resp"
+				" size, got %zu bytes\n", vq->iov[out].iov_len);
+			break;
+		}
+>>>>>>> master
 		/*
 		 * Setup pointers and values based upon different virtio-scsi
 		 * request header if T10_PI is enabled in KVM guest.
@@ -1235,6 +1270,7 @@ err:
 		 * EIO:    Respond with bad target
 		 * EAGAIN: Pending request
 		 */
+<<<<<<< HEAD
 		if (ret == -ENXIO)
 			break;
 		else if (ret == -EIO)
@@ -1469,6 +1505,10 @@ err:
 			break;
 		else if (ret == -EIO)
 			vhost_scsi_send_bad_target(vs, vq, vc.head, vc.out);
+=======
+		INIT_WORK(&cmd->work, vhost_scsi_submission_work);
+		queue_work(vhost_scsi_workqueue, &cmd->work);
+>>>>>>> master
 	} while (likely(!vhost_exceeds_weight(vq, ++c, 0)));
 out:
 	mutex_unlock(&vq->mutex);
@@ -1971,8 +2011,13 @@ static int vhost_scsi_open(struct inode *inode, struct file *f)
 				vhost_scsi_complete_cmd_work);
 		svq->vq.handle_kick = vhost_scsi_handle_kick;
 	}
+<<<<<<< HEAD
 	vhost_dev_init(&vs->dev, vqs, nvqs, UIO_MAXIOV,
 		       VHOST_SCSI_WEIGHT, 0, true, NULL);
+=======
+	vhost_dev_init(&vs->dev, vqs, VHOST_SCSI_MAX_VQ, UIO_MAXIOV,
+		       VHOST_SCSI_WEIGHT, 0);
+>>>>>>> master
 
 	vhost_scsi_init_inflight(vs, NULL);
 

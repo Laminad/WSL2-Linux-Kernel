@@ -7,9 +7,17 @@
 #include <asm-generic/module.h>
 #include <linux/elf.h>
 
+<<<<<<< HEAD
 struct module;
 unsigned long module_emit_got_entry(struct module *mod, unsigned long val);
 unsigned long module_emit_plt_entry(struct module *mod, unsigned long val);
+=======
+#define MODULE_ARCH_VERMAGIC    "riscv"
+
+struct module;
+u64 module_emit_got_entry(struct module *mod, u64 val);
+u64 module_emit_plt_entry(struct module *mod, u64 val);
+>>>>>>> master
 
 #ifdef CONFIG_MODULE_SECTIONS
 struct mod_section {

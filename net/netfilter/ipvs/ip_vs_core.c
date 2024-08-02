@@ -1707,7 +1707,11 @@ ip_vs_in_icmp(struct netns_ipvs *ipvs, struct sk_buff *skb, int *related,
 	if (!cp) {
 		int v;
 
+<<<<<<< HEAD
 		if (tunnel || !sysctl_schedule_icmp(ipvs))
+=======
+		if (ipip || !sysctl_schedule_icmp(ipvs))
+>>>>>>> master
 			return NF_ACCEPT;
 
 		if (!ip_vs_try_to_schedule(ipvs, AF_INET, skb, pd, &v, &cp, &ciph))
@@ -2341,6 +2345,7 @@ static void __net_exit __ip_vs_cleanup_batch(struct list_head *net_list)
 	struct netns_ipvs *ipvs;
 	struct net *net;
 
+<<<<<<< HEAD
 	ip_vs_service_nets_cleanup(net_list);	/* ip_vs_flush() with locks */
 	list_for_each_entry(net, net_list, exit_list) {
 		ipvs = net_ipvs(net);
@@ -2367,6 +2372,40 @@ static void __net_exit __ip_vs_dev_cleanup_batch(struct list_head *net_list)
 		smp_wmb();
 		ip_vs_sync_net_cleanup(ipvs);
 	}
+=======
+	ip_vs_service_net_cleanup(ipvs);	/* ip_vs_flush() with locks */
+	ip_vs_conn_net_cleanup(ipvs);
+	ip_vs_app_net_cleanup(ipvs);
+	ip_vs_protocol_net_cleanup(ipvs);
+	ip_vs_control_net_cleanup(ipvs);
+	ip_vs_estimator_net_cleanup(ipvs);
+	IP_VS_DBG(2, "ipvs netns %d released\n", ipvs->gen);
+	net->ipvs = NULL;
+}
+
+static int __net_init __ip_vs_dev_init(struct net *net)
+{
+	int ret;
+
+	ret = nf_register_net_hooks(net, ip_vs_ops, ARRAY_SIZE(ip_vs_ops));
+	if (ret < 0)
+		goto hook_fail;
+	return 0;
+
+hook_fail:
+	return ret;
+}
+
+static void __net_exit __ip_vs_dev_cleanup(struct net *net)
+{
+	struct netns_ipvs *ipvs = net_ipvs(net);
+	EnterFunction(2);
+	nf_unregister_net_hooks(net, ip_vs_ops, ARRAY_SIZE(ip_vs_ops));
+	ipvs->enable = 0;	/* Disable packet reception */
+	smp_wmb();
+	ip_vs_sync_net_cleanup(ipvs);
+	LeaveFunction(2);
+>>>>>>> master
 }
 
 static struct pernet_operations ipvs_core_ops = {
@@ -2377,7 +2416,12 @@ static struct pernet_operations ipvs_core_ops = {
 };
 
 static struct pernet_operations ipvs_core_dev_ops = {
+<<<<<<< HEAD
 	.exit_batch = __ip_vs_dev_cleanup_batch,
+=======
+	.init = __ip_vs_dev_init,
+	.exit = __ip_vs_dev_cleanup,
+>>>>>>> master
 };
 
 /*

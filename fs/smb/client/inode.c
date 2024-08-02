@@ -456,6 +456,7 @@ static int cifs_get_unix_fattr(const unsigned char *full_path,
 		cifs_dbg(FYI, "check_mf_symlink: %d\n", tmprc);
 	}
 
+<<<<<<< HEAD:fs/smb/client/inode.c
 	if (S_ISLNK(fattr->cf_mode) && !fattr->cf_symlink_target) {
 		if (!server->ops->query_symlink)
 			return -EOPNOTSUPP;
@@ -463,6 +464,34 @@ static int cifs_get_unix_fattr(const unsigned char *full_path,
 						cifs_sb, full_path,
 						&fattr->cf_symlink_target);
 		cifs_dbg(FYI, "%s: query_symlink: %d\n", __func__, rc);
+=======
+	if (*pinode == NULL) {
+		/* get new inode */
+		cifs_fill_uniqueid(sb, &fattr);
+		*pinode = cifs_iget(sb, &fattr);
+		if (!*pinode)
+			rc = -ENOMEM;
+	} else {
+		/* we already have inode, update it */
+
+		/* if uniqueid is different, return error */
+		if (unlikely(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM &&
+		    CIFS_I(*pinode)->uniqueid != fattr.cf_uniqueid)) {
+			CIFS_I(*pinode)->time = 0; /* force reval */
+			rc = -ESTALE;
+			goto cgiiu_exit;
+		}
+
+		/* if filetype is different, return error */
+		if (unlikely(((*pinode)->i_mode & S_IFMT) !=
+		    (fattr.cf_mode & S_IFMT))) {
+			CIFS_I(*pinode)->time = 0; /* force reval */
+			rc = -ESTALE;
+			goto cgiiu_exit;
+		}
+
+		cifs_fattr_to_inode(*pinode, &fattr);
+>>>>>>> master:fs/cifs/inode.c
 	}
 	return rc;
 }
@@ -1088,6 +1117,81 @@ static int cifs_get_fattr(struct cifs_open_info_data *data,
 		data = &tmp_data;
 	}
 
+<<<<<<< HEAD:fs/smb/client/inode.c
+=======
+	/* if inode info is not passed, get it from server */
+	if (data == NULL) {
+		if (!server->ops->query_path_info) {
+			rc = -ENOSYS;
+			goto cgii_exit;
+		}
+		buf = kmalloc(sizeof(FILE_ALL_INFO), GFP_KERNEL);
+		if (buf == NULL) {
+			rc = -ENOMEM;
+			goto cgii_exit;
+		}
+		data = (FILE_ALL_INFO *)buf;
+		rc = server->ops->query_path_info(xid, tcon, cifs_sb, full_path,
+						  data, &adjust_tz, &symlink);
+	}
+
+	if (!rc) {
+		cifs_all_info_to_fattr(&fattr, data, sb, adjust_tz,
+				       symlink);
+	} else if (rc == -EREMOTE) {
+		cifs_create_dfs_fattr(&fattr, sb);
+		rc = 0;
+	} else if ((rc == -EACCES) && backup_cred(cifs_sb) &&
+		   (strcmp(server->vals->version_string, SMB1_VERSION_STRING)
+		      == 0)) {
+		/*
+		 * For SMB2 and later the backup intent flag is already
+		 * sent if needed on open and there is no path based
+		 * FindFirst operation to use to retry with
+		 */
+
+		srchinf = kzalloc(sizeof(struct cifs_search_info),
+					GFP_KERNEL);
+		if (srchinf == NULL) {
+			rc = -ENOMEM;
+			goto cgii_exit;
+		}
+
+		srchinf->endOfSearch = false;
+		if (tcon->unix_ext)
+			srchinf->info_level = SMB_FIND_FILE_UNIX;
+		else if ((tcon->ses->capabilities &
+			 tcon->ses->server->vals->cap_nt_find) == 0)
+			srchinf->info_level = SMB_FIND_FILE_INFO_STANDARD;
+		else if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM)
+			srchinf->info_level = SMB_FIND_FILE_ID_FULL_DIR_INFO;
+		else /* no srvino useful for fallback to some netapp */
+			srchinf->info_level = SMB_FIND_FILE_DIRECTORY_INFO;
+
+		srchflgs = CIFS_SEARCH_CLOSE_ALWAYS |
+				CIFS_SEARCH_CLOSE_AT_END |
+				CIFS_SEARCH_BACKUP_SEARCH;
+
+		rc = CIFSFindFirst(xid, tcon, full_path,
+			cifs_sb, NULL, srchflgs, srchinf, false);
+		if (!rc) {
+			data = (FILE_ALL_INFO *)srchinf->srch_entries_start;
+
+			cifs_dir_info_to_fattr(&fattr,
+			(FILE_DIRECTORY_INFO *)data, cifs_sb);
+			fattr.cf_uniqueid = le64_to_cpu(
+			((SEARCH_ID_FULL_DIR_INFO *)data)->UniqueId);
+			validinum = true;
+
+			cifs_buf_release(srchinf->ntwrk_buf_start);
+		}
+		kfree(srchinf);
+		if (rc)
+			goto cgii_exit;
+	} else
+		goto cgii_exit;
+
+>>>>>>> master:fs/cifs/inode.c
 	/*
 	 * 2. Convert it to internal cifs metadata (fattr)
 	 */
@@ -1211,8 +1315,42 @@ handle_mnt_opt:
 		cifs_dbg(FYI, "check_mf_symlink: %d\n", tmprc);
 	}
 
+<<<<<<< HEAD:fs/smb/client/inode.c
 out:
 	cifs_buf_release(smb1_backup_rsp_buf);
+=======
+	if (!*inode) {
+		*inode = cifs_iget(sb, &fattr);
+		if (!*inode)
+			rc = -ENOMEM;
+	} else {
+		/* we already have inode, update it */
+
+		/* if uniqueid is different, return error */
+		if (unlikely(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM &&
+		    CIFS_I(*inode)->uniqueid != fattr.cf_uniqueid)) {
+			CIFS_I(*inode)->time = 0; /* force reval */
+			rc = -ESTALE;
+			goto cgii_exit;
+		}
+
+		/* if filetype is different, return error */
+		if (unlikely(((*inode)->i_mode & S_IFMT) !=
+		    (fattr.cf_mode & S_IFMT))) {
+			CIFS_I(*inode)->time = 0; /* force reval */
+			rc = -ESTALE;
+			goto cgii_exit;
+		}
+
+		cifs_fattr_to_inode(*inode, &fattr);
+	}
+
+cgii_exit:
+	if ((*inode) && ((*inode)->i_ino == 0))
+		cifs_dbg(FYI, "inode number of zero returned\n");
+
+	kfree(buf);
+>>>>>>> master:fs/cifs/inode.c
 	cifs_put_tlink(tlink);
 	cifs_free_open_info(&tmp_data);
 	return rc;
@@ -2210,7 +2348,10 @@ cifs_do_rename(const unsigned int xid, struct dentry *from_dentry,
 	if (server->vals->protocol_id != 0)
 		goto do_rename_exit;
 
+<<<<<<< HEAD:fs/smb/client/inode.c
 #ifdef CONFIG_CIFS_ALLOW_INSECURE_LEGACY
+=======
+>>>>>>> master:fs/cifs/inode.c
 	/* open-file renames don't work across directories */
 	if (to_dentry->d_parent != from_dentry->d_parent)
 		goto do_rename_exit;
@@ -3025,6 +3166,7 @@ cifs_setattr_nounix(struct dentry *direntry, struct iattr *attrs)
 	 * will be truncated anyway? Also, should we error out here if
 	 * the flush returns error? Do we need to check for ATTR_MTIME_SET flag?
 	 */
+<<<<<<< HEAD:fs/smb/client/inode.c
 	if (attrs->ia_valid & (ATTR_MTIME | ATTR_SIZE | ATTR_CTIME)) {
 		rc = filemap_write_and_wait(inode->i_mapping);
 		if (is_interrupt_error(rc)) {
@@ -3034,6 +3176,15 @@ cifs_setattr_nounix(struct dentry *direntry, struct iattr *attrs)
 		mapping_set_error(inode->i_mapping, rc);
 	}
 
+=======
+	rc = filemap_write_and_wait(inode->i_mapping);
+	if (is_interrupt_error(rc)) {
+		rc = -ERESTARTSYS;
+		goto cifs_setattr_exit;
+	}
+
+	mapping_set_error(inode->i_mapping, rc);
+>>>>>>> master:fs/cifs/inode.c
 	rc = 0;
 
 	if ((attrs->ia_valid & ATTR_MTIME) &&

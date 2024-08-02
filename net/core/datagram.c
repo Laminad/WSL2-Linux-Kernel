@@ -97,7 +97,11 @@ int __skb_wait_for_more_packets(struct sock *sk, struct sk_buff_head *queue,
 	if (error)
 		goto out_err;
 
+<<<<<<< HEAD
 	if (READ_ONCE(queue->prev) != skb)
+=======
+	if (READ_ONCE(sk->sk_receive_queue.prev) != skb)
+>>>>>>> master
 		goto out;
 
 	/* Socket shut down? */
@@ -272,7 +276,11 @@ struct sk_buff *__skb_try_recv_datagram(struct sock *sk,
 			break;
 
 		sk_busy_loop(sk, flags & MSG_DONTWAIT);
+<<<<<<< HEAD
 	} while (READ_ONCE(queue->prev) != *last);
+=======
+	} while (READ_ONCE(sk->sk_receive_queue.prev) != *last);
+>>>>>>> master
 
 	error = -EAGAIN;
 
@@ -780,7 +788,11 @@ int skb_copy_and_csum_datagram_msg(struct sk_buff *skb,
 
 		if (unlikely(skb->ip_summed == CHECKSUM_COMPLETE) &&
 		    !skb->csum_complete_sw)
+<<<<<<< HEAD
 			netdev_rx_csum_fault(NULL, skb);
+=======
+			netdev_rx_csum_fault(NULL);
+>>>>>>> master
 	}
 	return 0;
 fault:
@@ -813,8 +825,12 @@ __poll_t datagram_poll(struct file *file, struct socket *sock,
 	mask = 0;
 
 	/* exceptional events? */
+<<<<<<< HEAD
 	if (READ_ONCE(sk->sk_err) ||
 	    !skb_queue_empty_lockless(&sk->sk_error_queue))
+=======
+	if (sk->sk_err || !skb_queue_empty_lockless(&sk->sk_error_queue))
+>>>>>>> master
 		mask |= EPOLLERR |
 			(sock_flag(sk, SOCK_SELECT_ERR_QUEUE) ? EPOLLPRI : 0);
 

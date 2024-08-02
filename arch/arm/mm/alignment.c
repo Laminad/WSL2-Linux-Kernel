@@ -766,7 +766,11 @@ do_alignment_t32_to_handler(u32 *pinstr, struct pt_regs *regs,
 	return NULL;
 }
 
+<<<<<<< HEAD
 static int alignment_get_arm(struct pt_regs *regs, u32 *ip, u32 *inst)
+=======
+static int alignment_get_arm(struct pt_regs *regs, u32 *ip, unsigned long *inst)
+>>>>>>> master
 {
 	u32 instr = 0;
 	int fault;
@@ -774,7 +778,11 @@ static int alignment_get_arm(struct pt_regs *regs, u32 *ip, u32 *inst)
 	if (user_mode(regs))
 		fault = get_user(instr, ip);
 	else
+<<<<<<< HEAD
 		fault = get_kernel_nofault(instr, ip);
+=======
+		fault = probe_kernel_address(ip, instr);
+>>>>>>> master
 
 	*inst = __mem_to_opcode_arm(instr);
 
@@ -789,7 +797,11 @@ static int alignment_get_thumb(struct pt_regs *regs, u16 *ip, u16 *inst)
 	if (user_mode(regs))
 		fault = get_user(instr, ip);
 	else
+<<<<<<< HEAD
 		fault = get_kernel_nofault(instr, ip);
+=======
+		fault = probe_kernel_address(ip, instr);
+>>>>>>> master
 
 	*inst = __mem_to_opcode_thumb16(instr);
 
@@ -803,7 +815,10 @@ do_alignment(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
 	unsigned long instrptr;
 	int (*handler)(unsigned long addr, u32 instr, struct pt_regs *regs);
 	unsigned int type;
+<<<<<<< HEAD
 	u32 instr = 0;
+=======
+>>>>>>> master
 	u16 tinstr = 0;
 	int isize = 4;
 	int thumb2_32b = 0;

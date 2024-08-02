@@ -958,8 +958,17 @@ void folio_memcg_unlock(struct folio *folio);
 
 void __mod_memcg_state(struct mem_cgroup *memcg, int idx, int val);
 
+<<<<<<< HEAD
 /* try to stablize folio_memcg() for all the pages in a memcg */
 static inline bool mem_cgroup_trylock_pages(struct mem_cgroup *memcg)
+=======
+/*
+ * idx can be of type enum memcg_stat_item or node_stat_item.
+ * Keep in sync with memcg_exact_page_state().
+ */
+static inline unsigned long memcg_page_state(struct mem_cgroup *memcg,
+					     int idx)
+>>>>>>> master
 {
 	rcu_read_lock();
 

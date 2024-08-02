@@ -184,6 +184,7 @@ static int gpio_exar_probe(struct platform_device *pdev)
 				EXAR_UART_CHANNEL_SIZE;
 	}
 
+<<<<<<< HEAD
 	/*
 	 * We don't need to check the return values of mmio regmap operations (unless
 	 * the regmap has a clock attached which is not the case here).
@@ -199,6 +200,11 @@ static int gpio_exar_probe(struct platform_device *pdev)
 	ret = devm_add_action_or_reset(dev, exar_devm_ida_free, exar_gpio);
 	if (ret)
 		return ret;
+=======
+	index = ida_simple_get(&ida_index, 0, 0, GFP_KERNEL);
+	if (index < 0)
+		goto err_destroy;
+>>>>>>> master
 
 	sprintf(exar_gpio->name, "exar_gpio%d", index);
 	exar_gpio->gpio_chip.label = exar_gpio->name;

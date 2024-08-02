@@ -1002,6 +1002,7 @@ void mt76x0_phy_set_channel(struct mt76x02_dev *dev,
 	mt76x0_read_rx_gain(dev);
 	mt76x0_phy_set_chan_bbp_params(dev, rf_bw_band);
 
+<<<<<<< HEAD
 	/* enable vco */
 	mt76x0_rf_set(dev, MT_RF(0, 4), BIT(7));
 	if (scan)
@@ -1010,6 +1011,142 @@ void mt76x0_phy_set_channel(struct mt76x02_dev *dev,
 	mt76x02_init_agc_gain(dev);
 	mt76x0_phy_calibrate(dev, false);
 	mt76x0_phy_set_txpower(dev);
+=======
+	mt76x0_vco_cal(dev, channel);
+	if (scan)
+		mt76x0_mcu_calibrate(dev, MCU_CAL_RXDCOC, 1);
+
+	mt76x0_phy_set_chan_pwr(dev, channel);
+
+	dev->mt76.chandef = *chandef;
+	return 0;
+}
+
+int mt76x0_phy_set_channel(struct mt76x0_dev *dev,
+			   struct cfg80211_chan_def *chandef)
+{
+	int ret;
+
+	mutex_lock(&dev->hw_atomic_mutex);
+	ret = __mt76x0_phy_set_channel(dev, chandef);
+	mutex_unlock(&dev->hw_atomic_mutex);
+
+	return ret;
+}
+
+void mt76x0_phy_recalibrate_after_assoc(struct mt76x0_dev *dev)
+{
+	u32 tx_alc, reg_val;
+	u8 channel = dev->mt76.chandef.chan->hw_value;
+	int is_5ghz = (dev->mt76.chandef.chan->band == NL80211_BAND_5GHZ) ? 1 : 0;
+
+	mt76x0_mcu_calibrate(dev, MCU_CAL_R, 0);
+
+	mt76x0_vco_cal(dev, channel);
+
+	tx_alc = mt76_rr(dev, MT_TX_ALC_CFG_0);
+	mt76_wr(dev, MT_TX_ALC_CFG_0, 0);
+	usleep_range(500, 700);
+
+	reg_val = mt76_rr(dev, 0x2124);
+	reg_val &= 0xffffff7e;
+	mt76_wr(dev, 0x2124, reg_val);
+
+	mt76x0_mcu_calibrate(dev, MCU_CAL_RXDCOC, 0);
+
+	mt76x0_mcu_calibrate(dev, MCU_CAL_LC, is_5ghz);
+	mt76x0_mcu_calibrate(dev, MCU_CAL_LOFT, is_5ghz);
+	mt76x0_mcu_calibrate(dev, MCU_CAL_TXIQ, is_5ghz);
+	mt76x0_mcu_calibrate(dev, MCU_CAL_TX_GROUP_DELAY, is_5ghz);
+	mt76x0_mcu_calibrate(dev, MCU_CAL_RXIQ, is_5ghz);
+	mt76x0_mcu_calibrate(dev, MCU_CAL_RX_GROUP_DELAY, is_5ghz);
+
+	mt76_wr(dev, 0x2124, reg_val);
+	mt76_wr(dev, MT_TX_ALC_CFG_0, tx_alc);
+	msleep(100);
+
+	mt76x0_mcu_calibrate(dev, MCU_CAL_RXDCOC, 1);
+}
+
+void mt76x0_agc_save(struct mt76x0_dev *dev)
+{
+	/* Only one RX path */
+	dev->agc_save = FIELD_GET(MT_BBP_AGC_GAIN, mt76_rr(dev, MT_BBP(AGC, 8)));
+}
+
+void mt76x0_agc_restore(struct mt76x0_dev *dev)
+{
+	mt76_rmw_field(dev, MT_BBP(AGC, 8), MT_BBP_AGC_GAIN, dev->agc_save);
+}
+
+static void mt76x0_temp_sensor(struct mt76x0_dev *dev)
+{
+	u8 rf_b7_73, rf_b0_66, rf_b0_67;
+	int cycle, temp;
+	u32 val;
+	s32 sval;
+
+	rf_b7_73 = rf_rr(dev, MT_RF(7, 73));
+	rf_b0_66 = rf_rr(dev, MT_RF(0, 66));
+	rf_b0_67 = rf_rr(dev, MT_RF(0, 73));
+
+	rf_wr(dev, MT_RF(7, 73), 0x02);
+	rf_wr(dev, MT_RF(0, 66), 0x23);
+	rf_wr(dev, MT_RF(0, 73), 0x01);
+
+	mt76_wr(dev, MT_BBP(CORE, 34), 0x00080055);
+
+	for (cycle = 0; cycle < 2000; cycle++) {
+		val = mt76_rr(dev, MT_BBP(CORE, 34));
+		if (!(val & 0x10))
+			break;
+		udelay(3);
+	}
+
+	if (cycle >= 2000) {
+		val &= 0x10;
+		mt76_wr(dev, MT_BBP(CORE, 34), val);
+		goto done;
+	}
+
+	sval = mt76_rr(dev, MT_BBP(CORE, 35)) & 0xff;
+	if (!(sval & 0x80))
+		sval &= 0x7f; /* Positive */
+	else
+		sval |= 0xffffff00; /* Negative */
+
+	temp = (35 * (sval - dev->ee->temp_off))/ 10 + 25;
+
+done:
+	rf_wr(dev, MT_RF(7, 73), rf_b7_73);
+	rf_wr(dev, MT_RF(0, 66), rf_b0_66);
+	rf_wr(dev, MT_RF(0, 73), rf_b0_67);
+}
+
+static void mt76x0_dynamic_vga_tuning(struct mt76x0_dev *dev)
+{
+	u32 val, init_vga;
+
+	init_vga = (dev->mt76.chandef.chan->band == NL80211_BAND_5GHZ) ? 0x54 : 0x4E;
+	if (dev->avg_rssi > -60)
+		init_vga -= 0x20;
+	else if (dev->avg_rssi > -70)
+		init_vga -= 0x10;
+
+	val = mt76_rr(dev, MT_BBP(AGC, 8));
+	val &= 0xFFFF80FF;
+	val |= init_vga << 8;
+	mt76_wr(dev, MT_BBP(AGC,8), val);
+}
+
+static void mt76x0_phy_calibrate(struct work_struct *work)
+{
+	struct mt76x0_dev *dev = container_of(work, struct mt76x0_dev,
+					    cal_work.work);
+
+	mt76x0_dynamic_vga_tuning(dev);
+	mt76x0_temp_sensor(dev);
+>>>>>>> master
 
 	ieee80211_queue_delayed_work(dev->mt76.hw, &dev->cal_work,
 				     MT_CALIBRATE_INTERVAL);

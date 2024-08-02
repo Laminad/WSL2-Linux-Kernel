@@ -864,6 +864,7 @@ static void sci_transmit_chars(struct uart_port *port)
 
 	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
 		uart_write_wakeup(port);
+<<<<<<< HEAD
 	if (uart_circ_empty(xmit)) {
 		if (port->type == PORT_SCI) {
 			ctrl = serial_port_in(port, SCSCR);
@@ -874,6 +875,11 @@ static void sci_transmit_chars(struct uart_port *port)
 
 		sci_stop_tx(port);
 	}
+=======
+	if (uart_circ_empty(xmit))
+		sci_stop_tx(port);
+
+>>>>>>> master
 }
 
 static void sci_receive_chars(struct uart_port *port)
@@ -1381,7 +1387,11 @@ static void sci_dma_tx_release(struct sci_port *s)
 	dma_release_channel(chan);
 }
 
+<<<<<<< HEAD
 static int sci_dma_rx_submit(struct sci_port *s, bool port_lock_held)
+=======
+static int sci_submit_rx(struct sci_port *s, bool port_lock_held)
+>>>>>>> master
 {
 	struct dma_chan *chan = s->chan_rx;
 	struct uart_port *port = &s->port;
@@ -1417,7 +1427,14 @@ fail:
 		spin_lock_irqsave(&port->lock, flags);
 	if (i)
 		dmaengine_terminate_async(chan);
+<<<<<<< HEAD
 	sci_dma_rx_chan_invalidate(s);
+=======
+	for (i = 0; i < 2; i++)
+		s->cookie_rx[i] = -EINVAL;
+	s->active_rx = -EINVAL;
+	s->chan_rx = NULL;
+>>>>>>> master
 	sci_start_rx(port);
 	if (!port_lock_held)
 		spin_unlock_irqrestore(&port->lock, flags);
@@ -1445,8 +1462,15 @@ static void sci_dma_tx_work_fn(struct work_struct *work)
 	spin_lock_irq(&port->lock);
 	head = xmit->head;
 	tail = xmit->tail;
+<<<<<<< HEAD
 	buf = s->tx_dma_addr + tail;
 	s->tx_dma_len = CIRC_CNT_TO_END(head, tail, UART_XMIT_SIZE);
+=======
+	buf = s->tx_dma_addr + (tail & (UART_XMIT_SIZE - 1));
+	s->tx_dma_len = min_t(unsigned int,
+		CIRC_CNT(head, tail, UART_XMIT_SIZE),
+		CIRC_CNT_TO_END(head, tail, UART_XMIT_SIZE));
+>>>>>>> master
 	if (!s->tx_dma_len) {
 		/* Transmit buffer has been flushed */
 		spin_unlock_irq(&port->lock);
@@ -1545,9 +1569,14 @@ static enum hrtimer_restart sci_dma_rx_timer_fn(struct hrtimer *t)
 			tty_flip_buffer_push(&port->state->port);
 	}
 
+<<<<<<< HEAD
 	if (port->type == PORT_SCIFA || port->type == PORT_SCIFB ||
 	    s->cfg->regtype == SCIx_RZ_SCIFA_REGTYPE)
 		sci_dma_rx_submit(s, true);
+=======
+	if (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
+		sci_submit_rx(s, true);
+>>>>>>> master
 
 	sci_dma_rx_reenable_irq(s);
 
@@ -1666,6 +1695,7 @@ static void sci_request_dma(struct uart_port *port)
 		}
 
 		hrtimer_init(&s->rx_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+<<<<<<< HEAD
 		s->rx_timer.function = sci_dma_rx_timer_fn;
 
 		s->chan_rx_saved = s->chan_rx = chan;
@@ -1673,6 +1703,14 @@ static void sci_request_dma(struct uart_port *port)
 		if (port->type == PORT_SCIFA || port->type == PORT_SCIFB ||
 		    s->cfg->regtype == SCIx_RZ_SCIFA_REGTYPE)
 			sci_dma_rx_submit(s, false);
+=======
+		s->rx_timer.function = rx_timer_fn;
+
+		s->chan_rx_saved = s->chan_rx = chan;
+
+		if (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
+			sci_submit_rx(s, false);
+>>>>>>> master
 	}
 }
 
@@ -1734,7 +1772,11 @@ static irqreturn_t sci_rx_interrupt(int irq, void *ptr)
 				scr |= SCSCR_RDRQE;
 			}
 		} else {
+<<<<<<< HEAD
 			if (sci_dma_rx_submit(s, false) < 0)
+=======
+			if (sci_submit_rx(s, false) < 0)
+>>>>>>> master
 				goto handle_pio;
 
 			scr &= ~SCSCR_RIE;
@@ -3205,10 +3247,21 @@ static int sci_remove(struct platform_device *dev)
 
 	sci_cleanup_single(port);
 
+<<<<<<< HEAD
 	if (port->port.fifosize > 1)
 		device_remove_file(&dev->dev, &dev_attr_rx_fifo_trigger);
 	if (type == PORT_SCIFA || type == PORT_SCIFB || type == PORT_HSCIF)
 		device_remove_file(&dev->dev, &dev_attr_rx_fifo_timeout);
+=======
+	if (port->port.fifosize > 1) {
+		sysfs_remove_file(&dev->dev.kobj,
+				  &dev_attr_rx_fifo_trigger.attr);
+	}
+	if (type == PORT_SCIFA || type == PORT_SCIFB || type == PORT_HSCIF) {
+		sysfs_remove_file(&dev->dev.kobj,
+				  &dev_attr_rx_fifo_timeout.attr);
+	}
+>>>>>>> master
 
 	return 0;
 }

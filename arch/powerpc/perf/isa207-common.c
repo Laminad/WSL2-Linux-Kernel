@@ -368,6 +368,7 @@ void isa207_get_mem_weight(u64 *weight, u64 type)
 	u64 sier = mfspr(SPRN_SIER);
 	u64 val = (sier & ISA207_SIER_TYPE_MASK) >> ISA207_SIER_TYPE_SHIFT;
 
+<<<<<<< HEAD
 	if (cpu_has_feature(CPU_FTR_ARCH_31))
 		mantissa = P10_MMCRA_THR_CTR_MANT(mmcra);
 
@@ -396,6 +397,12 @@ void isa207_get_mem_weight(u64 *weight, u64 type)
 			weight_fields->var3_w = P10_SIER2_DISPATCH_CYC(mfspr(SPRN_SIER2));
 		}
 	}
+=======
+	if (val == 0 || val == 7)
+		*weight = 0;
+	else
+		*weight = mantissa << (2 * exp);
+>>>>>>> master
 }
 
 int isa207_get_constraint(u64 event, unsigned long *maskp, unsigned long *valp, u64 event_config1)

@@ -70,7 +70,11 @@ static int add_system_zone(struct ext4_system_blocks *system_blks,
 			   ext4_fsblk_t start_blk,
 			   unsigned int count, u32 ino)
 {
+<<<<<<< HEAD
 	struct ext4_system_zone *new_entry, *entry;
+=======
+	struct ext4_system_zone *new_entry = NULL, *entry;
+>>>>>>> master
 	struct rb_node **n = &system_blks->root.rb_node, *node;
 	struct rb_node *parent = NULL, *new_node = NULL;
 
@@ -94,8 +98,14 @@ static int add_system_zone(struct ext4_system_blocks *system_blks,
 	new_entry->ino = ino;
 	new_node = &new_entry->node;
 
+<<<<<<< HEAD
 	rb_link_node(new_node, parent, n);
 	rb_insert_color(new_node, &system_blks->root);
+=======
+		rb_link_node(new_node, parent, n);
+		rb_insert_color(new_node, &system_blks->root);
+	}
+>>>>>>> master
 
 	/* Can we merge to the left? */
 	node = rb_prev(new_node);
@@ -130,9 +140,13 @@ static void debug_print_tree(struct ext4_sb_info *sbi)
 	int first = 1;
 
 	printk(KERN_INFO "System zones: ");
+<<<<<<< HEAD
 	rcu_read_lock();
 	system_blks = rcu_dereference(sbi->s_system_blks);
 	node = rb_first(&system_blks->root);
+=======
+	node = rb_first(&sbi->system_blks->root);
+>>>>>>> master
 	while (node) {
 		entry = rb_entry(node, struct ext4_system_zone, node);
 		printk(KERN_CONT "%s%llu-%llu", first ? "" : ", ",
@@ -144,6 +158,7 @@ static void debug_print_tree(struct ext4_sb_info *sbi)
 	printk(KERN_CONT "\n");
 }
 
+<<<<<<< HEAD
 static int ext4_protect_reserved_inode(struct super_block *sb,
 				       struct ext4_system_blocks *system_blks,
 				       u32 ino)
@@ -270,6 +285,8 @@ err:
 	return ret;
 }
 
+=======
+>>>>>>> master
 /*
  * Called when the filesystem is unmounted or when remounting it with
  * noblock_validity specified.
@@ -280,7 +297,14 @@ err:
  * protected only by RCU. So we first clear the system_blks pointer and
  * then free the rbtree only after RCU grace period expires.
  */
+<<<<<<< HEAD
 void ext4_release_system_zone(struct super_block *sb)
+=======
+static int ext4_data_block_valid_rcu(struct ext4_sb_info *sbi,
+				     struct ext4_system_blocks *system_blks,
+				     ext4_fsblk_t start_blk,
+				     unsigned int count)
+>>>>>>> master
 {
 	struct ext4_system_blocks *system_blks;
 
@@ -299,12 +323,16 @@ int ext4_sb_block_valid(struct super_block *sb, struct inode *inode,
 	struct ext4_system_blocks *system_blks;
 	struct ext4_system_zone *entry;
 	struct rb_node *n;
+<<<<<<< HEAD
 	int ret = 1;
+=======
+>>>>>>> master
 
 	if ((start_blk <= le32_to_cpu(sbi->s_es->s_first_data_block)) ||
 	    (start_blk + count < start_blk) ||
 	    (start_blk + count > ext4_blocks_count(sbi->s_es)))
 		return 0;
+<<<<<<< HEAD
 
 	/*
 	 * Lock the system zone to prevent it being released concurrently
@@ -315,6 +343,12 @@ int ext4_sb_block_valid(struct super_block *sb, struct inode *inode,
 	system_blks = rcu_dereference(sbi->s_system_blks);
 	if (system_blks == NULL)
 		goto out_rcu;
+=======
+	}
+
+	if (system_blks == NULL)
+		return 1;
+>>>>>>> master
 
 	n = system_blks->root.rb_node;
 	while (n) {
@@ -344,6 +378,177 @@ int ext4_inode_block_valid(struct inode *inode, ext4_fsblk_t start_blk,
 			  unsigned int count)
 {
 	return ext4_sb_block_valid(inode->i_sb, inode, start_blk, count);
+}
+
+static int ext4_protect_reserved_inode(struct super_block *sb,
+				       struct ext4_system_blocks *system_blks,
+				       u32 ino)
+{
+	struct inode *inode;
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	struct ext4_map_blocks map;
+	u32 i = 0, num;
+	int err = 0, n;
+
+	if ((ino < EXT4_ROOT_INO) ||
+	    (ino > le32_to_cpu(sbi->s_es->s_inodes_count)))
+		return -EINVAL;
+	inode = ext4_iget(sb, ino, EXT4_IGET_SPECIAL);
+	if (IS_ERR(inode))
+		return PTR_ERR(inode);
+	num = (inode->i_size + sb->s_blocksize - 1) >> sb->s_blocksize_bits;
+	while (i < num) {
+		map.m_lblk = i;
+		map.m_len = num - i;
+		n = ext4_map_blocks(NULL, inode, &map, 0);
+		if (n < 0) {
+			err = n;
+			break;
+		}
+		if (n == 0) {
+			i++;
+		} else {
+			if (!ext4_data_block_valid_rcu(sbi, system_blks,
+						map.m_pblk, n)) {
+				ext4_error(sb, "blocks %llu-%llu from inode %u "
+					   "overlap system zone", map.m_pblk,
+					   map.m_pblk + map.m_len - 1, ino);
+				err = -EFSCORRUPTED;
+				break;
+			}
+			err = add_system_zone(system_blks, map.m_pblk, n);
+			if (err < 0)
+				break;
+			i += n;
+		}
+	}
+	iput(inode);
+	return err;
+}
+
+static void ext4_destroy_system_zone(struct rcu_head *rcu)
+{
+	struct ext4_system_blocks *system_blks;
+
+	system_blks = container_of(rcu, struct ext4_system_blocks, rcu);
+	release_system_zone(system_blks);
+	kfree(system_blks);
+}
+
+/*
+ * Build system zone rbtree which is used for block validity checking.
+ *
+ * The update of system_blks pointer in this function is protected by
+ * sb->s_umount semaphore. However we have to be careful as we can be
+ * racing with ext4_data_block_valid() calls reading system_blks rbtree
+ * protected only by RCU. That's why we first build the rbtree and then
+ * swap it in place.
+ */
+int ext4_setup_system_zone(struct super_block *sb)
+{
+	ext4_group_t ngroups = ext4_get_groups_count(sb);
+	struct ext4_sb_info *sbi = EXT4_SB(sb);
+	struct ext4_system_blocks *system_blks;
+	struct ext4_group_desc *gdp;
+	ext4_group_t i;
+	int flex_size = ext4_flex_bg_size(sbi);
+	int ret;
+
+	if (!test_opt(sb, BLOCK_VALIDITY)) {
+		if (sbi->system_blks)
+			ext4_release_system_zone(sb);
+		return 0;
+	}
+	if (sbi->system_blks)
+		return 0;
+
+	system_blks = kzalloc(sizeof(*system_blks), GFP_KERNEL);
+	if (!system_blks)
+		return -ENOMEM;
+
+	for (i=0; i < ngroups; i++) {
+		if (ext4_bg_has_super(sb, i) &&
+		    ((i < 5) || ((i % flex_size) == 0)))
+			add_system_zone(system_blks,
+					ext4_group_first_block_no(sb, i),
+					ext4_bg_num_gdb(sb, i) + 1);
+		gdp = ext4_get_group_desc(sb, i, NULL);
+		ret = add_system_zone(system_blks,
+				ext4_block_bitmap(sb, gdp), 1);
+		if (ret)
+			goto err;
+		ret = add_system_zone(system_blks,
+				ext4_inode_bitmap(sb, gdp), 1);
+		if (ret)
+			goto err;
+		ret = add_system_zone(system_blks,
+				ext4_inode_table(sb, gdp),
+				sbi->s_itb_per_group);
+		if (ret)
+			goto err;
+	}
+	if (ext4_has_feature_journal(sb) && sbi->s_es->s_journal_inum) {
+		ret = ext4_protect_reserved_inode(sb, system_blks,
+				le32_to_cpu(sbi->s_es->s_journal_inum));
+		if (ret)
+			goto err;
+	}
+
+	/*
+	 * System blks rbtree complete, announce it once to prevent racing
+	 * with ext4_data_block_valid() accessing the rbtree at the same
+	 * time.
+	 */
+	rcu_assign_pointer(sbi->system_blks, system_blks);
+
+	if (test_opt(sb, DEBUG))
+		debug_print_tree(sbi);
+	return 0;
+err:
+	release_system_zone(system_blks);
+	kfree(system_blks);
+	return ret;
+}
+
+/*
+ * Called when the filesystem is unmounted or when remounting it with
+ * noblock_validity specified.
+ *
+ * The update of system_blks pointer in this function is protected by
+ * sb->s_umount semaphore. However we have to be careful as we can be
+ * racing with ext4_data_block_valid() calls reading system_blks rbtree
+ * protected only by RCU. So we first clear the system_blks pointer and
+ * then free the rbtree only after RCU grace period expires.
+ */
+void ext4_release_system_zone(struct super_block *sb)
+{
+	struct ext4_system_blocks *system_blks;
+
+	system_blks = rcu_dereference_protected(EXT4_SB(sb)->system_blks,
+					lockdep_is_held(&sb->s_umount));
+	rcu_assign_pointer(EXT4_SB(sb)->system_blks, NULL);
+
+	if (system_blks)
+		call_rcu(&system_blks->rcu, ext4_destroy_system_zone);
+}
+
+int ext4_data_block_valid(struct ext4_sb_info *sbi, ext4_fsblk_t start_blk,
+			  unsigned int count)
+{
+	struct ext4_system_blocks *system_blks;
+	int ret;
+
+	/*
+	 * Lock the system zone to prevent it being released concurrently
+	 * when doing a remount which inverse current "[no]block_validity"
+	 * mount option.
+	 */
+	rcu_read_lock();
+	system_blks = rcu_dereference(sbi->system_blks);
+	ret = ext4_data_block_valid_rcu(sbi, system_blks, start_blk,
+					count);
+	rcu_read_unlock();
+	return ret;
 }
 
 int ext4_check_blockref(const char *function, unsigned int line,

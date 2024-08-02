@@ -21,7 +21,94 @@
 /*
  * Desired PSSCR in r3
  *
+<<<<<<< HEAD
  * No state will be lost regardless of wakeup mechanism (interrupt or NIA).
+=======
+ * On POWER8, the only such deep idle state is winkle which is used
+ * only in the context of CPU-Hotplug, where these additional SPRs are
+ * reinitiazed to a sane value. Hence there is no need to save/restore
+ * these SPRs.
+ */
+BEGIN_FTR_SECTION
+	blr
+END_FTR_SECTION_IFCLR(CPU_FTR_ARCH_300)
+
+power9_save_additional_sprs:
+	mfspr	r3, SPRN_PID
+	mfspr	r4, SPRN_LDBAR
+	std	r3, STOP_PID(r13)
+	std	r4, STOP_LDBAR(r13)
+
+	mfspr	r3, SPRN_FSCR
+	mfspr	r4, SPRN_HFSCR
+	std	r3, STOP_FSCR(r13)
+	std	r4, STOP_HFSCR(r13)
+
+	mfspr	r3, SPRN_MMCRA
+	mfspr	r4, SPRN_MMCR0
+	std	r3, STOP_MMCRA(r13)
+	std	r4, _MMCR0(r1)
+
+	mfspr	r3, SPRN_MMCR1
+	mfspr	r4, SPRN_MMCR2
+	std	r3, STOP_MMCR1(r13)
+	std	r4, STOP_MMCR2(r13)
+	blr
+
+power9_restore_additional_sprs:
+	ld	r3,_LPCR(r1)
+	ld	r4, STOP_PID(r13)
+	mtspr	SPRN_LPCR,r3
+	mtspr	SPRN_PID, r4
+
+	ld	r3, STOP_LDBAR(r13)
+	ld	r4, STOP_FSCR(r13)
+	mtspr	SPRN_LDBAR, r3
+	mtspr	SPRN_FSCR, r4
+
+	ld	r3, STOP_HFSCR(r13)
+	ld	r4, STOP_MMCRA(r13)
+	mtspr	SPRN_HFSCR, r3
+	mtspr	SPRN_MMCRA, r4
+
+	ld	r3, _MMCR0(r1)
+	ld	r4, STOP_MMCR1(r13)
+	mtspr	SPRN_MMCR0, r3
+	mtspr	SPRN_MMCR1, r4
+
+	ld	r3, STOP_MMCR2(r13)
+	ld	r4, PACA_SPRG_VDSO(r13)
+	mtspr	SPRN_MMCR2, r3
+	mtspr	SPRN_SPRG3, r4
+	blr
+
+/*
+ * Used by threads when the lock bit of core_idle_state is set.
+ * Threads will spin in HMT_LOW until the lock bit is cleared.
+ * r14 - pointer to core_idle_state
+ * r15 - used to load contents of core_idle_state
+ * r9  - used as a temporary variable
+ */
+
+core_idle_lock_held:
+	HMT_LOW
+3:	lwz	r15,0(r14)
+	andis.	r15,r15,PNV_CORE_IDLE_LOCK_BIT@h
+	bne	3b
+	HMT_MEDIUM
+	lwarx	r15,0,r14
+	andis.	r9,r15,PNV_CORE_IDLE_LOCK_BIT@h
+	bne-	core_idle_lock_held
+	blr
+
+/* Reuse an unused pt_regs slot for IAMR */
+#define PNV_POWERSAVE_IAMR	_DAR
+
+/*
+ * Pass requested state in r3:
+ *	r3 - PNV_THREAD_NAP/SLEEP/WINKLE in POWER8
+ *	   - Requested PSSCR value in POWER9
+>>>>>>> master
  *
  * An EC=0 type wakeup will return with a value of 0. SRESET wakeup (which can
  * happen with xscom SRESET and possibly MCE) may clobber volatiles except LR,
@@ -34,6 +121,7 @@ _GLOBAL(isa300_idle_stop_noloss)
 	li	r3,0
 	blr
 
+<<<<<<< HEAD
 /*
  * Desired PSSCR in r3
  *
@@ -49,6 +137,29 @@ _GLOBAL(isa300_idle_stop_noloss)
  */
 _GLOBAL(isa300_idle_stop_mayloss)
 	mtspr 	SPRN_PSSCR,r3
+=======
+	mflr	r0
+	std	r0,16(r1)
+	stdu	r1,-INT_FRAME_SIZE(r1)
+	std	r0,_LINK(r1)
+	std	r0,_NIP(r1)
+
+	/* We haven't lost state ... yet */
+	li	r0,0
+	stb	r0,PACA_NAPSTATELOST(r13)
+
+	/* Continue saving state */
+	SAVE_GPR(2, r1)
+	SAVE_NVGPRS(r1)
+
+BEGIN_FTR_SECTION
+	mfspr	r5, SPRN_IAMR
+	std	r5, PNV_POWERSAVE_IAMR(r1)
+END_FTR_SECTION_IFSET(CPU_FTR_ARCH_207S)
+
+	mfcr	r5
+	std	r5,_CCR(r1)
+>>>>>>> master
 	std	r1,PACAR1(r13)
 	mflr	r4
 	mfcr	r5
@@ -212,7 +323,73 @@ _GLOBAL(power4_idle_nap)
 	isync
 	b	1b
 
+<<<<<<< HEAD
 	.globl power4_idle_nap_return
 power4_idle_nap_return:
+=======
+	mr	r12,r19
+	mtlr	r17
+	blr		/* return to pnv_powersave_wakeup */
+
+fastsleep_workaround_at_exit:
+	li	r3,1
+	li	r4,0
+	bl	opal_config_cpu_idle_state
+	b	timebase_resync
+
+/*
+ * R3 here contains the value that will be returned to the caller
+ * of power7_nap.
+ * R12 contains SRR1 for CHECK_HMI_INTERRUPT.
+ */
+.global pnv_wakeup_loss
+pnv_wakeup_loss:
+	ld	r1,PACAR1(r13)
+BEGIN_FTR_SECTION
+	CHECK_HMI_INTERRUPT
+END_FTR_SECTION_IFSET(CPU_FTR_HVMODE)
+	REST_NVGPRS(r1)
+	REST_GPR(2, r1)
+
+BEGIN_FTR_SECTION
+	/* IAMR was saved in pnv_powersave_common() */
+	ld	r5, PNV_POWERSAVE_IAMR(r1)
+	mtspr	SPRN_IAMR, r5
+	/*
+	 * We don't need an isync here because the upcoming mtmsrd is
+	 * execution synchronizing.
+	 */
+END_FTR_SECTION_IFSET(CPU_FTR_ARCH_207S)
+
+	ld	r4,PACAKMSR(r13)
+	ld	r5,_LINK(r1)
+	ld	r6,_CCR(r1)
+	addi	r1,r1,INT_FRAME_SIZE
+	mtlr	r5
+	mtcr	r6
+	mtmsrd	r4
+	blr
+
+/*
+ * R3 here contains the value that will be returned to the caller
+ * of power7_nap.
+ * R12 contains SRR1 for CHECK_HMI_INTERRUPT.
+ */
+pnv_wakeup_noloss:
+	lbz	r0,PACA_NAPSTATELOST(r13)
+	cmpwi	r0,0
+	bne	pnv_wakeup_loss
+	ld	r1,PACAR1(r13)
+BEGIN_FTR_SECTION
+	CHECK_HMI_INTERRUPT
+END_FTR_SECTION_IFSET(CPU_FTR_HVMODE)
+	ld	r4,PACAKMSR(r13)
+	ld	r5,_NIP(r1)
+	ld	r6,_CCR(r1)
+	addi	r1,r1,INT_FRAME_SIZE
+	mtlr	r5
+	mtcr	r6
+	mtmsrd	r4
+>>>>>>> master
 	blr
 #endif

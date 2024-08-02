@@ -341,6 +341,323 @@ config ARCH_MULTIPLATFORM
 
 menu "Platform selection"
 	depends on MMU
+<<<<<<< HEAD
+=======
+	select ARM_HAS_SG_CHAIN
+	select ARM_PATCH_PHYS_VIRT
+	select AUTO_ZRELADDR
+	select TIMER_OF
+	select COMMON_CLK
+	select GENERIC_CLOCKEVENTS
+	select GENERIC_IRQ_MULTI_HANDLER
+	select MIGHT_HAVE_PCI
+	select PCI_DOMAINS if PCI
+	select SPARSE_IRQ
+	select USE_OF
+
+config ARM_SINGLE_ARMV7M
+	bool "ARMv7-M based platforms (Cortex-M0/M3/M4)"
+	depends on !MMU
+	select ARM_NVIC
+	select AUTO_ZRELADDR
+	select TIMER_OF
+	select COMMON_CLK
+	select CPU_V7M
+	select GENERIC_CLOCKEVENTS
+	select NO_IOPORT_MAP
+	select SPARSE_IRQ
+	select USE_OF
+
+config ARCH_EBSA110
+	bool "EBSA-110"
+	select ARCH_USES_GETTIMEOFFSET
+	select CPU_SA110
+	select ISA
+	select NEED_MACH_IO_H
+	select NEED_MACH_MEMORY_H
+	select NO_IOPORT_MAP
+	help
+	  This is an evaluation board for the StrongARM processor available
+	  from Digital. It has limited hardware on-board, including an
+	  Ethernet interface, two PCMCIA sockets, two serial ports and a
+	  parallel port.
+
+config ARCH_EP93XX
+	bool "EP93xx-based"
+	select ARCH_SPARSEMEM_ENABLE
+	select ARM_AMBA
+	imply ARM_PATCH_PHYS_VIRT
+	select ARM_VIC
+	select AUTO_ZRELADDR
+	select CLKDEV_LOOKUP
+	select CLKSRC_MMIO
+	select CPU_ARM920T
+	select GENERIC_CLOCKEVENTS
+	select GPIOLIB
+	help
+	  This enables support for the Cirrus EP93xx series of CPUs.
+
+config ARCH_FOOTBRIDGE
+	bool "FootBridge"
+	select CPU_SA110
+	select FOOTBRIDGE
+	select GENERIC_CLOCKEVENTS
+	select HAVE_IDE
+	select NEED_MACH_IO_H if !MMU
+	select NEED_MACH_MEMORY_H
+	help
+	  Support for systems based on the DC21285 companion chip
+	  ("FootBridge"), such as the Simtec CATS and the Rebel NetWinder.
+
+config ARCH_NETX
+	bool "Hilscher NetX based"
+	select ARM_VIC
+	select CLKSRC_MMIO
+	select CPU_ARM926T
+	select GENERIC_CLOCKEVENTS
+	help
+	  This enables support for systems based on the Hilscher NetX Soc
+
+config ARCH_IOP13XX
+	bool "IOP13xx-based"
+	depends on MMU
+	select CPU_XSC3
+	select NEED_MACH_MEMORY_H
+	select NEED_RET_TO_USER
+	select PCI
+	select PLAT_IOP
+	select VMSPLIT_1G
+	select SPARSE_IRQ
+	help
+	  Support for Intel's IOP13XX (XScale) family of processors.
+
+config ARCH_IOP32X
+	bool "IOP32x-based"
+	depends on MMU
+	select CPU_XSCALE
+	select GPIO_IOP
+	select GPIOLIB
+	select NEED_RET_TO_USER
+	select PCI
+	select PLAT_IOP
+	help
+	  Support for Intel's 80219 and IOP32X (XScale) family of
+	  processors.
+
+config ARCH_IOP33X
+	bool "IOP33x-based"
+	depends on MMU
+	select CPU_XSCALE
+	select GPIO_IOP
+	select GPIOLIB
+	select NEED_RET_TO_USER
+	select PCI
+	select PLAT_IOP
+	help
+	  Support for Intel's IOP33X (XScale) family of processors.
+
+config ARCH_IXP4XX
+	bool "IXP4xx-based"
+	depends on MMU
+	select ARCH_HAS_DMA_SET_COHERENT_MASK
+	select ARCH_SUPPORTS_BIG_ENDIAN
+	select CLKSRC_MMIO
+	select CPU_XSCALE
+	select DMABOUNCE if PCI
+	select GENERIC_CLOCKEVENTS
+	select GPIOLIB
+	select MIGHT_HAVE_PCI
+	select NEED_MACH_IO_H
+	select USB_EHCI_BIG_ENDIAN_DESC
+	select USB_EHCI_BIG_ENDIAN_MMIO
+	help
+	  Support for Intel's IXP4XX (XScale) family of processors.
+
+config ARCH_DOVE
+	bool "Marvell Dove"
+	select CPU_PJ4
+	select GENERIC_CLOCKEVENTS
+	select GENERIC_IRQ_MULTI_HANDLER
+	select GPIOLIB
+	select MIGHT_HAVE_PCI
+	select MVEBU_MBUS
+	select PINCTRL
+	select PINCTRL_DOVE
+	select PLAT_ORION_LEGACY
+	select SPARSE_IRQ
+	select PM_GENERIC_DOMAINS if PM
+	help
+	  Support for the Marvell Dove SoC 88AP510
+
+config ARCH_KS8695
+	bool "Micrel/Kendin KS8695"
+	select CLKSRC_MMIO
+	select CPU_ARM922T
+	select GENERIC_CLOCKEVENTS
+	select GPIOLIB
+	select NEED_MACH_MEMORY_H
+	help
+	  Support for Micrel/Kendin KS8695 "Centaur" (ARM922T) based
+	  System-on-Chip devices.
+
+config ARCH_W90X900
+	bool "Nuvoton W90X900 CPU"
+	select CLKDEV_LOOKUP
+	select CLKSRC_MMIO
+	select CPU_ARM926T
+	select GENERIC_CLOCKEVENTS
+	select GPIOLIB
+	help
+	  Support for Nuvoton (Winbond logic dept.) ARM9 processor,
+	  At present, the w90x900 has been renamed nuc900, regarding
+	  the ARM series product line, you can login the following
+	  link address to know more.
+
+	  <http://www.nuvoton.com/hq/enu/ProductAndSales/ProductLines/
+		ConsumerElectronicsIC/ARMMicrocontroller/ARMMicrocontroller>
+
+config ARCH_LPC32XX
+	bool "NXP LPC32XX"
+	select ARM_AMBA
+	select CLKDEV_LOOKUP
+	select CLKSRC_LPC32XX
+	select COMMON_CLK
+	select CPU_ARM926T
+	select GENERIC_CLOCKEVENTS
+	select GENERIC_IRQ_MULTI_HANDLER
+	select GPIOLIB
+	select SPARSE_IRQ
+	select USE_OF
+	help
+	  Support for the NXP LPC32XX family of processors
+
+config ARCH_PXA
+	bool "PXA2xx/PXA3xx-based"
+	depends on MMU
+	select ARCH_MTD_XIP
+	select ARM_CPU_SUSPEND if PM
+	select AUTO_ZRELADDR
+	select COMMON_CLK
+	select CLKDEV_LOOKUP
+	select CLKSRC_PXA
+	select CLKSRC_MMIO
+	select TIMER_OF
+	select CPU_XSCALE if !CPU_XSC3
+	select GENERIC_CLOCKEVENTS
+	select GENERIC_IRQ_MULTI_HANDLER
+	select GPIO_PXA
+	select GPIOLIB
+	select HAVE_IDE
+	select IRQ_DOMAIN
+	select PLAT_PXA
+	select SPARSE_IRQ
+	help
+	  Support for Intel/Marvell's PXA2xx/PXA3xx processor line.
+
+config ARCH_RPC
+	bool "RiscPC"
+	depends on MMU
+	select ARCH_ACORN
+	select ARCH_MAY_HAVE_PC_FDC
+	select ARCH_SPARSEMEM_ENABLE
+	select ARCH_USES_GETTIMEOFFSET
+	select CPU_SA110
+	select FIQ
+	select HAVE_IDE
+	select HAVE_PATA_PLATFORM
+	select ISA_DMA_API
+	select NEED_MACH_IO_H
+	select NEED_MACH_MEMORY_H
+	select NO_IOPORT_MAP
+	help
+	  On the Acorn Risc-PC, Linux can support the internal IDE disk and
+	  CD-ROM interface, serial and parallel port, and the floppy drive.
+
+config ARCH_SA1100
+	bool "SA1100-based"
+	select ARCH_MTD_XIP
+	select ARCH_SPARSEMEM_ENABLE
+	select CLKDEV_LOOKUP
+	select CLKSRC_MMIO
+	select CLKSRC_PXA
+	select TIMER_OF if OF
+	select CPU_FREQ
+	select CPU_SA1100
+	select GENERIC_CLOCKEVENTS
+	select GENERIC_IRQ_MULTI_HANDLER
+	select GPIOLIB
+	select HAVE_IDE
+	select IRQ_DOMAIN
+	select ISA
+	select NEED_MACH_MEMORY_H
+	select SPARSE_IRQ
+	help
+	  Support for StrongARM 11x0 based boards.
+
+config ARCH_S3C24XX
+	bool "Samsung S3C24XX SoCs"
+	select ATAGS
+	select CLKDEV_LOOKUP
+	select CLKSRC_SAMSUNG_PWM
+	select GENERIC_CLOCKEVENTS
+	select GPIO_SAMSUNG
+	select GPIOLIB
+	select GENERIC_IRQ_MULTI_HANDLER
+	select HAVE_S3C2410_I2C if I2C
+	select HAVE_S3C2410_WATCHDOG if WATCHDOG
+	select HAVE_S3C_RTC if RTC_CLASS
+	select NEED_MACH_IO_H
+	select SAMSUNG_ATAGS
+	select USE_OF
+	help
+	  Samsung S3C2410, S3C2412, S3C2413, S3C2416, S3C2440, S3C2442, S3C2443
+	  and S3C2450 SoCs based systems, such as the Simtec Electronics BAST
+	  (<http://www.simtec.co.uk/products/EB110ITX/>), the IPAQ 1940 or the
+	  Samsung SMDK2410 development board (and derivatives).
+
+config ARCH_DAVINCI
+	bool "TI DaVinci"
+	select ARCH_HAS_HOLES_MEMORYMODEL
+	select COMMON_CLK
+	select CPU_ARM926T
+	select GENERIC_ALLOCATOR
+	select GENERIC_CLOCKEVENTS
+	select GENERIC_IRQ_CHIP
+	select GPIOLIB
+	select HAVE_IDE
+	select PM_GENERIC_DOMAINS if PM
+	select PM_GENERIC_DOMAINS_OF if PM && OF
+	select REGMAP_MMIO
+	select RESET_CONTROLLER
+	select USE_OF
+	select ZONE_DMA
+	help
+	  Support for TI's DaVinci platform.
+
+config ARCH_OMAP1
+	bool "TI OMAP1"
+	depends on MMU
+	select ARCH_HAS_HOLES_MEMORYMODEL
+	select ARCH_OMAP
+	select CLKDEV_LOOKUP
+	select CLKSRC_MMIO
+	select GENERIC_CLOCKEVENTS
+	select GENERIC_IRQ_CHIP
+	select GENERIC_IRQ_MULTI_HANDLER
+	select GPIOLIB
+	select HAVE_IDE
+	select IRQ_DOMAIN
+	select NEED_MACH_IO_H if PCCARD
+	select NEED_MACH_MEMORY_H
+	select SPARSE_IRQ
+	help
+	  Support for older TI OMAP1 (omap7xx, omap15xx or omap16xx)
+
+endchoice
+
+menu "Multiple platform selection"
+	depends on ARCH_MULTIPLATFORM
+>>>>>>> master
 
 comment "CPU Core family selection"
 

@@ -2273,10 +2273,15 @@ static int kvmppc_get_one_reg_hv(struct kvm_vcpu *vcpu, u64 id,
 		 * either vcore->dpdes or doorbell_request.
 		 * On POWER8, doorbell_request is 0.
 		 */
+<<<<<<< HEAD
 		if (cpu_has_feature(CPU_FTR_ARCH_300))
 			*val = get_reg_val(id, vcpu->arch.doorbell_request);
 		else
 			*val = get_reg_val(id, vcpu->arch.vcore->dpdes);
+=======
+		*val = get_reg_val(id, vcpu->arch.vcore->dpdes |
+				   vcpu->arch.doorbell_request);
+>>>>>>> master
 		break;
 	case KVM_REG_PPC_VTB:
 		*val = get_reg_val(id, vcpu->arch.vcore->vtb);
@@ -5266,6 +5271,7 @@ static int kvmppc_hv_setup_htab_rma(struct kvm_vcpu *vcpu)
  */
 int kvmppc_switch_mmu_to_hpt(struct kvm *kvm)
 {
+<<<<<<< HEAD
 	unsigned long lpcr, lpcr_mask;
 
 	if (nesting_enabled(kvm))
@@ -5273,10 +5279,16 @@ int kvmppc_switch_mmu_to_hpt(struct kvm *kvm)
 	kvmppc_rmap_reset(kvm);
 	kvm->arch.process_table = 0;
 	/* Mutual exclusion with kvm_unmap_gfn_range etc. */
+=======
+	kvmppc_rmap_reset(kvm);
+	kvm->arch.process_table = 0;
+	/* Mutual exclusion with kvm_unmap_hva_range etc. */
+>>>>>>> master
 	spin_lock(&kvm->mmu_lock);
 	kvm->arch.radix = 0;
 	spin_unlock(&kvm->mmu_lock);
 	kvmppc_free_radix(kvm);
+<<<<<<< HEAD
 
 	lpcr = LPCR_VPM1;
 	lpcr_mask = LPCR_VPM1 | LPCR_UPRT | LPCR_GTSE | LPCR_HR;
@@ -5284,6 +5296,10 @@ int kvmppc_switch_mmu_to_hpt(struct kvm *kvm)
 		lpcr_mask |= LPCR_HAIL;
 	kvmppc_update_lpcr(kvm, lpcr, lpcr_mask);
 
+=======
+	kvmppc_update_lpcr(kvm, LPCR_VPM1,
+			   LPCR_VPM1 | LPCR_UPRT | LPCR_GTSE | LPCR_HR);
+>>>>>>> master
 	return 0;
 }
 
@@ -5299,12 +5315,19 @@ int kvmppc_switch_mmu_to_radix(struct kvm *kvm)
 	err = kvmppc_init_vm_radix(kvm);
 	if (err)
 		return err;
+<<<<<<< HEAD
 	kvmppc_rmap_reset(kvm);
 	/* Mutual exclusion with kvm_unmap_gfn_range etc. */
+=======
+
+	kvmppc_rmap_reset(kvm);
+	/* Mutual exclusion with kvm_unmap_hva_range etc. */
+>>>>>>> master
 	spin_lock(&kvm->mmu_lock);
 	kvm->arch.radix = 1;
 	spin_unlock(&kvm->mmu_lock);
 	kvmppc_free_hpt(&kvm->arch.hpt);
+<<<<<<< HEAD
 
 	lpcr = LPCR_UPRT | LPCR_GTSE | LPCR_HR;
 	lpcr_mask = LPCR_VPM1 | LPCR_UPRT | LPCR_GTSE | LPCR_HR;
@@ -5316,6 +5339,10 @@ int kvmppc_switch_mmu_to_radix(struct kvm *kvm)
 	}
 	kvmppc_update_lpcr(kvm, lpcr, lpcr_mask);
 
+=======
+	kvmppc_update_lpcr(kvm, LPCR_UPRT | LPCR_GTSE | LPCR_HR,
+			   LPCR_VPM1 | LPCR_UPRT | LPCR_GTSE | LPCR_HR);
+>>>>>>> master
 	return 0;
 }
 

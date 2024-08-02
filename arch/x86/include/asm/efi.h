@@ -98,6 +98,7 @@ extern asmlinkage u64 __efi_call(void *fp, ...);
 
 extern bool efi_disable_ibt_for_runtime;
 
+<<<<<<< HEAD
 #define efi_call(...) ({						\
 	__efi_nargs_check(efi_call, 7, __VA_ARGS__);			\
 	__efi_call(__VA_ARGS__);					\
@@ -109,6 +110,40 @@ extern bool efi_disable_ibt_for_runtime;
 	ret = efi_call((void *)p->f, args);				\
 	ibt_restore(ibt);						\
 	ret;								\
+=======
+#define efi_call_phys(f, args...)		efi_call((f), args)
+
+/*
+ * struct efi_scratch - Scratch space used while switching to/from efi_mm
+ * @phys_stack: stack used during EFI Mixed Mode
+ * @prev_mm:    store/restore stolen mm_struct while switching to/from efi_mm
+ */
+struct efi_scratch {
+	u64			phys_stack;
+	struct mm_struct	*prev_mm;
+} __packed;
+
+#define arch_efi_call_virt_setup()					\
+({									\
+	efi_sync_low_kernel_mappings();					\
+	kernel_fpu_begin();						\
+	firmware_restrict_branch_speculation_start();			\
+									\
+	if (!efi_enabled(EFI_OLD_MEMMAP))				\
+		efi_switch_mm(&efi_mm);					\
+})
+
+#define arch_efi_call_virt(p, f, args...)				\
+	efi_call((void *)p->f, args)					\
+
+#define arch_efi_call_virt_teardown()					\
+({									\
+	if (!efi_enabled(EFI_OLD_MEMMAP))				\
+		efi_switch_mm(efi_scratch.prev_mm);			\
+									\
+	firmware_restrict_branch_speculation_end();			\
+	kernel_fpu_end();						\
+>>>>>>> master
 })
 
 #ifdef CONFIG_KASAN

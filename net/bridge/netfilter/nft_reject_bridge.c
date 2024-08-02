@@ -90,6 +90,30 @@ static void nft_reject_br_send_v6_tcp_reset(struct net *net,
 	br_forward(br_port_get_rcu(dev), nskb, false, true);
 }
 
+<<<<<<< HEAD
+=======
+static bool reject6_br_csum_ok(struct sk_buff *skb, int hook)
+{
+	const struct ipv6hdr *ip6h = ipv6_hdr(skb);
+	int thoff;
+	__be16 fo;
+	u8 proto = ip6h->nexthdr;
+
+	if (skb_csum_unnecessary(skb))
+		return true;
+
+	if (ip6h->payload_len &&
+	    pskb_trim_rcsum(skb, ntohs(ip6h->payload_len) + sizeof(*ip6h)))
+		return false;
+
+	ip6h = ipv6_hdr(skb);
+	thoff = ipv6_skip_exthdr(skb, ((u8*)(ip6h+1) - skb->data), &proto, &fo);
+	if (thoff < 0 || thoff >= skb->len || (fo & htons(~0x7)) != 0)
+		return false;
+
+	return nf_ip6_checksum(skb, hook, thoff, proto) == 0;
+}
+>>>>>>> master
 
 static void nft_reject_br_send_v6_unreach(struct net *net,
 					  struct sk_buff *oldskb,

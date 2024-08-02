@@ -29,13 +29,21 @@ enum branch_cache_flush_type {
 	BRANCH_CACHE_FLUSH_SW	= 0x2,
 	BRANCH_CACHE_FLUSH_HW	= 0x4,
 };
+<<<<<<< HEAD
 static enum branch_cache_flush_type count_cache_flush_type = BRANCH_CACHE_FLUSH_NONE;
 static enum branch_cache_flush_type link_stack_flush_type = BRANCH_CACHE_FLUSH_NONE;
+=======
+static enum count_cache_flush_type count_cache_flush_type = COUNT_CACHE_FLUSH_NONE;
+>>>>>>> master
 
 bool barrier_nospec_enabled;
 static bool no_nospec;
 static bool btb_flush_enabled;
+<<<<<<< HEAD
 #if defined(CONFIG_PPC_E500) || defined(CONFIG_PPC_BOOK3S_64)
+=======
+#ifdef CONFIG_PPC_FSL_BOOK3E
+>>>>>>> master
 static bool no_spectrev2;
 #endif
 
@@ -122,7 +130,11 @@ static __init int security_feature_debugfs_init(void)
 device_initcall(security_feature_debugfs_init);
 #endif /* CONFIG_DEBUG_FS */
 
+<<<<<<< HEAD
 #if defined(CONFIG_PPC_E500) || defined(CONFIG_PPC_BOOK3S_64)
+=======
+#ifdef CONFIG_PPC_FSL_BOOK3E
+>>>>>>> master
 static int __init handle_nospectre_v2(char *p)
 {
 	no_spectrev2 = true;
@@ -130,17 +142,25 @@ static int __init handle_nospectre_v2(char *p)
 	return 0;
 }
 early_param("nospectre_v2", handle_nospectre_v2);
+<<<<<<< HEAD
 #endif /* CONFIG_PPC_E500 || CONFIG_PPC_BOOK3S_64 */
 
 #ifdef CONFIG_PPC_E500
 void __init setup_spectre_v2(void)
+=======
+void setup_spectre_v2(void)
+>>>>>>> master
 {
 	if (no_spectrev2 || cpu_mitigations_off())
 		do_btb_flush_fixups();
 	else
 		btb_flush_enabled = true;
 }
+<<<<<<< HEAD
 #endif /* CONFIG_PPC_E500 */
+=======
+#endif /* CONFIG_PPC_FSL_BOOK3E */
+>>>>>>> master
 
 #ifdef CONFIG_PPC_BOOK3S_64
 ssize_t cpu_show_meltdown(struct device *dev, struct device_attribute *attr, char *buf)
@@ -221,6 +241,7 @@ ssize_t cpu_show_spectre_v2(struct device *dev, struct device_attribute *attr, c
 
 		if (ccd)
 			seq_buf_printf(&s, "Indirect branch cache disabled");
+<<<<<<< HEAD
 
 	} else if (count_cache_flush_type != BRANCH_CACHE_FLUSH_NONE) {
 		seq_buf_printf(&s, "Mitigation: Software count cache flush");
@@ -228,11 +249,19 @@ ssize_t cpu_show_spectre_v2(struct device *dev, struct device_attribute *attr, c
 		if (count_cache_flush_type == BRANCH_CACHE_FLUSH_HW)
 			seq_buf_printf(&s, " (hardware accelerated)");
 
+=======
+	} else if (count_cache_flush_type != COUNT_CACHE_FLUSH_NONE) {
+		seq_buf_printf(&s, "Mitigation: Software count cache flush");
+
+		if (count_cache_flush_type == COUNT_CACHE_FLUSH_HW)
+			seq_buf_printf(&s, " (hardware accelerated)");
+>>>>>>> master
 	} else if (btb_flush_enabled) {
 		seq_buf_printf(&s, "Mitigation: Branch predictor state flush");
 	} else {
 		seq_buf_printf(&s, "Vulnerable");
 	}
+<<<<<<< HEAD
 
 	if (bcs || ccd || count_cache_flush_type != BRANCH_CACHE_FLUSH_NONE) {
 		if (link_stack_flush_type != BRANCH_CACHE_FLUSH_NONE)
@@ -240,6 +269,8 @@ ssize_t cpu_show_spectre_v2(struct device *dev, struct device_attribute *attr, c
 		if (link_stack_flush_type == BRANCH_CACHE_FLUSH_HW)
 			seq_buf_printf(&s, " (hardware accelerated)");
 	}
+=======
+>>>>>>> master
 
 	seq_buf_printf(&s, "\n");
 

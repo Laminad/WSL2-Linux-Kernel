@@ -136,6 +136,15 @@ SECTIONS
 
   RO_DATA(4096)
 
+<<<<<<< HEAD
+=======
+  /*  Relocation table */
+
+  .fixup   : { *(.fixup) }
+
+  EXCEPTION_TABLE(16)
+  NOTES
+>>>>>>> master
   /* Data section */
 
 #ifdef CONFIG_XIP_KERNEL

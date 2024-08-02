@@ -403,7 +403,32 @@ static struct dmtimer *to_dmtimer(struct omap_dm_timer *cookie)
 	if (!cookie)
 		return NULL;
 
+<<<<<<< HEAD
 	return container_of(cookie, struct dmtimer, cookie);
+=======
+	/*
+	 * FIXME: OMAP1 devices do not use the clock framework for dmtimers so
+	 * do not call clk_get() for these devices.
+	 */
+	if (!timer->fclk)
+		return -ENODEV;
+
+	parent = clk_get(&timer->pdev->dev, NULL);
+	if (IS_ERR(parent))
+		return -ENODEV;
+
+	/* Bail out if both clocks point to fck */
+	if (clk_is_match(parent, timer->fclk))
+		return 0;
+
+	ret = clk_set_parent(timer->fclk, parent);
+	if (ret < 0)
+		pr_err("%s: failed to set parent\n", __func__);
+
+	clk_put(parent);
+
+	return ret;
+>>>>>>> master
 }
 
 static int omap_dm_timer_set_source(struct omap_dm_timer *cookie, int source)

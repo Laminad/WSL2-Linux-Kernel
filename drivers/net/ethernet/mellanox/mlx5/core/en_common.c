@@ -44,11 +44,36 @@ void mlx5e_mkey_set_relaxed_ordering(struct mlx5_core_dev *mdev, void *mkc)
 		       (pcie_relaxed_ordering_enabled(mdev->pdev) &&
 			MLX5_CAP_GEN(mdev, relaxed_ordering_read_pci_enabled));
 
+<<<<<<< HEAD
 	MLX5_SET(mkc, mkc, relaxed_ordering_read, ro_read);
 	MLX5_SET(mkc, mkc, relaxed_ordering_write, ro_write);
 }
 
 int mlx5e_create_mkey(struct mlx5_core_dev *mdev, u32 pdn, u32 *mkey)
+=======
+	err = mlx5_core_create_tir(mdev, in, inlen, &tir->tirn);
+	if (err)
+		return err;
+
+	mutex_lock(&mdev->mlx5e_res.td.list_lock);
+	list_add(&tir->list, &mdev->mlx5e_res.td.tirs_list);
+	mutex_unlock(&mdev->mlx5e_res.td.list_lock);
+
+	return 0;
+}
+
+void mlx5e_destroy_tir(struct mlx5_core_dev *mdev,
+		       struct mlx5e_tir *tir)
+{
+	mutex_lock(&mdev->mlx5e_res.td.list_lock);
+	mlx5_core_destroy_tir(mdev, tir->tirn);
+	list_del(&tir->list);
+	mutex_unlock(&mdev->mlx5e_res.td.list_lock);
+}
+
+static int mlx5e_create_mkey(struct mlx5_core_dev *mdev, u32 pdn,
+			     struct mlx5_core_mkey *mkey)
+>>>>>>> master
 {
 	int inlen = MLX5_ST_SZ_BYTES(create_mkey_in);
 	void *mkc;
@@ -103,6 +128,7 @@ int mlx5e_create_mdev_resources(struct mlx5_core_dev *mdev)
 		goto err_destroy_mkey;
 	}
 
+<<<<<<< HEAD
 	INIT_LIST_HEAD(&res->td.tirs_list);
 	mutex_init(&res->td.list_lock);
 
@@ -112,6 +138,10 @@ int mlx5e_create_mdev_resources(struct mlx5_core_dev *mdev)
 			      PTR_ERR(mdev->mlx5e_res.dek_priv));
 		mdev->mlx5e_res.dek_priv = NULL;
 	}
+=======
+	INIT_LIST_HEAD(&mdev->mlx5e_res.td.tirs_list);
+	mutex_init(&mdev->mlx5e_res.td.list_lock);
+>>>>>>> master
 
 	return 0;
 
@@ -142,7 +172,10 @@ int mlx5e_refresh_tirs(struct mlx5e_priv *priv, bool enable_uc_lb,
 {
 	struct mlx5_core_dev *mdev = priv->mdev;
 	struct mlx5e_tir *tir;
+<<<<<<< HEAD
 	u8 lb_flags = 0;
+=======
+>>>>>>> master
 	int err  = 0;
 	u32 tirn = 0;
 	int inlen;
@@ -150,8 +183,15 @@ int mlx5e_refresh_tirs(struct mlx5e_priv *priv, bool enable_uc_lb,
 
 	inlen = MLX5_ST_SZ_BYTES(modify_tir_in);
 	in = kvzalloc(inlen, GFP_KERNEL);
+<<<<<<< HEAD
 	if (!in)
 		return -ENOMEM;
+=======
+	if (!in) {
+		err = -ENOMEM;
+		goto out;
+	}
+>>>>>>> master
 
 	if (enable_uc_lb)
 		lb_flags = MLX5_TIRC_SELF_LB_BLOCK_BLOCK_UNICAST;
@@ -164,8 +204,13 @@ int mlx5e_refresh_tirs(struct mlx5e_priv *priv, bool enable_uc_lb,
 
 	MLX5_SET(modify_tir_in, in, bitmask.self_lb_en, 1);
 
+<<<<<<< HEAD
 	mutex_lock(&mdev->mlx5e_res.hw_objs.td.list_lock);
 	list_for_each_entry(tir, &mdev->mlx5e_res.hw_objs.td.tirs_list, list) {
+=======
+	mutex_lock(&mdev->mlx5e_res.td.list_lock);
+	list_for_each_entry(tir, &mdev->mlx5e_res.td.tirs_list, list) {
+>>>>>>> master
 		tirn = tir->tirn;
 		err = mlx5_core_modify_tir(mdev, tirn, in);
 		if (err)
@@ -176,6 +221,7 @@ int mlx5e_refresh_tirs(struct mlx5e_priv *priv, bool enable_uc_lb,
 	kvfree(in);
 	if (err)
 		netdev_err(priv->netdev, "refresh tir(0x%x) failed, %d\n", tirn, err);
+	mutex_unlock(&mdev->mlx5e_res.td.list_lock);
 
 	return err;
 }

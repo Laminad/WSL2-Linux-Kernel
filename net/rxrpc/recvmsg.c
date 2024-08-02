@@ -455,7 +455,11 @@ error_requeue_call:
 error_no_call:
 	release_sock(&rx->sk);
 error_trace:
+<<<<<<< HEAD
 	trace_rxrpc_recvmsg(call_debug_id, rxrpc_recvmsg_return, ret);
+=======
+	trace_rxrpc_recvmsg(call, rxrpc_recvmsg_return, 0, 0, 0, ret);
+>>>>>>> master
 	return ret;
 
 wait_interrupted:

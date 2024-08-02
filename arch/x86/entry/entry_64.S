@@ -247,6 +247,7 @@ SYM_FUNC_START(__switch_to_asm)
 	pushq	%r13
 	pushq	%r14
 	pushq	%r15
+	pushfq
 
 	/* switch stack */
 	movq	%rsp, TASK_threadsp(%rdi)
@@ -267,6 +268,7 @@ SYM_FUNC_START(__switch_to_asm)
 	FILL_RETURN_BUFFER %r12, RSB_CLEAR_LOOPS, X86_FEATURE_RSB_CTXSW
 
 	/* restore callee-saved registers */
+	popfq
 	popq	%r15
 	popq	%r14
 	popq	%r13
@@ -314,6 +316,18 @@ SYM_CODE_START(ret_from_fork_asm)
 	jmp	swapgs_restore_regs_and_return_to_usermode
 SYM_CODE_END(ret_from_fork_asm)
 .popsection
+
+	.align 8
+ENTRY(spurious_entries_start)
+    vector=FIRST_SYSTEM_VECTOR
+    .rept (NR_VECTORS - FIRST_SYSTEM_VECTOR)
+	UNWIND_HINT_IRET_REGS
+	pushq	$(~vector+0x80)			/* Note: always in signed byte range */
+	jmp	common_spurious
+	.align	8
+	vector=vector+1
+    .endr
+END(spurious_entries_start)
 
 .macro DEBUG_ENTRY_ASSERT_IRQS_OFF
 #ifdef CONFIG_DEBUG_ENTRY
@@ -396,6 +410,7 @@ SYM_CODE_START(\asmsym)
 	ASM_CLAC
 	cld
 
+<<<<<<< HEAD
 	.if \has_error_code == 0
 		pushq	$-1			/* ORIG_RAX: no syscall to restart */
 	.endif
@@ -413,6 +428,19 @@ SYM_CODE_START(\asmsym)
 		UNWIND_HINT_IRET_REGS offset=8
 .Lfrom_usermode_no_gap_\@:
 	.endif
+=======
+	testb	$3, CS-ORIG_RAX+8(%rsp)
+	jz	1f
+	SWAPGS
+	FENCE_SWAPGS_USER_ENTRY
+	/*
+	 * Switch to the thread stack. The IRET frame and orig_ax are
+	 * on the stack, as well as the return address. RDI..R12 are
+	 * not (yet) on the stack and space has not (yet) been
+	 * allocated for them.
+	 */
+	pushq	%rdi
+>>>>>>> master
 
 	idtentry_body \cfunc \has_error_code
 
@@ -420,6 +448,7 @@ _ASM_NOKPROBE(\asmsym)
 SYM_CODE_END(\asmsym)
 .endm
 
+<<<<<<< HEAD
 /*
  * Interrupt entry/exit.
  *
@@ -430,6 +459,68 @@ SYM_CODE_END(\asmsym)
  * common_interrupt is a hotpath, align it to a cache line
  */
 .macro idtentry_irq vector cfunc
+=======
+	pushq	7*8(%rdi)		/* regs->ss */
+	pushq	6*8(%rdi)		/* regs->rsp */
+	pushq	5*8(%rdi)		/* regs->eflags */
+	pushq	4*8(%rdi)		/* regs->cs */
+	pushq	3*8(%rdi)		/* regs->ip */
+	pushq	2*8(%rdi)		/* regs->orig_ax */
+	pushq	8(%rdi)			/* return address */
+	UNWIND_HINT_FUNC
+
+	movq	(%rdi), %rdi
+	jmp	2f
+1:
+	FENCE_SWAPGS_KERNEL_ENTRY
+2:
+	PUSH_AND_CLEAR_REGS save_ret=1
+	ENCODE_FRAME_POINTER 8
+
+	testb	$3, CS+8(%rsp)
+	jz	1f
+
+	/*
+	 * IRQ from user mode.
+	 *
+	 * We need to tell lockdep that IRQs are off.  We can't do this until
+	 * we fix gsbase, and we should do it before enter_from_user_mode
+	 * (which can take locks).  Since TRACE_IRQS_OFF is idempotent,
+	 * the simplest way to handle it is to just call it twice if
+	 * we enter from user mode.  There's no reason to optimize this since
+	 * TRACE_IRQS_OFF is a no-op if lockdep is off.
+	 */
+	TRACE_IRQS_OFF
+
+	CALL_enter_from_user_mode
+
+1:
+	ENTER_IRQ_STACK old_rsp=%rdi save_ret=1
+	/* We entered an interrupt context - irqs are off: */
+	TRACE_IRQS_OFF
+
+	ret
+END(interrupt_entry)
+_ASM_NOKPROBE(interrupt_entry)
+
+
+/* Interrupt entry/exit. */
+
+/*
+ * The interrupt stubs push (~vector+0x80) onto the stack and
+ * then jump to common_spurious/interrupt.
+ */
+common_spurious:
+	addq	$-0x80, (%rsp)			/* Adjust vector to [-256, -1] range */
+	call	interrupt_entry
+	UNWIND_HINT_REGS indirect=1
+	call	smp_spurious_interrupt		/* rdi points to pt_regs */
+	jmp	ret_from_intr
+END(common_spurious)
+_ASM_NOKPROBE(common_spurious)
+
+/* common_interrupt is a hotpath. Align it */
+>>>>>>> master
 	.p2align CONFIG_X86_L1_CACHE_SHIFT
 	idtentry \vector asm_\cfunc \cfunc has_error_code=1
 .endm
@@ -786,8 +877,13 @@ native_irq_return_ldt:
 	 */
 	jmp	native_irq_return_iret
 #endif
+<<<<<<< HEAD
 SYM_CODE_END(common_interrupt_return)
 _ASM_NOKPROBE(common_interrupt_return)
+=======
+END(common_interrupt)
+_ASM_NOKPROBE(common_interrupt)
+>>>>>>> master
 
 /*
  * Reload gs selector with exception handling
@@ -795,7 +891,203 @@ _ASM_NOKPROBE(common_interrupt_return)
  *
  * Is in entry.text as it shouldn't be instrumented.
  */
+<<<<<<< HEAD
 SYM_FUNC_START(asm_load_gs_index)
+=======
+.macro apicinterrupt3 num sym do_sym
+ENTRY(\sym)
+	UNWIND_HINT_IRET_REGS
+	pushq	$~(\num)
+.Lcommon_\sym:
+	call	interrupt_entry
+	UNWIND_HINT_REGS indirect=1
+	call	\do_sym	/* rdi points to pt_regs */
+	jmp	ret_from_intr
+END(\sym)
+_ASM_NOKPROBE(\sym)
+.endm
+
+/* Make sure APIC interrupt handlers end up in the irqentry section: */
+#define PUSH_SECTION_IRQENTRY	.pushsection .irqentry.text, "ax"
+#define POP_SECTION_IRQENTRY	.popsection
+
+.macro apicinterrupt num sym do_sym
+PUSH_SECTION_IRQENTRY
+apicinterrupt3 \num \sym \do_sym
+POP_SECTION_IRQENTRY
+.endm
+
+#ifdef CONFIG_SMP
+apicinterrupt3 IRQ_MOVE_CLEANUP_VECTOR		irq_move_cleanup_interrupt	smp_irq_move_cleanup_interrupt
+apicinterrupt3 REBOOT_VECTOR			reboot_interrupt		smp_reboot_interrupt
+#endif
+
+#ifdef CONFIG_X86_UV
+apicinterrupt3 UV_BAU_MESSAGE			uv_bau_message_intr1		uv_bau_message_interrupt
+#endif
+
+apicinterrupt LOCAL_TIMER_VECTOR		apic_timer_interrupt		smp_apic_timer_interrupt
+apicinterrupt X86_PLATFORM_IPI_VECTOR		x86_platform_ipi		smp_x86_platform_ipi
+
+#ifdef CONFIG_HAVE_KVM
+apicinterrupt3 POSTED_INTR_VECTOR		kvm_posted_intr_ipi		smp_kvm_posted_intr_ipi
+apicinterrupt3 POSTED_INTR_WAKEUP_VECTOR	kvm_posted_intr_wakeup_ipi	smp_kvm_posted_intr_wakeup_ipi
+apicinterrupt3 POSTED_INTR_NESTED_VECTOR	kvm_posted_intr_nested_ipi	smp_kvm_posted_intr_nested_ipi
+#endif
+
+#ifdef CONFIG_X86_MCE_THRESHOLD
+apicinterrupt THRESHOLD_APIC_VECTOR		threshold_interrupt		smp_threshold_interrupt
+#endif
+
+#ifdef CONFIG_X86_MCE_AMD
+apicinterrupt DEFERRED_ERROR_VECTOR		deferred_error_interrupt	smp_deferred_error_interrupt
+#endif
+
+#ifdef CONFIG_X86_THERMAL_VECTOR
+apicinterrupt THERMAL_APIC_VECTOR		thermal_interrupt		smp_thermal_interrupt
+#endif
+
+#ifdef CONFIG_SMP
+apicinterrupt CALL_FUNCTION_SINGLE_VECTOR	call_function_single_interrupt	smp_call_function_single_interrupt
+apicinterrupt CALL_FUNCTION_VECTOR		call_function_interrupt		smp_call_function_interrupt
+apicinterrupt RESCHEDULE_VECTOR			reschedule_interrupt		smp_reschedule_interrupt
+#endif
+
+apicinterrupt ERROR_APIC_VECTOR			error_interrupt			smp_error_interrupt
+apicinterrupt SPURIOUS_APIC_VECTOR		spurious_interrupt		smp_spurious_interrupt
+
+#ifdef CONFIG_IRQ_WORK
+apicinterrupt IRQ_WORK_VECTOR			irq_work_interrupt		smp_irq_work_interrupt
+#endif
+
+/*
+ * Exception entry points.
+ */
+#define CPU_TSS_IST(x) PER_CPU_VAR(cpu_tss_rw) + (TSS_ist + ((x) - 1) * 8)
+
+.macro idtentry sym do_sym has_error_code:req paranoid=0 shift_ist=-1 create_gap=0
+ENTRY(\sym)
+	UNWIND_HINT_IRET_REGS offset=\has_error_code*8
+
+	/* Sanity check */
+	.if \shift_ist != -1 && \paranoid == 0
+	.error "using shift_ist requires paranoid=1"
+	.endif
+
+	ASM_CLAC
+
+	.if \has_error_code == 0
+	pushq	$-1				/* ORIG_RAX: no syscall to restart */
+	.endif
+
+	.if \paranoid == 1
+	testb	$3, CS-ORIG_RAX(%rsp)		/* If coming from userspace, switch stacks */
+	jnz	.Lfrom_usermode_switch_stack_\@
+	.endif
+
+	.if \create_gap == 1
+	/*
+	 * If coming from kernel space, create a 6-word gap to allow the
+	 * int3 handler to emulate a call instruction.
+	 */
+	testb	$3, CS-ORIG_RAX(%rsp)
+	jnz	.Lfrom_usermode_no_gap_\@
+	.rept	6
+	pushq	5*8(%rsp)
+	.endr
+	UNWIND_HINT_IRET_REGS offset=8
+.Lfrom_usermode_no_gap_\@:
+	.endif
+
+	.if \paranoid
+	call	paranoid_entry
+	.else
+	call	error_entry
+	.endif
+	UNWIND_HINT_REGS
+	/* returned flag: ebx=0: need swapgs on exit, ebx=1: don't need it */
+
+	.if \paranoid
+	.if \shift_ist != -1
+	TRACE_IRQS_OFF_DEBUG			/* reload IDT in case of recursion */
+	.else
+	TRACE_IRQS_OFF
+	.endif
+	.endif
+
+	movq	%rsp, %rdi			/* pt_regs pointer */
+
+	.if \has_error_code
+	movq	ORIG_RAX(%rsp), %rsi		/* get error code */
+	movq	$-1, ORIG_RAX(%rsp)		/* no syscall to restart */
+	.else
+	xorl	%esi, %esi			/* no error code */
+	.endif
+
+	.if \shift_ist != -1
+	subq	$EXCEPTION_STKSZ, CPU_TSS_IST(\shift_ist)
+	.endif
+
+	call	\do_sym
+
+	.if \shift_ist != -1
+	addq	$EXCEPTION_STKSZ, CPU_TSS_IST(\shift_ist)
+	.endif
+
+	/* these procedures expect "no swapgs" flag in ebx */
+	.if \paranoid
+	jmp	paranoid_exit
+	.else
+	jmp	error_exit
+	.endif
+
+	.if \paranoid == 1
+	/*
+	 * Entry from userspace.  Switch stacks and treat it
+	 * as a normal entry.  This means that paranoid handlers
+	 * run in real process context if user_mode(regs).
+	 */
+.Lfrom_usermode_switch_stack_\@:
+	call	error_entry
+
+	movq	%rsp, %rdi			/* pt_regs pointer */
+
+	.if \has_error_code
+	movq	ORIG_RAX(%rsp), %rsi		/* get error code */
+	movq	$-1, ORIG_RAX(%rsp)		/* no syscall to restart */
+	.else
+	xorl	%esi, %esi			/* no error code */
+	.endif
+
+	call	\do_sym
+
+	jmp	error_exit
+	.endif
+_ASM_NOKPROBE(\sym)
+END(\sym)
+.endm
+
+idtentry divide_error			do_divide_error			has_error_code=0
+idtentry overflow			do_overflow			has_error_code=0
+idtentry bounds				do_bounds			has_error_code=0
+idtentry invalid_op			do_invalid_op			has_error_code=0
+idtentry device_not_available		do_device_not_available		has_error_code=0
+idtentry double_fault			do_double_fault			has_error_code=1 paranoid=2
+idtentry coprocessor_segment_overrun	do_coprocessor_segment_overrun	has_error_code=0
+idtentry invalid_TSS			do_invalid_TSS			has_error_code=1
+idtentry segment_not_present		do_segment_not_present		has_error_code=1
+idtentry spurious_interrupt_bug		do_spurious_interrupt_bug	has_error_code=0
+idtentry coprocessor_error		do_coprocessor_error		has_error_code=0
+idtentry alignment_check		do_alignment_check		has_error_code=1
+idtentry simd_coprocessor_error		do_simd_coprocessor_error	has_error_code=0
+
+
+	/*
+	 * Reload gs selector with exception handling
+	 * edi:  new selector
+	 */
+ENTRY(native_load_gs_index)
+>>>>>>> master
 	FRAME_BEGIN
 	swapgs
 .Lgs_change:
@@ -900,9 +1192,50 @@ SYM_CODE_START_NOALIGN(xen_failsafe_callback)
 	pushq	$-1 /* orig_ax = -1 => not a system call */
 	PUSH_AND_CLEAR_REGS
 	ENCODE_FRAME_POINTER
+<<<<<<< HEAD
 	jmp	error_return
 SYM_CODE_END(xen_failsafe_callback)
 #endif /* CONFIG_XEN_PV */
+=======
+	jmp	error_exit
+END(xen_failsafe_callback)
+
+apicinterrupt3 HYPERVISOR_CALLBACK_VECTOR \
+	xen_hvm_callback_vector xen_evtchn_do_upcall
+
+#endif /* CONFIG_XEN */
+
+#if IS_ENABLED(CONFIG_HYPERV)
+apicinterrupt3 HYPERVISOR_CALLBACK_VECTOR \
+	hyperv_callback_vector hyperv_vector_handler
+
+apicinterrupt3 HYPERV_REENLIGHTENMENT_VECTOR \
+	hyperv_reenlightenment_vector hyperv_reenlightenment_intr
+
+apicinterrupt3 HYPERV_STIMER0_VECTOR \
+	hv_stimer0_callback_vector hv_stimer0_vector_handler
+#endif /* CONFIG_HYPERV */
+
+idtentry debug			do_debug		has_error_code=0	paranoid=1 shift_ist=DEBUG_STACK
+idtentry int3			do_int3			has_error_code=0	create_gap=1
+idtentry stack_segment		do_stack_segment	has_error_code=1
+
+#ifdef CONFIG_XEN
+idtentry xennmi			do_nmi			has_error_code=0
+idtentry xendebug		do_debug		has_error_code=0
+#endif
+
+idtentry general_protection	do_general_protection	has_error_code=1
+idtentry page_fault		do_page_fault		has_error_code=1
+
+#ifdef CONFIG_KVM_GUEST
+idtentry async_page_fault	do_async_page_fault	has_error_code=1
+#endif
+
+#ifdef CONFIG_X86_MCE
+idtentry machine_check		do_mce			has_error_code=0	paranoid=1
+#endif
+>>>>>>> master
 
 /*
  * Save all registers in pt_regs. Return GSBASE related information
@@ -941,6 +1274,7 @@ SYM_CODE_START(paranoid_entry)
 	SAVE_AND_SWITCH_TO_KERNEL_CR3 scratch_reg=%rax save_reg=%r14
 
 	/*
+<<<<<<< HEAD
 	 * Handling GSBASE depends on the availability of FSGSBASE.
 	 *
 	 * Without FSGSBASE the kernel enforces that negative GSBASE
@@ -991,6 +1325,16 @@ SYM_CODE_START(paranoid_entry)
 
 	RET
 SYM_CODE_END(paranoid_entry)
+=======
+	 * The above SAVE_AND_SWITCH_TO_KERNEL_CR3 macro doesn't do an
+	 * unconditional CR3 write, even in the PTI case.  So do an lfence
+	 * to prevent GS speculation, regardless of whether PTI is enabled.
+	 */
+	FENCE_SWAPGS_KERNEL_ENTRY
+
+	ret
+END(paranoid_entry)
+>>>>>>> master
 
 /*
  * "Paranoid" exit path from exception stack.  This is invoked
@@ -1067,7 +1411,11 @@ SYM_CODE_START(error_entry)
 	 * We entered from user mode or we're pretending to have entered
 	 * from user mode due to an IRET fault.
 	 */
+<<<<<<< HEAD
 	swapgs
+=======
+	SWAPGS
+>>>>>>> master
 	FENCE_SWAPGS_USER_ENTRY
 	/* We have user CR3.  Change to kernel CR3. */
 	SWITCH_TO_KERNEL_CR3 scratch_reg=%rax
@@ -1076,7 +1424,31 @@ SYM_CODE_START(error_entry)
 
 	leaq	8(%rsp), %rdi			/* arg0 = pt_regs pointer */
 	/* Put us onto the real thread stack. */
+<<<<<<< HEAD
 	jmp	sync_regs
+=======
+	popq	%r12				/* save return addr in %12 */
+	movq	%rsp, %rdi			/* arg0 = pt_regs pointer */
+	call	sync_regs
+	movq	%rax, %rsp			/* switch stack */
+	ENCODE_FRAME_POINTER
+	pushq	%r12
+
+	/*
+	 * We need to tell lockdep that IRQs are off.  We can't do this until
+	 * we fix gsbase, and we should do it before enter_from_user_mode
+	 * (which can take locks).
+	 */
+	TRACE_IRQS_OFF
+	CALL_enter_from_user_mode
+	ret
+
+.Lerror_entry_done_lfence:
+	FENCE_SWAPGS_KERNEL_ENTRY
+.Lerror_entry_done:
+	TRACE_IRQS_OFF
+	ret
+>>>>>>> master
 
 	/*
 	 * There are two places in the kernel that can potentially fault with
@@ -1099,6 +1471,7 @@ SYM_CODE_START(error_entry)
 	 * gsbase and proceed.  We'll fix up the exception and land in
 	 * .Lgs_change's error handler with kernel gsbase.
 	 */
+<<<<<<< HEAD
 	swapgs
 
 	/*
@@ -1111,6 +1484,12 @@ SYM_CODE_START(error_entry)
 	leaq	8(%rsp), %rax			/* return pt_regs pointer */
 	VALIDATE_UNRET_END
 	RET
+=======
+	SWAPGS
+	FENCE_SWAPGS_USER_ENTRY
+	SWITCH_TO_KERNEL_CR3 scratch_reg=%rax
+	jmp .Lerror_entry_done
+>>>>>>> master
 
 .Lbstep_iret:
 	/* Fix truncated RIP */
@@ -1122,7 +1501,11 @@ SYM_CODE_START(error_entry)
 	 * We came from an IRET to user mode, so we have user
 	 * gsbase and CR3.  Switch to kernel gsbase and CR3:
 	 */
+<<<<<<< HEAD
 	swapgs
+=======
+	SWAPGS
+>>>>>>> master
 	FENCE_SWAPGS_USER_ENTRY
 	SWITCH_TO_KERNEL_CR3 scratch_reg=%rax
 	IBRS_ENTER
@@ -1217,6 +1600,10 @@ SYM_CODE_START(asm_exc_nmi)
 	 */
 
 	swapgs
+<<<<<<< HEAD
+=======
+	cld
+>>>>>>> master
 	FENCE_SWAPGS_USER_ENTRY
 	SWITCH_TO_KERNEL_CR3 scratch_reg=%rdx
 	movq	%rsp, %rdx

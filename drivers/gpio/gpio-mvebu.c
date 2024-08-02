@@ -810,9 +810,38 @@ static int mvebu_pwm_probe(struct platform_device *pdev,
 		offset = 0;
 	}
 
+<<<<<<< HEAD
 	if (IS_ERR(mvchip->clk))
 		return PTR_ERR(mvchip->clk);
 
+=======
+	/*
+	 * There are only two sets of PWM configuration registers for
+	 * all the GPIO lines on those SoCs which this driver reserves
+	 * for the first two GPIO chips. So if the resource is missing
+	 * we can't treat it as an error.
+	 */
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "pwm");
+	if (!res)
+		return 0;
+
+	if (IS_ERR(mvchip->clk))
+		return PTR_ERR(mvchip->clk);
+
+	/*
+	 * Use set A for lines of GPIO chip with id 0, B for GPIO chip
+	 * with id 1. Don't allow further GPIO chips to be used for PWM.
+	 */
+	if (id == 0)
+		set = 0;
+	else if (id == 1)
+		set = U32_MAX;
+	else
+		return -EINVAL;
+	regmap_write(mvchip->regs,
+		     GPIO_BLINK_CNT_SELECT_OFF + mvchip->offset, set);
+
+>>>>>>> master
 	mvpwm = devm_kzalloc(dev, sizeof(struct mvebu_pwm), GFP_KERNEL);
 	if (!mvpwm)
 		return -ENOMEM;

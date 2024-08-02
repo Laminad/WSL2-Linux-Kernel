@@ -1175,8 +1175,12 @@ static int xennet_fill_frags(struct netfront_queue *queue,
 			__pskb_pull_tail(skb, pull_to - skb_headlen(skb));
 		}
 		if (unlikely(skb_shinfo(skb)->nr_frags >= MAX_SKB_FRAGS)) {
+<<<<<<< HEAD
 			xennet_set_rx_rsp_cons(queue,
 					       ++cons + skb_queue_len(list));
+=======
+			queue->rx.rsp_cons = ++cons + skb_queue_len(list);
+>>>>>>> master
 			kfree_skb(nskb);
 			return -ENOENT;
 		}
@@ -1189,7 +1193,11 @@ static int xennet_fill_frags(struct netfront_queue *queue,
 		kfree_skb(nskb);
 	}
 
+<<<<<<< HEAD
 	xennet_set_rx_rsp_cons(queue, cons);
+=======
+	queue->rx.rsp_cons = cons;
+>>>>>>> master
 
 	return 0;
 }
@@ -1342,8 +1350,12 @@ err:
 
 		__skb_queue_tail(&rxq, skb);
 
+<<<<<<< HEAD
 		i = queue->rx.rsp_cons + 1;
 		xennet_set_rx_rsp_cons(queue, i);
+=======
+		i = ++queue->rx.rsp_cons;
+>>>>>>> master
 		work_done++;
 	}
 	if (need_xdp_flush)

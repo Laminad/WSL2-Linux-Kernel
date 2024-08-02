@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0
+<<<<<<< HEAD
 /*
+=======
+/**
+>>>>>>> master
  * GHASH routines supporting VMX instructions on the Power 8
  *
  * Copyright (C) 2015, 2019 International Business Machines Inc.
@@ -76,7 +80,11 @@ static int p8_ghash_setkey(struct crypto_shash *tfm, const u8 *key,
 static inline void __ghash_block(struct p8_ghash_ctx *ctx,
 				 struct p8_ghash_desc_ctx *dctx)
 {
+<<<<<<< HEAD
 	if (crypto_simd_usable()) {
+=======
+	if (!IN_INTERRUPT) {
+>>>>>>> master
 		preempt_disable();
 		pagefault_disable();
 		enable_kernel_vsx();
@@ -95,7 +103,11 @@ static inline void __ghash_blocks(struct p8_ghash_ctx *ctx,
 				  struct p8_ghash_desc_ctx *dctx,
 				  const u8 *src, unsigned int srclen)
 {
+<<<<<<< HEAD
 	if (crypto_simd_usable()) {
+=======
+	if (!IN_INTERRUPT) {
+>>>>>>> master
 		preempt_disable();
 		pagefault_disable();
 		enable_kernel_vsx();

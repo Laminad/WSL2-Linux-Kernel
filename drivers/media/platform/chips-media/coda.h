@@ -122,8 +122,11 @@ struct coda_params {
 	u8			h264_disable_deblocking_filter_idc;
 	s8			h264_slice_alpha_c0_offset_div2;
 	s8			h264_slice_beta_offset_div2;
+<<<<<<< HEAD:drivers/media/platform/chips-media/coda.h
 	bool			h264_constrained_intra_pred_flag;
 	s8			h264_chroma_qp_index_offset;
+=======
+>>>>>>> master:drivers/media/platform/coda/coda.h
 	u8			h264_profile_idc;
 	u8			h264_level_idc;
 	u8			mpeg2_profile_idc;

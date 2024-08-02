@@ -1190,7 +1190,12 @@ static int scsi_probe_and_add_lun(struct scsi_target *starget,
 	if (!sdev)
 		goto out;
 
+<<<<<<< HEAD
 	result = kmalloc(result_len, GFP_KERNEL);
+=======
+	result = kmalloc(result_len, GFP_KERNEL |
+			((shost->unchecked_isa_dma) ? __GFP_DMA : 0));
+>>>>>>> master
 	if (!result)
 		goto out_free_sdev;
 

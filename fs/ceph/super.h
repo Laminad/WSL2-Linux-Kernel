@@ -1021,12 +1021,17 @@ extern const struct inode_operations ceph_file_iops;
 
 extern struct inode *ceph_alloc_inode(struct super_block *sb);
 extern void ceph_evict_inode(struct inode *inode);
+<<<<<<< HEAD
 extern void ceph_free_inode(struct inode *inode);
 
 struct inode *ceph_new_inode(struct inode *dir, struct dentry *dentry,
 			     umode_t *mode, struct ceph_acl_sec_ctx *as_ctx);
 void ceph_as_ctx_to_req(struct ceph_mds_request *req,
 			struct ceph_acl_sec_ctx *as_ctx);
+=======
+extern void ceph_destroy_inode(struct inode *inode);
+extern int ceph_drop_inode(struct inode *inode);
+>>>>>>> master
 
 extern struct inode *ceph_get_inode(struct super_block *sb,
 				    struct ceph_vino vino,

@@ -50,6 +50,7 @@ static inline const char *icache_policy_str(int l1ip)
 unsigned long __icache_flags;
 
 static const char *const hwcap_str[] = {
+<<<<<<< HEAD
 	[KERNEL_HWCAP_FP]		= "fp",
 	[KERNEL_HWCAP_ASIMD]		= "asimd",
 	[KERNEL_HWCAP_EVTSTRM]		= "evtstrm",
@@ -127,6 +128,38 @@ static const char *const hwcap_str[] = {
 	[KERNEL_HWCAP_SME_F16F16]	= "smef16f16",
 	[KERNEL_HWCAP_MOPS]		= "mops",
 	[KERNEL_HWCAP_HBC]		= "hbc",
+=======
+	"fp",
+	"asimd",
+	"evtstrm",
+	"aes",
+	"pmull",
+	"sha1",
+	"sha2",
+	"crc32",
+	"atomics",
+	"fphp",
+	"asimdhp",
+	"cpuid",
+	"asimdrdm",
+	"jscvt",
+	"fcma",
+	"lrcpc",
+	"dcpop",
+	"sha3",
+	"sm3",
+	"sm4",
+	"asimddp",
+	"sha512",
+	"sve",
+	"asimdfhm",
+	"dit",
+	"uscat",
+	"ilrcpc",
+	"flagm",
+	"ssbs",
+	NULL
+>>>>>>> master
 };
 
 #ifdef CONFIG_COMPAT

@@ -326,6 +326,7 @@ static int compat_riscv_gpr_set(struct task_struct *target,
 	int ret;
 	struct compat_user_regs_struct cregs;
 
+<<<<<<< HEAD
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &cregs, 0, -1);
 
 	cregs_to_regs(&cregs, task_pt_regs(target));
@@ -384,4 +385,10 @@ const struct user_regset_view *task_user_regset_view(struct task_struct *task)
 	else
 #endif
 		return &riscv_user_native_view;
+=======
+#ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS
+	if (test_thread_flag(TIF_SYSCALL_TRACEPOINT))
+		trace_sys_exit(regs, regs_return_value(regs));
+#endif
+>>>>>>> master
 }

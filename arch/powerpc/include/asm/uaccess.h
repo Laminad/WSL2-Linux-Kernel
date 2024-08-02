@@ -12,7 +12,47 @@
 #define TASK_SIZE_MAX		TASK_SIZE_USER64
 #endif
 
+<<<<<<< HEAD
 #include <asm-generic/access_ok.h>
+=======
+#define get_ds()	(KERNEL_DS)
+#define get_fs()	(current->thread.addr_limit)
+
+static inline void set_fs(mm_segment_t fs)
+{
+	current->thread.addr_limit = fs;
+	/* On user-mode return check addr_limit (fs) is correct */
+	set_thread_flag(TIF_FSCHECK);
+}
+
+#define segment_eq(a, b)	((a).seg == (b).seg)
+
+#define user_addr_max()	(get_fs().seg)
+
+#ifdef __powerpc64__
+/*
+ * This check is sufficient because there is a large enough
+ * gap between user addresses and the kernel addresses
+ */
+#define __access_ok(addr, size, segment)	\
+	(((addr) <= (segment).seg) && ((size) <= (segment).seg))
+
+#else
+
+static inline int __access_ok(unsigned long addr, unsigned long size,
+			mm_segment_t seg)
+{
+	if (addr > seg.seg)
+		return 0;
+	return (size == 0 || size - 1 <= seg.seg - addr);
+}
+
+#endif
+
+#define access_ok(type, addr, size)		\
+	(__chk_user_ptr(addr), (void)(type),		\
+	 __access_ok((__force unsigned long)(addr), (size), get_fs()))
+>>>>>>> master
 
 /*
  * These are the main single-value transfer routines.  They automatically
@@ -321,12 +361,17 @@ extern unsigned long __copy_tofrom_user(void __user *to,
 static inline unsigned long
 raw_copy_in_user(void __user *to, const void __user *from, unsigned long n)
 {
+<<<<<<< HEAD
 	unsigned long ret;
 
 	allow_read_write_user(to, from, n);
 	ret = __copy_tofrom_user(to, from, n);
 	prevent_read_write_user(to, from, n);
 	return ret;
+=======
+	barrier_nospec();
+	return __copy_tofrom_user(to, from, n);
+>>>>>>> master
 }
 #endif /* __powerpc64__ */
 

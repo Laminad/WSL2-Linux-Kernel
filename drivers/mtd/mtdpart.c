@@ -130,11 +130,20 @@ static struct mtd_info *allocate_partition(struct mtd_info *parent,
 	/* let's do some sanity checks */
 	if (child->part.offset >= parent_size) {
 		/* let's register it anyway to preserve ordering */
+<<<<<<< HEAD
 		child->part.offset = 0;
 		child->part.size = 0;
 
 		/* Initialize ->erasesize to make add_mtd_device() happy. */
 		child->erasesize = parent->erasesize;
+=======
+		slave->offset = 0;
+		slave->mtd.size = 0;
+
+		/* Initialize ->erasesize to make add_mtd_device() happy. */
+		slave->mtd.erasesize = parent->erasesize;
+
+>>>>>>> master
 		printk(KERN_ERR"mtd: partition \"%s\" is out of reach -- disabled\n",
 			part->name);
 		goto out_register;

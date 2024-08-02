@@ -134,7 +134,16 @@ static int inv_mpu_probe(struct i2c_client *client)
 		return result;
 
 	st = iio_priv(dev_get_drvdata(&client->dev));
+<<<<<<< HEAD
 	if (inv_mpu_i2c_aux_bus(&client->dev)) {
+=======
+	switch (st->chip_type) {
+	case INV_ICM20608:
+	case INV_ICM20602:
+		/* no i2c auxiliary bus on the chip */
+		break;
+	default:
+>>>>>>> master
 		/* declare i2c auxiliary bus */
 		st->muxc = i2c_mux_alloc(client->adapter, &client->dev,
 					 1, 0, I2C_MUX_LOCKED | I2C_MUX_GATE,
@@ -181,6 +190,7 @@ static const struct i2c_device_id inv_mpu_id[] = {
 	{"mpu9250", INV_MPU9250},
 	{"mpu9255", INV_MPU9255},
 	{"icm20608", INV_ICM20608},
+<<<<<<< HEAD
 	{"icm20608d", INV_ICM20608D},
 	{"icm20609", INV_ICM20609},
 	{"icm20689", INV_ICM20689},
@@ -188,6 +198,9 @@ static const struct i2c_device_id inv_mpu_id[] = {
 	{"icm20602", INV_ICM20602},
 	{"icm20690", INV_ICM20690},
 	{"iam20680", INV_IAM20680},
+=======
+	{"icm20602", INV_ICM20602},
+>>>>>>> master
 	{}
 };
 
@@ -227,6 +240,7 @@ static const struct of_device_id inv_of_match[] = {
 		.data = (void *)INV_ICM20608
 	},
 	{
+<<<<<<< HEAD
 		.compatible = "invensense,icm20608d",
 		.data = (void *)INV_ICM20608D
 	},
@@ -254,6 +268,11 @@ static const struct of_device_id inv_of_match[] = {
 		.compatible = "invensense,iam20680",
 		.data = (void *)INV_IAM20680
 	},
+=======
+		.compatible = "invensense,icm20602",
+		.data = (void *)INV_ICM20602
+	},
+>>>>>>> master
 	{ }
 };
 MODULE_DEVICE_TABLE(of, inv_of_match);

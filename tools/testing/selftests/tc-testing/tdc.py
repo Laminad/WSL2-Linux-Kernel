@@ -196,6 +196,7 @@ def exec_cmd(args, pm, stage, command):
         stderr=subprocess.PIPE,
         env=ENVIR)
 
+<<<<<<< HEAD
     try:
         (rawout, serr) = proc.communicate(timeout=NAMES['TIMEOUT'])
         if proc.returncode != 0 and len(serr) > 0:
@@ -205,6 +206,12 @@ def exec_cmd(args, pm, stage, command):
     except subprocess.TimeoutExpired:
         foutput = "Command \"{}\" timed out\n".format(command)
         proc.returncode = 255
+=======
+    if proc.returncode != 0 and len(serr) > 0:
+        foutput = serr.decode("utf-8", errors="ignore")
+    else:
+        foutput = rawout.decode("utf-8", errors="ignore")
+>>>>>>> master
 
     proc.stdout.close()
     proc.stderr.close()
@@ -400,11 +407,18 @@ def run_one_test(pm, args, index, tidx):
     pm.call_post_execute()
 
     if (exit_code is None or exit_code != int(tidx["expExitCode"])):
+<<<<<<< HEAD
         print("exit: {!r}".format(exit_code))
         print("exit: {}".format(int(tidx["expExitCode"])))
         #print("exit: {!r} {}".format(exit_code, int(tidx["expExitCode"])))
         res.set_result(ResultState.fail)
         res.set_failmsg('Command exited with {}, expected {}\n{}'.format(exit_code, tidx["expExitCode"], procout))
+=======
+        result = False
+        print("exit: {!r}".format(exit_code))
+        print("exit: {}".format(int(tidx["expExitCode"])))
+        #print("exit: {!r} {}".format(exit_code, int(tidx["expExitCode"])))
+>>>>>>> master
         print(procout)
     else:
         if args.verbose > 0:

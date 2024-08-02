@@ -8,7 +8,10 @@
 #include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <asm/apicdef.h>
+<<<<<<< HEAD
 #include <asm/apic.h>
+=======
+>>>>>>> master
 #include <asm/nmi.h>
 
 #include "../perf_event.h"
@@ -16,6 +19,7 @@
 static DEFINE_PER_CPU(unsigned long, perf_nmi_tstamp);
 static unsigned long perf_nmi_window;
 
+<<<<<<< HEAD
 /* AMD Event 0xFFF: Merge.  Used with Large Increment per Cycle events */
 #define AMD_MERGE_EVENT ((0xFULL << 32) | 0xFFULL)
 #define AMD_MERGE_EVENT_ENABLE (AMD_MERGE_EVENT | ARCH_PERFMON_EVENTSEL_ENABLE)
@@ -23,6 +27,8 @@ static unsigned long perf_nmi_window;
 /* PMC Enable and Overflow bits for PerfCntrGlobal* registers */
 static u64 amd_pmu_global_cntr_mask __read_mostly;
 
+=======
+>>>>>>> master
 static __initconst const u64 amd_hw_cache_event_ids
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
@@ -250,16 +256,24 @@ static const u64 amd_perfmon_event_map[PERF_COUNT_HW_MAX] =
 /*
  * AMD Performance Monitor Family 17h and later:
  */
+<<<<<<< HEAD
 static const u64 amd_zen1_perfmon_event_map[PERF_COUNT_HW_MAX] =
+=======
+static const u64 amd_f17h_perfmon_event_map[PERF_COUNT_HW_MAX] =
+>>>>>>> master
 {
 	[PERF_COUNT_HW_CPU_CYCLES]		= 0x0076,
 	[PERF_COUNT_HW_INSTRUCTIONS]		= 0x00c0,
 	[PERF_COUNT_HW_CACHE_REFERENCES]	= 0xff60,
+<<<<<<< HEAD
 	[PERF_COUNT_HW_CACHE_MISSES]		= 0x0964,
+=======
+>>>>>>> master
 	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS]	= 0x00c2,
 	[PERF_COUNT_HW_BRANCH_MISSES]		= 0x00c3,
 	[PERF_COUNT_HW_STALLED_CYCLES_FRONTEND]	= 0x0287,
 	[PERF_COUNT_HW_STALLED_CYCLES_BACKEND]	= 0x0187,
+<<<<<<< HEAD
 };
 
 static const u64 amd_zen2_perfmon_event_map[PERF_COUNT_HW_MAX] =
@@ -271,15 +285,22 @@ static const u64 amd_zen2_perfmon_event_map[PERF_COUNT_HW_MAX] =
 	[PERF_COUNT_HW_BRANCH_INSTRUCTIONS]	= 0x00c2,
 	[PERF_COUNT_HW_BRANCH_MISSES]		= 0x00c3,
 	[PERF_COUNT_HW_STALLED_CYCLES_FRONTEND]	= 0x00a9,
+=======
+>>>>>>> master
 };
 
 static u64 amd_pmu_event_map(int hw_event)
 {
+<<<<<<< HEAD
 	if (cpu_feature_enabled(X86_FEATURE_ZEN2) || boot_cpu_data.x86 >= 0x19)
 		return amd_zen2_perfmon_event_map[hw_event];
 
 	if (cpu_feature_enabled(X86_FEATURE_ZEN1))
 		return amd_zen1_perfmon_event_map[hw_event];
+=======
+	if (boot_cpu_data.x86 >= 0x17)
+		return amd_f17h_perfmon_event_map[hw_event];
+>>>>>>> master
 
 	return amd_perfmon_event_map[hw_event];
 }
@@ -632,6 +653,7 @@ static void amd_pmu_cpu_dead(int cpu)
 	}
 }
 
+<<<<<<< HEAD
 static inline void amd_pmu_set_global_ctl(u64 ctl)
 {
 	wrmsrl(MSR_AMD64_PERF_CNTR_GLOBAL_CTL, ctl);
@@ -674,6 +696,8 @@ static bool amd_pmu_test_overflow_status(int idx)
 
 DEFINE_STATIC_CALL(amd_pmu_test_overflow, amd_pmu_test_overflow_topbit);
 
+=======
+>>>>>>> master
 /*
  * When a PMC counter overflows, an NMI is used to process the event and
  * reset the counter. NMI latency can result in the counter being updated
@@ -686,6 +710,10 @@ DEFINE_STATIC_CALL(amd_pmu_test_overflow, amd_pmu_test_overflow_topbit);
 static void amd_pmu_wait_on_overflow(int idx)
 {
 	unsigned int i;
+<<<<<<< HEAD
+=======
+	u64 counter;
+>>>>>>> master
 
 	/*
 	 * Wait for the counter to be reset if it has overflowed. This loop
@@ -693,7 +721,12 @@ static void amd_pmu_wait_on_overflow(int idx)
 	 * forever...
 	 */
 	for (i = 0; i < OVERFLOW_WAIT_COUNT; i++) {
+<<<<<<< HEAD
 		if (!static_call(amd_pmu_test_overflow)(idx))
+=======
+		rdmsrl(x86_pmu_event_addr(idx), counter);
+		if (counter & (1ULL << (x86_pmu.cntval_bits - 1)))
+>>>>>>> master
 			break;
 
 		/* Might be in IRQ context, so can't sleep */
@@ -701,11 +734,20 @@ static void amd_pmu_wait_on_overflow(int idx)
 	}
 }
 
+<<<<<<< HEAD
 static void amd_pmu_check_overflow(void)
+=======
+static void amd_pmu_disable_all(void)
+>>>>>>> master
 {
 	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
 	int idx;
 
+<<<<<<< HEAD
+=======
+	x86_pmu_disable_all();
+
+>>>>>>> master
 	/*
 	 * This shouldn't be called from NMI context, but add a safeguard here
 	 * to return, since if we're in NMI context we can't wait for an NMI
@@ -717,7 +759,11 @@ static void amd_pmu_check_overflow(void)
 	/*
 	 * Check each counter for overflow and wait for it to be reset by the
 	 * NMI if it has overflowed. This relies on the fact that all active
+<<<<<<< HEAD
 	 * counters are always enabled when this function is called and
+=======
+	 * counters are always enabled when this function is caled and
+>>>>>>> master
 	 * ARCH_PERFMON_EVENTSEL_INT is always set.
 	 */
 	for (idx = 0; idx < x86_pmu.num_counters; idx++) {
@@ -728,6 +774,7 @@ static void amd_pmu_check_overflow(void)
 	}
 }
 
+<<<<<<< HEAD
 static void amd_pmu_enable_event(struct perf_event *event)
 {
 	x86_pmu_enable_event(event);
@@ -775,6 +822,8 @@ static void amd_pmu_v2_enable_all(int added)
 	amd_pmu_core_enable_all();
 }
 
+=======
+>>>>>>> master
 static void amd_pmu_disable_event(struct perf_event *event)
 {
 	x86_pmu_disable_event(event);
@@ -792,6 +841,7 @@ static void amd_pmu_disable_event(struct perf_event *event)
 	amd_pmu_wait_on_overflow(event->hw.idx);
 }
 
+<<<<<<< HEAD
 static void amd_pmu_disable_all(void)
 {
 	amd_brs_disable_all();
@@ -827,6 +877,8 @@ static void amd_pmu_del_event(struct perf_event *event)
 		static_call(amd_pmu_branch_del)(event);
 }
 
+=======
+>>>>>>> master
 /*
  * Because of NMI latency, if multiple PMC counters are active or other sources
  * of NMIs are received, the perf NMI handler can handle one or more overflowed
@@ -845,14 +897,37 @@ static void amd_pmu_del_event(struct perf_event *event)
  * handled a counter. When an un-handled NMI is received, it will be claimed
  * only if arriving within that window.
  */
+<<<<<<< HEAD
 static inline int amd_pmu_adjust_nmi_window(int handled)
 {
+=======
+static int amd_pmu_handle_irq(struct pt_regs *regs)
+{
+	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
+	int active, handled;
+
+	/*
+	 * Obtain the active count before calling x86_pmu_handle_irq() since
+	 * it is possible that x86_pmu_handle_irq() may make a counter
+	 * inactive (through x86_pmu_stop).
+	 */
+	active = __bitmap_weight(cpuc->active_mask, X86_PMC_IDX_MAX);
+
+	/* Process any counter overflows */
+	handled = x86_pmu_handle_irq(regs);
+
+>>>>>>> master
 	/*
 	 * If a counter was handled, record a timestamp such that un-handled
 	 * NMIs will be claimed if arriving within that window.
 	 */
 	if (handled) {
+<<<<<<< HEAD
 		this_cpu_write(perf_nmi_tstamp, jiffies + perf_nmi_window);
+=======
+		this_cpu_write(perf_nmi_tstamp,
+			       jiffies + perf_nmi_window);
+>>>>>>> master
 
 		return handled;
 	}
@@ -863,6 +938,7 @@ static inline int amd_pmu_adjust_nmi_window(int handled)
 	return NMI_HANDLED;
 }
 
+<<<<<<< HEAD
 static int amd_pmu_handle_irq(struct pt_regs *regs)
 {
 	struct cpu_hw_events *cpuc = this_cpu_ptr(&cpu_hw_events);
@@ -985,6 +1061,8 @@ done:
 	return amd_pmu_adjust_nmi_window(handled);
 }
 
+=======
+>>>>>>> master
 static struct event_constraint *
 amd_get_event_constraints(struct cpu_hw_events *cpuc, int idx,
 			  struct perf_event *event)
@@ -1257,8 +1335,13 @@ static __initconst const struct x86_pmu amd_pmu = {
 	.name			= "AMD",
 	.handle_irq		= amd_pmu_handle_irq,
 	.disable_all		= amd_pmu_disable_all,
+<<<<<<< HEAD
 	.enable_all		= amd_pmu_enable_all,
 	.enable			= amd_pmu_enable_event,
+=======
+	.enable_all		= x86_pmu_enable_all,
+	.enable			= x86_pmu_enable_event,
+>>>>>>> master
 	.disable		= amd_pmu_disable_event,
 	.hw_config		= amd_pmu_hw_config,
 	.schedule_events	= x86_schedule_events,
@@ -1356,8 +1439,30 @@ static int __init amd_core_pmu_init(void)
 	if (!boot_cpu_has(X86_FEATURE_PERFCTR_CORE))
 		return 0;
 
+<<<<<<< HEAD
 	/* Avoid calculating the value each time in the NMI handler */
 	perf_nmi_window = msecs_to_jiffies(100);
+=======
+	/* Avoid calulating the value each time in the NMI handler */
+	perf_nmi_window = msecs_to_jiffies(100);
+
+	switch (boot_cpu_data.x86) {
+	case 0x15:
+		pr_cont("Fam15h ");
+		x86_pmu.get_event_constraints = amd_get_event_constraints_f15h;
+		break;
+	case 0x17:
+		pr_cont("Fam17h ");
+		/*
+		 * In family 17h, there are no event constraints in the PMC hardware.
+		 * We fallback to using default amd_get_event_constraints.
+		 */
+		break;
+	default:
+		pr_err("core perfctr but no constraints; unknown hardware!\n");
+		return -ENODEV;
+	}
+>>>>>>> master
 
 	/*
 	 * If core performance counter extensions exists, we must use
@@ -1510,7 +1615,12 @@ void amd_pmu_enable_virt(void)
 	cpuc->perf_ctr_virt_mask = 0;
 
 	/* Reload all events */
+<<<<<<< HEAD
 	amd_pmu_reload_virt();
+=======
+	amd_pmu_disable_all();
+	x86_pmu_enable_all(0);
+>>>>>>> master
 }
 EXPORT_SYMBOL_GPL(amd_pmu_enable_virt);
 
@@ -1527,6 +1637,11 @@ void amd_pmu_disable_virt(void)
 	cpuc->perf_ctr_virt_mask = AMD64_EVENTSEL_HOSTONLY;
 
 	/* Reload all events */
+<<<<<<< HEAD
 	amd_pmu_reload_virt();
+=======
+	amd_pmu_disable_all();
+	x86_pmu_enable_all(0);
+>>>>>>> master
 }
 EXPORT_SYMBOL_GPL(amd_pmu_disable_virt);

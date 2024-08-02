@@ -217,6 +217,7 @@ static const struct pipe_buf_operations anon_pipe_buf_ops = {
 	.get		= generic_pipe_buf_get,
 };
 
+<<<<<<< HEAD
 /* Done while waiting without holding the pipe lock - thus the READ_ONCE() */
 static inline bool pipe_readable(const struct pipe_inode_info *pipe)
 {
@@ -225,6 +226,29 @@ static inline bool pipe_readable(const struct pipe_inode_info *pipe)
 	unsigned int writers = READ_ONCE(pipe->writers);
 
 	return !pipe_empty(head, tail) || !writers;
+}
+=======
+static const struct pipe_buf_operations anon_pipe_buf_nomerge_ops = {
+	.can_merge = 0,
+	.confirm = generic_pipe_buf_confirm,
+	.release = anon_pipe_buf_release,
+	.steal = anon_pipe_buf_steal,
+	.get = generic_pipe_buf_get,
+};
+
+static const struct pipe_buf_operations packet_pipe_buf_ops = {
+	.can_merge = 0,
+	.confirm = generic_pipe_buf_confirm,
+	.release = anon_pipe_buf_release,
+	.steal = anon_pipe_buf_steal,
+	.get = generic_pipe_buf_get,
+};
+>>>>>>> master
+
+void pipe_buf_mark_unmergeable(struct pipe_buffer *buf)
+{
+	if (buf->ops == &anon_pipe_buf_ops)
+		buf->ops = &anon_pipe_buf_nomerge_ops;
 }
 
 static ssize_t

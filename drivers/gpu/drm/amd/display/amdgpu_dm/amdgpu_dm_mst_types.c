@@ -526,12 +526,23 @@ static const struct drm_encoder_funcs amdgpu_dm_encoder_funcs = {
 void
 dm_dp_create_fake_mst_encoders(struct amdgpu_device *adev)
 {
+<<<<<<< HEAD
 	struct drm_device *dev = adev_to_drm(adev);
 	int i;
 
 	for (i = 0; i < adev->dm.display_indexes_num; i++) {
 		struct amdgpu_encoder *amdgpu_encoder = &adev->dm.mst_encoders[i];
 		struct drm_encoder *encoder = &amdgpu_encoder->base;
+=======
+	struct drm_device *dev = connector->base.dev;
+	struct amdgpu_device *adev = dev->dev_private;
+	struct amdgpu_encoder *amdgpu_encoder;
+	struct drm_encoder *encoder;
+
+	amdgpu_encoder = kzalloc(sizeof(*amdgpu_encoder), GFP_KERNEL);
+	if (!amdgpu_encoder)
+		return NULL;
+>>>>>>> master
 
 		encoder->possible_crtcs = amdgpu_dm_get_encoder_crtc_mask(adev);
 
@@ -556,7 +567,10 @@ dm_dp_add_mst_connector(struct drm_dp_mst_topology_mgr *mgr,
 	struct amdgpu_device *adev = drm_to_adev(dev);
 	struct amdgpu_dm_connector *aconnector;
 	struct drm_connector *connector;
+<<<<<<< HEAD
 	int i;
+=======
+>>>>>>> master
 
 	aconnector = kzalloc(sizeof(*aconnector), GFP_KERNEL);
 	if (!aconnector)
@@ -585,6 +599,7 @@ dm_dp_add_mst_connector(struct drm_dp_mst_topology_mgr *mgr,
 		master->dc_link,
 		master->connector_id);
 
+<<<<<<< HEAD
 	for (i = 0; i < adev->dm.display_indexes_num; i++) {
 		drm_connector_attach_encoder(&aconnector->base,
 					     &adev->dm.mst_encoders[i].base);
@@ -597,6 +612,11 @@ dm_dp_add_mst_connector(struct drm_dp_mst_topology_mgr *mgr,
 	connector->vrr_capable_property = master->base.vrr_capable_property;
 	if (connector->vrr_capable_property)
 		drm_connector_attach_vrr_capable_property(connector);
+=======
+	aconnector->mst_encoder = dm_dp_create_fake_mst_encoder(master);
+	drm_connector_attach_encoder(&aconnector->base,
+				     &aconnector->mst_encoder->base);
+>>>>>>> master
 
 	drm_object_attach_property(
 		&connector->base,
@@ -618,7 +638,14 @@ dm_dp_add_mst_connector(struct drm_dp_mst_topology_mgr *mgr,
 	 */
 	amdgpu_dm_connector_funcs_reset(connector);
 
+<<<<<<< HEAD
 	drm_dp_mst_get_port_malloc(port);
+=======
+	DRM_INFO("DM_MST: added connector: %p [id: %d] [master: %p]\n",
+			aconnector, connector->base.id, aconnector->mst_port);
+
+	DRM_DEBUG_KMS(":%d\n", connector->base.id);
+>>>>>>> master
 
 	return connector;
 }
@@ -627,6 +654,7 @@ void dm_handle_mst_sideband_msg_ready_event(
 	struct drm_dp_mst_topology_mgr *mgr,
 	enum mst_msg_ready_type msg_rdy_type)
 {
+<<<<<<< HEAD
 	uint8_t esi[DP_PSR_ERROR_STATUS - DP_SINK_COUNT_ESI] = { 0 };
 	uint8_t dret;
 	bool new_irq_handled = false;
@@ -637,6 +665,12 @@ void dm_handle_mst_sideband_msg_ready_event(
 	u8 retry;
 	struct amdgpu_dm_connector *aconnector =
 			container_of(mgr, struct amdgpu_dm_connector, mst_mgr);
+=======
+	struct amdgpu_dm_connector *master = container_of(mgr, struct amdgpu_dm_connector, mst_mgr);
+	struct drm_device *dev = master->base.dev;
+	struct amdgpu_device *adev = dev->dev_private;
+	struct amdgpu_dm_connector *aconnector = to_amdgpu_dm_connector(connector);
+>>>>>>> master
 
 
 	const struct dc_link_status *link_status = dc_link_get_status(aconnector->dc_link);
@@ -651,6 +685,7 @@ void dm_handle_mst_sideband_msg_ready_event(
 		dpcd_addr = DP_SINK_COUNT_ESI;
 	}
 
+<<<<<<< HEAD
 	mutex_lock(&aconnector->handle_mst_msg_ready);
 
 	while (process_count < max_process_count) {
@@ -725,11 +760,37 @@ void dm_handle_mst_sideband_msg_ready_event(
 
 	if (process_count == max_process_count)
 		DRM_DEBUG_DRIVER("Loop exceeded max iterations\n");
+=======
+	drm_connector_unregister(connector);
+	if (adev->mode_info.rfbdev)
+		drm_fb_helper_remove_one_connector(&adev->mode_info.rfbdev->helper, connector);
+	drm_connector_put(connector);
+>>>>>>> master
 }
 
 static void dm_handle_mst_down_rep_msg_ready(struct drm_dp_mst_topology_mgr *mgr)
 {
+<<<<<<< HEAD
 	dm_handle_mst_sideband_msg_ready_event(mgr, DOWN_REP_MSG_RDY_EVENT);
+=======
+	struct amdgpu_dm_connector *master = container_of(mgr, struct amdgpu_dm_connector, mst_mgr);
+	struct drm_device *dev = master->base.dev;
+
+	drm_kms_helper_hotplug_event(dev);
+}
+
+static void dm_dp_mst_register_connector(struct drm_connector *connector)
+{
+	struct drm_device *dev = connector->dev;
+	struct amdgpu_device *adev = dev->dev_private;
+
+	if (adev->mode_info.rfbdev)
+		drm_fb_helper_add_one_connector(&adev->mode_info.rfbdev->helper, connector);
+	else
+		DRM_ERROR("adev->mode_info.rfbdev is NULL\n");
+
+	drm_connector_register(connector);
+>>>>>>> master
 }
 
 static const struct drm_dp_mst_topology_cbs dm_mst_cbs = {

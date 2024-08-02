@@ -795,9 +795,21 @@ static inline void throtl_trim_slice(struct throtl_grp *tg, bool rw)
 
 static void __tg_update_carryover(struct throtl_grp *tg, bool rw)
 {
+<<<<<<< HEAD
 	unsigned long jiffy_elapsed = jiffies - tg->slice_start[rw];
 	u64 bps_limit = tg_bps_limit(tg, rw);
 	u32 iops_limit = tg_iops_limit(tg, rw);
+=======
+	bool rw = bio_data_dir(bio);
+	unsigned int io_allowed;
+	unsigned long jiffy_elapsed, jiffy_wait, jiffy_elapsed_rnd;
+	u64 tmp;
+
+	jiffy_elapsed = jiffies - tg->slice_start[rw];
+
+	/* Round up to the next throttle slice, wait time must be nonzero */
+	jiffy_elapsed_rnd = roundup(jiffy_elapsed + 1, tg->td->throtl_slice);
+>>>>>>> master
 
 	/*
 	 * If config is updated while bios are still throttled, calculate and

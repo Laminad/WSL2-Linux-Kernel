@@ -392,6 +392,7 @@ struct soc_enum;
 #define SND_SOC_DAPM_STREAM_PAUSE_RELEASE	0x20
 
 /* dapm event types */
+<<<<<<< HEAD
 #define SND_SOC_DAPM_PRE_PMU		0x1	/* before widget power up */
 #define SND_SOC_DAPM_POST_PMU		0x2	/* after  widget power up */
 #define SND_SOC_DAPM_PRE_PMD		0x4	/* before widget power down */
@@ -402,6 +403,20 @@ struct soc_enum;
 #define SND_SOC_DAPM_WILL_PMD		0x80	/* called at start of sequence */
 #define SND_SOC_DAPM_PRE_POST_PMD	(SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD)
 #define SND_SOC_DAPM_PRE_POST_PMU	(SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU)
+=======
+#define SND_SOC_DAPM_PRE_PMU	0x1 	/* before widget power up */
+#define SND_SOC_DAPM_POST_PMU	0x2		/* after widget power up */
+#define SND_SOC_DAPM_PRE_PMD	0x4 	/* before widget power down */
+#define SND_SOC_DAPM_POST_PMD	0x8		/* after widget power down */
+#define SND_SOC_DAPM_PRE_REG	0x10	/* before audio path setup */
+#define SND_SOC_DAPM_POST_REG	0x20	/* after audio path setup */
+#define SND_SOC_DAPM_WILL_PMU   0x40    /* called at start of sequence */
+#define SND_SOC_DAPM_WILL_PMD   0x80    /* called at start of sequence */
+#define SND_SOC_DAPM_PRE_POST_PMD \
+				(SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD)
+#define SND_SOC_DAPM_PRE_POST_PMU \
+				(SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU)
+>>>>>>> master
 
 /* convenience event type detection */
 #define SND_SOC_DAPM_EVENT_ON(e)	(e & (SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU))

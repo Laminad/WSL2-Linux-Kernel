@@ -145,6 +145,7 @@ void vgic_put_irq(struct kvm *kvm, struct vgic_irq *irq)
 		return;
 
 	raw_spin_lock_irqsave(&dist->lpi_list_lock, flags);
+<<<<<<< HEAD:arch/arm64/kvm/vgic/vgic.c
 	__vgic_put_lpi_locked(kvm, irq);
 	raw_spin_unlock_irqrestore(&dist->lpi_list_lock, flags);
 }
@@ -154,6 +155,16 @@ void vgic_flush_pending_lpis(struct kvm_vcpu *vcpu)
 	struct vgic_cpu *vgic_cpu = &vcpu->arch.vgic_cpu;
 	struct vgic_irq *irq, *tmp;
 	unsigned long flags;
+=======
+	if (!kref_put(&irq->refcount, vgic_irq_release)) {
+		raw_spin_unlock_irqrestore(&dist->lpi_list_lock, flags);
+		return;
+	};
+
+	list_del(&irq->lpi_list);
+	dist->lpi_list_count--;
+	raw_spin_unlock_irqrestore(&dist->lpi_list_lock, flags);
+>>>>>>> master:virt/kvm/arm/vgic/vgic.c
 
 	raw_spin_lock_irqsave(&vgic_cpu->ap_list_lock, flags);
 
@@ -271,8 +282,13 @@ static int vgic_irq_cmp(void *priv, const struct list_head *a,
 	if (unlikely(irqa == irqb))
 		return 0;
 
+<<<<<<< HEAD:arch/arm64/kvm/vgic/vgic.c
 	raw_spin_lock(&irqa->irq_lock);
 	raw_spin_lock_nested(&irqb->irq_lock, SINGLE_DEPTH_NESTING);
+=======
+	spin_lock(&irqa->irq_lock);
+	spin_lock_nested(&irqb->irq_lock, SINGLE_DEPTH_NESTING);
+>>>>>>> master:virt/kvm/arm/vgic/vgic.c
 
 	if (irqa->active || irqb->active) {
 		ret = (int)irqb->active - (int)irqa->active;

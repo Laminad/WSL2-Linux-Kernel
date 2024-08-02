@@ -395,6 +395,24 @@ static int sst_media_prepare(struct snd_pcm_substream *substream,
 	if (ret_val)
 		return ret_val;
 	substream->runtime->hw.info = SNDRV_PCM_INFO_BLOCK_TRANSFER;
+<<<<<<< HEAD
+=======
+	return ret_val;
+}
+
+static int sst_media_hw_params(struct snd_pcm_substream *substream,
+				struct snd_pcm_hw_params *params,
+				struct snd_soc_dai *dai)
+{
+	int ret;
+
+	ret =
+		snd_pcm_lib_malloc_pages(substream,
+				params_buffer_bytes(params));
+	if (ret)
+		return ret;
+	memset(substream->runtime->dma_area, 0, params_buffer_bytes(params));
+>>>>>>> master
 	return 0;
 }
 
@@ -702,12 +720,18 @@ static const struct snd_soc_component_driver sst_soc_platform_drv  = {
 	.name		= DRV_NAME,
 	.probe		= sst_soc_probe,
 	.remove		= sst_soc_remove,
+<<<<<<< HEAD
 	.open		= sst_soc_open,
 	.trigger	= sst_soc_trigger,
 	.pointer	= sst_soc_pointer,
 	.delay		= sst_soc_delay,
 	.compress_ops	= &sst_platform_compress_ops,
 	.pcm_construct	= sst_soc_pcm_new,
+=======
+	.ops		= &sst_platform_ops,
+	.compr_ops	= &sst_platform_compr_ops,
+	.pcm_new	= sst_pcm_new,
+>>>>>>> master
 };
 
 static int sst_platform_probe(struct platform_device *pdev)

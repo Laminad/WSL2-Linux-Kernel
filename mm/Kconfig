@@ -668,6 +668,17 @@ config PAGE_REPORTING
 	  memory can be freed within the host for other uses.
 
 #
+# support for unused page reporting
+config PAGE_REPORTING
+	bool "Allow for reporting of unused pages"
+	def_bool n
+	help
+	  Unused page reporting allows for the incremental acquisition of
+	  unused pages from the buddy allocator for the purpose of reporting
+	  those pages to another entity, such as a hypervisor, so that the
+	  memory can be freed up for other uses.
+
+#
 # support for page migration
 #
 config MIGRATION
@@ -1048,6 +1059,7 @@ config ZONE_DEVICE
 
 	  If FS_DAX is enabled, then say Y.
 
+<<<<<<< HEAD
 #
 # Helpers to mirror range of the CPU page tables of a process into device page
 # tables.
@@ -1059,6 +1071,39 @@ config HMM_MIRROR
 config GET_FREE_REGION
 	depends on SPARSEMEM
 	bool
+=======
+config ARCH_HAS_HMM
+	bool
+	default y
+	depends on (X86_64 || PPC64)
+	depends on ZONE_DEVICE
+	depends on MMU && 64BIT
+	depends on MEMORY_HOTPLUG
+	depends on MEMORY_HOTREMOVE
+	depends on SPARSEMEM_VMEMMAP
+
+config MIGRATE_VMA_HELPER
+	bool
+
+config DEV_PAGEMAP_OPS
+	bool
+
+config HMM
+	bool
+	select MMU_NOTIFIER
+	select MIGRATE_VMA_HELPER
+
+config HMM_MIRROR
+	bool "HMM mirror CPU page table into a device page table"
+	depends on ARCH_HAS_HMM
+	select HMM
+	help
+	  Select HMM_MIRROR if you want to mirror range of the CPU page table of a
+	  process into a device page table. Here, mirror means "keep synchronized".
+	  Prerequisites: the device must provide the ability to write-protect its
+	  page tables (at PAGE_SIZE granularity), and must be able to recover from
+	  the resulting potential page faults.
+>>>>>>> master
 
 config DEVICE_PRIVATE
 	bool "Unaddressable device memory (GPU memory, ...)"

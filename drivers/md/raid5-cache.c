@@ -1924,8 +1924,12 @@ r5c_recovery_alloc_stripe(
 {
 	struct stripe_head *sh;
 
+<<<<<<< HEAD
 	sh = raid5_get_active_stripe(conf, NULL, stripe_sect,
 				     noblock ? R5_GAS_NOBLOCK : 0);
+=======
+	sh = raid5_get_active_stripe(conf, stripe_sect, 0, noblock, 0);
+>>>>>>> master
 	if (!sh)
 		return NULL;  /* no more stripe available */
 

@@ -1284,6 +1284,7 @@ static int svc_tcp_sendto(struct svc_rqst *rqstp)
 	mutex_unlock(&xprt->xpt_mutex);
 	return sent;
 
+<<<<<<< HEAD
 out_notconn:
 	mutex_unlock(&xprt->xpt_mutex);
 	return -ENOTCONN;
@@ -1295,6 +1296,17 @@ out_close:
 	svc_xprt_deferred_close(xprt);
 	mutex_unlock(&xprt->xpt_mutex);
 	return -EAGAIN;
+=======
+/*
+ * Setup response header. TCP has a 4B record length field.
+ */
+void svc_tcp_prep_reply_hdr(struct svc_rqst *rqstp)
+{
+	struct kvec *resv = &rqstp->rq_res.head[0];
+
+	/* tcp needs a space for the record length... */
+	svc_putnl(resv, 0);
+>>>>>>> master
 }
 
 static struct svc_xprt *svc_tcp_create(struct svc_serv *serv,

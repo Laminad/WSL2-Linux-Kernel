@@ -2166,6 +2166,9 @@ static void setup_format_params(int track)
 	if (!raw_cmd->cmd[F_SECT_PER_TRACK])
 		return;
 
+	if (!F_SECT_PER_TRACK)
+		return;
+
 	/* allow for about 30ms for data transport per track */
 	head_shift = (raw_cmd->cmd[F_SECT_PER_TRACK] + 5) / 6;
 
@@ -3230,9 +3233,15 @@ static int set_geometry(unsigned int cmd, struct floppy_struct *g,
 	    (int)g->head <= 0 ||
 	    /* check for overflow in max_sector */
 	    (int)(g->sect * g->head) <= 0 ||
+<<<<<<< HEAD
 	    /* check for zero in raw_cmd->cmd[F_SECT_PER_TRACK] */
 	    (unsigned char)((g->sect << 2) >> FD_SIZECODE(g)) == 0 ||
 	    g->track <= 0 || g->track > drive_params[drive].tracks >> STRETCH(g) ||
+=======
+	    /* check for zero in F_SECT_PER_TRACK */
+	    (unsigned char)((g->sect << 2) >> FD_SIZECODE(g)) == 0 ||
+	    g->track <= 0 || g->track > UDP->tracks >> STRETCH(g) ||
+>>>>>>> master
 	    /* check if reserved bits are set */
 	    (g->stretch & ~(FD_STRETCH | FD_SWAPSIDES | FD_SECTBASEMASK)) != 0)
 		return -EINVAL;
@@ -3376,13 +3385,21 @@ static int fd_getgeo(struct block_device *bdev, struct hd_geometry *geo)
 	return 0;
 }
 
+<<<<<<< HEAD
 static bool valid_floppy_drive_params(const short autodetect[FD_AUTODETECT_SIZE],
+=======
+static bool valid_floppy_drive_params(const short autodetect[8],
+>>>>>>> master
 		int native_format)
 {
 	size_t floppy_type_size = ARRAY_SIZE(floppy_type);
 	size_t i = 0;
 
+<<<<<<< HEAD
 	for (i = 0; i < FD_AUTODETECT_SIZE; ++i) {
+=======
+	for (i = 0; i < 8; ++i) {
+>>>>>>> master
 		if (autodetect[i] < 0 ||
 		    autodetect[i] >= floppy_type_size)
 			return false;
@@ -3394,8 +3411,13 @@ static bool valid_floppy_drive_params(const short autodetect[FD_AUTODETECT_SIZE]
 	return true;
 }
 
+<<<<<<< HEAD
 static int fd_locked_ioctl(struct block_device *bdev, blk_mode_t mode,
 		unsigned int cmd, unsigned long param)
+=======
+static int fd_locked_ioctl(struct block_device *bdev, fmode_t mode, unsigned int cmd,
+		    unsigned long param)
+>>>>>>> master
 {
 	int drive = (long)bdev->bd_disk->private_data;
 	int type = ITYPE(drive_state[drive].fd_device);
@@ -3523,7 +3545,11 @@ static int fd_locked_ioctl(struct block_device *bdev, blk_mode_t mode,
 		if (!valid_floppy_drive_params(inparam.dp.autodetect,
 				inparam.dp.native_format))
 			return -EINVAL;
+<<<<<<< HEAD
 		drive_params[drive] = inparam.dp;
+=======
+		*UDP = inparam.dp;
+>>>>>>> master
 		break;
 	case FDGETDRVPRM:
 		outparam = &drive_params[drive];
@@ -4154,6 +4180,8 @@ static int __floppy_read_block_0(struct block_device *bdev, int drive)
 	bio.bi_flags |= (1 << BIO_QUIET);
 	bio.bi_private = &cbdata;
 	bio.bi_end_io = floppy_rb0_cb;
+
+	init_completion(&cbdata.complete);
 
 	init_completion(&cbdata.complete);
 

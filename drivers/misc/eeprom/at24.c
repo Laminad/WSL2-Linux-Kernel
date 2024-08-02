@@ -200,7 +200,10 @@ AT24_CHIP_DATA(at24_data_24c128, 131072 / 8, AT24_FLAG_ADDR16);
 AT24_CHIP_DATA(at24_data_24c256, 262144 / 8, AT24_FLAG_ADDR16);
 AT24_CHIP_DATA(at24_data_24c512, 524288 / 8, AT24_FLAG_ADDR16);
 AT24_CHIP_DATA(at24_data_24c1024, 1048576 / 8, AT24_FLAG_ADDR16);
+<<<<<<< HEAD
 AT24_CHIP_DATA_BS(at24_data_24c1025, 1048576 / 8, AT24_FLAG_ADDR16, 2);
+=======
+>>>>>>> master
 AT24_CHIP_DATA(at24_data_24c2048, 2097152 / 8, AT24_FLAG_ADDR16);
 /* identical to 24c08 ? */
 AT24_CHIP_DATA(at24_data_INT3499, 8192 / 8, 0);
@@ -229,7 +232,10 @@ static const struct i2c_device_id at24_ids[] = {
 	{ "24c256",	(kernel_ulong_t)&at24_data_24c256 },
 	{ "24c512",	(kernel_ulong_t)&at24_data_24c512 },
 	{ "24c1024",	(kernel_ulong_t)&at24_data_24c1024 },
+<<<<<<< HEAD
 	{ "24c1025",	(kernel_ulong_t)&at24_data_24c1025 },
+=======
+>>>>>>> master
 	{ "24c2048",    (kernel_ulong_t)&at24_data_24c2048 },
 	{ "at24",	0 },
 	{ /* END OF LIST */ }
@@ -259,7 +265,10 @@ static const struct of_device_id at24_of_match[] = {
 	{ .compatible = "atmel,24c256",		.data = &at24_data_24c256 },
 	{ .compatible = "atmel,24c512",		.data = &at24_data_24c512 },
 	{ .compatible = "atmel,24c1024",	.data = &at24_data_24c1024 },
+<<<<<<< HEAD
 	{ .compatible = "atmel,24c1025",	.data = &at24_data_24c1025 },
+=======
+>>>>>>> master
 	{ .compatible = "atmel,24c2048",	.data = &at24_data_24c2048 },
 	{ /* END OF LIST */ },
 };
@@ -756,7 +765,11 @@ static int at24_probe(struct i2c_client *client)
 	nvmem_config.type = NVMEM_TYPE_EEPROM;
 	nvmem_config.dev = dev;
 	nvmem_config.read_only = !writable;
+<<<<<<< HEAD
 	nvmem_config.root_only = !(flags & AT24_FLAG_IRUGO);
+=======
+	nvmem_config.root_only = !(pdata.flags & AT24_FLAG_IRUGO);
+>>>>>>> master
 	nvmem_config.owner = THIS_MODULE;
 	nvmem_config.compat = true;
 	nvmem_config.base_dev = dev;

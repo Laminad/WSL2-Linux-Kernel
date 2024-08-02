@@ -4603,6 +4603,7 @@ static const struct alg_test_desc alg_test_descs[] = {
 			}
 		}
 	}, {
+<<<<<<< HEAD
 		.alg = "ccm(sm4)",
 		.generic_driver = "ccm_base(ctr(sm4-generic),cbcmac(sm4-generic))",
 		.test = alg_test_aead,
@@ -4613,6 +4614,8 @@ static const struct alg_test_desc alg_test_descs[] = {
 			}
 		}
 	}, {
+=======
+>>>>>>> master
 		.alg = "cfb(aes)",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
@@ -4620,6 +4623,7 @@ static const struct alg_test_desc alg_test_descs[] = {
 			.cipher = __VECS(aes_cfb_tv_template)
 		},
 	}, {
+<<<<<<< HEAD
 		.alg = "cfb(aria)",
 		.test = alg_test_skcipher,
 		.suite = {
@@ -4632,6 +4636,8 @@ static const struct alg_test_desc alg_test_descs[] = {
 			.cipher = __VECS(sm4_cfb_tv_template)
 		}
 	}, {
+=======
+>>>>>>> master
 		.alg = "chacha20",
 		.test = alg_test_skcipher,
 		.suite = {
@@ -5735,6 +5741,7 @@ static const struct alg_test_desc alg_test_descs[] = {
 			.cipher = __VECS(serpent_xts_tv_template)
 		}
 	}, {
+<<<<<<< HEAD
 		.alg = "xts(sm4)",
 		.generic_driver = "xts(ecb(sm4-generic))",
 		.test = alg_test_skcipher,
@@ -5742,6 +5749,8 @@ static const struct alg_test_desc alg_test_descs[] = {
 			.cipher = __VECS(sm4_xts_tv_template)
 		}
 	}, {
+=======
+>>>>>>> master
 		.alg = "xts(twofish)",
 		.generic_driver = "xts(ecb(twofish-generic))",
 		.test = alg_test_skcipher,

@@ -759,12 +759,20 @@ static int cc_hash_setkey(struct crypto_ahash *ahash, const u8 *key,
 			return -ENOMEM;
 
 		ctx->key_params.key_dma_addr =
+<<<<<<< HEAD
 			dma_map_single(dev, ctx->key_params.key, keylen,
+=======
+			dma_map_single(dev, (void *)ctx->key_params.key, keylen,
+>>>>>>> master
 				       DMA_TO_DEVICE);
 		if (dma_mapping_error(dev, ctx->key_params.key_dma_addr)) {
 			dev_err(dev, "Mapping key va=0x%p len=%u for DMA failed\n",
 				ctx->key_params.key, keylen);
+<<<<<<< HEAD
 			kfree_sensitive(ctx->key_params.key);
+=======
+			kzfree(ctx->key_params.key);
+>>>>>>> master
 			return -ENOMEM;
 		}
 		dev_dbg(dev, "mapping key-buffer: key_dma_addr=%pad keylen=%u\n",
@@ -913,7 +921,11 @@ out:
 			&ctx->key_params.key_dma_addr, ctx->key_params.keylen);
 	}
 
+<<<<<<< HEAD
 	kfree_sensitive(ctx->key_params.key);
+=======
+	kzfree(ctx->key_params.key);
+>>>>>>> master
 
 	return rc;
 }
@@ -950,7 +962,11 @@ static int cc_xcbc_setkey(struct crypto_ahash *ahash,
 	if (dma_mapping_error(dev, ctx->key_params.key_dma_addr)) {
 		dev_err(dev, "Mapping key va=0x%p len=%u for DMA failed\n",
 			key, keylen);
+<<<<<<< HEAD
 		kfree_sensitive(ctx->key_params.key);
+=======
+		kzfree(ctx->key_params.key);
+>>>>>>> master
 		return -ENOMEM;
 	}
 	dev_dbg(dev, "mapping key-buffer: key_dma_addr=%pad keylen=%u\n",
@@ -999,7 +1015,11 @@ static int cc_xcbc_setkey(struct crypto_ahash *ahash,
 	dev_dbg(dev, "Unmapped key-buffer: key_dma_addr=%pad keylen=%u\n",
 		&ctx->key_params.key_dma_addr, ctx->key_params.keylen);
 
+<<<<<<< HEAD
 	kfree_sensitive(ctx->key_params.key);
+=======
+	kzfree(ctx->key_params.key);
+>>>>>>> master
 
 	return rc;
 }

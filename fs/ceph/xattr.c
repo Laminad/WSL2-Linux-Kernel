@@ -988,12 +988,15 @@ ssize_t __ceph_getxattr(struct inode *inode, const char *name, void *value,
 			if (size && size < err)
 				err = -ERANGE;
 		}
+<<<<<<< HEAD
 		return err;
 	} else {
 		err = ceph_do_getvxattr(inode, name, value, size);
 		/* this would happen with a new client and old server combo */
 		if (err == -EOPNOTSUPP)
 			err = -ENODATA;
+=======
+>>>>>>> master
 		return err;
 	}
 handle_non_vxattrs:

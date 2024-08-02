@@ -25,7 +25,12 @@ int nanddev_bbt_init(struct nand_device *nand)
 	unsigned int bits_per_block = fls(NAND_BBT_BLOCK_NUM_STATUS);
 	unsigned int nblocks = nanddev_neraseblocks(nand);
 
+<<<<<<< HEAD
 	nand->bbt.cache = bitmap_zalloc(nblocks * bits_per_block, GFP_KERNEL);
+=======
+	nand->bbt.cache = kcalloc(nwords, sizeof(*nand->bbt.cache),
+				  GFP_KERNEL);
+>>>>>>> master
 	if (!nand->bbt.cache)
 		return -ENOMEM;
 

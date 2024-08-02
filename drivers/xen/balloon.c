@@ -254,6 +254,23 @@ static struct resource *additional_memory_resource(phys_addr_t size)
 		return NULL;
 	}
 
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_SPARSEMEM
+	{
+		unsigned long limit = 1UL << (MAX_PHYSMEM_BITS - PAGE_SHIFT);
+		unsigned long pfn = res->start >> PAGE_SHIFT;
+
+		if (pfn > limit) {
+			pr_err("New System RAM resource outside addressable RAM (%lu > %lu)\n",
+			       pfn, limit);
+			release_memory_resource(res);
+			return NULL;
+		}
+	}
+#endif
+
+>>>>>>> master
 	return res;
 }
 
@@ -538,6 +555,16 @@ static int balloon_thread(void *unused)
 
 		if (credit < 0) {
 			long n_pages;
+<<<<<<< HEAD
+=======
+
+			n_pages = min(-credit, si_mem_available());
+			state = decrease_reservation(n_pages, GFP_BALLOON);
+			if (state == BP_DONE && n_pages != -credit &&
+			    n_pages < totalreserve_pages)
+				state = BP_EAGAIN;
+		}
+>>>>>>> master
 
 			n_pages = min(-credit, si_mem_available());
 			balloon_state = decrease_reservation(n_pages,
@@ -727,7 +754,11 @@ static int __init balloon_init(void)
 #ifdef CONFIG_XEN_BALLOON_MEMORY_HOTPLUG
 	set_online_page_callback(&xen_online_page);
 	register_memory_notifier(&xen_memory_nb);
+<<<<<<< HEAD
 	register_sysctl_init("xen/balloon", balloon_table);
+=======
+	register_sysctl_table(xen_root);
+>>>>>>> master
 #endif
 
 	balloon_add_regions();

@@ -66,7 +66,52 @@ TEST_GEN_PROGS := $(patsubst %,$(OUTPUT)/%,$(TEST_GEN_PROGS))
 TEST_GEN_PROGS_EXTENDED := $(patsubst %,$(OUTPUT)/%,$(TEST_GEN_PROGS_EXTENDED))
 TEST_GEN_FILES := $(patsubst %,$(OUTPUT)/%,$(TEST_GEN_FILES))
 
+<<<<<<< HEAD
 all: $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES)
+=======
+ifdef KSFT_KHDR_INSTALL
+top_srcdir ?= ../../../..
+include $(top_srcdir)/scripts/subarch.include
+ARCH		?= $(SUBARCH)
+
+.PHONY: khdr
+khdr:
+	make ARCH=$(ARCH) -C $(top_srcdir) headers_install
+
+all: khdr $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES)
+else
+all: $(TEST_GEN_PROGS) $(TEST_GEN_PROGS_EXTENDED) $(TEST_GEN_FILES)
+endif
+
+.ONESHELL:
+define RUN_TEST_PRINT_RESULT
+	TEST_HDR_MSG="selftests: "`basename $$PWD`:" $$BASENAME_TEST";	\
+	echo $$TEST_HDR_MSG;					\
+	echo "========================================";	\
+	if [ ! -x $$TEST ]; then	\
+		echo "$$TEST_HDR_MSG: Warning: file $$BASENAME_TEST is not executable, correct this.";\
+		echo "not ok 1..$$test_num $$TEST_HDR_MSG [FAIL]"; \
+	else					\
+		cd `dirname $$TEST` > /dev/null; \
+		if [ "X$(summary)" != "X" ]; then	\
+			(./$$BASENAME_TEST > /tmp/$$BASENAME_TEST 2>&1 && \
+			echo "ok 1..$$test_num $$TEST_HDR_MSG [PASS]") || \
+			(if [ $$? -eq $$skip ]; then	\
+				echo "not ok 1..$$test_num $$TEST_HDR_MSG [SKIP]";				\
+			else echo "not ok 1..$$test_num $$TEST_HDR_MSG [FAIL]";					\
+			fi;)			\
+		else				\
+			(./$$BASENAME_TEST &&	\
+			echo "ok 1..$$test_num $$TEST_HDR_MSG [PASS]") ||						\
+			(if [ $$? -eq $$skip ]; then \
+				echo "not ok 1..$$test_num $$TEST_HDR_MSG [SKIP]"; \
+			else echo "not ok 1..$$test_num $$TEST_HDR_MSG [FAIL]";				\
+			fi;)		\
+		fi;				\
+		cd - > /dev/null;		\
+	fi;
+endef
+>>>>>>> master
 
 define RUN_TESTS
 	BASE_DIR="$(selfdir)";			\

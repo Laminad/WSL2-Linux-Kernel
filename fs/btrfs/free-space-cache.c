@@ -113,7 +113,11 @@ static struct inode *__lookup_free_space_inode(struct btrfs_root *root,
 	 * sure NOFS is set to keep us from deadlocking.
 	 */
 	nofs_flag = memalloc_nofs_save();
+<<<<<<< HEAD
 	inode = btrfs_iget_path(fs_info->sb, location.objectid, root, path);
+=======
+	inode = btrfs_iget_path(fs_info->sb, &location, root, NULL, path);
+>>>>>>> master
 	btrfs_release_path(path);
 	memalloc_nofs_restore(nofs_flag);
 	if (IS_ERR(inode))
@@ -989,7 +993,11 @@ int load_free_space_cache(struct btrfs_block_group *block_group)
 	 * once created get their ->cached field set to BTRFS_CACHE_FINISHED so
 	 * we will never try to read their inode item while the fs is mounted.
 	 */
+<<<<<<< HEAD
 	inode = lookup_free_space_inode(block_group, path);
+=======
+	inode = lookup_free_space_inode(fs_info, block_group, path);
+>>>>>>> master
 	if (IS_ERR(inode)) {
 		btrfs_free_path(path);
 		return 0;
@@ -1890,6 +1898,10 @@ static inline void bitmap_clear_bits(struct btrfs_free_space_ctl *ctl,
 	info->bytes -= bytes;
 	if (info->max_extent_size > ctl->unit)
 		info->max_extent_size = 0;
+<<<<<<< HEAD
+=======
+}
+>>>>>>> master
 
 	relink_bitmap_entry(ctl, info);
 
@@ -2004,6 +2016,13 @@ static int search_bitmap(struct btrfs_free_space_ctl *ctl,
 	return -1;
 }
 
+static inline u64 get_max_extent_size(struct btrfs_free_space *entry)
+{
+	if (entry->bitmap)
+		return entry->max_extent_size;
+	return entry->bytes;
+}
+
 /* Cache the size of the max extent in bytes */
 static struct btrfs_free_space *
 find_free_space(struct btrfs_free_space_ctl *ctl, u64 *offset, u64 *bytes,
@@ -2047,8 +2066,11 @@ again:
 		if (entry->bytes < *bytes) {
 			*max_extent_size = max(get_max_extent_size(entry),
 					       *max_extent_size);
+<<<<<<< HEAD
 			if (use_bytes_index)
 				break;
+=======
+>>>>>>> master
 			continue;
 		}
 
@@ -2127,6 +2149,7 @@ static void add_new_bitmap(struct btrfs_free_space_ctl *ctl,
 static void free_bitmap(struct btrfs_free_space_ctl *ctl,
 			struct btrfs_free_space *bitmap_info)
 {
+<<<<<<< HEAD
 	/*
 	 * Normally when this is called, the bitmap is completely empty. However,
 	 * if we are blowing up the free space cache for one reason or another
@@ -2140,6 +2163,9 @@ static void free_bitmap(struct btrfs_free_space_ctl *ctl,
 
 	}
 	unlink_free_space(ctl, bitmap_info, true);
+=======
+	unlink_free_space(ctl, bitmap_info);
+>>>>>>> master
 	kmem_cache_free(btrfs_free_space_bitmap_cachep, bitmap_info->bitmap);
 	kmem_cache_free(btrfs_free_space_cachep, bitmap_info);
 	ctl->total_bitmaps--;
@@ -2409,7 +2435,10 @@ new_bitmap:
 		/* allocate the bitmap */
 		info->bitmap = kmem_cache_zalloc(btrfs_free_space_bitmap_cachep,
 						 GFP_NOFS);
+<<<<<<< HEAD
 		info->trim_state = BTRFS_TRIM_STATE_TRIMMED;
+=======
+>>>>>>> master
 		spin_lock(&ctl->tree_lock);
 		if (!info->bitmap) {
 			ret = -ENOMEM;
@@ -2912,6 +2941,7 @@ void btrfs_dump_free_space(struct btrfs_block_group *block_group,
 	struct rb_node *n;
 	int count = 0;
 
+<<<<<<< HEAD
 	/*
 	 * Zoned btrfs does not use free space tree and cluster. Just print
 	 * out the free space after the allocation offset.
@@ -2924,6 +2954,8 @@ void btrfs_dump_free_space(struct btrfs_block_group *block_group,
 		return;
 	}
 
+=======
+>>>>>>> master
 	spin_lock(&ctl->tree_lock);
 	for (n = rb_first(&ctl->free_space_offset); n; n = rb_next(n)) {
 		info = rb_entry(n, struct btrfs_free_space, offset_index);

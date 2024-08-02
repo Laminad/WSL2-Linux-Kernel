@@ -477,7 +477,11 @@ static int ovl_create_over_whiteout(struct dentry *dentry, struct inode *inode,
 	if (d_is_negative(upper) || !IS_WHITEOUT(d_inode(upper)))
 		goto out_dput;
 
+<<<<<<< HEAD
 	newdentry = ovl_create_temp(ofs, workdir, cattr);
+=======
+	newdentry = ovl_create_temp(workdir, cattr);
+>>>>>>> master
 	err = PTR_ERR(newdentry);
 	if (IS_ERR(newdentry))
 		goto out_dput;

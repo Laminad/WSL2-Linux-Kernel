@@ -961,6 +961,328 @@ int nfs_try_get_tree(struct fs_context *fc)
 }
 EXPORT_SYMBOL_GPL(nfs_try_get_tree);
 
+<<<<<<< HEAD
+=======
+/*
+ * Split "dev_name" into "hostname:export_path".
+ *
+ * The leftmost colon demarks the split between the server's hostname
+ * and the export path.  If the hostname starts with a left square
+ * bracket, then it may contain colons.
+ *
+ * Note: caller frees hostname and export path, even on error.
+ */
+static int nfs_parse_devname(const char *dev_name,
+			     char **hostname, size_t maxnamlen,
+			     char **export_path, size_t maxpathlen)
+{
+	size_t len;
+	char *end;
+
+	if (unlikely(!dev_name || !*dev_name)) {
+		dfprintk(MOUNT, "NFS: device name not specified\n");
+		return -EINVAL;
+	}
+
+	/* Is the host name protected with square brakcets? */
+	if (*dev_name == '[') {
+		end = strchr(++dev_name, ']');
+		if (end == NULL || end[1] != ':')
+			goto out_bad_devname;
+
+		len = end - dev_name;
+		end++;
+	} else {
+		char *comma;
+
+		end = strchr(dev_name, ':');
+		if (end == NULL)
+			goto out_bad_devname;
+		len = end - dev_name;
+
+		/* kill possible hostname list: not supported */
+		comma = strchr(dev_name, ',');
+		if (comma != NULL && comma < end)
+			*comma = 0;
+	}
+
+	if (len > maxnamlen)
+		goto out_hostname;
+
+	/* N.B. caller will free nfs_server.hostname in all cases */
+	*hostname = kstrndup(dev_name, len, GFP_KERNEL);
+	if (*hostname == NULL)
+		goto out_nomem;
+	len = strlen(++end);
+	if (len > maxpathlen)
+		goto out_path;
+	*export_path = kstrndup(end, len, GFP_KERNEL);
+	if (!*export_path)
+		goto out_nomem;
+
+	dfprintk(MOUNT, "NFS: MNTPATH: '%s'\n", *export_path);
+	return 0;
+
+out_bad_devname:
+	dfprintk(MOUNT, "NFS: device name not in host:path format\n");
+	return -EINVAL;
+
+out_nomem:
+	dfprintk(MOUNT, "NFS: not enough memory to parse device name\n");
+	return -ENOMEM;
+
+out_hostname:
+	dfprintk(MOUNT, "NFS: server hostname too long\n");
+	return -ENAMETOOLONG;
+
+out_path:
+	dfprintk(MOUNT, "NFS: export pathname too long\n");
+	return -ENAMETOOLONG;
+}
+
+/*
+ * Validate the NFS2/NFS3 mount data
+ * - fills in the mount root filehandle
+ *
+ * For option strings, user space handles the following behaviors:
+ *
+ * + DNS: mapping server host name to IP address ("addr=" option)
+ *
+ * + failure mode: how to behave if a mount request can't be handled
+ *   immediately ("fg/bg" option)
+ *
+ * + retry: how often to retry a mount request ("retry=" option)
+ *
+ * + breaking back: trying proto=udp after proto=tcp, v2 after v3,
+ *   mountproto=tcp after mountproto=udp, and so on
+ */
+static int nfs23_validate_mount_data(void *options,
+				     struct nfs_parsed_mount_data *args,
+				     struct nfs_fh *mntfh,
+				     const char *dev_name)
+{
+	struct nfs_mount_data *data = (struct nfs_mount_data *)options;
+	struct sockaddr *sap = (struct sockaddr *)&args->nfs_server.address;
+	int extra_flags = NFS_MOUNT_LEGACY_INTERFACE;
+
+	if (data == NULL)
+		goto out_no_data;
+
+	args->version = NFS_DEFAULT_VERSION;
+	switch (data->version) {
+	case 1:
+		data->namlen = 0; /* fall through */
+	case 2:
+		data->bsize = 0; /* fall through */
+	case 3:
+		if (data->flags & NFS_MOUNT_VER3)
+			goto out_no_v3;
+		data->root.size = NFS2_FHSIZE;
+		memcpy(data->root.data, data->old_root.data, NFS2_FHSIZE);
+		/* Turn off security negotiation */
+		extra_flags |= NFS_MOUNT_SECFLAVOUR;
+		/* fall through */
+	case 4:
+		if (data->flags & NFS_MOUNT_SECFLAVOUR)
+			goto out_no_sec;
+		/* fall through */
+	case 5:
+		memset(data->context, 0, sizeof(data->context));
+		/* fall through */
+	case 6:
+		if (data->flags & NFS_MOUNT_VER3) {
+			if (data->root.size > NFS3_FHSIZE || data->root.size == 0)
+				goto out_invalid_fh;
+			mntfh->size = data->root.size;
+			args->version = 3;
+		} else {
+			mntfh->size = NFS2_FHSIZE;
+			args->version = 2;
+		}
+
+
+		memcpy(mntfh->data, data->root.data, mntfh->size);
+		if (mntfh->size < sizeof(mntfh->data))
+			memset(mntfh->data + mntfh->size, 0,
+			       sizeof(mntfh->data) - mntfh->size);
+
+		/*
+		 * Translate to nfs_parsed_mount_data, which nfs_fill_super
+		 * can deal with.
+		 */
+		args->flags		= data->flags & NFS_MOUNT_FLAGMASK;
+		args->flags		|= extra_flags;
+		args->rsize		= data->rsize;
+		args->wsize		= data->wsize;
+		args->timeo		= data->timeo;
+		args->retrans		= data->retrans;
+		args->acregmin		= data->acregmin;
+		args->acregmax		= data->acregmax;
+		args->acdirmin		= data->acdirmin;
+		args->acdirmax		= data->acdirmax;
+		args->need_mount	= false;
+
+		memcpy(sap, &data->addr, sizeof(data->addr));
+		args->nfs_server.addrlen = sizeof(data->addr);
+		args->nfs_server.port = ntohs(data->addr.sin_port);
+		if (sap->sa_family != AF_INET ||
+		    !nfs_verify_server_address(sap))
+			goto out_no_address;
+
+		if (!(data->flags & NFS_MOUNT_TCP))
+			args->nfs_server.protocol = XPRT_TRANSPORT_UDP;
+		/* N.B. caller will free nfs_server.hostname in all cases */
+		args->nfs_server.hostname = kstrdup(data->hostname, GFP_KERNEL);
+		args->namlen		= data->namlen;
+		args->bsize		= data->bsize;
+
+		if (data->flags & NFS_MOUNT_SECFLAVOUR)
+			args->selected_flavor = data->pseudoflavor;
+		else
+			args->selected_flavor = RPC_AUTH_UNIX;
+		if (!args->nfs_server.hostname)
+			goto out_nomem;
+
+		if (!(data->flags & NFS_MOUNT_NONLM))
+			args->flags &= ~(NFS_MOUNT_LOCAL_FLOCK|
+					 NFS_MOUNT_LOCAL_FCNTL);
+		else
+			args->flags |= (NFS_MOUNT_LOCAL_FLOCK|
+					NFS_MOUNT_LOCAL_FCNTL);
+		/*
+		 * The legacy version 6 binary mount data from userspace has a
+		 * field used only to transport selinux information into the
+		 * the kernel.  To continue to support that functionality we
+		 * have a touch of selinux knowledge here in the NFS code. The
+		 * userspace code converted context=blah to just blah so we are
+		 * converting back to the full string selinux understands.
+		 */
+		if (data->context[0]){
+#ifdef CONFIG_SECURITY_SELINUX
+			int rc;
+			char *opts_str = kmalloc(sizeof(data->context) + 8, GFP_KERNEL);
+			if (!opts_str)
+				return -ENOMEM;
+			strcpy(opts_str, "context=");
+			data->context[NFS_MAX_CONTEXT_LEN] = '\0';
+			strcat(opts_str, &data->context[0]);
+			rc = security_sb_parse_opts_str(opts_str, &args->lsm_opts);
+			kfree(opts_str);
+			if (rc)
+				return rc;
+#else
+			return -EINVAL;
+#endif
+		}
+
+		break;
+	default:
+		return NFS_TEXT_DATA;
+	}
+
+	return 0;
+
+out_no_data:
+	dfprintk(MOUNT, "NFS: mount program didn't pass any mount data\n");
+	return -EINVAL;
+
+out_no_v3:
+	dfprintk(MOUNT, "NFS: nfs_mount_data version %d does not support v3\n",
+		 data->version);
+	return -EINVAL;
+
+out_no_sec:
+	dfprintk(MOUNT, "NFS: nfs_mount_data version supports only AUTH_SYS\n");
+	return -EINVAL;
+
+out_nomem:
+	dfprintk(MOUNT, "NFS: not enough memory to handle mount options\n");
+	return -ENOMEM;
+
+out_no_address:
+	dfprintk(MOUNT, "NFS: mount program didn't pass remote address\n");
+	return -EINVAL;
+
+out_invalid_fh:
+	dfprintk(MOUNT, "NFS: invalid root filehandle\n");
+	return -EINVAL;
+}
+
+#if IS_ENABLED(CONFIG_NFS_V4)
+static int nfs_validate_mount_data(struct file_system_type *fs_type,
+				   void *options,
+				   struct nfs_parsed_mount_data *args,
+				   struct nfs_fh *mntfh,
+				   const char *dev_name)
+{
+	if (fs_type == &nfs_fs_type)
+		return nfs23_validate_mount_data(options, args, mntfh, dev_name);
+	return nfs4_validate_mount_data(options, args, dev_name);
+}
+#else
+static int nfs_validate_mount_data(struct file_system_type *fs_type,
+				   void *options,
+				   struct nfs_parsed_mount_data *args,
+				   struct nfs_fh *mntfh,
+				   const char *dev_name)
+{
+	return nfs23_validate_mount_data(options, args, mntfh, dev_name);
+}
+#endif
+
+static int nfs_validate_text_mount_data(void *options,
+					struct nfs_parsed_mount_data *args,
+					const char *dev_name)
+{
+	int port = 0;
+	int max_namelen = PAGE_SIZE;
+	int max_pathlen = NFS_MAXPATHLEN;
+	struct sockaddr *sap = (struct sockaddr *)&args->nfs_server.address;
+
+	if (nfs_parse_mount_options((char *)options, args) == 0)
+		return -EINVAL;
+
+	if (!nfs_verify_server_address(sap))
+		goto out_no_address;
+
+	if (args->version == 4) {
+#if IS_ENABLED(CONFIG_NFS_V4)
+		port = NFS_PORT;
+		max_namelen = NFS4_MAXNAMLEN;
+		max_pathlen = NFS4_MAXPATHLEN;
+		nfs_validate_transport_protocol(args);
+		if (args->nfs_server.protocol == XPRT_TRANSPORT_UDP)
+			goto out_invalid_transport_udp;
+		nfs4_validate_mount_flags(args);
+#else
+		goto out_v4_not_compiled;
+#endif /* CONFIG_NFS_V4 */
+	} else
+		nfs_set_mount_transport_protocol(args);
+
+	nfs_set_port(sap, &args->nfs_server.port, port);
+
+	return nfs_parse_devname(dev_name,
+				   &args->nfs_server.hostname,
+				   max_namelen,
+				   &args->nfs_server.export_path,
+				   max_pathlen);
+
+#if !IS_ENABLED(CONFIG_NFS_V4)
+out_v4_not_compiled:
+	dfprintk(MOUNT, "NFS: NFSv4 is not compiled into kernel\n");
+	return -EPROTONOSUPPORT;
+#else
+out_invalid_transport_udp:
+	dfprintk(MOUNT, "NFSv4: Unsupported transport protocol udp\n");
+	return -EINVAL;
+#endif /* !CONFIG_NFS_V4 */
+
+out_no_address:
+	dfprintk(MOUNT, "NFS: mount program didn't pass remote address\n");
+	return -EINVAL;
+}
+>>>>>>> master
 
 #define NFS_REMOUNT_CMP_FLAGMASK ~(NFS_MOUNT_INTR \
 		| NFS_MOUNT_SECURE \
@@ -979,6 +1301,7 @@ static int
 nfs_compare_remount_data(struct nfs_server *nfss,
 			 struct nfs_fs_context *ctx)
 {
+<<<<<<< HEAD
 	if ((ctx->flags ^ nfss->flags) & NFS_REMOUNT_CMP_FLAGMASK ||
 	    ctx->rsize != nfss->rsize ||
 	    ctx->wsize != nfss->wsize ||
@@ -995,6 +1318,24 @@ nfs_compare_remount_data(struct nfs_server *nfss,
 	    ctx->nfs_server.port != nfss->port ||
 	    ctx->nfs_server.addrlen != nfss->nfs_client->cl_addrlen ||
 	    !rpc_cmp_addr((struct sockaddr *)&ctx->nfs_server.address,
+=======
+	if ((data->flags ^ nfss->flags) & NFS_REMOUNT_CMP_FLAGMASK ||
+	    data->rsize != nfss->rsize ||
+	    data->wsize != nfss->wsize ||
+	    data->version != nfss->nfs_client->rpc_ops->version ||
+	    data->minorversion != nfss->nfs_client->cl_minorversion ||
+	    data->retrans != nfss->client->cl_timeout->to_retries ||
+	    !nfs_auth_info_match(&data->auth_info, nfss->client->cl_auth->au_flavor) ||
+	    data->acregmin != nfss->acregmin / HZ ||
+	    data->acregmax != nfss->acregmax / HZ ||
+	    data->acdirmin != nfss->acdirmin / HZ ||
+	    data->acdirmax != nfss->acdirmax / HZ ||
+	    data->timeo != (10U * nfss->client->cl_timeout->to_initval / HZ) ||
+	    (data->options & NFS_OPTION_FSCACHE) != (nfss->options & NFS_OPTION_FSCACHE) ||
+	    data->nfs_server.port != nfss->port ||
+	    data->nfs_server.addrlen != nfss->nfs_client->cl_addrlen ||
+	    !rpc_cmp_addr((struct sockaddr *)&data->nfs_server.address,
+>>>>>>> master
 			  (struct sockaddr *)&nfss->nfs_client->cl_addr))
 		return -EINVAL;
 

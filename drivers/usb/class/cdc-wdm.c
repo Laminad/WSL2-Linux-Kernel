@@ -630,6 +630,7 @@ static int wdm_wait_for_response(struct file *file, long timeout)
 	struct wdm_device *desc = file->private_data;
 	long rv; /* Use long here because (int) MAX_SCHEDULE_TIMEOUT < 0. */
 
+<<<<<<< HEAD
 	/*
 	 * Needs both flags. We cannot do with one because resetting it would
 	 * cause a race with write() yet we need to signal a disconnect.
@@ -649,6 +650,24 @@ static int wdm_wait_for_response(struct file *file, long timeout)
 		return -EIO;
 	if (rv < 0)
 		return -EINTR;
+=======
+	wait_event(desc->wait,
+			/*
+			 * needs both flags. We cannot do with one
+			 * because resetting it would cause a race
+			 * with write() yet we need to signal
+			 * a disconnect
+			 */
+			!test_bit(WDM_IN_USE, &desc->flags) ||
+			test_bit(WDM_DISCONNECTING, &desc->flags));
+
+	/* cannot dereference desc->intf if WDM_DISCONNECTING */
+	if (test_bit(WDM_DISCONNECTING, &desc->flags))
+		return -ENODEV;
+	if (desc->werr < 0)
+		dev_err(&desc->intf->dev, "Error in flush path: %d\n",
+			desc->werr);
+>>>>>>> master
 
 	spin_lock_irq(&desc->iuspin);
 	rv = desc->werr;

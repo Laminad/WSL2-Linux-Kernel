@@ -773,6 +773,7 @@ static void srcu_gp_start(struct srcu_struct *ssp)
 	struct srcu_data *sdp;
 	int state;
 
+<<<<<<< HEAD
 	if (smp_load_acquire(&ssp->srcu_sup->srcu_size_state) < SRCU_SIZE_WAIT_BARRIER)
 		sdp = per_cpu_ptr(ssp->sda, get_boot_cpu_id());
 	else
@@ -786,6 +787,16 @@ static void srcu_gp_start(struct srcu_struct *ssp)
 	spin_unlock_rcu_node(sdp);  /* Interrupts remain disabled. */
 	WRITE_ONCE(ssp->srcu_sup->srcu_gp_start, jiffies);
 	WRITE_ONCE(ssp->srcu_sup->srcu_n_exp_nodelay, 0);
+=======
+	lockdep_assert_held(&ACCESS_PRIVATE(sp, lock));
+	WARN_ON_ONCE(ULONG_CMP_GE(sp->srcu_gp_seq, sp->srcu_gp_seq_needed));
+	spin_lock_rcu_node(sdp);  /* Interrupts already disabled. */
+	rcu_segcblist_advance(&sdp->srcu_cblist,
+			      rcu_seq_current(&sp->srcu_gp_seq));
+	(void)rcu_segcblist_accelerate(&sdp->srcu_cblist,
+				       rcu_seq_snap(&sp->srcu_gp_seq));
+	spin_unlock_rcu_node(sdp);  /* Interrupts remain disabled. */
+>>>>>>> master
 	smp_mb(); /* Order prior store to ->srcu_gp_seq_needed vs. GP start. */
 	rcu_seq_start(&ssp->srcu_sup->srcu_gp_seq);
 	state = rcu_seq_state(ssp->srcu_sup->srcu_gp_seq);

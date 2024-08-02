@@ -414,17 +414,28 @@ DEFINE_DEBUGFS_ATTRIBUTE(pfn_ops, u64_get, pfn_set, "0x%llx\n");
 
 static int decay_interval_set(void *data, u64 val)
 {
+<<<<<<< HEAD
+=======
+	*(u64 *)data = val;
+
+>>>>>>> master
 	if (val < CEC_DECAY_MIN_INTERVAL)
 		return -EINVAL;
 
 	if (val > CEC_DECAY_MAX_INTERVAL)
 		return -EINVAL;
 
+<<<<<<< HEAD
 	*(u64 *)data   = val;
 	decay_interval = val;
 
 	cec_mod_work(decay_interval);
 
+=======
+	decay_interval = val;
+
+	cec_mod_work(decay_interval);
+>>>>>>> master
 	return 0;
 }
 DEFINE_DEBUGFS_ATTRIBUTE(decay_interval_ops, u64_get, decay_interval_set, "%lld\n");
@@ -517,6 +528,24 @@ static int __init create_debugfs_nodes(void)
 		goto err;
 	}
 
+<<<<<<< HEAD
+=======
+	decay = debugfs_create_file("decay_interval", S_IRUSR | S_IWUSR, d,
+				    &decay_interval, &decay_interval_ops);
+	if (!decay) {
+		pr_warn("Error creating decay_interval debugfs node!\n");
+		goto err;
+	}
+
+	count = debugfs_create_file("count_threshold", S_IRUSR | S_IWUSR, d,
+				    &count_threshold, &count_threshold_ops);
+	if (!count) {
+		pr_warn("Error creating count_threshold debugfs node!\n");
+		goto err;
+	}
+
+
+>>>>>>> master
 	return 0;
 
 err:
@@ -577,8 +606,11 @@ static int __init cec_init(void)
 
 	INIT_DELAYED_WORK(&cec_work, cec_work_fn);
 	schedule_delayed_work(&cec_work, CEC_DECAY_DEFAULT_INTERVAL);
+<<<<<<< HEAD
 
 	mce_register_decode_chain(&cec_nb);
+=======
+>>>>>>> master
 
 	pr_info("Correctable Errors collector initialized.\n");
 	return 0;

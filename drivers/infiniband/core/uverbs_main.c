@@ -211,6 +211,7 @@ void ib_uverbs_release_file(struct kref *ref)
 	if (refcount_dec_and_test(&file->device->refcount))
 		ib_uverbs_comp_dev(file->device);
 
+<<<<<<< HEAD
 	if (file->default_async_file)
 		uverbs_uobject_put(&file->default_async_file->uobj);
 	put_device(&file->device->dev);
@@ -219,6 +220,12 @@ void ib_uverbs_release_file(struct kref *ref)
 		__free_pages(file->disassociate_page, 0);
 	mutex_destroy(&file->umap_lock);
 	mutex_destroy(&file->ucontext_lock);
+=======
+	if (file->async_file)
+		kref_put(&file->async_file->ref,
+			 ib_uverbs_release_async_event_file);
+	kobject_put(&file->device->kobj);
+>>>>>>> master
 	kfree(file);
 }
 

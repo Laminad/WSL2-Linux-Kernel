@@ -132,6 +132,156 @@ void iwl_pcie_txq_check_wrptrs(struct iwl_trans *trans)
 	}
 }
 
+<<<<<<< HEAD
+=======
+static inline dma_addr_t iwl_pcie_tfd_tb_get_addr(struct iwl_trans *trans,
+						  void *_tfd, u8 idx)
+{
+
+	if (trans->cfg->use_tfh) {
+		struct iwl_tfh_tfd *tfd = _tfd;
+		struct iwl_tfh_tb *tb = &tfd->tbs[idx];
+
+		return (dma_addr_t)(le64_to_cpu(tb->addr));
+	} else {
+		struct iwl_tfd *tfd = _tfd;
+		struct iwl_tfd_tb *tb = &tfd->tbs[idx];
+		dma_addr_t addr = get_unaligned_le32(&tb->lo);
+		dma_addr_t hi_len;
+
+		if (sizeof(dma_addr_t) <= sizeof(u32))
+			return addr;
+
+		hi_len = le16_to_cpu(tb->hi_n_len) & 0xF;
+
+		/*
+		 * shift by 16 twice to avoid warnings on 32-bit
+		 * (where this code never runs anyway due to the
+		 * if statement above)
+		 */
+		return addr | ((hi_len << 16) << 16);
+	}
+}
+
+static inline void iwl_pcie_tfd_set_tb(struct iwl_trans *trans, void *tfd,
+				       u8 idx, dma_addr_t addr, u16 len)
+{
+	struct iwl_tfd *tfd_fh = (void *)tfd;
+	struct iwl_tfd_tb *tb = &tfd_fh->tbs[idx];
+
+	u16 hi_n_len = len << 4;
+
+	put_unaligned_le32(addr, &tb->lo);
+	hi_n_len |= iwl_get_dma_hi_addr(addr);
+
+	tb->hi_n_len = cpu_to_le16(hi_n_len);
+
+	tfd_fh->num_tbs = idx + 1;
+}
+
+static inline u8 iwl_pcie_tfd_get_num_tbs(struct iwl_trans *trans, void *_tfd)
+{
+	if (trans->cfg->use_tfh) {
+		struct iwl_tfh_tfd *tfd = _tfd;
+
+		return le16_to_cpu(tfd->num_tbs) & 0x1f;
+	} else {
+		struct iwl_tfd *tfd = _tfd;
+
+		return tfd->num_tbs & 0x1f;
+	}
+}
+
+static void iwl_pcie_tfd_unmap(struct iwl_trans *trans,
+			       struct iwl_cmd_meta *meta,
+			       struct iwl_txq *txq, int index)
+{
+	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	int i, num_tbs;
+	void *tfd = iwl_pcie_get_tfd(trans, txq, index);
+
+	/* Sanity check on number of chunks */
+	num_tbs = iwl_pcie_tfd_get_num_tbs(trans, tfd);
+
+	if (num_tbs > trans_pcie->max_tbs) {
+		IWL_ERR(trans, "Too many chunks: %i\n", num_tbs);
+		/* @todo issue fatal error, it is quite serious situation */
+		return;
+	}
+
+	/* first TB is never freed - it's the bidirectional DMA data */
+
+	for (i = 1; i < num_tbs; i++) {
+		if (meta->tbs & BIT(i))
+			dma_unmap_page(trans->dev,
+				       iwl_pcie_tfd_tb_get_addr(trans, tfd, i),
+				       iwl_pcie_tfd_tb_get_len(trans, tfd, i),
+				       DMA_TO_DEVICE);
+		else
+			dma_unmap_single(trans->dev,
+					 iwl_pcie_tfd_tb_get_addr(trans, tfd,
+								  i),
+					 iwl_pcie_tfd_tb_get_len(trans, tfd,
+								 i),
+					 DMA_TO_DEVICE);
+	}
+
+	meta->tbs = 0;
+
+	if (trans->cfg->use_tfh) {
+		struct iwl_tfh_tfd *tfd_fh = (void *)tfd;
+
+		tfd_fh->num_tbs = 0;
+	} else {
+		struct iwl_tfd *tfd_fh = (void *)tfd;
+
+		tfd_fh->num_tbs = 0;
+	}
+
+}
+
+/*
+ * iwl_pcie_txq_free_tfd - Free all chunks referenced by TFD [txq->q.read_ptr]
+ * @trans - transport private data
+ * @txq - tx queue
+ * @dma_dir - the direction of the DMA mapping
+ *
+ * Does NOT advance any TFD circular buffer read/write indexes
+ * Does NOT free the TFD itself (which is within circular buffer)
+ */
+void iwl_pcie_txq_free_tfd(struct iwl_trans *trans, struct iwl_txq *txq)
+{
+	/* rd_ptr is bounded by TFD_QUEUE_SIZE_MAX and
+	 * idx is bounded by n_window
+	 */
+	int rd_ptr = txq->read_ptr;
+	int idx = iwl_pcie_get_cmd_index(txq, rd_ptr);
+
+	lockdep_assert_held(&txq->lock);
+
+	/* We have only q->n_window txq->entries, but we use
+	 * TFD_QUEUE_SIZE_MAX tfds
+	 */
+	iwl_pcie_tfd_unmap(trans, &txq->entries[idx].meta, txq, rd_ptr);
+
+	/* free SKB */
+	if (txq->entries) {
+		struct sk_buff *skb;
+
+		skb = txq->entries[idx].skb;
+
+		/* Can be called from irqs-disabled context
+		 * If skb is not NULL, it means that the whole queue is being
+		 * freed and that the queue is not empty - free the skb
+		 */
+		if (skb) {
+			iwl_op_mode_free_skb(trans->op_mode, skb);
+			txq->entries[idx].skb = NULL;
+		}
+	}
+}
+
+>>>>>>> master
 static int iwl_pcie_txq_build_tfd(struct iwl_trans *trans, struct iwl_txq *txq,
 				  dma_addr_t addr, u16 len, bool reset)
 {

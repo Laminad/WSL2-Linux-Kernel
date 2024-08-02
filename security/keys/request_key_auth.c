@@ -64,7 +64,11 @@ static int request_key_auth_instantiate(struct key *key,
 static void request_key_auth_describe(const struct key *key,
 				      struct seq_file *m)
 {
+<<<<<<< HEAD
 	struct request_key_auth *rka = dereference_key_rcu(key);
+=======
+	struct request_key_auth *rka = get_request_key_auth(key);
+>>>>>>> master
 
 	if (!rka)
 		return;
@@ -82,7 +86,11 @@ static void request_key_auth_describe(const struct key *key,
 static long request_key_auth_read(const struct key *key,
 				  char *buffer, size_t buflen)
 {
+<<<<<<< HEAD
 	struct request_key_auth *rka = dereference_key_locked(key);
+=======
+	struct request_key_auth *rka = get_request_key_auth(key);
+>>>>>>> master
 	size_t datalen;
 	long ret;
 
@@ -103,6 +111,26 @@ static long request_key_auth_read(const struct key *key,
 	return ret;
 }
 
+<<<<<<< HEAD
+=======
+/*
+ * Handle revocation of an authorisation token key.
+ *
+ * Called with the key sem write-locked.
+ */
+static void request_key_auth_revoke(struct key *key)
+{
+	struct request_key_auth *rka = get_request_key_auth(key);
+
+	kenter("{%d}", key->serial);
+
+	if (rka->cred) {
+		put_cred(rka->cred);
+		rka->cred = NULL;
+	}
+}
+
+>>>>>>> master
 static void free_request_key_auth(struct request_key_auth *rka)
 {
 	if (!rka)
@@ -145,7 +173,11 @@ static void request_key_auth_revoke(struct key *key)
  */
 static void request_key_auth_destroy(struct key *key)
 {
+<<<<<<< HEAD
 	struct request_key_auth *rka = rcu_access_pointer(key->payload.rcu_data0);
+=======
+	struct request_key_auth *rka = get_request_key_auth(key);
+>>>>>>> master
 
 	kenter("{%d}", key->serial);
 	if (rka) {
@@ -178,7 +210,11 @@ struct key *request_key_auth_new(struct key *target, const char *op,
 	if (!rka->callout_info)
 		goto error_free_rka;
 	rka->callout_len = callout_len;
+<<<<<<< HEAD
 	strscpy(rka->op, op, sizeof(rka->op));
+=======
+	strlcpy(rka->op, op, sizeof(rka->op));
+>>>>>>> master
 
 	/* see if the calling process is already servicing the key request of
 	 * another process */

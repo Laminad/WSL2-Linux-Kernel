@@ -919,6 +919,12 @@ static int pctv452e_frontend_attach(struct dvb_usb_adapter *a)
 						&a->dev->i2c_adap);
 	if (!a->fe_adap[0].fe)
 		return -ENODEV;
+<<<<<<< HEAD
+=======
+	if ((dvb_attach(lnbp22_attach, a->fe_adap[0].fe,
+					&a->dev->i2c_adap)) == NULL)
+		err("Cannot attach lnbp22\n");
+>>>>>>> master
 
 	id = a->dev->desc->warm_ids[0];
 	if (id->idVendor == USB_VID_TECHNOTREND &&

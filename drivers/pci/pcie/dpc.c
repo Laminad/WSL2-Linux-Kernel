@@ -240,6 +240,30 @@ static void dpc_process_rp_pio_error(struct pci_dev *pdev)
 
 static int dpc_get_aer_uncorrect_severity(struct pci_dev *dev,
 					  struct aer_err_info *info)
+<<<<<<< HEAD
+=======
+{
+	int pos = dev->aer_cap;
+	u32 status, mask, sev;
+
+	pci_read_config_dword(dev, pos + PCI_ERR_UNCOR_STATUS, &status);
+	pci_read_config_dword(dev, pos + PCI_ERR_UNCOR_MASK, &mask);
+	status &= ~mask;
+	if (!status)
+		return 0;
+
+	pci_read_config_dword(dev, pos + PCI_ERR_UNCOR_SEVER, &sev);
+	status &= sev;
+	if (status)
+		info->severity = AER_FATAL;
+	else
+		info->severity = AER_NONFATAL;
+
+	return 1;
+}
+
+static irqreturn_t dpc_handler(int irq, void *context)
+>>>>>>> master
 {
 	int pos = dev->aer_cap;
 	u32 status, mask, sev;
@@ -282,13 +306,22 @@ void dpc_process_error(struct pci_dev *pdev)
 				     "reserved error");
 
 	/* show RP PIO error detail information */
+<<<<<<< HEAD
 	if (pdev->dpc_rp_extensions && reason == 3 && ext_reason == 0)
 		dpc_process_rp_pio_error(pdev);
+=======
+	if (dpc->rp_extensions && reason == 3 && ext_reason == 0)
+		dpc_process_rp_pio_error(dpc);
+>>>>>>> master
 	else if (reason == 0 &&
 		 dpc_get_aer_uncorrect_severity(pdev, &info) &&
 		 aer_get_device_error_info(pdev, &info)) {
 		aer_print_error(pdev, &info);
+<<<<<<< HEAD
 		pci_aer_clear_nonfatal_status(pdev);
+=======
+		pci_cleanup_aer_uncorrect_error_status(pdev);
+>>>>>>> master
 		pci_aer_clear_fatal_status(pdev);
 	}
 }

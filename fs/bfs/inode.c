@@ -342,6 +342,7 @@ static int bfs_fill_super(struct super_block *s, void *data, int silent)
 	s->s_magic = BFS_MAGIC;
 
 	if (le32_to_cpu(bfs_sb->s_start) > le32_to_cpu(bfs_sb->s_end) ||
+<<<<<<< HEAD
 	    le32_to_cpu(bfs_sb->s_start) < sizeof(struct bfs_super_block) + sizeof(struct bfs_dirent)) {
 		printf("Superblock is corrupted on %s\n", s->s_id);
 		goto out1;
@@ -352,6 +353,20 @@ static int bfs_fill_super(struct super_block *s, void *data, int silent)
 		printf("NOTE: filesystem %s was created with 512 inodes, the real maximum is 511, mounting anyway\n", s->s_id);
 	else if (info->si_lasti > BFS_MAX_LASTI) {
 		printf("Impossible last inode number %lu > %d on %s\n", info->si_lasti, BFS_MAX_LASTI, s->s_id);
+=======
+	    le32_to_cpu(bfs_sb->s_start) < BFS_BSIZE) {
+		printf("Superblock is corrupted\n");
+		goto out1;
+	}
+
+	info->si_lasti = (le32_to_cpu(bfs_sb->s_start) - BFS_BSIZE) /
+					sizeof(struct bfs_inode)
+					+ BFS_ROOT_INO - 1;
+	imap_len = (info->si_lasti / 8) + 1;
+	info->si_imap = kzalloc(imap_len, GFP_KERNEL | __GFP_NOWARN);
+	if (!info->si_imap) {
+		printf("Cannot allocate %u bytes\n", imap_len);
+>>>>>>> master
 		goto out1;
 	}
 	for (i = 0; i < BFS_ROOT_INO; i++)

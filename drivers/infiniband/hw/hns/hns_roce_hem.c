@@ -747,8 +747,12 @@ void *hns_roce_table_find(struct hns_roce_dev *hr_dev,
 	} else {
 		u32 seg_size = 64; /* 8 bytes per BA and 8 BA per segment */
 
+<<<<<<< HEAD
 		if (hns_roce_calc_hem_mhop(hr_dev, table, &mhop_obj, &mhop))
 			goto out;
+=======
+		hns_roce_calc_hem_mhop(hr_dev, table, &mhop_obj, &mhop);
+>>>>>>> master
 		/* mtt mhop */
 		i = mhop.l0_idx;
 		j = mhop.l1_idx;
@@ -759,7 +763,12 @@ void *hns_roce_table_find(struct hns_roce_dev *hr_dev,
 			hem_idx = i;
 
 		hem = table->hem[hem_idx];
+<<<<<<< HEAD
 		dma_offset = offset = obj * seg_size % mhop.bt_chunk_size;
+=======
+		dma_offset = offset = (obj & (table->num_obj - 1)) * seg_size %
+				       mhop.bt_chunk_size;
+>>>>>>> master
 		if (mhop.hop_num == 2)
 			dma_offset = offset = 0;
 	}

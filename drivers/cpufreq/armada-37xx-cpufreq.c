@@ -404,6 +404,7 @@ static int __init armada37xx_cpufreq_driver_init(void)
 	struct armada_37xx_dvfs *dvfs;
 	struct platform_device *pdev;
 	unsigned long freq;
+<<<<<<< HEAD
 	unsigned int base_frequency;
 	struct regmap *nb_clk_base, *nb_pm_base, *avs_base;
 	struct device *cpu_dev;
@@ -414,6 +415,13 @@ static int __init armada37xx_cpufreq_driver_init(void)
 		syscon_regmap_lookup_by_compatible("marvell,armada-3700-periph-clock-nb");
 	if (IS_ERR(nb_clk_base))
 		return -ENODEV;
+=======
+	unsigned int cur_frequency, base_frequency;
+	struct regmap *nb_pm_base, *avs_base;
+	struct device *cpu_dev;
+	int load_lvl, ret;
+	struct clk *clk, *parent;
+>>>>>>> master
 
 	nb_pm_base =
 		syscon_regmap_lookup_by_compatible("marvell,armada-3700-nb-pm");
@@ -461,6 +469,17 @@ static int __init armada37xx_cpufreq_driver_init(void)
 
 	if (!base_frequency) {
 		dev_err(cpu_dev, "Failed to get parent clock rate for CPU\n");
+<<<<<<< HEAD
+=======
+		clk_put(clk);
+		return -EINVAL;
+	}
+
+	/* Get nominal (current) CPU frequency */
+	cur_frequency = clk_get_rate(clk);
+	if (!cur_frequency) {
+		dev_err(cpu_dev, "Failed to get clock rate for CPU\n");
+>>>>>>> master
 		clk_put(clk);
 		return -EINVAL;
 	}

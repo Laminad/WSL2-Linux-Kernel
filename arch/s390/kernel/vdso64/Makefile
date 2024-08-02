@@ -52,8 +52,13 @@ quiet_cmd_vdso_and_check = VDSO    $@
       cmd_vdso_and_check = $(cmd_ld); $(cmd_vdso_check)
 
 # link rule for the .so file, .lds has to be first
+<<<<<<< HEAD
 $(obj)/vdso64.so.dbg: $(src)/vdso64.lds $(obj-vdso64) $(obj-cvdso64) FORCE
 	$(call if_changed,vdso_and_check)
+=======
+$(obj)/vdso64.so.dbg: $(src)/vdso64.lds $(obj-vdso64) FORCE
+	$(call if_changed,vdso64ld)
+>>>>>>> master
 
 # strip rule for the .so file
 $(obj)/%.so: OBJCOPYFLAGS := -S
@@ -68,6 +73,11 @@ $(obj-cvdso64): %.o: %.c FORCE
 	$(call if_changed_dep,vdso64cc)
 
 # actual build commands
+<<<<<<< HEAD
+=======
+quiet_cmd_vdso64ld = VDSO64L $@
+      cmd_vdso64ld = $(CC) $(c_flags) -Wl,-T $(filter %.lds %.o,$^) -o $@
+>>>>>>> master
 quiet_cmd_vdso64as = VDSO64A $@
       cmd_vdso64as = $(CC) $(a_flags) -c -o $@ $<
 quiet_cmd_vdso64cc = VDSO64C $@

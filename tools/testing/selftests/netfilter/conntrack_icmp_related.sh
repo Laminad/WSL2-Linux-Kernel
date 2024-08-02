@@ -35,8 +35,11 @@ cleanup() {
 	for i in 1 2;do ip netns del nsrouter$i;done
 }
 
+<<<<<<< HEAD
 trap cleanup EXIT
 
+=======
+>>>>>>> master
 ipv4() {
     echo -n 192.168.$1.2
 }
@@ -148,6 +151,7 @@ ip netns exec nsclient1 nft -f - <<EOF
 table inet filter {
 	counter unknown { }
 	counter related { }
+<<<<<<< HEAD
 	counter redir4 { }
 	counter redir6 { }
 	chain input {
@@ -159,6 +163,13 @@ table inet filter {
 		meta l4proto { icmp, icmpv6 } ct state established,untracked accept
 		meta l4proto { icmp, icmpv6 } ct state "related" counter name "related" accept
 
+=======
+	chain input {
+		type filter hook input priority 0; policy accept;
+		meta l4proto { icmp, icmpv6 } ct state established,untracked accept
+
+		meta l4proto { icmp, icmpv6 } ct state "related" counter name "related" accept
+>>>>>>> master
 		counter name "unknown" drop
 	}
 }
@@ -287,6 +298,7 @@ else
 	echo "ERROR: icmp error RELATED state test has failed"
 fi
 
+<<<<<<< HEAD
 # add 'bad' route,  expect icmp REDIRECT to be generated
 ip netns exec nsclient1 ip route add 192.168.1.42 via 192.168.1.1
 ip netns exec nsclient1 ip route add dead:1::42 via dead:1::1
@@ -312,4 +324,7 @@ else
 	echo "ERROR: icmp redirect RELATED state test has failed"
 fi
 
+=======
+cleanup
+>>>>>>> master
 exit $ret

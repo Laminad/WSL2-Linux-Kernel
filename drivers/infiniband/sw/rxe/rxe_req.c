@@ -731,12 +731,47 @@ int rxe_requester(struct rxe_qp *qp)
 		goto exit;
 	}
 
+<<<<<<< HEAD
 	if (wqe->mask & WR_LOCAL_OP_MASK) {
 		err = rxe_do_local_ops(qp, wqe);
 		if (unlikely(err))
 			goto err;
 		else
 			goto done;
+=======
+			rmr = rxe_pool_get_index(&rxe->mr_pool,
+						 wqe->wr.ex.invalidate_rkey >> 8);
+			if (!rmr) {
+				pr_err("No mr for key %#x\n",
+				       wqe->wr.ex.invalidate_rkey);
+				wqe->state = wqe_state_error;
+				wqe->status = IB_WC_MW_BIND_ERR;
+				goto exit;
+			}
+			rmr->state = RXE_MEM_STATE_FREE;
+			rxe_drop_ref(rmr);
+			wqe->state = wqe_state_done;
+			wqe->status = IB_WC_SUCCESS;
+		} else if (wqe->wr.opcode == IB_WR_REG_MR) {
+			struct rxe_mem *rmr = to_rmr(wqe->wr.wr.reg.mr);
+
+			rmr->state = RXE_MEM_STATE_VALID;
+			rmr->access = wqe->wr.wr.reg.access;
+			rmr->lkey = wqe->wr.wr.reg.key;
+			rmr->rkey = wqe->wr.wr.reg.key;
+			rmr->iova = wqe->wr.wr.reg.mr->iova;
+			wqe->state = wqe_state_done;
+			wqe->status = IB_WC_SUCCESS;
+		} else {
+			goto exit;
+		}
+		if ((wqe->wr.send_flags & IB_SEND_SIGNALED) ||
+		    qp->sq_sig_type == IB_SIGNAL_ALL_WR)
+			rxe_run_task(&qp->comp.task, 1);
+		qp->req.wqe_index = next_index(qp->sq.queue,
+						qp->req.wqe_index);
+		goto next_wqe;
+>>>>>>> master
 	}
 
 	if (unlikely(qp_type(qp) == IB_QPT_RC &&

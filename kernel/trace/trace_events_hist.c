@@ -816,9 +816,460 @@ static void hist_err(struct trace_array *tr, u8 err_type, u16 err_pos)
 
 static void hist_err_clear(void)
 {
+<<<<<<< HEAD
 	if (last_cmd)
 		last_cmd[0] = '\0';
 	last_cmd_loc[0] = '\0';
+=======
+	hist_err_str[0] = '\0';
+}
+
+static bool have_hist_err(void)
+{
+	if (strlen(hist_err_str))
+		return true;
+
+	return false;
+}
+
+static LIST_HEAD(synth_event_list);
+static DEFINE_MUTEX(synth_event_mutex);
+
+struct synth_trace_event {
+	struct trace_entry	ent;
+	u64			fields[];
+};
+
+static int synth_event_define_fields(struct trace_event_call *call)
+{
+	struct synth_trace_event trace;
+	int offset = offsetof(typeof(trace), fields);
+	struct synth_event *event = call->data;
+	unsigned int i, size, n_u64;
+	char *name, *type;
+	bool is_signed;
+	int ret = 0;
+
+	for (i = 0, n_u64 = 0; i < event->n_fields; i++) {
+		size = event->fields[i]->size;
+		is_signed = event->fields[i]->is_signed;
+		type = event->fields[i]->type;
+		name = event->fields[i]->name;
+		ret = trace_define_field(call, type, name, offset, size,
+					 is_signed, FILTER_OTHER);
+		if (ret)
+			break;
+
+		if (event->fields[i]->is_string) {
+			offset += STR_VAR_LEN_MAX;
+			n_u64 += STR_VAR_LEN_MAX / sizeof(u64);
+		} else {
+			offset += sizeof(u64);
+			n_u64++;
+		}
+	}
+
+	event->n_u64 = n_u64;
+
+	return ret;
+}
+
+static bool synth_field_signed(char *type)
+{
+	if (strncmp(type, "u", 1) == 0)
+		return false;
+	if (strcmp(type, "gfp_t") == 0)
+		return false;
+
+	return true;
+}
+
+static int synth_field_is_string(char *type)
+{
+	if (strstr(type, "char[") != NULL)
+		return true;
+
+	return false;
+}
+
+static int synth_field_string_size(char *type)
+{
+	char buf[4], *end, *start;
+	unsigned int len;
+	int size, err;
+
+	start = strstr(type, "char[");
+	if (start == NULL)
+		return -EINVAL;
+	start += strlen("char[");
+
+	end = strchr(type, ']');
+	if (!end || end < start)
+		return -EINVAL;
+
+	len = end - start;
+	if (len > 3)
+		return -EINVAL;
+
+	strncpy(buf, start, len);
+	buf[len] = '\0';
+
+	err = kstrtouint(buf, 0, &size);
+	if (err)
+		return err;
+
+	if (size > STR_VAR_LEN_MAX)
+		return -EINVAL;
+
+	return size;
+}
+
+static int synth_field_size(char *type)
+{
+	int size = 0;
+
+	if (strcmp(type, "s64") == 0)
+		size = sizeof(s64);
+	else if (strcmp(type, "u64") == 0)
+		size = sizeof(u64);
+	else if (strcmp(type, "s32") == 0)
+		size = sizeof(s32);
+	else if (strcmp(type, "u32") == 0)
+		size = sizeof(u32);
+	else if (strcmp(type, "s16") == 0)
+		size = sizeof(s16);
+	else if (strcmp(type, "u16") == 0)
+		size = sizeof(u16);
+	else if (strcmp(type, "s8") == 0)
+		size = sizeof(s8);
+	else if (strcmp(type, "u8") == 0)
+		size = sizeof(u8);
+	else if (strcmp(type, "char") == 0)
+		size = sizeof(char);
+	else if (strcmp(type, "unsigned char") == 0)
+		size = sizeof(unsigned char);
+	else if (strcmp(type, "int") == 0)
+		size = sizeof(int);
+	else if (strcmp(type, "unsigned int") == 0)
+		size = sizeof(unsigned int);
+	else if (strcmp(type, "long") == 0)
+		size = sizeof(long);
+	else if (strcmp(type, "unsigned long") == 0)
+		size = sizeof(unsigned long);
+	else if (strcmp(type, "pid_t") == 0)
+		size = sizeof(pid_t);
+	else if (synth_field_is_string(type))
+		size = synth_field_string_size(type);
+
+	return size;
+}
+
+static const char *synth_field_fmt(char *type)
+{
+	const char *fmt = "%llu";
+
+	if (strcmp(type, "s64") == 0)
+		fmt = "%lld";
+	else if (strcmp(type, "u64") == 0)
+		fmt = "%llu";
+	else if (strcmp(type, "s32") == 0)
+		fmt = "%d";
+	else if (strcmp(type, "u32") == 0)
+		fmt = "%u";
+	else if (strcmp(type, "s16") == 0)
+		fmt = "%d";
+	else if (strcmp(type, "u16") == 0)
+		fmt = "%u";
+	else if (strcmp(type, "s8") == 0)
+		fmt = "%d";
+	else if (strcmp(type, "u8") == 0)
+		fmt = "%u";
+	else if (strcmp(type, "char") == 0)
+		fmt = "%d";
+	else if (strcmp(type, "unsigned char") == 0)
+		fmt = "%u";
+	else if (strcmp(type, "int") == 0)
+		fmt = "%d";
+	else if (strcmp(type, "unsigned int") == 0)
+		fmt = "%u";
+	else if (strcmp(type, "long") == 0)
+		fmt = "%ld";
+	else if (strcmp(type, "unsigned long") == 0)
+		fmt = "%lu";
+	else if (strcmp(type, "pid_t") == 0)
+		fmt = "%d";
+	else if (synth_field_is_string(type))
+		fmt = "%s";
+
+	return fmt;
+}
+
+static enum print_line_t print_synth_event(struct trace_iterator *iter,
+					   int flags,
+					   struct trace_event *event)
+{
+	struct trace_array *tr = iter->tr;
+	struct trace_seq *s = &iter->seq;
+	struct synth_trace_event *entry;
+	struct synth_event *se;
+	unsigned int i, n_u64;
+	char print_fmt[32];
+	const char *fmt;
+
+	entry = (struct synth_trace_event *)iter->ent;
+	se = container_of(event, struct synth_event, call.event);
+
+	trace_seq_printf(s, "%s: ", se->name);
+
+	for (i = 0, n_u64 = 0; i < se->n_fields; i++) {
+		if (trace_seq_has_overflowed(s))
+			goto end;
+
+		fmt = synth_field_fmt(se->fields[i]->type);
+
+		/* parameter types */
+		if (tr->trace_flags & TRACE_ITER_VERBOSE)
+			trace_seq_printf(s, "%s ", fmt);
+
+		snprintf(print_fmt, sizeof(print_fmt), "%%s=%s%%s", fmt);
+
+		/* parameter values */
+		if (se->fields[i]->is_string) {
+			trace_seq_printf(s, print_fmt, se->fields[i]->name,
+					 (char *)&entry->fields[n_u64],
+					 i == se->n_fields - 1 ? "" : " ");
+			n_u64 += STR_VAR_LEN_MAX / sizeof(u64);
+		} else {
+			trace_seq_printf(s, print_fmt, se->fields[i]->name,
+					 entry->fields[n_u64],
+					 i == se->n_fields - 1 ? "" : " ");
+			n_u64++;
+		}
+	}
+end:
+	trace_seq_putc(s, '\n');
+
+	return trace_handle_return(s);
+}
+
+static struct trace_event_functions synth_event_funcs = {
+	.trace		= print_synth_event
+};
+
+static notrace void trace_event_raw_event_synth(void *__data,
+						u64 *var_ref_vals,
+						unsigned int var_ref_idx)
+{
+	struct trace_event_file *trace_file = __data;
+	struct synth_trace_event *entry;
+	struct trace_event_buffer fbuffer;
+	struct ring_buffer *buffer;
+	struct synth_event *event;
+	unsigned int i, n_u64;
+	int fields_size = 0;
+
+	event = trace_file->event_call->data;
+
+	if (trace_trigger_soft_disabled(trace_file))
+		return;
+
+	fields_size = event->n_u64 * sizeof(u64);
+
+	/*
+	 * Avoid ring buffer recursion detection, as this event
+	 * is being performed within another event.
+	 */
+	buffer = trace_file->tr->trace_buffer.buffer;
+	ring_buffer_nest_start(buffer);
+
+	entry = trace_event_buffer_reserve(&fbuffer, trace_file,
+					   sizeof(*entry) + fields_size);
+	if (!entry)
+		goto out;
+
+	for (i = 0, n_u64 = 0; i < event->n_fields; i++) {
+		if (event->fields[i]->is_string) {
+			char *str_val = (char *)(long)var_ref_vals[var_ref_idx + i];
+			char *str_field = (char *)&entry->fields[n_u64];
+
+			strscpy(str_field, str_val, STR_VAR_LEN_MAX);
+			n_u64 += STR_VAR_LEN_MAX / sizeof(u64);
+		} else {
+			entry->fields[n_u64] = var_ref_vals[var_ref_idx + i];
+			n_u64++;
+		}
+	}
+
+	trace_event_buffer_commit(&fbuffer);
+out:
+	ring_buffer_nest_end(buffer);
+}
+
+static void free_synth_event_print_fmt(struct trace_event_call *call)
+{
+	if (call) {
+		kfree(call->print_fmt);
+		call->print_fmt = NULL;
+	}
+}
+
+static int __set_synth_event_print_fmt(struct synth_event *event,
+				       char *buf, int len)
+{
+	const char *fmt;
+	int pos = 0;
+	int i;
+
+	/* When len=0, we just calculate the needed length */
+#define LEN_OR_ZERO (len ? len - pos : 0)
+
+	pos += snprintf(buf + pos, LEN_OR_ZERO, "\"");
+	for (i = 0; i < event->n_fields; i++) {
+		fmt = synth_field_fmt(event->fields[i]->type);
+		pos += snprintf(buf + pos, LEN_OR_ZERO, "%s=%s%s",
+				event->fields[i]->name, fmt,
+				i == event->n_fields - 1 ? "" : ", ");
+	}
+	pos += snprintf(buf + pos, LEN_OR_ZERO, "\"");
+
+	for (i = 0; i < event->n_fields; i++) {
+		pos += snprintf(buf + pos, LEN_OR_ZERO,
+				", REC->%s", event->fields[i]->name);
+	}
+
+#undef LEN_OR_ZERO
+
+	/* return the length of print_fmt */
+	return pos;
+}
+
+static int set_synth_event_print_fmt(struct trace_event_call *call)
+{
+	struct synth_event *event = call->data;
+	char *print_fmt;
+	int len;
+
+	/* First: called with 0 length to calculate the needed length */
+	len = __set_synth_event_print_fmt(event, NULL, 0);
+
+	print_fmt = kmalloc(len + 1, GFP_KERNEL);
+	if (!print_fmt)
+		return -ENOMEM;
+
+	/* Second: actually write the @print_fmt */
+	__set_synth_event_print_fmt(event, print_fmt, len + 1);
+	call->print_fmt = print_fmt;
+
+	return 0;
+}
+
+static void free_synth_field(struct synth_field *field)
+{
+	kfree(field->type);
+	kfree(field->name);
+	kfree(field);
+}
+
+static struct synth_field *parse_synth_field(int argc, char **argv,
+					     int *consumed)
+{
+	struct synth_field *field;
+	const char *prefix = NULL;
+	char *field_type = argv[0], *field_name;
+	int len, ret = 0;
+	char *array;
+
+	if (field_type[0] == ';')
+		field_type++;
+
+	if (!strcmp(field_type, "unsigned")) {
+		if (argc < 3)
+			return ERR_PTR(-EINVAL);
+		prefix = "unsigned ";
+		field_type = argv[1];
+		field_name = argv[2];
+		*consumed = 3;
+	} else {
+		field_name = argv[1];
+		*consumed = 2;
+	}
+
+	len = strlen(field_name);
+	if (field_name[len - 1] == ';')
+		field_name[len - 1] = '\0';
+
+	field = kzalloc(sizeof(*field), GFP_KERNEL);
+	if (!field)
+		return ERR_PTR(-ENOMEM);
+
+	len = strlen(field_type) + 1;
+	array = strchr(field_name, '[');
+	if (array)
+		len += strlen(array);
+	if (prefix)
+		len += strlen(prefix);
+	field->type = kzalloc(len, GFP_KERNEL);
+	if (!field->type) {
+		ret = -ENOMEM;
+		goto free;
+	}
+	if (prefix)
+		strcat(field->type, prefix);
+	strcat(field->type, field_type);
+	if (array) {
+		strcat(field->type, array);
+		*array = '\0';
+	}
+
+	field->size = synth_field_size(field->type);
+	if (!field->size) {
+		ret = -EINVAL;
+		goto free;
+	}
+
+	if (synth_field_is_string(field->type))
+		field->is_string = true;
+
+	field->is_signed = synth_field_signed(field->type);
+
+	field->name = kstrdup(field_name, GFP_KERNEL);
+	if (!field->name) {
+		ret = -ENOMEM;
+		goto free;
+	}
+ out:
+	return field;
+ free:
+	free_synth_field(field);
+	field = ERR_PTR(ret);
+	goto out;
+}
+
+static void free_synth_tracepoint(struct tracepoint *tp)
+{
+	if (!tp)
+		return;
+
+	kfree(tp->name);
+	kfree(tp);
+}
+
+static struct tracepoint *alloc_synth_tracepoint(char *name)
+{
+	struct tracepoint *tp;
+
+	tp = kzalloc(sizeof(*tp), GFP_KERNEL);
+	if (!tp)
+		return ERR_PTR(-ENOMEM);
+
+	tp->name = kstrdup(name, GFP_KERNEL);
+	if (!tp->name) {
+		kfree(tp);
+		return ERR_PTR(-ENOMEM);
+	}
+
+	return tp;
+>>>>>>> master
 }
 
 typedef void (*synth_probe_func_t) (void *__data, u64 *var_ref_vals,
@@ -864,6 +1315,232 @@ struct hist_var_data {
 	struct hist_trigger_data *hist_data;
 };
 
+<<<<<<< HEAD
+=======
+static void add_or_delete_synth_event(struct synth_event *event, int delete)
+{
+	if (delete)
+		free_synth_event(event);
+	else {
+		mutex_lock(&synth_event_mutex);
+		if (!find_synth_event(event->name))
+			list_add(&event->list, &synth_event_list);
+		else
+			free_synth_event(event);
+		mutex_unlock(&synth_event_mutex);
+	}
+}
+
+static int create_synth_event(int argc, char **argv)
+{
+	struct synth_field *field, *fields[SYNTH_FIELDS_MAX];
+	struct synth_event *event = NULL;
+	bool delete_event = false;
+	int i, consumed = 0, n_fields = 0, ret = 0;
+	char *name;
+
+	mutex_lock(&synth_event_mutex);
+
+	/*
+	 * Argument syntax:
+	 *  - Add synthetic event: <event_name> field[;field] ...
+	 *  - Remove synthetic event: !<event_name> field[;field] ...
+	 *      where 'field' = type field_name
+	 */
+	if (argc < 1) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	name = argv[0];
+	if (name[0] == '!') {
+		delete_event = true;
+		name++;
+	}
+
+	event = find_synth_event(name);
+	if (event) {
+		if (delete_event) {
+			if (event->ref) {
+				event = NULL;
+				ret = -EBUSY;
+				goto out;
+			}
+			list_del(&event->list);
+			goto out;
+		}
+		event = NULL;
+		ret = -EEXIST;
+		goto out;
+	} else if (delete_event) {
+		ret = -ENOENT;
+		goto out;
+	}
+
+	if (argc < 2) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	for (i = 1; i < argc - 1; i++) {
+		if (strcmp(argv[i], ";") == 0)
+			continue;
+		if (n_fields == SYNTH_FIELDS_MAX) {
+			ret = -EINVAL;
+			goto err;
+		}
+
+		field = parse_synth_field(argc - i, &argv[i], &consumed);
+		if (IS_ERR(field)) {
+			ret = PTR_ERR(field);
+			goto err;
+		}
+		fields[n_fields++] = field;
+		i += consumed - 1;
+	}
+
+	if (i < argc && strcmp(argv[i], ";") != 0) {
+		ret = -EINVAL;
+		goto err;
+	}
+
+	event = alloc_synth_event(name, n_fields, fields);
+	if (IS_ERR(event)) {
+		ret = PTR_ERR(event);
+		event = NULL;
+		goto err;
+	}
+ out:
+	mutex_unlock(&synth_event_mutex);
+
+	if (event) {
+		if (delete_event) {
+			ret = unregister_synth_event(event);
+			add_or_delete_synth_event(event, !ret);
+		} else {
+			ret = register_synth_event(event);
+			add_or_delete_synth_event(event, ret);
+		}
+	}
+
+	return ret;
+ err:
+	mutex_unlock(&synth_event_mutex);
+
+	for (i = 0; i < n_fields; i++)
+		free_synth_field(fields[i]);
+	free_synth_event(event);
+
+	return ret;
+}
+
+static int release_all_synth_events(void)
+{
+	struct list_head release_events;
+	struct synth_event *event, *e;
+	int ret = 0;
+
+	INIT_LIST_HEAD(&release_events);
+
+	mutex_lock(&synth_event_mutex);
+
+	list_for_each_entry(event, &synth_event_list, list) {
+		if (event->ref) {
+			mutex_unlock(&synth_event_mutex);
+			return -EBUSY;
+		}
+	}
+
+	list_splice_init(&event->list, &release_events);
+
+	mutex_unlock(&synth_event_mutex);
+
+	list_for_each_entry_safe(event, e, &release_events, list) {
+		list_del(&event->list);
+
+		ret = unregister_synth_event(event);
+		add_or_delete_synth_event(event, !ret);
+	}
+
+	return ret;
+}
+
+
+static void *synth_events_seq_start(struct seq_file *m, loff_t *pos)
+{
+	mutex_lock(&synth_event_mutex);
+
+	return seq_list_start(&synth_event_list, *pos);
+}
+
+static void *synth_events_seq_next(struct seq_file *m, void *v, loff_t *pos)
+{
+	return seq_list_next(v, &synth_event_list, pos);
+}
+
+static void synth_events_seq_stop(struct seq_file *m, void *v)
+{
+	mutex_unlock(&synth_event_mutex);
+}
+
+static int synth_events_seq_show(struct seq_file *m, void *v)
+{
+	struct synth_field *field;
+	struct synth_event *event = v;
+	unsigned int i;
+
+	seq_printf(m, "%s\t", event->name);
+
+	for (i = 0; i < event->n_fields; i++) {
+		field = event->fields[i];
+
+		/* parameter values */
+		seq_printf(m, "%s %s%s", field->type, field->name,
+			   i == event->n_fields - 1 ? "" : "; ");
+	}
+
+	seq_putc(m, '\n');
+
+	return 0;
+}
+
+static const struct seq_operations synth_events_seq_op = {
+	.start  = synth_events_seq_start,
+	.next   = synth_events_seq_next,
+	.stop   = synth_events_seq_stop,
+	.show   = synth_events_seq_show
+};
+
+static int synth_events_open(struct inode *inode, struct file *file)
+{
+	int ret;
+
+	if ((file->f_mode & FMODE_WRITE) && (file->f_flags & O_TRUNC)) {
+		ret = release_all_synth_events();
+		if (ret < 0)
+			return ret;
+	}
+
+	return seq_open(file, &synth_events_seq_op);
+}
+
+static ssize_t synth_events_write(struct file *file,
+				  const char __user *buffer,
+				  size_t count, loff_t *ppos)
+{
+	return trace_parse_run_command(file, buffer, count, ppos,
+				       create_synth_event);
+}
+
+static const struct file_operations synth_events_fops = {
+	.open           = synth_events_open,
+	.write		= synth_events_write,
+	.read           = seq_read,
+	.llseek         = seq_lseek,
+	.release        = seq_release,
+};
+
+>>>>>>> master
 static u64 hist_field_timestamp(struct hist_field *hist_field,
 				struct tracing_map_elt *elt,
 				struct trace_buffer *buffer,

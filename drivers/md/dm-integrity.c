@@ -1256,7 +1256,10 @@ static void remove_range_unlocked(struct dm_integrity_c *ic, struct dm_integrity
 		struct dm_integrity_range *last_range =
 			list_first_entry(&ic->wait_list, struct dm_integrity_range, wait_entry);
 		struct task_struct *last_range_task;
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 		last_range_task = last_range->task;
 		list_del(&last_range->wait_entry);
 		if (!add_new_range(ic, last_range, false)) {
@@ -1866,6 +1869,15 @@ again:
 			r = dm_integrity_rw_tag(ic, checksums, &dio->metadata_block, &dio->metadata_offset,
 						checksums_ptr - checksums, dio->op == REQ_OP_READ ? TAG_CMP : TAG_WRITE);
 			if (unlikely(r)) {
+<<<<<<< HEAD
+=======
+				if (r > 0) {
+					DMERR_LIMIT("Checksum failed at sector 0x%llx",
+						    (unsigned long long)(sector - ((r + ic->tag_size - 1) / ic->tag_size)));
+					r = -EILSEQ;
+					atomic64_inc(&ic->number_of_mismatches);
+				}
+>>>>>>> master
 				if (likely(checksums != checksums_onstack))
 					kfree(checksums);
 				if (r > 0) {
@@ -2078,9 +2090,13 @@ retry_kmap:
 					integrity_sector_checksum(ic, logical_sector, mem + bv.bv_offset, checksums_onstack);
 					if (unlikely(memcmp(checksums_onstack, journal_entry_tag(ic, je), ic->tag_size))) {
 						DMERR_LIMIT("Checksum failed when reading from journal, at sector 0x%llx",
+<<<<<<< HEAD
 							    logical_sector);
 						dm_audit_log_bio(DM_MSG_PREFIX, "journal-checksum",
 								 bio, logical_sector, 0);
+=======
+							    (unsigned long long)logical_sector);
+>>>>>>> master
 					}
 				}
 #endif
@@ -2297,14 +2313,19 @@ offload_to_thread:
 		 */
 		if (journal_read_pos != NOT_FOUND) {
 			sector_t next_sector;
+<<<<<<< HEAD
 			unsigned int new_pos;
 
 			new_pos = find_journal_node(ic, dio->range.logical_sector, &next_sector);
+=======
+			unsigned new_pos = find_journal_node(ic, dio->range.logical_sector, &next_sector);
+>>>>>>> master
 			if (unlikely(new_pos != journal_read_pos)) {
 				remove_range_unlocked(ic, &dio->range);
 				goto retry;
 			}
 		}
+<<<<<<< HEAD
 	}
 	if (ic->mode == 'J' && likely(dio->op == REQ_OP_DISCARD) && !discard_retried) {
 		sector_t next_sector;
@@ -2322,6 +2343,8 @@ offload_to_thread:
 			discard_retried = true;
 			goto lock_retry;
 		}
+=======
+>>>>>>> master
 	}
 	spin_unlock_irq(&ic->endio_wait.lock);
 
@@ -3553,7 +3576,10 @@ static int calculate_device_limits(struct dm_integrity_c *ic)
 			return -EINVAL;
 	} else {
 		__u64 meta_size = (ic->provided_data_sectors >> ic->sb->log2_sectors_per_block) * ic->tag_size;
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 		meta_size = (meta_size + ((1U << (ic->log2_buffer_sectors + SECTOR_SHIFT)) - 1))
 				>> (ic->log2_buffer_sectors + SECTOR_SHIFT);
 		meta_size <<= ic->log2_buffer_sectors;
@@ -4228,6 +4254,7 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned int argc, char **argv
 				goto bad;
 			}
 			ic->sectors_per_block = val >> SECTOR_SHIFT;
+<<<<<<< HEAD
 		} else if (sscanf(opt_string, "sectors_per_bit:%llu%c", &llval, &dummy) == 1) {
 			log2_sectors_per_bitmap_bit = !llval ? 0 : __ilog2_u64(llval);
 		} else if (sscanf(opt_string, "bitmap_flush_interval:%u%c", &val, &dummy) == 1) {
@@ -4237,6 +4264,8 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned int argc, char **argv
 				goto bad;
 			}
 			ic->bitmap_flush_interval = msecs_to_jiffies(val);
+=======
+>>>>>>> master
 		} else if (!strncmp(opt_string, "internal_hash:", strlen("internal_hash:"))) {
 			r = get_alg_and_key(opt_string, &ic->internal_hash_alg, &ti->error,
 					    "Invalid internal_hash argument");
@@ -4248,7 +4277,11 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned int argc, char **argv
 			if (r)
 				goto bad;
 		} else if (!strncmp(opt_string, "journal_mac:", strlen("journal_mac:"))) {
+<<<<<<< HEAD
 			r = get_alg_and_key(opt_string, &ic->journal_mac_alg, &ti->error,
+=======
+			r = get_alg_and_key(opt_string, &ic->journal_mac_alg,  &ti->error,
+>>>>>>> master
 					    "Invalid journal_mac argument");
 			if (r)
 				goto bad;
@@ -4532,7 +4565,11 @@ try_smaller_buffer:
 	DEBUG_print("	journal_sections %u\n", (unsigned int)le32_to_cpu(ic->sb->journal_sections));
 	DEBUG_print("	journal_entries %u\n", ic->journal_entries);
 	DEBUG_print("	log2_interleave_sectors %d\n", ic->sb->log2_interleave_sectors);
+<<<<<<< HEAD
 	DEBUG_print("	data_device_sectors 0x%llx\n", bdev_nr_sectors(ic->dev->bdev));
+=======
+	DEBUG_print("	data_device_sectors 0x%llx\n", (unsigned long long)ic->data_device_sectors);
+>>>>>>> master
 	DEBUG_print("	initial_sectors 0x%x\n", ic->initial_sectors);
 	DEBUG_print("	metadata_run 0x%x\n", ic->metadata_run);
 	DEBUG_print("	log2_metadata_run %d\n", ic->log2_metadata_run);

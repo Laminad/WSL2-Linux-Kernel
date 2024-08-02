@@ -57,6 +57,11 @@ static inline int arch_futex_atomic_op_inuser(int op, int oparg, int *oval,
 	}
 	user_access_end();
 
+<<<<<<< HEAD
+=======
+	pagefault_enable();
+
+>>>>>>> master
 	*oval = oldval;
 
 	return ret;

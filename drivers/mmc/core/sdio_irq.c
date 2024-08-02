@@ -30,9 +30,34 @@
 static int sdio_get_pending_irqs(struct mmc_host *host, u8 *pending)
 {
 	struct mmc_card *card = host->card;
+<<<<<<< HEAD
 	int ret;
 
 	WARN_ON(!host->claimed);
+=======
+	int i, ret, count;
+	bool sdio_irq_pending = host->sdio_irq_pending;
+	unsigned char pending;
+	struct sdio_func *func;
+
+	/* Don't process SDIO IRQs if the card is suspended. */
+	if (mmc_card_suspended(card))
+		return 0;
+
+	/* Clear the flag to indicate that we have processed the IRQ. */
+	host->sdio_irq_pending = false;
+
+	/*
+	 * Optimization, if there is only 1 function interrupt registered
+	 * and we know an IRQ was signaled then call irq handler directly.
+	 * Otherwise do the full probe.
+	 */
+	func = card->sdio_single_irq;
+	if (func && sdio_irq_pending) {
+		func->irq_handler(func);
+		return 1;
+	}
+>>>>>>> master
 
 	ret = mmc_io_rw_direct(card, 0, 0, SDIO_CCCR_INTx, 0, pending);
 	if (ret) {
@@ -132,7 +157,11 @@ void sdio_irq_work(struct work_struct *work)
 void sdio_signal_irq(struct mmc_host *host)
 {
 	host->sdio_irq_pending = true;
+<<<<<<< HEAD
 	schedule_work(&host->sdio_irq_work);
+=======
+	queue_delayed_work(system_wq, &host->sdio_irq_work, 0);
+>>>>>>> master
 }
 EXPORT_SYMBOL_GPL(sdio_signal_irq);
 

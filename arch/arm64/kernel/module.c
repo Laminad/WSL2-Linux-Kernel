@@ -112,7 +112,13 @@ subsys_initcall(module_init_limits);
 
 void *module_alloc(unsigned long size)
 {
+<<<<<<< HEAD
 	void *p = NULL;
+=======
+	u64 module_alloc_end = module_alloc_base + MODULES_VSIZE;
+	gfp_t gfp_mask = GFP_KERNEL;
+	void *p;
+>>>>>>> master
 
 	/*
 	 * Where possible, prefer to allocate within direct branch range of the
@@ -127,6 +133,7 @@ void *module_alloc(unsigned long size)
 					 __builtin_return_address(0));
 	}
 
+<<<<<<< HEAD
 	if (!p && module_plt_base) {
 		p = __vmalloc_node_range(size, MODULE_ALIGN,
 					 module_plt_base,
@@ -140,6 +147,31 @@ void *module_alloc(unsigned long size)
 		pr_warn_ratelimited("%s: unable to allocate memory\n",
 				    __func__);
 	}
+=======
+	if (IS_ENABLED(CONFIG_KASAN))
+		/* don't exceed the static module region - see below */
+		module_alloc_end = MODULES_END;
+
+	p = __vmalloc_node_range(size, MODULE_ALIGN, module_alloc_base,
+				module_alloc_end, gfp_mask, PAGE_KERNEL_EXEC, 0,
+				NUMA_NO_NODE, __builtin_return_address(0));
+
+	if (!p && IS_ENABLED(CONFIG_ARM64_MODULE_PLTS) &&
+	    !IS_ENABLED(CONFIG_KASAN))
+		/*
+		 * KASAN can only deal with module allocations being served
+		 * from the reserved module region, since the remainder of
+		 * the vmalloc region is already backed by zero shadow pages,
+		 * and punching holes into it is non-trivial. Since the module
+		 * region is not randomized when KASAN is enabled, it is even
+		 * less likely that the module region gets exhausted, so we
+		 * can simply omit this fallback in that case.
+		 */
+		p = __vmalloc_node_range(size, MODULE_ALIGN, module_alloc_base,
+				module_alloc_base + SZ_2G, GFP_KERNEL,
+				PAGE_KERNEL_EXEC, 0, NUMA_NO_NODE,
+				__builtin_return_address(0));
+>>>>>>> master
 
 	if (p && (kasan_alloc_module_shadow(p, size, GFP_KERNEL) < 0)) {
 		vfree(p);

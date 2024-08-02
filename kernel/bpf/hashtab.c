@@ -752,7 +752,11 @@ static void *htab_lru_map_lookup_elem_sys(struct bpf_map *map, void *key)
 	return __htab_lru_map_lookup_elem(map, key, false);
 }
 
+<<<<<<< HEAD
 static int htab_lru_map_gen_lookup(struct bpf_map *map,
+=======
+static u32 htab_lru_map_gen_lookup(struct bpf_map *map,
+>>>>>>> master
 				   struct bpf_insn *insn_buf)
 {
 	struct bpf_insn *insn = insn_buf;
@@ -939,8 +943,11 @@ static void free_htab_elem(struct bpf_htab *htab, struct htab_elem *l)
 	htab_put_fd_value(htab, l);
 
 	if (htab_is_prealloc(htab)) {
+<<<<<<< HEAD
 		bpf_map_dec_elem_count(&htab->map);
 		check_and_free_fields(htab, l);
+=======
+>>>>>>> master
 		__pcpu_freelist_push(&htab->freelist, &l->fnode);
 	} else {
 		dec_elem_count(htab);
@@ -2281,7 +2288,10 @@ const struct bpf_map_ops htab_lru_map_ops = {
 	.map_get_next_key = htab_map_get_next_key,
 	.map_release_uref = htab_map_free_timers,
 	.map_lookup_elem = htab_lru_map_lookup_elem,
+<<<<<<< HEAD
 	.map_lookup_and_delete_elem = htab_lru_map_lookup_and_delete_elem,
+=======
+>>>>>>> master
 	.map_lookup_elem_sys_only = htab_lru_map_lookup_elem_sys,
 	.map_update_elem = htab_lru_map_update_elem,
 	.map_delete_elem = htab_lru_map_delete_elem,

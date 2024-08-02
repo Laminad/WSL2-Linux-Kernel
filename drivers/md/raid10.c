@@ -1233,8 +1233,13 @@ static void raid10_read_request(struct mddev *mddev, struct bio *bio,
 					      gfp, &conf->bio_split);
 		bio_chain(split, bio);
 		allow_barrier(conf);
+<<<<<<< HEAD
 		submit_bio_noacct(bio);
 		wait_barrier(conf, false);
+=======
+		generic_make_request(bio);
+		wait_barrier(conf);
+>>>>>>> master
 		bio = split;
 		r10_bio->master_bio = bio;
 		r10_bio->sectors = max_sectors;
@@ -1545,8 +1550,13 @@ static void raid10_write_request(struct mddev *mddev, struct bio *bio,
 					      GFP_NOIO, &conf->bio_split);
 		bio_chain(split, bio);
 		allow_barrier(conf);
+<<<<<<< HEAD
 		submit_bio_noacct(bio);
 		wait_barrier(conf, false);
+=======
+		generic_make_request(bio);
+		wait_barrier(conf);
+>>>>>>> master
 		bio = split;
 		r10_bio->master_bio = bio;
 	}
@@ -4311,8 +4321,13 @@ static int raid10_run(struct mddev *mddev)
 		clear_bit(MD_RECOVERY_CHECK, &mddev->recovery);
 		set_bit(MD_RECOVERY_RESHAPE, &mddev->recovery);
 		set_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
+<<<<<<< HEAD
 		rcu_assign_pointer(mddev->sync_thread,
 			md_register_thread(md_do_sync, mddev, "reshape"));
+=======
+		mddev->sync_thread = md_register_thread(md_do_sync, mddev,
+							"reshape");
+>>>>>>> master
 		if (!mddev->sync_thread)
 			goto out_free_conf;
 	}
@@ -5027,7 +5042,11 @@ read_more:
 	md_sync_acct_bio(read_bio, r10_bio->sectors);
 	atomic_inc(&r10_bio->remaining);
 	read_bio->bi_next = NULL;
+<<<<<<< HEAD
 	submit_bio_noacct(read_bio);
+=======
+	generic_make_request(read_bio);
+>>>>>>> master
 	sectors_done += nr_sectors;
 	if (sector_nr <= last)
 		goto read_more;

@@ -17,6 +17,11 @@
 #include <linux/string.h>
 #include <linux/zalloc.h>
 
+<<<<<<< HEAD
+=======
+#include "../cache.h"
+#include "../util.h"
+>>>>>>> master
 #include "../auxtrace.h"
 
 #include "intel-pt-insn-decoder.h"
@@ -87,8 +92,11 @@ static inline bool intel_pt_sample_time(enum intel_pt_pkt_state pkt_state)
 	case INTEL_PT_STATE_ERR_RESYNC:
 	case INTEL_PT_STATE_IN_SYNC:
 	case INTEL_PT_STATE_TNT_CONT:
+<<<<<<< HEAD
 	case INTEL_PT_STATE_RESAMPLE:
 	case INTEL_PT_STATE_VM_TIME_CORRELATION:
+=======
+>>>>>>> master
 		return true;
 	case INTEL_PT_STATE_TNT:
 	case INTEL_PT_STATE_TIP:
@@ -1723,7 +1731,12 @@ static int intel_pt_walk_tnt(struct intel_pt_decoder *decoder)
 			decoder->sample_cyc = false;
 			decoder->ip += intel_pt_insn.length;
 			if (!decoder->tnt.count) {
+<<<<<<< HEAD
 				intel_pt_update_sample_time(decoder);
+=======
+				decoder->sample_timestamp = decoder->timestamp;
+				decoder->sample_insn_cnt = decoder->timestamp_insn_cnt;
+>>>>>>> master
 				return -EAGAIN;
 			}
 			decoder->tnt.payload <<= 1;
@@ -1857,7 +1870,10 @@ static int intel_pt_overflow(struct intel_pt_decoder *decoder)
 {
 	intel_pt_log("ERROR: Buffer overflow\n");
 	intel_pt_clear_tx_flags(decoder);
+<<<<<<< HEAD
 	intel_pt_set_nr(decoder);
+=======
+>>>>>>> master
 	decoder->timestamp_insn_cnt = 0;
 	decoder->pkt_state = INTEL_PT_STATE_IN_SYNC;
 	decoder->state.from_ip = decoder->ip;

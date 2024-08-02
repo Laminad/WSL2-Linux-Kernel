@@ -2318,6 +2318,16 @@ static int setup_nodes(struct perf_session *session)
 			return -ENOMEM;
 
 		nodes[node] = set;
+<<<<<<< HEAD
+=======
+
+		/* empty node, skip */
+		if (cpu_map__empty(map))
+			continue;
+
+		for (cpu = 0; cpu < map->nr; cpu++) {
+			set_bit(map->map[cpu], set);
+>>>>>>> master
 
 		/* empty node, skip */
 		if (perf_cpu_map__empty(map))

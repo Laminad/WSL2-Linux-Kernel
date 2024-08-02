@@ -56,7 +56,11 @@ static const struct aspeed_wdt_config ast2600_config = {
 static const struct of_device_id aspeed_wdt_of_table[] = {
 	{ .compatible = "aspeed,ast2400-wdt", .data = &ast2400_config },
 	{ .compatible = "aspeed,ast2500-wdt", .data = &ast2500_config },
+<<<<<<< HEAD
 	{ .compatible = "aspeed,ast2600-wdt", .data = &ast2600_config },
+=======
+	{ .compatible = "aspeed,ast2600-wdt", .data = &ast2500_config },
+>>>>>>> master
 	{ },
 };
 MODULE_DEVICE_TABLE(of, aspeed_wdt_of_table);

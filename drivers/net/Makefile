@@ -48,9 +48,13 @@ obj-$(CONFIG_ARCNET) += arcnet/
 obj-$(CONFIG_DEV_APPLETALK) += appletalk/
 obj-$(CONFIG_CAIF) += caif/
 obj-$(CONFIG_CAN) += can/
+<<<<<<< HEAD
 ifdef CONFIG_NET_DSA
 obj-y += dsa/
 endif
+=======
+obj-y += dsa/
+>>>>>>> master
 obj-$(CONFIG_ETHERNET) += ethernet/
 obj-$(CONFIG_FDDI) += fddi/
 obj-$(CONFIG_HIPPI) += hippi/

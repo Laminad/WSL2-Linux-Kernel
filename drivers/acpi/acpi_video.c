@@ -491,6 +491,7 @@ static const struct dmi_system_id video_dmi_table[] = {
 		DMI_MATCH(DMI_PRODUCT_NAME, "Vostro V131"),
 		},
 	},
+<<<<<<< HEAD
 	{
 	 .callback = video_set_report_key_events,
 	 .driver_data = (void *)((uintptr_t)REPORT_BRIGHTNESS_KEY_EVENTS),
@@ -509,6 +510,8 @@ static const struct dmi_system_id video_dmi_table[] = {
 		DMI_MATCH(DMI_PRODUCT_NAME, "X15 AT 23"),
 		},
 	},
+=======
+>>>>>>> master
 	/*
 	 * Some machines change the brightness themselves when a brightness
 	 * hotkey gets pressed, despite us telling them not to. In this case
@@ -2167,6 +2170,7 @@ static bool dmi_is_desktop(void)
 	case 0x07: /* Tower */
 	case 0x10: /* Lunch Box */
 	case 0x11: /* Main Server Chassis */
+<<<<<<< HEAD
 		return true;
 	}
 
@@ -2192,7 +2196,10 @@ static bool should_check_lcd_flag(void)
 		return true;
 
 	if (acpi_reduced_hardware())
+=======
+>>>>>>> master
 		return true;
+	}
 
 	return false;
 }

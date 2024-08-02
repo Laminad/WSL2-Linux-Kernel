@@ -455,6 +455,10 @@ static int btrfs_initxattrs(struct inode *inode,
 {
 	struct btrfs_trans_handle *trans = fs_private;
 	const struct xattr *xattr;
+<<<<<<< HEAD
+=======
+	struct btrfs_trans_handle *trans = fs_info;
+>>>>>>> master
 	unsigned int nofs_flag;
 	char *name;
 	int err = 0;

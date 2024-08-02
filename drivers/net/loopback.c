@@ -74,7 +74,11 @@ static netdev_tx_t loopback_xmit(struct sk_buff *skb,
 	skb_tx_timestamp(skb);
 
 	/* do not fool net_timestamp_check() with various clock bases */
+<<<<<<< HEAD
 	skb_clear_tstamp(skb);
+=======
+	skb->tstamp = 0;
+>>>>>>> master
 
 	skb_orphan(skb);
 

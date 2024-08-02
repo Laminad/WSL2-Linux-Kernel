@@ -1935,6 +1935,16 @@ static int snd_echo_create(struct snd_card *card,
 		dev_err(chip->card->dev, "ioremap failed\n");
 		return -ENOMEM;
 	}
+<<<<<<< HEAD
+=======
+	chip->dsp_registers = (volatile u32 __iomem *)
+		ioremap_nocache(chip->dsp_registers_phys, sz);
+	if (!chip->dsp_registers) {
+		dev_err(chip->card->dev, "ioremap failed\n");
+		snd_echo_free(chip);
+		return -ENOMEM;
+	}
+>>>>>>> master
 
 	if (request_irq(pci->irq, snd_echo_interrupt, IRQF_SHARED,
 			KBUILD_MODNAME, chip)) {

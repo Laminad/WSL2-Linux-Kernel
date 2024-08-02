@@ -89,6 +89,7 @@ struct mlxsw_core {
 	struct mlxsw_linecards *linecards;
 	struct mlxsw_core_port *ports;
 	unsigned int max_ports;
+<<<<<<< HEAD
 	atomic_t active_ports_count;
 	bool fw_flash_in_progress;
 	struct {
@@ -96,6 +97,11 @@ struct mlxsw_core {
 	} health;
 	struct mlxsw_env *env;
 	unsigned long driver_priv[];
+=======
+	bool reload_fail;
+	bool fw_flash_in_progress;
+	unsigned long driver_priv[0];
+>>>>>>> master
 	/* driver_priv has to be always the last item */
 };
 
@@ -679,6 +685,7 @@ struct mlxsw_reg_trans {
 	struct rcu_head rcu;
 };
 
+<<<<<<< HEAD
 static void mlxsw_emad_process_string_tlv(const struct sk_buff *skb,
 					  struct mlxsw_reg_trans *trans)
 {
@@ -699,6 +706,8 @@ static void mlxsw_emad_process_string_tlv(const struct sk_buff *skb,
 		MLXSW_EMAD_STRING_TLV_STRING_LEN);
 }
 
+=======
+>>>>>>> master
 #define MLXSW_EMAD_TIMEOUT_DURING_FW_FLASH_MS	3000
 #define MLXSW_EMAD_TIMEOUT_MS			200
 
@@ -709,8 +718,12 @@ static void mlxsw_emad_trans_timeout_schedule(struct mlxsw_reg_trans *trans)
 	if (trans->core->fw_flash_in_progress)
 		timeout = msecs_to_jiffies(MLXSW_EMAD_TIMEOUT_DURING_FW_FLASH_MS);
 
+<<<<<<< HEAD
 	queue_delayed_work(trans->core->emad_wq, &trans->timeout_dw,
 			   timeout << trans->retries);
+=======
+	queue_delayed_work(trans->core->emad_wq, &trans->timeout_dw, timeout);
+>>>>>>> master
 }
 
 static int mlxsw_emad_transmit(struct mlxsw_core *mlxsw_core,
@@ -1589,7 +1602,13 @@ mlxsw_devlink_core_bus_device_reload_up(struct devlink *devlink, enum devlink_re
 	err = mlxsw_core_bus_device_register(mlxsw_core->bus_info,
 					     mlxsw_core->bus,
 					     mlxsw_core->bus_priv, true,
+<<<<<<< HEAD
 					     devlink, extack);
+=======
+					     devlink);
+	mlxsw_core->reload_fail = !!err;
+
+>>>>>>> master
 	return err;
 }
 
@@ -2338,10 +2357,14 @@ void mlxsw_core_bus_device_unregister(struct mlxsw_core *mlxsw_core,
 {
 	struct devlink *devlink = priv_to_devlink(mlxsw_core);
 
+<<<<<<< HEAD
 	if (!reload)
 		devl_lock(devlink);
 
 	if (devlink_is_reload_failed(devlink)) {
+=======
+	if (mlxsw_core->reload_fail) {
+>>>>>>> master
 		if (!reload)
 			/* Only the parts that were not de-initialized in the
 			 * failed reload attempt need to be de-initialized.
@@ -2366,20 +2389,28 @@ void mlxsw_core_bus_device_unregister(struct mlxsw_core *mlxsw_core,
 	if (!reload)
 		devl_resources_unregister(devlink);
 	mlxsw_core->bus->fini(mlxsw_core->bus_priv);
+<<<<<<< HEAD
 	mlxsw_core_irq_event_handler_fini(mlxsw_core);
 	if (!reload) {
 		devl_unregister(devlink);
 		devl_unlock(devlink);
 		devlink_free(devlink);
 	}
+=======
+>>>>>>> master
 
 	return;
 
 reload_fail_deinit:
+<<<<<<< HEAD
 	mlxsw_core_params_unregister(mlxsw_core);
 	devl_resources_unregister(devlink);
 	devl_unregister(devlink);
 	devl_unlock(devlink);
+=======
+	devlink_unregister(devlink);
+	devlink_resources_unregister(devlink, NULL);
+>>>>>>> master
 	devlink_free(devlink);
 }
 EXPORT_SYMBOL(mlxsw_core_bus_device_unregister);
@@ -3373,6 +3404,7 @@ int mlxsw_core_kvd_sizes_get(struct mlxsw_core *mlxsw_core,
 }
 EXPORT_SYMBOL(mlxsw_core_kvd_sizes_get);
 
+<<<<<<< HEAD
 int mlxsw_core_resources_query(struct mlxsw_core *mlxsw_core, char *mbox,
 			       struct mlxsw_res *res)
 {
@@ -3436,11 +3468,25 @@ bool mlxsw_core_sdq_supports_cqe_v2(struct mlxsw_core *mlxsw_core)
 	return mlxsw_core->driver->sdq_supports_cqe_v2;
 }
 EXPORT_SYMBOL(mlxsw_core_sdq_supports_cqe_v2);
+=======
+void mlxsw_core_fw_flash_start(struct mlxsw_core *mlxsw_core)
+{
+	mlxsw_core->fw_flash_in_progress = true;
+}
+EXPORT_SYMBOL(mlxsw_core_fw_flash_start);
+
+void mlxsw_core_fw_flash_end(struct mlxsw_core *mlxsw_core)
+{
+	mlxsw_core->fw_flash_in_progress = false;
+}
+EXPORT_SYMBOL(mlxsw_core_fw_flash_end);
+>>>>>>> master
 
 static int __init mlxsw_core_module_init(void)
 {
 	int err;
 
+<<<<<<< HEAD
 	err = mlxsw_linecard_driver_register();
 	if (err)
 		return err;
@@ -3450,6 +3496,11 @@ static int __init mlxsw_core_module_init(void)
 		err = -ENOMEM;
 		goto err_alloc_workqueue;
 	}
+=======
+	mlxsw_wq = alloc_workqueue(mlxsw_core_driver_name, 0, 0);
+	if (!mlxsw_wq)
+		return -ENOMEM;
+>>>>>>> master
 	mlxsw_owq = alloc_ordered_workqueue("%s_ordered", 0,
 					    mlxsw_core_driver_name);
 	if (!mlxsw_owq) {

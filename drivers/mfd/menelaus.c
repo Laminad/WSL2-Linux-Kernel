@@ -1119,7 +1119,11 @@ static inline void menelaus_rtc_init(struct menelaus_chip *m)
 		menelaus_write_reg(MENELAUS_RTC_CTRL, m->rtc_control);
 	}
 
+<<<<<<< HEAD
 	err = devm_rtc_register_device(m->rtc);
+=======
+	err = rtc_register_device(m->rtc);
+>>>>>>> master
 	if (err) {
 		if (alarm) {
 			menelaus_remove_irq_work(MENELAUS_RTCALM_IRQ);

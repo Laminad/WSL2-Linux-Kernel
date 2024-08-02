@@ -287,6 +287,7 @@ static ssize_t config_show(struct device *dev,
 			dev_name(dev));
 
 	if (test_fw_config->name)
+<<<<<<< HEAD
 		len += scnprintf(buf + len, PAGE_SIZE - len,
 				"name:\t%s\n",
 				test_fw_config->name);
@@ -316,6 +317,27 @@ static ssize_t config_show(struct device *dev,
 			"sync_direct:\t\t%s\n",
 			test_fw_config->sync_direct ? "true" : "false");
 	len += scnprintf(buf + len, PAGE_SIZE - len,
+=======
+		len += scnprintf(buf+len, PAGE_SIZE - len,
+				"name:\t%s\n",
+				test_fw_config->name);
+	else
+		len += scnprintf(buf+len, PAGE_SIZE - len,
+				"name:\tEMTPY\n");
+
+	len += scnprintf(buf+len, PAGE_SIZE - len,
+			"num_requests:\t%u\n", test_fw_config->num_requests);
+
+	len += scnprintf(buf+len, PAGE_SIZE - len,
+			"send_uevent:\t\t%s\n",
+			test_fw_config->send_uevent ?
+			"FW_ACTION_HOTPLUG" :
+			"FW_ACTION_NOHOTPLUG");
+	len += scnprintf(buf+len, PAGE_SIZE - len,
+			"sync_direct:\t\t%s\n",
+			test_fw_config->sync_direct ? "true" : "false");
+	len += scnprintf(buf+len, PAGE_SIZE - len,
+>>>>>>> master
 			"read_fw_idx:\t%u\n", test_fw_config->read_fw_idx);
 	if (test_fw_config->upload_name)
 		len += scnprintf(buf + len, PAGE_SIZE - len,

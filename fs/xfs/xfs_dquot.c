@@ -376,6 +376,7 @@ xfs_dquot_disk_alloc(
 	 * is responsible for unlocking any buffer passed back, either
 	 * manually or by committing the transaction.  On error, the buffer is
 	 * released and not passed back.
+<<<<<<< HEAD
 	 *
 	 * Keep the quota inode ILOCKed until after the transaction commit to
 	 * maintain the atomicity of bmap/rmap updates.
@@ -383,8 +384,14 @@ xfs_dquot_disk_alloc(
 	xfs_trans_bhold(tp, bp);
 	error = xfs_trans_commit(tp);
 	xfs_iunlock(quotip, XFS_ILOCK_EXCL);
+=======
+	 */
+	xfs_trans_bhold(tp, bp);
+	error = xfs_defer_finish(tpp);
+>>>>>>> master
 	if (error) {
-		xfs_buf_relse(bp);
+		xfs_trans_bhold_release(*tpp, bp);
+		xfs_trans_brelse(*tpp, bp);
 		return error;
 	}
 
@@ -613,12 +620,17 @@ xfs_dquot_to_disk(
 	struct xfs_disk_dquot	*ddqp,
 	struct xfs_dquot	*dqp)
 {
+<<<<<<< HEAD
 	ddqp->d_magic = cpu_to_be16(XFS_DQUOT_MAGIC);
 	ddqp->d_version = XFS_DQUOT_VERSION;
 	ddqp->d_type = dqp->q_type;
 	ddqp->d_id = cpu_to_be32(dqp->q_id);
 	ddqp->d_pad0 = 0;
 	ddqp->d_pad = 0;
+=======
+	struct xfs_trans	*tp;
+	int			error;
+>>>>>>> master
 
 	ddqp->d_blk_hardlimit = cpu_to_be64(dqp->q_blk.hardlimit);
 	ddqp->d_blk_softlimit = cpu_to_be64(dqp->q_blk.softlimit);
@@ -627,6 +639,7 @@ xfs_dquot_to_disk(
 	ddqp->d_rtb_hardlimit = cpu_to_be64(dqp->q_rtb.hardlimit);
 	ddqp->d_rtb_softlimit = cpu_to_be64(dqp->q_rtb.softlimit);
 
+<<<<<<< HEAD
 	ddqp->d_bcount = cpu_to_be64(dqp->q_blk.count);
 	ddqp->d_icount = cpu_to_be64(dqp->q_ino.count);
 	ddqp->d_rtbcount = cpu_to_be64(dqp->q_rtb.count);
@@ -634,6 +647,23 @@ xfs_dquot_to_disk(
 	ddqp->d_bwarns = 0;
 	ddqp->d_iwarns = 0;
 	ddqp->d_rtbwarns = 0;
+=======
+	error = xfs_dquot_disk_alloc(&tp, dqp, bpp);
+	if (error)
+		goto err_cancel;
+
+	error = xfs_trans_commit(tp);
+	if (error) {
+		/*
+		 * Buffer was held to the transaction, so we have to unlock it
+		 * manually here because we're not passing it back.
+		 */
+		xfs_buf_relse(*bpp);
+		*bpp = NULL;
+		goto err;
+	}
+	return 0;
+>>>>>>> master
 
 	ddqp->d_btimer = xfs_dquot_to_disk_ts(dqp, dqp->q_blk.timer);
 	ddqp->d_itimer = xfs_dquot_to_disk_ts(dqp, dqp->q_ino.timer);

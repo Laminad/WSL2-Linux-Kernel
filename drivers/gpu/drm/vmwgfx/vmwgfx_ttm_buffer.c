@@ -220,6 +220,7 @@ static int vmw_ttm_map_dma(struct vmw_ttm_tt *vmw_tt)
 	switch (dev_priv->map_mode) {
 	case vmw_dma_map_bind:
 	case vmw_dma_map_populate:
+<<<<<<< HEAD
 		if (vmw_tt->dma_ttm.page_flags  & TTM_TT_FLAG_EXTERNAL) {
 			vsgt->sgt = vmw_tt->dma_ttm.sg;
 		} else {
@@ -231,6 +232,32 @@ static int vmw_ttm_map_dma(struct vmw_ttm_tt *vmw_tt)
 				GFP_KERNEL);
 			if (ret)
 				goto out_sg_alloc_fail;
+=======
+		if (unlikely(!sgl_size)) {
+			sgl_size = ttm_round_pot(sizeof(struct scatterlist));
+			sgt_size = ttm_round_pot(sizeof(struct sg_table));
+		}
+		vmw_tt->sg_alloc_size = sgt_size + sgl_size * vsgt->num_pages;
+		ret = ttm_mem_global_alloc(glob, vmw_tt->sg_alloc_size, &ctx);
+		if (unlikely(ret != 0))
+			return ret;
+
+		ret = __sg_alloc_table_from_pages
+			(&vmw_tt->sgt, vsgt->pages, vsgt->num_pages, 0,
+			 (unsigned long) vsgt->num_pages << PAGE_SHIFT,
+			 dma_get_max_seg_size(dev_priv->dev->dev),
+			 GFP_KERNEL);
+		if (unlikely(ret != 0))
+			goto out_sg_alloc_fail;
+
+		if (vsgt->num_pages > vmw_tt->sgt.nents) {
+			uint64_t over_alloc =
+				sgl_size * (vsgt->num_pages -
+					    vmw_tt->sgt.nents);
+
+			ttm_mem_global_free(glob, over_alloc);
+			vmw_tt->sg_alloc_size -= over_alloc;
+>>>>>>> master
 		}
 
 		ret = vmw_ttm_map_for_dma(vmw_tt);

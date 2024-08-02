@@ -21,7 +21,11 @@ static void default_threshold_interrupt(void)
 
 void (*mce_threshold_vector)(void) = default_threshold_interrupt;
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/mce/threshold.c
 DEFINE_IDTENTRY_SYSVEC(sysvec_threshold)
+=======
+asmlinkage __visible void __irq_entry smp_threshold_interrupt(struct pt_regs *regs)
+>>>>>>> master:arch/x86/kernel/cpu/mcheck/threshold.c
 {
 	trace_threshold_apic_entry(THRESHOLD_APIC_VECTOR);
 	inc_irq_stat(irq_threshold_count);

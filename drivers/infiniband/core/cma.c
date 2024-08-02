@@ -2033,8 +2033,19 @@ static void _destroy_id(struct rdma_id_private *id_priv,
 {
 	cma_cancel_operation(id_priv, state);
 
+<<<<<<< HEAD
 	rdma_restrack_del(&id_priv->res);
 	cma_remove_id_from_tree(id_priv);
+=======
+	/*
+	 * Wait for any active callback to finish.  New callbacks will find
+	 * the id_priv state set to destroying and abort.
+	 */
+	mutex_lock(&id_priv->handler_mutex);
+	mutex_unlock(&id_priv->handler_mutex);
+
+	rdma_restrack_del(&id_priv->res);
+>>>>>>> master
 	if (id_priv->cma_dev) {
 		if (rdma_cap_ib_cm(id_priv->id.device, 1)) {
 			if (id_priv->cm_id.ib)
@@ -2615,8 +2626,16 @@ static int iw_conn_req_handler(struct iw_cm_id *cm_id,
 	if (ret) {
 		/* User wants to destroy the CM ID */
 		conn_id->cm_id.iw = NULL;
+<<<<<<< HEAD
 		mutex_unlock(&listen_id->handler_mutex);
 		destroy_id_handler_unlock(conn_id);
+=======
+		cma_exch(conn_id, RDMA_CM_DESTROYING);
+		mutex_unlock(&conn_id->handler_mutex);
+		mutex_unlock(&listen_id->handler_mutex);
+		cma_deref_id(conn_id);
+		rdma_destroy_id(&conn_id->id);
+>>>>>>> master
 		return ret;
 	}
 
@@ -4027,6 +4046,10 @@ static int rdma_bind_addr_dst(struct rdma_id_private *id_priv,
 		rdma_restrack_add(&id_priv->res);
 	return 0;
 err2:
+<<<<<<< HEAD
+=======
+	rdma_restrack_del(&id_priv->res);
+>>>>>>> master
 	if (id_priv->cma_dev)
 		cma_release_dev(id_priv);
 err1:

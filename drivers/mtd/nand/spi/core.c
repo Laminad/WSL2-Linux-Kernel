@@ -421,11 +421,20 @@ static int spinand_write_to_cache_op(struct spinand_device *spinand,
 				     const struct nand_page_io_req *req)
 {
 	struct nand_device *nand = spinand_to_nand(spinand);
+<<<<<<< HEAD
 	struct mtd_info *mtd = spinand_to_mtd(spinand);
 	struct spi_mem_dirmap_desc *wdesc;
 	unsigned int nbytes, column = 0;
 	void *buf = spinand->databuf;
 	ssize_t ret;
+=======
+	struct mtd_info *mtd = nanddev_to_mtd(nand);
+	struct nand_page_io_req adjreq = *req;
+	void *buf = spinand->databuf;
+	unsigned int nbytes;
+	u16 column = 0;
+	int ret;
+>>>>>>> master
 
 	/*
 	 * Looks like PROGRAM LOAD (AKA write cache) does not necessarily reset
@@ -433,12 +442,24 @@ static int spinand_write_to_cache_op(struct spinand_device *spinand,
 	 * must fill the page cache entirely even if we only want to program
 	 * the data portion of the page, otherwise we might corrupt the BBM or
 	 * user data previously programmed in OOB area.
+<<<<<<< HEAD
 	 *
 	 * Only reset the data buffer manually, the OOB buffer is prepared by
 	 * ECC engines ->prepare_io_req() callback.
 	 */
 	nbytes = nanddev_page_size(nand) + nanddev_per_page_oobsize(nand);
 	memset(spinand->databuf, 0xff, nanddev_page_size(nand));
+=======
+	 */
+	nbytes = nanddev_page_size(nand) + nanddev_per_page_oobsize(nand);
+	memset(spinand->databuf, 0xff, nbytes);
+	adjreq.dataoffs = 0;
+	adjreq.datalen = nanddev_page_size(nand);
+	adjreq.databuf.out = spinand->databuf;
+	adjreq.ooblen = nanddev_per_page_oobsize(nand);
+	adjreq.ooboffs = 0;
+	adjreq.oobbuf.out = spinand->oobbuf;
+>>>>>>> master
 
 	if (req->datalen)
 		memcpy(spinand->databuf + req->dataoffs, req->databuf.out,
@@ -468,9 +489,26 @@ static int spinand_write_to_cache_op(struct spinand_device *spinand,
 		if (!ret || ret > nbytes)
 			return -EIO;
 
+<<<<<<< HEAD
 		nbytes -= ret;
 		column += ret;
 		buf += ret;
+=======
+		buf += op.data.nbytes;
+		nbytes -= op.data.nbytes;
+		op.addr.val += op.data.nbytes;
+
+		/*
+		 * We need to use the RANDOM LOAD CACHE operation if there's
+		 * more than one iteration, because the LOAD operation might
+		 * reset the cache to 0xff.
+		 */
+		if (nbytes) {
+			column = op.addr.val;
+			op = *spinand->op_templates.update_cache;
+			op.addr.val = column;
+		}
+>>>>>>> master
 	}
 
 	return 0;
@@ -663,7 +701,13 @@ static int spinand_mtd_read(struct mtd_info *mtd, loff_t from,
 
 		if (ret == -EBADMSG)
 			ecc_failed = true;
+<<<<<<< HEAD
 		else
+=======
+			mtd->ecc_stats.failed++;
+		} else {
+			mtd->ecc_stats.corrected += ret;
+>>>>>>> master
 			max_bitflips = max_t(unsigned int, max_bitflips, ret);
 
 		ret = 0;
@@ -1253,6 +1297,32 @@ static int spinand_init(struct spinand_device *spinand)
 	if (ret)
 		goto err_free_bufs;
 
+<<<<<<< HEAD
+=======
+	ret = spinand_upd_cfg(spinand, CFG_OTP_ENABLE, 0);
+	if (ret)
+		goto err_free_bufs;
+
+	ret = spinand_manufacturer_init(spinand);
+	if (ret) {
+		dev_err(dev,
+			"Failed to initialize the SPI NAND chip (err = %d)\n",
+			ret);
+		goto err_free_bufs;
+	}
+
+	/* After power up, all blocks are locked, so unlock them here. */
+	for (i = 0; i < nand->memorg.ntargets; i++) {
+		ret = spinand_select_target(spinand, i);
+		if (ret)
+			goto err_manuf_cleanup;
+
+		ret = spinand_lock_block(spinand, BL_ALL_UNLOCKED);
+		if (ret)
+			goto err_manuf_cleanup;
+	}
+
+>>>>>>> master
 	ret = nanddev_init(nand, &spinand_ops, THIS_MODULE);
 	if (ret)
 		goto err_manuf_cleanup;

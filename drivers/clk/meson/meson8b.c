@@ -310,7 +310,10 @@ static struct clk_regmap meson8b_sys_pll = {
 			&meson8b_sys_pll_dco.hw
 		},
 		.num_parents = 1,
+<<<<<<< HEAD
 		.flags = CLK_SET_RATE_PARENT,
+=======
+>>>>>>> master
 	},
 };
 
@@ -755,6 +758,7 @@ static struct clk_regmap meson8b_cpu_scale_out_sel = {
 	},
 	.hw.init = &(struct clk_init_data){
 		.name = "cpu_scale_out_sel",
+<<<<<<< HEAD
 		.ops = &clk_regmap_mux_ops,
 		/*
 		 * NOTE: We are skipping the parent with value 0x2 (which is
@@ -767,6 +771,18 @@ static struct clk_regmap meson8b_cpu_scale_out_sel = {
 			&meson8b_cpu_in_div2.hw,
 			&meson8b_cpu_scale_div.hw,
 		},
+=======
+		.ops = &clk_regmap_mux_ro_ops,
+		/*
+		 * NOTE: We are skipping the parent with value 0x2 (which is
+		 * "cpu_div3") because it results in a duty cycle of 33% which
+		 * makes the system unstable and can result in a lockup of the
+		 * whole system.
+		 */
+		.parent_names = (const char *[]) { "cpu_in_sel",
+						   "cpu_div2",
+						   "cpu_scale_div" },
+>>>>>>> master
 		.num_parents = 3,
 		.flags = CLK_SET_RATE_PARENT,
 	},

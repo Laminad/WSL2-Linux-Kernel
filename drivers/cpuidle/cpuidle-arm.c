@@ -106,6 +106,7 @@ static int __init arm_idle_init_cpu(int cpu)
 	ret = arm_cpuidle_init(cpu);
 
 	/*
+<<<<<<< HEAD
 	 * Allow the initialization to continue for other CPUs, if the
 	 * reported failure is a HW misconfiguration/breakage (-ENXIO).
 	 *
@@ -119,6 +120,22 @@ static int __init arm_idle_init_cpu(int cpu)
 			pr_err("CPU %d failed to init idle CPU ops\n", cpu);
 		ret = ret == -ENXIO ? 0 : ret;
 		goto out_kfree_drv;
+=======
+	 * Allow the initialization to continue for other CPUs, if the reported
+	 * failure is a HW misconfiguration/breakage (-ENXIO).
+	 */
+	if (ret) {
+		pr_err("CPU %d failed to init idle CPU ops\n", cpu);
+		ret = ret == -ENXIO ? 0 : ret;
+		goto out_kfree_drv;
+	}
+
+	ret = cpuidle_register_driver(drv);
+	if (ret) {
+		if (ret != -EBUSY)
+			pr_err("Failed to register cpuidle driver\n");
+		goto out_kfree_drv;
+>>>>>>> master
 	}
 
 	ret = cpuidle_register(drv, NULL);

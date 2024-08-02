@@ -329,11 +329,15 @@ static void read_midi_messages(struct amdtp_stream *s, __be32 *buffer,
 	int f;
 
 	for (f = 0; f < frames; f++) {
+<<<<<<< HEAD
 		unsigned int port = f;
 
 		if (!(s->flags & CIP_UNALIGHED_DBC))
 			port += data_block_counter;
 		port %= 8;
+=======
+		port = (8 - s->tx_first_dbc + s->data_block_counter + f) % 8;
+>>>>>>> master
 		b = (u8 *)&buffer[p->midi_position];
 
 		len = b[0] - 0x80;

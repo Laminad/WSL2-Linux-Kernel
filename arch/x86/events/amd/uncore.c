@@ -240,6 +240,23 @@ static int amd_uncore_event_init(struct perf_event *event)
 
 	if (event->cpu < 0)
 		return -EINVAL;
+<<<<<<< HEAD
+=======
+
+	/*
+	 * SliceMask and ThreadMask need to be set for certain L3 events in
+	 * Family 17h. For other events, the two fields do not affect the count.
+	 */
+	if (l3_mask && is_llc_event(event)) {
+		int thread = 2 * (cpu_data(event->cpu).cpu_core_id % 4);
+
+		if (smp_num_siblings > 1)
+			thread += cpu_data(event->cpu).apicid & 1;
+
+		hwc->config |= (1ULL << (AMD64_L3_THREAD_SHIFT + thread) &
+				AMD64_L3_THREAD_MASK) | AMD64_L3_SLICE_MASK;
+	}
+>>>>>>> master
 
 	/*
 	 * SliceMask and ThreadMask need to be set for certain L3 events.

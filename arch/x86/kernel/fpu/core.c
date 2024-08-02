@@ -85,11 +85,15 @@ bool irq_fpu_usable(void)
 }
 EXPORT_SYMBOL(irq_fpu_usable);
 
+<<<<<<< HEAD
 /*
  * Track AVX512 state use because it is known to slow the max clock
  * speed of the core.
  */
 static void update_avx_timestamp(struct fpu *fpu)
+=======
+static void __kernel_fpu_begin(void)
+>>>>>>> master
 {
 
 #define AVX512_TRACKING_MASK	(XFEATURE_MASK_ZMM_Hi256 | XFEATURE_MASK_Hi16_ZMM)
@@ -187,7 +191,11 @@ void restore_fpregs_from_fpstate(struct fpstate *fpstate, u64 mask)
 	}
 }
 
+<<<<<<< HEAD
 void fpu_reset_from_exception_fixup(void)
+=======
+static void __kernel_fpu_end(void)
+>>>>>>> master
 {
 	restore_fpregs_from_fpstate(&init_fpstate, XFEATURE_MASK_FPSTATE);
 }

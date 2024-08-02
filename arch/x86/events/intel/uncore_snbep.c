@@ -1374,6 +1374,7 @@ static struct pci_driver snbep_uncore_pci_driver = {
 
 #define NODE_ID_MASK	0x7
 
+<<<<<<< HEAD
 /* Each three bits from 0 to 23 of GIDNIDMAP register correspond Node ID. */
 #define GIDNIDMAP(config, id)	(((config) >> (3 * (id))) & 0x7)
 
@@ -1396,6 +1397,8 @@ err:
 	return ret;
 }
 
+=======
+>>>>>>> master
 /*
  * build pci bus to socket mapping
  */
@@ -1413,6 +1416,28 @@ static int snbep_pci2phy_map_init(int devid, int nodeid_loc, int idmap_loc, bool
 		if (!ubox_dev)
 			break;
 		bus = ubox_dev->bus->number;
+<<<<<<< HEAD
+=======
+		/* get the Node ID of the local register */
+		err = pci_read_config_dword(ubox_dev, nodeid_loc, &config);
+		if (err)
+			break;
+		nodeid = config & NODE_ID_MASK;
+		/* get the Node ID mapping */
+		err = pci_read_config_dword(ubox_dev, idmap_loc, &config);
+		if (err)
+			break;
+
+		segment = pci_domain_nr(ubox_dev->bus);
+		raw_spin_lock(&pci2phy_map_lock);
+		map = __find_pci2phy_map(segment);
+		if (!map) {
+			raw_spin_unlock(&pci2phy_map_lock);
+			err = -ENOMEM;
+			break;
+		}
+
+>>>>>>> master
 		/*
 		 * The nodeid and idmap registers only contain enough
 		 * information to handle 8 nodes.  On systems with more

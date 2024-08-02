@@ -58,11 +58,19 @@ static int altr_a10sr_gpio_direction_input(struct gpio_chip *gc,
 static int altr_a10sr_gpio_direction_output(struct gpio_chip *gc,
 					    unsigned int nr, int value)
 {
+<<<<<<< HEAD
 	if (nr > (ALTR_A10SR_OUT_VALID_RANGE_HI - ALTR_A10SR_LED_VALID_SHIFT))
 		return -EINVAL;
 
 	altr_a10sr_gpio_set(gc, nr, value);
 	return 0;
+=======
+	if (nr <= (ALTR_A10SR_OUT_VALID_RANGE_HI - ALTR_A10SR_LED_VALID_SHIFT)) {
+		altr_a10sr_gpio_set(gc, nr, value);
+		return 0;
+	}
+	return -EINVAL;
+>>>>>>> master
 }
 
 static const struct gpio_chip altr_a10sr_gc = {

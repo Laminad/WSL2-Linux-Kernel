@@ -295,16 +295,25 @@ int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
 
 	/*
 	 * Detach src's sve_state (if any) from dst so that it does not
+<<<<<<< HEAD
 	 * get erroneously used or freed prematurely.  dst's copies
 	 * will be allocated on demand later on if dst uses SVE.
 	 * For consistency, also clear TIF_SVE here: this could be done
 	 * later in copy_process(), but to avoid tripping up future
 	 * maintainers it is best not to leave TIF flags and buffers in
+=======
+	 * get erroneously used or freed prematurely.  dst's sve_state
+	 * will be allocated on demand later on if dst uses SVE.
+	 * For consistency, also clear TIF_SVE here: this could be done
+	 * later in copy_process(), but to avoid tripping up future
+	 * maintainers it is best not to leave TIF_SVE and sve_state in
+>>>>>>> master
 	 * an inconsistent state, even temporarily.
 	 */
 	dst->thread.sve_state = NULL;
 	clear_tsk_thread_flag(dst, TIF_SVE);
 
+<<<<<<< HEAD
 	/*
 	 * In the unlikely event that we create a new thread with ZA
 	 * enabled we should retain the ZA and ZT state so duplicate
@@ -337,6 +346,8 @@ int arch_dup_task_struct(struct task_struct *dst, struct task_struct *src)
 	/* clear any pending asynchronous tag fault raised by the parent */
 	clear_tsk_thread_flag(dst, TIF_MTE_ASYNC_FAULT);
 
+=======
+>>>>>>> master
 	return 0;
 }
 
@@ -398,10 +409,23 @@ int copy_thread(struct task_struct *p, const struct kernel_clone_args *args)
 		 * be initialized by start_thread() or start_compat_thread().
 		 */
 		memset(childregs, 0, sizeof(struct pt_regs));
+<<<<<<< HEAD
 		childregs->pstate = PSR_MODE_EL1h | PSR_IL_BIT;
 
 		p->thread.cpu_context.x19 = (unsigned long)args->fn;
 		p->thread.cpu_context.x20 = (unsigned long)args->fn_arg;
+=======
+		childregs->pstate = PSR_MODE_EL1h;
+		if (IS_ENABLED(CONFIG_ARM64_UAO) &&
+		    cpus_have_const_cap(ARM64_HAS_UAO))
+			childregs->pstate |= PSR_UAO_BIT;
+
+		if (arm64_get_ssbd_state() == ARM64_SSBD_FORCE_DISABLE)
+			set_ssbs_bit(childregs);
+
+		p->thread.cpu_context.x19 = stack_start;
+		p->thread.cpu_context.x20 = stk_sz;
+>>>>>>> master
 	}
 	p->thread.cpu_context.pc = (unsigned long)ret_from_fork;
 	p->thread.cpu_context.sp = (unsigned long)childregs;
@@ -458,6 +482,32 @@ static void ssbs_thread_switch(struct task_struct *next)
 		return;
 
 	spectre_v4_enable_task_mitigation(next);
+}
+
+/*
+ * Force SSBS state on context-switch, since it may be lost after migrating
+ * from a CPU which treats the bit as RES0 in a heterogeneous system.
+ */
+static void ssbs_thread_switch(struct task_struct *next)
+{
+	struct pt_regs *regs = task_pt_regs(next);
+
+	/*
+	 * Nothing to do for kernel threads, but 'regs' may be junk
+	 * (e.g. idle task) so check the flags and bail early.
+	 */
+	if (unlikely(next->flags & PF_KTHREAD))
+		return;
+
+	/* If the mitigation is enabled, then we leave SSBS clear. */
+	if ((arm64_get_ssbd_state() == ARM64_SSBD_FORCE_ENABLE) ||
+	    test_tsk_thread_flag(next, TIF_SSBD))
+		return;
+
+	if (compat_user_mode(regs))
+		set_compat_ssbs_bit(regs);
+	else if (user_mode(regs))
+		set_ssbs_bit(regs);
 }
 
 /*
@@ -530,9 +580,14 @@ struct task_struct *__switch_to(struct task_struct *prev,
 	hw_breakpoint_thread_switch(next);
 	contextidr_thread_switch(next);
 	entry_task_switch(next);
+<<<<<<< HEAD
 	ssbs_thread_switch(next);
 	erratum_1418040_thread_switch(next);
 	ptrauth_thread_switch_user(next);
+=======
+	uao_thread_switch(next);
+	ssbs_thread_switch(next);
+>>>>>>> master
 
 	/*
 	 * Complete any pending TLB or cache maintenance on this CPU in case

@@ -30,7 +30,24 @@ DECLARE_INIT_PER_CPU(irq_stack_backing_store);
 
 #ifdef CONFIG_VMAP_STACK
 /*
+<<<<<<< HEAD
  * VMAP the backing store with guard pages
+=======
+ * Probabilistic stack overflow check:
+ *
+ * Regular device interrupts can enter on the following stacks:
+ *
+ * - User stack
+ *
+ * - Kernel task stack
+ *
+ * - Interrupt stack if a device driver reenables interrupts
+ *   which should only happen in really old drivers.
+ *
+ * - Debug IST stack
+ *
+ * All other contexts are invalid.
+>>>>>>> master
  */
 static int map_irq_stack(unsigned int cpu)
 {
@@ -49,6 +66,7 @@ static int map_irq_stack(unsigned int cpu)
 	if (!va)
 		return -ENOMEM;
 
+<<<<<<< HEAD
 	/* Store actual TOS to avoid adjustment in the hotpath */
 	per_cpu(pcpu_hot.hardirq_stack_ptr, cpu) = va + IRQ_STACK_SIZE - 8;
 	return 0;
@@ -61,6 +79,13 @@ static int map_irq_stack(unsigned int cpu)
 static int map_irq_stack(unsigned int cpu)
 {
 	void *va = per_cpu_ptr(&irq_stack_backing_store, cpu);
+=======
+	oist = this_cpu_ptr(&orig_ist);
+	estack_bottom = (u64)oist->ist[DEBUG_STACK];
+	estack_top = estack_bottom - DEBUG_STKSZ + STACK_TOP_MARGIN;
+	if (regs->sp >= estack_top && regs->sp <= estack_bottom)
+		return;
+>>>>>>> master
 
 	/* Store actual TOS to avoid adjustment in the hotpath */
 	per_cpu(pcpu_hot.hardirq_stack_ptr, cpu) = va + IRQ_STACK_SIZE - 8;

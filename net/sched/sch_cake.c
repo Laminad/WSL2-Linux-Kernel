@@ -1556,6 +1556,7 @@ static unsigned int cake_drop(struct Qdisc *sch, struct sk_buff **to_free)
 	return idx + (tin << 16);
 }
 
+<<<<<<< HEAD
 static u8 cake_handle_diffserv(struct sk_buff *skb, bool wash)
 {
 	const int offset = skb_network_offset(skb);
@@ -1578,12 +1579,29 @@ static u8 cake_handle_diffserv(struct sk_buff *skb, bool wash)
 			    skb_try_make_writable(skb, wlen))
 				return 0;
 
+=======
+static u8 cake_handle_diffserv(struct sk_buff *skb, u16 wash)
+{
+	int wlen = skb_network_offset(skb);
+	u8 dscp;
+
+	switch (tc_skb_protocol(skb)) {
+	case htons(ETH_P_IP):
+		wlen += sizeof(struct iphdr);
+		if (!pskb_may_pull(skb, wlen) ||
+		    skb_try_make_writable(skb, wlen))
+			return 0;
+
+		dscp = ipv4_get_dsfield(ip_hdr(skb)) >> 2;
+		if (wash && dscp)
+>>>>>>> master
 			ipv4_change_dsfield(ip_hdr(skb), INET_ECN_MASK, 0);
 		}
 
 		return dscp;
 
 	case htons(ETH_P_IPV6):
+<<<<<<< HEAD
 		buf = skb_header_pointer(skb, offset, sizeof(buf_), &buf_);
 		if (unlikely(!buf))
 			return 0;
@@ -1598,6 +1616,15 @@ static u8 cake_handle_diffserv(struct sk_buff *skb, bool wash)
 			    skb_try_make_writable(skb, wlen))
 				return 0;
 
+=======
+		wlen += sizeof(struct ipv6hdr);
+		if (!pskb_may_pull(skb, wlen) ||
+		    skb_try_make_writable(skb, wlen))
+			return 0;
+
+		dscp = ipv6_get_dsfield(ipv6_hdr(skb)) >> 2;
+		if (wash && dscp)
+>>>>>>> master
 			ipv6_change_dsfield(ipv6_hdr(skb), INET_ECN_MASK, 0);
 		}
 
@@ -1616,6 +1643,7 @@ static struct cake_tin_data *cake_select_tin(struct Qdisc *sch,
 					     struct sk_buff *skb)
 {
 	struct cake_sched_data *q = qdisc_priv(sch);
+<<<<<<< HEAD
 	u32 tin, mark;
 	bool wash;
 	u8 dscp;
@@ -1628,21 +1656,37 @@ static struct cake_tin_data *cake_select_tin(struct Qdisc *sch,
 	wash = !!(q->rate_flags & CAKE_FLAG_WASH);
 	if (wash)
 		dscp = cake_handle_diffserv(skb, wash);
+=======
+	u32 tin;
+	u8 dscp;
+
+	/* Tin selection: Default to diffserv-based selection, allow overriding
+	 * using firewall marks or skb->priority.
+	 */
+	dscp = cake_handle_diffserv(skb,
+				    q->rate_flags & CAKE_FLAG_WASH);
+>>>>>>> master
 
 	if (q->tin_mode == CAKE_DIFFSERV_BESTEFFORT)
 		tin = 0;
 
+<<<<<<< HEAD
 	else if (mark && mark <= q->tin_cnt)
 		tin = q->tin_order[mark - 1];
 
+=======
+>>>>>>> master
 	else if (TC_H_MAJ(skb->priority) == sch->handle &&
 		 TC_H_MIN(skb->priority) > 0 &&
 		 TC_H_MIN(skb->priority) <= q->tin_cnt)
 		tin = q->tin_order[TC_H_MIN(skb->priority) - 1];
 
 	else {
+<<<<<<< HEAD
 		if (!wash)
 			dscp = cake_handle_diffserv(skb, wash);
+=======
+>>>>>>> master
 		tin = q->tin_index[dscp];
 
 		if (unlikely(tin >= q->tin_cnt))

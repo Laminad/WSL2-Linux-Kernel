@@ -1328,12 +1328,17 @@ static int davinci_mcasp_hw_rule_slot_width(struct snd_pcm_hw_params *params,
 	struct davinci_mcasp_ruledata *rd = rule->private;
 	struct snd_mask *fmt = hw_param_mask(params, SNDRV_PCM_HW_PARAM_FORMAT);
 	struct snd_mask nfmt;
+<<<<<<< HEAD:sound/soc/ti/davinci-mcasp.c
 	int slot_width;
 	snd_pcm_format_t i;
+=======
+	int i, slot_width;
+>>>>>>> master:sound/soc/davinci/davinci-mcasp.c
 
 	snd_mask_none(&nfmt);
 	slot_width = rd->mcasp->slot_width;
 
+<<<<<<< HEAD:sound/soc/ti/davinci-mcasp.c
 	pcm_for_each_format(i) {
 		if (snd_mask_test_format(fmt, i)) {
 			if (snd_pcm_format_width(i) <= slot_width) {
@@ -1361,6 +1366,12 @@ static int davinci_mcasp_hw_rule_format_width(struct snd_pcm_hw_params *params,
 		if (snd_mask_test_format(fmt, i)) {
 			if (snd_pcm_format_width(i) == format_width) {
 				snd_mask_set_format(&nfmt, i);
+=======
+	for (i = 0; i <= SNDRV_PCM_FORMAT_LAST; i++) {
+		if (snd_mask_test(fmt, i)) {
+			if (snd_pcm_format_width(i) <= slot_width) {
+				snd_mask_set(&nfmt, i);
+>>>>>>> master:sound/soc/davinci/davinci-mcasp.c
 			}
 		}
 	}
@@ -1546,6 +1557,7 @@ static int davinci_mcasp_startup(struct snd_pcm_substream *substream,
 				   0, SNDRV_PCM_HW_PARAM_CHANNELS,
 				   &mcasp->chconstr[substream->stream]);
 
+<<<<<<< HEAD:sound/soc/ti/davinci-mcasp.c
 	if (mcasp->max_format_width) {
 		/*
 		 * Only allow formats which require same amount of bits on the
@@ -1560,6 +1572,9 @@ static int davinci_mcasp_startup(struct snd_pcm_substream *substream,
 			return ret;
 	}
 	else if (mcasp->slot_width) {
+=======
+	if (mcasp->slot_width) {
+>>>>>>> master:sound/soc/davinci/davinci-mcasp.c
 		/* Only allow formats require <= slot_width bits on the bus */
 		ret = snd_pcm_hw_rule_add(substream->runtime, 0,
 					  SNDRV_PCM_HW_PARAM_FORMAT,

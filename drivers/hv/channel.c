@@ -37,6 +37,7 @@
  */
 static inline u32 hv_gpadl_size(enum hv_gpadl_type type, u32 size)
 {
+<<<<<<< HEAD
 	switch (type) {
 	case HV_GPADL_BUFFER:
 		return size;
@@ -56,6 +57,9 @@ static inline u32 hv_gpadl_size(enum hv_gpadl_type type, u32 size)
 	BUG();
 	return 0;
 }
+=======
+	phys_addr_t paddr;
+>>>>>>> master
 
 /*
  * hv_ring_gpadl_send_hvpgoffset - Calculate the send offset (in unit of

@@ -9,9 +9,21 @@
  * Based on drivers/media/video/s5p-tv/mixer_reg.c
  */
 
+<<<<<<< HEAD
 #include <linux/clk.h>
 #include <linux/component.h>
 #include <linux/delay.h>
+=======
+#include <drm/drmP.h>
+
+#include "regs-mixer.h"
+#include "regs-vp.h"
+
+#include <linux/kernel.h>
+#include <linux/ktime.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
+>>>>>>> master
 #include <linux/i2c.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
@@ -677,7 +689,11 @@ static void mixer_graph_buffer(struct mixer_context *ctx,
 	mixer_reg_write(ctx, MXR_GRAPHIC_BASE(win), dma_addr);
 
 	mixer_cfg_layer(ctx, win, priority, true);
+<<<<<<< HEAD
 	mixer_cfg_gfx_blend(ctx, win, pixel_alpha, state->base.alpha);
+=======
+	mixer_cfg_gfx_blend(ctx, win, fb->format->has_alpha);
+>>>>>>> master
 
 	spin_unlock_irqrestore(&ctx->reg_slock, flags);
 

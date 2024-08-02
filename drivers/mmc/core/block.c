@@ -544,7 +544,11 @@ static int __mmc_blk_ioctl_cmd(struct mmc_card *card, struct mmc_blk_data *md,
 			return err;
 	}
 
+<<<<<<< HEAD
 	if (idata->rpmb || prev_idata) {
+=======
+	if (idata->rpmb) {
+>>>>>>> master
 		sbc.opcode = MMC_SET_BLOCK_COUNT;
 		/*
 		 * We don't do any blockcount validation because the max size
@@ -552,8 +556,11 @@ static int __mmc_blk_ioctl_cmd(struct mmc_card *card, struct mmc_blk_data *md,
 		 * 'Reliable Write' bit here.
 		 */
 		sbc.arg = data.blocks | (idata->ic.write_flag & BIT(31));
+<<<<<<< HEAD
 		if (prev_idata)
 			sbc.arg = prev_idata->ic.arg;
+=======
+>>>>>>> master
 		sbc.flags = MMC_RSP_R1 | MMC_CMD_AC;
 		mrq.sbc = &sbc;
 	}
@@ -3019,9 +3026,38 @@ static int mmc_blk_probe(struct mmc_card *card)
 
 	card->complete_wq = alloc_workqueue("mmc_complete",
 					WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
+<<<<<<< HEAD
 	if (!card->complete_wq) {
 		pr_err("Failed to create mmc completion workqueue");
 		return -ENOMEM;
+=======
+	if (unlikely(!card->complete_wq)) {
+		pr_err("Failed to create mmc completion workqueue");
+		return -ENOMEM;
+	}
+
+	md = mmc_blk_alloc(card);
+	if (IS_ERR(md))
+		return PTR_ERR(md);
+
+	string_get_size((u64)get_capacity(md->disk), 512, STRING_UNITS_2,
+			cap_str, sizeof(cap_str));
+	pr_info("%s: %s %s %s %s\n",
+		md->disk->disk_name, mmc_card_id(card), mmc_card_name(card),
+		cap_str, md->read_only ? "(ro)" : "");
+
+	if (mmc_blk_alloc_parts(card, md))
+		goto out;
+
+	dev_set_drvdata(&card->dev, md);
+
+	if (mmc_add_disk(md))
+		goto out;
+
+	list_for_each_entry(part_md, &md->part, part) {
+		if (mmc_add_disk(part_md))
+			goto out;
+>>>>>>> master
 	}
 
 	md = mmc_blk_alloc(card);
@@ -3075,6 +3111,10 @@ static void mmc_blk_remove(struct mmc_card *card)
 		pm_runtime_disable(&card->dev);
 	pm_runtime_put_noidle(&card->dev);
 	mmc_blk_remove_req(md);
+<<<<<<< HEAD
+=======
+	dev_set_drvdata(&card->dev, NULL);
+>>>>>>> master
 	destroy_workqueue(card->complete_wq);
 }
 

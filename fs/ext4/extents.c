@@ -570,10 +570,21 @@ __read_extent_tree_block(const char *function, unsigned int line,
 	}
 	if (buffer_verified(bh) && !(flags & EXT4_EX_FORCE_CACHE))
 		return bh;
+<<<<<<< HEAD
 	err = __ext4_ext_check(function, line, inode, ext_block_hdr(bh),
 			       depth, pblk, le32_to_cpu(idx->ei_block));
 	if (err)
 		goto errout;
+=======
+	if (!ext4_has_feature_journal(inode->i_sb) ||
+	    (inode->i_ino !=
+	     le32_to_cpu(EXT4_SB(inode->i_sb)->s_es->s_journal_inum))) {
+		err = __ext4_ext_check(function, line, inode,
+				       ext_block_hdr(bh), depth, pblk);
+		if (err)
+			goto errout;
+	}
+>>>>>>> master
 	set_buffer_verified(bh);
 	/*
 	 * If this is a leaf block, cache all of its entries
@@ -1065,9 +1076,12 @@ static int ext4_ext_split(handle_t *handle, struct inode *inode,
 	gfp_t gfp_flags = GFP_NOFS;
 	int err = 0;
 	size_t ext_size = 0;
+<<<<<<< HEAD
 
 	if (flags & EXT4_EX_NOFAIL)
 		gfp_flags |= __GFP_NOFAIL;
+=======
+>>>>>>> master
 
 	/* make decision: where to split? */
 	/* FIXME: now decision is simplest: at current extent */

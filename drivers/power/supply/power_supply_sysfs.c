@@ -472,6 +472,10 @@ int power_supply_uevent(const struct device *dev, struct kobj_uevent_env *env)
 					 sizeof(unsigned long) + 1] = {0};
 	int ret = 0, j;
 	char *prop_buf;
+<<<<<<< HEAD
+=======
+	char *attrname;
+>>>>>>> master
 
 	if (!psy || !psy->desc) {
 		dev_dbg(dev, "No power supply yet\n");
@@ -508,11 +512,31 @@ int power_supply_uevent(const struct device *dev, struct kobj_uevent_env *env)
 	for (j = 0; j < power_supply_battery_info_properties_size; j++) {
 		if (test_bit(battery_props[j], psy_drv_properties))
 			continue;
+<<<<<<< HEAD
 		if (!power_supply_battery_info_has_prop(psy->battery_info,
 				battery_props[j]))
 			continue;
 		ret = add_prop_uevent(dev, env, battery_props[j],
 			      prop_buf);
+=======
+		}
+
+		if (ret < 0)
+			goto out;
+
+		line = strchr(prop_buf, '\n');
+		if (line)
+			*line = 0;
+
+		attrname = kstruprdup(attr->attr.name, GFP_KERNEL);
+		if (!attrname) {
+			ret = -ENOMEM;
+			goto out;
+		}
+
+		ret = add_uevent_var(env, "POWER_SUPPLY_%s=%s", attrname, prop_buf);
+		kfree(attrname);
+>>>>>>> master
 		if (ret)
 			goto out;
 	}

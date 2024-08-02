@@ -476,6 +476,7 @@ static_assert(sizeof(struct ptdesc) <= sizeof(struct page));
 #define PAGE_FRAG_CACHE_MAX_SIZE	__ALIGN_MASK(32768, ~PAGE_MASK)
 #define PAGE_FRAG_CACHE_MAX_ORDER	get_order(PAGE_FRAG_CACHE_MAX_SIZE)
 
+<<<<<<< HEAD
 /*
  * page_private can be used on tail pages.  However, PagePrivate is only
  * checked by the VM on the head page.  So page_private on the tail pages
@@ -493,6 +494,10 @@ static inline void *folio_get_private(struct folio *folio)
 {
 	return folio->private;
 }
+=======
+#define page_private(page)		((page)->private)
+#define set_page_private(page, v)	((page)->private = (v))
+>>>>>>> master
 
 struct page_frag_cache {
 	void * va;
@@ -510,6 +515,11 @@ struct page_frag_cache {
 };
 
 typedef unsigned long vm_flags_t;
+
+static inline atomic_t *compound_mapcount_ptr(struct page *page)
+{
+	return &page[1].compound_mapcount;
+}
 
 /*
  * A region containing a mapping of a non-memory backed file under NOMMU

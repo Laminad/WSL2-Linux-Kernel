@@ -192,6 +192,7 @@ bool rq_depth_scale_down(struct rq_depth *rqd, bool hard_throttle)
 	rqd->scaled_max = false;
 	rq_depth_calc_max_depth(rqd);
 	return true;
+<<<<<<< HEAD
 }
 
 struct rq_qos_wait_data {
@@ -284,6 +285,8 @@ void rq_qos_wait(struct rq_wait *rqw, void *private_data,
 		set_current_state(TASK_UNINTERRUPTIBLE);
 	} while (1);
 	finish_wait(&rqw->wait, &data.wq);
+=======
+>>>>>>> master
 }
 
 void rq_qos_exit(struct request_queue *q)

@@ -472,11 +472,35 @@ struct file *ovl_path_open(const struct path *path, int flags);
 int ovl_copy_up_start(struct dentry *dentry, int flags);
 void ovl_copy_up_end(struct dentry *dentry);
 bool ovl_already_copied_up(struct dentry *dentry, int flags);
+<<<<<<< HEAD
 bool ovl_path_check_dir_xattr(struct ovl_fs *ofs, const struct path *path,
 			      enum ovl_xattr ox);
 bool ovl_path_check_origin_xattr(struct ovl_fs *ofs, const struct path *path);
 bool ovl_init_uuid_xattr(struct super_block *sb, struct ovl_fs *ofs,
 			 const struct path *upperpath);
+=======
+bool ovl_check_origin_xattr(struct dentry *dentry);
+bool ovl_check_dir_xattr(struct dentry *dentry, const char *name);
+int ovl_check_setxattr(struct dentry *dentry, struct dentry *upperdentry,
+		       const char *name, const void *value, size_t size,
+		       int xerr);
+int ovl_set_impure(struct dentry *dentry, struct dentry *upperdentry);
+void ovl_set_flag(unsigned long flag, struct inode *inode);
+void ovl_clear_flag(unsigned long flag, struct inode *inode);
+bool ovl_test_flag(unsigned long flag, struct inode *inode);
+bool ovl_inuse_trylock(struct dentry *dentry);
+void ovl_inuse_unlock(struct dentry *dentry);
+bool ovl_is_inuse(struct dentry *dentry);
+bool ovl_need_index(struct dentry *dentry);
+int ovl_nlink_start(struct dentry *dentry, bool *locked);
+void ovl_nlink_end(struct dentry *dentry, bool locked);
+int ovl_lock_rename_workdir(struct dentry *workdir, struct dentry *upperdir);
+int ovl_check_metacopy_xattr(struct dentry *dentry);
+bool ovl_is_metacopy_dentry(struct dentry *dentry);
+char *ovl_get_redirect_xattr(struct dentry *dentry, int padding);
+ssize_t ovl_getxattr(struct dentry *dentry, char *name, char **value,
+		     size_t padding);
+>>>>>>> master
 
 static inline bool ovl_check_origin_xattr(struct ovl_fs *ofs,
 					  struct dentry *upperdentry)
@@ -818,12 +842,21 @@ int ovl_fileattr_set(struct mnt_idmap *idmap,
 /* copy_up.c */
 int ovl_copy_up(struct dentry *dentry);
 int ovl_copy_up_with_data(struct dentry *dentry);
+<<<<<<< HEAD
 int ovl_maybe_copy_up(struct dentry *dentry, int flags);
 int ovl_copy_xattr(struct super_block *sb, const struct path *path, struct dentry *new);
 int ovl_set_attr(struct ovl_fs *ofs, struct dentry *upper, struct kstat *stat);
 struct ovl_fh *ovl_encode_real_fh(struct ovl_fs *ofs, struct dentry *real,
 				  bool is_upper);
 int ovl_set_origin(struct ovl_fs *ofs, struct dentry *lower,
+=======
+int ovl_copy_up_flags(struct dentry *dentry, int flags);
+int ovl_maybe_copy_up(struct dentry *dentry, int flags);
+int ovl_copy_xattr(struct dentry *old, struct dentry *new);
+int ovl_set_attr(struct dentry *upper, struct kstat *stat);
+struct ovl_fh *ovl_encode_real_fh(struct dentry *real, bool is_upper);
+int ovl_set_origin(struct dentry *dentry, struct dentry *lower,
+>>>>>>> master
 		   struct dentry *upper);
 
 /* export.c */

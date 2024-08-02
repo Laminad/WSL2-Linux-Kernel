@@ -120,6 +120,7 @@ static void of_device_make_bus_id(struct device *dev)
 		 */
 		reg = of_get_property(node, "reg", NULL);
 		if (reg && (addr = of_translate_address(node, reg)) != OF_BAD_ADDR) {
+<<<<<<< HEAD
 			if (!of_property_read_u32(node, "mask", &mask))
 				dev_set_name(dev, dev_name(dev) ? "%llx.%x.%pOFn:%s" : "%llx.%x.%pOFn",
 					     addr, ffs(mask) - 1, node, dev_name(dev));
@@ -127,6 +128,11 @@ static void of_device_make_bus_id(struct device *dev)
 			else
 				dev_set_name(dev, dev_name(dev) ? "%llx.%pOFn:%s" : "%llx.%pOFn",
 					     addr, node, dev_name(dev));
+=======
+			dev_set_name(dev, dev_name(dev) ? "%llx.%pOFn:%s" : "%llx.%pOFn",
+				     (unsigned long long)addr, node,
+				     dev_name(dev));
+>>>>>>> master
 			return;
 		}
 
@@ -172,6 +178,12 @@ struct platform_device *of_device_alloc(struct device_node *np,
 			rc = of_address_to_resource(np, i, res);
 			WARN_ON(rc);
 		}
+<<<<<<< HEAD
+=======
+		if (of_irq_to_resource_table(np, res, num_irq) != num_irq)
+			pr_debug("not all legacy IRQ resources mapped for %pOFn\n",
+				 np);
+>>>>>>> master
 	}
 
 	/* setup generic device info */

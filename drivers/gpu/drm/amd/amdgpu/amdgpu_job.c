@@ -108,8 +108,14 @@ int amdgpu_job_alloc(struct amdgpu_device *adev, struct amdgpu_vm *vm,
 	(*job)->base.sched = &adev->rings[0]->sched;
 	(*job)->vm = vm;
 
+<<<<<<< HEAD
 	amdgpu_sync_create(&(*job)->explicit_sync);
 	(*job)->generation = amdgpu_vm_generation(adev, vm);
+=======
+	amdgpu_sync_create(&(*job)->sync);
+	amdgpu_sync_create(&(*job)->sched_sync);
+	(*job)->vram_lost_counter = atomic_read(&adev->vram_lost_counter);
+>>>>>>> master
 	(*job)->vm_pd_addr = AMDGPU_BO_INVALID_OFFSET;
 
 	if (!entity)

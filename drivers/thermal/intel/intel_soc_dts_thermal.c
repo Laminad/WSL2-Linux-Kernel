@@ -36,7 +36,12 @@ static irqreturn_t soc_irq_thread_fn(int irq, void *dev_data)
 }
 
 static const struct x86_cpu_id soc_thermal_ids[] = {
+<<<<<<< HEAD:drivers/thermal/intel/intel_soc_dts_thermal.c
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_SILVERMONT, BYT_SOC_DTS_APIC_IRQ),
+=======
+	{ X86_VENDOR_INTEL, 6, INTEL_FAM6_ATOM_SILVERMONT, 0,
+		BYT_SOC_DTS_APIC_IRQ},
+>>>>>>> master:drivers/thermal/intel_soc_dts_thermal.c
 	{}
 };
 MODULE_DEVICE_TABLE(x86cpu, soc_thermal_ids);

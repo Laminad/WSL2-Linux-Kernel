@@ -686,8 +686,17 @@ static void remove_inode_hugepages(struct inode *inode, loff_t lstart,
 			struct folio *folio = fbatch.folios[i];
 			u32 hash = 0;
 
+<<<<<<< HEAD
 			index = folio->index;
 			hash = hugetlb_fault_mutex_hash(mapping, index);
+=======
+		for (i = 0; i < pagevec_count(&pvec); ++i) {
+			struct page *page = pvec.pages[i];
+			u32 hash;
+
+			index = page->index;
+			hash = hugetlb_fault_mutex_hash(h, mapping, index, 0);
+>>>>>>> master
 			mutex_lock(&hugetlb_fault_mutex_table[hash]);
 
 			/*
@@ -893,7 +902,11 @@ static long hugetlbfs_fallocate(struct file *file, int mode, loff_t offset,
 		addr = index * hpage_size;
 
 		/* mutex taken here, fault path and hole punch */
+<<<<<<< HEAD
 		hash = hugetlb_fault_mutex_hash(mapping, index);
+=======
+		hash = hugetlb_fault_mutex_hash(h, mapping, index, addr);
+>>>>>>> master
 		mutex_lock(&hugetlb_fault_mutex_table[hash]);
 
 		/* See if already present in mapping to avoid alloc/free */
@@ -1148,10 +1161,22 @@ static int hugetlbfs_migrate_folio(struct address_space *mapping,
 	if (rc != MIGRATEPAGE_SUCCESS)
 		return rc;
 
+<<<<<<< HEAD
 	if (hugetlb_folio_subpool(src)) {
 		hugetlb_set_folio_subpool(dst,
 					hugetlb_folio_subpool(src));
 		hugetlb_set_folio_subpool(src, NULL);
+=======
+	/*
+	 * page_private is subpool pointer in hugetlb pages.  Transfer to
+	 * new page.  PagePrivate is not associated with page_private for
+	 * hugetlb pages and can not be set here as only page_huge_active
+	 * pages can be migrated.
+	 */
+	if (page_private(page)) {
+		set_page_private(newpage, page_private(page));
+		set_page_private(page, 0);
+>>>>>>> master
 	}
 
 	if (mode != MIGRATE_SYNC_NO_COPY)

@@ -1978,13 +1978,19 @@ int btrfs_sysfs_add_fsid(struct btrfs_fs_devices *fs_devs)
 
 	init_completion(&fs_devs->kobj_unregister);
 	fs_devs->fsid_kobj.kset = btrfs_kset;
+<<<<<<< HEAD
 	error = kobject_init_and_add(&fs_devs->fsid_kobj, &btrfs_ktype, NULL,
 				     "%pU", fs_devs->fsid);
+=======
+	error = kobject_init_and_add(&fs_devs->fsid_kobj,
+				&btrfs_ktype, parent, "%pU", fs_devs->fsid);
+>>>>>>> master
 	if (error) {
 		kobject_put(&fs_devs->fsid_kobj);
 		return error;
 	}
 
+<<<<<<< HEAD
 	fs_devs->devices_kobj = kobject_create_and_add("devices",
 						       &fs_devs->fsid_kobj);
 	if (!fs_devs->devices_kobj) {
@@ -2003,6 +2009,8 @@ int btrfs_sysfs_add_fsid(struct btrfs_fs_devices *fs_devs)
 		return -ENOMEM;
 	}
 
+=======
+>>>>>>> master
 	return 0;
 }
 

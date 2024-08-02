@@ -554,6 +554,10 @@ static netdev_tx_t
 vti6_tnl_xmit(struct sk_buff *skb, struct net_device *dev)
 {
 	struct ip6_tnl *t = netdev_priv(dev);
+<<<<<<< HEAD
+=======
+	struct net_device_stats *stats = &t->dev->stats;
+>>>>>>> master
 	struct flowi fl;
 	int ret;
 

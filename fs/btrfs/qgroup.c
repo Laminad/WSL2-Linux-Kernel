@@ -1151,6 +1151,7 @@ out_add_root:
 		btrfs_abort_transaction(trans, ret);
 		goto out_free_path;
 	}
+<<<<<<< HEAD
 	ret = btrfs_sysfs_add_one_qgroup(fs_info, qgroup);
 	if (ret < 0) {
 		btrfs_abort_transaction(trans, ret);
@@ -1183,6 +1184,24 @@ out_add_root:
 	set_bit(BTRFS_FS_QUOTA_ENABLED, &fs_info->flags);
 	spin_unlock(&fs_info->qgroup_lock);
 
+=======
+
+	ret = btrfs_commit_transaction(trans);
+	trans = NULL;
+	if (ret)
+		goto out_free_path;
+
+	/*
+	 * Set quota enabled flag after committing the transaction, to avoid
+	 * deadlocks on fs_info->qgroup_ioctl_lock with concurrent snapshot
+	 * creation.
+	 */
+	spin_lock(&fs_info->qgroup_lock);
+	fs_info->quota_root = quota_root;
+	set_bit(BTRFS_FS_QUOTA_ENABLED, &fs_info->flags);
+	spin_unlock(&fs_info->qgroup_lock);
+
+>>>>>>> master
 	ret = qgroup_rescan_init(fs_info, 0, 1);
 	if (!ret) {
 	        qgroup_rescan_zero_tracking(fs_info);
@@ -3133,6 +3152,7 @@ unlock:
 out:
 	if (!committing)
 		mutex_unlock(&fs_info->qgroup_ioctl_lock);
+<<<<<<< HEAD
 	if (need_rescan)
 		qgroup_mark_inconsistent(fs_info);
 	return ret;
@@ -3140,6 +3160,25 @@ out:
 
 static bool qgroup_check_limits(const struct btrfs_qgroup *qg, u64 num_bytes)
 {
+=======
+	return ret;
+}
+
+/*
+ * Two limits to commit transaction in advance.
+ *
+ * For RATIO, it will be 1/RATIO of the remaining limit as threshold.
+ * For SIZE, it will be in byte unit as threshold.
+ */
+#define QGROUP_FREE_RATIO		32
+#define QGROUP_FREE_SIZE		SZ_32M
+static bool qgroup_check_limits(struct btrfs_fs_info *fs_info,
+				const struct btrfs_qgroup *qg, u64 num_bytes)
+{
+	u64 free;
+	u64 threshold;
+
+>>>>>>> master
 	if ((qg->lim_flags & BTRFS_QGROUP_LIMIT_MAX_RFER) &&
 	    qgroup_rsv_total(qg) + (s64)qg->rfer + num_bytes > qg->max_rfer)
 		return false;
@@ -3148,6 +3187,35 @@ static bool qgroup_check_limits(const struct btrfs_qgroup *qg, u64 num_bytes)
 	    qgroup_rsv_total(qg) + (s64)qg->excl + num_bytes > qg->max_excl)
 		return false;
 
+<<<<<<< HEAD
+=======
+	/*
+	 * Even if we passed the check, it's better to check if reservation
+	 * for meta_pertrans is pushing us near limit.
+	 * If there is too much pertrans reservation or it's near the limit,
+	 * let's try commit transaction to free some, using transaction_kthread
+	 */
+	if ((qg->lim_flags & (BTRFS_QGROUP_LIMIT_MAX_RFER |
+			      BTRFS_QGROUP_LIMIT_MAX_EXCL))) {
+		if (qg->lim_flags & BTRFS_QGROUP_LIMIT_MAX_EXCL) {
+			free = qg->max_excl - qgroup_rsv_total(qg) - qg->excl;
+			threshold = min_t(u64, qg->max_excl / QGROUP_FREE_RATIO,
+					  QGROUP_FREE_SIZE);
+		} else {
+			free = qg->max_rfer - qgroup_rsv_total(qg) - qg->rfer;
+			threshold = min_t(u64, qg->max_rfer / QGROUP_FREE_RATIO,
+					  QGROUP_FREE_SIZE);
+		}
+
+		/*
+		 * Use transaction_kthread to commit transaction, so we no
+		 * longer need to bother nested transaction nor lock context.
+		 */
+		if (free < threshold)
+			btrfs_commit_transaction_locksafe(fs_info);
+	}
+
+>>>>>>> master
 	return true;
 }
 
@@ -3449,6 +3517,7 @@ out:
 	 * fs_info->quota_root to NULL and cleared BTRFS_FS_QUOTA_ENABLED at
 	 * btrfs_quota_disable().
 	 */
+<<<<<<< HEAD
 	if (did_leaf_rescans) {
 		trans = btrfs_start_transaction(fs_info->quota_root, 1);
 		if (IS_ERR(trans)) {
@@ -3465,6 +3534,19 @@ out:
 	mutex_lock(&fs_info->qgroup_rescan_lock);
 	if (!stopped ||
 	    fs_info->qgroup_flags & BTRFS_QGROUP_RUNTIME_FLAG_CANCEL_RESCAN)
+=======
+	trans = btrfs_start_transaction(fs_info->quota_root, 1);
+	if (IS_ERR(trans)) {
+		err = PTR_ERR(trans);
+		trans = NULL;
+		btrfs_err(fs_info,
+			  "fail to start transaction for status update: %d",
+			  err);
+	}
+
+	mutex_lock(&fs_info->qgroup_rescan_lock);
+	if (!btrfs_fs_closing(fs_info))
+>>>>>>> master
 		fs_info->qgroup_flags &= ~BTRFS_QGROUP_STATUS_FLAG_RESCAN;
 	if (trans) {
 		ret = update_qgroup_status_item(trans);
@@ -3475,7 +3557,10 @@ out:
 		}
 	}
 	fs_info->qgroup_rescan_running = false;
+<<<<<<< HEAD
 	fs_info->qgroup_flags &= ~BTRFS_QGROUP_RUNTIME_FLAG_CANCEL_RESCAN;
+=======
+>>>>>>> master
 	complete_all(&fs_info->qgroup_rescan_completion);
 	mutex_unlock(&fs_info->qgroup_rescan_lock);
 
@@ -3827,12 +3912,24 @@ static int qgroup_reserve_data(struct btrfs_inode *inode,
 	return ret;
 
 cleanup:
+<<<<<<< HEAD
 	qgroup_unreserve_range(inode, reserved, start, len);
 out:
 	if (new_reserved) {
 		extent_changeset_free(reserved);
 		*reserved_ret = NULL;
 	}
+=======
+	/* cleanup *ALL* already reserved ranges */
+	ULIST_ITER_INIT(&uiter);
+	while ((unode = ulist_next(&reserved->range_changed, &uiter)))
+		clear_extent_bit(&BTRFS_I(inode)->io_tree, unode->val,
+				 unode->aux, EXTENT_QGROUP_RESERVED, 0, 0, NULL);
+	/* Also free data bytes of already reserved one */
+	btrfs_qgroup_free_refroot(root->fs_info, root->root_key.objectid,
+				  orig_reserved, BTRFS_QGROUP_RSV_DATA);
+	extent_changeset_release(reserved);
+>>>>>>> master
 	return ret;
 }
 
@@ -3905,8 +4002,13 @@ static int qgroup_free_reserved_data(struct btrfs_inode *inode,
 		 * EXTENT_QGROUP_RESERVED, we won't double free.
 		 * So not need to rush.
 		 */
+<<<<<<< HEAD
 		ret = clear_record_extent_bits(&inode->io_tree, free_start,
 				free_start + free_len - 1,
+=======
+		ret = clear_record_extent_bits(&BTRFS_I(inode)->io_tree,
+				free_start, free_start + free_len - 1,
+>>>>>>> master
 				EXTENT_QGROUP_RESERVED, &changeset);
 		if (ret < 0)
 			goto out;
@@ -3930,7 +4032,12 @@ static int __btrfs_qgroup_release_data(struct btrfs_inode *inode,
 	int trace_op = QGROUP_RELEASE;
 	int ret;
 
+<<<<<<< HEAD
 	if (!test_bit(BTRFS_FS_QUOTA_ENABLED, &inode->root->fs_info->flags))
+=======
+	if (!test_bit(BTRFS_FS_QUOTA_ENABLED,
+		      &BTRFS_I(inode)->root->fs_info->flags))
+>>>>>>> master
 		return 0;
 
 	/* In release case, we shouldn't have @reserved */
@@ -4112,8 +4219,12 @@ void __btrfs_qgroup_free_meta(struct btrfs_root *root, int num_bytes,
 	num_bytes = sub_root_meta_rsv(root, num_bytes, type);
 	BUG_ON(num_bytes != round_down(num_bytes, fs_info->nodesize));
 	trace_qgroup_meta_reserve(root, -(s64)num_bytes, type);
+<<<<<<< HEAD
 	btrfs_qgroup_free_refroot(fs_info, root->root_key.objectid,
 				  num_bytes, type);
+=======
+	btrfs_qgroup_free_refroot(fs_info, root->objectid, num_bytes, type);
+>>>>>>> master
 }
 
 static void qgroup_convert_meta(struct btrfs_fs_info *fs_info, u64 ref_root,

@@ -84,6 +84,7 @@ static void fsnotify_unmount_inodes(struct super_block *sb)
 	}
 	spin_unlock(&sb->s_inode_list_lock);
 
+<<<<<<< HEAD
 	iput(iput_inode);
 }
 
@@ -94,6 +95,13 @@ void fsnotify_sb_delete(struct super_block *sb)
 	/* Wait for outstanding object references from connectors */
 	wait_var_event(&sb->s_fsnotify_connectors,
 		       !atomic_long_read(&sb->s_fsnotify_connectors));
+=======
+	if (iput_inode)
+		iput(iput_inode);
+	/* Wait for outstanding inode references from connectors */
+	wait_var_event(&sb->s_fsnotify_inode_refs,
+		       !atomic_long_read(&sb->s_fsnotify_inode_refs));
+>>>>>>> master
 }
 
 /*
@@ -206,9 +214,17 @@ int __fsnotify_parent(struct dentry *dentry, __u32 mask, const void *data,
 	/* Does parent inode care about events on children? */
 	parent = dget_parent(dentry);
 	p_inode = parent->d_inode;
+<<<<<<< HEAD
 	p_mask = fsnotify_inode_watches_children(p_inode);
 	if (unlikely(parent_watched && !p_mask))
 		__fsnotify_update_child_dentry_flags(p_inode);
+=======
+
+	if (unlikely(!fsnotify_inode_watches_children(p_inode))) {
+		__fsnotify_update_child_dentry_flags(p_inode);
+	} else if (p_inode->i_fsnotify_mask & mask & ALL_FSNOTIFY_EVENTS) {
+		struct name_snapshot name;
+>>>>>>> master
 
 	/*
 	 * Include parent/name in notification either if some notification
@@ -489,7 +505,11 @@ int fsnotify(__u32 mask, const void *data, int data_type, struct inode *dir,
 	struct dentry *moved;
 	int inode2_type;
 	int ret = 0;
+<<<<<<< HEAD
 	__u32 test_mask, marks_mask;
+=======
+	__u32 test_mask = (mask & ALL_FSNOTIFY_EVENTS);
+>>>>>>> master
 
 	if (path)
 		mnt = real_mount(path->mnt);
@@ -511,6 +531,10 @@ int fsnotify(__u32 mask, const void *data, int data_type, struct inode *dir,
 		inode2 = dir;
 		inode2_type = FSNOTIFY_ITER_TYPE_PARENT;
 	}
+
+	/* An event "on child" is not intended for a mount mark */
+	if (mask & FS_EVENT_ON_CHILD)
+		mnt = NULL;
 
 	/*
 	 * Optimization: srcu_read_lock() has a memory barrier which can
@@ -587,7 +611,11 @@ static __init int fsnotify_init(void)
 {
 	int ret;
 
+<<<<<<< HEAD
 	BUILD_BUG_ON(HWEIGHT32(ALL_FSNOTIFY_BITS) != 23);
+=======
+	BUG_ON(hweight32(ALL_FSNOTIFY_BITS) != 23);
+>>>>>>> master
 
 	ret = init_srcu_struct(&fsnotify_mark_srcu);
 	if (ret)

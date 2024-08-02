@@ -23,7 +23,11 @@ CFLAGS_REMOVE_rodata.o			+= $(CC_FLAGS_LTO) $(RETHUNK_CFLAGS) $(CC_FLAGS_CFI)
 
 OBJCOPYFLAGS :=
 OBJCOPYFLAGS_rodata_objcopy.o	:= \
+<<<<<<< HEAD
 			--rename-section .noinstr.text=.rodata,alloc,readonly,load,contents
+=======
+			--rename-section .text=.rodata,alloc,readonly,load
+>>>>>>> master
 targets += rodata.o rodata_objcopy.o
 $(obj)/rodata_objcopy.o: $(obj)/rodata.o FORCE
 	$(call if_changed,objcopy)

@@ -234,6 +234,13 @@ enum scrub_flags {
 	ARS_POLL,
 };
 
+enum scrub_flags {
+	ARS_BUSY,
+	ARS_CANCEL,
+	ARS_VALID,
+	ARS_POLL,
+};
+
 struct acpi_nfit_desc {
 	struct nvdimm_bus_descriptor nd_desc;
 	struct acpi_table_header acpi_header;

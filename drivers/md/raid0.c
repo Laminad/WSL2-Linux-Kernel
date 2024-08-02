@@ -124,6 +124,21 @@ static int create_strip_zones(struct mddev *mddev, struct r0conf **private_conf)
 	pr_debug("md/raid0:%s: FINAL %d zones\n",
 		 mdname(mddev), conf->nr_strip_zones);
 
+<<<<<<< HEAD
+=======
+	if (conf->nr_strip_zones == 1) {
+		conf->layout = RAID0_ORIG_LAYOUT;
+	} else if (default_layout == RAID0_ORIG_LAYOUT ||
+		   default_layout == RAID0_ALT_MULTIZONE_LAYOUT) {
+		conf->layout = default_layout;
+	} else {
+		pr_err("md/raid0:%s: cannot assemble multi-zone RAID0 with default_layout setting\n",
+		       mdname(mddev));
+		pr_err("md/raid0: please set raid0.default_layout to 1 or 2\n");
+		err = -ENOTSUPP;
+		goto abort;
+	}
+>>>>>>> master
 	/*
 	 * now since we have the hard sector sizes, we can make sure
 	 * chunk size is a multiple of that sector size
@@ -540,7 +555,21 @@ static void raid0_handle_discard(struct mddev *mddev, struct bio *bio)
 			conf->strip_zone[0].nb_dev + disk];
 		md_submit_discard_bio(mddev, rdev, bio,
 			dev_start + zone->dev_start + rdev->data_offset,
+<<<<<<< HEAD
 			dev_end - dev_start);
+=======
+			dev_end - dev_start, GFP_NOIO, 0, &discard_bio) ||
+		    !discard_bio)
+			continue;
+		bio_chain(discard_bio, bio);
+		bio_clone_blkcg_association(discard_bio, bio);
+		if (mddev->gendisk)
+			trace_block_bio_remap(bdev_get_queue(rdev->bdev),
+				discard_bio, disk_devt(mddev->gendisk),
+				bio->bi_iter.bi_sector);
+		bio_clear_flag(bio, BIO_QUEUE_ENTERED);
+		generic_make_request(discard_bio);
+>>>>>>> master
 	}
 	bio_endio(bio);
 }
@@ -589,6 +618,7 @@ static void raid0_map_submit_bio(struct mddev *mddev, struct bio *bio)
 static bool raid0_make_request(struct mddev *mddev, struct bio *bio)
 {
 	sector_t sector;
+	sector_t orig_sector;
 	unsigned chunk_sects;
 	unsigned sectors;
 
@@ -617,7 +647,36 @@ static bool raid0_make_request(struct mddev *mddev, struct bio *bio)
 		bio = split;
 	}
 
+<<<<<<< HEAD
 	raid0_map_submit_bio(mddev, bio);
+=======
+	orig_sector = sector;
+	zone = find_zone(mddev->private, &sector);
+	switch (conf->layout) {
+	case RAID0_ORIG_LAYOUT:
+		tmp_dev = map_sector(mddev, zone, orig_sector, &sector);
+		break;
+	case RAID0_ALT_MULTIZONE_LAYOUT:
+		tmp_dev = map_sector(mddev, zone, sector, &sector);
+		break;
+	default:
+		WARN("md/raid0:%s: Invalid layout\n", mdname(mddev));
+		bio_io_error(bio);
+		return true;
+	}
+
+	bio_set_dev(bio, tmp_dev->bdev);
+	bio->bi_iter.bi_sector = sector + zone->dev_start +
+		tmp_dev->data_offset;
+
+	if (mddev->gendisk)
+		trace_block_bio_remap(bio->bi_disk->queue, bio,
+				disk_devt(mddev->gendisk), bio_sector);
+	mddev_check_writesame(mddev, bio);
+	mddev_check_write_zeroes(mddev, bio);
+	bio_clear_flag(bio, BIO_QUEUE_ENTERED);
+	generic_make_request(bio);
+>>>>>>> master
 	return true;
 }
 

@@ -14,8 +14,11 @@
 #include <linux/nospec.h>
 #include <linux/prctl.h>
 #include <linux/sched/smt.h>
+<<<<<<< HEAD
 #include <linux/pgtable.h>
 #include <linux/bpf.h>
+=======
+>>>>>>> master
 
 #include <asm/spec-ctrl.h>
 #include <asm/cmdline.h>
@@ -41,6 +44,7 @@ static void __init spectre_v2_user_select_mitigation(void);
 static void __init ssb_select_mitigation(void);
 static void __init l1tf_select_mitigation(void);
 static void __init mds_select_mitigation(void);
+<<<<<<< HEAD
 static void __init md_clear_update_mitigation(void);
 static void __init md_clear_select_mitigation(void);
 static void __init taa_select_mitigation(void);
@@ -51,8 +55,14 @@ static void __init srso_select_mitigation(void);
 static void __init gds_select_mitigation(void);
 
 /* The base value of the SPEC_CTRL MSR without task-specific bits set */
+=======
+static void __init taa_select_mitigation(void);
+
+/* The base value of the SPEC_CTRL MSR that always has to be preserved. */
+>>>>>>> master
 u64 x86_spec_ctrl_base;
 EXPORT_SYMBOL_GPL(x86_spec_ctrl_base);
+static DEFINE_MUTEX(spec_ctrl_mutex);
 
 /* The current value of the SPEC_CTRL MSR with task-specific bits set */
 DEFINE_PER_CPU(u64, x86_spec_ctrl_current);
@@ -106,17 +116,28 @@ EXPORT_SYMBOL_GPL(spec_ctrl_current);
 u64 __ro_after_init x86_amd_ls_cfg_base;
 u64 __ro_after_init x86_amd_ls_cfg_ssbd_mask;
 
+<<<<<<< HEAD
 /* Control conditional STIBP in switch_to() */
+=======
+/* Control conditional STIPB in switch_to() */
+>>>>>>> master
 DEFINE_STATIC_KEY_FALSE(switch_to_cond_stibp);
 /* Control conditional IBPB in switch_mm() */
 DEFINE_STATIC_KEY_FALSE(switch_mm_cond_ibpb);
 /* Control unconditional IBPB in switch_mm() */
 DEFINE_STATIC_KEY_FALSE(switch_mm_always_ibpb);
 
+<<<<<<< HEAD
+=======
+/* Control MDS CPU buffer clear before returning to user space */
+DEFINE_STATIC_KEY_FALSE(mds_user_clear);
+EXPORT_SYMBOL_GPL(mds_user_clear);
+>>>>>>> master
 /* Control MDS CPU buffer clear before idling (halt, mwait) */
 DEFINE_STATIC_KEY_FALSE(mds_idle_clear);
 EXPORT_SYMBOL_GPL(mds_idle_clear);
 
+<<<<<<< HEAD
 /*
  * Controls whether l1d flush based mitigations are enabled,
  * based on hw features and admin setting via boot parameter
@@ -130,6 +151,23 @@ EXPORT_SYMBOL_GPL(mmio_stale_data_clear);
 
 void __init cpu_select_mitigations(void)
 {
+=======
+void __init check_bugs(void)
+{
+	identify_boot_cpu();
+
+	/*
+	 * identify_boot_cpu() initialized SMT support information, let the
+	 * core code know.
+	 */
+	cpu_smt_check_topology();
+
+	if (!IS_ENABLED(CONFIG_SMP)) {
+		pr_info("CPU: ");
+		print_cpu_info(&boot_cpu_data);
+	}
+
+>>>>>>> master
 	/*
 	 * Read the SPEC_CTRL MSR to account for reserved bits which may
 	 * have unknown values. AMD64_LS_CFG MSR is cached in the early AMD
@@ -146,6 +184,7 @@ void __init cpu_select_mitigations(void)
 		x86_spec_ctrl_base &= ~SPEC_CTRL_MITIGATIONS_MASK;
 	}
 
+<<<<<<< HEAD
 	x86_arch_cap_msr = x86_read_arch_cap_msr();
 
 	/* Select the proper CPU mitigations before patching alternatives: */
@@ -168,6 +207,36 @@ void __init cpu_select_mitigations(void)
 	md_clear_select_mitigation();
 	srbds_select_mitigation();
 	l1d_flush_select_mitigation();
+=======
+	/* Select the proper CPU mitigations before patching alternatives: */
+	spectre_v1_select_mitigation();
+	spectre_v2_select_mitigation();
+	ssb_select_mitigation();
+	l1tf_select_mitigation();
+	mds_select_mitigation();
+	taa_select_mitigation();
+
+	arch_smt_update();
+
+#ifdef CONFIG_X86_32
+	/*
+	 * Check whether we are able to run this kernel safely on SMP.
+	 *
+	 * - i386 is no longer supported.
+	 * - In order to run on anything without a TSC, we need to be
+	 *   compiled for a i486.
+	 */
+	if (boot_cpu_data.x86 < 4)
+		panic("Kernel requires i486+ for 'invlpg' and other features");
+
+	init_utsname()->machine[1] =
+		'0' + (boot_cpu_data.x86 > 6 ? 6 : boot_cpu_data.x86);
+	alternative_instructions();
+
+	fpu__init_check_bugs();
+#else /* CONFIG_X86_64 */
+	alternative_instructions();
+>>>>>>> master
 
 	/*
 	 * srso_select_mitigation() depends and must run after
@@ -177,16 +246,47 @@ void __init cpu_select_mitigations(void)
 	gds_select_mitigation();
 }
 
+<<<<<<< HEAD
 /*
  * NOTE: This function is *only* called for SVM, since Intel uses
  * MSR_IA32_SPEC_CTRL for SSBD.
  */
+=======
+>>>>>>> master
 void
 x86_virt_spec_ctrl(u64 guest_virt_spec_ctrl, bool setguest)
 {
 	u64 guestval, hostval;
 	struct thread_info *ti = current_thread_info();
 
+<<<<<<< HEAD
+=======
+	/* Is MSR_SPEC_CTRL implemented ? */
+	if (static_cpu_has(X86_FEATURE_MSR_SPEC_CTRL)) {
+		/*
+		 * Restrict guest_spec_ctrl to supported values. Clear the
+		 * modifiable bits in the host base value and or the
+		 * modifiable bits from the guest value.
+		 */
+		guestval = hostval & ~x86_spec_ctrl_mask;
+		guestval |= guest_spec_ctrl & x86_spec_ctrl_mask;
+
+		/* SSBD controlled in MSR_SPEC_CTRL */
+		if (static_cpu_has(X86_FEATURE_SPEC_CTRL_SSBD) ||
+		    static_cpu_has(X86_FEATURE_AMD_SSBD))
+			hostval |= ssbd_tif_to_spec_ctrl(ti->flags);
+
+		/* Conditional STIBP enabled? */
+		if (static_branch_unlikely(&switch_to_cond_stibp))
+			hostval |= stibp_tif_to_spec_ctrl(ti->flags);
+
+		if (hostval != guestval) {
+			msrval = setguest ? guestval : hostval;
+			wrmsrl(MSR_IA32_SPEC_CTRL, msrval);
+		}
+	}
+
+>>>>>>> master
 	/*
 	 * If SSBD is not handled in MSR_SPEC_CTRL on AMD, update
 	 * MSR_AMD64_L2_CFG or MSR_VIRT_SPEC_CTRL if supported.
@@ -253,12 +353,21 @@ static void __init mds_select_mitigation(void)
 		if (!boot_cpu_has(X86_FEATURE_MD_CLEAR))
 			mds_mitigation = MDS_MITIGATION_VMWERV;
 
+<<<<<<< HEAD
 		setup_force_cpu_cap(X86_FEATURE_CLEAR_CPU_BUF);
+=======
+		static_branch_enable(&mds_user_clear);
+>>>>>>> master
 
 		if (!boot_cpu_has(X86_BUG_MSBDS_ONLY) &&
 		    (mds_nosmt || cpu_mitigations_auto_nosmt()))
 			cpu_smt_disable(false);
 	}
+<<<<<<< HEAD
+=======
+
+	pr_info("%s\n", mds_strings[mds_mitigation]);
+>>>>>>> master
 }
 
 static int __init mds_cmdline(char *str)
@@ -285,6 +394,7 @@ early_param("mds", mds_cmdline);
 #undef pr_fmt
 #define pr_fmt(fmt)	"TAA: " fmt
 
+<<<<<<< HEAD
 enum taa_mitigations {
 	TAA_MITIGATION_OFF,
 	TAA_MITIGATION_UCODE_NEEDED,
@@ -292,6 +402,8 @@ enum taa_mitigations {
 	TAA_MITIGATION_TSX_DISABLED,
 };
 
+=======
+>>>>>>> master
 /* Default mitigation for TAA-affected CPUs */
 static enum taa_mitigations taa_mitigation __ro_after_init = TAA_MITIGATION_VERW;
 static bool taa_nosmt __ro_after_init;
@@ -305,6 +417,11 @@ static const char * const taa_strings[] = {
 
 static void __init taa_select_mitigation(void)
 {
+<<<<<<< HEAD
+=======
+	u64 ia32_cap;
+
+>>>>>>> master
 	if (!boot_cpu_has_bug(X86_BUG_TAA)) {
 		taa_mitigation = TAA_MITIGATION_OFF;
 		return;
@@ -313,7 +430,11 @@ static void __init taa_select_mitigation(void)
 	/* TSX previously disabled by tsx=off */
 	if (!boot_cpu_has(X86_FEATURE_RTM)) {
 		taa_mitigation = TAA_MITIGATION_TSX_DISABLED;
+<<<<<<< HEAD
 		return;
+=======
+		goto out;
+>>>>>>> master
 	}
 
 	if (cpu_mitigations_off()) {
@@ -321,6 +442,7 @@ static void __init taa_select_mitigation(void)
 		return;
 	}
 
+<<<<<<< HEAD
 	/*
 	 * TAA mitigation via VERW is turned off if both
 	 * tsx_async_abort=off and mds=off are specified.
@@ -328,6 +450,11 @@ static void __init taa_select_mitigation(void)
 	if (taa_mitigation == TAA_MITIGATION_OFF &&
 	    mds_mitigation == MDS_MITIGATION_OFF)
 		return;
+=======
+	/* TAA mitigation is turned off on the cmdline (tsx_async_abort=off) */
+	if (taa_mitigation == TAA_MITIGATION_OFF)
+		goto out;
+>>>>>>> master
 
 	if (boot_cpu_has(X86_FEATURE_MD_CLEAR))
 		taa_mitigation = TAA_MITIGATION_VERW;
@@ -343,8 +470,14 @@ static void __init taa_select_mitigation(void)
 	 * On MDS_NO=1 CPUs if ARCH_CAP_TSX_CTRL_MSR is not set, microcode
 	 * update is required.
 	 */
+<<<<<<< HEAD
 	if ( (x86_arch_cap_msr & ARCH_CAP_MDS_NO) &&
 	    !(x86_arch_cap_msr & ARCH_CAP_TSX_CTRL_MSR))
+=======
+	ia32_cap = x86_read_arch_cap_msr();
+	if ( (ia32_cap & ARCH_CAP_MDS_NO) &&
+	    !(ia32_cap & ARCH_CAP_TSX_CTRL_MSR))
+>>>>>>> master
 		taa_mitigation = TAA_MITIGATION_UCODE_NEEDED;
 
 	/*
@@ -354,10 +487,20 @@ static void __init taa_select_mitigation(void)
 	 * For guests that can't determine whether the correct microcode is
 	 * present on host, enable the mitigation for UCODE_NEEDED as well.
 	 */
+<<<<<<< HEAD
 	setup_force_cpu_cap(X86_FEATURE_CLEAR_CPU_BUF);
 
 	if (taa_nosmt || cpu_mitigations_auto_nosmt())
 		cpu_smt_disable(false);
+=======
+	static_branch_enable(&mds_user_clear);
+
+	if (taa_nosmt || cpu_mitigations_auto_nosmt())
+		cpu_smt_disable(false);
+
+out:
+	pr_info("%s\n", taa_strings[taa_mitigation]);
+>>>>>>> master
 }
 
 static int __init tsx_async_abort_parse_cmdline(char *str)
@@ -382,6 +525,7 @@ static int __init tsx_async_abort_parse_cmdline(char *str)
 early_param("tsx_async_abort", tsx_async_abort_parse_cmdline);
 
 #undef pr_fmt
+<<<<<<< HEAD
 #define pr_fmt(fmt)	"MMIO Stale Data: " fmt
 
 enum mmio_mitigations {
@@ -863,6 +1007,8 @@ static int __init gds_parse_cmdline(char *str)
 early_param("gather_data_sampling", gds_parse_cmdline);
 
 #undef pr_fmt
+=======
+>>>>>>> master
 #define pr_fmt(fmt)     "Spectre V1 : " fmt
 
 enum spectre_v1_mitigation {
@@ -915,12 +1061,22 @@ static void __init spectre_v1_select_mitigation(void)
 		 * If FSGSBASE is enabled, the user can put a kernel address in
 		 * GS, in which case SMAP provides no protection.
 		 *
+<<<<<<< HEAD
+=======
+		 * [ NOTE: Don't check for X86_FEATURE_FSGSBASE until the
+		 *	   FSGSBASE enablement patches have been merged. ]
+		 *
+>>>>>>> master
 		 * If FSGSBASE is disabled, the user can only put a user space
 		 * address in GS.  That makes an attack harder, but still
 		 * possible if there's no SMAP protection.
 		 */
+<<<<<<< HEAD
 		if (boot_cpu_has(X86_FEATURE_FSGSBASE) ||
 		    !smap_works_speculatively()) {
+=======
+		if (!smap_works_speculatively()) {
+>>>>>>> master
 			/*
 			 * Mitigation can be provided from SWAPGS itself or
 			 * PTI as the CR3 write in the Meltdown mitigation
@@ -952,6 +1108,7 @@ static int __init nospectre_v1_cmdline(char *str)
 }
 early_param("nospectre_v1", nospectre_v1_cmdline);
 
+<<<<<<< HEAD
 enum spectre_v2_mitigation spectre_v2_enabled __ro_after_init = SPECTRE_V2_NONE;
 
 #undef pr_fmt
@@ -1160,6 +1317,15 @@ do_cmd_auto:
 static enum spectre_v2_user_mitigation spectre_v2_user_stibp __ro_after_init =
 	SPECTRE_V2_USER_NONE;
 static enum spectre_v2_user_mitigation spectre_v2_user_ibpb __ro_after_init =
+=======
+#undef pr_fmt
+#define pr_fmt(fmt)     "Spectre V2 : " fmt
+
+static enum spectre_v2_mitigation spectre_v2_enabled __ro_after_init =
+	SPECTRE_V2_NONE;
+
+static enum spectre_v2_user_mitigation spectre_v2_user __ro_after_init =
+>>>>>>> master
 	SPECTRE_V2_USER_NONE;
 
 #ifdef CONFIG_RETPOLINE
@@ -1183,6 +1349,7 @@ static inline const char *spectre_v2_module_string(void)
 static inline const char *spectre_v2_module_string(void) { return ""; }
 #endif
 
+<<<<<<< HEAD
 #define SPECTRE_V2_LFENCE_MSG "WARNING: LFENCE mitigation is not recommended for this CPU, data leaks possible!\n"
 #define SPECTRE_V2_EIBRS_EBPF_MSG "WARNING: Unprivileged eBPF is enabled with eIBRS on, data leaks possible via Spectre v2 BHB attacks!\n"
 #define SPECTRE_V2_EIBRS_LFENCE_EBPF_SMT_MSG "WARNING: Unprivileged eBPF is enabled with eIBRS+LFENCE mitigation and SMT, data leaks possible via Spectre v2 BHB attacks!\n"
@@ -1210,6 +1377,8 @@ void unpriv_ebpf_notify(int new_state)
 }
 #endif
 
+=======
+>>>>>>> master
 static inline bool match_option(const char *arg, int arglen, const char *opt)
 {
 	int len = strlen(opt);
@@ -1224,11 +1393,15 @@ enum spectre_v2_mitigation_cmd {
 	SPECTRE_V2_CMD_FORCE,
 	SPECTRE_V2_CMD_RETPOLINE,
 	SPECTRE_V2_CMD_RETPOLINE_GENERIC,
+<<<<<<< HEAD
 	SPECTRE_V2_CMD_RETPOLINE_LFENCE,
 	SPECTRE_V2_CMD_EIBRS,
 	SPECTRE_V2_CMD_EIBRS_RETPOLINE,
 	SPECTRE_V2_CMD_EIBRS_LFENCE,
 	SPECTRE_V2_CMD_IBRS,
+=======
+	SPECTRE_V2_CMD_RETPOLINE_AMD,
+>>>>>>> master
 };
 
 enum spectre_v2_user_cmd {
@@ -1242,11 +1415,18 @@ enum spectre_v2_user_cmd {
 };
 
 static const char * const spectre_v2_user_strings[] = {
+<<<<<<< HEAD
 	[SPECTRE_V2_USER_NONE]			= "User space: Vulnerable",
 	[SPECTRE_V2_USER_STRICT]		= "User space: Mitigation: STIBP protection",
 	[SPECTRE_V2_USER_STRICT_PREFERRED]	= "User space: Mitigation: STIBP always-on protection",
 	[SPECTRE_V2_USER_PRCTL]			= "User space: Mitigation: STIBP via prctl",
 	[SPECTRE_V2_USER_SECCOMP]		= "User space: Mitigation: STIBP via seccomp and prctl",
+=======
+	[SPECTRE_V2_USER_NONE]		= "User space: Vulnerable",
+	[SPECTRE_V2_USER_STRICT]	= "User space: Mitigation: STIBP protection",
+	[SPECTRE_V2_USER_PRCTL]		= "User space: Mitigation: STIBP via prctl",
+	[SPECTRE_V2_USER_SECCOMP]	= "User space: Mitigation: STIBP via seccomp and prctl",
+>>>>>>> master
 };
 
 static const struct {
@@ -1269,15 +1449,24 @@ static void __init spec_v2_user_print_cond(const char *reason, bool secure)
 		pr_info("spectre_v2_user=%s forced on command line.\n", reason);
 }
 
+<<<<<<< HEAD
 static __ro_after_init enum spectre_v2_mitigation_cmd spectre_v2_cmd;
 
 static enum spectre_v2_user_cmd __init
 spectre_v2_parse_user_cmdline(void)
+=======
+static enum spectre_v2_user_cmd __init
+spectre_v2_parse_user_cmdline(enum spectre_v2_mitigation_cmd v2_cmd)
+>>>>>>> master
 {
 	char arg[20];
 	int ret, i;
 
+<<<<<<< HEAD
 	switch (spectre_v2_cmd) {
+=======
+	switch (v2_cmd) {
+>>>>>>> master
 	case SPECTRE_V2_CMD_NONE:
 		return SPECTRE_V2_USER_CMD_NONE;
 	case SPECTRE_V2_CMD_FORCE:
@@ -1303,6 +1492,7 @@ spectre_v2_parse_user_cmdline(void)
 	return SPECTRE_V2_USER_CMD_AUTO;
 }
 
+<<<<<<< HEAD
 static inline bool spectre_v2_in_ibrs_mode(enum spectre_v2_mitigation mode)
 {
 	return spectre_v2_in_eibrs_mode(mode) || mode == SPECTRE_V2_IBRS;
@@ -1310,6 +1500,10 @@ static inline bool spectre_v2_in_ibrs_mode(enum spectre_v2_mitigation mode)
 
 static void __init
 spectre_v2_user_select_mitigation(void)
+=======
+static void __init
+spectre_v2_user_select_mitigation(enum spectre_v2_mitigation_cmd v2_cmd)
+>>>>>>> master
 {
 	enum spectre_v2_user_mitigation mode = SPECTRE_V2_USER_NONE;
 	bool smt_possible = IS_ENABLED(CONFIG_SMP);
@@ -1322,18 +1516,29 @@ spectre_v2_user_select_mitigation(void)
 	    cpu_smt_control == CPU_SMT_NOT_SUPPORTED)
 		smt_possible = false;
 
+<<<<<<< HEAD
 	cmd = spectre_v2_parse_user_cmdline();
+=======
+	cmd = spectre_v2_parse_user_cmdline(v2_cmd);
+>>>>>>> master
 	switch (cmd) {
 	case SPECTRE_V2_USER_CMD_NONE:
 		goto set_mode;
 	case SPECTRE_V2_USER_CMD_FORCE:
 		mode = SPECTRE_V2_USER_STRICT;
 		break;
+<<<<<<< HEAD
 	case SPECTRE_V2_USER_CMD_AUTO:
+=======
+>>>>>>> master
 	case SPECTRE_V2_USER_CMD_PRCTL:
 	case SPECTRE_V2_USER_CMD_PRCTL_IBPB:
 		mode = SPECTRE_V2_USER_PRCTL;
 		break;
+<<<<<<< HEAD
+=======
+	case SPECTRE_V2_USER_CMD_AUTO:
+>>>>>>> master
 	case SPECTRE_V2_USER_CMD_SECCOMP:
 	case SPECTRE_V2_USER_CMD_SECCOMP_IBPB:
 		if (IS_ENABLED(CONFIG_SECCOMP))
@@ -1347,13 +1552,19 @@ spectre_v2_user_select_mitigation(void)
 	if (boot_cpu_has(X86_FEATURE_IBPB)) {
 		setup_force_cpu_cap(X86_FEATURE_USE_IBPB);
 
+<<<<<<< HEAD
 		spectre_v2_user_ibpb = mode;
+=======
+>>>>>>> master
 		switch (cmd) {
 		case SPECTRE_V2_USER_CMD_FORCE:
 		case SPECTRE_V2_USER_CMD_PRCTL_IBPB:
 		case SPECTRE_V2_USER_CMD_SECCOMP_IBPB:
 			static_branch_enable(&switch_mm_always_ibpb);
+<<<<<<< HEAD
 			spectre_v2_user_ibpb = SPECTRE_V2_USER_STRICT;
+=======
+>>>>>>> master
 			break;
 		case SPECTRE_V2_USER_CMD_PRCTL:
 		case SPECTRE_V2_USER_CMD_AUTO:
@@ -1369,6 +1580,7 @@ spectre_v2_user_select_mitigation(void)
 			"always-on" : "conditional");
 	}
 
+<<<<<<< HEAD
 	/*
 	 * If no STIBP, Intel enhanced IBRS is enabled, or SMT impossible, STIBP
 	 * is not required.
@@ -1408,16 +1620,39 @@ spectre_v2_user_select_mitigation(void)
 
 set_mode:
 	pr_info("%s\n", spectre_v2_user_strings[mode]);
+=======
+	/* If enhanced IBRS is enabled no STIPB required */
+	if (spectre_v2_enabled == SPECTRE_V2_IBRS_ENHANCED)
+		return;
+
+	/*
+	 * If SMT is not possible or STIBP is not available clear the STIPB
+	 * mode.
+	 */
+	if (!smt_possible || !boot_cpu_has(X86_FEATURE_STIBP))
+		mode = SPECTRE_V2_USER_NONE;
+set_mode:
+	spectre_v2_user = mode;
+	/* Only print the STIBP mode when SMT possible */
+	if (smt_possible)
+		pr_info("%s\n", spectre_v2_user_strings[mode]);
+>>>>>>> master
 }
 
 static const char * const spectre_v2_strings[] = {
 	[SPECTRE_V2_NONE]			= "Vulnerable",
+<<<<<<< HEAD
 	[SPECTRE_V2_RETPOLINE]			= "Mitigation: Retpolines",
 	[SPECTRE_V2_LFENCE]			= "Mitigation: LFENCE",
 	[SPECTRE_V2_EIBRS]			= "Mitigation: Enhanced / Automatic IBRS",
 	[SPECTRE_V2_EIBRS_LFENCE]		= "Mitigation: Enhanced / Automatic IBRS + LFENCE",
 	[SPECTRE_V2_EIBRS_RETPOLINE]		= "Mitigation: Enhanced / Automatic IBRS + Retpolines",
 	[SPECTRE_V2_IBRS]			= "Mitigation: IBRS",
+=======
+	[SPECTRE_V2_RETPOLINE_GENERIC]		= "Mitigation: Full generic retpoline",
+	[SPECTRE_V2_RETPOLINE_AMD]		= "Mitigation: Full AMD retpoline",
+	[SPECTRE_V2_IBRS_ENHANCED]		= "Mitigation: Enhanced IBRS",
+>>>>>>> master
 };
 
 static const struct {
@@ -1428,6 +1663,7 @@ static const struct {
 	{ "off",		SPECTRE_V2_CMD_NONE,		  false },
 	{ "on",			SPECTRE_V2_CMD_FORCE,		  true  },
 	{ "retpoline",		SPECTRE_V2_CMD_RETPOLINE,	  false },
+<<<<<<< HEAD
 	{ "retpoline,amd",	SPECTRE_V2_CMD_RETPOLINE_LFENCE,  false },
 	{ "retpoline,lfence",	SPECTRE_V2_CMD_RETPOLINE_LFENCE,  false },
 	{ "retpoline,generic",	SPECTRE_V2_CMD_RETPOLINE_GENERIC, false },
@@ -1436,6 +1672,11 @@ static const struct {
 	{ "eibrs,retpoline",	SPECTRE_V2_CMD_EIBRS_RETPOLINE,	  false },
 	{ "auto",		SPECTRE_V2_CMD_AUTO,		  false },
 	{ "ibrs",		SPECTRE_V2_CMD_IBRS,              false },
+=======
+	{ "retpoline,amd",	SPECTRE_V2_CMD_RETPOLINE_AMD,	  false },
+	{ "retpoline,generic",	SPECTRE_V2_CMD_RETPOLINE_GENERIC, false },
+	{ "auto",		SPECTRE_V2_CMD_AUTO,		  false },
+>>>>>>> master
 };
 
 static void __init spec_v2_print_cond(const char *reason, bool secure)
@@ -1490,6 +1731,7 @@ static enum spectre_v2_mitigation_cmd __init spectre_v2_parse_cmdline(void)
 		return SPECTRE_V2_CMD_AUTO;
 	}
 
+<<<<<<< HEAD
 	if ((cmd == SPECTRE_V2_CMD_RETPOLINE_LFENCE ||
 	     cmd == SPECTRE_V2_CMD_EIBRS_LFENCE) &&
 	    !boot_cpu_has(X86_FEATURE_LFENCE_RDTSC)) {
@@ -1522,6 +1764,8 @@ static enum spectre_v2_mitigation_cmd __init spectre_v2_parse_cmdline(void)
 		return SPECTRE_V2_CMD_AUTO;
 	}
 
+=======
+>>>>>>> master
 	spec_v2_print_cond(mitigation_options[i].option,
 			   mitigation_options[i].secure);
 	return cmd;
@@ -1750,6 +1994,16 @@ static void __init spectre_v2_select_mitigation(void)
 			x86_spec_ctrl_base |= SPEC_CTRL_IBRS;
 			update_spec_ctrl(x86_spec_ctrl_base);
 		}
+<<<<<<< HEAD
+=======
+		mode = SPECTRE_V2_RETPOLINE_AMD;
+		setup_force_cpu_cap(X86_FEATURE_RETPOLINE_AMD);
+		setup_force_cpu_cap(X86_FEATURE_RETPOLINE);
+	} else {
+	retpoline_generic:
+		mode = SPECTRE_V2_RETPOLINE_GENERIC;
+		setup_force_cpu_cap(X86_FEATURE_RETPOLINE);
+>>>>>>> master
 	}
 
 	switch (mode) {
@@ -1831,8 +2085,11 @@ static void __init spectre_v2_select_mitigation(void)
 	setup_force_cpu_cap(X86_FEATURE_RSB_CTXSW);
 	pr_info("Spectre v2 / SpectreRSB mitigation: Filling RSB on context switch\n");
 
+<<<<<<< HEAD
 	spectre_v2_determine_rsb_fill_type_at_vmexit(mode);
 
+=======
+>>>>>>> master
 	/*
 	 * Retpoline protects the kernel, but doesn't protect firmware.  IBRS
 	 * and Enhanced IBRS protect firmware too, so enable IBRS around
@@ -1860,13 +2117,21 @@ static void __init spectre_v2_select_mitigation(void)
 	}
 
 	/* Set up IBPB and STIBP depending on the general spectre V2 command */
+<<<<<<< HEAD
 	spectre_v2_cmd = cmd;
+=======
+	spectre_v2_user_select_mitigation(cmd);
+>>>>>>> master
 }
 
 static void update_stibp_msr(void * __unused)
 {
+<<<<<<< HEAD
 	u64 val = spec_ctrl_current() | (x86_spec_ctrl_base & SPEC_CTRL_STIBP);
 	update_spec_ctrl(val);
+=======
+	wrmsrl(MSR_IA32_SPEC_CTRL, x86_spec_ctrl_base);
+>>>>>>> master
 }
 
 /* Update x86_spec_ctrl_base in case SMT state changed. */
@@ -1912,16 +2177,24 @@ static void update_mds_branch_idle(void)
 	if (!boot_cpu_has_bug(X86_BUG_MSBDS_ONLY))
 		return;
 
+<<<<<<< HEAD
 	if (sched_smt_active()) {
 		static_branch_enable(&mds_idle_clear);
 	} else if (mmio_mitigation == MMIO_MITIGATION_OFF ||
 		   (x86_arch_cap_msr & ARCH_CAP_FBSDP_NO)) {
 		static_branch_disable(&mds_idle_clear);
 	}
+=======
+	if (sched_smt_active())
+		static_branch_enable(&mds_idle_clear);
+	else
+		static_branch_disable(&mds_idle_clear);
+>>>>>>> master
 }
 
 #define MDS_MSG_SMT "MDS CPU bug present and SMT on, data leak possible. See https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln/mds.html for more details.\n"
 #define TAA_MSG_SMT "TAA CPU bug present and SMT on, data leak possible. See https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln/tsx_async_abort.html for more details.\n"
+<<<<<<< HEAD
 #define MMIO_MSG_SMT "MMIO Stale Data CPU bug present and SMT on, data leak possible. See https://www.kernel.org/doc/html/latest/admin-guide/hw-vuln/processor_mmio_stale_data.html for more details.\n"
 
 void cpu_bugs_smt_update(void)
@@ -1937,6 +2210,17 @@ void cpu_bugs_smt_update(void)
 		break;
 	case SPECTRE_V2_USER_STRICT:
 	case SPECTRE_V2_USER_STRICT_PREFERRED:
+=======
+
+void arch_smt_update(void)
+{
+	mutex_lock(&spec_ctrl_mutex);
+
+	switch (spectre_v2_user) {
+	case SPECTRE_V2_USER_NONE:
+		break;
+	case SPECTRE_V2_USER_STRICT:
+>>>>>>> master
 		update_stibp_strict();
 		break;
 	case SPECTRE_V2_USER_PRCTL:
@@ -1967,6 +2251,7 @@ void cpu_bugs_smt_update(void)
 		break;
 	}
 
+<<<<<<< HEAD
 	switch (mmio_mitigation) {
 	case MMIO_MITIGATION_VERW:
 	case MMIO_MITIGATION_UCODE_NEEDED:
@@ -1977,6 +2262,8 @@ void cpu_bugs_smt_update(void)
 		break;
 	}
 
+=======
+>>>>>>> master
 	mutex_unlock(&spec_ctrl_mutex);
 }
 
@@ -2081,6 +2368,16 @@ static enum ssb_mitigation __init __ssb_select_mitigation(void)
 	}
 
 	/*
+	 * If SSBD is controlled by the SPEC_CTRL MSR, then set the proper
+	 * bit in the mask to allow guests to use the mitigation even in the
+	 * case where the host does not enable it.
+	 */
+	if (static_cpu_has(X86_FEATURE_SPEC_CTRL_SSBD) ||
+	    static_cpu_has(X86_FEATURE_AMD_SSBD)) {
+		x86_spec_ctrl_mask |= SPEC_CTRL_SSBD;
+	}
+
+	/*
 	 * We have three CPU feature flags that are in play here:
 	 *  - X86_BUG_SPEC_STORE_BYPASS - CPU is susceptible.
 	 *  - X86_FEATURE_SSBD - CPU is able to turn off speculative store bypass
@@ -2097,7 +2394,11 @@ static enum ssb_mitigation __init __ssb_select_mitigation(void)
 			x86_amd_ssb_disable();
 		} else {
 			x86_spec_ctrl_base |= SPEC_CTRL_SSBD;
+<<<<<<< HEAD
 			update_spec_ctrl(x86_spec_ctrl_base);
+=======
+			wrmsrl(MSR_IA32_SPEC_CTRL, x86_spec_ctrl_base);
+>>>>>>> master
 		}
 	}
 
@@ -2132,6 +2433,7 @@ static void task_update_spec_tif(struct task_struct *tsk)
 		speculation_ctrl_update_current();
 }
 
+<<<<<<< HEAD
 static int l1d_flush_prctl_set(struct task_struct *task, unsigned long ctrl)
 {
 
@@ -2150,6 +2452,8 @@ static int l1d_flush_prctl_set(struct task_struct *task, unsigned long ctrl)
 	}
 }
 
+=======
+>>>>>>> master
 static int ssb_prctl_set(struct task_struct *task, unsigned long ctrl)
 {
 	if (ssb_mode != SPEC_STORE_BYPASS_PRCTL &&
@@ -2162,17 +2466,24 @@ static int ssb_prctl_set(struct task_struct *task, unsigned long ctrl)
 		if (task_spec_ssb_force_disable(task))
 			return -EPERM;
 		task_clear_spec_ssb_disable(task);
+<<<<<<< HEAD
 		task_clear_spec_ssb_noexec(task);
+=======
+>>>>>>> master
 		task_update_spec_tif(task);
 		break;
 	case PR_SPEC_DISABLE:
 		task_set_spec_ssb_disable(task);
+<<<<<<< HEAD
 		task_clear_spec_ssb_noexec(task);
+=======
+>>>>>>> master
 		task_update_spec_tif(task);
 		break;
 	case PR_SPEC_FORCE_DISABLE:
 		task_set_spec_ssb_disable(task);
 		task_set_spec_ssb_force_disable(task);
+<<<<<<< HEAD
 		task_clear_spec_ssb_noexec(task);
 		task_update_spec_tif(task);
 		break;
@@ -2181,6 +2492,8 @@ static int ssb_prctl_set(struct task_struct *task, unsigned long ctrl)
 			return -EPERM;
 		task_set_spec_ssb_disable(task);
 		task_set_spec_ssb_noexec(task);
+=======
+>>>>>>> master
 		task_update_spec_tif(task);
 		break;
 	default:
@@ -2189,6 +2502,7 @@ static int ssb_prctl_set(struct task_struct *task, unsigned long ctrl)
 	return 0;
 }
 
+<<<<<<< HEAD
 static bool is_spec_ib_user_controlled(void)
 {
 	return spectre_v2_user_ibpb == SPECTRE_V2_USER_PRCTL ||
@@ -2197,10 +2511,13 @@ static bool is_spec_ib_user_controlled(void)
 		spectre_v2_user_stibp == SPECTRE_V2_USER_SECCOMP;
 }
 
+=======
+>>>>>>> master
 static int ib_prctl_set(struct task_struct *task, unsigned long ctrl)
 {
 	switch (ctrl) {
 	case PR_SPEC_ENABLE:
+<<<<<<< HEAD
 		if (spectre_v2_user_ibpb == SPECTRE_V2_USER_NONE &&
 		    spectre_v2_user_stibp == SPECTRE_V2_USER_NONE)
 			return 0;
@@ -2224,6 +2541,16 @@ static int ib_prctl_set(struct task_struct *task, unsigned long ctrl)
 		    task_spec_ib_force_disable(task))
 			return -EPERM;
 
+=======
+		if (spectre_v2_user == SPECTRE_V2_USER_NONE)
+			return 0;
+		/*
+		 * Indirect branch speculation is always disabled in strict
+		 * mode.
+		 */
+		if (spectre_v2_user == SPECTRE_V2_USER_STRICT)
+			return -EPERM;
+>>>>>>> master
 		task_clear_spec_ib_disable(task);
 		task_update_spec_tif(task);
 		break;
@@ -2233,6 +2560,7 @@ static int ib_prctl_set(struct task_struct *task, unsigned long ctrl)
 		 * Indirect branch speculation is always allowed when
 		 * mitigation is force disabled.
 		 */
+<<<<<<< HEAD
 		if (spectre_v2_user_ibpb == SPECTRE_V2_USER_NONE &&
 		    spectre_v2_user_stibp == SPECTRE_V2_USER_NONE)
 			return -EPERM;
@@ -2240,12 +2568,21 @@ static int ib_prctl_set(struct task_struct *task, unsigned long ctrl)
 		if (!is_spec_ib_user_controlled())
 			return 0;
 
+=======
+		if (spectre_v2_user == SPECTRE_V2_USER_NONE)
+			return -EPERM;
+		if (spectre_v2_user == SPECTRE_V2_USER_STRICT)
+			return 0;
+>>>>>>> master
 		task_set_spec_ib_disable(task);
 		if (ctrl == PR_SPEC_FORCE_DISABLE)
 			task_set_spec_ib_force_disable(task);
 		task_update_spec_tif(task);
+<<<<<<< HEAD
 		if (task == current)
 			indirect_branch_prediction_barrier();
+=======
+>>>>>>> master
 		break;
 	default:
 		return -ERANGE;
@@ -2261,8 +2598,11 @@ int arch_prctl_spec_ctrl_set(struct task_struct *task, unsigned long which,
 		return ssb_prctl_set(task, ctrl);
 	case PR_SPEC_INDIRECT_BRANCH:
 		return ib_prctl_set(task, ctrl);
+<<<<<<< HEAD
 	case PR_SPEC_L1D_FLUSH:
 		return l1d_flush_prctl_set(task, ctrl);
+=======
+>>>>>>> master
 	default:
 		return -ENODEV;
 	}
@@ -2273,8 +2613,12 @@ void arch_seccomp_spec_mitigate(struct task_struct *task)
 {
 	if (ssb_mode == SPEC_STORE_BYPASS_SECCOMP)
 		ssb_prctl_set(task, PR_SPEC_FORCE_DISABLE);
+<<<<<<< HEAD
 	if (spectre_v2_user_ibpb == SPECTRE_V2_USER_SECCOMP ||
 	    spectre_v2_user_stibp == SPECTRE_V2_USER_SECCOMP)
+=======
+	if (spectre_v2_user == SPECTRE_V2_USER_SECCOMP)
+>>>>>>> master
 		ib_prctl_set(task, PR_SPEC_FORCE_DISABLE);
 }
 #endif
@@ -2316,21 +2660,37 @@ static int ib_prctl_get(struct task_struct *task)
 	if (!boot_cpu_has_bug(X86_BUG_SPECTRE_V2))
 		return PR_SPEC_NOT_AFFECTED;
 
+<<<<<<< HEAD
 	if (spectre_v2_user_ibpb == SPECTRE_V2_USER_NONE &&
 	    spectre_v2_user_stibp == SPECTRE_V2_USER_NONE)
 		return PR_SPEC_ENABLE;
 	else if (is_spec_ib_user_controlled()) {
+=======
+	switch (spectre_v2_user) {
+	case SPECTRE_V2_USER_NONE:
+		return PR_SPEC_ENABLE;
+	case SPECTRE_V2_USER_PRCTL:
+	case SPECTRE_V2_USER_SECCOMP:
+>>>>>>> master
 		if (task_spec_ib_force_disable(task))
 			return PR_SPEC_PRCTL | PR_SPEC_FORCE_DISABLE;
 		if (task_spec_ib_disable(task))
 			return PR_SPEC_PRCTL | PR_SPEC_DISABLE;
 		return PR_SPEC_PRCTL | PR_SPEC_ENABLE;
+<<<<<<< HEAD
 	} else if (spectre_v2_user_ibpb == SPECTRE_V2_USER_STRICT ||
 	    spectre_v2_user_stibp == SPECTRE_V2_USER_STRICT ||
 	    spectre_v2_user_stibp == SPECTRE_V2_USER_STRICT_PREFERRED)
 		return PR_SPEC_DISABLE;
 	else
 		return PR_SPEC_NOT_AFFECTED;
+=======
+	case SPECTRE_V2_USER_STRICT:
+		return PR_SPEC_DISABLE;
+	default:
+		return PR_SPEC_NOT_AFFECTED;
+	}
+>>>>>>> master
 }
 
 int arch_prctl_spec_ctrl_get(struct task_struct *task, unsigned long which)
@@ -2340,8 +2700,11 @@ int arch_prctl_spec_ctrl_get(struct task_struct *task, unsigned long which)
 		return ssb_prctl_get(task);
 	case PR_SPEC_INDIRECT_BRANCH:
 		return ib_prctl_get(task);
+<<<<<<< HEAD
 	case PR_SPEC_L1D_FLUSH:
 		return l1d_flush_prctl_get(task);
+=======
+>>>>>>> master
 	default:
 		return -ENODEV;
 	}
@@ -2482,6 +2845,7 @@ static int __init l1tf_cmdline(char *str)
 early_param("l1tf", l1tf_cmdline);
 
 #undef pr_fmt
+<<<<<<< HEAD
 #define pr_fmt(fmt)	"Speculative Return Stack Overflow: " fmt
 
 enum srso_mitigation {
@@ -2643,6 +3007,8 @@ pred_cmd:
 }
 
 #undef pr_fmt
+=======
+>>>>>>> master
 #define pr_fmt(fmt) fmt
 
 #ifdef CONFIG_SYSFS
@@ -2667,6 +3033,7 @@ static ssize_t l1tf_show_state(char *buf)
 	if (l1tf_vmx_mitigation == VMENTER_L1D_FLUSH_EPT_DISABLED ||
 	    (l1tf_vmx_mitigation == VMENTER_L1D_FLUSH_NEVER &&
 	     sched_smt_active())) {
+<<<<<<< HEAD
 		return sysfs_emit(buf, "%s; VMX: %s\n", L1TF_DEFAULT_MSG,
 				  l1tf_vmx_states[l1tf_vmx_mitigation]);
 	}
@@ -2674,10 +3041,20 @@ static ssize_t l1tf_show_state(char *buf)
 	return sysfs_emit(buf, "%s; VMX: %s, SMT %s\n", L1TF_DEFAULT_MSG,
 			  l1tf_vmx_states[l1tf_vmx_mitigation],
 			  sched_smt_active() ? "vulnerable" : "disabled");
+=======
+		return sprintf(buf, "%s; VMX: %s\n", L1TF_DEFAULT_MSG,
+			       l1tf_vmx_states[l1tf_vmx_mitigation]);
+	}
+
+	return sprintf(buf, "%s; VMX: %s, SMT %s\n", L1TF_DEFAULT_MSG,
+		       l1tf_vmx_states[l1tf_vmx_mitigation],
+		       sched_smt_active() ? "vulnerable" : "disabled");
+>>>>>>> master
 }
 
 static ssize_t itlb_multihit_show_state(char *buf)
 {
+<<<<<<< HEAD
 	if (!boot_cpu_has(X86_FEATURE_MSR_IA32_FEAT_CTL) ||
 	    !boot_cpu_has(X86_FEATURE_VMX))
 		return sysfs_emit(buf, "KVM: Mitigation: VMX unsupported\n");
@@ -2687,6 +3064,12 @@ static ssize_t itlb_multihit_show_state(char *buf)
 		return sysfs_emit(buf, "KVM: Mitigation: Split huge pages\n");
 	else
 		return sysfs_emit(buf, "KVM: Vulnerable\n");
+=======
+	if (itlb_multihit_kvm_mitigation)
+		return sprintf(buf, "KVM: Mitigation: Split huge pages\n");
+	else
+		return sprintf(buf, "KVM: Vulnerable\n");
+>>>>>>> master
 }
 #else
 static ssize_t l1tf_show_state(char *buf)
@@ -2698,11 +3081,17 @@ static ssize_t itlb_multihit_show_state(char *buf)
 {
 	return sysfs_emit(buf, "Processor vulnerable\n");
 }
+
+static ssize_t itlb_multihit_show_state(char *buf)
+{
+	return sprintf(buf, "Processor vulnerable\n");
+}
 #endif
 
 static ssize_t mds_show_state(char *buf)
 {
 	if (boot_cpu_has(X86_FEATURE_HYPERVISOR)) {
+<<<<<<< HEAD
 		return sysfs_emit(buf, "%s; SMT Host state unknown\n",
 				  mds_strings[mds_mitigation]);
 	}
@@ -2715,12 +3104,27 @@ static ssize_t mds_show_state(char *buf)
 
 	return sysfs_emit(buf, "%s; SMT %s\n", mds_strings[mds_mitigation],
 			  sched_smt_active() ? "vulnerable" : "disabled");
+=======
+		return sprintf(buf, "%s; SMT Host state unknown\n",
+			       mds_strings[mds_mitigation]);
+	}
+
+	if (boot_cpu_has(X86_BUG_MSBDS_ONLY)) {
+		return sprintf(buf, "%s; SMT %s\n", mds_strings[mds_mitigation],
+			       (mds_mitigation == MDS_MITIGATION_OFF ? "vulnerable" :
+			        sched_smt_active() ? "mitigated" : "disabled"));
+	}
+
+	return sprintf(buf, "%s; SMT %s\n", mds_strings[mds_mitigation],
+		       sched_smt_active() ? "vulnerable" : "disabled");
+>>>>>>> master
 }
 
 static ssize_t tsx_async_abort_show_state(char *buf)
 {
 	if ((taa_mitigation == TAA_MITIGATION_TSX_DISABLED) ||
 	    (taa_mitigation == TAA_MITIGATION_OFF))
+<<<<<<< HEAD
 		return sysfs_emit(buf, "%s\n", taa_strings[taa_mitigation]);
 
 	if (boot_cpu_has(X86_FEATURE_HYPERVISOR)) {
@@ -2752,10 +3156,22 @@ static ssize_t mmio_stale_data_show_state(char *buf)
 static ssize_t rfds_show_state(char *buf)
 {
 	return sysfs_emit(buf, "%s\n", rfds_strings[rfds_mitigation]);
+=======
+		return sprintf(buf, "%s\n", taa_strings[taa_mitigation]);
+
+	if (boot_cpu_has(X86_FEATURE_HYPERVISOR)) {
+		return sprintf(buf, "%s; SMT Host state unknown\n",
+			       taa_strings[taa_mitigation]);
+	}
+
+	return sprintf(buf, "%s; SMT %s\n", taa_strings[taa_mitigation],
+		       sched_smt_active() ? "vulnerable" : "disabled");
+>>>>>>> master
 }
 
 static char *stibp_state(void)
 {
+<<<<<<< HEAD
 	if (spectre_v2_in_eibrs_mode(spectre_v2_enabled) &&
 	    !boot_cpu_has(X86_FEATURE_AUTOIBRS))
 		return "";
@@ -2771,6 +3187,20 @@ static char *stibp_state(void)
 	case SPECTRE_V2_USER_SECCOMP:
 		if (static_key_enabled(&switch_to_cond_stibp))
 			return "; STIBP: conditional";
+=======
+	if (spectre_v2_enabled == SPECTRE_V2_IBRS_ENHANCED)
+		return "";
+
+	switch (spectre_v2_user) {
+	case SPECTRE_V2_USER_NONE:
+		return ", STIBP: disabled";
+	case SPECTRE_V2_USER_STRICT:
+		return ", STIBP: forced";
+	case SPECTRE_V2_USER_PRCTL:
+	case SPECTRE_V2_USER_SECCOMP:
+		if (static_key_enabled(&switch_to_cond_stibp))
+			return ", STIBP: conditional";
+>>>>>>> master
 	}
 	return "";
 }
@@ -2779,14 +3209,22 @@ static char *ibpb_state(void)
 {
 	if (boot_cpu_has(X86_FEATURE_IBPB)) {
 		if (static_key_enabled(&switch_mm_always_ibpb))
+<<<<<<< HEAD
 			return "; IBPB: always-on";
 		if (static_key_enabled(&switch_mm_cond_ibpb))
 			return "; IBPB: conditional";
 		return "; IBPB: disabled";
+=======
+			return ", IBPB: always-on";
+		if (static_key_enabled(&switch_mm_cond_ibpb))
+			return ", IBPB: conditional";
+		return ", IBPB: disabled";
+>>>>>>> master
 	}
 	return "";
 }
 
+<<<<<<< HEAD
 static char *pbrsb_eibrs_state(void)
 {
 	if (boot_cpu_has_bug(X86_BUG_EIBRS_PBRSB)) {
@@ -2878,6 +3316,8 @@ static ssize_t gds_show_state(char *buf)
 	return sysfs_emit(buf, "%s\n", gds_strings[gds_mitigation]);
 }
 
+=======
+>>>>>>> master
 static ssize_t cpu_show_common(struct device *dev, struct device_attribute *attr,
 			       char *buf, unsigned int bug)
 {
@@ -2895,10 +3335,22 @@ static ssize_t cpu_show_common(struct device *dev, struct device_attribute *attr
 		break;
 
 	case X86_BUG_SPECTRE_V1:
+<<<<<<< HEAD
 		return sysfs_emit(buf, "%s\n", spectre_v1_strings[spectre_v1_mitigation]);
 
 	case X86_BUG_SPECTRE_V2:
 		return spectre_v2_show_state(buf);
+=======
+		return sprintf(buf, "%s\n", spectre_v1_strings[spectre_v1_mitigation]);
+
+	case X86_BUG_SPECTRE_V2:
+		return sprintf(buf, "%s%s%s%s%s%s\n", spectre_v2_strings[spectre_v2_enabled],
+			       ibpb_state(),
+			       boot_cpu_has(X86_FEATURE_USE_IBRS_FW) ? ", IBRS_FW" : "",
+			       stibp_state(),
+			       boot_cpu_has(X86_FEATURE_RSB_CTXSW) ? ", RSB filling" : "",
+			       spectre_v2_module_string());
+>>>>>>> master
 
 	case X86_BUG_SPEC_STORE_BYPASS:
 		return sysfs_emit(buf, "%s\n", ssb_strings[ssb_mode]);
@@ -2917,6 +3369,7 @@ static ssize_t cpu_show_common(struct device *dev, struct device_attribute *attr
 	case X86_BUG_ITLB_MULTIHIT:
 		return itlb_multihit_show_state(buf);
 
+<<<<<<< HEAD
 	case X86_BUG_SRBDS:
 		return srbds_show_state(buf);
 
@@ -2936,6 +3389,8 @@ static ssize_t cpu_show_common(struct device *dev, struct device_attribute *attr
 	case X86_BUG_RFDS:
 		return rfds_show_state(buf);
 
+=======
+>>>>>>> master
 	default:
 		break;
 	}
@@ -2982,6 +3437,7 @@ ssize_t cpu_show_itlb_multihit(struct device *dev, struct device_attribute *attr
 {
 	return cpu_show_common(dev, attr, buf, X86_BUG_ITLB_MULTIHIT);
 }
+<<<<<<< HEAD
 
 ssize_t cpu_show_srbds(struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -3015,4 +3471,6 @@ ssize_t cpu_show_reg_file_data_sampling(struct device *dev, struct device_attrib
 {
 	return cpu_show_common(dev, attr, buf, X86_BUG_RFDS);
 }
+=======
+>>>>>>> master
 #endif

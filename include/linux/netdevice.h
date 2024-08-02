@@ -1691,6 +1691,7 @@ struct net_device_ops {
  * @IFF_FAILOVER: device is a failover master device
  * @IFF_FAILOVER_SLAVE: device is lower dev of a failover master device
  * @IFF_L3MDEV_RX_HANDLER: only invoke the rx handler of L3 master device
+<<<<<<< HEAD
  * @IFF_NO_ADDRCONF: prevent ipv6 addrconf
  * @IFF_TX_SKB_NO_LINEAR: device/driver is capable of xmitting frames with
  *	skb_headlen(skb) == 0 (data starts from frag0)
@@ -1698,6 +1699,9 @@ struct net_device_ops {
  * @IFF_SEE_ALL_HWTSTAMP_REQUESTS: device wants to see calls to
  *	ndo_hwtstamp_set() for all timestamp requests regardless of source,
  *	even if those aren't HWTSTAMP_SOURCE_NETDEV.
+=======
+ * @IFF_LIVE_RENAME_OK: rename is allowed while device is up and running
+>>>>>>> master
  */
 enum netdev_priv_flags {
 	IFF_802_1Q_VLAN			= 1<<0,
@@ -1730,10 +1734,14 @@ enum netdev_priv_flags {
 	IFF_FAILOVER			= 1<<27,
 	IFF_FAILOVER_SLAVE		= 1<<28,
 	IFF_L3MDEV_RX_HANDLER		= 1<<29,
+<<<<<<< HEAD
 	IFF_NO_ADDRCONF			= BIT_ULL(30),
 	IFF_TX_SKB_NO_LINEAR		= BIT_ULL(31),
 	IFF_CHANGE_PROTO_DOWN		= BIT_ULL(32),
 	IFF_SEE_ALL_HWTSTAMP_REQUESTS	= BIT_ULL(33),
+=======
+	IFF_LIVE_RENAME_OK		= 1<<30,
+>>>>>>> master
 };
 
 #define IFF_802_1Q_VLAN			IFF_802_1Q_VLAN
@@ -1766,6 +1774,7 @@ enum netdev_priv_flags {
 #define IFF_FAILOVER			IFF_FAILOVER
 #define IFF_FAILOVER_SLAVE		IFF_FAILOVER_SLAVE
 #define IFF_L3MDEV_RX_HANDLER		IFF_L3MDEV_RX_HANDLER
+<<<<<<< HEAD
 #define IFF_TX_SKB_NO_LINEAR		IFF_TX_SKB_NO_LINEAR
 
 /* Specifies the type of the struct net_device::ml_priv pointer */
@@ -1780,6 +1789,9 @@ enum netdev_stat_type {
 	NETDEV_PCPU_STAT_TSTATS, /* struct pcpu_sw_netstats */
 	NETDEV_PCPU_STAT_DSTATS, /* struct pcpu_dstats */
 };
+=======
+#define IFF_LIVE_RENAME_OK		IFF_LIVE_RENAME_OK
+>>>>>>> master
 
 /**
  *	struct net_device - The DEVICE structure.

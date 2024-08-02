@@ -1722,6 +1722,7 @@ static inline void cpu_probe_loongson(struct cpuinfo_mips *c, unsigned int cpu)
 		 * register, we correct it here.
 		 */
 		c->options |= MIPS_CPU_FTLB | MIPS_CPU_TLBINV | MIPS_CPU_LDPTE;
+<<<<<<< HEAD
 		c->ases |= (MIPS_ASE_LOONGSON_MMI | MIPS_ASE_LOONGSON_CAM |
 			MIPS_ASE_LOONGSON_EXT | MIPS_ASE_LOONGSON_EXT2);
 		c->ases &= ~MIPS_ASE_VZ; /* VZ of Loongson-3A2000/3000 is incomplete */
@@ -1731,6 +1732,11 @@ static inline void cpu_probe_loongson(struct cpuinfo_mips *c, unsigned int cpu)
 		set_elf_platform(cpu, "loongson3a");
 		set_isa(c, MIPS_CPU_ISA_M64R2);
 		decode_cpucfg(c);
+=======
+		c->writecombine = _CACHE_UNCACHED_ACCELERATED;
+		c->ases |= (MIPS_ASE_LOONGSON_MMI | MIPS_ASE_LOONGSON_CAM |
+			MIPS_ASE_LOONGSON_EXT | MIPS_ASE_LOONGSON_EXT2);
+>>>>>>> master
 		break;
 	default:
 		panic("Unknown Loongson Processor ID!");
@@ -1759,10 +1765,17 @@ static inline void cpu_probe_ingenic(struct cpuinfo_mips *c, unsigned int cpu)
 	c->icache.flags |= MIPS_CACHE_VTAG;
 
 	switch (c->processor_id & PRID_IMP_MASK) {
+<<<<<<< HEAD
 
 	/* XBurst®1 with MXU1.0/MXU1.1 SIMD ISA */
 	case PRID_IMP_XBURST_REV1:
 
+=======
+	case PRID_IMP_JZRISC:
+		c->cputype = CPU_JZRISC;
+		c->writecombine = _CACHE_UNCACHED_ACCELERATED;
+		__cpu_name[cpu] = "Ingenic JZRISC";
+>>>>>>> master
 		/*
 		 * The XBurst core by default attempts to avoid branch target
 		 * buffer lookups by detecting & special casing loops. This
@@ -1770,6 +1783,7 @@ static inline void cpu_probe_ingenic(struct cpuinfo_mips *c, unsigned int cpu)
 		 * Set cp0 config7 bit 4 to disable this feature.
 		 */
 		set_c0_config7(MIPS_CONF7_BTB_LOOP_EN);
+<<<<<<< HEAD
 
 		switch (c->processor_id & PRID_COMP_MASK) {
 
@@ -1812,6 +1826,8 @@ static inline void cpu_probe_ingenic(struct cpuinfo_mips *c, unsigned int cpu)
 		c->writecombine = _CACHE_CACHABLE_WA;
 		c->cputype = CPU_XBURST;
 		__cpu_name[cpu] = "Ingenic XBurst";
+=======
+>>>>>>> master
 		break;
 
 	/* XBurst®2 with MXU2.1 SIMD ISA */

@@ -76,7 +76,11 @@ static int ndesc_get_rx_status(struct stmmac_extra_stats *x,
 		return dma_own;
 
 	if (unlikely(!(rdes0 & RDES0_LAST_DESCRIPTOR))) {
+<<<<<<< HEAD
 		x->rx_length++;
+=======
+		stats->rx_length_errors++;
+>>>>>>> master
 		return discard_frame;
 	}
 

@@ -336,12 +336,23 @@ void bch_journal_mark(struct cache_set *c, struct list_head *list)
 	}
 }
 
+<<<<<<< HEAD
 static bool is_discard_enabled(struct cache_set *s)
 {
 	struct cache *ca = s->cache;
 
 	if (ca->discard)
 		return true;
+=======
+bool is_discard_enabled(struct cache_set *s)
+{
+	struct cache *ca;
+	unsigned int i;
+
+	for_each_cache(ca, s, i)
+		if (ca->discard)
+			return true;
+>>>>>>> master
 
 	return false;
 }
@@ -361,10 +372,17 @@ int bch_journal_replay(struct cache_set *s, struct list_head *list)
 
 		if (n != i->j.seq) {
 			if (n == start && is_discard_enabled(s))
+<<<<<<< HEAD
 				pr_info("journal entries %llu-%llu may be discarded! (replaying %llu-%llu)\n",
 					n, i->j.seq - 1, start, end);
 			else {
 				pr_err("journal entries %llu-%llu missing! (replaying %llu-%llu)\n",
+=======
+				pr_info("bcache: journal entries %llu-%llu may be discarded! (replaying %llu-%llu)",
+					n, i->j.seq - 1, start, end);
+			else {
+				pr_err("bcache: journal entries %llu-%llu missing! (replaying %llu-%llu)",
+>>>>>>> master
 					n, i->j.seq - 1, start, end);
 				ret = -EIO;
 				goto err;
@@ -415,6 +433,7 @@ void bch_journal_space_reserve(struct journal *j)
 
 static void btree_flush_write(struct cache_set *c)
 {
+<<<<<<< HEAD
 	struct btree *b, *t, *btree_nodes[BTREE_FLUSH_NR];
 	unsigned int i, nr;
 	int ref_nr;
@@ -445,6 +464,35 @@ static void btree_flush_write(struct cache_set *c)
 		goto out;
 	}
 	spin_unlock(&c->journal.lock);
+=======
+	/*
+	 * Try to find the btree node with that references the oldest journal
+	 * entry, best is our current candidate and is locked if non NULL:
+	 */
+	struct btree *b, *best;
+	unsigned int i;
+
+	atomic_long_inc(&c->flush_write);
+retry:
+	best = NULL;
+
+	mutex_lock(&c->bucket_lock);
+	for_each_cached_btree(b, c, i)
+		if (btree_current_write(b)->journal) {
+			if (!best)
+				best = b;
+			else if (journal_pin_cmp(c,
+					btree_current_write(best)->journal,
+					btree_current_write(b)->journal)) {
+				best = b;
+			}
+		}
+
+	b = best;
+	if (b)
+		set_btree_node_journal_flush(b);
+	mutex_unlock(&c->bucket_lock);
+>>>>>>> master
 
 	mask = c->journal.pin.mask;
 	nr = 0;
@@ -487,6 +535,7 @@ static void btree_flush_write(struct cache_set *c)
 		}
 
 		if (!btree_current_write(b)->journal) {
+			clear_bit(BTREE_NODE_journal_flush, &b->flags);
 			mutex_unlock(&b->write_lock);
 			continue;
 		}
@@ -682,10 +731,18 @@ static void journal_reclaim(struct cache_set *c)
 			     ca->sb.nr_this_dev);
 	atomic_long_inc(&c->reclaimed_journal_buckets);
 
+<<<<<<< HEAD
 	bkey_init(k);
 	SET_KEY_PTRS(k, 1);
 	c->journal.blocks_free = ca->sb.bucket_size >> c->block_bits;
 
+=======
+	if (n) {
+		bkey_init(k);
+		SET_KEY_PTRS(k, n);
+		c->journal.blocks_free = c->sb.bucket_size >> c->block_bits;
+	}
+>>>>>>> master
 out:
 	if (!journal_full(&c->journal))
 		__closure_wake_up(&c->journal.wait);
@@ -932,7 +989,11 @@ atomic_t *bch_journal(struct cache_set *c,
 	if (unlikely(test_bit(CACHE_SET_IO_DISABLE, &c->flags)))
 		return NULL;
 
+<<<<<<< HEAD
 	if (!CACHE_SYNC(&c->cache->sb))
+=======
+	if (!CACHE_SYNC(&c->sb))
+>>>>>>> master
 		return NULL;
 
 	w = journal_wait_for_write(c, bch_keylist_nkeys(keys));
@@ -992,8 +1053,13 @@ int bch_journal_alloc(struct cache_set *c)
 	j->w[1].c = c;
 
 	if (!(init_fifo(&j->pin, JOURNAL_PIN, GFP_KERNEL)) ||
+<<<<<<< HEAD
 	    !(j->w[0].data = (void *) __get_free_pages(GFP_KERNEL|__GFP_COMP, JSET_BITS)) ||
 	    !(j->w[1].data = (void *) __get_free_pages(GFP_KERNEL|__GFP_COMP, JSET_BITS)))
+=======
+	    !(j->w[0].data = (void *) __get_free_pages(GFP_KERNEL, JSET_BITS)) ||
+	    !(j->w[1].data = (void *) __get_free_pages(GFP_KERNEL, JSET_BITS)))
+>>>>>>> master
 		return -ENOMEM;
 
 	return 0;

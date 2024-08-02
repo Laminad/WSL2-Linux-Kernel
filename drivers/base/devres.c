@@ -29,10 +29,17 @@ struct devres {
 	 * Some archs want to perform DMA into kmalloc caches
 	 * and need a guaranteed alignment larger than
 	 * the alignment of a 64-bit integer.
+<<<<<<< HEAD
 	 * Thus we use ARCH_DMA_MINALIGN for data[] which will force the same
 	 * alignment for struct devres when allocated by kmalloc().
 	 */
 	u8 __aligned(ARCH_DMA_MINALIGN) data[];
+=======
+	 * Thus we use ARCH_KMALLOC_MINALIGN here and get exactly the same
+	 * buffer alignment as if it was allocated by plain kmalloc().
+	 */
+	u8 __aligned(ARCH_KMALLOC_MINALIGN) data[];
+>>>>>>> master
 };
 
 struct devres_group {

@@ -78,6 +78,7 @@
 #include "ice_irq.h"
 
 #define ICE_BAR0		0
+<<<<<<< HEAD
 #define ICE_REQ_DESC_MULTIPLE	32
 #define ICE_MIN_NUM_DESC	64
 #define ICE_MAX_NUM_DESC	8160
@@ -85,6 +86,12 @@
 #define ICE_DFLT_NUM_TX_DESC	256
 #define ICE_DFLT_NUM_RX_DESC	2048
 
+=======
+#define ICE_DFLT_NUM_DESC	128
+#define ICE_REQ_DESC_MULTIPLE	32
+#define ICE_MIN_NUM_DESC	ICE_REQ_DESC_MULTIPLE
+#define ICE_MAX_NUM_DESC	8160
+>>>>>>> master
 #define ICE_DFLT_TRAFFIC_CLASS	BIT(0)
 #define ICE_INT_NAME_STR_LEN	(IFNAMSIZ + 16)
 #define ICE_AQ_LEN		192

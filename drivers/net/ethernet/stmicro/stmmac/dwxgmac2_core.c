@@ -140,7 +140,11 @@ static void dwxgmac2_tx_queue_prio(struct mac_device_info *hw, u32 prio,
 	void __iomem *ioaddr = hw->pcsr;
 	u32 value, reg;
 
+<<<<<<< HEAD
 	reg = (queue < 4) ? XGMAC_TC_PRTY_MAP0 : XGMAC_TC_PRTY_MAP1;
+=======
+	reg = (queue < 4) ? XGMAC_RXQ_CTRL2 : XGMAC_RXQ_CTRL3;
+>>>>>>> master
 	if (queue >= 4)
 		queue -= 4;
 

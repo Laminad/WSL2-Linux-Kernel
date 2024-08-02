@@ -3830,6 +3830,192 @@ static int bnxt_reset(struct net_device *dev, u32 *flags)
 		} else if (req == BNXT_FW_RESET_AP) {
 			return -EOPNOTSUPP; /* only request, fail hard */
 		}
+<<<<<<< HEAD
+=======
+
+		if (info->dest_buf)
+			memcpy(info->dest_buf + off, dma_buf, len);
+
+		if (cmn_req->req_type ==
+				cpu_to_le16(HWRM_DBG_COREDUMP_RETRIEVE))
+			info->dest_buf_size += len;
+
+		if (!(cmn_resp->flags & HWRM_DBG_CMN_FLAGS_MORE))
+			break;
+
+		seq++;
+		off += len;
+	}
+	mutex_unlock(&bp->hwrm_cmd_lock);
+	dma_free_coherent(&bp->pdev->dev, info->dma_len, dma_buf, dma_handle);
+	return rc;
+}
+
+static int bnxt_hwrm_dbg_coredump_list(struct bnxt *bp,
+				       struct bnxt_coredump *coredump)
+{
+	struct hwrm_dbg_coredump_list_input req = {0};
+	struct bnxt_hwrm_dbg_dma_info info = {NULL};
+	int rc;
+
+	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_DBG_COREDUMP_LIST, -1, -1);
+
+	info.dma_len = COREDUMP_LIST_BUF_LEN;
+	info.seq_off = offsetof(struct hwrm_dbg_coredump_list_input, seq_no);
+	info.data_len_off = offsetof(struct hwrm_dbg_coredump_list_output,
+				     data_len);
+
+	rc = bnxt_hwrm_dbg_dma_data(bp, &req, sizeof(req), &info);
+	if (!rc) {
+		coredump->data = info.dest_buf;
+		coredump->data_size = info.dest_buf_size;
+		coredump->total_segs = info.segs;
+	}
+	return rc;
+}
+
+static int bnxt_hwrm_dbg_coredump_initiate(struct bnxt *bp, u16 component_id,
+					   u16 segment_id)
+{
+	struct hwrm_dbg_coredump_initiate_input req = {0};
+
+	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_DBG_COREDUMP_INITIATE, -1, -1);
+	req.component_id = cpu_to_le16(component_id);
+	req.segment_id = cpu_to_le16(segment_id);
+
+	return hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
+}
+
+static int bnxt_hwrm_dbg_coredump_retrieve(struct bnxt *bp, u16 component_id,
+					   u16 segment_id, u32 *seg_len,
+					   void *buf, u32 offset)
+{
+	struct hwrm_dbg_coredump_retrieve_input req = {0};
+	struct bnxt_hwrm_dbg_dma_info info = {NULL};
+	int rc;
+
+	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_DBG_COREDUMP_RETRIEVE, -1, -1);
+	req.component_id = cpu_to_le16(component_id);
+	req.segment_id = cpu_to_le16(segment_id);
+
+	info.dma_len = COREDUMP_RETRIEVE_BUF_LEN;
+	info.seq_off = offsetof(struct hwrm_dbg_coredump_retrieve_input,
+				seq_no);
+	info.data_len_off = offsetof(struct hwrm_dbg_coredump_retrieve_output,
+				     data_len);
+	if (buf)
+		info.dest_buf = buf + offset;
+
+	rc = bnxt_hwrm_dbg_dma_data(bp, &req, sizeof(req), &info);
+	if (!rc)
+		*seg_len = info.dest_buf_size;
+
+	return rc;
+}
+
+static void
+bnxt_fill_coredump_seg_hdr(struct bnxt *bp,
+			   struct bnxt_coredump_segment_hdr *seg_hdr,
+			   struct coredump_segment_record *seg_rec, u32 seg_len,
+			   int status, u32 duration, u32 instance)
+{
+	memset(seg_hdr, 0, sizeof(*seg_hdr));
+	memcpy(seg_hdr->signature, "sEgM", 4);
+	if (seg_rec) {
+		seg_hdr->component_id = (__force __le32)seg_rec->component_id;
+		seg_hdr->segment_id = (__force __le32)seg_rec->segment_id;
+		seg_hdr->low_version = seg_rec->version_low;
+		seg_hdr->high_version = seg_rec->version_hi;
+	} else {
+		/* For hwrm_ver_get response Component id = 2
+		 * and Segment id = 0
+		 */
+		seg_hdr->component_id = cpu_to_le32(2);
+		seg_hdr->segment_id = 0;
+	}
+	seg_hdr->function_id = cpu_to_le16(bp->pdev->devfn);
+	seg_hdr->length = cpu_to_le32(seg_len);
+	seg_hdr->status = cpu_to_le32(status);
+	seg_hdr->duration = cpu_to_le32(duration);
+	seg_hdr->data_offset = cpu_to_le32(sizeof(*seg_hdr));
+	seg_hdr->instance = cpu_to_le32(instance);
+}
+
+static void
+bnxt_fill_coredump_record(struct bnxt *bp, struct bnxt_coredump_record *record,
+			  time64_t start, s16 start_utc, u16 total_segs,
+			  int status)
+{
+	time64_t end = ktime_get_real_seconds();
+	u32 os_ver_major = 0, os_ver_minor = 0;
+	struct tm tm;
+
+	time64_to_tm(start, 0, &tm);
+	memset(record, 0, sizeof(*record));
+	memcpy(record->signature, "cOrE", 4);
+	record->flags = 0;
+	record->low_version = 0;
+	record->high_version = 1;
+	record->asic_state = 0;
+	strlcpy(record->system_name, utsname()->nodename,
+		sizeof(record->system_name));
+	record->year = cpu_to_le16(tm.tm_year + 1900);
+	record->month = cpu_to_le16(tm.tm_mon + 1);
+	record->day = cpu_to_le16(tm.tm_mday);
+	record->hour = cpu_to_le16(tm.tm_hour);
+	record->minute = cpu_to_le16(tm.tm_min);
+	record->second = cpu_to_le16(tm.tm_sec);
+	record->utc_bias = cpu_to_le16(start_utc);
+	strcpy(record->commandline, "ethtool -w");
+	record->total_segments = cpu_to_le32(total_segs);
+
+	sscanf(utsname()->release, "%u.%u", &os_ver_major, &os_ver_minor);
+	record->os_ver_major = cpu_to_le32(os_ver_major);
+	record->os_ver_minor = cpu_to_le32(os_ver_minor);
+
+	strlcpy(record->os_name, utsname()->sysname, 32);
+	time64_to_tm(end, 0, &tm);
+	record->end_year = cpu_to_le16(tm.tm_year + 1900);
+	record->end_month = cpu_to_le16(tm.tm_mon + 1);
+	record->end_day = cpu_to_le16(tm.tm_mday);
+	record->end_hour = cpu_to_le16(tm.tm_hour);
+	record->end_minute = cpu_to_le16(tm.tm_min);
+	record->end_second = cpu_to_le16(tm.tm_sec);
+	record->end_utc_bias = cpu_to_le16(sys_tz.tz_minuteswest * 60);
+	record->asic_id1 = cpu_to_le32(bp->chip_num << 16 |
+				       bp->ver_resp.chip_rev << 8 |
+				       bp->ver_resp.chip_metal);
+	record->asic_id2 = 0;
+	record->coredump_status = cpu_to_le32(status);
+	record->ioctl_low_version = 0;
+	record->ioctl_high_version = 0;
+}
+
+static int bnxt_get_coredump(struct bnxt *bp, void *buf, u32 *dump_len)
+{
+	u32 ver_get_resp_len = sizeof(struct hwrm_ver_get_output);
+	struct coredump_segment_record *seg_record = NULL;
+	u32 offset = 0, seg_hdr_len, seg_record_len;
+	struct bnxt_coredump_segment_hdr seg_hdr;
+	struct bnxt_coredump coredump = {NULL};
+	time64_t start_time;
+	u16 start_utc;
+	int rc = 0, i;
+
+	start_time = ktime_get_real_seconds();
+	start_utc = sys_tz.tz_minuteswest * 60;
+	seg_hdr_len = sizeof(seg_hdr);
+
+	/* First segment should be hwrm_ver_get response */
+	*dump_len = seg_hdr_len + ver_get_resp_len;
+	if (buf) {
+		bnxt_fill_coredump_seg_hdr(bp, &seg_hdr, NULL, ver_get_resp_len,
+					   0, 0, 0);
+		memcpy(buf + offset, &seg_hdr, seg_hdr_len);
+		offset += seg_hdr_len;
+		memcpy(buf + offset, &bp->ver_resp, ver_get_resp_len);
+		offset += ver_get_resp_len;
+>>>>>>> master
 	}
 
 	if (reload)

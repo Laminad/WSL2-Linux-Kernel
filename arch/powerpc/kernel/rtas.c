@@ -1637,6 +1637,284 @@ void rtas_os_term(char *str)
 		pr_emerg("ibm,os-term call failed %d\n", status);
 }
 
+<<<<<<< HEAD
+=======
+static int ibm_suspend_me_token = RTAS_UNKNOWN_SERVICE;
+#ifdef CONFIG_PPC_PSERIES
+static int __rtas_suspend_last_cpu(struct rtas_suspend_me_data *data, int wake_when_done)
+{
+	u16 slb_size = mmu_slb_size;
+	int rc = H_MULTI_THREADS_ACTIVE;
+	int cpu;
+
+	slb_set_size(SLB_MIN_SIZE);
+	printk(KERN_DEBUG "calling ibm,suspend-me on cpu %i\n", smp_processor_id());
+
+	while (rc == H_MULTI_THREADS_ACTIVE && !atomic_read(&data->done) &&
+	       !atomic_read(&data->error))
+		rc = rtas_call(data->token, 0, 1, NULL);
+
+	if (rc || atomic_read(&data->error)) {
+		printk(KERN_DEBUG "ibm,suspend-me returned %d\n", rc);
+		slb_set_size(slb_size);
+	}
+
+	if (atomic_read(&data->error))
+		rc = atomic_read(&data->error);
+
+	atomic_set(&data->error, rc);
+	pSeries_coalesce_init();
+
+	if (wake_when_done) {
+		atomic_set(&data->done, 1);
+
+		for_each_online_cpu(cpu)
+			plpar_hcall_norets(H_PROD, get_hard_smp_processor_id(cpu));
+	}
+
+	if (atomic_dec_return(&data->working) == 0)
+		complete(data->complete);
+
+	return rc;
+}
+
+int rtas_suspend_last_cpu(struct rtas_suspend_me_data *data)
+{
+	atomic_inc(&data->working);
+	return __rtas_suspend_last_cpu(data, 0);
+}
+
+static int __rtas_suspend_cpu(struct rtas_suspend_me_data *data, int wake_when_done)
+{
+	long rc = H_SUCCESS;
+	unsigned long msr_save;
+	int cpu;
+
+	atomic_inc(&data->working);
+
+	/* really need to ensure MSR.EE is off for H_JOIN */
+	msr_save = mfmsr();
+	mtmsr(msr_save & ~(MSR_EE));
+
+	while (rc == H_SUCCESS && !atomic_read(&data->done) && !atomic_read(&data->error))
+		rc = plpar_hcall_norets(H_JOIN);
+
+	mtmsr(msr_save);
+
+	if (rc == H_SUCCESS) {
+		/* This cpu was prodded and the suspend is complete. */
+		goto out;
+	} else if (rc == H_CONTINUE) {
+		/* All other cpus are in H_JOIN, this cpu does
+		 * the suspend.
+		 */
+		return __rtas_suspend_last_cpu(data, wake_when_done);
+	} else {
+		printk(KERN_ERR "H_JOIN on cpu %i failed with rc = %ld\n",
+		       smp_processor_id(), rc);
+		atomic_set(&data->error, rc);
+	}
+
+	if (wake_when_done) {
+		atomic_set(&data->done, 1);
+
+		/* This cpu did the suspend or got an error; in either case,
+		 * we need to prod all other other cpus out of join state.
+		 * Extra prods are harmless.
+		 */
+		for_each_online_cpu(cpu)
+			plpar_hcall_norets(H_PROD, get_hard_smp_processor_id(cpu));
+	}
+out:
+	if (atomic_dec_return(&data->working) == 0)
+		complete(data->complete);
+	return rc;
+}
+
+int rtas_suspend_cpu(struct rtas_suspend_me_data *data)
+{
+	return __rtas_suspend_cpu(data, 0);
+}
+
+static void rtas_percpu_suspend_me(void *info)
+{
+	__rtas_suspend_cpu((struct rtas_suspend_me_data *)info, 1);
+}
+
+enum rtas_cpu_state {
+	DOWN,
+	UP,
+};
+
+#ifndef CONFIG_SMP
+static int rtas_cpu_state_change_mask(enum rtas_cpu_state state,
+				cpumask_var_t cpus)
+{
+	if (!cpumask_empty(cpus)) {
+		cpumask_clear(cpus);
+		return -EINVAL;
+	} else
+		return 0;
+}
+#else
+/* On return cpumask will be altered to indicate CPUs changed.
+ * CPUs with states changed will be set in the mask,
+ * CPUs with status unchanged will be unset in the mask. */
+static int rtas_cpu_state_change_mask(enum rtas_cpu_state state,
+				cpumask_var_t cpus)
+{
+	int cpu;
+	int cpuret = 0;
+	int ret = 0;
+
+	if (cpumask_empty(cpus))
+		return 0;
+
+	for_each_cpu(cpu, cpus) {
+		struct device *dev = get_cpu_device(cpu);
+
+		switch (state) {
+		case DOWN:
+			cpuret = device_offline(dev);
+			break;
+		case UP:
+			cpuret = device_online(dev);
+			break;
+		}
+		if (cpuret < 0) {
+			pr_debug("%s: cpu_%s for cpu#%d returned %d.\n",
+					__func__,
+					((state == UP) ? "up" : "down"),
+					cpu, cpuret);
+			if (!ret)
+				ret = cpuret;
+			if (state == UP) {
+				/* clear bits for unchanged cpus, return */
+				cpumask_shift_right(cpus, cpus, cpu);
+				cpumask_shift_left(cpus, cpus, cpu);
+				break;
+			} else {
+				/* clear bit for unchanged cpu, continue */
+				cpumask_clear_cpu(cpu, cpus);
+			}
+		}
+	}
+
+	return ret;
+}
+#endif
+
+int rtas_online_cpus_mask(cpumask_var_t cpus)
+{
+	int ret;
+
+	ret = rtas_cpu_state_change_mask(UP, cpus);
+
+	if (ret) {
+		cpumask_var_t tmp_mask;
+
+		if (!alloc_cpumask_var(&tmp_mask, GFP_KERNEL))
+			return ret;
+
+		/* Use tmp_mask to preserve cpus mask from first failure */
+		cpumask_copy(tmp_mask, cpus);
+		rtas_offline_cpus_mask(tmp_mask);
+		free_cpumask_var(tmp_mask);
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL(rtas_online_cpus_mask);
+
+int rtas_offline_cpus_mask(cpumask_var_t cpus)
+{
+	return rtas_cpu_state_change_mask(DOWN, cpus);
+}
+EXPORT_SYMBOL(rtas_offline_cpus_mask);
+
+int rtas_ibm_suspend_me(u64 handle)
+{
+	long state;
+	long rc;
+	unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
+	struct rtas_suspend_me_data data;
+	DECLARE_COMPLETION_ONSTACK(done);
+	cpumask_var_t offline_mask;
+	int cpuret;
+
+	if (!rtas_service_present("ibm,suspend-me"))
+		return -ENOSYS;
+
+	/* Make sure the state is valid */
+	rc = plpar_hcall(H_VASI_STATE, retbuf, handle);
+
+	state = retbuf[0];
+
+	if (rc) {
+		printk(KERN_ERR "rtas_ibm_suspend_me: vasi_state returned %ld\n",rc);
+		return rc;
+	} else if (state == H_VASI_ENABLED) {
+		return -EAGAIN;
+	} else if (state != H_VASI_SUSPENDING) {
+		printk(KERN_ERR "rtas_ibm_suspend_me: vasi_state returned state %ld\n",
+		       state);
+		return -EIO;
+	}
+
+	if (!alloc_cpumask_var(&offline_mask, GFP_KERNEL))
+		return -ENOMEM;
+
+	atomic_set(&data.working, 0);
+	atomic_set(&data.done, 0);
+	atomic_set(&data.error, 0);
+	data.token = rtas_token("ibm,suspend-me");
+	data.complete = &done;
+
+	lock_device_hotplug();
+
+	/* All present CPUs must be online */
+	cpumask_andnot(offline_mask, cpu_present_mask, cpu_online_mask);
+	cpuret = rtas_online_cpus_mask(offline_mask);
+	if (cpuret) {
+		pr_err("%s: Could not bring present CPUs online.\n", __func__);
+		atomic_set(&data.error, cpuret);
+		goto out;
+	}
+
+	stop_topology_update();
+
+	/* Call function on all CPUs.  One of us will make the
+	 * rtas call
+	 */
+	if (on_each_cpu(rtas_percpu_suspend_me, &data, 0))
+		atomic_set(&data.error, -EINVAL);
+
+	wait_for_completion(&done);
+
+	if (atomic_read(&data.error) != 0)
+		printk(KERN_ERR "Error doing global join\n");
+
+	start_topology_update();
+
+	/* Take down CPUs not online prior to suspend */
+	cpuret = rtas_offline_cpus_mask(offline_mask);
+	if (cpuret)
+		pr_warn("%s: Could not restore CPUs to offline state.\n",
+				__func__);
+
+out:
+	unlock_device_hotplug();
+	free_cpumask_var(offline_mask);
+	return atomic_read(&data.error);
+}
+#else /* CONFIG_PPC_PSERIES */
+int rtas_ibm_suspend_me(u64 handle)
+{
+	return -ENOSYS;
+}
+#endif
+
+>>>>>>> master
 /**
  * rtas_activate_firmware() - Activate a new version of firmware.
  *

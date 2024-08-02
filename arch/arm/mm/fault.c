@@ -224,6 +224,7 @@ void do_bad_area(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
 
 static inline bool is_permission_fault(unsigned int fsr)
 {
+<<<<<<< HEAD
 	int fs = fsr_fs(fsr);
 #ifdef CONFIG_ARM_LPAE
 	if ((fs & FS_MMU_NOLL_MASK) == FS_PERM_NOLL)
@@ -233,6 +234,51 @@ static inline bool is_permission_fault(unsigned int fsr)
 		return true;
 #endif
 	return false;
+=======
+	unsigned int mask = VM_READ | VM_WRITE | VM_EXEC;
+
+	if ((fsr & FSR_WRITE) && !(fsr & FSR_CM))
+		mask = VM_WRITE;
+	if (fsr & FSR_LNX_PF)
+		mask = VM_EXEC;
+
+	return vma->vm_flags & mask ? false : true;
+}
+
+static vm_fault_t __kprobes
+__do_page_fault(struct mm_struct *mm, unsigned long addr, unsigned int fsr,
+		unsigned int flags, struct task_struct *tsk)
+{
+	struct vm_area_struct *vma;
+	vm_fault_t fault;
+
+	vma = find_vma(mm, addr);
+	fault = VM_FAULT_BADMAP;
+	if (unlikely(!vma))
+		goto out;
+	if (unlikely(vma->vm_start > addr))
+		goto check_stack;
+
+	/*
+	 * Ok, we have a good vm_area for this
+	 * memory access, so we can handle it.
+	 */
+good_area:
+	if (access_error(fsr, vma)) {
+		fault = VM_FAULT_BADACCESS;
+		goto out;
+	}
+
+	return handle_mm_fault(vma, addr & PAGE_MASK, flags);
+
+check_stack:
+	/* Don't allow expansion below FIRST_USER_ADDRESS */
+	if (vma->vm_flags & VM_GROWSDOWN &&
+	    addr >= FIRST_USER_ADDRESS && !expand_stack(vma, addr))
+		goto good_area;
+out:
+	return fault;
+>>>>>>> master
 }
 
 static int __kprobes
@@ -262,6 +308,11 @@ do_page_fault(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
 
 	if (user_mode(regs))
 		flags |= FAULT_FLAG_USER;
+<<<<<<< HEAD
+=======
+	if ((fsr & FSR_WRITE) && !(fsr & FSR_CM))
+		flags |= FAULT_FLAG_WRITE;
+>>>>>>> master
 
 	if (is_write_fault(fsr)) {
 		flags |= FAULT_FLAG_WRITE;

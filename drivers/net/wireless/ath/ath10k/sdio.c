@@ -621,8 +621,11 @@ static int ath10k_sdio_mbox_rx_alloc(struct ath10k *ar,
 			ath10k_warn(ar, "alloc_rx_pkt error %d\n", ret);
 			goto err;
 		}
+<<<<<<< HEAD
 
 		pkt_cnt++;
+=======
+>>>>>>> master
 	}
 
 	ar_sdio->n_rx_pkts = pkt_cnt;
@@ -2649,6 +2652,10 @@ static void ath10k_sdio_remove(struct sdio_func *func)
 
 	ath10k_core_destroy(ar);
 
+<<<<<<< HEAD
+=======
+	flush_workqueue(ar_sdio->workqueue);
+>>>>>>> master
 	destroy_workqueue(ar_sdio->workqueue);
 }
 

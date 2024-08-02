@@ -229,8 +229,14 @@ static int da9063_onkey_probe(struct platform_device *pdev)
 
 	input_set_capability(onkey->input, EV_KEY, KEY_POWER);
 
+<<<<<<< HEAD
 	error = devm_delayed_work_autocancel(&pdev->dev, &onkey->work,
 					     da9063_poll_on);
+=======
+	INIT_DELAYED_WORK(&onkey->work, da9063_poll_on);
+
+	error = devm_add_action(&pdev->dev, da9063_cancel_poll, onkey);
+>>>>>>> master
 	if (error) {
 		dev_err(&pdev->dev,
 			"Failed to add cancel poll action: %d\n",

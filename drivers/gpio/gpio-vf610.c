@@ -29,6 +29,7 @@ struct fsl_gpio_soc_data {
 
 struct vf610_gpio_port {
 	struct gpio_chip gc;
+	struct irq_chip ic;
 	void __iomem *base;
 	void __iomem *gpio_base;
 	const struct fsl_gpio_soc_data *sdata;
@@ -239,6 +240,7 @@ static int vf610_gpio_irq_set_wake(struct irq_data *d, u32 enable)
 	return 0;
 }
 
+<<<<<<< HEAD
 static const struct irq_chip vf610_irqchip = {
 	.name = "gpio-vf610",
 	.irq_ack = vf610_gpio_irq_ack,
@@ -256,12 +258,18 @@ static void vf610_gpio_disable_clk(void *data)
 	clk_disable_unprepare(data);
 }
 
+=======
+>>>>>>> master
 static int vf610_gpio_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct vf610_gpio_port *port;
 	struct gpio_chip *gc;
+<<<<<<< HEAD
 	struct gpio_irq_chip *girq;
+=======
+	struct irq_chip *ic;
+>>>>>>> master
 	int i;
 	int ret;
 
@@ -327,6 +335,24 @@ static int vf610_gpio_probe(struct platform_device *pdev)
 	gc->direction_output = vf610_gpio_direction_output;
 	gc->set = vf610_gpio_set;
 
+<<<<<<< HEAD
+	/* Mask all GPIO interrupts */
+	for (i = 0; i < gc->ngpio; i++)
+		vf610_gpio_writel(0, port->base + PORT_PCR(i));
+=======
+	ic = &port->ic;
+	ic->name = "gpio-vf610";
+	ic->irq_ack = vf610_gpio_irq_ack;
+	ic->irq_mask = vf610_gpio_irq_mask;
+	ic->irq_unmask = vf610_gpio_irq_unmask;
+	ic->irq_set_type = vf610_gpio_irq_set_type;
+	ic->irq_set_wake = vf610_gpio_irq_set_wake;
+
+	ret = gpiochip_add_data(gc, port);
+	if (ret < 0)
+		return ret;
+>>>>>>> master
+
 	/* Mask all GPIO interrupts */
 	for (i = 0; i < gc->ngpio; i++)
 		vf610_gpio_writel(0, port->base + PORT_PCR(i));
@@ -334,6 +360,7 @@ static int vf610_gpio_probe(struct platform_device *pdev)
 	/* Clear the interrupt status register for all GPIO's */
 	vf610_gpio_writel(~0, port->base + PORT_ISFR);
 
+<<<<<<< HEAD
 	girq = &gc->irq;
 	gpio_irq_chip_set_chip(girq, &vf610_irqchip);
 	girq->parent_handler = vf610_gpio_irq_handler;
@@ -346,6 +373,16 @@ static int vf610_gpio_probe(struct platform_device *pdev)
 	girq->parents[0] = port->irq;
 	girq->default_type = IRQ_TYPE_NONE;
 	girq->handler = handle_edge_irq;
+=======
+	ret = gpiochip_irqchip_add(gc, ic, 0, handle_edge_irq, IRQ_TYPE_NONE);
+	if (ret) {
+		dev_err(dev, "failed to add irqchip\n");
+		gpiochip_remove(gc);
+		return ret;
+	}
+	gpiochip_set_chained_irqchip(gc, ic, port->irq,
+				     vf610_gpio_irq_handler);
+>>>>>>> master
 
 	return devm_gpiochip_add_data(dev, gc, port);
 }

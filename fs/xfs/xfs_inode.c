@@ -1155,7 +1155,15 @@ xfs_create_tmpfile(
 	if (error)
 		goto out_trans_cancel;
 
+<<<<<<< HEAD
 	if (xfs_has_wsync(mp))
+=======
+	error = xfs_dir_ialloc(&tp, dp, mode, 0, 0, prid, &ip);
+	if (error)
+		goto out_trans_cancel;
+
+	if (mp->m_flags & XFS_MOUNT_WSYNC)
+>>>>>>> master
 		xfs_trans_set_sync(tp);
 
 	/*
@@ -1811,6 +1819,7 @@ out:
 }
 
 /*
+<<<<<<< HEAD
  * In-Core Unlinked List Lookups
  * =============================
  *
@@ -2051,6 +2060,8 @@ xfs_iunlink_insert_inode(
 }
 
 /*
+=======
+>>>>>>> master
  * This is called when the inode's link count has gone to 0 or we are creating
  * a tmpfile via O_TMPFILE.  The inode @ip must have nlink == 0.
  *

@@ -242,4 +242,8 @@ void __init efi_init(void)
 			 PAGE_ALIGN(data.size + (data.phys_map & ~PAGE_MASK)));
 
 	init_screen_info();
+
+	/* ARM does not permit early mappings to persist across paging_init() */
+	if (IS_ENABLED(CONFIG_ARM))
+		efi_memmap_unmap();
 }

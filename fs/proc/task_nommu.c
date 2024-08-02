@@ -205,7 +205,37 @@ static void *m_start(struct seq_file *m, loff_t *ppos)
 		return ERR_PTR(-ESRCH);
 
 	mm = priv->mm;
+<<<<<<< HEAD
 	if (!mm || !mmget_not_zero(mm)) {
+=======
+	if (!mm || !mmget_not_zero(mm))
+		return NULL;
+
+	if (down_read_killable(&mm->mmap_sem)) {
+		mmput(mm);
+		return ERR_PTR(-EINTR);
+	}
+
+	/* start from the Nth VMA */
+	for (p = rb_first(&mm->mm_rb); p; p = rb_next(p))
+		if (n-- == 0)
+			return p;
+
+	up_read(&mm->mmap_sem);
+	mmput(mm);
+	return NULL;
+}
+
+static void m_stop(struct seq_file *m, void *_vml)
+{
+	struct proc_maps_private *priv = m->private;
+
+	if (!IS_ERR_OR_NULL(_vml)) {
+		up_read(&priv->mm->mmap_sem);
+		mmput(priv->mm);
+	}
+	if (priv->task) {
+>>>>>>> master
 		put_task_struct(priv->task);
 		priv->task = NULL;
 		return NULL;

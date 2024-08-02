@@ -940,7 +940,13 @@ static int gs_can_open(struct net_device *netdev)
 					   "usb_submit_urb() failed, error %pe\n",
 					   ERR_PTR(rc));
 
+<<<<<<< HEAD
 				goto out_usb_unanchor_urb;
+=======
+				usb_unanchor_urb(urb);
+				usb_free_urb(urb);
+				break;
+>>>>>>> master
 			}
 
 			/* Drop reference,

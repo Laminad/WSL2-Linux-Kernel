@@ -60,8 +60,11 @@
 	((((dbms) * 1000) / ((1 << ((ptv) + 1)) * (1000000 / 32768))) - 1)
 #define OMAP4_VAL_DEBOUNCINGTIME_16MS					\
 	OMAP4_KEYPAD_DEBOUNCINGTIME_MS(16, OMAP4_KEYPAD_PTV_DIV_128)
+<<<<<<< HEAD
 #define OMAP4_KEYPAD_AUTOIDLE_MS	50	/* Approximate measured time */
 #define OMAP4_KEYPAD_IDLE_CHECK_MS	(OMAP4_KEYPAD_AUTOIDLE_MS / 2)
+=======
+>>>>>>> master
 
 enum {
 	KBD_REVISION_OMAP4 = 0,
@@ -193,9 +196,12 @@ static irqreturn_t omap4_keypad_irq_thread_fn(int irq, void *dev_id)
 	kbd_write_irqreg(keypad_data, OMAP4_KBD_IRQSTATUS,
 			 kbd_read_irqreg(keypad_data, OMAP4_KBD_IRQSTATUS));
 
+<<<<<<< HEAD
 	pm_runtime_mark_last_busy(dev);
 	pm_runtime_put_autosuspend(dev);
 
+=======
+>>>>>>> master
 	return IRQ_HANDLED;
 }
 
@@ -256,7 +262,20 @@ static void omap4_keypad_close(struct input_dev *input)
 			__func__, error);
 
 	disable_irq(keypad_data->irq);
+<<<<<<< HEAD
 	omap4_keypad_stop(keypad_data);
+=======
+
+	/* Disable interrupts and wake-up events */
+	kbd_write_irqreg(keypad_data, OMAP4_KBD_IRQENABLE,
+			 OMAP4_VAL_IRQDISABLE);
+	kbd_writel(keypad_data, OMAP4_KBD_WAKEUPENABLE, 0);
+
+	/* clear pending interrupts */
+	kbd_write_irqreg(keypad_data, OMAP4_KBD_IRQSTATUS,
+			 kbd_read_irqreg(keypad_data, OMAP4_KBD_IRQSTATUS));
+
+>>>>>>> master
 	enable_irq(keypad_data->irq);
 
 	pm_runtime_mark_last_busy(dev);
@@ -437,11 +456,17 @@ static int omap4_keypad_probe(struct platform_device *pdev)
 		return error;
 	}
 
+<<<<<<< HEAD
 	error = devm_request_threaded_irq(dev, keypad_data->irq,
 					  omap4_keypad_irq_handler,
 					  omap4_keypad_irq_thread_fn,
 					  IRQF_ONESHOT,
 					  "omap4-keypad", keypad_data);
+=======
+	error = request_threaded_irq(keypad_data->irq, omap4_keypad_irq_handler,
+				     omap4_keypad_irq_thread_fn, IRQF_ONESHOT,
+				     "omap4-keypad", keypad_data);
+>>>>>>> master
 	if (error) {
 		dev_err(dev, "failed to register interrupt\n");
 		return error;

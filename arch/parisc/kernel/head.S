@@ -22,7 +22,11 @@
 #include <linux/init.h>
 #include <linux/pgtable.h>
 
+<<<<<<< HEAD
 	.level	1.1
+=======
+	.level	PA_ASM_LEVEL
+>>>>>>> master
 
 	__INITDATA
 ENTRY(boot_args)

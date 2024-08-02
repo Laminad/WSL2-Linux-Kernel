@@ -7,6 +7,10 @@
  */
 
 #include <linux/init.h>
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
+=======
+#include <linux/module.h>
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
 #include <linux/freezer.h>
 #include <linux/kthread.h>
 
@@ -19,8 +23,11 @@
  *
  * Helper function that returns the media entity containing the source pad
  * linked with the first sink pad from the given media entity pad list.
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
  *
  * Return: The source pad or NULL, if it wasn't found.
+=======
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
  */
 static struct media_entity *vimc_get_source_entity(struct media_entity *ent)
 {
@@ -30,13 +37,21 @@ static struct media_entity *vimc_get_source_entity(struct media_entity *ent)
 	for (i = 0; i < ent->num_pads; i++) {
 		if (ent->pads[i].flags & MEDIA_PAD_FL_SOURCE)
 			continue;
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
 		pad = media_pad_remote_pad_first(&ent->pads[i]);
+=======
+		pad = media_entity_remote_pad(&ent->pads[i]);
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
 		return pad ? pad->entity : NULL;
 	}
 	return NULL;
 }
 
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
 /**
+=======
+/*
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
  * vimc_streamer_pipeline_terminate - Disable stream in all ved in stream
  *
  * @stream: the pointer to the stream structure with the pipeline to be
@@ -47,11 +62,16 @@ static struct media_entity *vimc_get_source_entity(struct media_entity *ent)
  */
 static void vimc_streamer_pipeline_terminate(struct vimc_stream *stream)
 {
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
 	struct vimc_ent_device *ved;
+=======
+	struct media_entity *entity;
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
 	struct v4l2_subdev *sd;
 
 	while (stream->pipe_size) {
 		stream->pipe_size--;
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
 		ved = stream->ved_pipeline[stream->pipe_size];
 		stream->ved_pipeline[stream->pipe_size] = NULL;
 
@@ -59,22 +79,41 @@ static void vimc_streamer_pipeline_terminate(struct vimc_stream *stream)
 			continue;
 
 		sd = media_entity_to_v4l2_subdev(ved->ent);
+=======
+		entity = stream->ved_pipeline[stream->pipe_size]->ent;
+		entity = vimc_get_source_entity(entity);
+		stream->ved_pipeline[stream->pipe_size] = NULL;
+
+		if (!is_media_entity_v4l2_subdev(entity))
+			continue;
+
+		sd = media_entity_to_v4l2_subdev(entity);
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
 		v4l2_subdev_call(sd, video, s_stream, 0);
 	}
 }
 
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
 /**
  * vimc_streamer_pipeline_init - Initializes the stream structure
+=======
+/*
+ * vimc_streamer_pipeline_init - initializes the stream structure
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
  *
  * @stream: the pointer to the stream structure to be initialized
  * @ved:    the pointer to the vimc entity initializing the stream
  *
  * Initializes the stream structure. Walks through the entity graph to
  * construct the pipeline used later on the streamer thread.
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
  * Calls vimc_streamer_s_stream() to enable stream in all entities of
  * the pipeline.
  *
  * Return: 0 if success, error code otherwise.
+=======
+ * Calls s_stream to enable stream in all entities of the pipeline.
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
  */
 static int vimc_streamer_pipeline_init(struct vimc_stream *stream,
 				       struct vimc_ent_device *ved)
@@ -92,6 +131,7 @@ static int vimc_streamer_pipeline_init(struct vimc_stream *stream,
 		}
 		stream->ved_pipeline[stream->pipe_size++] = ved;
 
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
 		if (is_media_entity_v4l2_subdev(ved->ent)) {
 			sd = media_entity_to_v4l2_subdev(ved->ent);
 			ret = v4l2_subdev_call(sd, video, s_stream, 1);
@@ -120,6 +160,20 @@ static int vimc_streamer_pipeline_init(struct vimc_stream *stream,
 		/* Get the next device in the pipeline */
 		if (is_media_entity_v4l2_subdev(entity)) {
 			sd = media_entity_to_v4l2_subdev(entity);
+=======
+		entity = vimc_get_source_entity(ved->ent);
+		/* Check if the end of the pipeline was reached*/
+		if (!entity)
+			return 0;
+
+		if (is_media_entity_v4l2_subdev(entity)) {
+			sd = media_entity_to_v4l2_subdev(entity);
+			ret = v4l2_subdev_call(sd, video, s_stream, 1);
+			if (ret && ret != -ENOIOCTLCMD) {
+				vimc_streamer_pipeline_terminate(stream);
+				return ret;
+			}
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
 			ved = v4l2_get_subdevdata(sd);
 		} else {
 			vdev = container_of(entity,
@@ -133,6 +187,7 @@ static int vimc_streamer_pipeline_init(struct vimc_stream *stream,
 	return -EINVAL;
 }
 
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
 /**
  * vimc_streamer_thread - Process frames through the pipeline
  *
@@ -149,6 +204,11 @@ static int vimc_streamer_thread(void *data)
 {
 	struct vimc_stream *stream = data;
 	u8 *frame = NULL;
+=======
+static int vimc_streamer_thread(void *data)
+{
+	struct vimc_stream *stream = data;
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
 	int i;
 
 	set_freezable();
@@ -159,9 +219,18 @@ static int vimc_streamer_thread(void *data)
 			break;
 
 		for (i = stream->pipe_size - 1; i >= 0; i--) {
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
 			frame = stream->ved_pipeline[i]->process_frame(
 					stream->ved_pipeline[i], frame);
 			if (!frame || IS_ERR(frame))
+=======
+			stream->frame = stream->ved_pipeline[i]->process_frame(
+					stream->ved_pipeline[i],
+					stream->frame);
+			if (!stream->frame)
+				break;
+			if (IS_ERR(stream->frame))
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
 				break;
 		}
 		//wait for 60hz
@@ -172,6 +241,7 @@ static int vimc_streamer_thread(void *data)
 	return 0;
 }
 
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
 /**
  * vimc_streamer_s_stream - Start/stop the streaming on the media pipeline
  *
@@ -187,6 +257,8 @@ static int vimc_streamer_thread(void *data)
  *
  * Return: 0 if success, error code otherwise.
  */
+=======
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
 int vimc_streamer_s_stream(struct vimc_stream *stream,
 			   struct vimc_ent_device *ved,
 			   int enable)
@@ -207,6 +279,7 @@ int vimc_streamer_s_stream(struct vimc_stream *stream,
 		stream->kthread = kthread_run(vimc_streamer_thread, stream,
 					      "vimc-streamer thread");
 
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
 		if (IS_ERR(stream->kthread)) {
 			ret = PTR_ERR(stream->kthread);
 			dev_err(ved->dev, "kthread_run failed with %d\n", ret);
@@ -214,12 +287,17 @@ int vimc_streamer_s_stream(struct vimc_stream *stream,
 			stream->kthread = NULL;
 			return ret;
 		}
+=======
+		if (IS_ERR(stream->kthread))
+			return PTR_ERR(stream->kthread);
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
 
 	} else {
 		if (!stream->kthread)
 			return 0;
 
 		ret = kthread_stop(stream->kthread);
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
 		/*
 		 * kthread_stop returns -EINTR in cases when streamon was
 		 * immediately followed by streamoff, and the thread didn't had
@@ -228,6 +306,10 @@ int vimc_streamer_s_stream(struct vimc_stream *stream,
 		 */
 		if (ret)
 			dev_dbg(ved->dev, "kthread_stop returned '%d'\n", ret);
+=======
+		if (ret)
+			return ret;
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c
 
 		stream->kthread = NULL;
 
@@ -236,3 +318,11 @@ int vimc_streamer_s_stream(struct vimc_stream *stream,
 
 	return 0;
 }
+<<<<<<< HEAD:drivers/media/test-drivers/vimc/vimc-streamer.c
+=======
+EXPORT_SYMBOL_GPL(vimc_streamer_s_stream);
+
+MODULE_DESCRIPTION("Virtual Media Controller Driver (VIMC) Streamer");
+MODULE_AUTHOR("Lucas A. M. Magalhães <lucmaga@gmail.com>");
+MODULE_LICENSE("GPL");
+>>>>>>> master:drivers/media/platform/vimc/vimc-streamer.c

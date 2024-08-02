@@ -610,7 +610,11 @@ static int cpg_mssr_reset(struct reset_controller_dev *rcdev,
 	dev_dbg(priv->dev, "reset %u%02u\n", reg, bit);
 
 	/* Reset module */
+<<<<<<< HEAD
 	writel(bitmask, priv->base + priv->reset_regs[reg]);
+=======
+	writel(bitmask, priv->base + SRCR(reg));
+>>>>>>> master
 
 	/* Wait for at least one cycle of the RCLK clock (@ ca. 32 kHz) */
 	udelay(35);
@@ -630,7 +634,11 @@ static int cpg_mssr_assert(struct reset_controller_dev *rcdev, unsigned long id)
 
 	dev_dbg(priv->dev, "assert %u%02u\n", reg, bit);
 
+<<<<<<< HEAD
 	writel(bitmask, priv->base + priv->reset_regs[reg]);
+=======
+	writel(bitmask, priv->base + SRCR(reg));
+>>>>>>> master
 	return 0;
 }
 

@@ -112,9 +112,15 @@ static void omap_dmic_dai_shutdown(struct snd_pcm_substream *substream,
 
 	mutex_lock(&dmic->mutex);
 
+<<<<<<< HEAD:sound/soc/ti/omap-dmic.c
 	cpu_latency_qos_remove_request(&dmic->pm_qos_req);
 
 	if (!snd_soc_dai_active(dai))
+=======
+	pm_qos_remove_request(&dmic->pm_qos_req);
+
+	if (!dai->active)
+>>>>>>> master:sound/soc/omap/omap-dmic.c
 		dmic->active = 0;
 
 	mutex_unlock(&dmic->mutex);
@@ -230,9 +236,14 @@ static int omap_dmic_dai_prepare(struct snd_pcm_substream *substream,
 	struct omap_dmic *dmic = snd_soc_dai_get_drvdata(dai);
 	u32 ctrl;
 
+<<<<<<< HEAD:sound/soc/ti/omap-dmic.c
 	if (cpu_latency_qos_request_active(&dmic->pm_qos_req))
 		cpu_latency_qos_update_request(&dmic->pm_qos_req,
 					       dmic->latency);
+=======
+	if (pm_qos_request_active(&dmic->pm_qos_req))
+		pm_qos_update_request(&dmic->pm_qos_req, dmic->latency);
+>>>>>>> master:sound/soc/omap/omap-dmic.c
 
 	/* Configure uplink threshold */
 	omap_dmic_write(dmic, OMAP_DMIC_FIFO_CTRL_REG, dmic->threshold);

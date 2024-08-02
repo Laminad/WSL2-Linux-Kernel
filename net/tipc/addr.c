@@ -76,7 +76,11 @@ void tipc_set_node_addr(struct net *net, u32 addr)
 	}
 	tn->trial_addr = addr;
 	tn->addr_trial_end = jiffies;
+<<<<<<< HEAD
 	pr_info("Node number set to %u\n", addr);
+=======
+	pr_info("32-bit node address hash set to %x\n", addr);
+>>>>>>> master
 }
 
 char *tipc_nodeid2string(char *str, u8 *id)

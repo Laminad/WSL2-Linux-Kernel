@@ -761,7 +761,11 @@ void kvmppc_rmap_reset(struct kvm *kvm)
 
 	srcu_idx = srcu_read_lock(&kvm->srcu);
 	slots = kvm_memslots(kvm);
+<<<<<<< HEAD
 	kvm_for_each_memslot(memslot, bkt, slots) {
+=======
+	kvm_for_each_memslot(memslot, slots) {
+>>>>>>> master
 		/* Mutual exclusion with kvm_unmap_hva_range etc. */
 		spin_lock(&kvm->mmu_lock);
 		/*

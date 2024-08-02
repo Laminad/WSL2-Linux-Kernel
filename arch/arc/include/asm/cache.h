@@ -61,6 +61,13 @@
 #if defined(CONFIG_ARC_HAS_LL64) && defined(CONFIG_ARC_HAS_LLSC)
 #define ARCH_SLAB_MINALIGN	8
 #endif
+<<<<<<< HEAD
+=======
+
+extern void arc_cache_init(void);
+extern char *arc_cache_mumbojumbo(int cpu_id, char *buf, int len);
+extern void read_decode_cache_bcr(void);
+>>>>>>> master
 
 extern int ioc_enable;
 extern unsigned long perip_base, perip_end;

@@ -366,7 +366,14 @@ static int read_template_version(struct pci_dev *dev, struct ocxl_fn_config *fn,
 	u8 major, minor;
 	int rc;
 
+<<<<<<< HEAD
 	rc = read_afu_info(dev, fn, OCXL_DVSEC_TEMPL_VERSION, &val32);
+=======
+	pci_write_config_byte(dev,
+			fn->dvsec_afu_info_pos + OCXL_DVSEC_AFU_INFO_AFU_IDX,
+			afu_idx);
+	rc = read_afu_info(dev, fn, OCXL_DVSEC_TEMPL_VERSION, &val);
+>>>>>>> master
 	if (rc)
 		return rc;
 

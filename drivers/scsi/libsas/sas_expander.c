@@ -28,6 +28,29 @@ static int sas_disable_routing(struct domain_device *dev,  u8 *sas_addr);
 
 /* ---------- SMP task management ---------- */
 
+<<<<<<< HEAD
+=======
+static void smp_task_timedout(struct timer_list *t)
+{
+	struct sas_task_slow *slow = from_timer(slow, t, timer);
+	struct sas_task *task = slow->task;
+	unsigned long flags;
+
+	spin_lock_irqsave(&task->task_state_lock, flags);
+	if (!(task->task_state_flags & SAS_TASK_STATE_DONE)) {
+		task->task_state_flags |= SAS_TASK_STATE_ABORTED;
+		complete(&task->slow_task->completion);
+	}
+	spin_unlock_irqrestore(&task->task_state_lock, flags);
+}
+
+static void smp_task_done(struct sas_task *task)
+{
+	del_timer(&task->slow_task->timer);
+	complete(&task->slow_task->completion);
+}
+
+>>>>>>> master
 /* Give it some long enough timeout. In seconds. */
 #define SMP_TIMEOUT 10
 
@@ -818,9 +841,64 @@ static struct domain_device *sas_ex_discover_end_dev(
 	sas_device_set_phy(child, phy->port);
 
 	if ((phy->attached_tproto & SAS_PROTOCOL_STP) || phy->attached_sata_dev) {
+<<<<<<< HEAD
 		res = sas_ata_add_dev(parent, phy, child, phy_id);
 	} else if (phy->attached_tproto & SAS_PROTOCOL_SSP) {
 		res = sas_ex_add_dev(parent, phy, child, phy_id);
+=======
+		res = sas_get_ata_info(child, phy);
+		if (res)
+			goto out_free;
+
+		sas_init_dev(child);
+		res = sas_ata_init(child);
+		if (res)
+			goto out_free;
+		rphy = sas_end_device_alloc(phy->port);
+		if (!rphy)
+			goto out_free;
+		rphy->identify.phy_identifier = phy_id;
+
+		child->rphy = rphy;
+		get_device(&rphy->dev);
+
+		list_add_tail(&child->disco_list_node, &parent->port->disco_list);
+
+		res = sas_discover_sata(child);
+		if (res) {
+			SAS_DPRINTK("sas_discover_sata() for device %16llx at "
+				    "%016llx:0x%x returned 0x%x\n",
+				    SAS_ADDR(child->sas_addr),
+				    SAS_ADDR(parent->sas_addr), phy_id, res);
+			goto out_list_del;
+		}
+	} else
+#endif
+	  if (phy->attached_tproto & SAS_PROTOCOL_SSP) {
+		child->dev_type = SAS_END_DEVICE;
+		rphy = sas_end_device_alloc(phy->port);
+		/* FIXME: error handling */
+		if (unlikely(!rphy))
+			goto out_free;
+		child->tproto = phy->attached_tproto;
+		sas_init_dev(child);
+
+		child->rphy = rphy;
+		get_device(&rphy->dev);
+		rphy->identify.phy_identifier = phy_id;
+		sas_fill_in_rphy(child, rphy);
+
+		list_add_tail(&child->disco_list_node, &parent->port->disco_list);
+
+		res = sas_discover_end_dev(child);
+		if (res) {
+			SAS_DPRINTK("sas_discover_end_dev() for device %16llx "
+				    "at %016llx:0x%x returned 0x%x\n",
+				    SAS_ADDR(child->sas_addr),
+				    SAS_ADDR(parent->sas_addr), phy_id, res);
+			goto out_list_del;
+		}
+>>>>>>> master
 	} else {
 		pr_notice("target proto 0x%x at %016llx:0x%x not handled\n",
 			  phy->attached_tproto, SAS_ADDR(parent->sas_addr),
@@ -1985,12 +2063,20 @@ static int sas_rediscover_dev(struct domain_device *dev, int phy_id,
 		phy->phy_state = PHY_EMPTY;
 		sas_unregister_devs_sas_addr(dev, phy_id, last);
 		/*
+<<<<<<< HEAD
 		 * Even though the PHY is empty, for convenience we update
 		 * the PHY info, like negotiated linkrate.
 		 */
 		if (res == 0)
 			sas_set_ex_phy(dev, phy_id, disc_resp);
 		goto out_free_resp;
+=======
+		 * Even though the PHY is empty, for convenience we discover
+		 * the PHY to update the PHY info, like negotiated linkrate.
+		 */
+		sas_ex_phy_discover(dev, phy_id);
+		return res;
+>>>>>>> master
 	} else if (SAS_ADDR(sas_addr) == SAS_ADDR(phy->attached_sas_addr) &&
 		   dev_type_flutter(type, phy->attached_dev_type)) {
 		struct domain_device *ata_dev = sas_ex_to_ata(dev, phy_id);

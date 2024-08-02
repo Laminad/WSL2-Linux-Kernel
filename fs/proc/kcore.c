@@ -500,6 +500,7 @@ static ssize_t read_kcore_iter(struct kiocb *iocb, struct iov_iter *iter)
 				ret = -EFAULT;
 				goto out;
 			}
+<<<<<<< HEAD
 			goto skip;
 		}
 
@@ -523,6 +524,46 @@ static ssize_t read_kcore_iter(struct kiocb *iocb, struct iov_iter *iter)
 				left -= read;
 
 				if (fault_in_iov_iter_writeable(iter, left)) {
+=======
+			m = NULL;	/* skip the list anchor */
+		} else if (!pfn_is_ram(__pa(start) >> PAGE_SHIFT)) {
+			if (clear_user(buffer, tsz)) {
+				ret = -EFAULT;
+				goto out;
+			}
+		} else if (m->type == KCORE_VMALLOC) {
+			vread(buf, (char *)start, tsz);
+			/* we have to zero-fill user buffer even if no read */
+			if (copy_to_user(buffer, buf, tsz)) {
+				ret = -EFAULT;
+				goto out;
+			}
+		} else if (m->type == KCORE_USER) {
+			/* User page is handled prior to normal kernel page: */
+			if (copy_to_user(buffer, (char *)start, tsz)) {
+				ret = -EFAULT;
+				goto out;
+			}
+		} else {
+			if (kern_addr_valid(start)) {
+				/*
+				 * Using bounce buffer to bypass the
+				 * hardened user copy kernel text checks.
+				 */
+				if (probe_kernel_read(buf, (void *) start, tsz)) {
+					if (clear_user(buffer, tsz)) {
+						ret = -EFAULT;
+						goto out;
+					}
+				} else {
+					if (copy_to_user(buffer, buf, tsz)) {
+						ret = -EFAULT;
+						goto out;
+					}
+				}
+			} else {
+				if (clear_user(buffer, tsz)) {
+>>>>>>> master
 					ret = -EFAULT;
 					goto out;
 				}

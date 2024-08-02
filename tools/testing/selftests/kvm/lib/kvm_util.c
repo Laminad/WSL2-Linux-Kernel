@@ -962,12 +962,22 @@ void vm_userspace_mem_region_add(struct kvm_vm *vm,
 			(uint64_t) region->region.memory_size);
 
 	/* Confirm no region with the requested slot already exists. */
+<<<<<<< HEAD
 	hash_for_each_possible(vm->regions.slot_hash, region, slot_node,
 			       slot) {
 		if (region->region.slot != slot)
 			continue;
 
 		TEST_FAIL("A mem region with the requested slot "
+=======
+	for (region = vm->userspace_mem_region_head; region;
+		region = region->next) {
+		if (region->region.slot == slot)
+			break;
+	}
+	if (region != NULL)
+		TEST_ASSERT(false, "A mem region with the requested slot "
+>>>>>>> master
 			"already exists.\n"
 			"  requested slot: %u paddr: 0x%lx npages: 0x%lx\n"
 			"  existing slot: %u paddr: 0x%lx size: 0x%lx",

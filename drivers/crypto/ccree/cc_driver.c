@@ -530,6 +530,15 @@ static int init_cc_resources(struct platform_device *plat_dev)
 		goto post_buf_mgr_err;
 	}
 
+<<<<<<< HEAD
+=======
+	rc = cc_ivgen_init(new_drvdata);
+	if (rc) {
+		dev_err(dev, "cc_ivgen_init failed\n");
+		goto post_buf_mgr_err;
+	}
+
+>>>>>>> master
 	/* Allocate crypto algs */
 	rc = cc_cipher_alloc(new_drvdata);
 	if (rc) {
@@ -543,6 +552,9 @@ static int init_cc_resources(struct platform_device *plat_dev)
 		goto post_cipher_err;
 	}
 
+	/* All set, we can allow autosuspend */
+	cc_pm_go(new_drvdata);
+
 	/* If we got here and FIPS mode is enabled
 	 * it means all FIPS test passed, so let TEE
 	 * know we're good.
@@ -554,8 +566,13 @@ static int init_cc_resources(struct platform_device *plat_dev)
 
 post_cipher_err:
 	cc_cipher_free(new_drvdata);
+<<<<<<< HEAD
 post_hash_err:
 	cc_hash_free(new_drvdata);
+=======
+post_ivgen_err:
+	cc_ivgen_fini(new_drvdata);
+>>>>>>> master
 post_buf_mgr_err:
 	 cc_buffer_mgr_fini(new_drvdata);
 post_req_mgr_err:

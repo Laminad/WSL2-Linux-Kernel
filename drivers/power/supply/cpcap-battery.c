@@ -259,6 +259,23 @@ static int cpcap_battery_cc_raw_div(struct cpcap_battery_ddata *ddata,
 
 	if (!divider)
 		return 0;
+<<<<<<< HEAD
+=======
+
+	sample &= 0xffffff;		/* 24-bits, unsigned */
+	offset &= 0x7ff;		/* 10-bits, signed */
+
+	switch (ddata->vendor) {
+	case CPCAP_VENDOR_ST:
+		cc_lsb = 95374;		/* μAms per LSB */
+		break;
+	case CPCAP_VENDOR_TI:
+		cc_lsb = 91501;		/* μAms per LSB */
+		break;
+	default:
+		return -EINVAL;
+	}
+>>>>>>> master
 
 	acc = accumulator;
 	acc -= (s64)sample * offset;

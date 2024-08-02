@@ -29,7 +29,11 @@ static void drop_pagecache_sb(struct super_block *sb, void *unused)
 		 * we need to reschedule to avoid softlockups.
 		 */
 		if ((inode->i_state & (I_FREEING|I_WILL_FREE|I_NEW)) ||
+<<<<<<< HEAD
 		    (mapping_empty(inode->i_mapping) && !need_resched())) {
+=======
+		    (inode->i_mapping->nrpages == 0 && !need_resched())) {
+>>>>>>> master
 			spin_unlock(&inode->i_lock);
 			continue;
 		}
@@ -37,6 +41,7 @@ static void drop_pagecache_sb(struct super_block *sb, void *unused)
 		spin_unlock(&inode->i_lock);
 		spin_unlock(&sb->s_inode_list_lock);
 
+		cond_resched();
 		invalidate_mapping_pages(inode->i_mapping, 0, -1);
 		iput(toput_inode);
 		toput_inode = inode;

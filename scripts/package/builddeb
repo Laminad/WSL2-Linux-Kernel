@@ -57,6 +57,45 @@ install_linux_image () {
 
 	rm -rf ${pdir}
 
+<<<<<<< HEAD
+=======
+# Not all arches have the same installed path in debian
+# XXX: have each arch Makefile export a variable of the canonical image install
+# path instead
+case $ARCH in
+um)
+	installed_image_path="usr/bin/linux-$version"
+	;;
+parisc|mips|powerpc)
+	installed_image_path="boot/vmlinux-$version"
+	;;
+*)
+	installed_image_path="boot/vmlinuz-$version"
+esac
+
+BUILD_DEBUG="$(grep -s '^CONFIG_DEBUG_INFO=y' $KCONFIG_CONFIG || true)"
+
+# Setup the directory structure
+rm -rf "$tmpdir" "$kernel_headers_dir" "$libc_headers_dir" "$dbg_dir" $objtree/debian/files
+mkdir -m 755 -p "$tmpdir/DEBIAN"
+mkdir -p "$tmpdir/lib" "$tmpdir/boot"
+mkdir -p "$kernel_headers_dir/lib/modules/$version/"
+
+# Build and install the kernel
+if [ "$ARCH" = "um" ] ; then
+	mkdir -p "$tmpdir/usr/lib/uml/modules/$version" "$tmpdir/usr/bin" "$tmpdir/usr/share/doc/$packagename"
+	$MAKE linux
+	cp System.map "$tmpdir/usr/lib/uml/modules/$version/System.map"
+	cp $KCONFIG_CONFIG "$tmpdir/usr/share/doc/$packagename/config"
+	gzip "$tmpdir/usr/share/doc/$packagename/config"
+else
+	cp System.map "$tmpdir/boot/System.map-$version"
+	cp $KCONFIG_CONFIG "$tmpdir/boot/config-$version"
+fi
+cp "$($MAKE -s -f $srctree/Makefile image_name)" "$tmpdir/$installed_image_path"
+
+if grep -q "^CONFIG_OF=y" $KCONFIG_CONFIG ; then
+>>>>>>> master
 	# Only some architectures with OF support have this target
 	if is_enabled CONFIG_OF_EARLY_FLATTREE && [ -d "${srctree}/arch/${SRCARCH}/boot/dts" ]; then
 		${MAKE} -f ${srctree}/Makefile INSTALL_DTBS_PATH="${pdir}/usr/lib/linux-image-${KERNELRELEASE}" dtbs_install

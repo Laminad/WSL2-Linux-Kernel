@@ -88,11 +88,14 @@ FEATURE_TESTS_EXTRA :=                  \
          libbabeltrace                  \
          libbfd-liberty                 \
          libbfd-liberty-z               \
+<<<<<<< HEAD
          libopencsd                     \
          libunwind-x86                  \
          libunwind-x86_64               \
          libunwind-arm                  \
          libunwind-aarch64              \
+=======
+>>>>>>> master
          libunwind-debug-frame          \
          libunwind-debug-frame-arm      \
          libunwind-debug-frame-aarch64  \

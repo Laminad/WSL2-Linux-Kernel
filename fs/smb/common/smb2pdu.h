@@ -61,6 +61,7 @@
 
 #define NUMBER_OF_SMB2_COMMANDS	0x0013
 
+<<<<<<< HEAD:fs/smb/common/smb2pdu.h
 /*
  * Size of the session key (crypto key encrypted with the password
  */
@@ -70,6 +71,10 @@
 #define SMB2_CMACAES_SIZE		16
 #define SMB3_GCM128_CRYPTKEY_SIZE	16
 #define SMB3_GCM256_CRYPTKEY_SIZE	32
+=======
+/* 52 transform hdr + 64 hdr + 88 create rsp */
+#define MAX_SMB2_HDR_SIZE 204
+>>>>>>> master:fs/cifs/smb2pdu.h
 
 /*
  * Size of the smb3 encryption/decryption keys
@@ -1244,6 +1249,55 @@ struct create_durable {
 	} Data;
 } __packed;
 
+<<<<<<< HEAD:fs/smb/common/smb2pdu.h
+=======
+struct create_posix {
+	struct create_context ccontext;
+	__u8	Name[16];
+	__le32  Mode;
+	__u32	Reserved;
+} __packed;
+
+/* See MS-SMB2 2.2.13.2.11 */
+/* Flags */
+#define SMB2_DHANDLE_FLAG_PERSISTENT	0x00000002
+struct durable_context_v2 {
+	__le32 Timeout;
+	__le32 Flags;
+	__u64 Reserved;
+	__u8 CreateGuid[16];
+} __packed;
+
+struct create_durable_v2 {
+	struct create_context ccontext;
+	__u8   Name[8];
+	struct durable_context_v2 dcontext;
+} __packed;
+
+/* See MS-SMB2 2.2.13.2.12 */
+struct durable_reconnect_context_v2 {
+	struct {
+		__u64 PersistentFileId;
+		__u64 VolatileFileId;
+	} Fid;
+	__u8 CreateGuid[16];
+	__le32 Flags; /* see above DHANDLE_FLAG_PERSISTENT */
+} __packed;
+
+/* See MS-SMB2 2.2.14.2.12 */
+struct durable_reconnect_context_v2_rsp {
+	__le32 Timeout;
+	__le32 Flags; /* see above DHANDLE_FLAG_PERSISTENT */
+} __packed;
+
+struct create_durable_handle_reconnect_v2 {
+	struct create_context ccontext;
+	__u8   Name[8];
+	struct durable_reconnect_context_v2 dcontext;
+	__u8   Pad[4];
+} __packed;
+
+>>>>>>> master:fs/cifs/smb2pdu.h
 /* See MS-SMB2 2.2.13.2.5 */
 struct create_mxac_req {
 	struct create_context_hdr ccontext;

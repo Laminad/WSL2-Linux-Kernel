@@ -186,6 +186,7 @@ static struct orc_entry null_orc_entry = {
 	.type = ORC_TYPE_CALL
 };
 
+<<<<<<< HEAD
 /* Fake frame pointer entry -- used as a fallback for generated code */
 static struct orc_entry orc_fp_entry = {
 	.type		= ORC_TYPE_CALL,
@@ -195,9 +196,14 @@ static struct orc_entry orc_fp_entry = {
 	.bp_offset	= -16,
 };
 
+=======
+>>>>>>> master
 static struct orc_entry *orc_find(unsigned long ip)
 {
 	static struct orc_entry *orc;
+
+	if (ip == 0)
+		return &null_orc_entry;
 
 	if (ip == 0)
 		return &null_orc_entry;

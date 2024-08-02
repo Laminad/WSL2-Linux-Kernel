@@ -276,7 +276,10 @@ static void v4l_print_format(const void *arg, bool write_only)
 	const struct v4l2_sliced_vbi_format *sliced;
 	const struct v4l2_window *win;
 	const struct v4l2_meta_format *meta;
+<<<<<<< HEAD
 	u32 pixelformat;
+=======
+>>>>>>> master
 	u32 planes;
 	unsigned i;
 

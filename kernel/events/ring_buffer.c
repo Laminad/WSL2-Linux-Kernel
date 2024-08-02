@@ -80,6 +80,18 @@ again:
 	 * load above to be stale.
 	 */
 
+<<<<<<< HEAD
+=======
+	/*
+	 * If this isn't the outermost nesting, we don't have to update
+	 * @rb->user_page->data_head.
+	 */
+	if (local_read(&rb->nest) > 1) {
+		local_dec(&rb->nest);
+		goto out;
+	}
+
+>>>>>>> master
 	/*
 	 * Since the mmap() consumer (userspace) can run on a different CPU:
 	 *
@@ -115,7 +127,11 @@ again:
 	 * write will (temporarily) publish a stale value.
 	 */
 	barrier();
+<<<<<<< HEAD
 	WRITE_ONCE(rb->nest, 0);
+=======
+	local_set(&rb->nest, 0);
+>>>>>>> master
 
 	/*
 	 * Ensure we decrement @rb->nest before we validate the @rb->head.
@@ -821,11 +837,18 @@ struct perf_buffer *rb_alloc(int nr_pages, long watermark, int cpu, int flags)
 	size = sizeof(struct perf_buffer);
 	size += nr_pages * sizeof(void *);
 
+<<<<<<< HEAD
 	if (order_base_2(size) > PAGE_SHIFT+MAX_ORDER)
 		goto fail;
 
 	node = (cpu == -1) ? cpu : cpu_to_node(cpu);
 	rb = kzalloc_node(size, GFP_KERNEL, node);
+=======
+	if (order_base_2(size) >= PAGE_SHIFT+MAX_ORDER)
+		goto fail;
+
+	rb = kzalloc(size, GFP_KERNEL);
+>>>>>>> master
 	if (!rb)
 		goto fail;
 

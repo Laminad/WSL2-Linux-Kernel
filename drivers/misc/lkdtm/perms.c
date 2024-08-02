@@ -49,6 +49,7 @@ static noinline void do_almost_nothing(void)
 	pr_info("do_nothing was hijacked!\n");
 }
 
+<<<<<<< HEAD
 static void *setup_function_descriptor(func_desc_t *fdesc, void *dst)
 {
 	if (!have_function_descriptors())
@@ -68,6 +69,9 @@ static noinline __nocfi void execute_location(void *dst, bool write)
 	void *do_nothing_text = dereference_function_descriptor(do_nothing);
 
 	pr_info("attempting ok execution at %px\n", do_nothing_text);
+=======
+	pr_info("attempting ok execution at %px\n", do_nothing);
+>>>>>>> master
 	do_nothing();
 
 	if (write == CODE_WRITE) {
@@ -75,8 +79,12 @@ static noinline __nocfi void execute_location(void *dst, bool write)
 		flush_icache_range((unsigned long)dst,
 				   (unsigned long)dst + EXEC_SIZE);
 	}
+<<<<<<< HEAD
 	pr_info("attempting bad execution at %px\n", dst);
 	func = setup_function_descriptor(&fdesc, dst);
+=======
+	pr_info("attempting bad execution at %px\n", func);
+>>>>>>> master
 	func();
 	pr_err("FAIL: func returned\n");
 }
@@ -90,15 +98,23 @@ static void execute_user_location(void *dst)
 	func_desc_t fdesc;
 	void *do_nothing_text = dereference_function_descriptor(do_nothing);
 
+<<<<<<< HEAD
 	pr_info("attempting ok execution at %px\n", do_nothing_text);
+=======
+	pr_info("attempting ok execution at %px\n", do_nothing);
+>>>>>>> master
 	do_nothing();
 
 	copied = access_process_vm(current, (unsigned long)dst, do_nothing_text,
 				   EXEC_SIZE, FOLL_WRITE);
 	if (copied < EXEC_SIZE)
 		return;
+<<<<<<< HEAD
 	pr_info("attempting bad execution at %px\n", dst);
 	func = setup_function_descriptor(&fdesc, dst);
+=======
+	pr_info("attempting bad execution at %px\n", func);
+>>>>>>> master
 	func();
 	pr_err("FAIL: func returned\n");
 }
@@ -142,7 +158,11 @@ static void lkdtm_WRITE_KERN(void)
 	ptr = dereference_function_descriptor(do_overwritten);
 
 	pr_info("attempting bad %zu byte write at %px\n", size, ptr);
+<<<<<<< HEAD
 	memcpy((void *)ptr, (unsigned char *)do_nothing, size);
+=======
+	memcpy(ptr, (unsigned char *)do_nothing, size);
+>>>>>>> master
 	flush_icache_range((unsigned long)ptr, (unsigned long)(ptr + size));
 	pr_err("FAIL: survived bad write\n");
 
@@ -212,12 +232,20 @@ static void lkdtm_EXEC_USERSPACE(void)
 	vm_munmap(user_addr, PAGE_SIZE);
 }
 
+<<<<<<< HEAD
 static void lkdtm_EXEC_NULL(void)
+=======
+void lkdtm_EXEC_NULL(void)
+>>>>>>> master
 {
 	execute_location(NULL, CODE_AS_IS);
 }
 
+<<<<<<< HEAD
 static void lkdtm_ACCESS_USERSPACE(void)
+=======
+void lkdtm_ACCESS_USERSPACE(void)
+>>>>>>> master
 {
 	unsigned long user_addr, tmp = 0;
 	unsigned long *ptr;
@@ -250,19 +278,32 @@ static void lkdtm_ACCESS_USERSPACE(void)
 	vm_munmap(user_addr, PAGE_SIZE);
 }
 
+<<<<<<< HEAD
 static void lkdtm_ACCESS_NULL(void)
 {
 	unsigned long tmp;
 	volatile unsigned long *ptr = (unsigned long *)NULL;
+=======
+void lkdtm_ACCESS_NULL(void)
+{
+	unsigned long tmp;
+	unsigned long *ptr = (unsigned long *)NULL;
+>>>>>>> master
 
 	pr_info("attempting bad read at %px\n", ptr);
 	tmp = *ptr;
 	tmp += 0xc0dec0de;
+<<<<<<< HEAD
 	pr_err("FAIL: survived bad read\n");
 
 	pr_info("attempting bad write at %px\n", ptr);
 	*ptr = tmp;
 	pr_err("FAIL: survived bad write\n");
+=======
+
+	pr_info("attempting bad write at %px\n", ptr);
+	*ptr = tmp;
+>>>>>>> master
 }
 
 void __init lkdtm_perms_init(void)

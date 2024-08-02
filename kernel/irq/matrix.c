@@ -286,7 +286,11 @@ void irq_matrix_remove_managed(struct irq_matrix *m, const struct cpumask *msk)
 int irq_matrix_alloc_managed(struct irq_matrix *m, const struct cpumask *msk,
 			     unsigned int *mapped_cpu)
 {
+<<<<<<< HEAD
 	unsigned int bit, cpu, end;
+=======
+	unsigned int bit, cpu, end = m->alloc_end;
+>>>>>>> master
 	struct cpumap *cm;
 
 	if (cpumask_empty(msk))
@@ -380,6 +384,7 @@ int irq_matrix_alloc(struct irq_matrix *m, const struct cpumask *msk,
 	unsigned int cpu, bit;
 	struct cpumap *cm;
 
+<<<<<<< HEAD
 	/*
 	 * Not required in theory, but matrix_find_best_cpu() uses
 	 * for_each_cpu() which ignores the cpumask on UP .
@@ -405,6 +410,26 @@ int irq_matrix_alloc(struct irq_matrix *m, const struct cpumask *msk,
 	trace_irq_matrix_alloc(bit, cpu, m, cm);
 	return bit;
 
+=======
+	cpu = matrix_find_best_cpu(m, msk);
+	if (cpu == UINT_MAX)
+		return -ENOSPC;
+
+	cm = per_cpu_ptr(m->maps, cpu);
+	bit = matrix_alloc_area(m, cm, 1, false);
+	if (bit >= m->alloc_end)
+		return -ENOSPC;
+	cm->allocated++;
+	cm->available--;
+	m->total_allocated++;
+	m->global_available--;
+	if (reserved)
+		m->global_reserved--;
+	*mapped_cpu = cpu;
+	trace_irq_matrix_alloc(bit, cpu, m, cm);
+	return bit;
+
+>>>>>>> master
 }
 
 /**

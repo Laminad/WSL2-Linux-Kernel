@@ -2128,6 +2128,56 @@ static int _opp_set_prop_name(struct opp_table *opp_table, const char *name)
 			return -ENOMEM;
 	}
 
+<<<<<<< HEAD
+=======
+	return opp_table;
+}
+EXPORT_SYMBOL_GPL(dev_pm_opp_set_prop_name);
+
+/**
+ * dev_pm_opp_put_prop_name() - Releases resources blocked for prop-name
+ * @opp_table: OPP table returned by dev_pm_opp_set_prop_name().
+ *
+ * This is required only for the V2 bindings, and is called for a matching
+ * dev_pm_opp_set_prop_name(). Until this is called, the opp_table structure
+ * will not be freed.
+ */
+void dev_pm_opp_put_prop_name(struct opp_table *opp_table)
+{
+	/* Make sure there are no concurrent readers while updating opp_table */
+	WARN_ON(!list_empty(&opp_table->opp_list));
+
+	kfree(opp_table->prop_name);
+	opp_table->prop_name = NULL;
+
+	dev_pm_opp_put_opp_table(opp_table);
+}
+EXPORT_SYMBOL_GPL(dev_pm_opp_put_prop_name);
+
+static int _allocate_set_opp_data(struct opp_table *opp_table)
+{
+	struct dev_pm_set_opp_data *data;
+	int len, count = opp_table->regulator_count;
+
+	if (WARN_ON(!opp_table->regulators))
+		return -EINVAL;
+
+	/* space for set_opp_data */
+	len = sizeof(*data);
+
+	/* space for old_opp.supplies and new_opp.supplies */
+	len += 2 * sizeof(struct dev_pm_opp_supply) * count;
+
+	data = kzalloc(len, GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
+
+	data->old_opp.supplies = (void *)(data + 1);
+	data->new_opp.supplies = data->old_opp.supplies + count;
+
+	opp_table->set_opp_data = data;
+
+>>>>>>> master
 	return 0;
 }
 

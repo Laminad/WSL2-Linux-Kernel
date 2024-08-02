@@ -2513,6 +2513,7 @@ static int pkt_new_dev(struct pktcdvd_device *pd, dev_t dev)
 		}
 	}
 
+<<<<<<< HEAD
 	bdev = blkdev_get_by_dev(dev, BLK_OPEN_READ | BLK_OPEN_NDELAY, NULL,
 				 NULL);
 	if (IS_ERR(bdev))
@@ -2520,6 +2521,16 @@ static int pkt_new_dev(struct pktcdvd_device *pd, dev_t dev)
 	sdev = scsi_device_from_queue(bdev->bd_disk->queue);
 	if (!sdev) {
 		blkdev_put(bdev, NULL);
+=======
+	bdev = bdget(dev);
+	if (!bdev)
+		return -ENOMEM;
+	ret = blkdev_get(bdev, FMODE_READ | FMODE_NDELAY, NULL);
+	if (ret)
+		return ret;
+	if (!blk_queue_scsi_passthrough(bdev_get_queue(bdev))) {
+		blkdev_put(bdev, FMODE_READ | FMODE_NDELAY);
+>>>>>>> master
 		return -EINVAL;
 	}
 	put_device(&sdev->sdev_gendev);

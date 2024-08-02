@@ -294,8 +294,12 @@ static ssize_t set_datatype_show(struct device *dev,
 
 	for (i = 0; i < ARRAY_SIZE(ch_data_type); i++) {
 		if (c->cfg.data_type & ch_data_type[i].most_ch_data_type)
+<<<<<<< HEAD:drivers/most/core.c
 			return snprintf(buf, PAGE_SIZE, "%s",
 					ch_data_type[i].name);
+=======
+			return snprintf(buf, PAGE_SIZE, "%s", ch_data_type[i].name);
+>>>>>>> master:drivers/staging/most/core.c
 	}
 	return snprintf(buf, PAGE_SIZE, "unconfigured\n");
 }
@@ -1300,12 +1304,23 @@ int most_register_interface(struct most_interface *iface)
 
 	INIT_LIST_HEAD(&iface->p->channel_list);
 	iface->p->dev_id = id;
+<<<<<<< HEAD:drivers/most/core.c
 	strscpy(iface->p->name, iface->description, sizeof(iface->p->name));
 	iface->dev->bus = &mostbus;
 	iface->dev->groups = interface_attr_groups;
 	dev_set_drvdata(iface->dev, iface);
 	if (device_register(iface->dev)) {
 		dev_err(iface->dev, "Failed to register interface device\n");
+=======
+	strcpy(iface->p->name, iface->description);
+	iface->dev.init_name = iface->p->name;
+	iface->dev.bus = &mc.bus;
+	iface->dev.parent = &mc.dev;
+	iface->dev.groups = interface_attr_groups;
+	iface->dev.release = release_interface;
+	if (device_register(&iface->dev)) {
+		pr_err("registering iface->dev failed\n");
+>>>>>>> master:drivers/staging/most/core.c
 		kfree(iface->p);
 		put_device(iface->dev);
 		ida_simple_remove(&mdev_id, id);

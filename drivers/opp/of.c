@@ -1029,7 +1029,18 @@ static int _of_add_opp_table_v2(struct device *dev, struct opp_table *opp_table)
 
 	lazy_link_required_opp_table(opp_table);
 
+<<<<<<< HEAD
 	return 0;
+=======
+	/* Either all or none of the nodes shall have performance state set */
+	if (pstate_count && pstate_count != count) {
+		dev_err(dev, "Not all nodes have performance state set (%d: %d)\n",
+			count, pstate_count);
+		ret = -ENOENT;
+		_dev_pm_opp_remove_table(opp_table, dev, false);
+		goto put_opp_table;
+	}
+>>>>>>> master
 
 remove_static_opp:
 	_opp_remove_all_static(opp_table);

@@ -58,7 +58,82 @@ void rxrpc_propose_delay_ACK(struct rxrpc_call *call, rxrpc_serial_t serial,
 					rxrpc_timer_set_for_ack);
 	}
 
+<<<<<<< HEAD
 	trace_rxrpc_propose_ack(call, why, RXRPC_ACK_DELAY, serial);
+=======
+	/* Update DELAY, IDLE, REQUESTED and PING_RESPONSE ACK serial
+	 * numbers, but we don't alter the timeout.
+	 */
+	_debug("prior %u %u vs %u %u",
+	       ack_reason, prior,
+	       call->ackr_reason, rxrpc_ack_priority[call->ackr_reason]);
+	if (ack_reason == call->ackr_reason) {
+		if (RXRPC_ACK_UPDATEABLE & (1 << ack_reason)) {
+			outcome = rxrpc_propose_ack_update;
+			call->ackr_serial = serial;
+			call->ackr_skew = skew;
+		}
+		if (!immediate)
+			goto trace;
+	} else if (prior > rxrpc_ack_priority[call->ackr_reason]) {
+		call->ackr_reason = ack_reason;
+		call->ackr_serial = serial;
+		call->ackr_skew = skew;
+	} else {
+		outcome = rxrpc_propose_ack_subsume;
+	}
+
+	switch (ack_reason) {
+	case RXRPC_ACK_REQUESTED:
+		if (rxrpc_requested_ack_delay < expiry)
+			expiry = rxrpc_requested_ack_delay;
+		if (serial == 1)
+			immediate = false;
+		break;
+
+	case RXRPC_ACK_DELAY:
+		if (rxrpc_soft_ack_delay < expiry)
+			expiry = rxrpc_soft_ack_delay;
+		break;
+
+	case RXRPC_ACK_IDLE:
+		if (rxrpc_idle_ack_delay < expiry)
+			expiry = rxrpc_idle_ack_delay;
+		break;
+
+	default:
+		immediate = true;
+		break;
+	}
+
+	if (test_bit(RXRPC_CALL_EV_ACK, &call->events)) {
+		_debug("already scheduled");
+	} else if (immediate || expiry == 0) {
+		_debug("immediate ACK %lx", call->events);
+		if (!test_and_set_bit(RXRPC_CALL_EV_ACK, &call->events) &&
+		    background)
+			rxrpc_queue_call(call);
+	} else {
+		unsigned long now = jiffies, ack_at;
+
+		if (call->peer->rtt_usage > 0)
+			ack_at = nsecs_to_jiffies(call->peer->rtt);
+		else
+			ack_at = expiry;
+
+		ack_at += READ_ONCE(call->tx_backoff);
+		ack_at += now;
+		if (time_before(ack_at, call->ack_at)) {
+			WRITE_ONCE(call->ack_at, ack_at);
+			rxrpc_reduce_call_timer(call, ack_at, now,
+						rxrpc_timer_set_for_ack);
+		}
+	}
+
+trace:
+	trace_rxrpc_propose_ack(call, why, ack_reason, serial, immediate,
+				background, outcome);
+>>>>>>> master
 }
 
 /*
@@ -373,8 +448,12 @@ static void rxrpc_send_initial_ping(struct rxrpc_call *call)
 bool rxrpc_input_call_event(struct rxrpc_call *call, struct sk_buff *skb)
 {
 	unsigned long now, next, t;
+<<<<<<< HEAD
 	bool resend = false, expired = false;
 	s32 abort_code;
+=======
+	unsigned int iterations = 0;
+>>>>>>> master
 
 	rxrpc_see_call(call, rxrpc_call_see_input);
 
@@ -383,6 +462,7 @@ bool rxrpc_input_call_event(struct rxrpc_call *call, struct sk_buff *skb)
 	       call->debug_id, rxrpc_call_states[__rxrpc_call_state(call)],
 	       call->events);
 
+<<<<<<< HEAD
 	if (__rxrpc_call_is_complete(call))
 		goto out;
 
@@ -392,6 +472,17 @@ bool rxrpc_input_call_event(struct rxrpc_call *call, struct sk_buff *skb)
 		rxrpc_abort_call(call, 0, call->send_abort, call->send_abort_err,
 				 call->send_abort_why);
 		goto out;
+=======
+recheck_state:
+	/* Limit the number of times we do this before returning to the manager */
+	iterations++;
+	if (iterations > 5)
+		goto requeue;
+
+	if (test_and_clear_bit(RXRPC_CALL_EV_ABORT, &call->events)) {
+		rxrpc_send_abort_packet(call);
+		goto recheck_state;
+>>>>>>> master
 	}
 
 	if (skb && skb->mark == RXRPC_SKB_MARK_ERROR)
@@ -482,8 +573,63 @@ bool rxrpc_input_call_event(struct rxrpc_call *call, struct sk_buff *skb)
 			rxrpc_abort_call(call, 0, RX_CALL_TIMEOUT, -ETIME,
 					 rxrpc_abort_call_timeout);
 		}
+<<<<<<< HEAD
 		goto out;
 	}
+=======
+		set_bit(RXRPC_CALL_EV_ABORT, &call->events);
+		goto recheck_state;
+	}
+
+	send_ack = NULL;
+	if (test_and_clear_bit(RXRPC_CALL_EV_ACK_LOST, &call->events)) {
+		call->acks_lost_top = call->tx_top;
+		rxrpc_propose_ACK(call, RXRPC_ACK_PING, 0, 0, true, false,
+				  rxrpc_propose_ack_ping_for_lost_ack);
+		send_ack = &call->acks_lost_ping;
+	}
+
+	if (test_and_clear_bit(RXRPC_CALL_EV_ACK, &call->events) ||
+	    send_ack) {
+		if (call->ackr_reason) {
+			rxrpc_send_ack_packet(call, false, send_ack);
+			goto recheck_state;
+		}
+	}
+
+	if (test_and_clear_bit(RXRPC_CALL_EV_PING, &call->events)) {
+		rxrpc_send_ack_packet(call, true, NULL);
+		goto recheck_state;
+	}
+
+	if (test_and_clear_bit(RXRPC_CALL_EV_RESEND, &call->events)) {
+		rxrpc_resend(call, now);
+		goto recheck_state;
+	}
+
+	/* Make sure the timer is restarted */
+	next = call->expect_rx_by;
+
+#define set(T) { t = READ_ONCE(T); if (time_before(t, next)) next = t; }
+
+	set(call->expect_req_by);
+	set(call->expect_term_by);
+	set(call->ack_at);
+	set(call->ack_lost_at);
+	set(call->resend_at);
+	set(call->keepalive_at);
+	set(call->ping_at);
+
+	now = jiffies;
+	if (time_after_eq(now, next))
+		goto recheck_state;
+
+	rxrpc_reduce_call_timer(call, next, now, rxrpc_timer_restart);
+
+	/* other events may have been raised since we started checking */
+	if (call->events && call->state < RXRPC_CALL_COMPLETE)
+		goto requeue;
+>>>>>>> master
 
 	if (test_and_clear_bit(RXRPC_CALL_EV_ACK_LOST, &call->events))
 		rxrpc_send_ACK(call, RXRPC_ACK_PING, 0,
@@ -541,5 +687,13 @@ out:
 	if (call->acks_hard_ack != call->tx_bottom)
 		rxrpc_shrink_call_tx_buffer(call);
 	_leave("");
+<<<<<<< HEAD
 	return true;
+=======
+	return;
+
+requeue:
+	__rxrpc_queue_call(call);
+	goto out;
+>>>>>>> master
 }

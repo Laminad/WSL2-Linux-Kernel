@@ -75,6 +75,7 @@ static const struct id_to_str arc_hs_ver54_rel[] = {
 static int
 arcompact_mumbojumbo(int c, struct cpuinfo_arc *info, char *buf, int len)
 {
+<<<<<<< HEAD
 	int n = 0;
 #ifdef CONFIG_ISA_ARCOMPACT
 	char *cpu_nm, *isa_nm = "ARCompact";
@@ -85,6 +86,170 @@ arcompact_mumbojumbo(int c, struct cpuinfo_arc *info, char *buf, int len)
 	struct bcr_iccm_arcompact iccm;
 	struct bcr_dccm_arcompact dccm;
 	struct bcr_generic isa;
+=======
+	if (is_isa_arcompact()) {
+		struct bcr_iccm_arcompact iccm;
+		struct bcr_dccm_arcompact dccm;
+
+		READ_BCR(ARC_REG_ICCM_BUILD, iccm);
+		if (iccm.ver) {
+			cpu->iccm.sz = 4096 << iccm.sz;	/* 8K to 512K */
+			cpu->iccm.base_addr = iccm.base << 16;
+		}
+
+		READ_BCR(ARC_REG_DCCM_BUILD, dccm);
+		if (dccm.ver) {
+			unsigned long base;
+			cpu->dccm.sz = 2048 << dccm.sz;	/* 2K to 256K */
+
+			base = read_aux_reg(ARC_REG_DCCM_BASE_BUILD);
+			cpu->dccm.base_addr = base & ~0xF;
+		}
+	} else {
+		struct bcr_iccm_arcv2 iccm;
+		struct bcr_dccm_arcv2 dccm;
+		unsigned long region;
+
+		READ_BCR(ARC_REG_ICCM_BUILD, iccm);
+		if (iccm.ver) {
+			cpu->iccm.sz = 256 << iccm.sz00;	/* 512B to 16M */
+			if (iccm.sz00 == 0xF && iccm.sz01 > 0)
+				cpu->iccm.sz <<= iccm.sz01;
+
+			region = read_aux_reg(ARC_REG_AUX_ICCM);
+			cpu->iccm.base_addr = region & 0xF0000000;
+		}
+
+		READ_BCR(ARC_REG_DCCM_BUILD, dccm);
+		if (dccm.ver) {
+			cpu->dccm.sz = 256 << dccm.sz0;
+			if (dccm.sz0 == 0xF && dccm.sz1 > 0)
+				cpu->dccm.sz <<= dccm.sz1;
+
+			region = read_aux_reg(ARC_REG_AUX_DCCM);
+			cpu->dccm.base_addr = region & 0xF0000000;
+		}
+	}
+}
+
+static void read_arc_build_cfg_regs(void)
+{
+	struct bcr_timer timer;
+	struct bcr_generic bcr;
+	struct cpuinfo_arc *cpu = &cpuinfo_arc700[smp_processor_id()];
+	const struct id_to_str *tbl;
+	struct bcr_isa_arcv2 isa;
+
+	FIX_PTR(cpu);
+
+	READ_BCR(AUX_IDENTITY, cpu->core);
+
+	for (tbl = &arc_cpu_rel[0]; tbl->id != 0; tbl++) {
+		if (cpu->core.family == tbl->id) {
+			cpu->details = tbl->str;
+			break;
+		}
+	}
+
+	for (tbl = &arc_cpu_nm[0]; tbl->id != 0; tbl++) {
+		if ((cpu->core.family & 0xF4) == tbl->id)
+			break;
+	}
+	cpu->name = tbl->str;
+
+	READ_BCR(ARC_REG_TIMERS_BCR, timer);
+	cpu->extn.timer0 = timer.t0;
+	cpu->extn.timer1 = timer.t1;
+	cpu->extn.rtc = timer.rtc;
+
+	cpu->vec_base = read_aux_reg(AUX_INTR_VEC_BASE);
+
+	READ_BCR(ARC_REG_MUL_BCR, cpu->extn_mpy);
+
+	cpu->extn.norm = read_aux_reg(ARC_REG_NORM_BCR) > 1 ? 1 : 0; /* 2,3 */
+	cpu->extn.barrel = read_aux_reg(ARC_REG_BARREL_BCR) > 1 ? 1 : 0; /* 2,3 */
+	cpu->extn.swap = read_aux_reg(ARC_REG_SWAP_BCR) ? 1 : 0;        /* 1,3 */
+	cpu->extn.crc = read_aux_reg(ARC_REG_CRC_BCR) ? 1 : 0;
+	cpu->extn.minmax = read_aux_reg(ARC_REG_MIXMAX_BCR) > 1 ? 1 : 0; /* 2 */
+	cpu->extn.swape = (cpu->core.family >= 0x34) ? 1 :
+				IS_ENABLED(CONFIG_ARC_HAS_SWAPE);
+
+	READ_BCR(ARC_REG_XY_MEM_BCR, cpu->extn_xymem);
+
+	/* Read CCM BCRs for boot reporting even if not enabled in Kconfig */
+	read_decode_ccm_bcr(cpu);
+
+	read_decode_mmu_bcr();
+	read_decode_cache_bcr();
+
+	if (is_isa_arcompact()) {
+		struct bcr_fp_arcompact sp, dp;
+		struct bcr_bpu_arcompact bpu;
+
+		READ_BCR(ARC_REG_FP_BCR, sp);
+		READ_BCR(ARC_REG_DPFP_BCR, dp);
+		cpu->extn.fpu_sp = sp.ver ? 1 : 0;
+		cpu->extn.fpu_dp = dp.ver ? 1 : 0;
+
+		READ_BCR(ARC_REG_BPU_BCR, bpu);
+		cpu->bpu.ver = bpu.ver;
+		cpu->bpu.full = bpu.fam ? 1 : 0;
+		if (bpu.ent) {
+			cpu->bpu.num_cache = 256 << (bpu.ent - 1);
+			cpu->bpu.num_pred = 256 << (bpu.ent - 1);
+		}
+	} else {
+		struct bcr_fp_arcv2 spdp;
+		struct bcr_bpu_arcv2 bpu;
+
+		READ_BCR(ARC_REG_FP_V2_BCR, spdp);
+		cpu->extn.fpu_sp = spdp.sp ? 1 : 0;
+		cpu->extn.fpu_dp = spdp.dp ? 1 : 0;
+
+		READ_BCR(ARC_REG_BPU_BCR, bpu);
+		cpu->bpu.ver = bpu.ver;
+		cpu->bpu.full = bpu.ft;
+		cpu->bpu.num_cache = 256 << bpu.bce;
+		cpu->bpu.num_pred = 2048 << bpu.pte;
+
+		if (cpu->core.family >= 0x54) {
+
+			struct bcr_uarch_build_arcv2 uarch;
+
+			/*
+			 * The first 0x54 core (uarch maj:min 0:1 or 0:2) was
+			 * dual issue only (HS4x). But next uarch rev (1:0)
+			 * allows it be configured for single issue (HS3x)
+			 * Ensure we fiddle with dual issue only on HS4x
+			 */
+			READ_BCR(ARC_REG_MICRO_ARCH_BCR, uarch);
+
+			if (uarch.prod == 4) {
+				unsigned int exec_ctrl;
+
+				/* dual issue hardware always present */
+				cpu->extn.dual = 1;
+
+				READ_BCR(AUX_EXEC_CTRL, exec_ctrl);
+
+				/* dual issue hardware enabled ? */
+				cpu->extn.dual_enb = !(exec_ctrl & 1);
+
+			}
+		}
+	}
+
+	READ_BCR(ARC_REG_AP_BCR, bcr);
+	cpu->extn.ap = bcr.ver ? 1 : 0;
+
+	READ_BCR(ARC_REG_SMART_BCR, bcr);
+	cpu->extn.smart = bcr.ver ? 1 : 0;
+
+	READ_BCR(ARC_REG_RTT_BCR, bcr);
+	cpu->extn.rtt = bcr.ver ? 1 : 0;
+
+	cpu->extn.debug = cpu->extn.ap | cpu->extn.smart | cpu->extn.rtt;
+>>>>>>> master
 
 	READ_BCR(ARC_REG_ISA_CFG_BCR, isa);
 

@@ -877,6 +877,7 @@ static int sta32x_probe(struct snd_soc_component *component)
 
 	sta32x->component = component;
 
+<<<<<<< HEAD
 	if (sta32x->xti_clk) {
 		ret = clk_prepare_enable(sta32x->xti_clk);
 		if (ret != 0) {
@@ -886,6 +887,8 @@ static int sta32x_probe(struct snd_soc_component *component)
 		}
 	}
 
+=======
+>>>>>>> master
 	ret = regulator_bulk_enable(ARRAY_SIZE(sta32x->supplies),
 				    sta32x->supplies);
 	if (ret != 0) {

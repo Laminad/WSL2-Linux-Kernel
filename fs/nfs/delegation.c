@@ -1074,24 +1074,38 @@ nfs_delegation_find_inode_server(struct nfs_server *server,
 				 const struct nfs_fh *fhandle)
 {
 	struct nfs_delegation *delegation;
+<<<<<<< HEAD
 	struct super_block *freeme = NULL;
 	struct inode *res = NULL;
+=======
+	struct inode *freeme, *res = NULL;
+>>>>>>> master
 
 	list_for_each_entry_rcu(delegation, &server->delegations, super_list) {
 		spin_lock(&delegation->lock);
 		if (delegation->inode != NULL &&
 		    !test_bit(NFS_DELEGATION_REVOKED, &delegation->flags) &&
 		    nfs_compare_fh(fhandle, &NFS_I(delegation->inode)->fh) == 0) {
+<<<<<<< HEAD
 			if (nfs_sb_active(server->super)) {
 				freeme = server->super;
 				res = igrab(delegation->inode);
 			}
+=======
+			freeme = igrab(delegation->inode);
+			if (freeme && nfs_sb_active(freeme->i_sb))
+				res = freeme;
+>>>>>>> master
 			spin_unlock(&delegation->lock);
 			if (res != NULL)
 				return res;
 			if (freeme) {
 				rcu_read_unlock();
+<<<<<<< HEAD
 				nfs_sb_deactive(freeme);
+=======
+				iput(freeme);
+>>>>>>> master
 				rcu_read_lock();
 			}
 			return ERR_PTR(-EAGAIN);

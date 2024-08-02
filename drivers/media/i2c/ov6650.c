@@ -874,6 +874,7 @@ static int ov6650_video_probe(struct v4l2_subdev *sd)
 	u8 pidh, pidl, midh, midl;
 	int i, ret = 0;
 
+<<<<<<< HEAD
 	priv->clk = devm_clk_get(&client->dev, NULL);
 	if (IS_ERR(priv->clk)) {
 		ret = PTR_ERR(priv->clk);
@@ -909,8 +910,20 @@ static int ov6650_video_probe(struct v4l2_subdev *sd)
 	}
 
 	ret = ov6650_s_power(sd, 1);
-	if (ret < 0)
+=======
+	priv->clk = v4l2_clk_get(&client->dev, NULL);
+	if (IS_ERR(priv->clk)) {
+		ret = PTR_ERR(priv->clk);
+		dev_err(&client->dev, "v4l2_clk request err: %d\n", ret);
 		return ret;
+	}
+
+	ret = ov6650_s_power(&priv->subdev, 1);
+>>>>>>> master
+	if (ret < 0)
+		goto eclkput;
+
+	msleep(20);
 
 	msleep(20);
 
@@ -950,7 +963,16 @@ static int ov6650_video_probe(struct v4l2_subdev *sd)
 		ret = v4l2_ctrl_handler_setup(&priv->hdl);
 
 done:
+<<<<<<< HEAD
 	ov6650_s_power(sd, 0);
+=======
+	ov6650_s_power(&priv->subdev, 0);
+	if (!ret)
+		return 0;
+eclkput:
+	v4l2_clk_put(priv->clk);
+
+>>>>>>> master
 	return ret;
 }
 
@@ -1080,6 +1102,7 @@ static int ov6650_probe(struct i2c_client *client)
 	priv->rect.width  = W_CIF;
 	priv->rect.height = H_CIF;
 
+<<<<<<< HEAD
 	/* Hardware default frame interval */
 	priv->tpf.numerator   = GET_CLKRC_DIV(DEF_CLKRC);
 	priv->tpf.denominator = FRAME_RATE_MAX;
@@ -1091,6 +1114,11 @@ static int ov6650_probe(struct i2c_client *client)
 		return 0;
 ectlhdlfree:
 	v4l2_ctrl_handler_free(&priv->hdl);
+=======
+	ret = ov6650_video_probe(client);
+	if (ret)
+		v4l2_ctrl_handler_free(&priv->hdl);
+>>>>>>> master
 
 	return ret;
 }

@@ -214,6 +214,7 @@ static void mei_mkhi_fix(struct mei_cl_device *cldev)
 	    !cldev->bus->hbm_f_os_supported)
 		return;
 
+<<<<<<< HEAD
 	ret = mei_cldev_enable(cldev);
 	if (ret)
 		return;
@@ -245,15 +246,26 @@ static void mei_gsc_mkhi_ver(struct mei_cl_device *cldev)
 	if (!cldev->bus->fw_f_fw_ver_supported || cldev->bus->fw_ver_received)
 		return;
 
+=======
+>>>>>>> master
 	ret = mei_cldev_enable(cldev);
 	if (ret)
 		return;
 
+<<<<<<< HEAD
 	ret = mei_fwver(cldev);
 	if (ret < 0)
 		dev_info(&cldev->dev, "FW version command failed %d\n", ret);
 	mei_cldev_disable(cldev);
 }
+=======
+	if (cldev->bus->fw_f_fw_ver_supported) {
+		ret = mei_fwver(cldev);
+		if (ret < 0)
+			dev_err(&cldev->dev, "FW version command failed %d\n",
+				ret);
+	}
+>>>>>>> master
 
 static void mei_gsc_mkhi_fix_ver(struct mei_cl_device *cldev)
 {

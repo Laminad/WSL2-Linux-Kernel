@@ -407,7 +407,11 @@ static void bcm2835_dma_fill_cb_chain_with_sg(
 	}
 }
 
+<<<<<<< HEAD
 static void bcm2835_dma_abort(struct bcm2835_chan *c)
+=======
+static int bcm2835_dma_abort(struct bcm2835_chan *c)
+>>>>>>> master
 {
 	void __iomem *chan_base = c->chan_base;
 	long int timeout = 10000;
@@ -417,7 +421,11 @@ static void bcm2835_dma_abort(struct bcm2835_chan *c)
 	 * (The ACTIVE flag in the CS register is not a reliable indicator.)
 	 */
 	if (!readl(chan_base + BCM2835_DMA_ADDR))
+<<<<<<< HEAD
 		return;
+=======
+		return 0;
+>>>>>>> master
 
 	/* Write 0 to the active bit - Pause the DMA */
 	writel(0, chan_base + BCM2835_DMA_CS);
@@ -433,6 +441,10 @@ static void bcm2835_dma_abort(struct bcm2835_chan *c)
 			"failed to complete outstanding writes\n");
 
 	writel(BCM2835_DMA_RESET, chan_base + BCM2835_DMA_CS);
+<<<<<<< HEAD
+=======
+	return 0;
+>>>>>>> master
 }
 
 static void bcm2835_dma_start_desc(struct bcm2835_chan *c)
@@ -793,6 +805,14 @@ static int bcm2835_dma_terminate_all(struct dma_chan *chan)
 
 	spin_lock_irqsave(&c->vc.lock, flags);
 
+<<<<<<< HEAD
+=======
+	/* Prevent this channel being scheduled */
+	spin_lock(&d->lock);
+	list_del_init(&c->node);
+	spin_unlock(&d->lock);
+
+>>>>>>> master
 	/* stop DMA activity */
 	if (c->desc) {
 		vchan_terminate_vdesc(&c->desc->vd);

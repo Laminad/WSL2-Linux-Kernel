@@ -160,7 +160,11 @@ list_set_del(struct ip_set *set, struct set_elem *e)
 	call_rcu(&e->rcu, __list_set_del_rcu);
 }
 
+<<<<<<< HEAD
 static void
+=======
+static inline void
+>>>>>>> master
 list_set_replace(struct ip_set *set, struct set_elem *e, struct set_elem *old)
 {
 	struct list_set *map = set->data;
@@ -522,7 +526,11 @@ nla_put_failure:
 		ret = -EMSGSIZE;
 	} else {
 		cb->args[IPSET_CB_ARG0] = i;
+<<<<<<< HEAD
 		nla_nest_end(skb, atd);
+=======
+		ipset_nest_end(skb, atd);
+>>>>>>> master
 	}
 out:
 	rcu_read_unlock();

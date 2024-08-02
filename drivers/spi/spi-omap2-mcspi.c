@@ -1569,8 +1569,12 @@ MODULE_ALIAS("platform:omap2_mcspi");
 
 static int __maybe_unused omap2_mcspi_suspend(struct device *dev)
 {
+<<<<<<< HEAD
 	struct spi_controller *ctlr = dev_get_drvdata(dev);
 	struct omap2_mcspi *mcspi = spi_controller_get_devdata(ctlr);
+=======
+	struct spi_master *master = dev_get_drvdata(dev);
+	struct omap2_mcspi *mcspi = spi_master_get_devdata(master);
 	int error;
 
 	error = pinctrl_pm_select_sleep_state(dev);
@@ -1578,6 +1582,27 @@ static int __maybe_unused omap2_mcspi_suspend(struct device *dev)
 		dev_warn(mcspi->dev, "%s: failed to set pins: %i\n",
 			 __func__, error);
 
+	error = spi_master_suspend(master);
+	if (error)
+		dev_warn(mcspi->dev, "%s: master suspend failed: %i\n",
+			 __func__, error);
+
+	return pm_runtime_force_suspend(dev);
+}
+
+static int __maybe_unused omap2_mcspi_resume(struct device *dev)
+{
+	struct spi_master *master = dev_get_drvdata(dev);
+	struct omap2_mcspi *mcspi = spi_master_get_devdata(master);
+>>>>>>> master
+	int error;
+
+	error = pinctrl_pm_select_sleep_state(dev);
+	if (error)
+		dev_warn(mcspi->dev, "%s: failed to set pins: %i\n",
+			 __func__, error);
+
+<<<<<<< HEAD
 	error = spi_controller_suspend(ctlr);
 	if (error)
 		dev_warn(mcspi->dev, "%s: controller suspend failed: %i\n",
@@ -1605,6 +1630,20 @@ static const struct dev_pm_ops omap2_mcspi_pm_ops = {
 				omap2_mcspi_resume)
 	.runtime_suspend	= omap_mcspi_runtime_suspend,
 	.runtime_resume		= omap_mcspi_runtime_resume,
+=======
+	error = spi_master_resume(master);
+	if (error)
+		dev_warn(mcspi->dev, "%s: master resume failed: %i\n",
+			 __func__, error);
+
+	return pm_runtime_force_resume(dev);
+}
+
+static const struct dev_pm_ops omap2_mcspi_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(omap2_mcspi_suspend,
+				omap2_mcspi_resume)
+	.runtime_resume	= omap_mcspi_runtime_resume,
+>>>>>>> master
 };
 
 static struct platform_driver omap2_mcspi_driver = {

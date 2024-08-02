@@ -172,7 +172,11 @@ long arch_ptrace(struct task_struct *child, long request,
 		     addr >= sizeof(struct pt_regs))
 			break;
 		if (addr == PT_IAOQ0 || addr == PT_IAOQ1) {
+<<<<<<< HEAD
 			data |= PRIV_USER; /* ensure userspace privilege */
+=======
+			data |= 3; /* ensure userspace privilege */
+>>>>>>> master
 		}
 		if ((addr >= PT_GR1 && addr <= PT_GR31) ||
 				addr == PT_IAOQ0 || addr == PT_IAOQ1 ||
@@ -291,7 +295,11 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 			if (addr >= sizeof(struct pt_regs))
 				break;
 			if (addr == PT_IAOQ0+4 || addr == PT_IAOQ1+4) {
+<<<<<<< HEAD
 				data |= PRIV_USER; /* ensure userspace privilege */
+=======
+				data |= 3; /* ensure userspace privilege */
+>>>>>>> master
 			}
 			if (addr >= PT_FR0 && addr <= PT_FR31 + 4) {
 				/* Special case, fp regs are 64 bits anyway */
@@ -326,7 +334,11 @@ long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
 long do_syscall_trace_enter(struct pt_regs *regs)
 {
 	if (test_thread_flag(TIF_SYSCALL_TRACE)) {
+<<<<<<< HEAD
 		int rc = ptrace_report_syscall_entry(regs);
+=======
+		int rc = tracehook_report_syscall_entry(regs);
+>>>>>>> master
 
 		/*
 		 * As tracesys_next does not set %r28 to -ENOSYS
@@ -337,7 +349,11 @@ long do_syscall_trace_enter(struct pt_regs *regs)
 		if (rc) {
 			/*
 			 * A nonzero return code from
+<<<<<<< HEAD
 			 * ptrace_report_syscall_entry() tells us
+=======
+			 * tracehook_report_syscall_entry() tells us
+>>>>>>> master
 			 * to prevent the syscall execution.  Skip
 			 * the syscall call and the syscall restart handling.
 			 *
@@ -495,7 +511,11 @@ static void set_reg(struct pt_regs *regs, int num, unsigned long val)
 	case RI(iaoq[0]):
 	case RI(iaoq[1]):
 			/* set 2 lowest bits to ensure userspace privilege: */
+<<<<<<< HEAD
 			regs->iaoq[num - RI(iaoq[0])] = val | PRIV_USER;
+=======
+			regs->iaoq[num - RI(iaoq[0])] = val | 3;
+>>>>>>> master
 			return;
 	case RI(sar):	regs->sar = val;
 			return;

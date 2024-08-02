@@ -269,7 +269,11 @@ ep93xx_dma_data_to_trans_dir(enum dma_data_direction dir)
  * in case of failure.
  */
 static struct dma_async_tx_descriptor *
+<<<<<<< HEAD
 ep93xx_spi_dma_prepare(struct spi_controller *host,
+=======
+ep93xx_spi_dma_prepare(struct spi_master *master,
+>>>>>>> master
 		       enum dma_data_direction dir)
 {
 	struct ep93xx_spi *espi = spi_controller_get_devdata(host);
@@ -373,7 +377,11 @@ ep93xx_spi_dma_prepare(struct spi_controller *host,
  * Function finishes with the DMA transfer. After this, the DMA buffer is
  * unmapped.
  */
+<<<<<<< HEAD
 static void ep93xx_spi_dma_finish(struct spi_controller *host,
+=======
+static void ep93xx_spi_dma_finish(struct spi_master *master,
+>>>>>>> master
 				  enum dma_data_direction dir)
 {
 	struct ep93xx_spi *espi = spi_controller_get_devdata(host);
@@ -395,8 +403,13 @@ static void ep93xx_spi_dma_callback(void *callback_param)
 {
 	struct spi_controller *host = callback_param;
 
+<<<<<<< HEAD
 	ep93xx_spi_dma_finish(host, DMA_TO_DEVICE);
 	ep93xx_spi_dma_finish(host, DMA_FROM_DEVICE);
+=======
+	ep93xx_spi_dma_finish(master, DMA_TO_DEVICE);
+	ep93xx_spi_dma_finish(master, DMA_FROM_DEVICE);
+>>>>>>> master
 
 	spi_finalize_current_transfer(host);
 }
@@ -406,16 +419,27 @@ static int ep93xx_spi_dma_transfer(struct spi_controller *host)
 	struct ep93xx_spi *espi = spi_controller_get_devdata(host);
 	struct dma_async_tx_descriptor *rxd, *txd;
 
+<<<<<<< HEAD
 	rxd = ep93xx_spi_dma_prepare(host, DMA_FROM_DEVICE);
+=======
+	rxd = ep93xx_spi_dma_prepare(master, DMA_FROM_DEVICE);
+>>>>>>> master
 	if (IS_ERR(rxd)) {
 		dev_err(&host->dev, "DMA RX failed: %ld\n", PTR_ERR(rxd));
 		return PTR_ERR(rxd);
 	}
 
+<<<<<<< HEAD
 	txd = ep93xx_spi_dma_prepare(host, DMA_TO_DEVICE);
 	if (IS_ERR(txd)) {
 		ep93xx_spi_dma_finish(host, DMA_FROM_DEVICE);
 		dev_err(&host->dev, "DMA TX failed: %ld\n", PTR_ERR(txd));
+=======
+	txd = ep93xx_spi_dma_prepare(master, DMA_TO_DEVICE);
+	if (IS_ERR(txd)) {
+		ep93xx_spi_dma_finish(master, DMA_FROM_DEVICE);
+		dev_err(&master->dev, "DMA TX failed: %ld\n", PTR_ERR(txd));
+>>>>>>> master
 		return PTR_ERR(txd);
 	}
 

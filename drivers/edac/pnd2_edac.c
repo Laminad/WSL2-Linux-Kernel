@@ -234,14 +234,51 @@ static u64 get_mem_ctrl_hub_base_addr(void)
 	return U64_LSHIFT(hi.base, 32) | U64_LSHIFT(lo.base, 15);
 }
 
+<<<<<<< HEAD
+=======
+static u64 get_sideband_reg_base_addr(void)
+{
+	struct pci_dev *pdev;
+	u32 hi, lo;
+	u8 hidden;
+
+	pdev = pci_get_device(PCI_VENDOR_ID_INTEL, 0x19dd, NULL);
+	if (pdev) {
+		/* Unhide the P2SB device, if it's hidden */
+		pci_read_config_byte(pdev, 0xe1, &hidden);
+		if (hidden)
+			pci_write_config_byte(pdev, 0xe1, 0);
+
+		pci_read_config_dword(pdev, 0x10, &lo);
+		pci_read_config_dword(pdev, 0x14, &hi);
+		lo &= 0xfffffff0;
+
+		/* Hide the P2SB device, if it was hidden before */
+		if (hidden)
+			pci_write_config_byte(pdev, 0xe1, hidden);
+
+		pci_dev_put(pdev);
+		return (U64_LSHIFT(hi, 32) | U64_LSHIFT(lo, 0));
+	} else {
+		return 0xfd000000;
+	}
+}
+
+>>>>>>> master
 #define DNV_MCHBAR_SIZE  0x8000
 #define DNV_SB_PORT_SIZE 0x10000
 static int dnv_rd_reg(int port, int off, int op, void *data, size_t sz, char *name)
 {
 	struct pci_dev *pdev;
+<<<<<<< HEAD
 	void __iomem *base;
 	struct resource r;
 	int ret;
+=======
+	char *base;
+	u64 addr;
+	unsigned long size;
+>>>>>>> master
 
 	if (op == 4) {
 		pdev = pci_get_device(PCI_VENDOR_ID_INTEL, 0x1980, NULL);
@@ -258,6 +295,7 @@ static int dnv_rd_reg(int port, int off, int op, void *data, size_t sz, char *na
 			r.start = get_mem_ctrl_hub_base_addr();
 			if (!r.start)
 				return -ENODEV;
+<<<<<<< HEAD
 			r.end = r.start + DNV_MCHBAR_SIZE - 1;
 		} else {
 			/* MMIO via sideband register base address */
@@ -270,6 +308,19 @@ static int dnv_rd_reg(int port, int off, int op, void *data, size_t sz, char *na
 		}
 
 		base = ioremap(r.start, resource_size(&r));
+=======
+			size = DNV_MCHBAR_SIZE;
+		} else {
+			/* MMIO via sideband register base address */
+			addr = get_sideband_reg_base_addr();
+			if (!addr)
+				return -ENODEV;
+			addr += (port << 16);
+			size = DNV_SB_PORT_SIZE;
+		}
+
+		base = ioremap((resource_size_t)addr, size);
+>>>>>>> master
 		if (!base)
 			return -ENODEV;
 
@@ -1514,8 +1565,13 @@ static struct dunit_ops dnv_ops = {
 };
 
 static const struct x86_cpu_id pnd2_cpuids[] = {
+<<<<<<< HEAD
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT,	&apl_ops),
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT_D,	&dnv_ops),
+=======
+	{ X86_VENDOR_INTEL, 6, INTEL_FAM6_ATOM_GOLDMONT, 0, (kernel_ulong_t)&apl_ops },
+	{ X86_VENDOR_INTEL, 6, INTEL_FAM6_ATOM_GOLDMONT_X, 0, (kernel_ulong_t)&dnv_ops },
+>>>>>>> master
 	{ }
 };
 MODULE_DEVICE_TABLE(x86cpu, pnd2_cpuids);

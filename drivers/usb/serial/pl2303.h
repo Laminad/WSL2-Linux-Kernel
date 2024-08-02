@@ -9,12 +9,15 @@
 #define PL2303_VENDOR_ID	0x067b
 #define PL2303_PRODUCT_ID	0x2303
 #define PL2303_PRODUCT_ID_TB		0x2304
+<<<<<<< HEAD
 #define PL2303_PRODUCT_ID_GC		0x23a3
 #define PL2303_PRODUCT_ID_GB		0x23b3
 #define PL2303_PRODUCT_ID_GT		0x23c3
 #define PL2303_PRODUCT_ID_GL		0x23d3
 #define PL2303_PRODUCT_ID_GE		0x23e3
 #define PL2303_PRODUCT_ID_GS		0x23f3
+=======
+>>>>>>> master
 #define PL2303_PRODUCT_ID_RSAQ2		0x04bb
 #define PL2303_PRODUCT_ID_DCU11		0x1234
 #define PL2303_PRODUCT_ID_PHAROS	0xaaa0
@@ -130,7 +133,10 @@
 
 /* Hewlett-Packard POS Pole Displays */
 #define HP_VENDOR_ID		0x03f0
+<<<<<<< HEAD
 #define HP_LD381GC_PRODUCT_ID	0x0183
+=======
+>>>>>>> master
 #define HP_LM920_PRODUCT_ID	0x026b
 #define HP_TD620_PRODUCT_ID	0x0956
 #define HP_LD960_PRODUCT_ID	0x0b39

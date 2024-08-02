@@ -1631,7 +1631,11 @@ static int __device_suspend(struct device *dev, pm_message_t state, bool async)
 		goto Complete;
 
 	/* Avoid direct_complete to let wakeup_path propagate. */
+<<<<<<< HEAD
 	if (device_may_wakeup(dev) || device_wakeup_path(dev))
+=======
+	if (device_may_wakeup(dev) || dev->power.wakeup_path)
+>>>>>>> master
 		dev->power.direct_complete = false;
 
 	if (dev->power.direct_complete) {

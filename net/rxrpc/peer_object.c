@@ -214,8 +214,13 @@ struct rxrpc_peer *rxrpc_alloc_peer(struct rxrpc_local *local, gfp_t gfp,
 
 	peer = kzalloc(sizeof(struct rxrpc_peer), gfp);
 	if (peer) {
+<<<<<<< HEAD
 		refcount_set(&peer->ref, 1);
 		peer->local = rxrpc_get_local(local, rxrpc_local_get_peer);
+=======
+		atomic_set(&peer->usage, 1);
+		peer->local = rxrpc_get_local(local);
+>>>>>>> master
 		INIT_HLIST_HEAD(&peer->error_targets);
 		peer->service_conns = RB_ROOT;
 		seqlock_init(&peer->service_conn_lock);
@@ -309,7 +314,11 @@ void rxrpc_new_incoming_peer(struct rxrpc_local *local, struct rxrpc_peer *peer)
 	unsigned long hash_key;
 
 	hash_key = rxrpc_peer_hash_key(local, &peer->srx);
+<<<<<<< HEAD
 	rxrpc_init_peer(local, peer, hash_key);
+=======
+	rxrpc_init_peer(rx, peer, hash_key);
+>>>>>>> master
 
 	spin_lock(&rxnet->peer_hash_lock);
 	hash_add_rcu(rxnet->peer_hash, &peer->hash_link, hash_key);
@@ -378,8 +387,13 @@ struct rxrpc_peer *rxrpc_get_peer(struct rxrpc_peer *peer, enum rxrpc_peer_trace
 {
 	int r;
 
+<<<<<<< HEAD
 	__refcount_inc(&peer->ref, &r);
 	trace_rxrpc_peer(peer->debug_id, r + 1, why);
+=======
+	n = atomic_inc_return(&peer->usage);
+	trace_rxrpc_peer(peer->debug_id, rxrpc_peer_got, n, here);
+>>>>>>> master
 	return peer;
 }
 
@@ -392,8 +406,14 @@ struct rxrpc_peer *rxrpc_get_peer_maybe(struct rxrpc_peer *peer,
 	int r;
 
 	if (peer) {
+<<<<<<< HEAD
 		if (__refcount_inc_not_zero(&peer->ref, &r))
 			trace_rxrpc_peer(peer->debug_id, r + 1, why);
+=======
+		int n = atomic_fetch_add_unless(&peer->usage, 1, 0);
+		if (n > 0)
+			trace_rxrpc_peer(peer->debug_id, rxrpc_peer_got, n + 1, here);
+>>>>>>> master
 		else
 			peer = NULL;
 	}
@@ -414,7 +434,12 @@ static void __rxrpc_put_peer(struct rxrpc_peer *peer)
 	list_del_init(&peer->keepalive_link);
 	spin_unlock(&rxnet->peer_hash_lock);
 
+<<<<<<< HEAD
 	rxrpc_free_peer(peer);
+=======
+	rxrpc_put_local(peer->local);
+	kfree_rcu(peer, rcu);
+>>>>>>> master
 }
 
 /*
@@ -422,6 +447,7 @@ static void __rxrpc_put_peer(struct rxrpc_peer *peer)
  */
 void rxrpc_put_peer(struct rxrpc_peer *peer, enum rxrpc_peer_trace why)
 {
+<<<<<<< HEAD
 	unsigned int debug_id;
 	bool dead;
 	int r;
@@ -431,7 +457,38 @@ void rxrpc_put_peer(struct rxrpc_peer *peer, enum rxrpc_peer_trace why)
 		dead = __refcount_dec_and_test(&peer->ref, &r);
 		trace_rxrpc_peer(debug_id, r - 1, why);
 		if (dead)
+=======
+	const void *here = __builtin_return_address(0);
+	unsigned int debug_id;
+	int n;
+
+	if (peer) {
+		debug_id = peer->debug_id;
+		n = atomic_dec_return(&peer->usage);
+		trace_rxrpc_peer(debug_id, rxrpc_peer_put, n, here);
+		if (n == 0)
+>>>>>>> master
 			__rxrpc_put_peer(peer);
+	}
+}
+
+/*
+ * Drop a ref on a peer record where the caller already holds the
+ * peer_hash_lock.
+ */
+void rxrpc_put_peer_locked(struct rxrpc_peer *peer)
+{
+	const void *here = __builtin_return_address(0);
+	unsigned int debug_id = peer->debug_id;
+	int n;
+
+	n = atomic_dec_return(&peer->usage);
+	trace_rxrpc_peer(debug_id, rxrpc_peer_put, n, here);
+	if (n == 0) {
+		hash_del_rcu(&peer->hash_link);
+		list_del_init(&peer->keepalive_link);
+		rxrpc_put_local(peer->local);
+		kfree_rcu(peer, rcu);
 	}
 }
 

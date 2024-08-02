@@ -261,6 +261,12 @@ nouveau_conn_reset(struct drm_connector *connector)
 		asyc = &nv_connector->properties_state;
 	}
 
+<<<<<<< HEAD
+=======
+	if (connector->state)
+		nouveau_conn_atomic_destroy_state(connector, connector->state);
+	__drm_atomic_helper_connector_reset(connector, &asyc->state);
+>>>>>>> master
 	asyc->dither.mode = DITHERING_MODE_AUTO;
 	asyc->dither.depth = DITHERING_DEPTH_AUTO;
 	asyc->scaler.mode = DRM_MODE_SCALE_NONE;

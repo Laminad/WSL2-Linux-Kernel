@@ -765,6 +765,16 @@ int f2fs_recover_orphan_inodes(struct f2fs_sb_info *sbi)
 	clear_ckpt_flags(sbi, CP_ORPHAN_PRESENT_FLAG);
 out:
 	set_sbi_flag(sbi, SBI_IS_RECOVERED);
+<<<<<<< HEAD
+=======
+
+#ifdef CONFIG_QUOTA
+	/* Turn quotas off */
+	if (quota_enabled)
+		f2fs_quota_off_umount(sbi->sb);
+#endif
+	sbi->sb->s_flags = s_flags; /* Restore SB_RDONLY status */
+>>>>>>> master
 
 	return err;
 }
@@ -1000,7 +1010,11 @@ free_fail_no_cp:
 	f2fs_put_page(cp1, 1);
 	f2fs_put_page(cp2, 1);
 fail_no_cp:
+<<<<<<< HEAD
 	kvfree(sbi->ckpt);
+=======
+	kfree(sbi->ckpt);
+>>>>>>> master
 	return err;
 }
 

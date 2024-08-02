@@ -71,6 +71,7 @@ static int test__expr(struct test_suite *t __maybe_unused, int subtest __maybe_u
 {
 	struct expr_id_data *val_ptr;
 	const char *p;
+<<<<<<< HEAD
 	double val, num_cpus_online, num_cpus, num_cores, num_dies, num_packages;
 	int ret;
 	struct expr_parse_ctx *ctx;
@@ -79,6 +80,13 @@ static int test__expr(struct test_suite *t __maybe_unused, int subtest __maybe_u
 	struct perf_pmu *pmu = perf_pmus__find_core_pmu();
 	char *cpuid = perf_pmu__getcpuid(pmu);
 	char *escaped_cpuid1, *escaped_cpuid2;
+=======
+	const char **other;
+	double val;
+	int i, ret;
+	struct parse_ctx ctx;
+	int num_other;
+>>>>>>> master
 
 	TEST_ASSERT_VAL("get_cpuid", cpuid);
 	is_intel = strstr(cpuid, "Intel") != NULL;
@@ -131,6 +139,7 @@ static int test__expr(struct test_suite *t __maybe_unused, int subtest __maybe_u
 	ret = expr__parse(&val, ctx, p);
 	TEST_ASSERT_VAL("missing operand", ret == -1);
 
+<<<<<<< HEAD
 	expr__ctx_clear(ctx);
 	TEST_ASSERT_VAL("find ids",
 			expr__find_ids("FOO + BAR + BAZ + BOZO", "FOO",
@@ -285,6 +294,19 @@ static int test__expr(struct test_suite *t __maybe_unused, int subtest __maybe_u
 	ret |= test(ctx, "has_event(cycles)", 1);
 
 	expr__ctx_free(ctx);
+=======
+	TEST_ASSERT_VAL("find other",
+			expr__find_other("FOO + BAR + BAZ + BOZO", "FOO", &other, &num_other) == 0);
+	TEST_ASSERT_VAL("find other", num_other == 3);
+	TEST_ASSERT_VAL("find other", !strcmp(other[0], "BAR"));
+	TEST_ASSERT_VAL("find other", !strcmp(other[1], "BAZ"));
+	TEST_ASSERT_VAL("find other", !strcmp(other[2], "BOZO"));
+	TEST_ASSERT_VAL("find other", other[3] == NULL);
+
+	for (i = 0; i < num_other; i++)
+		free((void *)other[i]);
+	free((void *)other);
+>>>>>>> master
 
 	return 0;
 }

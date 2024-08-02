@@ -419,10 +419,17 @@ static bool mtk_drm_find_mmsys_comp(struct mtk_drm_private *private, int comp_id
 static int mtk_drm_kms_init(struct drm_device *drm)
 {
 	struct mtk_drm_private *private = drm->dev_private;
+<<<<<<< HEAD
 	struct mtk_drm_private *priv_n;
 	struct device *dma_dev = NULL;
 	struct drm_crtc *crtc;
 	int ret, i, j;
+=======
+	struct platform_device *pdev;
+	struct device_node *np;
+	struct device *dma_dev;
+	int ret;
+>>>>>>> master
 
 	if (drm_firmware_drivers_only())
 		return -ENODEV;
@@ -505,8 +512,34 @@ static int mtk_drm_kms_init(struct drm_device *drm)
 		goto err_component_unbind;
 	}
 
+<<<<<<< HEAD
 	for (i = 0; i < private->data->mmsys_dev_num; i++)
 		private->all_drm_private[i]->dma_dev = dma_dev;
+=======
+	dma_dev = &pdev->dev;
+	private->dma_dev = dma_dev;
+
+	/*
+	 * Configure the DMA segment size to make sure we get contiguous IOVA
+	 * when importing PRIME buffers.
+	 */
+	if (!dma_dev->dma_parms) {
+		private->dma_parms_allocated = true;
+		dma_dev->dma_parms =
+			devm_kzalloc(drm->dev, sizeof(*dma_dev->dma_parms),
+				     GFP_KERNEL);
+	}
+	if (!dma_dev->dma_parms) {
+		ret = -ENOMEM;
+		goto err_component_unbind;
+	}
+
+	ret = dma_set_max_seg_size(dma_dev, (unsigned int)DMA_BIT_MASK(32));
+	if (ret) {
+		dev_err(dma_dev, "Failed to set DMA segment size\n");
+		goto err_unset_dma_parms;
+	}
+>>>>>>> master
 
 	/*
 	 * Configure the DMA segment size to make sure we get contiguous IOVA
@@ -520,13 +553,16 @@ static int mtk_drm_kms_init(struct drm_device *drm)
 
 	ret = drm_vblank_init(drm, MAX_CRTC);
 	if (ret < 0)
-		goto err_component_unbind;
+		goto err_unset_dma_parms;
 
 	drm_kms_helper_poll_init(drm);
 	drm_mode_config_reset(drm);
 
 	return 0;
 
+err_unset_dma_parms:
+	if (private->dma_parms_allocated)
+		dma_dev->dma_parms = NULL;
 err_component_unbind:
 	for (i = 0; i < private->data->mmsys_dev_num; i++)
 		component_unbind_all(private->all_drm_private[i]->dev, drm);
@@ -539,8 +575,16 @@ put_mutex_dev:
 
 static void mtk_drm_kms_deinit(struct drm_device *drm)
 {
+	struct mtk_drm_private *private = drm->dev_private;
+
 	drm_kms_helper_poll_fini(drm);
 	drm_atomic_helper_shutdown(drm);
+<<<<<<< HEAD
+=======
+
+	if (private->dma_parms_allocated)
+		private->dma_dev->dma_parms = NULL;
+>>>>>>> master
 
 	component_unbind_all(drm->dev, drm);
 }
@@ -551,20 +595,39 @@ DEFINE_DRM_GEM_FOPS(mtk_drm_fops);
  * We need to override this because the device used to import the memory is
  * not dev->dev, as drm_gem_prime_import() expects.
  */
+<<<<<<< HEAD
 static struct drm_gem_object *mtk_drm_gem_prime_import(struct drm_device *dev,
 						       struct dma_buf *dma_buf)
+=======
+struct drm_gem_object *mtk_drm_gem_prime_import(struct drm_device *dev,
+						struct dma_buf *dma_buf)
+>>>>>>> master
 {
 	struct mtk_drm_private *private = dev->dev_private;
 
 	return drm_gem_prime_import_dev(dev, dma_buf, private->dma_dev);
 }
 
+<<<<<<< HEAD
 static const struct drm_driver mtk_drm_driver = {
 	.driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
+=======
+static struct drm_driver mtk_drm_driver = {
+	.driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_PRIME |
+			   DRIVER_ATOMIC,
+>>>>>>> master
 
 	.dumb_create = mtk_drm_gem_dumb_create,
 
+<<<<<<< HEAD
 	.gem_prime_import = mtk_drm_gem_prime_import,
+=======
+	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
+	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
+	.gem_prime_export = drm_gem_prime_export,
+	.gem_prime_import = mtk_drm_gem_prime_import,
+	.gem_prime_get_sg_table = mtk_gem_prime_get_sg_table,
+>>>>>>> master
 	.gem_prime_import_sg_table = mtk_gem_prime_import_sg_table,
 	.fops = &mtk_drm_fops,
 
@@ -638,6 +701,7 @@ static void mtk_drm_unbind(struct device *dev)
 {
 	struct mtk_drm_private *private = dev_get_drvdata(dev);
 
+<<<<<<< HEAD
 	/* for multi mmsys dev, unregister drm dev in mmsys master */
 	if (private->drm_master) {
 		drm_dev_unregister(private->drm);
@@ -646,6 +710,12 @@ static void mtk_drm_unbind(struct device *dev)
 	}
 	private->mtk_drm_bound = false;
 	private->drm_master = false;
+=======
+	drm_dev_unregister(private->drm);
+	mtk_drm_kms_deinit(private->drm);
+	drm_dev_put(private->drm);
+	private->num_pipes = 0;
+>>>>>>> master
 	private->drm = NULL;
 }
 
@@ -882,10 +952,27 @@ static int mtk_drm_probe(struct platform_device *pdev)
 						   node);
 		}
 
+<<<<<<< HEAD
 		ret = mtk_ddp_comp_init(node, &private->ddp_comp[comp_id], comp_id);
 		if (ret) {
 			of_node_put(node);
 			goto err_node;
+=======
+			comp = devm_kzalloc(dev, sizeof(*comp), GFP_KERNEL);
+			if (!comp) {
+				ret = -ENOMEM;
+				of_node_put(node);
+				goto err_node;
+			}
+
+			ret = mtk_ddp_comp_init(dev, node, comp, comp_id, NULL);
+			if (ret) {
+				of_node_put(node);
+				goto err_node;
+			}
+
+			private->ddp_comp[comp_id] = comp;
+>>>>>>> master
 		}
 	}
 

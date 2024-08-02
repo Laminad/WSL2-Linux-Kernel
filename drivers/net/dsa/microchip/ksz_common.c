@@ -3474,7 +3474,72 @@ static const struct dsa_switch_ops ksz_switch_ops = {
 	.set_mac_eee		= ksz_set_mac_eee,
 };
 
+<<<<<<< HEAD
 struct ksz_device *ksz_switch_alloc(struct device *base, void *priv)
+=======
+struct ksz_chip_data {
+	u32 chip_id;
+	const char *dev_name;
+	int num_vlans;
+	int num_alus;
+	int num_statics;
+	int cpu_ports;
+	int port_cnt;
+};
+
+static const struct ksz_chip_data ksz_switch_chips[] = {
+	{
+		.chip_id = 0x00947700,
+		.dev_name = "KSZ9477",
+		.num_vlans = 4096,
+		.num_alus = 4096,
+		.num_statics = 16,
+		.cpu_ports = 0x7F,	/* can be configured as cpu port */
+		.port_cnt = 7,		/* total physical port count */
+	},
+	{
+		.chip_id = 0x00989700,
+		.dev_name = "KSZ9897",
+		.num_vlans = 4096,
+		.num_alus = 4096,
+		.num_statics = 16,
+		.cpu_ports = 0x7F,	/* can be configured as cpu port */
+		.port_cnt = 7,		/* total physical port count */
+	},
+};
+
+static int ksz_switch_init(struct ksz_device *dev)
+{
+	int i;
+
+	dev->ds->ops = &ksz_switch_ops;
+
+	for (i = 0; i < ARRAY_SIZE(ksz_switch_chips); i++) {
+		const struct ksz_chip_data *chip = &ksz_switch_chips[i];
+
+		if (dev->chip_id == chip->chip_id) {
+			dev->name = chip->dev_name;
+			dev->num_vlans = chip->num_vlans;
+			dev->num_alus = chip->num_alus;
+			dev->num_statics = chip->num_statics;
+			dev->port_cnt = chip->port_cnt;
+			dev->cpu_ports = chip->cpu_ports;
+
+			break;
+		}
+	}
+
+	/* no switch found */
+	if (!dev->port_cnt)
+		return -ENODEV;
+
+	return 0;
+}
+
+struct ksz_device *ksz_switch_alloc(struct device *base,
+				    const struct ksz_io_ops *ops,
+				    void *priv)
+>>>>>>> master
 {
 	struct dsa_switch *ds;
 	struct ksz_device *swdev;
@@ -3550,10 +3615,20 @@ int ksz_switch_register(struct ksz_device *dev)
 	if (dev->pdata)
 		dev->chip_id = dev->pdata->chip_id;
 
+<<<<<<< HEAD
 	dev->reset_gpio = devm_gpiod_get_optional(dev->dev, "reset",
 						  GPIOD_OUT_LOW);
 	if (IS_ERR(dev->reset_gpio))
 		return PTR_ERR(dev->reset_gpio);
+=======
+	mutex_init(&dev->reg_mutex);
+	mutex_init(&dev->stats_mutex);
+	mutex_init(&dev->alu_mutex);
+	mutex_init(&dev->vlan_mutex);
+
+	if (ksz_switch_detect(dev))
+		return -EINVAL;
+>>>>>>> master
 
 	if (dev->reset_gpio) {
 		gpiod_set_value_cansleep(dev->reset_gpio, 1);

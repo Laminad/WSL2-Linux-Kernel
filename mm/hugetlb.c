@@ -1560,11 +1560,33 @@ static void free_gigantic_folio(struct folio *folio, unsigned int order)
 #ifdef CONFIG_CMA
 	int nid = folio_nid(folio);
 
+<<<<<<< HEAD
 	if (cma_release(hugetlb_cma[nid], &folio->page, 1 << order))
 		return;
 #endif
 
 	free_contig_range(folio_pfn(folio), 1 << order);
+=======
+	for (i = start_pfn; i < end_pfn; i++) {
+		page = pfn_to_online_page(i);
+		if (!page)
+			return false;
+
+		if (page_zone(page) != z)
+			return false;
+
+		if (PageReserved(page))
+			return false;
+
+		if (page_count(page) > 0)
+			return false;
+
+		if (PageHuge(page))
+			return false;
+	}
+
+	return true;
+>>>>>>> master
 }
 
 #ifdef CONFIG_CONTIG_ALLOC
@@ -1912,11 +1934,19 @@ void free_huge_folio(struct folio *folio)
 	folio_clear_hugetlb_restore_reserve(folio);
 
 	/*
+<<<<<<< HEAD
 	 * If HPageRestoreReserve was set on page, page allocation consumed a
 	 * reservation.  If the page was associated with a subpool, there
 	 * would have been a page reserved in the subpool before allocation
 	 * via hugepage_subpool_get_pages().  Since we are 'restoring' the
 	 * reservation, do not call hugepage_subpool_put_pages() as this will
+=======
+	 * If PagePrivate() was set on page, page allocation consumed a
+	 * reservation.  If the page was associated with a subpool, there
+	 * would have been a page reserved in the subpool before allocation
+	 * via hugepage_subpool_get_pages().  Since we are 'restoring' the
+	 * reservtion, do not call hugepage_subpool_put_pages() as this will
+>>>>>>> master
 	 * remove the reserved page from the subpool.
 	 */
 	if (!restore_reserve) {
@@ -2272,6 +2302,7 @@ static struct page *remove_pool_huge_page(struct hstate *h,
  * nothing for in-use hugepages and non-hugepages.
  * This function returns values like below:
  *
+<<<<<<< HEAD
  *  -ENOMEM: failed to allocate vmemmap pages to free the freed hugepages
  *           when the system is under memory pressure and the feature of
  *           freeing unused vmemmap pages associated with each hugetlb page
@@ -2280,12 +2311,19 @@ static struct page *remove_pool_huge_page(struct hstate *h,
  *           (allocated or reserved.)
  *       0:  successfully dissolved free hugepages or the page is not a
  *           hugepage (considered as already dissolved)
+=======
+ *  -EBUSY: failed to dissolved free hugepages or the hugepage is in-use
+ *          (allocated or reserved.)
+ *       0: successfully dissolved free hugepages or the page is not a
+ *          hugepage (considered as already dissolved)
+>>>>>>> master
  */
 int dissolve_free_huge_page(struct page *page)
 {
 	int rc = -EBUSY;
 	struct folio *folio = page_folio(page);
 
+<<<<<<< HEAD
 retry:
 	/* Not to disrupt normal path by vainly holding hugetlb_lock */
 	if (!folio_test_hugetlb(folio))
@@ -2293,6 +2331,37 @@ retry:
 
 	spin_lock_irq(&hugetlb_lock);
 	if (!folio_test_hugetlb(folio)) {
+=======
+	/* Not to disrupt normal path by vainly holding hugetlb_lock */
+	if (!PageHuge(page))
+		return 0;
+
+	spin_lock(&hugetlb_lock);
+	if (!PageHuge(page)) {
+		rc = 0;
+		goto out;
+	}
+
+	if (!page_count(page)) {
+		struct page *head = compound_head(page);
+		struct hstate *h = page_hstate(head);
+		int nid = page_to_nid(head);
+		if (h->free_huge_pages - h->resv_huge_pages == 0)
+			goto out;
+		/*
+		 * Move PageHWPoison flag from head page to the raw error page,
+		 * which makes any subpages rather than the error page reusable.
+		 */
+		if (PageHWPoison(head) && page != head) {
+			SetPageHWPoison(page);
+			ClearPageHWPoison(head);
+		}
+		list_del(&head->lru);
+		h->free_huge_pages--;
+		h->free_huge_pages_node[nid]--;
+		h->max_huge_pages--;
+		update_and_free_page(h, head);
+>>>>>>> master
 		rc = 0;
 		goto out;
 	}
@@ -2412,10 +2481,20 @@ static struct folio *alloc_surplus_hugetlb_folio(struct hstate *h,
 	 * codeflow
 	 */
 	if (h->surplus_huge_pages >= h->nr_overcommit_huge_pages) {
+<<<<<<< HEAD
 		folio_set_hugetlb_temporary(folio);
 		spin_unlock_irq(&hugetlb_lock);
 		free_huge_folio(folio);
 		return NULL;
+=======
+		SetPageHugeTemporary(page);
+		spin_unlock(&hugetlb_lock);
+		put_page(page);
+		return NULL;
+	} else {
+		h->surplus_huge_pages++;
+		h->surplus_huge_pages_node[page_to_nid(page)]++;
+>>>>>>> master
 	}
 
 	h->surplus_huge_pages++;
@@ -5021,8 +5100,13 @@ int copy_hugetlb_page_range(struct mm_struct *dst, struct mm_struct *src,
 			    struct vm_area_struct *dst_vma,
 			    struct vm_area_struct *src_vma)
 {
+<<<<<<< HEAD
 	pte_t *src_pte, *dst_pte, entry;
 	struct folio *pte_folio;
+=======
+	pte_t *src_pte, *dst_pte, entry, dst_entry;
+	struct page *ptepage;
+>>>>>>> master
 	unsigned long addr;
 	bool cow = is_cow_mapping(src_vma->vm_flags);
 	struct hstate *h = hstate_vma(src_vma);
@@ -5065,6 +5149,7 @@ int copy_hugetlb_page_range(struct mm_struct *dst, struct mm_struct *src,
 
 		/*
 		 * If the pagetables are shared don't copy or take references.
+<<<<<<< HEAD
 		 *
 		 * dst_pte == src_pte is the common case of src/dest sharing.
 		 * However, src could have 'unshared' and dst shares with
@@ -5073,6 +5158,17 @@ int copy_hugetlb_page_range(struct mm_struct *dst, struct mm_struct *src,
 		 */
 		if (page_count(virt_to_page(dst_pte)) > 1) {
 			addr |= last_addr_mask;
+=======
+		 * dst_pte == src_pte is the common case of src/dest sharing.
+		 *
+		 * However, src could have 'unshared' and dst shares with
+		 * another vma.  If dst_pte !none, this implies sharing.
+		 * Check here before taking page table lock, and once again
+		 * after taking the lock below.
+		 */
+		dst_entry = huge_ptep_get(dst_pte);
+		if ((dst_pte == src_pte) || !huge_pte_none(dst_entry))
+>>>>>>> master
 			continue;
 		}
 
@@ -5080,10 +5176,19 @@ int copy_hugetlb_page_range(struct mm_struct *dst, struct mm_struct *src,
 		src_ptl = huge_pte_lockptr(h, src, src_pte);
 		spin_lock_nested(src_ptl, SINGLE_DEPTH_NESTING);
 		entry = huge_ptep_get(src_pte);
+<<<<<<< HEAD
 again:
 		if (huge_pte_none(entry)) {
 			/*
 			 * Skip if src entry none.
+=======
+		dst_entry = huge_ptep_get(dst_pte);
+		if (huge_pte_none(entry) || !huge_pte_none(dst_entry)) {
+			/*
+			 * Skip if src entry none.  Also, skip in the
+			 * unlikely case dst entry !none as this implies
+			 * sharing with another vma.
+>>>>>>> master
 			 */
 			;
 		} else if (unlikely(is_hugetlb_entry_hwpoisoned(entry))) {
@@ -5688,11 +5793,17 @@ retry_avoidcopy:
 		goto out_release_all;
 	}
 
+<<<<<<< HEAD
 	if (copy_user_large_folio(new_folio, old_folio, address, vma)) {
 		ret = VM_FAULT_HWPOISON_LARGE;
 		goto out_release_all;
 	}
 	__folio_mark_uptodate(new_folio);
+=======
+	copy_user_huge_page(new_page, old_page, address, vma,
+			    pages_per_huge_page(h));
+	__SetPageUptodate(new_page);
+>>>>>>> master
 
 	mmu_notifier_range_init(&range, MMU_NOTIFY_CLEAR, 0, mm, haddr,
 				haddr + huge_page_size(h));
@@ -5709,12 +5820,21 @@ retry_avoidcopy:
 
 		/* Break COW or unshare */
 		huge_ptep_clear_flush(vma, haddr, ptep);
+<<<<<<< HEAD
 		page_remove_rmap(&old_folio->page, vma, true);
 		hugepage_add_new_anon_rmap(new_folio, vma, haddr);
 		if (huge_pte_uffd_wp(pte))
 			newpte = huge_pte_mkuffd_wp(newpte);
 		set_huge_pte_at(mm, haddr, ptep, newpte, huge_page_size(h));
 		folio_set_hugetlb_migratable(new_folio);
+=======
+		mmu_notifier_invalidate_range(mm, mmun_start, mmun_end);
+		set_huge_pte_at(mm, haddr, ptep,
+				make_huge_pte(vma, new_page, 1));
+		page_remove_rmap(old_page, true);
+		hugepage_add_new_anon_rmap(new_page, vma, haddr);
+		set_page_huge_active(new_page);
+>>>>>>> master
 		/* Make the old page be freed below */
 		new_folio = old_folio;
 	}
@@ -5775,6 +5895,12 @@ int hugetlb_add_to_page_cache(struct folio *folio, struct address_space *mapping
 	 * by non-hugetlbfs specific code paths.
 	 */
 	folio_mark_dirty(folio);
+
+	/*
+	 * set page dirty so that it will not be removed from cache/file
+	 * by non-hugetlbfs specific code paths.
+	 */
+	set_page_dirty(page);
 
 	spin_lock(&inode->i_lock);
 	inode->i_blocks += blocks_per_huge_page(h);
@@ -5848,8 +5974,12 @@ static vm_fault_t hugetlb_no_page(struct mm_struct *mm,
 	pte_t new_pte;
 	spinlock_t *ptl;
 	unsigned long haddr = address & huge_page_mask(h);
+<<<<<<< HEAD
 	bool new_folio, new_pagecache_folio = false;
 	u32 hash = hugetlb_fault_mutex_hash(mapping, idx);
+=======
+	bool new_page = false;
+>>>>>>> master
 
 	/*
 	 * Currently, we are forced to kill the process in the event the
@@ -5892,8 +6022,33 @@ static vm_fault_t hugetlb_no_page(struct mm_struct *mm,
 			 * never happen on the page after UFFDIO_COPY has
 			 * correctly installed the page and returned.
 			 */
+<<<<<<< HEAD
 			if (!hugetlb_pte_stable(h, mm, ptep, old_pte)) {
 				ret = 0;
+=======
+			hash = hugetlb_fault_mutex_hash(h, mapping, idx, haddr);
+			mutex_unlock(&hugetlb_fault_mutex_table[hash]);
+			ret = handle_userfault(&vmf, VM_UFFD_MISSING);
+			mutex_lock(&hugetlb_fault_mutex_table[hash]);
+			goto out;
+		}
+
+		page = alloc_huge_page(vma, haddr, 0);
+		if (IS_ERR(page)) {
+			ret = vmf_error(PTR_ERR(page));
+			goto out;
+		}
+		clear_huge_page(page, address, pages_per_huge_page(h));
+		__SetPageUptodate(page);
+		new_page = true;
+
+		if (vma->vm_flags & VM_MAYSHARE) {
+			int err = huge_add_to_page_cache(page, mapping, idx);
+			if (err) {
+				put_page(page);
+				if (err == -EEXIST)
+					goto retry;
+>>>>>>> master
 				goto out;
 			}
 
@@ -6020,6 +6175,7 @@ static vm_fault_t hugetlb_no_page(struct mm_struct *mm,
 	spin_unlock(ptl);
 
 	/*
+<<<<<<< HEAD
 	 * Only set hugetlb_migratable in newly allocated pages.  Existing pages
 	 * found in the pagecache may not have hugetlb_migratable if they have
 	 * been isolated for migration.
@@ -6028,6 +6184,16 @@ static vm_fault_t hugetlb_no_page(struct mm_struct *mm,
 		folio_set_hugetlb_migratable(folio);
 
 	folio_unlock(folio);
+=======
+	 * Only make newly allocated pages active.  Existing pages found
+	 * in the pagecache could be !page_huge_active() if they have been
+	 * isolated for migration.
+	 */
+	if (new_page)
+		set_page_huge_active(page);
+
+	unlock_page(page);
+>>>>>>> master
 out:
 	hugetlb_vma_unlock_read(vma);
 	mutex_unlock(&hugetlb_fault_mutex_table[hash]);
@@ -6045,7 +6211,12 @@ backout_unlocked:
 }
 
 #ifdef CONFIG_SMP
+<<<<<<< HEAD
 u32 hugetlb_fault_mutex_hash(struct address_space *mapping, pgoff_t idx)
+=======
+u32 hugetlb_fault_mutex_hash(struct hstate *h, struct address_space *mapping,
+			    pgoff_t idx, unsigned long address)
+>>>>>>> master
 {
 	unsigned long key[2];
 	u32 hash;
@@ -6062,7 +6233,12 @@ u32 hugetlb_fault_mutex_hash(struct address_space *mapping, pgoff_t idx)
  * For uniprocessor systems we always use a single mutex, so just
  * return 0 and avoid the hashing overhead.
  */
+<<<<<<< HEAD
 u32 hugetlb_fault_mutex_hash(struct address_space *mapping, pgoff_t idx)
+=======
+u32 hugetlb_fault_mutex_hash(struct hstate *h, struct address_space *mapping,
+			    pgoff_t idx, unsigned long address)
+>>>>>>> master
 {
 	return 0;
 }
@@ -6094,9 +6270,13 @@ vm_fault_t hugetlb_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 	 * get spurious allocation failures if two CPUs race to instantiate
 	 * the same page in the page cache.
 	 */
+<<<<<<< HEAD
 	mapping = vma->vm_file->f_mapping;
 	idx = vma_hugecache_offset(h, vma, haddr);
 	hash = hugetlb_fault_mutex_hash(mapping, idx);
+=======
+	hash = hugetlb_fault_mutex_hash(h, mapping, idx, haddr);
+>>>>>>> master
 	mutex_lock(&hugetlb_fault_mutex_table[hash]);
 
 	/*
@@ -6336,6 +6516,7 @@ int hugetlb_mfill_atomic_pte(pte_t *dst_pte,
 		/* fallback to copy_from_user outside mmap_lock */
 		if (unlikely(ret)) {
 			ret = -ENOENT;
+<<<<<<< HEAD
 			/* Free the allocated folio which may have
 			 * consumed a reservation.
 			 */
@@ -6355,6 +6536,10 @@ int hugetlb_mfill_atomic_pte(pte_t *dst_pte,
 			 * copy the contents outside the lock. Don't free the
 			 * folio.
 			 */
+=======
+			*pagep = page;
+			/* don't free the page */
+>>>>>>> master
 			goto out;
 		}
 	} else {
@@ -6387,7 +6572,11 @@ int hugetlb_mfill_atomic_pte(pte_t *dst_pte,
 	 * preceding stores to the page contents become visible before
 	 * the set_pte_at() write.
 	 */
+<<<<<<< HEAD
 	__folio_mark_uptodate(folio);
+=======
+	__SetPageUptodate(page);
+>>>>>>> master
 
 	/* Add shared, newly allocated pages to the page cache. */
 	if (vm_shared && !is_continue) {
@@ -6458,10 +6647,16 @@ int hugetlb_mfill_atomic_pte(pte_t *dst_pte,
 	update_mmu_cache(dst_vma, dst_addr, dst_pte);
 
 	spin_unlock(ptl);
+<<<<<<< HEAD
 	if (!is_continue)
 		folio_set_hugetlb_migratable(folio);
 	if (vm_shared || is_continue)
 		folio_unlock(folio);
+=======
+	set_page_huge_active(page);
+	if (vm_shared)
+		unlock_page(page);
+>>>>>>> master
 	ret = 0;
 out:
 	return ret;
@@ -6530,7 +6725,102 @@ struct page *hugetlb_follow_page_mask(struct vm_area_struct *vma,
 			goto out;
 		}
 
+<<<<<<< HEAD
 		*page_mask = (1U << huge_page_order(h)) - 1;
+=======
+		/*
+		 * We need call hugetlb_fault for both hugepages under migration
+		 * (in which case hugetlb_fault waits for the migration,) and
+		 * hwpoisoned hugepages (in which case we need to prevent the
+		 * caller from accessing to them.) In order to do this, we use
+		 * here is_swap_pte instead of is_hugetlb_entry_migration and
+		 * is_hugetlb_entry_hwpoisoned. This is because it simply covers
+		 * both cases, and because we can't follow correct pages
+		 * directly from any kind of swap entries.
+		 */
+		if (absent || is_swap_pte(huge_ptep_get(pte)) ||
+		    ((flags & FOLL_WRITE) &&
+		      !huge_pte_write(huge_ptep_get(pte)))) {
+			vm_fault_t ret;
+			unsigned int fault_flags = 0;
+
+			if (pte)
+				spin_unlock(ptl);
+			if (flags & FOLL_WRITE)
+				fault_flags |= FAULT_FLAG_WRITE;
+			if (nonblocking)
+				fault_flags |= FAULT_FLAG_ALLOW_RETRY;
+			if (flags & FOLL_NOWAIT)
+				fault_flags |= FAULT_FLAG_ALLOW_RETRY |
+					FAULT_FLAG_RETRY_NOWAIT;
+			if (flags & FOLL_TRIED) {
+				VM_WARN_ON_ONCE(fault_flags &
+						FAULT_FLAG_ALLOW_RETRY);
+				fault_flags |= FAULT_FLAG_TRIED;
+			}
+			ret = hugetlb_fault(mm, vma, vaddr, fault_flags);
+			if (ret & VM_FAULT_ERROR) {
+				err = vm_fault_to_errno(ret, flags);
+				remainder = 0;
+				break;
+			}
+			if (ret & VM_FAULT_RETRY) {
+				if (nonblocking &&
+				    !(fault_flags & FAULT_FLAG_RETRY_NOWAIT))
+					*nonblocking = 0;
+				*nr_pages = 0;
+				/*
+				 * VM_FAULT_RETRY must not return an
+				 * error, it will return zero
+				 * instead.
+				 *
+				 * No need to update "position" as the
+				 * caller will not check it after
+				 * *nr_pages is set to 0.
+				 */
+				return i;
+			}
+			continue;
+		}
+
+		pfn_offset = (vaddr & ~huge_page_mask(h)) >> PAGE_SHIFT;
+		page = pte_page(huge_ptep_get(pte));
+
+		/*
+		 * Instead of doing 'try_get_page()' below in the same_page
+		 * loop, just check the count once here.
+		 */
+		if (unlikely(page_count(page) <= 0)) {
+			if (pages) {
+				spin_unlock(ptl);
+				remainder = 0;
+				err = -ENOMEM;
+				break;
+			}
+		}
+same_page:
+		if (pages) {
+			pages[i] = mem_map_offset(page, pfn_offset);
+			get_page(pages[i]);
+		}
+
+		if (vmas)
+			vmas[i] = vma;
+
+		vaddr += PAGE_SIZE;
+		++pfn_offset;
+		--remainder;
+		++i;
+		if (vaddr < vma->vm_end && remainder &&
+				pfn_offset < pages_per_huge_page(h)) {
+			/*
+			 * We use pfn_offset to avoid touching the pageframes
+			 * of this compound page.
+			 */
+			goto same_page;
+		}
+		spin_unlock(ptl);
+>>>>>>> master
 	}
 out:
 	spin_unlock(ptl);

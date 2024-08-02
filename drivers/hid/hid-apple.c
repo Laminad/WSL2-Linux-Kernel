@@ -86,7 +86,10 @@ struct apple_sc {
 	struct hid_device *hdev;
 	unsigned long quirks;
 	unsigned int fn_on;
+<<<<<<< HEAD
 	unsigned int fn_found;
+=======
+>>>>>>> master
 	DECLARE_BITMAP(pressed_numlock, KEY_CNT);
 	struct timer_list battery_timer;
 	struct apple_sc_backlight *backlight;
@@ -400,8 +403,12 @@ static int hidinput_apple_event(struct hid_device *hid, struct input_dev *input,
 	struct apple_sc *asc = hid_get_drvdata(hid);
 	const struct apple_key_translation *trans, *table;
 	bool do_translate;
+<<<<<<< HEAD
 	u16 code = usage->code;
 	unsigned int real_fnmode;
+=======
+	u16 code = 0;
+>>>>>>> master
 
 	if (fnmode == 3) {
 		real_fnmode = (asc->quirks & APPLE_IS_NON_APPLE) ? 2 : 1;
@@ -409,6 +416,7 @@ static int hidinput_apple_event(struct hid_device *hid, struct input_dev *input,
 		real_fnmode = fnmode;
 	}
 
+<<<<<<< HEAD
 	if (swap_fn_leftctrl) {
 		trans = apple_find_translation(swapped_fn_leftctrl_keys, code);
 
@@ -474,6 +482,10 @@ static int hidinput_apple_event(struct hid_device *hid, struct input_dev *input,
 			 hid->product == USB_DEVICE_ID_APPLE_WELLSPRINGT2_J230K)
 				table = apple_fn_keys;
 		else if (hid->product >= USB_DEVICE_ID_APPLE_WELLSPRING4_ANSI &&
+=======
+	if (fnmode) {
+		if (hid->product >= USB_DEVICE_ID_APPLE_WELLSPRING4_ANSI &&
+>>>>>>> master
 				hid->product <= USB_DEVICE_ID_APPLE_WELLSPRING4A_JIS)
 			table = macbookair_fn_keys;
 		else if (hid->product < 0x21d || hid->product >= 0x300)
@@ -484,6 +496,7 @@ static int hidinput_apple_event(struct hid_device *hid, struct input_dev *input,
 		trans = apple_find_translation(table, code);
 
 		if (trans) {
+<<<<<<< HEAD
 			bool from_is_set = test_bit(trans->from, input->key);
 			bool to_is_set = test_bit(trans->to, input->key);
 
@@ -511,7 +524,35 @@ static int hidinput_apple_event(struct hid_device *hid, struct input_dev *input,
 
 				if (do_translate)
 					code = trans->to;
+=======
+			if (test_bit(trans->from, input->key))
+				code = trans->from;
+			else if (test_bit(trans->to, input->key))
+				code = trans->to;
+
+			if (!code) {
+				if (trans->flags & APPLE_FLAG_FKEY) {
+					switch (fnmode) {
+					case 1:
+						do_translate = !asc->fn_on;
+						break;
+					case 2:
+						do_translate = asc->fn_on;
+						break;
+					default:
+						/* should never happen */
+						do_translate = false;
+					}
+				} else {
+					do_translate = asc->fn_on;
+				}
+
+				code = do_translate ? trans->to : trans->from;
+>>>>>>> master
 			}
+
+			input_event(input, usage->type, code, value);
+			return 1;
 		}
 
 		if (asc->quirks & APPLE_NUMLOCK_EMULATION &&

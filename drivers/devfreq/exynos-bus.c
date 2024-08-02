@@ -157,11 +157,64 @@ static void exynos_bus_exit(struct device *dev)
 	if (ret < 0)
 		dev_warn(dev, "failed to disable the devfreq-event devices\n");
 
+<<<<<<< HEAD
 	platform_device_unregister(bus->icc_pdev);
 
 	dev_pm_opp_of_remove_table(dev);
 	clk_disable_unprepare(bus->clk);
 	dev_pm_opp_put_regulators(bus->opp_token);
+=======
+	dev_pm_opp_of_remove_table(dev);
+	clk_disable_unprepare(bus->clk);
+	if (bus->regulator)
+		regulator_disable(bus->regulator);
+}
+
+/*
+ * Must necessary function for devfreq passive governor
+ */
+static int exynos_bus_passive_target(struct device *dev, unsigned long *freq,
+					u32 flags)
+{
+	struct exynos_bus *bus = dev_get_drvdata(dev);
+	struct dev_pm_opp *new_opp;
+	unsigned long old_freq, new_freq;
+	int ret = 0;
+
+	/* Get new opp-bus instance according to new bus clock */
+	new_opp = devfreq_recommended_opp(dev, freq, flags);
+	if (IS_ERR(new_opp)) {
+		dev_err(dev, "failed to get recommended opp instance\n");
+		return PTR_ERR(new_opp);
+	}
+
+	new_freq = dev_pm_opp_get_freq(new_opp);
+	dev_pm_opp_put(new_opp);
+
+	old_freq = bus->curr_freq;
+
+	if (old_freq == new_freq)
+		return 0;
+
+	/* Change the frequency according to new OPP level */
+	mutex_lock(&bus->lock);
+
+	ret = clk_set_rate(bus->clk, new_freq);
+	if (ret < 0) {
+		dev_err(dev, "failed to set the clock of bus\n");
+		goto out;
+	}
+
+	*freq = new_freq;
+	bus->curr_freq = new_freq;
+
+	dev_dbg(dev, "Set the frequency of bus (%luHz -> %luHz, %luHz)\n",
+			old_freq, new_freq, clk_get_rate(bus->clk));
+out:
+	mutex_unlock(&bus->lock);
+
+	return ret;
+>>>>>>> master
 }
 
 static void exynos_bus_passive_exit(struct device *dev)
@@ -420,6 +473,7 @@ static int exynos_bus_probe(struct platform_device *pdev)
 
 	/* Parse the device-tree to get the resource information */
 	ret = exynos_bus_parse_of(np, bus);
+<<<<<<< HEAD
 	if (ret < 0)
 		goto err_reg;
 
@@ -428,8 +482,13 @@ static int exynos_bus_probe(struct platform_device *pdev)
 	else
 		ret = exynos_bus_profile_init(bus, profile);
 
+=======
+>>>>>>> master
 	if (ret < 0)
-		goto err;
+		goto err_reg;
+
+	if (passive)
+		goto passive;
 
 	/* Create child platform device for the interconnect provider */
 	if (of_property_present(dev->of_node, "#interconnect-cells")) {
@@ -455,7 +514,12 @@ err:
 	dev_pm_opp_of_remove_table(dev);
 	clk_disable_unprepare(bus->clk);
 err_reg:
+<<<<<<< HEAD
 	dev_pm_opp_put_regulators(bus->opp_token);
+=======
+	if (!passive)
+		regulator_disable(bus->regulator);
+>>>>>>> master
 
 	return ret;
 }

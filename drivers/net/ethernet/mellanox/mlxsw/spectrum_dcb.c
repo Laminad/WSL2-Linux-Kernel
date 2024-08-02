@@ -344,12 +344,15 @@ static int mlxsw_sp_port_dcb_app_update(struct mlxsw_sp_port *mlxsw_sp_port)
 	int err;
 
 	default_prio = mlxsw_sp_port_dcb_app_default_prio(mlxsw_sp_port);
+<<<<<<< HEAD
 	err = mlxsw_sp_port_dcb_app_update_qpdp(mlxsw_sp_port, default_prio);
 	if (err) {
 		netdev_err(mlxsw_sp_port->dev, "Couldn't configure port default priority\n");
 		return err;
 	}
 
+=======
+>>>>>>> master
 	have_dscp = mlxsw_sp_port_dcb_app_prio_dscp_map(mlxsw_sp_port,
 							&prio_map);
 

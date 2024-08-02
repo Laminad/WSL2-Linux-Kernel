@@ -40,6 +40,7 @@ Supported adapters:
   * Intel Cedar Fork (PCH)
   * Intel Ice Lake (PCH)
   * Intel Comet Lake (PCH)
+<<<<<<< HEAD:Documentation/i2c/busses/i2c-i801.rst
   * Intel Elkhart Lake (PCH)
   * Intel Tiger Lake (PCH)
   * Intel Jasper Lake (SOC)
@@ -49,6 +50,8 @@ Supported adapters:
   * Intel Meteor Lake (SOC and PCH)
   * Intel Birch Stream (SOC)
 
+=======
+>>>>>>> master:Documentation/i2c/busses/i2c-i801
    Datasheets: Publicly available at the Intel website
 
 On Intel Patsburg and later chipsets, both the normal host SMBus controller

@@ -1207,7 +1207,11 @@ static int add_gpu_components(struct device *dev,
 		return 0;
 
 	if (of_device_is_available(np))
+<<<<<<< HEAD
 		drm_of_component_match_add(dev, matchptr, component_compare_of, np);
+=======
+		drm_of_component_match_add(dev, matchptr, compare_of, np);
+>>>>>>> master
 
 	of_node_put(np);
 
@@ -1252,15 +1256,16 @@ int msm_drv_probe(struct device *master_dev,
 
 	ret = add_gpu_components(master_dev, &match);
 	if (ret)
-		return ret;
+		goto fail;
 
 	/* on all devices that I am aware of, iommu's which can map
 	 * any address the cpu can see are used:
 	 */
 	ret = dma_set_mask_and_coherent(master_dev, ~0);
 	if (ret)
-		return ret;
+		goto fail;
 
+<<<<<<< HEAD
 	ret = component_master_add_with_match(master_dev, &msm_drm_ops, match);
 	if (ret)
 		return ret;
@@ -1276,6 +1281,17 @@ int msm_drv_probe(struct device *master_dev,
 static int msm_pdev_probe(struct platform_device *pdev)
 {
 	return msm_drv_probe(&pdev->dev, NULL);
+=======
+	ret = component_master_add_with_match(&pdev->dev, &msm_drm_ops, match);
+	if (ret)
+		goto fail;
+
+	return 0;
+
+fail:
+	of_platform_depopulate(&pdev->dev);
+	return ret;
+>>>>>>> master
 }
 
 static int msm_pdev_remove(struct platform_device *pdev)

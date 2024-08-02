@@ -518,11 +518,17 @@ static inline u64 callchain_context(u64 ip, u64 kernel_start)
 	return ip < kernel_start ? PERF_CONTEXT_USER : PERF_CONTEXT_KERNEL;
 }
 
+<<<<<<< HEAD
 void thread_stack__sample(struct thread *thread, int cpu,
 			  struct ip_callchain *chain,
 			  size_t sz, u64 ip, u64 kernel_start)
 {
 	struct thread_stack *ts = thread__stack(thread, cpu);
+=======
+void thread_stack__sample(struct thread *thread, struct ip_callchain *chain,
+			  size_t sz, u64 ip, u64 kernel_start)
+{
+>>>>>>> master
 	u64 context = callchain_context(ip, kernel_start);
 	u64 last_context;
 	size_t i, j;
@@ -535,15 +541,24 @@ void thread_stack__sample(struct thread *thread, int cpu,
 	chain->ips[0] = context;
 	chain->ips[1] = ip;
 
+<<<<<<< HEAD
 	if (!ts) {
+=======
+	if (!thread || !thread->ts) {
+>>>>>>> master
 		chain->nr = 2;
 		return;
 	}
 
 	last_context = context;
 
+<<<<<<< HEAD
 	for (i = 2, j = 1; i < sz && j <= ts->cnt; i++, j++) {
 		ip = ts->stack[ts->cnt - j].ret_addr;
+=======
+	for (i = 2, j = 1; i < sz && j <= thread->ts->cnt; i++, j++) {
+		ip = thread->ts->stack[thread->ts->cnt - j].ret_addr;
+>>>>>>> master
 		context = callchain_context(ip, kernel_start);
 		if (context != last_context) {
 			if (i >= sz - 1)
@@ -555,6 +570,7 @@ void thread_stack__sample(struct thread *thread, int cpu,
 	}
 
 	chain->nr = i;
+<<<<<<< HEAD
 }
 
 /*
@@ -748,6 +764,8 @@ void thread_stack__br_sample_late(struct thread *thread, int cpu,
 	}
 
 	dst->nr = nr;
+=======
+>>>>>>> master
 }
 
 struct call_return_processor *

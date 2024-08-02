@@ -47,7 +47,16 @@ static struct inode *jffs2_alloc_inode(struct super_block *sb)
 
 static void jffs2_free_inode(struct inode *inode)
 {
+<<<<<<< HEAD
 	struct jffs2_inode_info *f = JFFS2_INODE_INFO(inode);
+=======
+	struct inode *inode = container_of(head, struct inode, i_rcu);
+	struct jffs2_inode_info *f = JFFS2_INODE_INFO(inode);
+
+	kfree(f->target);
+	kmem_cache_free(jffs2_inode_cachep, f);
+}
+>>>>>>> master
 
 	kfree(f->target);
 	kmem_cache_free(jffs2_inode_cachep, f);
@@ -265,9 +274,15 @@ static int jffs2_fill_super(struct super_block *sb, struct fs_context *fc)
 	c->mtd = sb->s_mtd;
 	c->os_priv = sb;
 
+<<<<<<< HEAD
 	if (c->mount_opts.rp_size > c->mtd->size)
 		return invalf(fc, "jffs2: Too large reserve pool specified, max is %llu KB",
 			      c->mtd->size / 1024);
+=======
+	ret = jffs2_parse_options(c, data);
+	if (ret)
+		return -EINVAL;
+>>>>>>> master
 
 	/* Initialize JFFS2 superblock locks, the further initialization will
 	 * be done later */

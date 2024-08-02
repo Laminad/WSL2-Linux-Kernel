@@ -1372,8 +1372,12 @@ static void dp83640_txtstamp(struct mii_timestamper *mii_ts,
 			     struct sk_buff *skb, int type)
 {
 	struct dp83640_skb_info *skb_info = (struct dp83640_skb_info *)skb->cb;
+<<<<<<< HEAD
 	struct dp83640_private *dp83640 =
 		container_of(mii_ts, struct dp83640_private, mii_ts);
+=======
+	struct dp83640_private *dp83640 = phydev->priv;
+>>>>>>> master
 
 	switch (dp83640->hwts_tx_en) {
 

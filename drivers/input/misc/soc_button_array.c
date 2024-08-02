@@ -494,12 +494,21 @@ static int soc_button_probe(struct platform_device *pdev)
  * is defined in section 2.8.7.2 of "Windows ACPI Design Guide for SoC
  * Platforms"
  */
+<<<<<<< HEAD
 static const struct soc_button_info soc_button_PNP0C40[] = {
 	{ "power", 0, EV_KEY, KEY_POWER, false, true, true },
 	{ "home", 1, EV_KEY, KEY_LEFTMETA, false, true, true },
 	{ "volume_up", 2, EV_KEY, KEY_VOLUMEUP, true, false, true },
 	{ "volume_down", 3, EV_KEY, KEY_VOLUMEDOWN, true, false, true },
 	{ "rotation_lock", 4, EV_KEY, KEY_ROTATE_LOCK_TOGGLE, false, false, true },
+=======
+static struct soc_button_info soc_button_PNP0C40[] = {
+	{ "power", 0, EV_KEY, KEY_POWER, false, true },
+	{ "home", 1, EV_KEY, KEY_LEFTMETA, false, true },
+	{ "volume_up", 2, EV_KEY, KEY_VOLUMEUP, true, false },
+	{ "volume_down", 3, EV_KEY, KEY_VOLUMEDOWN, true, false },
+	{ "rotation_lock", 4, EV_KEY, KEY_ROTATE_LOCK_TOGGLE, false, false },
+>>>>>>> master
 	{ }
 };
 

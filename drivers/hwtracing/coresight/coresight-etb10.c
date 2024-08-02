@@ -137,7 +137,24 @@ static int etb_enable_hw(struct etb_drvdata *drvdata)
 	if (rc)
 		return rc;
 
+<<<<<<< HEAD
 	__etb_enable_hw(drvdata);
+=======
+	/* Don't let perf disturb sysFS sessions */
+	if (val == CS_MODE_SYSFS && mode == CS_MODE_PERF)
+		return -EBUSY;
+
+	/* Nothing to do, the tracer is already enabled. */
+	if (val == CS_MODE_SYSFS)
+		goto out;
+
+	spin_lock_irqsave(&drvdata->spinlock, flags);
+	etb_enable_hw(drvdata);
+	spin_unlock_irqrestore(&drvdata->spinlock, flags);
+
+out:
+	dev_info(drvdata->dev, "ETB enabled\n");
+>>>>>>> master
 	return 0;
 }
 

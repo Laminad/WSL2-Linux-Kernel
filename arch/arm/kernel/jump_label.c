@@ -27,3 +27,12 @@ void arch_jump_label_transform(struct jump_entry *entry,
 {
 	__arch_jump_label_transform(entry, type, false);
 }
+<<<<<<< HEAD
+=======
+
+void arch_jump_label_transform_static(struct jump_entry *entry,
+				      enum jump_label_type type)
+{
+	__arch_jump_label_transform(entry, type, true);
+}
+>>>>>>> master

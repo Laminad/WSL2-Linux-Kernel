@@ -232,6 +232,7 @@ static int hid_add_usage(struct hid_parser *parser, unsigned usage, u8 size)
 		return -1;
 	}
 	parser->local.usage[parser->local.usage_index] = usage;
+<<<<<<< HEAD
 
 	/*
 	 * If Usage item only includes usage id, concatenate it with
@@ -240,6 +241,8 @@ static int hid_add_usage(struct hid_parser *parser, unsigned usage, u8 size)
 	if (size <= 2)
 		complete_usage(parser, parser->local.usage_index);
 
+=======
+>>>>>>> master
 	parser->local.usage_size[parser->local.usage_index] = size;
 	parser->local.collection_index[parser->local.usage_index] =
 		parser->collection_stack_ptr ?
@@ -571,6 +574,7 @@ static int hid_parser_local(struct hid_parser *parser, struct hid_item *item)
  * usage value."
  */
 
+<<<<<<< HEAD
 static void hid_concatenate_last_usage_page(struct hid_parser *parser)
 {
 	int i;
@@ -597,6 +601,15 @@ static void hid_concatenate_last_usage_page(struct hid_parser *parser)
 
 		complete_usage(parser, i);
 	}
+=======
+static void hid_concatenate_usage_page(struct hid_parser *parser)
+{
+	int i;
+
+	for (i = 0; i < parser->local.usage_index; i++)
+		if (parser->local.usage_size[i] <= 2)
+			parser->local.usage[i] += parser->global.usage_page << 16;
+>>>>>>> master
 }
 
 /*
@@ -608,7 +621,11 @@ static int hid_parser_main(struct hid_parser *parser, struct hid_item *item)
 	__u32 data;
 	int ret;
 
+<<<<<<< HEAD
 	hid_concatenate_last_usage_page(parser);
+=======
+	hid_concatenate_usage_page(parser);
+>>>>>>> master
 
 	data = item_udata(item);
 
@@ -840,7 +857,11 @@ static int hid_scan_main(struct hid_parser *parser, struct hid_item *item)
 	__u32 data;
 	int i;
 
+<<<<<<< HEAD
 	hid_concatenate_last_usage_page(parser);
+=======
+	hid_concatenate_usage_page(parser);
+>>>>>>> master
 
 	data = item_udata(item);
 

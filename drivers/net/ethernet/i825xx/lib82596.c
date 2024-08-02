@@ -1089,6 +1089,17 @@ static int i82596_probe(struct net_device *dev)
 	if (!dev->base_addr || !dev->irq)
 		return -ENODEV;
 
+<<<<<<< HEAD
+=======
+	dma = dma_alloc_attrs(dev->dev.parent, sizeof(struct i596_dma),
+			      &lp->dma_addr, GFP_KERNEL,
+			      LIB82596_DMA_ATTR);
+	if (!dma) {
+		printk(KERN_ERR "%s: Couldn't get shared memory\n", __FILE__);
+		return -ENOMEM;
+	}
+
+>>>>>>> master
 	dev->netdev_ops = &i596_netdev_ops;
 	dev->watchdog_timeo = TX_TIMEOUT;
 
@@ -1100,9 +1111,18 @@ static int i82596_probe(struct net_device *dev)
 
 	dma_sync_dev(dev, lp->dma, sizeof(struct i596_dma));
 
+<<<<<<< HEAD
 	ret = register_netdev(dev);
 	if (ret)
 		return ret;
+=======
+	i = register_netdev(dev);
+	if (i) {
+		dma_free_attrs(dev->dev.parent, sizeof(struct i596_dma),
+			       dma, lp->dma_addr, LIB82596_DMA_ATTR);
+		return i;
+	}
+>>>>>>> master
 
 	DEB(DEB_PROBE, printk(KERN_INFO "%s: 82596 at %#3lx, %pM IRQ %d.\n",
 			      dev->name, dev->base_addr, dev->dev_addr,

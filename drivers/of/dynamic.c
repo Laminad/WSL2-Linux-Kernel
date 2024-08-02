@@ -202,6 +202,7 @@ static void __of_attach_node(struct device_node *np)
 	int sz;
 	unsigned long flags;
 
+<<<<<<< HEAD
 	raw_spin_lock_irqsave(&devtree_lock, flags);
 
 	if (!of_node_check_flag(np, OF_OVERLAY)) {
@@ -209,6 +210,16 @@ static void __of_attach_node(struct device_node *np)
 		if (!np->name)
 			np->name = "<NULL>";
 
+=======
+	if (!of_node_check_flag(np, OF_OVERLAY)) {
+		np->name = __of_get_property(np, "name", NULL);
+		np->type = __of_get_property(np, "device_type", NULL);
+		if (!np->name)
+			np->name = "<NULL>";
+		if (!np->type)
+			np->type = "<NULL>";
+
+>>>>>>> master
 		phandle = __of_get_property(np, "phandle", &sz);
 		if (!phandle)
 			phandle = __of_get_property(np, "linux,phandle", &sz);
@@ -278,16 +289,23 @@ void __of_detach_node(struct device_node *np)
 	of_node_set_flag(np, OF_DETACHED);
 
 	/* race with of_find_node_by_phandle() prevented by devtree_lock */
+<<<<<<< HEAD
 	__of_phandle_cache_inv_entry(np->phandle);
 
 	raw_spin_unlock_irqrestore(&devtree_lock, flags);
 
 	__of_detach_node_sysfs(np);
+=======
+	__of_free_phandle_cache_entry(np->phandle);
+>>>>>>> master
 }
 
 /**
  * of_detach_node() - "Unplug" a node from the device tree.
+<<<<<<< HEAD
  * @np:		Pointer to the caller's Device Node
+=======
+>>>>>>> master
  */
 int of_detach_node(struct device_node *np)
 {
@@ -376,10 +394,13 @@ void of_node_release(struct kobject *kobj)
 			       __func__, node);
 	}
 
+<<<<<<< HEAD
 	if (node->child)
 		pr_err("ERROR: %s() unexpected children for %pOF/%s\n",
 			__func__, node->parent, node->full_name);
 
+=======
+>>>>>>> master
 	property_list_free(node->properties);
 	property_list_free(node->deadprops);
 	fwnode_links_purge(of_fwnode_handle(node));

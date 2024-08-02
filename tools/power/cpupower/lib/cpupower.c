@@ -14,6 +14,7 @@
 #include "cpupower.h"
 #include "cpupower_intern.h"
 
+<<<<<<< HEAD
 int is_valid_path(const char *path)
 {
 	if (access(path, F_OK) == -1)
@@ -21,6 +22,8 @@ int is_valid_path(const char *path)
 	return 1;
 }
 
+=======
+>>>>>>> master
 unsigned int cpupower_read_sysfs(const char *path, char *buf, size_t buflen)
 {
 	ssize_t numread;

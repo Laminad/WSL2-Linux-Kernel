@@ -3,11 +3,15 @@
 # Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
 #
 
+<<<<<<< HEAD
 KBUILD_DEFCONFIG := haps_hs_smp_defconfig
 
 ifeq ($(CROSS_COMPILE),)
 CROSS_COMPILE := $(call cc-cross-prefix, arc-linux- arceb-linux-)
 endif
+=======
+KBUILD_DEFCONFIG := nsim_hs_defconfig
+>>>>>>> master
 
 cflags-y	+= -fno-common -pipe -fno-builtin -mmedium-calls -D__linux__
 

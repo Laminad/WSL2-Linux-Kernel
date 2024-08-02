@@ -34,12 +34,15 @@
 #include <asm/page.h>
 #include <asm/boot.h>
 #include <asm/bootparam.h>
+<<<<<<< HEAD
 #include <asm/desc_defs.h>
 
 #include "tdx.h"
 
 #define BOOT_CTYPE_H
 #include <linux/acpi.h>
+=======
+>>>>>>> master
 
 #define BOOT_BOOT_H
 #include "../ctype.h"

@@ -604,6 +604,7 @@ extern const struct iwl_cfg iwl9560_qu_b0_jf_b0_cfg;
 extern const struct iwl_cfg iwl9560_qu_c0_jf_b0_cfg;
 extern const struct iwl_cfg iwl9560_quz_a0_jf_b0_cfg;
 extern const struct iwl_cfg iwl9560_2ac_cfg_soc;
+<<<<<<< HEAD
 extern const struct iwl_cfg iwl_qu_b0_hr1_b0;
 extern const struct iwl_cfg iwl_qu_c0_hr1_b0;
 extern const struct iwl_cfg iwl_quz_a0_hr1_b0;
@@ -639,5 +640,32 @@ extern const struct iwl_cfg iwl_cfg_gl;
 
 extern const struct iwl_cfg iwl_cfg_sc;
 #endif /* CONFIG_IWLMVM */
+=======
+extern const struct iwl_cfg iwl9560_killer_2ac_cfg_soc;
+extern const struct iwl_cfg iwl9560_killer_s_2ac_cfg_soc;
+extern const struct iwl_cfg iwl9460_2ac_cfg_shared_clk;
+extern const struct iwl_cfg iwl9461_2ac_cfg_shared_clk;
+extern const struct iwl_cfg iwl9462_2ac_cfg_shared_clk;
+extern const struct iwl_cfg iwl9560_2ac_cfg_shared_clk;
+extern const struct iwl_cfg iwl9560_killer_2ac_cfg_shared_clk;
+extern const struct iwl_cfg iwl9560_killer_s_2ac_cfg_shared_clk;
+extern const struct iwl_cfg iwl22000_2ac_cfg_hr;
+extern const struct iwl_cfg iwl22000_2ac_cfg_hr_cdb;
+extern const struct iwl_cfg iwl22000_2ac_cfg_jf;
+extern const struct iwl_cfg iwl22000_2ax_cfg_hr;
+extern const struct iwl_cfg iwl9461_2ac_cfg_qu_b0_jf_b0;
+extern const struct iwl_cfg iwl9462_2ac_cfg_qu_b0_jf_b0;
+extern const struct iwl_cfg iwl9560_2ac_cfg_qu_b0_jf_b0;
+extern const struct iwl_cfg killer1550i_2ac_cfg_qu_b0_jf_b0;
+extern const struct iwl_cfg killer1550s_2ac_cfg_qu_b0_jf_b0;
+extern const struct iwl_cfg iwl22000_2ax_cfg_jf;
+extern const struct iwl_cfg iwl22000_2ax_cfg_qnj_hr_a0_f0;
+extern const struct iwl_cfg iwl22000_2ax_cfg_qnj_hr_b0_f0;
+extern const struct iwl_cfg iwl22000_2ax_cfg_qnj_hr_b0;
+extern const struct iwl_cfg iwl22000_2ax_cfg_qnj_jf_b0;
+extern const struct iwl_cfg iwl22000_2ax_cfg_qnj_hr_a0;
+extern const struct iwl_cfg iwl22560_2ax_cfg_su_cdb;
+#endif /* CPTCFG_IWLMVM || CPTCFG_IWLFMAC */
+>>>>>>> master
 
 #endif /* __IWL_CONFIG_H__ */

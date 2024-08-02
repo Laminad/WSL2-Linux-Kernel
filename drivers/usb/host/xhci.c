@@ -9,7 +9,10 @@
  */
 
 #include <linux/pci.h>
+<<<<<<< HEAD
 #include <linux/iommu.h>
+=======
+>>>>>>> master
 #include <linux/iopoll.h>
 #include <linux/irq.h>
 #include <linux/log2.h>
@@ -74,7 +77,11 @@ int xhci_handshake(void __iomem *ptr, u32 mask, u32 done, u64 timeout_us)
 	ret = readl_poll_timeout_atomic(ptr, result,
 					(result & mask) == done ||
 					result == U32_MAX,
+<<<<<<< HEAD
 					1, timeout_us);
+=======
+					1, usec);
+>>>>>>> master
 	if (result == U32_MAX)		/* card removed */
 		return -ENODEV;
 
@@ -987,11 +994,18 @@ int xhci_resume(struct xhci_hcd *xhci, pm_message_t msg)
 		set_bit(HCD_FLAG_HW_ACCESSIBLE, &xhci->shared_hcd->flags);
 
 	spin_lock_irq(&xhci->lock);
+<<<<<<< HEAD
 
 	if (hibernated || xhci->quirks & XHCI_RESET_ON_RESUME || xhci->broken_suspend)
 		reinit_xhc = true;
 
 	if (!reinit_xhc) {
+=======
+	if ((xhci->quirks & XHCI_RESET_ON_RESUME) || xhci->broken_suspend)
+		hibernated = true;
+
+	if (!hibernated) {
+>>>>>>> master
 		/*
 		 * Some controllers might lose power during suspend, so wait
 		 * for controller not ready bit to clear, just as in xHC init.
@@ -1514,6 +1528,10 @@ static int xhci_urb_enqueue(struct usb_hcd *hcd, struct urb *urb, gfp_t mem_flag
 	if (!HCD_HW_ACCESSIBLE(hcd))
 		return -ESHUTDOWN;
 
+	if (xhci->devs[slot_id]->flags & VDEV_PORT_ERROR) {
+		xhci_dbg(xhci, "Can't queue urb, port error, link inactive\n");
+		return -ENODEV;
+	}
 	if (xhci->devs[slot_id]->flags & VDEV_PORT_ERROR) {
 		xhci_dbg(xhci, "Can't queue urb, port error, link inactive\n");
 		return -ENODEV;
@@ -4618,7 +4636,11 @@ static u16 xhci_calculate_u1_timeout(struct xhci_hcd *xhci,
 		}
 	}
 
+<<<<<<< HEAD
 	if (xhci->quirks & (XHCI_INTEL_HOST | XHCI_ZHAOXIN_HOST))
+=======
+	if (xhci->quirks & XHCI_INTEL_HOST)
+>>>>>>> master
 		timeout_ns = xhci_calculate_intel_u1_timeout(udev, desc);
 	else
 		timeout_ns = udev->u1_params.sel;
@@ -4682,7 +4704,11 @@ static u16 xhci_calculate_u2_timeout(struct xhci_hcd *xhci,
 		}
 	}
 
+<<<<<<< HEAD
 	if (xhci->quirks & (XHCI_INTEL_HOST | XHCI_ZHAOXIN_HOST))
+=======
+	if (xhci->quirks & XHCI_INTEL_HOST)
+>>>>>>> master
 		timeout_ns = xhci_calculate_intel_u2_timeout(udev, desc);
 	else
 		timeout_ns = udev->u2_params.sel;
@@ -5159,8 +5185,60 @@ int xhci_gen_setup(struct usb_hcd *hcd, xhci_get_quirks_t get_quirks)
 
 	xhci = hcd_to_xhci(hcd);
 
+<<<<<<< HEAD
 	if (!usb_hcd_is_primary_hcd(hcd)) {
 		xhci_hcd_init_usb3_data(xhci, hcd);
+=======
+	if (usb_hcd_is_primary_hcd(hcd)) {
+		xhci->main_hcd = hcd;
+		xhci->usb2_rhub.hcd = hcd;
+		/* Mark the first roothub as being USB 2.0.
+		 * The xHCI driver will register the USB 3.0 roothub.
+		 */
+		hcd->speed = HCD_USB2;
+		hcd->self.root_hub->speed = USB_SPEED_HIGH;
+		/*
+		 * USB 2.0 roothub under xHCI has an integrated TT,
+		 * (rate matching hub) as opposed to having an OHCI/UHCI
+		 * companion controller.
+		 */
+		hcd->has_tt = 1;
+	} else {
+		/*
+		 * Early xHCI 1.1 spec did not mention USB 3.1 capable hosts
+		 * should return 0x31 for sbrn, or that the minor revision
+		 * is a two digit BCD containig minor and sub-minor numbers.
+		 * This was later clarified in xHCI 1.2.
+		 *
+		 * Some USB 3.1 capable hosts therefore have sbrn 0x30, and
+		 * minor revision set to 0x1 instead of 0x10.
+		 */
+		if (xhci->usb3_rhub.min_rev == 0x1)
+			minor_rev = 1;
+		else
+			minor_rev = xhci->usb3_rhub.min_rev / 0x10;
+
+		switch (minor_rev) {
+		case 2:
+			hcd->speed = HCD_USB32;
+			hcd->self.root_hub->speed = USB_SPEED_SUPER_PLUS;
+			hcd->self.root_hub->rx_lanes = 2;
+			hcd->self.root_hub->tx_lanes = 2;
+			break;
+		case 1:
+			hcd->speed = HCD_USB31;
+			hcd->self.root_hub->speed = USB_SPEED_SUPER_PLUS;
+			break;
+		}
+		xhci_info(xhci, "Host supports USB 3.%x %sSuperSpeed\n",
+			  minor_rev,
+			  minor_rev ? "Enhanced " : "");
+
+		xhci->usb3_rhub.hcd = hcd;
+		/* xHCI private pointer was set in xhci_pci_probe for the second
+		 * registered roothub.
+		 */
+>>>>>>> master
 		return 0;
 	}
 

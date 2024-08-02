@@ -1516,7 +1516,11 @@ nothing_to_do:
 
 static bool ata_check_nblocks(struct scsi_cmnd *scmd, u32 n_blocks)
 {
+<<<<<<< HEAD
 	struct request *rq = scsi_cmd_to_rq(scmd);
+=======
+	struct request *rq = scmd->request;
+>>>>>>> master
 	u32 req_blocks;
 
 	if (!blk_rq_is_passthrough(rq))

@@ -1068,6 +1068,7 @@ int set_trigger_filter(char *filter_str,
 		goto out;
 
 	/* The filter is for the 'trigger' event, not the triggered event */
+<<<<<<< HEAD
 	ret = create_event_filter(file->tr, file->event_call,
 				  filter_str, true, &filter);
 
@@ -1077,6 +1078,9 @@ int set_trigger_filter(char *filter_str,
 		filter->filter_string = NULL;
 	}
 
+=======
+	ret = create_event_filter(file->event_call, filter_str, false, &filter);
+>>>>>>> master
 	/*
 	 * If create_event_filter() fails, filter still needs to be freed.
 	 * Which the calling code will do with data->filter.

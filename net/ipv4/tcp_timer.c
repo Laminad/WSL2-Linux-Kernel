@@ -173,9 +173,15 @@ static void tcp_mtu_probing(struct inet_connection_sock *icsk, struct sock *sk)
 		icsk->icsk_mtup.probe_timestamp = tcp_jiffies32;
 	} else {
 		mss = tcp_mtu_to_mss(sk, icsk->icsk_mtup.search_low) >> 1;
+<<<<<<< HEAD
 		mss = min(READ_ONCE(net->ipv4.sysctl_tcp_base_mss), mss);
 		mss = max(mss, READ_ONCE(net->ipv4.sysctl_tcp_mtu_probe_floor));
 		mss = max(mss, READ_ONCE(net->ipv4.sysctl_tcp_min_snd_mss));
+=======
+		mss = min(net->ipv4.sysctl_tcp_base_mss, mss);
+		mss = max(mss, 68 - tcp_sk(sk)->tcp_header_len);
+		mss = max(mss, net->ipv4.sysctl_tcp_min_snd_mss);
+>>>>>>> master
 		icsk->icsk_mtup.search_low = tcp_mss_to_mtu(sk, mss);
 	}
 	tcp_sync_mss(sk, icsk->icsk_pmtu_cookie);
@@ -236,6 +242,7 @@ static int tcp_write_timeout(struct sock *sk)
 	struct tcp_sock *tp = tcp_sk(sk);
 	struct net *net = sock_net(sk);
 	bool expired = false, do_reset;
+<<<<<<< HEAD
 	int retry_until, max_retransmits;
 
 	if ((1 << sk->sk_state) & (TCPF_SYN_SENT | TCPF_SYN_RECV)) {
@@ -250,6 +257,18 @@ static int tcp_write_timeout(struct sock *sk)
 			max_retransmits += READ_ONCE(net->ipv4.sysctl_tcp_syn_linear_timeouts);
 
 		expired = icsk->icsk_retransmits >= max_retransmits;
+=======
+	int retry_until;
+
+	if ((1 << sk->sk_state) & (TCPF_SYN_SENT | TCPF_SYN_RECV)) {
+		if (icsk->icsk_retransmits) {
+			dst_negative_advice(sk);
+		} else {
+			sk_rethink_txhash(sk);
+		}
+		retry_until = icsk->icsk_syn_retries ? : net->ipv4.sysctl_tcp_syn_retries;
+		expired = icsk->icsk_retransmits >= retry_until;
+>>>>>>> master
 	} else {
 		if (retransmits_timed_out(sk, READ_ONCE(net->ipv4.sysctl_tcp_retries1), 0)) {
 			/* Black hole detection */
@@ -272,7 +291,11 @@ static int tcp_write_timeout(struct sock *sk)
 	}
 	if (!expired)
 		expired = retransmits_timed_out(sk, retry_until,
+<<<<<<< HEAD
 						READ_ONCE(icsk->icsk_user_timeout));
+=======
+						icsk->icsk_user_timeout);
+>>>>>>> master
 	tcp_fastopen_active_detect_blackhole(sk, expired);
 
 	if (BPF_SOCK_OPS_TEST_FLAG(tp, BPF_SOCK_OPS_RTO_CB_FLAG))
@@ -807,12 +830,16 @@ static enum hrtimer_restart tcp_compressed_ack_kick(struct hrtimer *timer)
 
 	bh_lock_sock(sk);
 	if (!sock_owned_by_user(sk)) {
+<<<<<<< HEAD
 		if (tp->compressed_ack) {
 			/* Since we have to send one ack finally,
 			 * subtract one from tp->compressed_ack to keep
 			 * LINUX_MIB_TCPACKCOMPRESSED accurate.
 			 */
 			tp->compressed_ack--;
+=======
+		if (tp->compressed_ack > TCP_FASTRETRANS_THRESH)
+>>>>>>> master
 			tcp_send_ack(sk);
 		}
 	} else {

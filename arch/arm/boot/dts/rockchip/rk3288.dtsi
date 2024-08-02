@@ -1330,6 +1330,13 @@
 			opp-hz = /bits/ 64 <400000000>;
 			opp-microvolt = <1100000>;
 		};
+<<<<<<< HEAD:arch/arm/boot/dts/rockchip/rk3288.dtsi
+=======
+		opp-500000000 {
+			opp-hz = /bits/ 64 <500000000>;
+			opp-microvolt = <1200000>;
+		};
+>>>>>>> master:arch/arm/boot/dts/rk3288.dtsi
 		opp-600000000 {
 			opp-hz = /bits/ 64 <600000000>;
 			opp-microvolt = <1250000>;

@@ -22,5 +22,9 @@ TEST_GEN_PROGS := \
 TEST_PROGS := run.sh
 
 top_srcdir = ../../../../..
+<<<<<<< HEAD
 DEFAULT_INSTALL_HDR_PATH := 1
+=======
+KSFT_KHDR_INSTALL := 1
+>>>>>>> master
 include ../../lib.mk

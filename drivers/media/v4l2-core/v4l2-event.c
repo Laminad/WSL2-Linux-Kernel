@@ -187,6 +187,7 @@ int v4l2_event_pending(struct v4l2_fh *fh)
 }
 EXPORT_SYMBOL_GPL(v4l2_event_pending);
 
+<<<<<<< HEAD
 void v4l2_event_wake_all(struct video_device *vdev)
 {
 	struct v4l2_fh *fh;
@@ -204,6 +205,8 @@ void v4l2_event_wake_all(struct video_device *vdev)
 }
 EXPORT_SYMBOL_GPL(v4l2_event_wake_all);
 
+=======
+>>>>>>> master
 static void __v4l2_event_unsubscribe(struct v4l2_subscribed_event *sev)
 {
 	struct v4l2_fh *fh = sev->fh;

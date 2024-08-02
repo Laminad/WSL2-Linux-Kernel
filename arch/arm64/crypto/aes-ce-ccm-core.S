@@ -70,9 +70,15 @@ SYM_FUNC_START(ce_aes_ccm_auth_data)
 	beq	10f
 	ext	v0.16b, v0.16b, v0.16b, #1	/* rotate out the mac bytes */
 	b	7b
+<<<<<<< HEAD
 8:	cbz	w3, 91f
 	mov	w7, w3
 	add	w3, w3, #16
+=======
+8:	cbz	w8, 91f
+	mov	w7, w8
+	add	w8, w8, #16
+>>>>>>> master
 9:	ext	v1.16b, v1.16b, v1.16b, #1
 	adds	w7, w7, #1
 	bne	9b

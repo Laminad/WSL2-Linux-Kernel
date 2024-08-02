@@ -98,6 +98,9 @@ static void mtk_pll_set_rate_regs(struct mtk_clk_pll *pll, u32 pcw,
 	/* disable tuner */
 	__mtk_pll_tuner_disable(pll);
 
+	/* disable tuner */
+	__mtk_pll_tuner_disable(pll);
+
 	/* set postdiv */
 	val = readl(pll->pd_addr);
 	val &= ~(POSTDIV_MASK << pll->data->pd_shift);
@@ -122,7 +125,12 @@ static void mtk_pll_set_rate_regs(struct mtk_clk_pll *pll, u32 pcw,
 	/* restore tuner_en */
 	__mtk_pll_tuner_enable(pll);
 
+<<<<<<< HEAD
 	udelay(20);
+=======
+	if (pll_en)
+		udelay(20);
+>>>>>>> master
 }
 
 /*
@@ -227,10 +235,14 @@ int mtk_pll_prepare(struct clk_hw *hw)
 	r = readl(pll->en_addr) | BIT(pll->data->pll_en_bit);
 	writel(r, pll->en_addr);
 
+<<<<<<< HEAD
 	if (pll->data->en_mask) {
 		r = readl(pll->base_addr + REG_CON0) | pll->data->en_mask;
 		writel(r, pll->base_addr + REG_CON0);
 	}
+=======
+	__mtk_pll_tuner_enable(pll);
+>>>>>>> master
 
 	__mtk_pll_tuner_enable(pll);
 
@@ -257,11 +269,14 @@ void mtk_pll_unprepare(struct clk_hw *hw)
 	}
 
 	__mtk_pll_tuner_disable(pll);
+<<<<<<< HEAD
 
 	if (pll->data->en_mask) {
 		r = readl(pll->base_addr + REG_CON0) & ~pll->data->en_mask;
 		writel(r, pll->base_addr + REG_CON0);
 	}
+=======
+>>>>>>> master
 
 	r = readl(pll->en_addr) & ~BIT(pll->data->pll_en_bit);
 	writel(r, pll->en_addr);

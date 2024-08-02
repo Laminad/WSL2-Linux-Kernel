@@ -3,13 +3,19 @@
 #ifndef I2C_HID_H
 #define I2C_HID_H
 
+<<<<<<< HEAD
 #include <linux/i2c.h>
+=======
+>>>>>>> master
 
 #ifdef CONFIG_DMI
 struct i2c_hid_desc *i2c_hid_get_dmi_i2c_hid_desc_override(uint8_t *i2c_name);
 char *i2c_hid_get_dmi_hid_report_desc_override(uint8_t *i2c_name,
 					       unsigned int *size);
+<<<<<<< HEAD
 u32 i2c_hid_get_dmi_quirks(const u16 vendor, const u16 product);
+=======
+>>>>>>> master
 #else
 static inline struct i2c_hid_desc
 		   *i2c_hid_get_dmi_i2c_hid_desc_override(uint8_t *i2c_name)
@@ -17,6 +23,7 @@ static inline struct i2c_hid_desc
 static inline char *i2c_hid_get_dmi_hid_report_desc_override(uint8_t *i2c_name,
 							     unsigned int *size)
 { return NULL; }
+<<<<<<< HEAD
 static inline u32 i2c_hid_get_dmi_quirks(const u16 vendor, const u16 product)
 { return 0; }
 #endif
@@ -42,4 +49,8 @@ void i2c_hid_core_shutdown(struct i2c_client *client);
 
 extern const struct dev_pm_ops i2c_hid_core_pm;
 
+=======
+#endif
+
+>>>>>>> master
 #endif

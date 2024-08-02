@@ -149,6 +149,7 @@ fi
 version=$KERNELRELEASE
 if [ -n "$KDEB_PKGVERSION" ]; then
 	packageversion=$KDEB_PKGVERSION
+	revision=${packageversion##*-}
 else
 	packageversion=$(${srctree}/scripts/setlocalversion --no-local ${srctree})-$($srctree/init/build-version)
 fi
@@ -263,9 +264,28 @@ Description: Linux kernel debugging symbols for $version
 EOF
 fi
 
+<<<<<<< HEAD
 cat <<EOF > debian/rules.vars
 ARCH := ${ARCH}
 KERNELRELEASE := ${KERNELRELEASE}
+=======
+cat <<EOF > debian/rules
+#!$(command -v $MAKE) -f
+
+build:
+	\$(MAKE) KERNELRELEASE=${version} ARCH=${ARCH} \
+	KBUILD_BUILD_VERSION=${revision} KBUILD_SRC=
+
+binary-arch:
+	\$(MAKE) KERNELRELEASE=${version} ARCH=${ARCH} \
+	KBUILD_BUILD_VERSION=${revision} KBUILD_SRC= intdeb-pkg
+
+clean:
+	rm -rf debian/*tmp debian/files
+	\$(MAKE) clean
+
+binary: binary-arch
+>>>>>>> master
 EOF
 
 cp "${srctree}/scripts/package/debian/rules" debian/

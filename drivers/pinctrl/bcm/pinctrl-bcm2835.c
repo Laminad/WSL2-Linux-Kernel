@@ -90,8 +90,11 @@ struct bcm2835_pinctrl {
 	struct pinctrl_gpio_range gpio_range;
 
 	raw_spinlock_t irq_lock[BCM2835_NUM_BANKS];
+<<<<<<< HEAD
 	/* Protect FSEL registers */
 	spinlock_t fsel_lock;
+=======
+>>>>>>> master
 };
 
 /* pins are just named GPIO0..GPIO53 */
@@ -522,8 +525,11 @@ static void bcm2835_gpio_irq_unmask(struct irq_data *data)
 	unsigned bank = GPIO_REG_OFFSET(gpio);
 	unsigned long flags;
 
+<<<<<<< HEAD
 	gpiochip_enable_irq(chip, gpio);
 
+=======
+>>>>>>> master
 	raw_spin_lock_irqsave(&pc->irq_lock[bank], flags);
 	set_bit(offset, &pc->enabled_irq_map[bank]);
 	bcm2835_gpio_irq_config(pc, gpio, true);
@@ -545,8 +551,11 @@ static void bcm2835_gpio_irq_mask(struct irq_data *data)
 	bcm2835_gpio_set_bit(pc, GPEDS0, gpio);
 	clear_bit(offset, &pc->enabled_irq_map[bank]);
 	raw_spin_unlock_irqrestore(&pc->irq_lock[bank], flags);
+<<<<<<< HEAD
 
 	gpiochip_disable_irq(chip, gpio);
+=======
+>>>>>>> master
 }
 
 static int __bcm2835_gpio_irq_set_type_disabled(struct bcm2835_pinctrl *pc,

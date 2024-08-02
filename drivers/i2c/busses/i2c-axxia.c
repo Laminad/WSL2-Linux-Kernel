@@ -411,12 +411,19 @@ static irqreturn_t axxia_i2c_isr(int irq, void *_dev)
 		/* Stop completed */
 		i2c_int_disable(idev, ~MST_STATUS_TSS);
 		complete(&idev->msg_complete);
+<<<<<<< HEAD
 	} else if (status & (MST_STATUS_SNS | MST_STATUS_SS)) {
 		/* Transfer done */
 		int mask = idev->last ? ~0 : ~MST_STATUS_TSS;
 
 		i2c_int_disable(idev, mask);
 		if (i2c_m_rd(idev->msg_r) && idev->msg_xfrd_r < idev->msg_r->len)
+=======
+	} else if (status & MST_STATUS_SNS) {
+		/* Transfer done */
+		i2c_int_disable(idev, ~MST_STATUS_TSS);
+		if (i2c_m_rd(idev->msg) && idev->msg_xfrd < idev->msg->len)
+>>>>>>> master
 			axxia_i2c_empty_rx_fifo(idev);
 		complete(&idev->msg_complete);
 	} else if (status & MST_STATUS_TSS) {
@@ -436,6 +443,15 @@ out:
 static void axxia_i2c_set_addr(struct axxia_i2c_dev *idev, struct i2c_msg *msg)
 {
 	u32 addr_1, addr_2;
+<<<<<<< HEAD
+=======
+	unsigned long time_left;
+	unsigned int wt_value;
+
+	idev->msg = msg;
+	idev->msg_xfrd = 0;
+	reinit_completion(&idev->msg_complete);
+>>>>>>> master
 
 	if (i2c_m_ten(msg)) {
 		/* 10-bit address
@@ -563,6 +579,7 @@ static int axxia_i2c_xfer_msg(struct axxia_i2c_dev *idev, struct i2c_msg *msg,
 	if (idev->msg_err)
 		goto out;
 
+<<<<<<< HEAD
 	if (!last) {
 		writel(CMD_MANUAL, idev->base + MST_COMMAND);
 		int_mask |= MST_STATUS_SNS;
@@ -570,6 +587,12 @@ static int axxia_i2c_xfer_msg(struct axxia_i2c_dev *idev, struct i2c_msg *msg,
 		writel(CMD_AUTO, idev->base + MST_COMMAND);
 		int_mask |= MST_STATUS_SS;
 	}
+
+	writel(WT_EN | wt_value, idev->base + WAIT_TIMER_CONTROL);
+=======
+	/* Start manual mode */
+	writel(CMD_MANUAL, idev->base + MST_COMMAND);
+>>>>>>> master
 
 	writel(WT_EN | wt_value, idev->base + WAIT_TIMER_CONTROL);
 
@@ -604,9 +627,30 @@ out:
  */
 static bool axxia_i2c_sequence_ok(struct i2c_msg msgs[], int num)
 {
+<<<<<<< HEAD
 	return num == SEQ_LEN && !i2c_m_rd(&msgs[0]) && i2c_m_rd(&msgs[1]) &&
 	       msgs[0].len > 0 && msgs[0].len <= FIFO_SIZE &&
 	       msgs[1].len > 0 && msgs[0].addr == msgs[1].addr;
+=======
+	u32 int_mask = MST_STATUS_ERR | MST_STATUS_SCC | MST_STATUS_TSS;
+	unsigned long time_left;
+
+	reinit_completion(&idev->msg_complete);
+
+	/* Issue stop */
+	writel(0xb, idev->base + MST_COMMAND);
+	i2c_int_enable(idev, int_mask);
+	time_left = wait_for_completion_timeout(&idev->msg_complete,
+					      I2C_STOP_TIMEOUT);
+	i2c_int_disable(idev, int_mask);
+	if (time_left == 0)
+		return -ETIMEDOUT;
+
+	if (readl(idev->base + MST_COMMAND) & CMD_BUSY)
+		dev_warn(idev->dev, "busy after stop\n");
+
+	return 0;
+>>>>>>> master
 }
 
 static int
@@ -617,6 +661,13 @@ axxia_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msgs[], int num)
 	int ret = 0;
 
 	idev->msg_err = 0;
+<<<<<<< HEAD
+=======
+	i2c_int_enable(idev, MST_STATUS_TSS);
+
+	for (i = 0; ret == 0 && i < num; ++i)
+		ret = axxia_i2c_xfer_msg(idev, &msgs[i]);
+>>>>>>> master
 
 	if (axxia_i2c_sequence_ok(msgs, num)) {
 		ret = axxia_i2c_xfer_seq(idev, msgs);

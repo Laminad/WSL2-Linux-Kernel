@@ -811,7 +811,11 @@ static void pca953x_irq_shutdown(struct irq_data *d)
 {
 	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
 	struct pca953x_chip *chip = gpiochip_get_data(gc);
+<<<<<<< HEAD
 	irq_hw_number_t hwirq = irqd_to_hwirq(d);
+=======
+	u8 mask = 1 << (d->hwirq % BANK_SZ);
+>>>>>>> master
 
 	clear_bit(hwirq, chip->irq_trig_raise);
 	clear_bit(hwirq, chip->irq_trig_fall);

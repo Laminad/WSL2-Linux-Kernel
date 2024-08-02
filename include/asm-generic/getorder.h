@@ -26,7 +26,11 @@
  *
  * The result is undefined if the size is 0.
  */
+<<<<<<< HEAD
 static __always_inline __attribute_const__ int get_order(unsigned long size)
+=======
+static inline __attribute_const__ int get_order(unsigned long size)
+>>>>>>> master
 {
 	if (__builtin_constant_p(size)) {
 		if (!size)

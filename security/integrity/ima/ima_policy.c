@@ -1988,6 +1988,15 @@ static const char *const mask_tokens[] = {
 	"^MAY_WRITE",
 	"^MAY_READ",
 	"^MAY_APPEND"
+<<<<<<< HEAD
+=======
+};
+
+#define __ima_hook_stringify(str)	(#str),
+
+static const char *const func_tokens[] = {
+	__ima_hooks(__ima_hook_stringify)
+>>>>>>> master
 };
 
 void *ima_policy_start(struct seq_file *m, loff_t *pos)

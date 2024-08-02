@@ -31,4 +31,9 @@ if [ -d events/synthetic/wakeup_latency ]; then
     fail "Created wakeup_latency synthetic event with an invalid format"
 fi
 
+<<<<<<< HEAD
+=======
+do_reset
+
+>>>>>>> master
 exit 0

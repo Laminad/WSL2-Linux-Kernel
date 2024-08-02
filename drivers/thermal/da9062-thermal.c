@@ -97,10 +97,14 @@ static void da9062_thermal_poll_on(struct work_struct *work)
 		thermal_zone_device_update(thermal->zone,
 					   THERMAL_EVENT_UNSPECIFIED);
 
+<<<<<<< HEAD
 		/*
 		 * pp_tmp is between 1s and 10s, so we can round the jiffies
 		 */
 		delay = round_jiffies(msecs_to_jiffies(pp_tmp));
+=======
+		delay = msecs_to_jiffies(thermal->zone->passive_delay);
+>>>>>>> master
 		queue_delayed_work(system_freezable_wq, &thermal->work, delay);
 		return;
 	}

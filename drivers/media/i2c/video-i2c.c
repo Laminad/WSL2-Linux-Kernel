@@ -753,7 +753,10 @@ static void video_i2c_release(struct video_device *vdev)
 	v4l2_device_unregister(&data->v4l2_dev);
 	mutex_destroy(&data->lock);
 	mutex_destroy(&data->queue_lock);
+<<<<<<< HEAD
 	regmap_exit(data->regmap);
+=======
+>>>>>>> master
 	kfree(data);
 }
 
@@ -908,6 +911,11 @@ static void video_i2c_remove(struct i2c_client *client)
 		data->chip->set_power(data, false);
 
 	video_unregister_device(&data->vdev);
+<<<<<<< HEAD
+=======
+
+	return 0;
+>>>>>>> master
 }
 
 #ifdef CONFIG_PM

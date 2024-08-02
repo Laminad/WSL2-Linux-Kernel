@@ -1284,9 +1284,17 @@ unsigned int OnAssocReq(struct adapter *padapter, union recv_frame *precv_frame)
 
 
 	/* get a unique AID */
+<<<<<<< HEAD
 	if (pstat->aid == 0) {
 		for (pstat->aid = 1; pstat->aid <= NUM_STA; pstat->aid++)
 			if (!pstapriv->sta_aid[pstat->aid - 1])
+=======
+	if (pstat->aid > 0) {
+		DBG_871X("  old AID %d\n", pstat->aid);
+	} else {
+		for (pstat->aid = 1; pstat->aid <= NUM_STA; pstat->aid++)
+			if (pstapriv->sta_aid[pstat->aid - 1] == NULL)
+>>>>>>> master
 				break;
 
 		/* if (pstat->aid > NUM_STA) { */

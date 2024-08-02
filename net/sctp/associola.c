@@ -235,6 +235,10 @@ static struct sctp_association *sctp_association_init(
 	asoc->pathmtu = sp->pathmtu;
 	sctp_assoc_update_frag_point(asoc);
 
+	/* Initialize default path MTU. */
+	asoc->pathmtu = sp->pathmtu;
+	sctp_assoc_update_frag_point(asoc);
+
 	/* Assume that peer would support both address types unless we are
 	 * told otherwise.
 	 */

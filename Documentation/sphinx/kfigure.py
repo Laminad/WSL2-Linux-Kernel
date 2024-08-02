@@ -59,7 +59,20 @@ from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives import images
 import sphinx
 from sphinx.util.nodes import clean_astext
+<<<<<<< HEAD
 import kernellog
+=======
+from six import iteritems
+
+import kernellog
+
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    _unicode = str
+else:
+    _unicode = unicode
+>>>>>>> master
 
 # Get Sphinx version
 major, minor, patch = sphinx.version_info[:3]
@@ -174,8 +187,12 @@ def setupTools(app):
 
     This function is called once, when the builder is initiated.
     """
+<<<<<<< HEAD
     global dot_cmd, dot_Tpdf, convert_cmd, rsvg_convert_cmd   # pylint: disable=W0603
     global inkscape_cmd, inkscape_ver_one  # pylint: disable=W0603
+=======
+    global dot_cmd, convert_cmd   # pylint: disable=W0603
+>>>>>>> master
     kernellog.verbose(app, "kfigure: check installed tools ...")
 
     dot_cmd = which('dot')
@@ -185,6 +202,7 @@ def setupTools(app):
 
     if dot_cmd:
         kernellog.verbose(app, "use dot(1) from: " + dot_cmd)
+<<<<<<< HEAD
 
         try:
             dot_Thelp_list = subprocess.check_output([dot_cmd, '-Thelp'],
@@ -230,6 +248,17 @@ def setupTools(app):
                 kernellog.verbose(app, "use 'dot -Tpdf' for DOT -> PDF conversion")
             else:
                 kernellog.verbose(app, "use 'dot -Tsvg' and convert(1) for DOT -> PDF conversion")
+=======
+    else:
+        kernellog.warn(app, "dot(1) not found, for better output quality install "
+                       "graphviz from http://www.graphviz.org")
+    if convert_cmd:
+        kernellog.verbose(app, "use convert(1) from: " + convert_cmd)
+    else:
+        kernellog.warn(app,
+            "convert(1) not found, for SVG to PDF conversion install "
+            "ImageMagick (https://www.imagemagick.org)")
+>>>>>>> master
 
 
 # integrate conversion tools
@@ -295,11 +324,17 @@ def convert_image(img_node, translator, src_fname=None):
     elif in_ext == '.svg':
 
         if translator.builder.format == 'latex':
+<<<<<<< HEAD
             if not inkscape_cmd and convert_cmd is None:
                 kernellog.warn(app,
                                   "no SVG to PDF conversion available / include SVG raw."
                                   "\nIncluding large raw SVGs can cause xelatex error."
                                   "\nInstall Inkscape (preferred) or ImageMagick.")
+=======
+            if convert_cmd is None:
+                kernellog.verbose(app,
+                                  "no SVG to PDF conversion available / include SVG raw.")
+>>>>>>> master
                 img_node.replace_self(file2literal(src_fname))
             else:
                 dst_fname = path.join(translator.builder.outdir, fname + '.pdf')
@@ -321,6 +356,7 @@ def convert_image(img_node, translator, src_fname=None):
 
             if in_ext == '.dot':
                 kernellog.verbose(app, 'convert DOT to: {out}/' + _name)
+<<<<<<< HEAD
                 if translator.builder.format == 'latex' and not dot_Tpdf:
                     svg_fname = path.join(translator.builder.outdir, fname + '.svg')
                     ok1 = dot2format(app, src_fname, svg_fname)
@@ -329,6 +365,9 @@ def convert_image(img_node, translator, src_fname=None):
 
                 else:
                     ok = dot2format(app, src_fname, dst_fname)
+=======
+                ok = dot2format(app, src_fname, dst_fname)
+>>>>>>> master
 
             elif in_ext == '.svg':
                 kernellog.verbose(app, 'convert SVG to: {out}/' + _name)
@@ -395,6 +434,7 @@ def svg2pdf(app, svg_fname, pdf_fname):
 
     if exit_code != 0:
         kernellog.warn(app, "Error #%d when calling: %s" % (exit_code, " ".join(cmd)))
+<<<<<<< HEAD
         if warning_msg:
             kernellog.warn(app, "Warning msg from %s: %s"
                            % (cmd_name, str(warning_msg, 'utf-8')))
@@ -402,6 +442,8 @@ def svg2pdf(app, svg_fname, pdf_fname):
         kernellog.verbose(app, "Warning msg from %s (likely harmless):\n%s"
                           % (cmd_name, str(warning_msg, 'utf-8')))
 
+=======
+>>>>>>> master
     return bool(exit_code == 0)
 
 def svg2pdf_by_rsvg(app, svg_fname, pdf_fname):

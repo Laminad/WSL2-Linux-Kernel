@@ -238,12 +238,38 @@ static void meson_plane_atomic_update(struct drm_plane *plane,
 		/* For XRGB, replace the pixel's alpha by 0xFF */
 		priv->viu.osd1_ctrl_stat2 |= OSD_REPLACE_EN;
 		break;
+	case DRM_FORMAT_XBGR8888:
+		/* For XRGB, replace the pixel's alpha by 0xFF */
+		writel_bits_relaxed(OSD_REPLACE_EN, OSD_REPLACE_EN,
+				    priv->io_base + _REG(VIU_OSD1_CTRL_STAT2));
+		priv->viu.osd1_blk0_cfg[0] |= OSD_BLK_MODE_32 |
+					      OSD_COLOR_MATRIX_32_ABGR;
+		break;
 	case DRM_FORMAT_ARGB8888:
 	case DRM_FORMAT_ABGR8888:
 		/* For ARGB, use the pixel's alpha */
 		priv->viu.osd1_ctrl_stat2 &= ~OSD_REPLACE_EN;
 		break;
+<<<<<<< HEAD
 	}
+=======
+	case DRM_FORMAT_ABGR8888:
+		/* For ARGB, use the pixel's alpha */
+		writel_bits_relaxed(OSD_REPLACE_EN, 0,
+				    priv->io_base + _REG(VIU_OSD1_CTRL_STAT2));
+		priv->viu.osd1_blk0_cfg[0] |= OSD_BLK_MODE_32 |
+					      OSD_COLOR_MATRIX_32_ABGR;
+		break;
+	case DRM_FORMAT_RGB888:
+		priv->viu.osd1_blk0_cfg[0] |= OSD_BLK_MODE_24 |
+					      OSD_COLOR_MATRIX_24_RGB;
+		break;
+	case DRM_FORMAT_RGB565:
+		priv->viu.osd1_blk0_cfg[0] |= OSD_BLK_MODE_16 |
+					      OSD_COLOR_MATRIX_16_RGB565;
+		break;
+	};
+>>>>>>> master
 
 	/* Default scaler parameters */
 	vsc_bot_rcv_num = 0;

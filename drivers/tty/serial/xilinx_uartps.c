@@ -359,8 +359,11 @@ static irqreturn_t cdns_uart_isr(int irq, void *dev_id)
 		isrstatus &= ~CDNS_UART_IXR_TXEMPTY;
 	}
 
+<<<<<<< HEAD
 	isrstatus &= port->read_status_mask;
 	isrstatus &= ~port->ignore_status_mask;
+=======
+>>>>>>> master
 	/*
 	 * Skip RX processing if RX is disabled as RXEMPTY will never be set
 	 * as read bytes will not be removed from the FIFO.

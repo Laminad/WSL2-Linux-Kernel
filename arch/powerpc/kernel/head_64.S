@@ -1018,6 +1018,7 @@ start_here_multiplatform:
 	RFI_TO_KERNEL
 	b	.	/* prevent speculative execution */
 
+	.previous
 	/* This is where all platforms converge execution */
 
 start_here_common:

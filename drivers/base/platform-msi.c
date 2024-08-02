@@ -322,12 +322,26 @@ void platform_msi_device_domain_free(struct irq_domain *domain, unsigned int vir
 				     unsigned int nr_irqs)
 {
 	struct platform_msi_priv_data *data = domain->host_data;
+<<<<<<< HEAD
 
 	msi_lock_descs(data->dev);
 	msi_domain_depopulate_descs(data->dev, virq, nr_irqs);
 	irq_domain_free_irqs_common(domain, virq, nr_irqs);
 	msi_free_msi_descs_range(data->dev, virq, virq + nr_irqs - 1);
 	msi_unlock_descs(data->dev);
+=======
+	struct msi_desc *desc, *tmp;
+	for_each_msi_entry_safe(desc, tmp, data->dev) {
+		if (WARN_ON(!desc->irq || desc->nvec_used != 1))
+			return;
+		if (!(desc->irq >= virq && desc->irq < (virq + nvec)))
+			continue;
+
+		irq_domain_free_irqs_common(domain, desc->irq, 1);
+		list_del(&desc->list);
+		free_msi_entry(desc);
+	}
+>>>>>>> master
 }
 
 /**

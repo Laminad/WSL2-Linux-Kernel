@@ -144,7 +144,11 @@ static int wacom_wac_pen_serial_enforce(struct hid_device *hdev,
 	if (flush)
 		wacom_wac_queue_flush(hdev, wacom_wac->pen_fifo);
 	else if (insert)
+<<<<<<< HEAD
 		wacom_wac_queue_insert(hdev, wacom_wac->pen_fifo,
+=======
+		wacom_wac_queue_insert(hdev, &wacom_wac->pen_fifo,
+>>>>>>> master
 				       raw_data, report_size);
 
 	return insert && !flush;
@@ -317,11 +321,17 @@ static void wacom_feature_mapping(struct hid_device *hdev,
 			data[0] = field->report->id;
 			ret = wacom_get_report(hdev, HID_FEATURE_REPORT,
 					       data, n, WAC_CMD_RETRIES);
+<<<<<<< HEAD
 			if (ret == n && features->type == HID_GENERIC) {
 				ret = hid_report_raw_event(hdev,
 					HID_FEATURE_REPORT, data, n, 0);
 			} else if (ret == 2 && features->type != HID_GENERIC) {
 				features->touch_max = data[1];
+=======
+			if (ret == n) {
+				ret = hid_report_raw_event(hdev,
+					HID_FEATURE_REPORT, data, n, 0);
+>>>>>>> master
 			} else {
 				features->touch_max = 16;
 				hid_warn(hdev, "wacom_feature_mapping: "

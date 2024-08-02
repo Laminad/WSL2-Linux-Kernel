@@ -323,7 +323,11 @@
 };
 
 &pinctrl_1 {
+<<<<<<< HEAD:arch/arm/boot/dts/samsung/exynos4210-origen.dts
 	max8997_irq: max8997-irq-pins {
+=======
+	max8997_irq: max8997-irq {
+>>>>>>> master:arch/arm/boot/dts/exynos4210-origen.dts
 		samsung,pins = "gpx0-3", "gpx0-4";
 		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
 	};

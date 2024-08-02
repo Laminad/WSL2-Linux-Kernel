@@ -1773,7 +1773,11 @@ void rebind_evtchn_irq(evtchn_port_t evtchn, int irq)
 }
 
 /* Rebind an evtchn so that it gets delivered to a specific cpu */
+<<<<<<< HEAD
 static int xen_rebind_evtchn_to_cpu(struct irq_info *info, unsigned int tcpu)
+=======
+static int xen_rebind_evtchn_to_cpu(int evtchn, unsigned int tcpu)
+>>>>>>> master
 {
 	struct evtchn_bind_vcpu bind_vcpu;
 	evtchn_port_t evtchn = info ? info->evtchn : 0;
@@ -1806,6 +1810,7 @@ static int xen_rebind_evtchn_to_cpu(struct irq_info *info, unsigned int tcpu)
 
 	return 0;
 }
+<<<<<<< HEAD
 
 /*
  * Find the CPU within @dest mask which has the least number of channels
@@ -1834,6 +1839,8 @@ static unsigned int select_target_cpu(const struct cpumask *dest)
 
 	return best_cpu;
 }
+=======
+>>>>>>> master
 
 static int set_affinity_irq(struct irq_data *data, const struct cpumask *dest,
 			    bool force)
@@ -1847,6 +1854,15 @@ static int set_affinity_irq(struct irq_data *data, const struct cpumask *dest,
 
 	return ret;
 }
+
+/* To be called with desc->lock held. */
+int xen_set_affinity_evtchn(struct irq_desc *desc, unsigned int tcpu)
+{
+	struct irq_data *d = irq_desc_get_irq_data(desc);
+
+	return set_affinity_irq(d, cpumask_of(tcpu), false);
+}
+EXPORT_SYMBOL_GPL(xen_set_affinity_evtchn);
 
 static void enable_dynirq(struct irq_data *data)
 {
@@ -2189,6 +2205,12 @@ void xen_setup_callback_vector(void)
 			pr_err("Request for Xen HVM callback vector failed\n");
 			xen_have_vector_callback = false;
 		}
+<<<<<<< HEAD
+=======
+		pr_info_once("Xen HVM callback vector for event delivery is enabled\n");
+		alloc_intr_gate(HYPERVISOR_CALLBACK_VECTOR,
+				xen_hvm_callback_vector);
+>>>>>>> master
 	}
 }
 

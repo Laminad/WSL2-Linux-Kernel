@@ -76,7 +76,10 @@
 #include <linux/blk-mq.h>
 #include "blk-rq-qos.h"
 #include "blk-stat.h"
+<<<<<<< HEAD
 #include "blk-cgroup.h"
+=======
+>>>>>>> master
 #include "blk.h"
 
 #define DEFAULT_SCALE_COOKIE 1000000U
@@ -596,6 +599,10 @@ static void blkcg_iolatency_done_bio(struct rq_qos *rqos, struct bio *bio)
 	u64 window_start;
 	u64 now;
 	bool issue_as_root = bio_issue_as_root_blkg(bio);
+<<<<<<< HEAD
+=======
+	bool enabled = false;
+>>>>>>> master
 	int inflight = 0;
 
 	blkg = bio->bi_blkg;
@@ -606,10 +613,17 @@ static void blkcg_iolatency_done_bio(struct rq_qos *rqos, struct bio *bio)
 	if (!iolat)
 		return;
 
+<<<<<<< HEAD
 	if (!iolat->blkiolat->enabled)
 		return;
 
 	now = ktime_to_ns(ktime_get());
+=======
+	enabled = blk_iolatency_enabled(iolat->blkiolat);
+	if (!enabled)
+		return;
+
+>>>>>>> master
 	while (blkg && blkg->parent) {
 		iolat = blkg_to_lat(blkg);
 		if (!iolat) {
@@ -630,8 +644,13 @@ static void blkcg_iolatency_done_bio(struct rq_qos *rqos, struct bio *bio)
 			window_start = atomic64_read(&iolat->window_start);
 			if (now > window_start &&
 			    (now - window_start) >= iolat->cur_win_nsec) {
+<<<<<<< HEAD
 				if (atomic64_try_cmpxchg(&iolat->window_start,
 							 &window_start, now))
+=======
+				if (atomic64_cmpxchg(&iolat->window_start,
+					     window_start, now) == window_start)
+>>>>>>> master
 					iolatency_check_latencies(iolat, now);
 			}
 		}
@@ -784,10 +803,13 @@ err_free:
 	return ret;
 }
 
-static void iolatency_set_min_lat_nsec(struct blkcg_gq *blkg, u64 val)
+/*
+ * return 1 for enabling iolatency, return -1 for disabling iolatency, otherwise
+ * return 0.
+ */
+static int iolatency_set_min_lat_nsec(struct blkcg_gq *blkg, u64 val)
 {
 	struct iolatency_grp *iolat = blkg_to_lat(blkg);
-	struct blk_iolatency *blkiolat = iolat->blkiolat;
 	u64 oldval = iolat->min_lat_nsec;
 
 	iolat->min_lat_nsec = val;
@@ -795,6 +817,7 @@ static void iolatency_set_min_lat_nsec(struct blkcg_gq *blkg, u64 val)
 	iolat->cur_win_nsec = min_t(u64, iolat->cur_win_nsec,
 				    BLKIOLATENCY_MAX_WIN_SIZE);
 
+<<<<<<< HEAD
 	if (!oldval && val) {
 		if (atomic_inc_return(&blkiolat->enable_cnt) == 1)
 			schedule_work(&blkiolat->enable_work);
@@ -804,6 +827,15 @@ static void iolatency_set_min_lat_nsec(struct blkcg_gq *blkg, u64 val)
 		if (atomic_dec_return(&blkiolat->enable_cnt) == 0)
 			schedule_work(&blkiolat->enable_work);
 	}
+=======
+	if (!oldval && val)
+		return 1;
+	if (oldval && !val) {
+		blkcg_clear_delay(blkg);
+		return -1;
+	}
+	return 0;
+>>>>>>> master
 }
 
 static void iolatency_clear_scaling(struct blkcg_gq *blkg)
@@ -835,6 +867,7 @@ static ssize_t iolatency_set_limit(struct kernfs_open_file *of, char *buf,
 	u64 lat_val = 0;
 	u64 oldval;
 	int ret;
+	int enable = 0;
 
 	blkg_conf_init(&ctx, buf);
 
@@ -885,12 +918,44 @@ static ssize_t iolatency_set_limit(struct kernfs_open_file *of, char *buf,
 	blkg = ctx.blkg;
 	oldval = iolat->min_lat_nsec;
 
+<<<<<<< HEAD
 	iolatency_set_min_lat_nsec(blkg, lat_val);
 	if (oldval != iolat->min_lat_nsec)
+=======
+	enable = iolatency_set_min_lat_nsec(blkg, lat_val);
+	if (enable) {
+		WARN_ON_ONCE(!blk_get_queue(blkg->q));
+		blkg_get(blkg);
+	}
+
+	if (oldval != iolat->min_lat_nsec) {
+>>>>>>> master
 		iolatency_clear_scaling(blkg);
 	ret = 0;
 out:
+<<<<<<< HEAD
 	blkg_conf_exit(&ctx);
+=======
+	blkg_conf_finish(&ctx);
+	if (ret == 0 && enable) {
+		struct iolatency_grp *tmp = blkg_to_lat(blkg);
+		struct blk_iolatency *blkiolat = tmp->blkiolat;
+
+		blk_mq_freeze_queue(blkg->q);
+
+		if (enable == 1)
+			atomic_inc(&blkiolat->enabled);
+		else if (enable == -1)
+			atomic_dec(&blkiolat->enabled);
+		else
+			WARN_ON_ONCE(1);
+
+		blk_mq_unfreeze_queue(blkg->q);
+
+		blkg_put(blkg);
+		blk_put_queue(blkg->q);
+	}
+>>>>>>> master
 	return ret ?: nbytes;
 }
 
@@ -1026,8 +1091,14 @@ static void iolatency_pd_offline(struct blkg_policy_data *pd)
 {
 	struct iolatency_grp *iolat = pd_to_lat(pd);
 	struct blkcg_gq *blkg = lat_to_blkg(iolat);
+	struct blk_iolatency *blkiolat = iolat->blkiolat;
+	int ret;
 
-	iolatency_set_min_lat_nsec(blkg, 0);
+	ret = iolatency_set_min_lat_nsec(blkg, 0);
+	if (ret == 1)
+		atomic_inc(&blkiolat->enabled);
+	if (ret == -1)
+		atomic_dec(&blkiolat->enabled);
 	iolatency_clear_scaling(blkg);
 }
 

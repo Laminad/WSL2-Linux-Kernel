@@ -2387,7 +2387,14 @@ unlock_noconn:
 	spin_lock(&sde->flushlist_lock);
 	list_add_tail(&tx->list, &sde->flushlist);
 	spin_unlock(&sde->flushlist_lock);
+<<<<<<< HEAD
 	iowait_inc_wait_count(wait, tx->num_desc);
+=======
+	if (wait) {
+		wait->tx_count++;
+		wait->count += tx->num_desc;
+	}
+>>>>>>> master
 	queue_work_on(sde->cpu, system_highpri_wq, &sde->flush_worker);
 	ret = -ECOMM;
 	goto unlock;

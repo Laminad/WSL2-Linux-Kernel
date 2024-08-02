@@ -123,6 +123,7 @@ enum  {
 	I2S_LRCLK_STRENGTH_HIGH,
 };
 
+<<<<<<< HEAD
 enum  {
 	I2S_SCLK_STRENGTH_DISABLE,
 	I2S_SCLK_STRENGTH_LOW,
@@ -130,6 +131,8 @@ enum  {
 	I2S_SCLK_STRENGTH_HIGH,
 };
 
+=======
+>>>>>>> master
 enum {
 	HP_POWER_EVENT,
 	DAC_POWER_EVENT,
@@ -150,20 +153,31 @@ struct sgtl5000_priv {
 	u8 micbias_resistor;
 	u8 micbias_voltage;
 	u8 lrclk_strength;
+<<<<<<< HEAD
 	u8 sclk_strength;
+=======
+>>>>>>> master
 	u16 mute_state[LAST_POWER_EVENT + 1];
 };
 
 static inline int hp_sel_input(struct snd_soc_component *component)
 {
+<<<<<<< HEAD
 	return (snd_soc_component_read(component, SGTL5000_CHIP_ANA_CTRL) &
+=======
+	return (snd_soc_component_read32(component, SGTL5000_CHIP_ANA_CTRL) &
+>>>>>>> master
 		SGTL5000_HP_SEL_MASK) >> SGTL5000_HP_SEL_SHIFT;
 }
 
 static inline u16 mute_output(struct snd_soc_component *component,
 			      u16 mute_mask)
 {
+<<<<<<< HEAD
 	u16 mute_reg = snd_soc_component_read(component,
+=======
+	u16 mute_reg = snd_soc_component_read32(component,
+>>>>>>> master
 					      SGTL5000_CHIP_ANA_CTRL);
 
 	snd_soc_component_update_bits(component, SGTL5000_CHIP_ANA_CTRL,
@@ -180,7 +194,11 @@ static inline void restore_output(struct snd_soc_component *component,
 
 static void vag_power_on(struct snd_soc_component *component, u32 source)
 {
+<<<<<<< HEAD
 	if (snd_soc_component_read(component, SGTL5000_CHIP_ANA_POWER) &
+=======
+	if (snd_soc_component_read32(component, SGTL5000_CHIP_ANA_POWER) &
+>>>>>>> master
 	    SGTL5000_VAG_POWERUP)
 		return;
 
@@ -225,7 +243,11 @@ static int vag_power_consumers(struct snd_soc_component *component,
 
 static void vag_power_off(struct snd_soc_component *component, u32 source)
 {
+<<<<<<< HEAD
 	u16 ana_pwr = snd_soc_component_read(component,
+=======
+	u16 ana_pwr = snd_soc_component_read32(component,
+>>>>>>> master
 					     SGTL5000_CHIP_ANA_POWER);
 
 	if (!(ana_pwr & SGTL5000_VAG_POWERUP))
@@ -1345,8 +1367,12 @@ static int sgtl5000_set_power_regs(struct snd_soc_component *component)
 		 * if vddio == vdda the source of charge pump should be
 		 * assigned manually to VDDIO
 		 */
+<<<<<<< HEAD
 		if (regulator_is_equal(sgtl5000->supplies[VDDA].consumer,
 				       sgtl5000->supplies[VDDIO].consumer)) {
+=======
+		if (vddio == vdda) {
+>>>>>>> master
 			lreg_ctrl |= SGTL5000_VDDC_ASSN_OVRD;
 			lreg_ctrl |= SGTL5000_VDDC_MAN_ASSN_VDDIO <<
 				    SGTL5000_VDDC_MAN_ASSN_SHIFT;

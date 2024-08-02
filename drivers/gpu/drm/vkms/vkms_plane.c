@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0+
+<<<<<<< HEAD
 
 #include <linux/iosys-map.h>
 
@@ -8,6 +9,8 @@
 #include <drm/drm_fourcc.h>
 #include <drm/drm_gem_atomic_helper.h>
 #include <drm/drm_gem_framebuffer_helper.h>
+=======
+>>>>>>> master
 
 #include "vkms_drv.h"
 #include "vkms_formats.h"

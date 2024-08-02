@@ -988,7 +988,10 @@ static int charger_extcon_init(struct charger_manager *cm,
 	if (IS_ERR(cable->extcon_dev)) {
 		pr_err("Cannot find extcon_dev for %s (cable: %s)\n",
 			cable->extcon_name, cable->name);
+<<<<<<< HEAD
 		return PTR_ERR(cable->extcon_dev);
+=======
+>>>>>>> master
 	}
 
 	for (i = 0; i < ARRAY_SIZE(extcon_mapping); i++) {

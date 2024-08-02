@@ -1321,6 +1321,7 @@ bool mlx5_is_roce_on(struct mlx5_core_dev *dev);
 
 static inline bool mlx5_get_roce_state(struct mlx5_core_dev *dev)
 {
+<<<<<<< HEAD
 	if (MLX5_CAP_GEN(dev, roce_rw_supported))
 		return MLX5_CAP_GEN(dev, roce);
 
@@ -1328,6 +1329,9 @@ static inline bool mlx5_get_roce_state(struct mlx5_core_dev *dev)
 	 * in order to support RoCE enable/disable feature
 	 */
 	return mlx5_is_roce_on(dev);
+=======
+	return dev->priv.irq_info[vector + MLX5_EQ_VEC_COMP_BASE].mask;
+>>>>>>> master
 }
 
 #ifdef CONFIG_MLX5_MACSEC

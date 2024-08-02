@@ -301,6 +301,12 @@ static bool is_vgic_v2_sgi(struct kvm_vcpu *vcpu, struct vgic_irq *irq)
 		vcpu->kvm->arch.vgic.vgic_model == KVM_DEV_TYPE_ARM_VGIC_V2);
 }
 
+static bool is_vgic_v2_sgi(struct kvm_vcpu *vcpu, struct vgic_irq *irq)
+{
+	return (vgic_irq_is_sgi(irq->intid) &&
+		vcpu->kvm->arch.vgic.vgic_model == KVM_DEV_TYPE_ARM_VGIC_V2);
+}
+
 void vgic_mmio_write_spending(struct kvm_vcpu *vcpu,
 			      gpa_t addr, unsigned int len,
 			      unsigned long val)
@@ -318,6 +324,7 @@ void vgic_mmio_write_spending(struct kvm_vcpu *vcpu,
 			continue;
 		}
 
+<<<<<<< HEAD:arch/arm64/kvm/vgic/vgic-mmio.c
 		raw_spin_lock_irqsave(&irq->irq_lock, flags);
 
 		if (irq->hw && vgic_irq_is_sgi(irq->intid)) {
@@ -335,6 +342,9 @@ void vgic_mmio_write_spending(struct kvm_vcpu *vcpu,
 		}
 
 		irq->pending_latch = true;
+=======
+		spin_lock_irqsave(&irq->irq_lock, flags);
+>>>>>>> master:virt/kvm/arm/vgic/vgic-mmio.c
 		if (irq->hw)
 			vgic_irq_set_phys_active(irq, true);
 
@@ -411,6 +421,7 @@ void vgic_mmio_write_cpending(struct kvm_vcpu *vcpu,
 			continue;
 		}
 
+<<<<<<< HEAD:arch/arm64/kvm/vgic/vgic-mmio.c
 		raw_spin_lock_irqsave(&irq->irq_lock, flags);
 
 		if (irq->hw && vgic_irq_is_sgi(irq->intid)) {
@@ -426,6 +437,9 @@ void vgic_mmio_write_cpending(struct kvm_vcpu *vcpu,
 
 			continue;
 		}
+=======
+		spin_lock_irqsave(&irq->irq_lock, flags);
+>>>>>>> master:virt/kvm/arm/vgic/vgic-mmio.c
 
 		if (irq->hw)
 			vgic_hw_irq_cpending(vcpu, irq);
@@ -566,7 +580,11 @@ static void vgic_mmio_change_active(struct kvm_vcpu *vcpu, struct vgic_irq *irq,
 
 	raw_spin_lock_irqsave(&irq->irq_lock, flags);
 
+<<<<<<< HEAD:arch/arm64/kvm/vgic/vgic-mmio.c
 	if (irq->hw && !vgic_irq_is_sgi(irq->intid)) {
+=======
+	if (irq->hw) {
+>>>>>>> master:virt/kvm/arm/vgic/vgic-mmio.c
 		vgic_hw_irq_change_active(vcpu, irq, active, !requester_vcpu);
 	} else if (irq->hw && vgic_irq_is_sgi(irq->intid)) {
 		/*
@@ -602,7 +620,41 @@ static void vgic_mmio_change_active(struct kvm_vcpu *vcpu, struct vgic_irq *irq,
 	if (irq->active)
 		vgic_queue_irq_unlock(vcpu->kvm, irq, flags);
 	else
+<<<<<<< HEAD:arch/arm64/kvm/vgic/vgic-mmio.c
 		raw_spin_unlock_irqrestore(&irq->irq_lock, flags);
+=======
+		spin_unlock_irqrestore(&irq->irq_lock, flags);
+}
+
+/*
+ * If we are fiddling with an IRQ's active state, we have to make sure the IRQ
+ * is not queued on some running VCPU's LRs, because then the change to the
+ * active state can be overwritten when the VCPU's state is synced coming back
+ * from the guest.
+ *
+ * For shared interrupts, we have to stop all the VCPUs because interrupts can
+ * be migrated while we don't hold the IRQ locks and we don't want to be
+ * chasing moving targets.
+ *
+ * For private interrupts we don't have to do anything because userspace
+ * accesses to the VGIC state already require all VCPUs to be stopped, and
+ * only the VCPU itself can modify its private interrupts active state, which
+ * guarantees that the VCPU is not running.
+ */
+static void vgic_change_active_prepare(struct kvm_vcpu *vcpu, u32 intid)
+{
+	if (vcpu->kvm->arch.vgic.vgic_model == KVM_DEV_TYPE_ARM_VGIC_V3 ||
+	    intid > VGIC_NR_PRIVATE_IRQS)
+		kvm_arm_halt_guest(vcpu->kvm);
+}
+
+/* See vgic_change_active_prepare */
+static void vgic_change_active_finish(struct kvm_vcpu *vcpu, u32 intid)
+{
+	if (vcpu->kvm->arch.vgic.vgic_model == KVM_DEV_TYPE_ARM_VGIC_V3 ||
+	    intid > VGIC_NR_PRIVATE_IRQS)
+		kvm_arm_resume_guest(vcpu->kvm);
+>>>>>>> master:virt/kvm/arm/vgic/vgic-mmio.c
 }
 
 static void __vgic_mmio_write_cactive(struct kvm_vcpu *vcpu,

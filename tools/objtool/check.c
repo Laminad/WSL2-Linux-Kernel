@@ -21,6 +21,8 @@
 #include <linux/kernel.h>
 #include <linux/static_call_types.h>
 
+#define FAKE_JUMP_OFFSET -1
+
 struct alternative {
 	struct alternative *next;
 	struct instruction *insn;
@@ -194,7 +196,23 @@ static bool __dead_end_function(struct objtool_file *file, struct symbol *func,
 
 #define NORETURN(func) __stringify(func),
 	static const char * const global_noreturns[] = {
+<<<<<<< HEAD
 #include "noreturns.h"
+=======
+		"__stack_chk_fail",
+		"panic",
+		"do_exit",
+		"do_task_dead",
+		"__module_put_and_exit",
+		"complete_and_exit",
+		"kvm_spurious_fault",
+		"__reiserfs_panic",
+		"lbug_with_loc",
+		"fortify_panic",
+		"usercopy_abort",
+		"machine_real_restart",
+		"rewind_stack_do_exit",
+>>>>>>> master
 	};
 #undef NORETURN
 
@@ -1549,7 +1567,29 @@ static int add_jump_destinations(struct objtool_file *file)
 	unsigned long dest_off;
 
 	for_each_insn(file, insn) {
+<<<<<<< HEAD
 		if (insn->jump_dest) {
+=======
+		if (insn->type != INSN_JUMP_CONDITIONAL &&
+		    insn->type != INSN_JUMP_UNCONDITIONAL)
+			continue;
+
+		if (insn->ignore || insn->offset == FAKE_JUMP_OFFSET)
+			continue;
+
+		rela = find_rela_by_dest_range(insn->sec, insn->offset,
+					       insn->len);
+		if (!rela) {
+			dest_sec = insn->sec;
+			dest_off = insn->offset + insn->len + insn->immediate;
+		} else if (rela->sym->type == STT_SECTION) {
+			dest_sec = rela->sym->sec;
+			dest_off = rela->addend + 4;
+		} else if (rela->sym->sec->idx) {
+			dest_sec = rela->sym->sec;
+			dest_off = rela->sym->sym.st_value + rela->addend + 4;
+		} else if (strstr(rela->sym->name, "_indirect_thunk_")) {
+>>>>>>> master
 			/*
 			 * handle_group_alt() may have previously set
 			 * 'jump_dest' for some alternatives.
@@ -1741,10 +1781,28 @@ static int handle_group_alt(struct objtool_file *file,
 			WARN("malloc failed");
 			return -1;
 		}
+<<<<<<< HEAD
 		orig_alt_group->cfi = calloc(special_alt->orig_len,
 					     sizeof(struct cfi_state *));
 		if (!orig_alt_group->cfi) {
 			WARN("calloc failed");
+=======
+		memset(fake_jump, 0, sizeof(*fake_jump));
+		INIT_LIST_HEAD(&fake_jump->alts);
+		clear_insn_state(&fake_jump->state);
+
+		fake_jump->sec = special_alt->new_sec;
+		fake_jump->offset = FAKE_JUMP_OFFSET;
+		fake_jump->type = INSN_JUMP_UNCONDITIONAL;
+		fake_jump->jump_dest = list_next_entry(last_orig_insn, list);
+		fake_jump->func = orig_insn->func;
+	}
+
+	if (!special_alt->new_len) {
+		if (!fake_jump) {
+			WARN("%s: empty alternative at end of section",
+			     special_alt->orig_sec->name);
+>>>>>>> master
 			return -1;
 		}
 
@@ -2009,6 +2067,7 @@ static int add_jump_table(struct objtool_file *file, struct instruction *insn,
 	struct reloc *reloc = table;
 	struct alternative *alt;
 
+<<<<<<< HEAD
 	/*
 	 * Each @reloc is a switch table relocation which points to the target
 	 * instruction.
@@ -2017,6 +2076,10 @@ static int add_jump_table(struct objtool_file *file, struct instruction *insn,
 
 		/* Check for the end of the table: */
 		if (reloc != table && reloc == next_table)
+=======
+	list_for_each_entry_from(rela, &table->rela_sec->rela_list, list) {
+		if (rela == next_table)
+>>>>>>> master
 			break;
 
 		/* Make sure the table entries are consecutive: */
@@ -2064,8 +2127,15 @@ static struct reloc *find_jump_table(struct objtool_file *file,
 				      struct symbol *func,
 				      struct instruction *insn)
 {
+<<<<<<< HEAD
 	struct reloc *table_reloc;
 	struct instruction *dest_insn, *orig_insn = insn;
+=======
+	struct rela *text_rela, *rodata_rela;
+	struct instruction *orig_insn = insn;
+	struct section *rodata_sec;
+	unsigned long table_offset;
+>>>>>>> master
 
 	/*
 	 * Backward search using the @first_jump_src links, these help avoid
@@ -2086,6 +2156,7 @@ static struct reloc *find_jump_table(struct objtool_file *file,
 		     insn->jump_dest->offset > orig_insn->offset))
 		    break;
 
+<<<<<<< HEAD
 		table_reloc = arch_find_switch_table(file, insn);
 		if (!table_reloc)
 			continue;
@@ -2094,6 +2165,40 @@ static struct reloc *find_jump_table(struct objtool_file *file,
 			continue;
 
 		return table_reloc;
+=======
+		/* look for a relocation which references .rodata */
+		text_rela = find_rela_by_dest_range(insn->sec, insn->offset,
+						    insn->len);
+		if (!text_rela || text_rela->sym->type != STT_SECTION ||
+		    !text_rela->sym->sec->rodata)
+			continue;
+
+		table_offset = text_rela->addend;
+		rodata_sec = text_rela->sym->sec;
+
+		if (text_rela->type == R_X86_64_PC32)
+			table_offset += 4;
+
+		/*
+		 * Make sure the .rodata address isn't associated with a
+		 * symbol.  gcc jump tables are anonymous data.
+		 */
+		if (find_symbol_containing(rodata_sec, table_offset))
+			continue;
+
+		rodata_rela = find_rela_by_dest(rodata_sec, table_offset);
+		if (rodata_rela) {
+			/*
+			 * Use of RIP-relative switch jumps is quite rare, and
+			 * indicates a rare GCC quirk/bug which can leave dead
+			 * code behind.
+			 */
+			if (text_rela->type == R_X86_64_PC32)
+				file->ignore_unreachables = true;
+
+			return rodata_rela;
+		}
+>>>>>>> master
 	}
 
 	return NULL;
@@ -2352,6 +2457,7 @@ static int read_retpoline_hints(struct objtool_file *file)
 	return 0;
 }
 
+<<<<<<< HEAD
 static int read_instr_hints(struct objtool_file *file)
 {
 	struct section *rsec;
@@ -2532,12 +2638,15 @@ static int classify_symbols(struct objtool_file *file)
 	return 0;
 }
 
+=======
+>>>>>>> master
 static void mark_rodata(struct objtool_file *file)
 {
 	struct section *sec;
 	bool found = false;
 
 	/*
+<<<<<<< HEAD
 	 * Search for the following rodata sections, each of which can
 	 * potentially contain jump tables:
 	 *
@@ -2546,6 +2655,11 @@ static void mark_rodata(struct objtool_file *file)
 	 * - .rodata..c_jump_table: contains C annotated jump tables
 	 *
 	 * .rodata.str1.* sections are ignored; they don't contain jump tables.
+=======
+	 * This searches for the .rodata section or multiple .rodata.func_name
+	 * sections if -fdata-sections is being used. The .str.1.1 and .str.1.8
+	 * rodata sections are ignored as they don't contain jump tables.
+>>>>>>> master
 	 */
 	for_each_sec(file, sec) {
 		if (!strncmp(sec->name, ".rodata", 7) &&
@@ -2564,6 +2678,7 @@ static int decode_sections(struct objtool_file *file)
 
 	mark_rodata(file);
 
+<<<<<<< HEAD
 	ret = init_pv_ops(file);
 	if (ret)
 		return ret;
@@ -2575,6 +2690,8 @@ static int decode_sections(struct objtool_file *file)
 	if (ret)
 		return ret;
 
+=======
+>>>>>>> master
 	ret = decode_instructions(file);
 	if (ret)
 		return ret;
@@ -3565,6 +3682,12 @@ static int validate_branch(struct objtool_file *file, struct symbol *func,
 			return 1;
 		}
 
+<<<<<<< HEAD
+=======
+		if (insn->func)
+			func = insn->func->pfunc;
+
+>>>>>>> master
 		if (func && insn->ignore) {
 			WARN_INSN(insn, "BUG: why am I validating an ignored function?");
 			return 1;
@@ -4634,6 +4757,7 @@ static int disas_warned_funcs(struct objtool_file *file)
 	return 0;
 }
 
+<<<<<<< HEAD
 struct insn_chunk {
 	void *addr;
 	struct insn_chunk *next;
@@ -4666,6 +4790,27 @@ int check(struct objtool_file *file)
 {
 	int ret, warnings = 0;
 
+=======
+static struct objtool_file file;
+
+int check(const char *_objname, bool orc)
+{
+	int ret, warnings = 0;
+
+	objname = _objname;
+
+	file.elf = elf_open(objname, orc ? O_RDWR : O_RDONLY);
+	if (!file.elf)
+		return 1;
+
+	INIT_LIST_HEAD(&file.insn_list);
+	hash_init(file.insn_hash);
+	file.whitelist = find_section_by_name(file.elf, ".discard.func_stack_frame_non_standard");
+	file.c_file = find_section_by_name(file.elf, ".comment");
+	file.ignore_unreachables = no_unreachable;
+	file.hints = false;
+
+>>>>>>> master
 	arch_initial_func_cfi_state(&initial_func_cfi);
 	init_cfi_state(&init_cfi);
 	init_cfi_state(&func_cfi);

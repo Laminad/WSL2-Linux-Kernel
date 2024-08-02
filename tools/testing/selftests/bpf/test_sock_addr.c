@@ -714,8 +714,13 @@ static int connect6_prog_load(const struct sock_addr_test *test)
 	return load_path(test, CONNECT6_PROG_PATH);
 }
 
+<<<<<<< HEAD
 static int xmsg_ret_only_prog_load(const struct sock_addr_test *test,
 				   int32_t rc)
+=======
+static int sendmsg_ret_only_prog_load(const struct sock_addr_test *test,
+				      int32_t rc)
+>>>>>>> master
 {
 	struct bpf_insn insns[] = {
 		/* return rc */
@@ -743,6 +748,16 @@ static int recvmsg_allow_prog_load(const struct sock_addr_test *test)
 static int recvmsg_deny_prog_load(const struct sock_addr_test *test)
 {
 	return xmsg_ret_only_prog_load(test, /*rc*/ 0);
+}
+
+static int sendmsg_allow_prog_load(const struct sock_addr_test *test)
+{
+	return sendmsg_ret_only_prog_load(test, /*rc*/ 1);
+}
+
+static int sendmsg_deny_prog_load(const struct sock_addr_test *test)
+{
+	return sendmsg_ret_only_prog_load(test, /*rc*/ 0);
 }
 
 static int sendmsg4_rw_asm_prog_load(const struct sock_addr_test *test)

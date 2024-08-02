@@ -1088,7 +1088,12 @@ void vc4_crtc_destroy_state(struct drm_crtc *crtc,
 
 void vc4_crtc_reset(struct drm_crtc *crtc)
 {
+<<<<<<< HEAD
 	struct vc4_crtc_state *vc4_crtc_state;
+=======
+	if (crtc->state)
+		vc4_crtc_destroy_state(crtc, crtc->state);
+>>>>>>> master
 
 	if (crtc->state)
 		vc4_crtc_destroy_state(crtc, crtc->state);

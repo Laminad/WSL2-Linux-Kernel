@@ -1015,6 +1015,42 @@ static int rt5682_set_jack_detect(struct snd_soc_component *component,
 	struct rt5682_priv *rt5682 = snd_soc_component_get_drvdata(component);
 
 	rt5682->hs_jack = hs_jack;
+<<<<<<< HEAD
+=======
+
+	if (!hs_jack) {
+		regmap_update_bits(rt5682->regmap, RT5682_IRQ_CTRL_2,
+				   RT5682_JD1_EN_MASK, RT5682_JD1_DIS);
+		regmap_update_bits(rt5682->regmap, RT5682_RC_CLK_CTRL,
+				   RT5682_POW_JDH | RT5682_POW_JDL, 0);
+		return 0;
+	}
+
+	switch (rt5682->pdata.jd_src) {
+	case RT5682_JD1:
+		snd_soc_component_update_bits(component, RT5682_CBJ_CTRL_2,
+			RT5682_EXT_JD_SRC, RT5682_EXT_JD_SRC_MANUAL);
+		snd_soc_component_write(component, RT5682_CBJ_CTRL_1, 0xd042);
+		snd_soc_component_update_bits(component, RT5682_CBJ_CTRL_3,
+			RT5682_CBJ_IN_BUF_EN, RT5682_CBJ_IN_BUF_EN);
+		snd_soc_component_update_bits(component, RT5682_SAR_IL_CMD_1,
+			RT5682_SAR_POW_MASK, RT5682_SAR_POW_EN);
+		regmap_update_bits(rt5682->regmap, RT5682_GPIO_CTRL_1,
+			RT5682_GP1_PIN_MASK, RT5682_GP1_PIN_IRQ);
+		regmap_update_bits(rt5682->regmap, RT5682_RC_CLK_CTRL,
+				RT5682_POW_IRQ | RT5682_POW_JDH |
+				RT5682_POW_ANA, RT5682_POW_IRQ |
+				RT5682_POW_JDH | RT5682_POW_ANA);
+		regmap_update_bits(rt5682->regmap, RT5682_PWR_ANLG_2,
+			RT5682_PWR_JDH | RT5682_PWR_JDL,
+			RT5682_PWR_JDH | RT5682_PWR_JDL);
+		regmap_update_bits(rt5682->regmap, RT5682_IRQ_CTRL_2,
+			RT5682_JD1_EN_MASK | RT5682_JD1_POL_MASK,
+			RT5682_JD1_EN | RT5682_JD1_POL_NOR);
+		mod_delayed_work(system_power_efficient_wq,
+			   &rt5682->jack_detect_work, msecs_to_jiffies(250));
+		break;
+>>>>>>> master
 
 	if (rt5682->is_sdw && !rt5682->first_hw_init)
 		return 0;
@@ -1029,6 +1065,7 @@ static int rt5682_set_jack_detect(struct snd_soc_component *component,
 		return 0;
 	}
 
+<<<<<<< HEAD
 	if (!rt5682->is_sdw) {
 		switch (rt5682->pdata.jd_src) {
 		case RT5682_JD1:
@@ -1086,6 +1123,8 @@ static int rt5682_set_jack_detect(struct snd_soc_component *component,
 		}
 	}
 
+=======
+>>>>>>> master
 	return 0;
 }
 
@@ -1280,7 +1319,11 @@ static int set_filter_clk(struct snd_soc_dapm_widget *w,
 	struct snd_soc_component *component =
 		snd_soc_dapm_to_component(w->dapm);
 	struct rt5682_priv *rt5682 = snd_soc_component_get_drvdata(component);
+<<<<<<< HEAD
 	int ref, val, reg, idx;
+=======
+	int ref, val, reg, idx = -EINVAL;
+>>>>>>> master
 	static const int div_f[] = {1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48};
 	static const int div_o[] = {1, 2, 4, 6, 8, 12, 16, 24, 32, 48};
 

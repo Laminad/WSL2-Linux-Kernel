@@ -314,10 +314,14 @@ xfs_attr3_leaf_verify(
 	struct xfs_mount		*mp = bp->b_mount;
 	struct xfs_attr_leafblock	*leaf = bp->b_addr;
 	struct xfs_attr_leaf_entry	*entries;
+<<<<<<< HEAD
 	struct xfs_attr_leaf_entry	*ent;
 	char				*buf_end;
 	uint32_t			end;	/* must be 32bit - see below */
 	__u32				last_hashval = 0;
+=======
+	uint32_t			end;	/* must be 32bit - see below */
+>>>>>>> master
 	int				i;
 	xfs_failaddr_t			fa;
 

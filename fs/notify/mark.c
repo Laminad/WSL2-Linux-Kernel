@@ -213,6 +213,7 @@ static void fsnotify_connector_destroy_workfn(struct work_struct *work)
 	}
 }
 
+<<<<<<< HEAD
 static void fsnotify_put_inode_ref(struct inode *inode)
 {
 	struct super_block *sb = inode->i_sb;
@@ -238,6 +239,8 @@ static void fsnotify_put_sb_connectors(struct fsnotify_mark_connector *conn)
 		wake_up_var(&sb->s_fsnotify_connectors);
 }
 
+=======
+>>>>>>> master
 static void *fsnotify_detach_connector_from_object(
 					struct fsnotify_mark_connector *conn,
 					unsigned int *type)
@@ -251,10 +254,14 @@ static void *fsnotify_detach_connector_from_object(
 	if (conn->type == FSNOTIFY_OBJ_TYPE_INODE) {
 		inode = fsnotify_conn_inode(conn);
 		inode->i_fsnotify_mask = 0;
+<<<<<<< HEAD
 
 		/* Unpin inode when detaching from connector */
 		if (!(conn->flags & FSNOTIFY_CONN_FLAG_HAS_IREF))
 			inode = NULL;
+=======
+		atomic_long_inc(&inode->i_sb->s_fsnotify_inode_refs);
+>>>>>>> master
 	} else if (conn->type == FSNOTIFY_OBJ_TYPE_VFSMOUNT) {
 		fsnotify_conn_mount(conn)->mnt_fsnotify_mask = 0;
 	} else if (conn->type == FSNOTIFY_OBJ_TYPE_SB) {
@@ -282,17 +289,35 @@ static void fsnotify_final_mark_destroy(struct fsnotify_mark *mark)
 /* Drop object reference originally held by a connector */
 static void fsnotify_drop_object(unsigned int type, void *objp)
 {
+<<<<<<< HEAD
+=======
+	struct inode *inode;
+	struct super_block *sb;
+
+>>>>>>> master
 	if (!objp)
 		return;
 	/* Currently only inode references are passed to be dropped */
 	if (WARN_ON_ONCE(type != FSNOTIFY_OBJ_TYPE_INODE))
 		return;
+<<<<<<< HEAD
 	fsnotify_put_inode_ref(objp);
+=======
+	inode = objp;
+	sb = inode->i_sb;
+	iput(inode);
+	if (atomic_long_dec_and_test(&sb->s_fsnotify_inode_refs))
+		wake_up_var(&sb->s_fsnotify_inode_refs);
+>>>>>>> master
 }
 
 void fsnotify_put_mark(struct fsnotify_mark *mark)
 {
+<<<<<<< HEAD
 	struct fsnotify_mark_connector *conn = READ_ONCE(mark->connector);
+=======
+	struct fsnotify_mark_connector *conn;
+>>>>>>> master
 	void *objp = NULL;
 	unsigned int type = FSNOTIFY_OBJ_TYPE_DETACHED;
 	bool free_conn = false;

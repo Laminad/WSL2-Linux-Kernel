@@ -185,6 +185,7 @@ static int efi_pstore_write(struct pstore_record *record)
 	for (i = 0; i < DUMP_NAME_LEN; i++)
 		efi_name[i] = name[i];
 
+<<<<<<< HEAD
 	if (efivar_trylock())
 		return -EBUSY;
 	status = efivar_set_variable_locked(efi_name, &LINUX_EFI_CRASH_GUID,
@@ -193,6 +194,15 @@ static int efi_pstore_write(struct pstore_record *record)
 					    true);
 	efivar_unlock();
 	return status == EFI_SUCCESS ? 0 : -EIO;
+=======
+	ret = efivar_entry_set_safe(efi_name, vendor, PSTORE_EFI_ATTRIBUTES,
+			      preemptible(), record->size, record->psi->buf);
+
+	if (record->reason == KMSG_DUMP_OOPS)
+		efivar_run_worker();
+
+	return ret;
+>>>>>>> master
 };
 
 static int efi_pstore_erase(struct pstore_record *record)
@@ -239,7 +249,11 @@ static __init int efivars_pstore_init(void)
 	if (!efi_pstore_info.buf)
 		return -ENOMEM;
 
+<<<<<<< HEAD
 	efi_pstore_info.bufsize = record_size;
+=======
+	efi_pstore_info.bufsize = 1024;
+>>>>>>> master
 
 	if (pstore_register(&efi_pstore_info)) {
 		kfree(efi_pstore_info.buf);

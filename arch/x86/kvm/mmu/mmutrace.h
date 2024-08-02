@@ -343,7 +343,11 @@ TRACE_EVENT(
 		/* These depend on page entry type, so compute them now.  */
 		__field(bool, r)
 		__field(bool, x)
+<<<<<<< HEAD:arch/x86/kvm/mmu/mmutrace.h
 		__field(signed char, u)
+=======
+		__field(u8, u)
+>>>>>>> master:arch/x86/kvm/mmutrace.h
 	),
 
 	TP_fast_assign(
@@ -368,8 +372,13 @@ TRACE_EVENT(
 
 TRACE_EVENT(
 	kvm_mmu_spte_requested,
+<<<<<<< HEAD:arch/x86/kvm/mmu/mmutrace.h
 	TP_PROTO(struct kvm_page_fault *fault),
 	TP_ARGS(fault),
+=======
+	TP_PROTO(gpa_t addr, int level, kvm_pfn_t pfn),
+	TP_ARGS(addr, level, pfn),
+>>>>>>> master:arch/x86/kvm/mmutrace.h
 
 	TP_STRUCT__entry(
 		__field(u64, gfn)
@@ -378,9 +387,15 @@ TRACE_EVENT(
 	),
 
 	TP_fast_assign(
+<<<<<<< HEAD:arch/x86/kvm/mmu/mmutrace.h
 		__entry->gfn = fault->gfn;
 		__entry->pfn = fault->pfn | (fault->gfn & (KVM_PAGES_PER_HPAGE(fault->goal_level) - 1));
 		__entry->level = fault->goal_level;
+=======
+		__entry->gfn = addr >> PAGE_SHIFT;
+		__entry->pfn = pfn | (__entry->gfn & (KVM_PAGES_PER_HPAGE(level) - 1));
+		__entry->level = level;
+>>>>>>> master:arch/x86/kvm/mmutrace.h
 	),
 
 	TP_printk("gfn %llx pfn %llx level %d",
@@ -388,6 +403,7 @@ TRACE_EVENT(
 	)
 );
 
+<<<<<<< HEAD:arch/x86/kvm/mmu/mmutrace.h
 TRACE_EVENT(
 	kvm_tdp_mmu_spte_changed,
 	TP_PROTO(int as_id, gfn_t gfn, int level, u64 old_spte, u64 new_spte),
@@ -440,6 +456,8 @@ TRACE_EVENT(
 		  __entry->gfn, __entry->spte, __entry->level, __entry->errno)
 );
 
+=======
+>>>>>>> master:arch/x86/kvm/mmutrace.h
 #endif /* _TRACE_KVMMMU_H */
 
 #undef TRACE_INCLUDE_PATH

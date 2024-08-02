@@ -1202,11 +1202,49 @@ bool ovl_is_metacopy_dentry(struct dentry *dentry)
 	return (ovl_numlower(oe) > 1);
 }
 
+<<<<<<< HEAD
 char *ovl_get_redirect_xattr(struct ovl_fs *ofs, const struct path *path, int padding)
+=======
+ssize_t ovl_getxattr(struct dentry *dentry, char *name, char **value,
+		     size_t padding)
+{
+	ssize_t res;
+	char *buf = NULL;
+
+	res = vfs_getxattr(dentry, name, NULL, 0);
+	if (res < 0) {
+		if (res == -ENODATA || res == -EOPNOTSUPP)
+			return -ENODATA;
+		goto fail;
+	}
+
+	if (res != 0) {
+		buf = kzalloc(res + padding, GFP_KERNEL);
+		if (!buf)
+			return -ENOMEM;
+
+		res = vfs_getxattr(dentry, name, buf, res);
+		if (res < 0)
+			goto fail;
+	}
+	*value = buf;
+
+	return res;
+
+fail:
+	pr_warn_ratelimited("overlayfs: failed to get xattr %s: err=%zi)\n",
+			    name, res);
+	kfree(buf);
+	return res;
+}
+
+char *ovl_get_redirect_xattr(struct dentry *dentry, int padding)
+>>>>>>> master
 {
 	int res;
 	char *s, *next, *buf = NULL;
 
+<<<<<<< HEAD
 	res = ovl_path_getxattr(ofs, path, OVL_XATTR_REDIRECT, NULL, 0);
 	if (res == -ENODATA || res == -EOPNOTSUPP)
 		return NULL;
@@ -1220,8 +1258,13 @@ char *ovl_get_redirect_xattr(struct ovl_fs *ofs, const struct path *path, int pa
 		return ERR_PTR(-ENOMEM);
 
 	res = ovl_path_getxattr(ofs, path, OVL_XATTR_REDIRECT, buf, res);
+=======
+	res = ovl_getxattr(dentry, OVL_XATTR_REDIRECT, &buf, padding + 1);
+	if (res == -ENODATA)
+		return NULL;
+>>>>>>> master
 	if (res < 0)
-		goto fail;
+		return ERR_PTR(res);
 	if (res == 0)
 		goto invalid;
 
@@ -1238,6 +1281,7 @@ char *ovl_get_redirect_xattr(struct ovl_fs *ofs, const struct path *path, int pa
 
 	return buf;
 invalid:
+<<<<<<< HEAD
 	pr_warn_ratelimited("invalid redirect (%s)\n", buf);
 	res = -EINVAL;
 	goto err_free;
@@ -1413,4 +1457,10 @@ void ovl_copyattr(struct inode *inode)
 	inode->i_mtime = realinode->i_mtime;
 	inode_set_ctime_to_ts(inode, inode_get_ctime(realinode));
 	i_size_write(inode, i_size_read(realinode));
+=======
+	pr_warn_ratelimited("overlayfs: invalid redirect (%s)\n", buf);
+	res = -EINVAL;
+	kfree(buf);
+	return ERR_PTR(res);
+>>>>>>> master
 }

@@ -264,6 +264,7 @@ static const struct dmi_system_id efifb_dmi_swap_width_height[] __initconst = {
 					"Lenovo ideapad D330-10IGM"),
 		},
 	},
+<<<<<<< HEAD:drivers/firmware/efi/sysfb_efi.c
 	{
 		/* Lenovo IdeaPad Duet 3 10IGL5 with 1200x1920 portrait screen */
 		.matches = {
@@ -349,6 +350,11 @@ static const struct fwnode_operations efifb_fwnode_ops = {
 #ifdef CONFIG_EFI
 static struct fwnode_handle efifb_fwnode;
 
+=======
+	{},
+};
+
+>>>>>>> master:arch/x86/kernel/sysfb_efi.c
 __init void sysfb_apply_efi_quirks(void)
 {
 	if (screen_info.orig_video_isVGA != VIDEO_TYPE_EFI ||

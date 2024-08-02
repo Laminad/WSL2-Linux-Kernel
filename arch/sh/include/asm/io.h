@@ -303,6 +303,14 @@ unsigned long long poke_real_address_q(unsigned long long addr,
 #endif /* CONFIG_MMU */
 
 #define ioremap_uc	ioremap
+<<<<<<< HEAD
+=======
+
+static inline void iounmap(void __iomem *addr)
+{
+	__iounmap(addr);
+}
+>>>>>>> master
 
 /*
  * Convert a physical pointer to a virtual kernel pointer for /dev/mem

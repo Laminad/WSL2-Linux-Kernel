@@ -195,7 +195,11 @@ static u32 drm_max_vblank_count(struct drm_device *dev, unsigned int pipe)
  */
 static u32 drm_vblank_no_hw_counter(struct drm_device *dev, unsigned int pipe)
 {
+<<<<<<< HEAD
 	drm_WARN_ON_ONCE(dev, drm_max_vblank_count(dev, pipe) != 0);
+=======
+	WARN_ON_ONCE(drm_max_vblank_count(dev, pipe) != 0);
+>>>>>>> master
 	return 0;
 }
 
@@ -1463,8 +1467,13 @@ void drm_crtc_set_max_vblank_count(struct drm_crtc *crtc,
 	unsigned int pipe = drm_crtc_index(crtc);
 	struct drm_vblank_crtc *vblank = &dev->vblank[pipe];
 
+<<<<<<< HEAD
 	drm_WARN_ON(dev, dev->max_vblank_count);
 	drm_WARN_ON(dev, !READ_ONCE(vblank->inmodeset));
+=======
+	WARN_ON(dev->max_vblank_count);
+	WARN_ON(!READ_ONCE(vblank->inmodeset));
+>>>>>>> master
 
 	vblank->max_vblank_count = max_vblank_count;
 }

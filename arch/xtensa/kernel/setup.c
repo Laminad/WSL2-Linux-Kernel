@@ -280,6 +280,46 @@ void __init init_arch(bp_tag_t *bp_start)
  * Initialize system. Setup memory and reserve regions.
  */
 
+<<<<<<< HEAD
+=======
+extern char _end[];
+extern char _stext[];
+extern char _WindowVectors_text_start;
+extern char _WindowVectors_text_end;
+extern char _DebugInterruptVector_text_start;
+extern char _DebugInterruptVector_text_end;
+extern char _KernelExceptionVector_text_start;
+extern char _KernelExceptionVector_text_end;
+extern char _UserExceptionVector_text_start;
+extern char _UserExceptionVector_text_end;
+extern char _DoubleExceptionVector_text_start;
+extern char _DoubleExceptionVector_text_end;
+#if XCHAL_EXCM_LEVEL >= 2
+extern char _Level2InterruptVector_text_start;
+extern char _Level2InterruptVector_text_end;
+#endif
+#if XCHAL_EXCM_LEVEL >= 3
+extern char _Level3InterruptVector_text_start;
+extern char _Level3InterruptVector_text_end;
+#endif
+#if XCHAL_EXCM_LEVEL >= 4
+extern char _Level4InterruptVector_text_start;
+extern char _Level4InterruptVector_text_end;
+#endif
+#if XCHAL_EXCM_LEVEL >= 5
+extern char _Level5InterruptVector_text_start;
+extern char _Level5InterruptVector_text_end;
+#endif
+#if XCHAL_EXCM_LEVEL >= 6
+extern char _Level6InterruptVector_text_start;
+extern char _Level6InterruptVector_text_end;
+#endif
+#ifdef CONFIG_SMP
+extern char _SecondaryResetVector_text_start;
+extern char _SecondaryResetVector_text_end;
+#endif
+
+>>>>>>> master
 static inline int __init_memblock mem_reserve(unsigned long start,
 					      unsigned long end)
 {

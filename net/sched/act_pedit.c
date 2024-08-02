@@ -167,7 +167,11 @@ static int tcf_pedit_init(struct net *net, struct nlattr *nla,
 	struct nlattr *pattr;
 	struct tcf_pedit *p;
 	int ret = 0, err;
+<<<<<<< HEAD
 	int i, ksize;
+=======
+	int ksize;
+>>>>>>> master
 	u32 index;
 
 	if (!nla) {
@@ -190,6 +194,7 @@ static int tcf_pedit_init(struct net *net, struct nlattr *nla,
 
 	parm = nla_data(pattr);
 
+<<<<<<< HEAD
 	index = parm->index;
 	err = tcf_idr_check_alloc(tn, &index, a, bind);
 	if (!err) {
@@ -198,6 +203,26 @@ static int tcf_pedit_init(struct net *net, struct nlattr *nla,
 		if (ret) {
 			tcf_idr_cleanup(tn, index);
 			return ret;
+=======
+	keys_ex = tcf_pedit_keys_ex_parse(tb[TCA_PEDIT_KEYS_EX], parm->nkeys);
+	if (IS_ERR(keys_ex))
+		return PTR_ERR(keys_ex);
+
+	index = parm->index;
+	err = tcf_idr_check_alloc(tn, &index, a, bind);
+	if (!err) {
+		if (!parm->nkeys) {
+			tcf_idr_cleanup(tn, index);
+			NL_SET_ERR_MSG_MOD(extack, "Pedit requires keys to be passed");
+			ret = -EINVAL;
+			goto out_free;
+		}
+		ret = tcf_idr_create(tn, index, est, a,
+				     &act_pedit_ops, bind, false);
+		if (ret) {
+			tcf_idr_cleanup(tn, index);
+			goto out_free;
+>>>>>>> master
 		}
 		ret = ACT_P_CREATED;
 	} else if (err > 0) {
@@ -208,7 +233,8 @@ static int tcf_pedit_init(struct net *net, struct nlattr *nla,
 			goto out_release;
 		}
 	} else {
-		return err;
+		ret = err;
+		goto out_free;
 	}
 
 	if (!parm->nkeys) {

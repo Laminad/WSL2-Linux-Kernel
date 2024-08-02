@@ -454,9 +454,31 @@ static int crypto_ccm_create_common(struct crypto_template *tmpl,
 	struct hash_alg_common *mac;
 	int err;
 
+<<<<<<< HEAD
 	err = crypto_check_attr_type(tb, CRYPTO_ALG_TYPE_AEAD, &mask);
 	if (err)
 		return err;
+=======
+	algt = crypto_get_attr_type(tb);
+	if (IS_ERR(algt))
+		return PTR_ERR(algt);
+
+	if ((algt->type ^ CRYPTO_ALG_TYPE_AEAD) & algt->mask)
+		return -EINVAL;
+
+	mac_alg = crypto_find_alg(mac_name, &crypto_ahash_type,
+				  CRYPTO_ALG_TYPE_HASH,
+				  CRYPTO_ALG_TYPE_AHASH_MASK |
+				  CRYPTO_ALG_ASYNC);
+	if (IS_ERR(mac_alg))
+		return PTR_ERR(mac_alg);
+
+	mac = __crypto_hash_alg_common(mac_alg);
+	err = -EINVAL;
+	if (strncmp(mac->base.cra_name, "cbcmac(", 7) != 0 ||
+	    mac->digestsize != 16)
+		goto out_put_mac;
+>>>>>>> master
 
 	inst = kzalloc(sizeof(*inst) + sizeof(*ictx), GFP_KERNEL);
 	if (!inst)
@@ -485,22 +507,38 @@ static int crypto_ccm_create_common(struct crypto_template *tmpl,
 	if (strncmp(ctr->base.cra_name, "ctr(", 4) != 0 ||
 	    crypto_skcipher_alg_ivsize(ctr) != 16 ||
 	    ctr->base.cra_blocksize != 1)
+<<<<<<< HEAD
 		goto err_free_inst;
 
 	/* ctr and cbcmac must use the same underlying block cipher. */
 	if (strcmp(ctr->base.cra_name + 4, mac->base.cra_name + 7) != 0)
 		goto err_free_inst;
+=======
+		goto err_drop_ctr;
+
+	/* ctr and cbcmac must use the same underlying block cipher. */
+	if (strcmp(ctr->base.cra_name + 4, mac->base.cra_name + 7) != 0)
+		goto err_drop_ctr;
+>>>>>>> master
 
 	err = -ENAMETOOLONG;
 	if (snprintf(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
 		     "ccm(%s", ctr->base.cra_name + 4) >= CRYPTO_MAX_ALG_NAME)
+<<<<<<< HEAD
 		goto err_free_inst;
+=======
+		goto err_drop_ctr;
+>>>>>>> master
 
 	if (snprintf(inst->alg.base.cra_driver_name, CRYPTO_MAX_ALG_NAME,
 		     "ccm_base(%s,%s)", ctr->base.cra_driver_name,
 		     mac->base.cra_driver_name) >= CRYPTO_MAX_ALG_NAME)
 		goto err_free_inst;
 
+<<<<<<< HEAD
+=======
+	inst->alg.base.cra_flags = ctr->base.cra_flags & CRYPTO_ALG_ASYNC;
+>>>>>>> master
 	inst->alg.base.cra_priority = (mac->base.cra_priority +
 				       ctr->base.cra_priority) / 2;
 	inst->alg.base.cra_blocksize = 1;

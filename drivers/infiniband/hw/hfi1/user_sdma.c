@@ -69,10 +69,17 @@ static int defer_packet_queue(
 	bool pkts_sent)
 {
 	struct hfi1_user_sdma_pkt_q *pq =
+<<<<<<< HEAD
 		container_of(wait->iow, struct hfi1_user_sdma_pkt_q, busy);
 
 	write_seqlock(&sde->waitlock);
 	trace_hfi1_usdma_defer(pq, sde, &pq->busy);
+=======
+		container_of(wait, struct hfi1_user_sdma_pkt_q, busy);
+	struct hfi1_ibdev *dev = &pq->dd->verbs_dev;
+
+	write_seqlock(&dev->iowait_lock);
+>>>>>>> master
 	if (sdma_progress(sde, seq, txreq))
 		goto eagain;
 	/*
@@ -81,15 +88,23 @@ static int defer_packet_queue(
 	 * it is supposed to be enqueued.
 	 */
 	xchg(&pq->state, SDMA_PKT_Q_DEFERRED);
+<<<<<<< HEAD
 	if (list_empty(&pq->busy.list)) {
 		pq->busy.lock = &sde->waitlock;
 		iowait_get_priority(&pq->busy);
+=======
+	if (list_empty(&pq->busy.list))
+>>>>>>> master
 		iowait_queue(pkts_sent, &pq->busy, &sde->dmawait);
 	}
 	write_sequnlock(&sde->waitlock);
 	return -EBUSY;
 eagain:
+<<<<<<< HEAD
 	write_sequnlock(&sde->waitlock);
+=======
+	write_sequnlock(&dev->iowait_lock);
+>>>>>>> master
 	return -EAGAIN;
 }
 
@@ -461,8 +476,14 @@ int hfi1_user_sdma_process_request(struct hfi1_filedata *fd,
 		memcpy(&req->iovs[i].iov,
 		       iovec + idx++,
 		       sizeof(req->iovs[i].iov));
+<<<<<<< HEAD
 		if (req->iovs[i].iov.iov_len == 0) {
 			ret = -EINVAL;
+=======
+		ret = pin_vector_pages(req, &req->iovs[i]);
+		if (ret) {
+			req->data_iovs = i;
+>>>>>>> master
 			goto free_req;
 		}
 		req->data_len += req->iovs[i].iov.iov_len;
@@ -524,6 +545,13 @@ int hfi1_user_sdma_process_request(struct hfi1_filedata *fd,
 
 	set_comp_state(pq, cq, info.comp_idx, QUEUED, 0);
 	pq->state = SDMA_PKT_Q_ACTIVE;
+<<<<<<< HEAD
+=======
+	/* Send the first N packets in the request to buy us some time */
+	ret = user_sdma_send_pkts(req, pcount);
+	if (unlikely(ret < 0 && ret != -EBUSY))
+		goto free_req;
+>>>>>>> master
 
 	/*
 	 * This is a somewhat blocking send implementation.
@@ -534,11 +562,17 @@ int hfi1_user_sdma_process_request(struct hfi1_filedata *fd,
 	while (req->seqsubmitted != req->info.npkts) {
 		ret = user_sdma_send_pkts(req, pcount);
 		if (ret < 0) {
+<<<<<<< HEAD
 			int we_ret;
 
 			if (ret != -EBUSY)
 				goto free_req;
 			we_ret = wait_event_interruptible_timeout(
+=======
+			if (ret != -EBUSY)
+				goto free_req;
+			wait_event_interruptible_timeout(
+>>>>>>> master
 				pq->busy.wait_dma,
 				pq->state == SDMA_PKT_Q_ACTIVE,
 				msecs_to_jiffies(
@@ -560,7 +594,11 @@ free_req:
 		if (req->seqsubmitted)
 			wait_event(pq->busy.wait_dma,
 				   (req->seqcomp == req->seqsubmitted - 1));
+<<<<<<< HEAD
 		user_sdma_free_request(req);
+=======
+		user_sdma_free_request(req, true);
+>>>>>>> master
 		pq_update(pq);
 		set_comp_state(pq, cq, info.comp_idx, ERROR, ret);
 	}
@@ -1181,7 +1219,11 @@ static void user_sdma_txreq_cb(struct sdma_txreq *txreq, int status)
 	if (req->seqcomp != req->info.npkts - 1)
 		return;
 
+<<<<<<< HEAD
 	user_sdma_free_request(req);
+=======
+	user_sdma_free_request(req, false);
+>>>>>>> master
 	set_comp_state(pq, cq, req->info.comp_idx, state, status);
 	pq_update(pq);
 }
@@ -1206,6 +1248,24 @@ static void user_sdma_free_request(struct user_sdma_request *req)
 		}
 	}
 
+<<<<<<< HEAD
+=======
+	for (i = 0; i < req->data_iovs; i++) {
+		struct sdma_mmu_node *node = req->iovs[i].node;
+
+		if (!node)
+			continue;
+
+		req->iovs[i].node = NULL;
+
+		if (unpin)
+			hfi1_mmu_rb_remove(req->pq->handler,
+					   &node->rb);
+		else
+			atomic_dec(&node->refcount);
+	}
+
+>>>>>>> master
 	kfree(req->tids);
 	clear_bit(req->info.comp_idx, req->pq->req_in_use);
 }

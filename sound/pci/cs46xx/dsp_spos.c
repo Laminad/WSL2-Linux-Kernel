@@ -850,6 +850,27 @@ int cs46xx_dsp_proc_done (struct snd_cs46xx *chip)
 
 	if (!ins)
 		return 0;
+<<<<<<< HEAD
+=======
+
+	snd_info_free_entry(ins->proc_sym_info_entry);
+	ins->proc_sym_info_entry = NULL;
+
+	snd_info_free_entry(ins->proc_modules_info_entry);
+	ins->proc_modules_info_entry = NULL;
+
+	snd_info_free_entry(ins->proc_parameter_dump_info_entry);
+	ins->proc_parameter_dump_info_entry = NULL;
+
+	snd_info_free_entry(ins->proc_sample_dump_info_entry);
+	ins->proc_sample_dump_info_entry = NULL;
+
+	snd_info_free_entry(ins->proc_scb_info_entry);
+	ins->proc_scb_info_entry = NULL;
+
+	snd_info_free_entry(ins->proc_task_info_entry);
+	ins->proc_task_info_entry = NULL;
+>>>>>>> master
 
 	mutex_lock(&chip->spos_mutex);
 	for (i = 0; i < ins->nscb; ++i) {

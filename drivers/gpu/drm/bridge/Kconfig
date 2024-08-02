@@ -43,6 +43,7 @@ config DRM_CHRONTEL_CH7033
 config DRM_CROS_EC_ANX7688
 	tristate "ChromeOS EC ANX7688 bridge"
 	depends on OF
+<<<<<<< HEAD
 	depends on I2C_CROS_EC_TUNNEL || COMPILE_TEST
 	select DRM_KMS_HELPER
 	select REGMAP_I2C
@@ -68,6 +69,8 @@ config DRM_FSL_LDB
 	tristate "Freescale i.MX8MP LDB bridge"
 	depends on OF
 	depends on ARCH_MXC || COMPILE_TEST
+=======
+>>>>>>> master
 	select DRM_KMS_HELPER
 	select DRM_PANEL_BRIDGE
 	help

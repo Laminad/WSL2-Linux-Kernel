@@ -247,6 +247,7 @@ struct svc_rqst {
 	struct auth_domain *	rq_client;	/* RPC peer info */
 	struct auth_domain *	rq_gssclient;	/* "gss/"-style peer info */
 	struct task_struct	*rq_task;	/* service thread */
+<<<<<<< HEAD
 	struct net		*rq_bc_net;	/* pointer to backchannel's
 						 * net namespace
 						 */
@@ -266,6 +267,14 @@ enum {
 	RQ_DATA,		/* request has data */
 };
 
+=======
+	spinlock_t		rq_lock;	/* per-request lock */
+	struct net		*rq_bc_net;	/* pointer to backchannel's
+						 * net namespace
+						 */
+};
+
+>>>>>>> master
 #define SVC_NET(rqst) (rqst->rq_xprt ? rqst->rq_xprt->xpt_net : rqst->rq_bc_net)
 
 /*

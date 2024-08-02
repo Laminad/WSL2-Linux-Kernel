@@ -997,8 +997,12 @@ static ssize_t snd_seq_write(struct file *file, const char __user *buf,
 	struct snd_seq_client *client = file->private_data;
 	int written = 0, len;
 	int err, handled;
+<<<<<<< HEAD
 	union __snd_seq_event __event;
 	struct snd_seq_event *ev = &__event.legacy;
+=======
+	struct snd_seq_event event;
+>>>>>>> master
 
 	if (!(snd_seq_file_flags(file) & SNDRV_SEQ_LFLG_OUTPUT))
 		return -ENXIO;

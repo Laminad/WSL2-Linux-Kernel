@@ -227,11 +227,21 @@ void msm_hdmi_audio_set_sample_rate(struct hdmi *hdmi, int rate);
 struct drm_bridge *msm_hdmi_bridge_init(struct hdmi *hdmi);
 void msm_hdmi_bridge_destroy(struct drm_bridge *bridge);
 
+<<<<<<< HEAD
 void msm_hdmi_hpd_irq(struct drm_bridge *bridge);
 enum drm_connector_status msm_hdmi_bridge_detect(
 		struct drm_bridge *bridge);
 int msm_hdmi_hpd_enable(struct drm_bridge *bridge);
 void msm_hdmi_hpd_disable(struct hdmi_bridge *hdmi_bridge);
+=======
+/*
+ * hdmi connector:
+ */
+
+void msm_hdmi_connector_irq(struct drm_connector *connector);
+struct drm_connector *msm_hdmi_connector_init(struct hdmi *hdmi);
+int msm_hdmi_hpd_enable(struct drm_connector *connector);
+>>>>>>> master
 
 /*
  * i2c adapter for ddc:

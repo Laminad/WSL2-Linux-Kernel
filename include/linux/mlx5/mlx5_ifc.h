@@ -7458,6 +7458,14 @@ struct mlx5_ifc_modify_cq_in_bits {
 	struct mlx5_ifc_cqc_bits cq_context;
 
 	u8         reserved_at_280[0x60];
+<<<<<<< HEAD
+=======
+
+ 	u8         cq_umem_valid[0x1];
+	u8         reserved_at_2e1[0x1f];
+
+	u8         reserved_at_300[0x580];
+>>>>>>> master
 
 	u8         cq_umem_valid[0x1];
 	u8         reserved_at_2e1[0x1f];

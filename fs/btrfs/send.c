@@ -3701,6 +3701,10 @@ static int apply_children_dir_moves(struct send_ctx *sctx)
 	if (!pm)
 		return 0;
 
+<<<<<<< HEAD
+=======
+	INIT_LIST_HEAD(&stack);
+>>>>>>> master
 	tail_append_pending_moves(sctx, pm, &stack);
 
 	while (!list_empty(&stack)) {
@@ -7119,7 +7123,11 @@ static int changed_extent(struct send_ctx *sctx,
 	 * updates the inode item, but it only changes the iversion (sequence
 	 * field in the inode item) of the inode, so if a file is deduplicated
 	 * the same amount of times in both the parent and send snapshots, its
+<<<<<<< HEAD
 	 * iversion becomes the same in both snapshots, whence the inode item is
+=======
+	 * iversion becames the same in both snapshots, whence the inode item is
+>>>>>>> master
 	 * the same on both snapshots.
 	 */
 	if (sctx->cur_ino != sctx->cmp_key->objectid)
@@ -8037,7 +8045,11 @@ static int flush_delalloc_roots(struct send_ctx *sctx)
 	int i;
 
 	if (root) {
+<<<<<<< HEAD
 		ret = btrfs_start_delalloc_snapshot(root, false);
+=======
+		ret = btrfs_start_delalloc_snapshot(root);
+>>>>>>> master
 		if (ret)
 			return ret;
 		btrfs_wait_ordered_extents(root, U64_MAX, 0, U64_MAX);
@@ -8045,7 +8057,11 @@ static int flush_delalloc_roots(struct send_ctx *sctx)
 
 	for (i = 0; i < sctx->clone_roots_cnt; i++) {
 		root = sctx->clone_roots[i].root;
+<<<<<<< HEAD
 		ret = btrfs_start_delalloc_snapshot(root, false);
+=======
+		ret = btrfs_start_delalloc_snapshot(root);
+>>>>>>> master
 		if (ret)
 			return ret;
 		btrfs_wait_ordered_extents(root, U64_MAX, 0, U64_MAX);

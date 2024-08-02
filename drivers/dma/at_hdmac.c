@@ -1803,9 +1803,14 @@ static struct dma_chan *at_dma_xlate(struct of_phandle_args *dma_spec,
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
 
+<<<<<<< HEAD
 	atslave = kmalloc(sizeof(*atslave), GFP_KERNEL);
 	if (!atslave) {
 		put_device(&dmac_pdev->dev);
+=======
+	atslave = kzalloc(sizeof(*atslave), GFP_KERNEL);
+	if (!atslave)
+>>>>>>> master
 		return NULL;
 	}
 
@@ -2108,7 +2113,11 @@ static int at_dma_remove(struct platform_device *pdev)
 	at_dma_off(atdma);
 	if (pdev->dev.of_node)
 		of_dma_controller_free(pdev->dev.of_node);
+<<<<<<< HEAD
 	dma_async_device_unregister(&atdma->dma_device);
+=======
+	dma_async_device_unregister(&atdma->dma_common);
+>>>>>>> master
 
 	dma_pool_destroy(atdma->memset_pool);
 	dma_pool_destroy(atdma->lli_pool);

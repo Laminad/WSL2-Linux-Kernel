@@ -495,10 +495,15 @@ static int __inet_insert_ifa(struct in_ifaddr *ifa, struct nlmsghdr *nlh,
 	/* Don't set IPv6 only flags to IPv4 addresses */
 	ifa->ifa_flags &= ~IPV6ONLY_FLAGS;
 
+<<<<<<< HEAD
 	ifap = &in_dev->ifa_list;
 	ifa1 = rtnl_dereference(*ifap);
 
 	while (ifa1) {
+=======
+	for (ifap = &in_dev->ifa_list; (ifa1 = *ifap) != NULL;
+	     ifap = &ifa1->ifa_next) {
+>>>>>>> master
 		if (!(ifa1->ifa_flags & IFA_F_SECONDARY) &&
 		    ifa->ifa_scope <= ifa1->ifa_scope)
 			last_primary = &ifa1->ifa_next;

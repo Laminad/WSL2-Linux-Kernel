@@ -392,6 +392,7 @@ static u8 nfit_dsm_revid(unsigned family, unsigned func)
 	return id;
 }
 
+<<<<<<< HEAD
 static bool payload_dumpable(struct nvdimm *nvdimm, unsigned int func)
 {
 	struct nfit_mem *nfit_mem = nvdimm_provider_data(nvdimm);
@@ -405,6 +406,10 @@ static bool payload_dumpable(struct nvdimm *nvdimm, unsigned int func)
 
 static int cmd_to_func(struct nfit_mem *nfit_mem, unsigned int cmd,
 		struct nd_cmd_pkg *call_pkg, int *family)
+=======
+static int cmd_to_func(struct nfit_mem *nfit_mem, unsigned int cmd,
+		struct nd_cmd_pkg *call_pkg)
+>>>>>>> master
 {
 	if (call_pkg) {
 		int i;
@@ -415,7 +420,10 @@ static int cmd_to_func(struct nfit_mem *nfit_mem, unsigned int cmd,
 		for (i = 0; i < ARRAY_SIZE(call_pkg->nd_reserved2); i++)
 			if (call_pkg->nd_reserved2[i])
 				return -EINVAL;
+<<<<<<< HEAD
 		*family = call_pkg->nd_family;
+=======
+>>>>>>> master
 		return call_pkg->nd_command;
 	}
 
@@ -449,14 +457,21 @@ int acpi_nfit_ctl(struct nvdimm_bus_descriptor *nd_desc, struct nvdimm *nvdimm,
 	acpi_handle handle;
 	const guid_t *guid;
 	int func, rc, i;
+<<<<<<< HEAD
 	int family = 0;
+=======
+>>>>>>> master
 
 	if (cmd_rc)
 		*cmd_rc = -EINVAL;
 
 	if (cmd == ND_CMD_CALL)
 		call_pkg = buf;
+<<<<<<< HEAD
 	func = cmd_to_func(nfit_mem, cmd, call_pkg, &family);
+=======
+	func = cmd_to_func(nfit_mem, cmd, call_pkg);
+>>>>>>> master
 	if (func < 0)
 		return func;
 
@@ -478,6 +493,7 @@ int acpi_nfit_ctl(struct nvdimm_bus_descriptor *nd_desc, struct nvdimm *nvdimm,
 
 		cmd_name = nvdimm_bus_cmd_name(cmd);
 		cmd_mask = nd_desc->cmd_mask;
+<<<<<<< HEAD
 		if (cmd == ND_CMD_CALL && call_pkg->nd_family) {
 			family = call_pkg->nd_family;
 			if (family > NVDIMM_BUS_FAMILY_MAX ||
@@ -491,6 +507,9 @@ int acpi_nfit_ctl(struct nvdimm_bus_descriptor *nd_desc, struct nvdimm *nvdimm,
 			dsm_mask = acpi_desc->bus_dsm_mask;
 			guid = to_nfit_uuid(NFIT_DEV_BUS);
 		}
+=======
+		dsm_mask = nd_desc->bus_dsm_mask;
+>>>>>>> master
 		desc = nd_cmd_bus_desc(cmd);
 		handle = adev->handle;
 		dimm_name = "bus";
@@ -503,8 +522,12 @@ int acpi_nfit_ctl(struct nvdimm_bus_descriptor *nd_desc, struct nvdimm *nvdimm,
 	 * Check for a valid command.  For ND_CMD_CALL, we also have to
 	 * make sure that the DSM function is supported.
 	 */
+<<<<<<< HEAD
 	if (cmd == ND_CMD_CALL &&
 	    (func > NVDIMM_CMD_MAX || !test_bit(func, &dsm_mask)))
+=======
+	if (cmd == ND_CMD_CALL && !test_bit(func, &dsm_mask))
+>>>>>>> master
 		return -ENOTTY;
 	else if (!test_bit(cmd, &cmd_mask))
 		return -ENOTTY;
@@ -2963,7 +2986,11 @@ static void acpi_nfit_init_ars(struct acpi_nfit_desc *acpi_desc,
 static int acpi_nfit_register_regions(struct acpi_nfit_desc *acpi_desc)
 {
 	struct nfit_spa *nfit_spa;
+<<<<<<< HEAD
 	int rc, do_sched_ars = 0;
+=======
+	int rc;
+>>>>>>> master
 
 	set_bit(ARS_VALID, &acpi_desc->scrub_flags);
 	list_for_each_entry(nfit_spa, &acpi_desc->spas, list) {
@@ -2975,7 +3002,11 @@ static int acpi_nfit_register_regions(struct acpi_nfit_desc *acpi_desc)
 		}
 	}
 
+<<<<<<< HEAD
 	list_for_each_entry(nfit_spa, &acpi_desc->spas, list) {
+=======
+	list_for_each_entry(nfit_spa, &acpi_desc->spas, list)
+>>>>>>> master
 		switch (nfit_spa_type(nfit_spa->spa)) {
 		case NFIT_SPA_VOLATILE:
 		case NFIT_SPA_PM:
@@ -3184,6 +3215,7 @@ static int __acpi_nfit_clear_to_send(struct nvdimm_bus_descriptor *nd_desc,
 	return 0;
 }
 
+<<<<<<< HEAD
 /*
  * Prevent security and firmware activate commands from being issued via
  * ioctl.
@@ -3210,6 +3242,8 @@ static int acpi_nfit_clear_to_send(struct nvdimm_bus_descriptor *nd_desc,
 	return __acpi_nfit_clear_to_send(nd_desc, nvdimm, cmd);
 }
 
+=======
+>>>>>>> master
 int acpi_nfit_ars_rescan(struct acpi_nfit_desc *acpi_desc,
 		enum nfit_ars_state req_type)
 {
@@ -3314,6 +3348,10 @@ void acpi_nfit_shutdown(void *data)
 
 	mutex_lock(&acpi_desc->init_mutex);
 	set_bit(ARS_CANCEL, &acpi_desc->scrub_flags);
+<<<<<<< HEAD
+=======
+	cancel_delayed_work_sync(&acpi_desc->dwork);
+>>>>>>> master
 	mutex_unlock(&acpi_desc->init_mutex);
 	cancel_delayed_work_sync(&acpi_desc->dwork);
 
@@ -3480,6 +3518,9 @@ static struct acpi_driver acpi_nfit_driver = {
 	.ids = acpi_nfit_ids,
 	.ops = {
 		.add = acpi_nfit_add,
+	},
+	.drv = {
+		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 	},
 };
 

@@ -325,6 +325,7 @@ void rdma_restrack_del(struct rdma_restrack_entry *res)
 	struct rdma_restrack_root *rt;
 	struct ib_device *dev;
 
+<<<<<<< HEAD
 	if (!res->valid) {
 		if (res->task) {
 			put_task_struct(res->task);
@@ -334,6 +335,9 @@ void rdma_restrack_del(struct rdma_restrack_entry *res)
 	}
 
 	if (res->no_track)
+=======
+	if (!res->valid)
+>>>>>>> master
 		goto out;
 
 	dev = res_to_dev(res);
@@ -347,7 +351,17 @@ void rdma_restrack_del(struct rdma_restrack_entry *res)
 
 out:
 	res->valid = false;
+<<<<<<< HEAD
 	rdma_restrack_put(res);
 	wait_for_completion(&res->comp);
+=======
+	up_write(&dev->res.rwsem);
+
+out:
+	if (res->task) {
+		put_task_struct(res->task);
+		res->task = NULL;
+	}
+>>>>>>> master
 }
 EXPORT_SYMBOL(rdma_restrack_del);

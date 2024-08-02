@@ -1059,7 +1059,11 @@ static snd_pcm_uframes_t acp_dma_pointer(struct snd_soc_component *component,
 		}
 		if (bytescount > 0) {
 			delay = do_div(bytescount, period_bytes);
+<<<<<<< HEAD
 			adata->delay += bytes_to_frames(runtime, delay);
+=======
+			runtime->delay = bytes_to_frames(runtime, delay);
+>>>>>>> master
 		}
 	} else {
 		buffersize = frames_to_bytes(runtime, runtime->buffer_size);
@@ -1165,6 +1169,7 @@ static int acp_dma_new(struct snd_soc_component *component,
 
 	switch (adata->asic_type) {
 	case CHIP_STONEY:
+<<<<<<< HEAD
 		snd_pcm_set_managed_buffer_all(rtd->pcm,
 					       SNDRV_DMA_TYPE_DEV,
 					       parent,
@@ -1177,6 +1182,20 @@ static int acp_dma_new(struct snd_soc_component *component,
 					       parent,
 					       MIN_BUFFER,
 					       MAX_BUFFER);
+=======
+		ret = snd_pcm_lib_preallocate_pages_for_all(rtd->pcm,
+							    SNDRV_DMA_TYPE_DEV,
+							    parent,
+							    ST_MIN_BUFFER,
+							    ST_MAX_BUFFER);
+		break;
+	default:
+		ret = snd_pcm_lib_preallocate_pages_for_all(rtd->pcm,
+							    SNDRV_DMA_TYPE_DEV,
+							    parent,
+							    MIN_BUFFER,
+							    MAX_BUFFER);
+>>>>>>> master
 		break;
 	}
 	return 0;

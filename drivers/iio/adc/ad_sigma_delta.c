@@ -323,7 +323,11 @@ out:
 	ad_sigma_delta_set_mode(sigma_delta, AD_SD_MODE_IDLE);
 	sigma_delta->bus_locked = false;
 	spi_bus_unlock(sigma_delta->spi->master);
+<<<<<<< HEAD
 	iio_device_release_direct_mode(indio_dev);
+=======
+	mutex_unlock(&indio_dev->mlock);
+>>>>>>> master
 
 	if (ret)
 		return ret;

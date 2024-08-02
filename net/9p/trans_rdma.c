@@ -349,7 +349,11 @@ send_done(struct ib_cq *cq, struct ib_wc *wc)
 			    c->busa, c->req->tc.size,
 			    DMA_TO_DEVICE);
 	up(&rdma->sq_sem);
+<<<<<<< HEAD
 	p9_req_put(client, c->req);
+=======
+	p9_req_put(c->req);
+>>>>>>> master
 	kfree(c);
 }
 

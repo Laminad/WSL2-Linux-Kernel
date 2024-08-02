@@ -181,11 +181,16 @@ static int handle_async_copy(struct nfs42_copy_res *res,
 			     nfs4_stateid *src_stateid,
 			     bool *restart)
 {
+<<<<<<< HEAD
 	struct nfs4_copy_state *copy, *tmp_copy = NULL, *iter;
+=======
+	struct nfs4_copy_state *copy, *tmp_copy;
+>>>>>>> master
 	int status = NFS4_OK;
 	struct nfs_open_context *dst_ctx = nfs_file_open_context(dst);
 	struct nfs_open_context *src_ctx = nfs_file_open_context(src);
 
+<<<<<<< HEAD
 	copy = kzalloc(sizeof(struct nfs4_copy_state), GFP_KERNEL);
 	if (!copy)
 		return -ENOMEM;
@@ -203,6 +208,24 @@ static int handle_async_copy(struct nfs42_copy_res *res,
 	}
 	if (tmp_copy) {
 		spin_unlock(&dst_server->nfs_client->cl_lock);
+=======
+	copy = kzalloc(sizeof(struct nfs4_copy_state), GFP_NOFS);
+	if (!copy)
+		return -ENOMEM;
+
+	spin_lock(&server->nfs_client->cl_lock);
+	list_for_each_entry(tmp_copy, &server->nfs_client->pending_cb_stateids,
+				copies) {
+		if (memcmp(&res->write_res.stateid, &tmp_copy->stateid,
+				NFS4_STATEID_SIZE))
+			continue;
+		found_pending = true;
+		list_del(&tmp_copy->copies);
+		break;
+	}
+	if (found_pending) {
+		spin_unlock(&server->nfs_client->cl_lock);
+>>>>>>> master
 		kfree(copy);
 		copy = tmp_copy;
 		goto out;
@@ -435,7 +458,10 @@ ssize_t nfs42_proc_copy(struct file *src, loff_t pos_src,
 		.stateid	= &args.dst_stateid,
 	};
 	ssize_t err, err2;
+<<<<<<< HEAD
 	bool restart = false;
+=======
+>>>>>>> master
 
 	src_lock = nfs_get_lock_context(nfs_file_open_context(src));
 	if (IS_ERR(src_lock))

@@ -392,7 +392,11 @@ err:
 
 static int
 cttimeout_default_fill_info(struct net *net, struct sk_buff *skb, u32 portid,
+<<<<<<< HEAD
 			    u32 seq, u32 type, int event, u16 l3num,
+=======
+			    u32 seq, u32 type, int event,
+>>>>>>> master
 			    const struct nf_conntrack_l4proto *l4proto,
 			    const unsigned int *timeouts)
 {
@@ -419,7 +423,16 @@ cttimeout_default_fill_info(struct net *net, struct sk_buff *skb, u32 portid,
 	if (ret < 0)
 		goto nla_put_failure;
 
+<<<<<<< HEAD
 	nla_nest_end(skb, nest_parms);
+=======
+		ret = l4proto->ctnl_timeout.obj_to_nlattr(skb, timeouts);
+		if (ret < 0)
+			goto nla_put_failure;
+
+		nla_nest_end(skb, nest_parms);
+	}
+>>>>>>> master
 
 	nlmsg_end(skb, nlh);
 	return skb->len;
@@ -448,6 +461,7 @@ static int cttimeout_default_get(struct sk_buff *skb,
 	l4num = nla_get_u8(cda[CTA_TIMEOUT_L4PROTO]);
 	l4proto = nf_ct_l4proto_find(l4num);
 
+<<<<<<< HEAD
 	if (l4proto->l4proto != l4num)
 		return -EOPNOTSUPP;
 
@@ -473,15 +487,56 @@ static int cttimeout_default_get(struct sk_buff *skb,
 	case IPPROTO_SCTP:
 #ifdef CONFIG_NF_CT_PROTO_SCTP
 		timeouts = nf_sctp_pernet(info->net)->timeouts;
+=======
+	err = -EOPNOTSUPP;
+	if (l4proto->l4proto != l4num)
+		goto err;
+
+	switch (l4proto->l4proto) {
+	case IPPROTO_ICMP:
+		timeouts = &net->ct.nf_ct_proto.icmp.timeout;
+		break;
+	case IPPROTO_TCP:
+		timeouts = net->ct.nf_ct_proto.tcp.timeouts;
+		break;
+	case IPPROTO_UDP: /* fallthrough */
+	case IPPROTO_UDPLITE:
+		timeouts = net->ct.nf_ct_proto.udp.timeouts;
+		break;
+	case IPPROTO_DCCP:
+#ifdef CONFIG_NF_CT_PROTO_DCCP
+		timeouts = net->ct.nf_ct_proto.dccp.dccp_timeout;
+#endif
+		break;
+	case IPPROTO_ICMPV6:
+		timeouts = &net->ct.nf_ct_proto.icmpv6.timeout;
+		break;
+	case IPPROTO_SCTP:
+#ifdef CONFIG_NF_CT_PROTO_SCTP
+		timeouts = net->ct.nf_ct_proto.sctp.timeouts;
+>>>>>>> master
 #endif
 		break;
 	case IPPROTO_GRE:
 #ifdef CONFIG_NF_CT_PROTO_GRE
+<<<<<<< HEAD
 		timeouts = nf_gre_pernet(info->net)->timeouts;
 #endif
 		break;
 	case 255:
 		timeouts = &nf_generic_pernet(info->net)->timeout;
+=======
+		if (l4proto->net_id) {
+			struct netns_proto_gre *net_gre;
+
+			net_gre = net_generic(net, *l4proto->net_id);
+			timeouts = net_gre->gre_timeouts;
+		}
+#endif
+		break;
+	case 255:
+		timeouts = &net->ct.nf_ct_proto.generic.timeout;
+>>>>>>> master
 		break;
 	default:
 		WARN_ONCE(1, "Missing timeouts for proto %d", l4proto->l4proto);
@@ -489,7 +544,11 @@ static int cttimeout_default_get(struct sk_buff *skb,
 	}
 
 	if (!timeouts)
+<<<<<<< HEAD
 		return -EOPNOTSUPP;
+=======
+		goto err;
+>>>>>>> master
 
 	skb2 = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
 	if (!skb2)
@@ -500,7 +559,11 @@ static int cttimeout_default_get(struct sk_buff *skb,
 					  info->nlh->nlmsg_seq,
 					  NFNL_MSG_TYPE(info->nlh->nlmsg_type),
 					  IPCTNL_MSG_TIMEOUT_DEFAULT_SET,
+<<<<<<< HEAD
 					  l3num, l4proto, timeouts);
+=======
+					  l4proto, timeouts);
+>>>>>>> master
 	if (ret <= 0) {
 		kfree_skb(skb2);
 		return -ENOMEM;

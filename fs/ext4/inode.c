@@ -382,7 +382,12 @@ static int __check_block_validity(struct inode *inode, const char *func,
 	    (inode->i_ino ==
 	     le32_to_cpu(EXT4_SB(inode->i_sb)->s_es->s_journal_inum)))
 		return 0;
+<<<<<<< HEAD
 	if (!ext4_inode_block_valid(inode, map->m_pblk, map->m_len)) {
+=======
+	if (!ext4_data_block_valid(EXT4_SB(inode->i_sb), map->m_pblk,
+				   map->m_len)) {
+>>>>>>> master
 		ext4_error_inode(inode, func, line, map->m_pblk,
 				 "lblock %lu mapped to illegal pblock %llu "
 				 "(length %d)", (unsigned long) map->m_lblk,
@@ -2556,6 +2561,18 @@ static int ext4_do_writepages(struct mpage_da_data *mpd)
 		goto out_writepages;
 	}
 
+<<<<<<< HEAD
+=======
+	if (ext4_should_dioread_nolock(inode)) {
+		/*
+		 * We may need to convert up to one extent per block in
+		 * the page and we may dirty the inode.
+		 */
+		rsv_blocks = 1 + ext4_chunk_trans_blocks(inode,
+						PAGE_SIZE >> inode->i_blkbits);
+	}
+
+>>>>>>> master
 	/*
 	 * If we have inline data and arrive here, it means that
 	 * we will soon create the block for the 1st page, so
@@ -3911,6 +3928,15 @@ int ext4_punch_hole(struct file *file, loff_t offset, loff_t length)
 
 	trace_ext4_punch_hole(inode, offset, length, 0);
 
+	ext4_clear_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA);
+	if (ext4_has_inline_data(inode)) {
+		down_write(&EXT4_I(inode)->i_mmap_sem);
+		ret = ext4_convert_inline_data(inode);
+		up_write(&EXT4_I(inode)->i_mmap_sem);
+		if (ret)
+			return ret;
+	}
+
 	/*
 	 * Write out all dirty pages to avoid race conditions
 	 * Then release them.
@@ -4695,6 +4721,7 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 	projid_t i_projid;
 
 	if ((!(flags & EXT4_IGET_SPECIAL) &&
+<<<<<<< HEAD
 	     ((ino < EXT4_FIRST_INO(sb) && ino != EXT4_ROOT_INO) ||
 	      ino == le32_to_cpu(es->s_usr_quota_inum) ||
 	      ino == le32_to_cpu(es->s_grp_quota_inum) ||
@@ -4705,6 +4732,14 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 		if (flags & EXT4_IGET_HANDLE)
 			return ERR_PTR(-ESTALE);
 		__ext4_error(sb, function, line, false, EFSCORRUPTED, 0,
+=======
+	     (ino < EXT4_FIRST_INO(sb) && ino != EXT4_ROOT_INO)) ||
+	    (ino < EXT4_ROOT_INO) ||
+	    (ino > le32_to_cpu(EXT4_SB(sb)->s_es->s_inodes_count))) {
+		if (flags & EXT4_IGET_HANDLE)
+			return ERR_PTR(-ESTALE);
+		__ext4_error(sb, function, line,
+>>>>>>> master
 			     "inode #%lu: comm %s: iget: illegal inode #",
 			     ino, current->comm);
 		return ERR_PTR(-EFSCORRUPTED);
@@ -4729,6 +4764,19 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 	if (ret < 0)
 		goto bad_inode;
 	raw_inode = ext4_raw_inode(&iloc);
+
+<<<<<<< HEAD
+	if ((flags & EXT4_IGET_HANDLE) &&
+	    (raw_inode->i_links_count == 0) && (raw_inode->i_mode == 0)) {
+		ret = -ESTALE;
+=======
+	if ((ino == EXT4_ROOT_INO) && (raw_inode->i_links_count == 0)) {
+		ext4_error_inode(inode, function, line, 0,
+				 "iget: root inode unallocated");
+		ret = -EFSCORRUPTED;
+>>>>>>> master
+		goto bad_inode;
+	}
 
 	if ((flags & EXT4_IGET_HANDLE) &&
 	    (raw_inode->i_links_count == 0) && (raw_inode->i_mode == 0)) {
@@ -4764,11 +4812,17 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 					      sizeof(gen));
 	}
 
+<<<<<<< HEAD
 	if ((!ext4_inode_csum_verify(inode, raw_inode, ei) ||
 	    ext4_simulate_fail(sb, EXT4_SIM_INODE_CRC)) &&
 	     (!(EXT4_SB(sb)->s_mount_state & EXT4_FC_REPLAY))) {
 		ext4_error_inode_err(inode, function, line, 0,
 				EFSBADCRC, "iget: checksum invalid");
+=======
+	if (!ext4_inode_csum_verify(inode, raw_inode, ei)) {
+		ext4_error_inode(inode, function, line, 0,
+				 "iget: checksum invalid");
+>>>>>>> master
 		ret = -EFSBADCRC;
 		goto bad_inode;
 	}
@@ -4832,6 +4886,7 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 	if ((size = i_size_read(inode)) < 0) {
 		ext4_error_inode(inode, function, line, 0,
 				 "iget: bad i_size value: %lld", size);
+<<<<<<< HEAD
 		ret = -EFSCORRUPTED;
 		goto bad_inode;
 	}
@@ -4844,6 +4899,8 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 	    ext4_test_inode_flag(inode, EXT4_INODE_INDEX)) {
 		ext4_error_inode(inode, function, line, 0,
 			 "iget: Dir with htree data on filesystem without dir_index feature.");
+=======
+>>>>>>> master
 		ret = -EFSCORRUPTED;
 		goto bad_inode;
 	}
@@ -4919,7 +4976,11 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 
 	ret = 0;
 	if (ei->i_file_acl &&
+<<<<<<< HEAD
 	    !ext4_inode_block_valid(inode, ei->i_file_acl, 1)) {
+=======
+	    !ext4_data_block_valid(EXT4_SB(sb), ei->i_file_acl, 1)) {
+>>>>>>> master
 		ext4_error_inode(inode, function, line, 0,
 				 "iget: bad extended attribute block %llu",
 				 ei->i_file_acl);
@@ -4981,6 +5042,7 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 		ret = -EFSCORRUPTED;
 		ext4_error_inode(inode, function, line, 0,
 				 "iget: bogus i_mode (%o)", inode->i_mode);
+<<<<<<< HEAD
 		goto bad_inode;
 	}
 	if (IS_CASEFOLDED(inode) && !ext4_has_feature_casefold(inode->i_sb)) {
@@ -4992,6 +5054,8 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 	if ((err_str = check_igot_inode(inode, flags)) != NULL) {
 		ext4_error_inode(inode, function, line, 0, err_str);
 		ret = -EFSCORRUPTED;
+=======
+>>>>>>> master
 		goto bad_inode;
 	}
 
@@ -5005,6 +5069,7 @@ bad_inode:
 	return ERR_PTR(ret);
 }
 
+<<<<<<< HEAD
 static void __ext4_update_other_inode_time(struct super_block *sb,
 					   unsigned long orig_ino,
 					   unsigned long ino,
@@ -5015,6 +5080,15 @@ static void __ext4_update_other_inode_time(struct super_block *sb,
 	inode = find_inode_by_ino_rcu(sb, ino);
 	if (!inode)
 		return;
+=======
+static int ext4_inode_blocks_set(handle_t *handle,
+				struct ext4_inode *raw_inode,
+				struct ext4_inode_info *ei)
+{
+	struct inode *inode = &(ei->vfs_inode);
+	u64 i_blocks = inode->i_blocks;
+	struct super_block *sb = inode->i_sb;
+>>>>>>> master
 
 	if (!inode_is_dirtytime_only(inode))
 		return;
@@ -5122,8 +5196,12 @@ static int ext4_do_update_inode(handle_t *handle,
 						    EXT4_SB(sb)->s_sbh,
 						    EXT4_JTR_NONE);
 		if (err)
+<<<<<<< HEAD
 			goto out_error;
 		lock_buffer(EXT4_SB(sb)->s_sbh);
+=======
+			goto out_brelse;
+>>>>>>> master
 		ext4_set_feature_large_file(sb);
 		ext4_superblock_csum_set(sb);
 		unlock_buffer(EXT4_SB(sb)->s_sbh);
@@ -5177,10 +5255,15 @@ int ext4_write_inode(struct inode *inode, struct writeback_control *wbc)
 {
 	int err;
 
-	if (WARN_ON_ONCE(current->flags & PF_MEMALLOC))
+	if (WARN_ON_ONCE(current->flags & PF_MEMALLOC) ||
+	    sb_rdonly(inode->i_sb))
 		return 0;
 
+<<<<<<< HEAD
 	if (unlikely(ext4_forced_shutdown(inode->i_sb)))
+=======
+	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
+>>>>>>> master
 		return -EIO;
 
 	if (EXT4_SB(inode->i_sb)->s_journal) {
@@ -5198,7 +5281,11 @@ int ext4_write_inode(struct inode *inode, struct writeback_control *wbc)
 		if (wbc->sync_mode != WB_SYNC_ALL || wbc->for_sync)
 			return 0;
 
+<<<<<<< HEAD
 		err = ext4_fc_commit(EXT4_SB(inode->i_sb)->s_journal,
+=======
+		err = jbd2_complete_transaction(EXT4_SB(inode->i_sb)->s_journal,
+>>>>>>> master
 						EXT4_I(inode)->i_sync_tid);
 	} else {
 		struct ext4_iloc iloc;
@@ -5311,7 +5398,11 @@ int ext4_setattr(struct mnt_idmap *idmap, struct dentry *dentry,
 				  ATTR_GID | ATTR_TIMES_SET))))
 		return -EPERM;
 
+<<<<<<< HEAD
 	error = setattr_prepare(idmap, dentry, attr);
+=======
+	error = setattr_prepare(dentry, attr);
+>>>>>>> master
 	if (error)
 		return error;
 
@@ -5454,6 +5545,7 @@ int ext4_setattr(struct mnt_idmap *idmap, struct dentry *dentry,
 				EXT4_I(inode)->i_disksize = old_disksize;
 			up_write(&EXT4_I(inode)->i_data_sem);
 			ext4_journal_stop(handle);
+<<<<<<< HEAD
 			if (error)
 				goto out_mmap_sem;
 			if (!shrink) {
@@ -5462,6 +5554,32 @@ int ext4_setattr(struct mnt_idmap *idmap, struct dentry *dentry,
 			} else if (ext4_should_journal_data(inode)) {
 				ext4_wait_for_tail_page_commit(inode);
 			}
+=======
+			if (error) {
+				if (orphan && inode->i_nlink)
+					ext4_orphan_del(NULL, inode);
+				goto err_out;
+			}
+		}
+		if (!shrink) {
+			pagecache_isize_extended(inode, oldsize, inode->i_size);
+		} else {
+			/*
+			 * Blocks are going to be removed from the inode. Wait
+			 * for dio in flight.
+			 */
+			inode_dio_wait(inode);
+		}
+		if (orphan && ext4_should_journal_data(inode))
+			ext4_wait_for_tail_page_commit(inode);
+		down_write(&EXT4_I(inode)->i_mmap_sem);
+
+		rc = ext4_break_layouts(inode);
+		if (rc) {
+			up_write(&EXT4_I(inode)->i_mmap_sem);
+			error = rc;
+			goto err_out;
+>>>>>>> master
 		}
 
 		/*
@@ -5719,11 +5837,20 @@ int ext4_mark_iloc_dirty(handle_t *handle,
 {
 	int err = 0;
 
+<<<<<<< HEAD
 	if (unlikely(ext4_forced_shutdown(inode->i_sb))) {
 		put_bh(iloc->bh);
 		return -EIO;
 	}
 	ext4_fc_track_inode(handle, inode);
+=======
+	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb)))) {
+		put_bh(iloc->bh);
+		return -EIO;
+	}
+	if (IS_I_VERSION(inode))
+		inode_inc_iversion(inode);
+>>>>>>> master
 
 	/* the do_update_inode consumes one bh->b_count */
 	get_bh(iloc->bh);
@@ -5883,8 +6010,12 @@ int ext4_expand_extra_isize(struct inode *inode,
 	ext4_write_lock_xattr(inode, &no_expand);
 
 	BUFFER_TRACE(iloc->bh, "get_write_access");
+<<<<<<< HEAD
 	error = ext4_journal_get_write_access(handle, inode->i_sb, iloc->bh,
 					      EXT4_JTR_NONE);
+=======
+	error = ext4_journal_get_write_access(handle, iloc->bh);
+>>>>>>> master
 	if (error) {
 		brelse(iloc->bh);
 		goto out_unlock;

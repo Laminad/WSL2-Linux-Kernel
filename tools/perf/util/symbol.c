@@ -101,6 +101,11 @@ static int prefix_underscores_count(const char *str)
 	return tail - str;
 }
 
+void __weak arch__symbols__fixup_end(struct symbol *p, struct symbol *c)
+{
+	p->end = c->start;
+}
+
 const char * __weak arch__normalize_symbol_name(const char *name)
 {
 	return name;
@@ -231,6 +236,7 @@ void symbols__fixup_end(struct rb_root_cached *symbols, bool is_kallsyms)
 		prev = curr;
 		curr = rb_entry(nd, struct symbol, rb_node);
 
+<<<<<<< HEAD
 		/*
 		 * On some architecture kernel text segment start is located at
 		 * some low memory address, while modules are located at high
@@ -254,6 +260,10 @@ void symbols__fixup_end(struct rb_root_cached *symbols, bool is_kallsyms)
 			pr_debug4("%s sym:%s end:%#" PRIx64 "\n",
 				  __func__, prev->name, prev->end);
 		}
+=======
+		if (prev->end == prev->start && prev->end != curr->start)
+			arch__symbols__fixup_end(prev, curr);
+>>>>>>> master
 	}
 
 	/* Last entry */
@@ -788,10 +798,17 @@ static int maps__split_kallsyms_for_kcore(struct maps *kmaps, struct dso *dso)
 			symbol__delete(pos);
 			continue;
 		}
+<<<<<<< HEAD
 		curr_map_dso = map__dso(curr_map);
 		pos->start -= map__start(curr_map) - map__pgoff(curr_map);
 		if (pos->end > map__end(curr_map))
 			pos->end = map__end(curr_map);
+=======
+
+		pos->start -= curr_map->start - curr_map->pgoff;
+		if (pos->end > curr_map->end)
+			pos->end = curr_map->end;
+>>>>>>> master
 		if (pos->end)
 			pos->end -= map__start(curr_map) - map__pgoff(curr_map);
 		symbols__insert(&curr_map_dso->symbols, pos);

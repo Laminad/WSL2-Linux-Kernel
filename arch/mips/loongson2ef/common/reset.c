@@ -44,6 +44,17 @@ static void loongson_restart(char *command)
 static void loongson_poweroff(void)
 {
 	mach_prepare_shutdown();
+<<<<<<< HEAD:arch/mips/loongson2ef/common/reset.c
+=======
+
+	/*
+	 * It needs a wait loop here, but mips/kernel/reset.c already calls
+	 * a generic delay loop, machine_hang(), so simply return.
+	 */
+	return;
+#else
+	void (*fw_poweroff)(void) = (void *)loongson_sysconf.poweroff_addr;
+>>>>>>> master:arch/mips/loongson64/common/reset.c
 
 	/*
 	 * It needs a wait loop here, but mips/kernel/reset.c already calls

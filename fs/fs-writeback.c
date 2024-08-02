@@ -345,6 +345,7 @@ static struct bdi_writeback *inode_to_wb_and_lock_list(struct inode *inode)
 }
 
 struct inode_switch_wbs_context {
+<<<<<<< HEAD
 	struct rcu_work		work;
 
 	/*
@@ -354,6 +355,53 @@ struct inode_switch_wbs_context {
 	 * the first part, all inode pointers are placed into a NULL-terminated
 	 * array embedded into struct inode_switch_wbs_context.  Otherwise
 	 * an inode could be left in a non-consistent state.
+=======
+	struct inode		*inode;
+	struct bdi_writeback	*new_wb;
+
+	struct rcu_head		rcu_head;
+	struct work_struct	work;
+};
+
+static void bdi_down_write_wb_switch_rwsem(struct backing_dev_info *bdi)
+{
+	down_write(&bdi->wb_switch_rwsem);
+}
+
+static void bdi_up_write_wb_switch_rwsem(struct backing_dev_info *bdi)
+{
+	up_write(&bdi->wb_switch_rwsem);
+}
+
+static void inode_switch_wbs_work_fn(struct work_struct *work)
+{
+	struct inode_switch_wbs_context *isw =
+		container_of(work, struct inode_switch_wbs_context, work);
+	struct inode *inode = isw->inode;
+	struct backing_dev_info *bdi = inode_to_bdi(inode);
+	struct address_space *mapping = inode->i_mapping;
+	struct bdi_writeback *old_wb = inode->i_wb;
+	struct bdi_writeback *new_wb = isw->new_wb;
+	struct radix_tree_iter iter;
+	bool switched = false;
+	void **slot;
+
+	/*
+	 * If @inode switches cgwb membership while sync_inodes_sb() is
+	 * being issued, sync_inodes_sb() might miss it.  Synchronize.
+	 */
+	down_read(&bdi->wb_switch_rwsem);
+
+	/*
+	 * By the time control reaches here, RCU grace period has passed
+	 * since I_WB_SWITCH assertion and all wb stat update transactions
+	 * between unlocked_inode_to_wb_begin/end() are guaranteed to be
+	 * synchronizing against the i_pages lock.
+	 *
+	 * Grabbing old_wb->list_lock, inode->i_lock and the i_pages lock
+	 * gives us exclusion against all wb related operations on @inode
+	 * including IO list manipulations and stat updates.
+>>>>>>> master
 	 */
 	struct bdi_writeback	*new_wb;
 	struct inode		*inodes[];
@@ -508,7 +556,11 @@ static void inode_switch_wbs_work_fn(struct work_struct *work)
 
 	up_read(&bdi->wb_switch_rwsem);
 
+<<<<<<< HEAD
 	if (nr_switched) {
+=======
+	if (switched) {
+>>>>>>> master
 		wb_wakeup(new_wb);
 		wb_put_many(old_wb, nr_switched);
 	}
@@ -567,13 +619,26 @@ static void inode_switch_wbs(struct inode *inode, int new_wb_id)
 	if (inode->i_state & I_WB_SWITCH)
 		return;
 
+<<<<<<< HEAD
 	/* avoid queueing a new switch if too many are already in flight */
 	if (atomic_read(&isw_nr_in_flight) > WB_FRN_MAX_IN_FLIGHT)
 		return;
 
 	isw = kzalloc(struct_size(isw, inodes, 2), GFP_ATOMIC);
-	if (!isw)
+=======
+	/*
+	 * Avoid starting new switches while sync_inodes_sb() is in
+	 * progress.  Otherwise, if the down_write protected issue path
+	 * blocks heavily, we might end up starting a large number of
+	 * switches which will block on the rwsem.
+	 */
+	if (!down_read_trylock(&bdi->wb_switch_rwsem))
 		return;
+
+	isw = kzalloc(sizeof(*isw), GFP_ATOMIC);
+>>>>>>> master
+	if (!isw)
+		goto out_unlock;
 
 	atomic_inc(&isw_nr_in_flight);
 
@@ -594,7 +659,11 @@ static void inode_switch_wbs(struct inode *inode, int new_wb_id)
 	if (!inode_prepare_wbs_switch(inode, isw->new_wb))
 		goto out_free;
 
+<<<<<<< HEAD
 	isw->inodes[0] = inode;
+=======
+	isw->inode = inode;
+>>>>>>> master
 
 	/*
 	 * In addition to synchronizing among switchers, I_WB_SWITCH tells
@@ -602,15 +671,25 @@ static void inode_switch_wbs(struct inode *inode, int new_wb_id)
 	 * lock so that stat transfer can synchronize against them.
 	 * Let's continue after I_WB_SWITCH is guaranteed to be visible.
 	 */
+<<<<<<< HEAD
 	INIT_RCU_WORK(&isw->work, inode_switch_wbs_work_fn);
 	queue_rcu_work(isw_wq, &isw->work);
 	return;
+=======
+	call_rcu(&isw->rcu_head, inode_switch_wbs_rcu_fn);
+
+	atomic_inc(&isw_nr_in_flight);
+
+	goto out_unlock;
+>>>>>>> master
 
 out_free:
 	atomic_dec(&isw_nr_in_flight);
 	if (isw->new_wb)
 		wb_put(isw->new_wb);
 	kfree(isw);
+out_unlock:
+	up_read(&bdi->wb_switch_rwsem);
 }
 
 static bool isw_prepare_wbs_switch(struct inode_switch_wbs_context *isw,
@@ -876,7 +955,10 @@ EXPORT_SYMBOL_GPL(wbc_detach_inode);
 void wbc_account_cgroup_owner(struct writeback_control *wbc, struct page *page,
 			      size_t bytes)
 {
+<<<<<<< HEAD
 	struct folio *folio;
+=======
+>>>>>>> master
 	struct cgroup_subsys_state *css;
 	int id;
 
@@ -889,8 +971,12 @@ void wbc_account_cgroup_owner(struct writeback_control *wbc, struct page *page,
 	if (!wbc->wb || wbc->no_cgroup_owner)
 		return;
 
+<<<<<<< HEAD
 	folio = page_folio(page);
 	css = mem_cgroup_css_from_folio(folio);
+=======
+	css = mem_cgroup_css_from_page(page);
+>>>>>>> master
 	/* dead cgroups shouldn't contribute to inode ownership arbitration */
 	if (!(css->flags & CSS_ONLINE))
 		return;
@@ -1148,6 +1234,7 @@ fs_initcall(cgroup_writeback_init);
 static void bdi_down_write_wb_switch_rwsem(struct backing_dev_info *bdi) { }
 static void bdi_up_write_wb_switch_rwsem(struct backing_dev_info *bdi) { }
 
+<<<<<<< HEAD
 static void inode_cgwb_move_to_attached(struct inode *inode,
 					struct bdi_writeback *wb)
 {
@@ -1160,6 +1247,8 @@ static void inode_cgwb_move_to_attached(struct inode *inode,
 	wb_io_lists_depopulated(wb);
 }
 
+=======
+>>>>>>> master
 static struct bdi_writeback *
 locked_inode_to_wb_and_lock_list(struct inode *inode)
 	__releases(&inode->i_lock)
@@ -2758,7 +2847,11 @@ void sync_inodes_sb(struct super_block *sb)
 	/* protect against inode wb switch, see inode_switch_wbs_work_fn() */
 	bdi_down_write_wb_switch_rwsem(bdi);
 	bdi_split_work_to_wbs(bdi, &work, false);
+<<<<<<< HEAD
 	wb_wait_for_completion(&done);
+=======
+	wb_wait_for_completion(bdi, &done);
+>>>>>>> master
 	bdi_up_write_wb_switch_rwsem(bdi);
 
 	wait_sb_inodes(sb);

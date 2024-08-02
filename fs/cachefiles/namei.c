@@ -154,6 +154,7 @@ retry:
 	inode_lock(d_inode(subdir));
 	inode_unlock(d_inode(dir));
 
+<<<<<<< HEAD
 	if (!__cachefiles_mark_inode_in_use(NULL, d_inode(subdir))) {
 		pr_notice("cachefiles: Inode already in use: %pd (B=%lx)\n",
 			  subdir, d_inode(subdir)->i_ino);
@@ -209,6 +210,17 @@ nomem_d_alloc:
 	inode_unlock(d_inode(dir));
 	_leave(" = -ENOMEM");
 	return ERR_PTR(-ENOMEM);
+=======
+	cache->cache.ops->put_object(&xobject->fscache,
+		(enum fscache_obj_ref_trace)cachefiles_obj_put_wait_retry);
+	goto try_again;
+
+requeue:
+	cache->cache.ops->put_object(&xobject->fscache,
+		(enum fscache_obj_ref_trace)cachefiles_obj_put_wait_timeo);
+	_leave(" = -ETIMEDOUT");
+	return -ETIMEDOUT;
+>>>>>>> master
 }
 
 /*

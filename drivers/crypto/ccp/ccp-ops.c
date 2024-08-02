@@ -876,12 +876,19 @@ ccp_run_aes_gcm_cmd(struct ccp_cmd_queue *cmd_q, struct ccp_cmd *cmd)
 		ret = ccp_init_dm_workarea(&tag, cmd_q, authsize,
 					   DMA_BIDIRECTIONAL);
 		if (ret)
+<<<<<<< HEAD
 			goto e_final_wa;
 		ret = ccp_set_dm_area(&tag, 0, p_tag, 0, authsize);
 		if (ret) {
 			ccp_dm_free(&tag);
 			goto e_final_wa;
 		}
+=======
+			goto e_tag;
+		ret = ccp_set_dm_area(&tag, 0, p_tag, 0, authsize);
+		if (ret)
+			goto e_tag;
+>>>>>>> master
 
 		ret = crypto_memneq(tag.address, final_wa.address,
 				    authsize) ? -EBADMSG : 0;

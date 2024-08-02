@@ -434,9 +434,49 @@ static void hns3_self_test(struct net_device *ndev,
 	for (i = 0; i < cnt; i++)
 		data[i] = HNS3_NIC_LB_TEST_UNEXECUTED;
 
+<<<<<<< HEAD
 	if (hns3_nic_resetting(ndev)) {
 		netdev_err(ndev, "dev resetting!");
 		goto failure;
+=======
+	st_param[HNAE3_MAC_INTER_LOOP_MAC][0] = HNAE3_MAC_INTER_LOOP_MAC;
+	st_param[HNAE3_MAC_INTER_LOOP_MAC][1] =
+			h->flags & HNAE3_SUPPORT_MAC_LOOPBACK;
+
+	st_param[HNAE3_MAC_INTER_LOOP_SERDES][0] = HNAE3_MAC_INTER_LOOP_SERDES;
+	st_param[HNAE3_MAC_INTER_LOOP_SERDES][1] =
+			h->flags & HNAE3_SUPPORT_SERDES_LOOPBACK;
+
+	if (if_running)
+		ndev->netdev_ops->ndo_stop(ndev);
+
+#if IS_ENABLED(CONFIG_VLAN_8021Q)
+	/* Disable the vlan filter for selftest does not support it */
+	dis_vlan_filter = (ndev->features & NETIF_F_HW_VLAN_CTAG_FILTER) &&
+				h->ae_algo->ops->enable_vlan_filter;
+	if (dis_vlan_filter)
+		h->ae_algo->ops->enable_vlan_filter(h, false);
+#endif
+
+	set_bit(HNS3_NIC_STATE_TESTING, &priv->state);
+
+	for (i = 0; i < HNS3_SELF_TEST_TYPE_NUM; i++) {
+		enum hnae3_loop loop_type = (enum hnae3_loop)st_param[i][0];
+
+		if (!st_param[i][1])
+			continue;
+
+		data[test_index] = hns3_lp_up(ndev, loop_type);
+		if (!data[test_index]) {
+			data[test_index] = hns3_lp_run_test(ndev, loop_type);
+			hns3_lp_down(ndev, loop_type);
+		}
+
+		if (data[test_index])
+			eth_test->flags |= ETH_TEST_FL_FAILED;
+
+		test_index++;
+>>>>>>> master
 	}
 
 	if (!(eth_test->flags & ETH_TEST_FL_OFFLINE))
@@ -445,6 +485,7 @@ static void hns3_self_test(struct net_device *ndev,
 	if (netif_msg_ifdown(h))
 		netdev_info(ndev, "self test start\n");
 
+<<<<<<< HEAD
 	hns3_set_selftest_param(h, st_param);
 
 	/* external loopback test requires that the link is up and the duplex is
@@ -466,6 +507,10 @@ static void hns3_self_test(struct net_device *ndev,
 
 failure:
 	eth_test->flags |= ETH_TEST_FL_FAILED;
+=======
+	if (if_running)
+		ndev->netdev_ops->ndo_open(ndev);
+>>>>>>> master
 }
 
 static void hns3_update_limit_promisc_mode(struct net_device *netdev,

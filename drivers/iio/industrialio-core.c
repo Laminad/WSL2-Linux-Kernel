@@ -1991,11 +1991,17 @@ EXPORT_SYMBOL(__iio_device_register);
  */
 void iio_device_unregister(struct iio_dev *indio_dev)
 {
+<<<<<<< HEAD
 	struct iio_dev_opaque *iio_dev_opaque = to_iio_dev_opaque(indio_dev);
 
 	cdev_device_del(&iio_dev_opaque->chrdev, &indio_dev->dev);
 
 	mutex_lock(&iio_dev_opaque->info_exist_lock);
+=======
+	cdev_device_del(&indio_dev->chrdev, &indio_dev->dev);
+>>>>>>> master
+
+	mutex_lock(&indio_dev->info_exist_lock);
 
 	iio_device_unregister_debugfs(indio_dev);
 

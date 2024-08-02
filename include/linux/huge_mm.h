@@ -24,6 +24,7 @@ static inline void huge_pud_set_accessed(struct vm_fault *vmf, pud_t orig_pud)
 }
 #endif
 
+<<<<<<< HEAD
 vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf);
 bool madvise_free_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
 			   pmd_t *pmd, unsigned long addr, unsigned long next);
@@ -40,6 +41,33 @@ int change_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
 vm_fault_t vmf_insert_pfn_pmd(struct vm_fault *vmf, pfn_t pfn, bool write);
 vm_fault_t vmf_insert_pfn_pud(struct vm_fault *vmf, pfn_t pfn, bool write);
 
+=======
+extern vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd);
+extern struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+					  unsigned long addr,
+					  pmd_t *pmd,
+					  unsigned int flags);
+extern bool madvise_free_huge_pmd(struct mmu_gather *tlb,
+			struct vm_area_struct *vma,
+			pmd_t *pmd, unsigned long addr, unsigned long next);
+extern int zap_huge_pmd(struct mmu_gather *tlb,
+			struct vm_area_struct *vma,
+			pmd_t *pmd, unsigned long addr);
+extern int zap_huge_pud(struct mmu_gather *tlb,
+			struct vm_area_struct *vma,
+			pud_t *pud, unsigned long addr);
+extern int mincore_huge_pmd(struct vm_area_struct *vma, pmd_t *pmd,
+			unsigned long addr, unsigned long end,
+			unsigned char *vec);
+extern bool move_huge_pmd(struct vm_area_struct *vma, unsigned long old_addr,
+			 unsigned long new_addr, unsigned long old_end,
+			 pmd_t *old_pmd, pmd_t *new_pmd);
+extern int change_huge_pmd(struct vm_area_struct *vma, pmd_t *pmd,
+			unsigned long addr, pgprot_t newprot,
+			int prot_numa);
+vm_fault_t vmf_insert_pfn_pmd(struct vm_fault *vmf, pfn_t pfn, bool write);
+vm_fault_t vmf_insert_pfn_pud(struct vm_fault *vmf, pfn_t pfn, bool write);
+>>>>>>> master
 enum transparent_hugepage_flag {
 	TRANSPARENT_HUGEPAGE_UNSUPPORTED,
 	TRANSPARENT_HUGEPAGE_FLAG,

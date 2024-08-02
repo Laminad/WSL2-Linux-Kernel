@@ -6,7 +6,12 @@
 
 set -e
 
+<<<<<<< HEAD
 OUT=$1
+=======
+IN=$1
+OUT=$2
+>>>>>>> master
 
 dump_array()
 {

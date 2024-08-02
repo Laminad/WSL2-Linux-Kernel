@@ -114,6 +114,13 @@
 #define PCI_DEVICE_ID_AMD_16H_NB_F2	0x1532
 #define PCI_DEVICE_ID_AMD_16H_M30H_NB_F1 0x1581
 #define PCI_DEVICE_ID_AMD_16H_M30H_NB_F2 0x1582
+<<<<<<< HEAD
+=======
+#define PCI_DEVICE_ID_AMD_17H_DF_F0	0x1460
+#define PCI_DEVICE_ID_AMD_17H_DF_F6	0x1466
+#define PCI_DEVICE_ID_AMD_17H_M10H_DF_F0 0x15e8
+#define PCI_DEVICE_ID_AMD_17H_M10H_DF_F6 0x15ee
+>>>>>>> master
 
 /*
  * Function 1 - Address Map
@@ -273,6 +280,24 @@
 
 #define UMC_SDP_INIT			BIT(31)
 
+<<<<<<< HEAD
+=======
+#define NUM_UMCS			2
+
+enum amd_families {
+	K8_CPUS = 0,
+	F10_CPUS,
+	F15_CPUS,
+	F15_M30H_CPUS,
+	F15_M60H_CPUS,
+	F16_CPUS,
+	F16_M30H_CPUS,
+	F17_CPUS,
+	F17_M10H_CPUS,
+	NUM_FAMILIES,
+};
+
+>>>>>>> master
 /* Error injection control structure */
 struct error_injection {
 	u32	 section;

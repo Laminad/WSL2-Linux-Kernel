@@ -156,6 +156,7 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
 /* File is stream-like */
 #define FMODE_STREAM		((__force fmode_t)0x200000)
 
+<<<<<<< HEAD
 /* File supports DIRECT IO */
 #define	FMODE_CAN_ODIRECT	((__force fmode_t)0x400000)
 
@@ -167,6 +168,8 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
 /* File is embedded in backing_file object */
 #define FMODE_BACKING		((__force fmode_t)0x2000000)
 
+=======
+>>>>>>> master
 /* File was opened by fanotify and shouldn't generate fanotify events */
 #define FMODE_NONOTIFY		((__force fmode_t)0x4000000)
 
@@ -372,11 +375,16 @@ enum rw_hint {
 
 struct kiocb {
 	struct file		*ki_filp;
+
+	/* The 'ki_filp' pointer is shared in a union for aio */
+	randomized_struct_fields_start
+
 	loff_t			ki_pos;
 	void (*ki_complete)(struct kiocb *iocb, long ret);
 	void			*private;
 	int			ki_flags;
 	u16			ki_ioprio; /* See linux/ioprio.h */
+<<<<<<< HEAD
 	union {
 		/*
 		 * Only used for async buffered reads, where it denotes the
@@ -394,6 +402,10 @@ struct kiocb {
 		 */
 		ssize_t (*dio_complete)(void *data);
 	};
+=======
+
+	randomized_struct_fields_end
+>>>>>>> master
 };
 
 static inline bool is_sync_kiocb(struct kiocb *kiocb)
@@ -1272,6 +1284,7 @@ struct super_block {
 	/* Number of inodes with nlink == 0 but still referenced */
 	atomic_long_t s_remove_count;
 
+<<<<<<< HEAD
 	/*
 	 * Number of inode/mount/sb objects that are being watched, note that
 	 * inodes objects are currently double-accounted.
@@ -1279,6 +1292,12 @@ struct super_block {
 	atomic_long_t s_fsnotify_connectors;
 
 	/* Read-only state of the superblock is being changed */
+=======
+	/* Pending fsnotify inode refs */
+	atomic_long_t s_fsnotify_inode_refs;
+
+	/* Being remounted read-only */
+>>>>>>> master
 	int s_readonly_remount;
 
 	/* per-sb errseq_t for reporting writeback errors via syncfs */
@@ -2610,6 +2629,55 @@ extern void init_special_inode(struct inode *, umode_t, dev_t);
 extern void make_bad_inode(struct inode *);
 extern bool is_bad_inode(struct inode *);
 
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_BLOCK
+extern void check_disk_size_change(struct gendisk *disk,
+		struct block_device *bdev, bool verbose);
+extern int revalidate_disk(struct gendisk *);
+extern int check_disk_change(struct block_device *);
+extern int __invalidate_device(struct block_device *, bool);
+extern int invalidate_partition(struct gendisk *, int);
+#endif
+unsigned long invalidate_mapping_pages(struct address_space *mapping,
+					pgoff_t start, pgoff_t end);
+
+static inline void invalidate_remote_inode(struct inode *inode)
+{
+	if (S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode) ||
+	    S_ISLNK(inode->i_mode))
+		invalidate_mapping_pages(inode->i_mapping, 0, -1);
+}
+extern int invalidate_inode_pages2(struct address_space *mapping);
+extern int invalidate_inode_pages2_range(struct address_space *mapping,
+					 pgoff_t start, pgoff_t end);
+extern int write_inode_now(struct inode *, int);
+extern int filemap_fdatawrite(struct address_space *);
+extern int filemap_flush(struct address_space *);
+extern int filemap_fdatawait_keep_errors(struct address_space *mapping);
+extern int filemap_fdatawait_range(struct address_space *, loff_t lstart,
+				   loff_t lend);
+extern int filemap_fdatawait_range_keep_errors(struct address_space *mapping,
+		loff_t start_byte, loff_t end_byte);
+
+static inline int filemap_fdatawait(struct address_space *mapping)
+{
+	return filemap_fdatawait_range(mapping, 0, LLONG_MAX);
+}
+
+extern bool filemap_range_has_page(struct address_space *, loff_t lstart,
+				  loff_t lend);
+extern int filemap_write_and_wait(struct address_space *mapping);
+extern int filemap_write_and_wait_range(struct address_space *mapping,
+				        loff_t lstart, loff_t lend);
+extern int __filemap_fdatawrite_range(struct address_space *mapping,
+				loff_t start, loff_t end, int sync_mode);
+extern int filemap_fdatawrite_range(struct address_space *mapping,
+				loff_t start, loff_t end);
+extern int filemap_check_errors(struct address_space *mapping);
+extern void __filemap_set_wb_err(struct address_space *mapping, int err);
+
+>>>>>>> master
 extern int __must_check file_fdatawait_range(struct file *file, loff_t lstart,
 						loff_t lend);
 extern int __must_check file_check_and_advance_wb_err(struct file *file);

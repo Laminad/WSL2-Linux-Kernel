@@ -91,6 +91,7 @@ static inline unsigned long mm_lam_cr3_mask(struct mm_struct *mm)
 	return mm->context.lam_cr3_mask;
 }
 
+<<<<<<< HEAD
 static inline void dup_lam(struct mm_struct *oldmm, struct mm_struct *mm)
 {
 	mm->context.lam_cr3_mask = oldmm->context.lam_cr3_mask;
@@ -133,11 +134,16 @@ static inline void mm_reset_untag_mask(struct mm_struct *mm)
 #define enter_lazy_tlb enter_lazy_tlb
 extern void enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk);
 
+=======
+>>>>>>> master
 /*
  * Init a new mm.  Used on mm copies, like at fork()
  * and on mm's that are brand-new, like at execve().
  */
+<<<<<<< HEAD
 #define init_new_context init_new_context
+=======
+>>>>>>> master
 static inline int init_new_context(struct task_struct *tsk,
 				   struct mm_struct *mm)
 {
@@ -208,8 +214,12 @@ static inline void arch_dup_pkeys(struct mm_struct *oldmm,
 static inline int arch_dup_mmap(struct mm_struct *oldmm, struct mm_struct *mm)
 {
 	arch_dup_pkeys(oldmm, mm);
+<<<<<<< HEAD
 	paravirt_enter_mmap(mm);
 	dup_lam(oldmm, mm);
+=======
+	paravirt_arch_dup_mmap(oldmm, mm);
+>>>>>>> master
 	return ldt_dup_context(oldmm, mm);
 }
 

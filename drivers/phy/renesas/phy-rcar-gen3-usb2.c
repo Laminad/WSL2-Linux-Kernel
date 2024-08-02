@@ -391,7 +391,18 @@ static void rcar_gen3_init_otg(struct rcar_gen3_chan *ch)
 	void __iomem *usb2_base = ch->base;
 	u32 val;
 
+<<<<<<< HEAD
 	/* Should not use functions of read-modify-write a register */
+=======
+	val = readl(usb2_base + USB2_VBCTRL);
+	val &= ~USB2_VBCTRL_OCCLREN;
+	writel(val | USB2_VBCTRL_DRVVBUSSEL, usb2_base + USB2_VBCTRL);
+	writel(USB2_OBINT_BITS, usb2_base + USB2_OBINTSTA);
+	val = readl(usb2_base + USB2_OBINTEN);
+	writel(val | USB2_OBINT_BITS, usb2_base + USB2_OBINTEN);
+	val = readl(usb2_base + USB2_ADPCTRL);
+	writel(val | USB2_ADPCTRL_IDPULLUP, usb2_base + USB2_ADPCTRL);
+>>>>>>> master
 	val = readl(usb2_base + USB2_LINECTRL1);
 	val = (val & ~USB2_LINECTRL1_DP_RPD) | USB2_LINECTRL1_DPRPD_EN |
 	      USB2_LINECTRL1_DMRPD_EN | USB2_LINECTRL1_DM_RPD;

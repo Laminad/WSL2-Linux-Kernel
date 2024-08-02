@@ -38,7 +38,13 @@
  */
 int kdbgetsymval(const char *symname, kdb_symtab_t *symtab)
 {
+<<<<<<< HEAD
 	kdb_dbg_printf(AR, "symname=%s, symtab=%px\n", symname, symtab);
+=======
+	if (KDB_DEBUG(AR))
+		kdb_printf("kdbgetsymval: symname=%s, symtab=%px\n", symname,
+			   symtab);
+>>>>>>> master
 	memset(symtab, 0, sizeof(*symtab));
 	symtab->sym_start = kallsyms_lookup_name(symname);
 	if (symtab->sym_start) {
@@ -85,7 +91,12 @@ int kdbnearsym(unsigned long addr, kdb_symtab_t *symtab)
 	unsigned long offset = 0;
 	static char namebuf[KSYM_NAME_LEN];
 
+<<<<<<< HEAD
 	kdb_dbg_printf(AR, "addr=0x%lx, symtab=%px\n", addr, symtab);
+=======
+	if (KDB_DEBUG(AR))
+		kdb_printf("kdbnearsym: addr=0x%lx, symtab=%px\n", addr, symtab);
+>>>>>>> master
 	memset(symtab, 0, sizeof(*symtab));
 
 	if (addr < 4096)
@@ -103,8 +114,17 @@ int kdbnearsym(unsigned long addr, kdb_symtab_t *symtab)
 
 	if (symtab->mod_name == NULL)
 		symtab->mod_name = "kernel";
+<<<<<<< HEAD
 	kdb_dbg_printf(AR, "returns %d symtab->sym_start=0x%lx, symtab->mod_name=%px, symtab->sym_name=%px (%s)\n",
 		       ret, symtab->sym_start, symtab->mod_name, symtab->sym_name, symtab->sym_name);
+=======
+	if (KDB_DEBUG(AR))
+		kdb_printf("kdbnearsym: returns %d symtab->sym_start=0x%lx, "
+		   "symtab->mod_name=%px, symtab->sym_name=%px (%s)\n", ret,
+		   symtab->sym_start, symtab->mod_name, symtab->sym_name,
+		   symtab->sym_name);
+
+>>>>>>> master
 out:
 	return ret;
 }
@@ -527,6 +547,7 @@ bool kdb_task_state(const struct task_struct *p, const char *mask)
 	 * scheduler is idling and any system daemons that are currently
 	 * sleeping.
 	 */
+<<<<<<< HEAD
 	if (!mask || mask[0] == '\0')
 		return !strchr("-ims", state);
 
@@ -535,6 +556,47 @@ bool kdb_task_state(const struct task_struct *p, const char *mask)
 		return true;
 
 	return strchr(mask, state);
+=======
+	static int debug_kusage_one_time;
+#else
+	static int debug_kusage_one_time = 1;
+#endif
+	if (!get_dap_lock()) {
+		__release(dap_lock);	/* we never actually got it */
+		return;
+	}
+	h_free = (struct debug_alloc_header *)(debug_alloc_pool + dah_first);
+	if (dah_first == 0 &&
+	    (h_free->size == sizeof(debug_alloc_pool_aligned) - dah_overhead ||
+	     dah_first_call))
+		goto out;
+	if (!debug_kusage_one_time)
+		goto out;
+	debug_kusage_one_time = 0;
+	kdb_printf("%s: debug_kmalloc memory leak dah_first %d\n",
+		   __func__, dah_first);
+	if (dah_first) {
+		h_used = (struct debug_alloc_header *)debug_alloc_pool;
+		kdb_printf("%s: h_used %px size %d\n", __func__, h_used,
+			   h_used->size);
+	}
+	do {
+		h_used = (struct debug_alloc_header *)
+			  ((char *)h_free + dah_overhead + h_free->size);
+		kdb_printf("%s: h_used %px size %d caller %px\n",
+			   __func__, h_used, h_used->size, h_used->caller);
+		h_free = (struct debug_alloc_header *)
+			  (debug_alloc_pool + h_free->next);
+	} while (h_free->next);
+	h_used = (struct debug_alloc_header *)
+		  ((char *)h_free + dah_overhead + h_free->size);
+	if ((char *)h_used - debug_alloc_pool !=
+	    sizeof(debug_alloc_pool_aligned))
+		kdb_printf("%s: h_used %px size %d caller %px\n",
+			   __func__, h_used, h_used->size, h_used->caller);
+out:
+	spin_unlock(&dap_lock);
+>>>>>>> master
 }
 
 /* Maintain a small stack of kdb_flags to allow recursion without disturbing

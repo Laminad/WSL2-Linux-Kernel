@@ -21,7 +21,10 @@ TEST_GEN_PROGS += proc-uptime-002
 TEST_GEN_PROGS += read
 TEST_GEN_PROGS += self
 TEST_GEN_PROGS += setns-dcache
+<<<<<<< HEAD
 TEST_GEN_PROGS += setns-sysvipc
+=======
+>>>>>>> master
 TEST_GEN_PROGS += thread-self
 TEST_GEN_PROGS += proc-multiple-procfs
 TEST_GEN_PROGS += proc-fsconfig-hidepid

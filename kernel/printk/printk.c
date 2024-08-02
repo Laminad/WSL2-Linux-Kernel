@@ -1043,7 +1043,11 @@ static void __init log_buf_len_update(u64 size)
 /* save requested log_buf_len since it's too early to process it */
 static int __init log_buf_len_setup(char *str)
 {
+<<<<<<< HEAD
 	u64 size;
+=======
+	unsigned int size;
+>>>>>>> master
 
 	if (!str)
 		return -EINVAL;
@@ -4235,10 +4239,30 @@ bool kmsg_dump_get_buffer(struct kmsg_dump_iter *iter, bool syslog,
 	seq = find_first_fitting_seq(iter->cur_seq, iter->next_seq,
 				     size - 1, syslog, time);
 
+<<<<<<< HEAD
 	/*
 	 * Next kmsg_dump_get_buffer() invocation will dump block of
 	 * older records stored right before this one.
 	 */
+=======
+		l += msg_print_text(msg, true, NULL, 0);
+		idx = log_next(idx);
+		seq++;
+	}
+
+	/* move first record forward until length fits into the buffer */
+	seq = dumper->cur_seq;
+	idx = dumper->cur_idx;
+	while (l >= size && seq < dumper->next_seq) {
+		struct printk_log *msg = log_from_idx(idx);
+
+		l -= msg_print_text(msg, true, NULL, 0);
+		idx = log_next(idx);
+		seq++;
+	}
+
+	/* last message in next interation */
+>>>>>>> master
 	next_seq = seq;
 
 	prb_rec_init_rd(&r, &info, buf, size);

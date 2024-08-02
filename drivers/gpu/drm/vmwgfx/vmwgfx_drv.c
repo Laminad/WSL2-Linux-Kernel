@@ -693,6 +693,7 @@ static int vmw_dma_select_mode(struct vmw_private *dev_priv)
  */
 static int vmw_dma_masks(struct vmw_private *dev_priv)
 {
+<<<<<<< HEAD
 	struct drm_device *dev = &dev_priv->drm;
 	int ret = 0;
 
@@ -702,6 +703,26 @@ static int vmw_dma_masks(struct vmw_private *dev_priv)
 			 "Restricting DMA addresses to 44 bits.\n");
 		return dma_set_mask_and_coherent(dev->dev, DMA_BIT_MASK(44));
 	}
+=======
+	struct drm_device *dev = dev_priv->dev;
+	int ret = 0;
+
+	ret = dma_set_mask_and_coherent(dev->dev, DMA_BIT_MASK(64));
+	if (dev_priv->map_mode != vmw_dma_phys &&
+	    (sizeof(unsigned long) == 4 || vmw_restrict_dma_mask)) {
+		DRM_INFO("Restricting DMA addresses to 44 bits.\n");
+		return dma_set_mask_and_coherent(dev->dev, DMA_BIT_MASK(44));
+	}
+
+	return ret;
+}
+#else
+static int vmw_dma_masks(struct vmw_private *dev_priv)
+{
+	return 0;
+}
+#endif
+>>>>>>> master
 
 	return ret;
 }
@@ -993,7 +1014,12 @@ static int vmw_driver_load(struct vmw_private *dev_priv, u32 pci_id)
 	if (unlikely(ret != 0))
 		goto out_err0;
 
+<<<<<<< HEAD
 	dma_set_max_seg_size(dev_priv->drm.dev, U32_MAX);
+=======
+	dma_set_max_seg_size(dev->dev, min_t(unsigned int, U32_MAX & PAGE_MASK,
+					     SCATTERLIST_MAX_SEGMENT));
+>>>>>>> master
 
 	if (dev_priv->capabilities & SVGA_CAP_GMR2) {
 		drm_info(&dev_priv->drm,
@@ -1311,12 +1337,81 @@ static void vmw_master_set(struct drm_device *dev,
 			   struct drm_file *file_priv,
 			   bool from_open)
 {
+<<<<<<< HEAD
+=======
+}
+
+static void vmw_master_init(struct vmw_master *vmaster)
+{
+	ttm_lock_init(&vmaster->lock);
+}
+
+static int vmw_master_create(struct drm_device *dev,
+			     struct drm_master *master)
+{
+	struct vmw_master *vmaster;
+
+	vmaster = kzalloc(sizeof(*vmaster), GFP_KERNEL);
+	if (unlikely(!vmaster))
+		return -ENOMEM;
+
+	vmw_master_init(vmaster);
+	ttm_lock_set_kill(&vmaster->lock, true, SIGTERM);
+	master->driver_priv = vmaster;
+
+	return 0;
+}
+
+static void vmw_master_destroy(struct drm_device *dev,
+			       struct drm_master *master)
+{
+	struct vmw_master *vmaster = vmw_master(master);
+
+	master->driver_priv = NULL;
+	kfree(vmaster);
+}
+
+static int vmw_master_set(struct drm_device *dev,
+			  struct drm_file *file_priv,
+			  bool from_open)
+{
+	struct vmw_private *dev_priv = vmw_priv(dev);
+	struct vmw_fpriv *vmw_fp = vmw_fpriv(file_priv);
+	struct vmw_master *active = dev_priv->active_master;
+	struct vmw_master *vmaster = vmw_master(file_priv->master);
+	int ret = 0;
+
+	if (active) {
+		BUG_ON(active != &dev_priv->fbdev_master);
+		ret = ttm_vt_lock(&active->lock, false, vmw_fp->tfile);
+		if (unlikely(ret != 0))
+			return ret;
+
+		ttm_lock_set_kill(&active->lock, true, SIGTERM);
+		dev_priv->active_master = NULL;
+	}
+
+	ttm_lock_set_kill(&vmaster->lock, false, SIGTERM);
+	if (!from_open) {
+		ttm_vt_unlock(&vmaster->lock);
+		BUG_ON(vmw_fp->locked_master != file_priv->master);
+		drm_master_put(&vmw_fp->locked_master);
+	}
+
+	dev_priv->active_master = vmaster;
+
+>>>>>>> master
 	/*
 	 * Inform a new master that the layout may have changed while
 	 * it was gone.
 	 */
 	if (!from_open)
 		drm_sysfs_hotplug_event(dev);
+<<<<<<< HEAD
+=======
+
+	return 0;
+>>>>>>> master
 }
 
 static void vmw_master_drop(struct drm_device *dev,

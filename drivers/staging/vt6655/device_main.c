@@ -1201,7 +1201,11 @@ static void vnt_interrupt_work(struct work_struct *work)
 	if (priv->vif)
 		vnt_interrupt_process(priv);
 
+<<<<<<< HEAD
 	iowrite32(IMR_MASK_VALUE, priv->port_offset + MAC_REG_IMR);
+=======
+	MACvIntEnable(priv->PortOffset, IMR_MASK_VALUE);
+>>>>>>> master
 }
 
 static irqreturn_t vnt_interrupt(int irq,  void *arg)
@@ -1210,7 +1214,11 @@ static irqreturn_t vnt_interrupt(int irq,  void *arg)
 
 	schedule_work(&priv->interrupt_work);
 
+<<<<<<< HEAD
 	iowrite32(0, priv->port_offset + MAC_REG_IMR);
+=======
+	MACvIntDisable(priv->PortOffset);
+>>>>>>> master
 
 	return IRQ_HANDLED;
 }

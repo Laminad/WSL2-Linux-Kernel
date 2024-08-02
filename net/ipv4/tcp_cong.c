@@ -412,7 +412,11 @@ out:
  * already initialized.
  */
 int tcp_set_congestion_control(struct sock *sk, const char *name, bool load,
+<<<<<<< HEAD
 			       bool cap_net_admin)
+=======
+			       bool reinit, bool cap_net_admin)
+>>>>>>> master
 {
 	struct inet_connection_sock *icsk = inet_csk(sk);
 	const struct tcp_congestion_ops *ca;
@@ -435,7 +439,24 @@ int tcp_set_congestion_control(struct sock *sk, const char *name, bool load,
 
 	if (!ca)
 		err = -ENOENT;
+<<<<<<< HEAD
 	else if (!((ca->flags & TCP_CONG_NON_RESTRICTED) || cap_net_admin))
+=======
+	} else if (!load) {
+		const struct tcp_congestion_ops *old_ca = icsk->icsk_ca_ops;
+
+		if (try_module_get(ca->owner)) {
+			if (reinit) {
+				tcp_reinit_congestion_control(sk, ca);
+			} else {
+				icsk->icsk_ca_ops = ca;
+				module_put(old_ca->owner);
+			}
+		} else {
+			err = -EBUSY;
+		}
+	} else if (!((ca->flags & TCP_CONG_NON_RESTRICTED) || cap_net_admin)) {
+>>>>>>> master
 		err = -EPERM;
 	else if (!bpf_try_module_get(ca, ca->owner))
 		err = -EBUSY;

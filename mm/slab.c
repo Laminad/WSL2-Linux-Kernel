@@ -3550,12 +3550,24 @@ void __do_kmem_cache_free(struct kmem_cache *cachep, void *objp,
 {
 	unsigned long flags;
 
+<<<<<<< HEAD
 	local_irq_save(flags);
 	debug_check_no_locks_freed(objp, cachep->object_size);
 	if (!(cachep->flags & SLAB_DEBUG_OBJECTS))
 		debug_check_no_obj_freed(objp, cachep->object_size);
 	__cache_free(cachep, objp, caller);
 	local_irq_restore(flags);
+=======
+	if (unlikely(size > KMALLOC_MAX_CACHE_SIZE))
+		return NULL;
+	cachep = kmalloc_slab(size, flags);
+	if (unlikely(ZERO_OR_NULL_PTR(cachep)))
+		return cachep;
+	ret = kmem_cache_alloc_node_trace(cachep, flags, node, size);
+	kasan_kmalloc(cachep, ret, size, flags);
+
+	return ret;
+>>>>>>> master
 }
 
 void __kmem_cache_free(struct kmem_cache *cachep, void *objp,
@@ -3563,6 +3575,56 @@ void __kmem_cache_free(struct kmem_cache *cachep, void *objp,
 {
 	__do_kmem_cache_free(cachep, objp, caller);
 }
+<<<<<<< HEAD
+=======
+EXPORT_SYMBOL(__kmalloc_node);
+
+void *__kmalloc_node_track_caller(size_t size, gfp_t flags,
+		int node, unsigned long caller)
+{
+	return __do_kmalloc_node(size, flags, node, caller);
+}
+EXPORT_SYMBOL(__kmalloc_node_track_caller);
+#endif /* CONFIG_NUMA */
+
+/**
+ * __do_kmalloc - allocate memory
+ * @size: how many bytes of memory are required.
+ * @flags: the type of memory to allocate (see kmalloc).
+ * @caller: function caller for debug tracking of the caller
+ */
+static __always_inline void *__do_kmalloc(size_t size, gfp_t flags,
+					  unsigned long caller)
+{
+	struct kmem_cache *cachep;
+	void *ret;
+
+	if (unlikely(size > KMALLOC_MAX_CACHE_SIZE))
+		return NULL;
+	cachep = kmalloc_slab(size, flags);
+	if (unlikely(ZERO_OR_NULL_PTR(cachep)))
+		return cachep;
+	ret = slab_alloc(cachep, flags, caller);
+
+	kasan_kmalloc(cachep, ret, size, flags);
+	trace_kmalloc(caller, ret,
+		      size, cachep->size, flags);
+
+	return ret;
+}
+
+void *__kmalloc(size_t size, gfp_t flags)
+{
+	return __do_kmalloc(size, flags, _RET_IP_);
+}
+EXPORT_SYMBOL(__kmalloc);
+
+void *__kmalloc_track_caller(size_t size, gfp_t flags, unsigned long caller)
+{
+	return __do_kmalloc(size, flags, caller);
+}
+EXPORT_SYMBOL(__kmalloc_track_caller);
+>>>>>>> master
 
 /**
  * kmem_cache_free - Deallocate an object
@@ -3986,6 +4048,203 @@ ssize_t slabinfo_write(struct file *file, const char __user *buffer,
 	return res;
 }
 
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_DEBUG_SLAB_LEAK
+
+static inline int add_caller(unsigned long *n, unsigned long v)
+{
+	unsigned long *p;
+	int l;
+	if (!v)
+		return 1;
+	l = n[1];
+	p = n + 2;
+	while (l) {
+		int i = l/2;
+		unsigned long *q = p + 2 * i;
+		if (*q == v) {
+			q[1]++;
+			return 1;
+		}
+		if (*q > v) {
+			l = i;
+		} else {
+			p = q + 2;
+			l -= i + 1;
+		}
+	}
+	if (++n[1] == n[0])
+		return 0;
+	memmove(p + 2, p, n[1] * 2 * sizeof(unsigned long) - ((void *)p - (void *)n));
+	p[0] = v;
+	p[1] = 1;
+	return 1;
+}
+
+static void handle_slab(unsigned long *n, struct kmem_cache *c,
+						struct page *page)
+{
+	void *p;
+	int i, j;
+	unsigned long v;
+
+	if (n[0] == n[1])
+		return;
+	for (i = 0, p = page->s_mem; i < c->num; i++, p += c->size) {
+		bool active = true;
+
+		for (j = page->active; j < c->num; j++) {
+			if (get_free_obj(page, j) == i) {
+				active = false;
+				break;
+			}
+		}
+
+		if (!active)
+			continue;
+
+		/*
+		 * probe_kernel_read() is used for DEBUG_PAGEALLOC. page table
+		 * mapping is established when actual object allocation and
+		 * we could mistakenly access the unmapped object in the cpu
+		 * cache.
+		 */
+		if (probe_kernel_read(&v, dbg_userword(c, p), sizeof(v)))
+			continue;
+
+		if (!add_caller(n, v))
+			return;
+	}
+}
+
+static void show_symbol(struct seq_file *m, unsigned long address)
+{
+#ifdef CONFIG_KALLSYMS
+	unsigned long offset, size;
+	char modname[MODULE_NAME_LEN], name[KSYM_NAME_LEN];
+
+	if (lookup_symbol_attrs(address, &size, &offset, modname, name) == 0) {
+		seq_printf(m, "%s+%#lx/%#lx", name, offset, size);
+		if (modname[0])
+			seq_printf(m, " [%s]", modname);
+		return;
+	}
+#endif
+	seq_printf(m, "%px", (void *)address);
+}
+
+static int leaks_show(struct seq_file *m, void *p)
+{
+	struct kmem_cache *cachep = list_entry(p, struct kmem_cache,
+					       root_caches_node);
+	struct page *page;
+	struct kmem_cache_node *n;
+	const char *name;
+	unsigned long *x = m->private;
+	int node;
+	int i;
+
+	if (!(cachep->flags & SLAB_STORE_USER))
+		return 0;
+	if (!(cachep->flags & SLAB_RED_ZONE))
+		return 0;
+
+	/*
+	 * Set store_user_clean and start to grab stored user information
+	 * for all objects on this cache. If some alloc/free requests comes
+	 * during the processing, information would be wrong so restart
+	 * whole processing.
+	 */
+	do {
+		drain_cpu_caches(cachep);
+		/*
+		 * drain_cpu_caches() could make kmemleak_object and
+		 * debug_objects_cache dirty, so reset afterwards.
+		 */
+		set_store_user_clean(cachep);
+
+		x[1] = 0;
+
+		for_each_kmem_cache_node(cachep, node, n) {
+
+			check_irq_on();
+			spin_lock_irq(&n->list_lock);
+
+			list_for_each_entry(page, &n->slabs_full, lru)
+				handle_slab(x, cachep, page);
+			list_for_each_entry(page, &n->slabs_partial, lru)
+				handle_slab(x, cachep, page);
+			spin_unlock_irq(&n->list_lock);
+		}
+	} while (!is_store_user_clean(cachep));
+
+	name = cachep->name;
+	if (x[0] == x[1]) {
+		/* Increase the buffer size */
+		mutex_unlock(&slab_mutex);
+		m->private = kcalloc(x[0] * 4, sizeof(unsigned long),
+				     GFP_KERNEL);
+		if (!m->private) {
+			/* Too bad, we are really out */
+			m->private = x;
+			mutex_lock(&slab_mutex);
+			return -ENOMEM;
+		}
+		*(unsigned long *)m->private = x[0] * 2;
+		kfree(x);
+		mutex_lock(&slab_mutex);
+		/* Now make sure this entry will be retried */
+		m->count = m->size;
+		return 0;
+	}
+	for (i = 0; i < x[1]; i++) {
+		seq_printf(m, "%s: %lu ", name, x[2*i+3]);
+		show_symbol(m, x[2*i+2]);
+		seq_putc(m, '\n');
+	}
+
+	return 0;
+}
+
+static const struct seq_operations slabstats_op = {
+	.start = slab_start,
+	.next = slab_next,
+	.stop = slab_stop,
+	.show = leaks_show,
+};
+
+static int slabstats_open(struct inode *inode, struct file *file)
+{
+	unsigned long *n;
+
+	n = __seq_open_private(file, &slabstats_op, PAGE_SIZE);
+	if (!n)
+		return -ENOMEM;
+
+	*n = PAGE_SIZE / (2 * sizeof(unsigned long));
+
+	return 0;
+}
+
+static const struct file_operations proc_slabstats_operations = {
+	.open		= slabstats_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= seq_release_private,
+};
+#endif
+
+static int __init slab_proc_init(void)
+{
+#ifdef CONFIG_DEBUG_SLAB_LEAK
+	proc_create("slab_allocators", 0, NULL, &proc_slabstats_operations);
+#endif
+	return 0;
+}
+module_init(slab_proc_init);
+
+>>>>>>> master
 #ifdef CONFIG_HARDENED_USERCOPY
 /*
  * Rejects incorrectly sized objects and objects that are to be copied

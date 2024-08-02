@@ -280,12 +280,20 @@ int bcmgenet_mii_config(struct net_device *dev, bool init)
 	reg = bcmgenet_ext_readl(priv, EXT_RGMII_OOB_CTRL);
 	reg &= ~OOB_DISABLE;
 	if (priv->ext_phy) {
+<<<<<<< HEAD
 		reg &= ~ID_MODE_DIS;
+=======
+		reg = bcmgenet_ext_readl(priv, EXT_RGMII_OOB_CTRL);
+>>>>>>> master
 		reg |= id_mode_dis;
 		if (GENET_IS_V1(priv) || GENET_IS_V2(priv) || GENET_IS_V3(priv))
 			reg |= RGMII_MODE_EN_V123;
 		else
 			reg |= RGMII_MODE_EN;
+<<<<<<< HEAD
+=======
+		bcmgenet_ext_writel(priv, reg, EXT_RGMII_OOB_CTRL);
+>>>>>>> master
 	}
 	bcmgenet_ext_writel(priv, reg, EXT_RGMII_OOB_CTRL);
 	mutex_unlock(&phydev->lock);
@@ -303,9 +311,13 @@ int bcmgenet_mii_probe(struct net_device *dev)
 	struct device_node *dn = kdev->of_node;
 	phy_interface_t phy_iface = priv->phy_interface;
 	struct phy_device *phydev;
+<<<<<<< HEAD
 	u32 phy_flags = PHY_BRCM_AUTO_PWRDWN_ENABLE |
 			PHY_BRCM_DIS_TXCRXC_NOENRGY |
 			PHY_BRCM_IDDQ_SUSPEND;
+=======
+	u32 phy_flags = 0;
+>>>>>>> master
 	int ret;
 
 	/* Communicate the integrated PHY revision */

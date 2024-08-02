@@ -42,6 +42,7 @@ enum {
 	BTRFS_INODE_IN_DELALLOC_LIST,
 	BTRFS_INODE_HAS_PROPS,
 	BTRFS_INODE_SNAPSHOT_FLUSH,
+<<<<<<< HEAD
 	/*
 	 * Set and used when logging an inode and it serves to signal that an
 	 * inode does not have xattrs, so subsequent fsyncs can avoid searching
@@ -67,6 +68,8 @@ enum {
 	BTRFS_INODE_VERITY_IN_PROGRESS,
 	/* Set when this inode is a free space inode. */
 	BTRFS_INODE_FREE_SPACE_INODE,
+=======
+>>>>>>> master
 };
 
 /* in memory btrfs inode */
@@ -202,6 +205,7 @@ struct btrfs_inode {
 	u64 last_unlink_trans;
 
 	/*
+<<<<<<< HEAD
 	 * The id/generation of the last transaction where this inode was
 	 * either the source or the destination of a clone/dedupe operation.
 	 * Used when logging an inode to know if there are shared extents that
@@ -211,6 +215,12 @@ struct btrfs_inode {
 	 * Protected by the vfs inode lock.
 	 */
 	u64 last_reflink_trans;
+=======
+	 * Track the transaction id of the last transaction used to create a
+	 * hard link for the inode. This is used by the log tree (fsync).
+	 */
+	u64 last_link_trans;
+>>>>>>> master
 
 	/*
 	 * Number of bytes outstanding that are going to need csums.  This is

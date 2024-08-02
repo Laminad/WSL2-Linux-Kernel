@@ -375,9 +375,15 @@ static int rcar_gyroadc_parse_subdevs(struct iio_dev *indio_dev)
 			/* Channel number is too high. */
 			if (reg >= num_channels) {
 				dev_err(dev,
+<<<<<<< HEAD
 					"Only %i channels supported with %pOFn, but reg = <%i>.\n",
 					num_channels, child, reg);
 				goto err_e_inval;
+=======
+					"Only %i channels supported with %s, but reg = <%i>.\n",
+					num_channels, child->name, reg);
+				return -EINVAL;
+>>>>>>> master
 			}
 		}
 
@@ -386,7 +392,11 @@ static int rcar_gyroadc_parse_subdevs(struct iio_dev *indio_dev)
 			dev_err(dev,
 				"Channel %i uses different ADC mode than the rest.\n",
 				reg);
+<<<<<<< HEAD
 			goto err_e_inval;
+=======
+			return -EINVAL;
+>>>>>>> master
 		}
 
 		/* Channel is valid, grab the regulator. */

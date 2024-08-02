@@ -6655,6 +6655,10 @@ static int __maybe_unused wlcore_runtime_resume(struct device *dev)
 	unsigned long flags;
 	int ret;
 	unsigned long start_time = jiffies;
+<<<<<<< HEAD
+=======
+	bool pending = false;
+>>>>>>> master
 	bool recovery = false;
 
 	/* Nothing to do if no ELP mode requested */
@@ -6670,29 +6674,53 @@ static int __maybe_unused wlcore_runtime_resume(struct device *dev)
 	ret = wlcore_raw_write32(wl, HW_ACCESS_ELP_CTRL_REG, ELPCTRL_WAKE_UP);
 	if (ret < 0) {
 		recovery = true;
+<<<<<<< HEAD
 	} else if (!test_bit(WL1271_FLAG_IRQ_RUNNING, &wl->flags)) {
+=======
+		goto err;
+	}
+
+	if (!pending) {
+>>>>>>> master
 		ret = wait_for_completion_timeout(&compl,
 			msecs_to_jiffies(WL1271_WAKEUP_TIMEOUT));
 		if (ret == 0) {
 			wl1271_warning("ELP wakeup timeout!");
+<<<<<<< HEAD
 			recovery = true;
+=======
+
+			/* Return no error for runtime PM for recovery */
+			ret = 0;
+			recovery = true;
+			goto err;
+>>>>>>> master
 		}
 	}
 
 	spin_lock_irqsave(&wl->wl_lock, flags);
 	wl->elp_compl = NULL;
 	spin_unlock_irqrestore(&wl->wl_lock, flags);
+<<<<<<< HEAD
 	clear_bit(WL1271_FLAG_IN_ELP, &wl->flags);
+=======
+>>>>>>> master
 
 	if (recovery) {
 		set_bit(WL1271_FLAG_INTENDED_FW_RECOVERY, &wl->flags);
 		wl12xx_queue_recovery_work(wl);
+<<<<<<< HEAD
 	} else {
 		wl1271_debug(DEBUG_PSM, "wakeup time: %u ms",
 			     jiffies_to_msecs(jiffies - start_time));
 	}
 
 	return 0;
+=======
+	}
+
+	return ret;
+>>>>>>> master
 }
 
 static const struct dev_pm_ops wlcore_pm_ops = {

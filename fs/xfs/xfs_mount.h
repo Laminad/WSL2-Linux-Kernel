@@ -202,6 +202,21 @@ typedef struct xfs_mount {
 
 	struct radix_tree_root	m_perag_tree;	/* per-ag accounting info */
 	spinlock_t		m_perag_lock;	/* lock for m_perag_tree */
+<<<<<<< HEAD
+=======
+	struct mutex		m_growlock;	/* growfs mutex */
+	int			m_fixedfsid[2];	/* unchanged for life of FS */
+	uint64_t		m_flags;	/* global mount flags */
+	bool			m_finobt_nores; /* no per-AG finobt resv. */
+	int			m_ialloc_inos;	/* inodes in inode allocation */
+	int			m_ialloc_blks;	/* blocks in inode allocation */
+	int			m_ialloc_min_blks;/* min blocks in sparse inode
+						   * allocation */
+	int			m_inoalign_mask;/* mask sb_inoalignmt if used */
+	uint			m_qflags;	/* quota status flags */
+	struct xfs_trans_resv	m_resv;		/* precomputed res values */
+	uint64_t		m_maxicount;	/* maximum inode count */
+>>>>>>> master
 	uint64_t		m_resblks;	/* total reserved blocks */
 	uint64_t		m_resblks_avail;/* available reserved blocks */
 	uint64_t		m_resblks_save;	/* reserved blks @ remount,ro */

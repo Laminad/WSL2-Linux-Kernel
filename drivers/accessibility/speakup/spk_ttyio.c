@@ -279,13 +279,31 @@ static void spk_ttyio_tiocmset(struct spk_synth *in_synth, unsigned int set, uns
 {
 	struct tty_struct *tty = in_synth->dev;
 
+<<<<<<< HEAD:drivers/accessibility/speakup/spk_ttyio.c
 	if (tty->ops->tiocmset)
 		tty->ops->tiocmset(tty, set, clear);
+=======
+	if (speakup_tty->ops->send_xchar)
+		speakup_tty->ops->send_xchar(speakup_tty, ch);
+	mutex_unlock(&speakup_tty_mutex);
+>>>>>>> master:drivers/staging/speakup/spk_ttyio.c
 }
 
 static int spk_ttyio_wait_for_xmitr(struct spk_synth *in_synth)
 {
+<<<<<<< HEAD:drivers/accessibility/speakup/spk_ttyio.c
 	return 1;
+=======
+	mutex_lock(&speakup_tty_mutex);
+	if (check_tty(speakup_tty)) {
+		mutex_unlock(&speakup_tty_mutex);
+		return;
+	}
+
+	if (speakup_tty->ops->tiocmset)
+		speakup_tty->ops->tiocmset(speakup_tty, set, clear);
+	mutex_unlock(&speakup_tty_mutex);
+>>>>>>> master:drivers/staging/speakup/spk_ttyio.c
 }
 
 static unsigned char ttyio_in(struct spk_synth *in_synth, int timeout)

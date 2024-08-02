@@ -264,6 +264,46 @@ static inline int kvm_read_guest_lock(struct kvm *kvm,
 
 static inline int kvm_write_guest_lock(struct kvm *kvm, gpa_t gpa,
 				       const void *data, unsigned long len)
+<<<<<<< HEAD
+=======
+{
+	int srcu_idx = srcu_read_lock(&kvm->srcu);
+	int ret = kvm_write_guest(kvm, gpa, data, len);
+
+	srcu_read_unlock(&kvm->srcu, srcu_idx);
+
+	return ret;
+}
+
+#ifdef CONFIG_KVM_INDIRECT_VECTORS
+/*
+ * EL2 vectors can be mapped and rerouted in a number of ways,
+ * depending on the kernel configuration and CPU present:
+ *
+ * - If the CPU has the ARM64_HARDEN_BRANCH_PREDICTOR cap, the
+ *   hardening sequence is placed in one of the vector slots, which is
+ *   executed before jumping to the real vectors.
+ *
+ * - If the CPU has both the ARM64_HARDEN_EL2_VECTORS cap and the
+ *   ARM64_HARDEN_BRANCH_PREDICTOR cap, the slot containing the
+ *   hardening sequence is mapped next to the idmap page, and executed
+ *   before jumping to the real vectors.
+ *
+ * - If the CPU only has the ARM64_HARDEN_EL2_VECTORS cap, then an
+ *   empty slot is selected, mapped next to the idmap page, and
+ *   executed before jumping to the real vectors.
+ *
+ * Note that ARM64_HARDEN_EL2_VECTORS is somewhat incompatible with
+ * VHE, as we don't have hypervisor-specific mappings. If the system
+ * is VHE and yet selects this capability, it will be ignored.
+ */
+#include <asm/mmu.h>
+
+extern void *__kvm_bp_vect_base;
+extern int __kvm_harden_el2_vector_slot;
+
+static inline void *kvm_get_hyp_vector(void)
+>>>>>>> master
 {
 	int srcu_idx = srcu_read_lock(&kvm->srcu);
 	int ret = kvm_write_guest(kvm, gpa, data, len);

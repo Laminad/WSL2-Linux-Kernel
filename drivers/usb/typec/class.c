@@ -2117,7 +2117,13 @@ typec_port_register_altmode(struct typec_port *port,
 	struct typec_mux *mux;
 	struct typec_retimer *retimer;
 
+<<<<<<< HEAD
 	mux = typec_mux_get(&port->dev);
+=======
+	sprintf(id, "id%04xm%02x", desc->svid, desc->mode);
+
+	mux = typec_mux_get(&port->dev, id);
+>>>>>>> master
 	if (IS_ERR(mux))
 		return ERR_CAST(mux);
 
@@ -2261,13 +2267,18 @@ struct typec_port *typec_register_port(struct device *parent,
 	port->prefer_role = cap->prefer_role;
 
 	device_initialize(&port->dev);
+<<<<<<< HEAD
 	port->dev.class = &typec_class;
+=======
+	port->dev.class = typec_class;
+>>>>>>> master
 	port->dev.parent = parent;
 	port->dev.fwnode = cap->fwnode;
 	port->dev.type = &typec_port_dev_type;
 	dev_set_name(&port->dev, "port%d", id);
 	dev_set_drvdata(&port->dev, cap->driver_data);
 
+<<<<<<< HEAD
 	port->cap = kmemdup(cap, sizeof(*cap), GFP_KERNEL);
 	if (!port->cap) {
 		put_device(&port->dev);
@@ -2297,6 +2308,20 @@ struct typec_port *typec_register_port(struct device *parent,
 
 	port->pd = cap->pd;
 
+=======
+	port->sw = typec_switch_get(&port->dev);
+	if (IS_ERR(port->sw)) {
+		put_device(&port->dev);
+		return ERR_CAST(port->sw);
+	}
+
+	port->mux = typec_mux_get(&port->dev, "typec-mux");
+	if (IS_ERR(port->mux)) {
+		put_device(&port->dev);
+		return ERR_CAST(port->mux);
+	}
+
+>>>>>>> master
 	ret = device_add(&port->dev);
 	if (ret) {
 		dev_err(parent, "failed to register port (%d)\n", ret);

@@ -199,6 +199,11 @@ static int __nf_queue(struct sk_buff *skb, const struct nf_hook_state *state,
 		return -ENETDOWN;
 	}
 
+	if (!skb_dst_force(skb) && state->hook != NF_INET_PRE_ROUTING) {
+		status = -ENETDOWN;
+		goto err;
+	}
+
 	*entry = (struct nf_queue_entry) {
 		.skb	= skb,
 		.state	= *state,
@@ -206,12 +211,16 @@ static int __nf_queue(struct sk_buff *skb, const struct nf_hook_state *state,
 		.size	= sizeof(*entry) + route_key_size,
 	};
 
+<<<<<<< HEAD
 	__nf_queue_entry_init_physdevs(entry);
 
 	if (!nf_queue_entry_get_refs(entry)) {
 		kfree(entry);
 		return -ENOTCONN;
 	}
+=======
+	nf_queue_entry_get_refs(entry);
+>>>>>>> master
 
 	switch (entry->state.pf) {
 	case AF_INET:

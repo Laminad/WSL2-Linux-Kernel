@@ -76,7 +76,10 @@ static int prox_read_raw(struct iio_dev *indio_dev,
 			report_id = prox_state->prox_attr.report_id;
 			min = prox_state->prox_attr.logical_minimum;
 			address = HID_USAGE_SENSOR_HUMAN_PRESENCE;
+<<<<<<< HEAD
 			hsdev = prox_state->common_attributes.hsdev;
+=======
+>>>>>>> master
 			break;
 		default:
 			report_id = -1;
@@ -86,8 +89,16 @@ static int prox_read_raw(struct iio_dev *indio_dev,
 			hid_sensor_power_state(&prox_state->common_attributes,
 						true);
 			*val = sensor_hub_input_attr_get_raw_value(
+<<<<<<< HEAD
 				hsdev, hsdev->usage, address, report_id,
 				SENSOR_HUB_SYNC, min < 0);
+=======
+				prox_state->common_attributes.hsdev,
+				HID_USAGE_SENSOR_PROX, address,
+				report_id,
+				SENSOR_HUB_SYNC,
+				min < 0);
+>>>>>>> master
 			hid_sensor_power_state(&prox_state->common_attributes,
 						false);
 		} else {

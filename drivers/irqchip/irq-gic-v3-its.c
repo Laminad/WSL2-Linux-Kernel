@@ -198,6 +198,7 @@ static DEFINE_IDA(its_vpeid_ida);
 #define gic_data_rdist_rd_base()	(gic_data_rdist()->rd_base)
 #define gic_data_rdist_vlpi_base()	(gic_data_rdist_rd_base() + SZ_128K)
 
+<<<<<<< HEAD
 /*
  * Skip ITSs that have no vLPIs mapped, unless we're on GICv4.1, as we
  * always have vSGIs mapped.
@@ -212,28 +213,40 @@ static bool rdists_support_shareable(void)
 	return !(gic_rdists->flags & RDIST_FLAGS_FORCE_NON_SHAREABLE);
 }
 
+=======
+>>>>>>> master
 static u16 get_its_list(struct its_vm *vm)
 {
 	struct its_node *its;
 	unsigned long its_list = 0;
 
 	list_for_each_entry(its, &its_nodes, entry) {
+<<<<<<< HEAD
 		if (!is_v4(its))
 			continue;
 
 		if (require_its_list_vmovp(vm, its))
+=======
+		if (!its->is_v4)
+			continue;
+
+		if (vm->vlpi_count[its->list_nr])
+>>>>>>> master
 			__set_bit(its->list_nr, &its_list);
 	}
 
 	return (u16)its_list;
 }
 
+<<<<<<< HEAD
 static inline u32 its_get_event_id(struct irq_data *d)
 {
 	struct its_device *its_dev = irq_data_get_irq_chip_data(d);
 	return d->hwirq - its_dev->event_map.lpi_base;
 }
 
+=======
+>>>>>>> master
 static struct its_collection *dev_event_to_col(struct its_device *its_dev,
 					       u32 event)
 {
@@ -2038,6 +2051,34 @@ static struct lpi_range *mk_lpi_range(u32 base, u32 span)
 	return range;
 }
 
+<<<<<<< HEAD
+=======
+static int lpi_range_cmp(void *priv, struct list_head *a, struct list_head *b)
+{
+	struct lpi_range *ra, *rb;
+
+	ra = container_of(a, struct lpi_range, entry);
+	rb = container_of(b, struct lpi_range, entry);
+
+	return ra->base_id - rb->base_id;
+}
+
+static void merge_lpi_ranges(void)
+{
+	struct lpi_range *range, *tmp;
+
+	list_for_each_entry_safe(range, tmp, &lpi_range_list, entry) {
+		if (!list_is_last(&range->entry, &lpi_range_list) &&
+		    (tmp->base_id == (range->base_id + range->span))) {
+			tmp->base_id = range->base_id;
+			tmp->span += range->span;
+			list_del(&range->entry);
+			kfree(range);
+		}
+	}
+}
+
+>>>>>>> master
 static int alloc_lpi_range(u32 nr_lpis, u32 *base)
 {
 	struct lpi_range *range, *tmp;
@@ -2617,8 +2658,14 @@ static int its_alloc_tables(struct its_node *its)
 
 		switch (type) {
 		case GITS_BASER_TYPE_DEVICE:
+<<<<<<< HEAD
 			indirect = its_parse_indirect_baser(its, baser, &order,
 							    device_ids(its));
+=======
+			indirect = its_parse_indirect_baser(its, baser,
+							    psz, &order,
+							    its->device_ids);
+>>>>>>> master
 			break;
 
 		case GITS_BASER_TYPE_VCPU:
@@ -3072,6 +3119,29 @@ static u64 its_clear_vpend_valid(void __iomem *vlpi_base, u64 clr, u64 set)
 	return val;
 }
 
+static u64 its_clear_vpend_valid(void __iomem *vlpi_base)
+{
+	u32 count = 1000000;	/* 1s! */
+	bool clean;
+	u64 val;
+
+	val = gits_read_vpendbaser(vlpi_base + GICR_VPENDBASER);
+	val &= ~GICR_VPENDBASER_Valid;
+	gits_write_vpendbaser(val, vlpi_base + GICR_VPENDBASER);
+
+	do {
+		val = gits_read_vpendbaser(vlpi_base + GICR_VPENDBASER);
+		clean = !(val & GICR_VPENDBASER_Dirty);
+		if (!clean) {
+			count--;
+			cpu_relax();
+			udelay(1);
+		}
+	} while (!clean && count);
+
+	return val;
+}
+
 static void its_cpu_init_lpis(void)
 {
 	void __iomem *rbase = gic_data_rdist_rd_base();
@@ -3161,13 +3231,21 @@ static void its_cpu_init_lpis(void)
 	val |= GICR_CTLR_ENABLE_LPIS;
 	writel_relaxed(val, rbase + GICR_CTLR);
 
+<<<<<<< HEAD
 out:
 	if (gic_rdists->has_vlpis && !gic_rdists->has_rvpeid) {
+=======
+	if (gic_rdists->has_vlpis) {
+>>>>>>> master
 		void __iomem *vlpi_base = gic_data_rdist_vlpi_base();
 
 		/*
 		 * It's possible for CPU to receive VLPIs before it is
+<<<<<<< HEAD
 		 * scheduled as a vPE, especially for the first CPU, and the
+=======
+		 * sheduled as a vPE, especially for the first CPU, and the
+>>>>>>> master
 		 * VLPI with INTID larger than 2^(IDbits+1) will be considered
 		 * as out of range and dropped by GIC.
 		 * So we initialize IDbits to known value to avoid VLPI drop.
@@ -3175,13 +3253,18 @@ out:
 		val = (LPI_NRBITS - 1) & GICR_VPROPBASER_IDBITS_MASK;
 		pr_debug("GICv4: CPU%d: Init IDbits to 0x%llx for GICR_VPROPBASER\n",
 			smp_processor_id(), val);
+<<<<<<< HEAD
 		gicr_write_vpropbaser(val, vlpi_base + GICR_VPROPBASER);
+=======
+		gits_write_vpropbaser(val, vlpi_base + GICR_VPROPBASER);
+>>>>>>> master
 
 		/*
 		 * Also clear Valid bit of GICR_VPENDBASER, in case some
 		 * ancient programming gets left in and has possibility of
 		 * corrupting memory.
 		 */
+<<<<<<< HEAD
 		val = its_clear_vpend_valid(vlpi_base, 0, 0);
 	}
 
@@ -3193,6 +3276,10 @@ out:
 		 */
 		gic_rdists->has_rvpeid = false;
 		gic_rdists->has_vlpis = false;
+=======
+		val = its_clear_vpend_valid(vlpi_base);
+		WARN_ON(val & GICR_VPENDBASER_Dirty);
+>>>>>>> master
 	}
 
 	/* Make sure the GIC has seen the above */
@@ -3471,7 +3558,10 @@ static int its_alloc_device_irq(struct its_device *dev, int nvecs, irq_hw_number
 {
 	int idx;
 
+<<<<<<< HEAD
 	/* Find a free LPI region in lpi_map and allocate them. */
+=======
+>>>>>>> master
 	idx = bitmap_find_free_region(dev->event_map.lpi_map,
 				      dev->event_map.nr_lpis,
 				      get_count_order(nvecs));
@@ -3531,9 +3621,12 @@ static int its_msi_prepare(struct irq_domain *domain, struct device *dev,
 		err = -ENOMEM;
 		goto out;
 	}
+<<<<<<< HEAD
 
 	if (info->flags & MSI_ALLOC_FLAGS_PROXY_DEVICE)
 		its_dev->shared = true;
+=======
+>>>>>>> master
 
 	pr_debug("ITT %d entries, %d bits\n", nvec, ilog2(nvec));
 out:
@@ -3585,10 +3678,13 @@ static int its_irq_domain_alloc(struct irq_domain *domain, unsigned int virq,
 	if (err)
 		return err;
 
+<<<<<<< HEAD
 	err = iommu_dma_prepare_msi(info->desc, its->get_msi_base(its_dev));
 	if (err)
 		return err;
 
+=======
+>>>>>>> master
 	for (i = 0; i < nr_irqs; i++) {
 		err = its_irq_gic_domain_alloc(domain, virq + i, hwirq + i);
 		if (err)
@@ -3596,10 +3692,14 @@ static int its_irq_domain_alloc(struct irq_domain *domain, unsigned int virq,
 
 		irq_domain_set_hwirq_and_chip(domain, virq + i,
 					      hwirq + i, &its_irq_chip, its_dev);
+<<<<<<< HEAD
 		irqd = irq_get_irq_data(virq + i);
 		irqd_set_single_target(irqd);
 		irqd_set_affinity_on_activate(irqd);
 		irqd_set_resend_when_in_progress(irqd);
+=======
+		irqd_set_single_target(irq_desc_get_irq_data(irq_to_desc(virq + i)));
+>>>>>>> master
 		pr_debug("ID:%d pID:%d vID:%d\n",
 			 (int)(hwirq + i - its_dev->event_map.lpi_base),
 			 (int)(hwirq + i), virq + i);
@@ -3662,7 +3762,11 @@ static void its_irq_domain_free(struct irq_domain *domain, unsigned int virq,
 
 	/*
 	 * If all interrupts have been freed, start mopping the
+<<<<<<< HEAD
 	 * floor. This is conditioned on the device not being shared.
+=======
+	 * floor. This is conditionned on the device not being shared.
+>>>>>>> master
 	 */
 	if (!its_dev->shared &&
 	    bitmap_empty(its_dev->event_map.lpi_map,
@@ -3905,10 +4009,23 @@ static void its_vpe_deschedule(struct its_vpe *vpe)
 	void __iomem *vlpi_base = gic_data_rdist_vlpi_base();
 	u64 val;
 
+<<<<<<< HEAD
 	val = its_clear_vpend_valid(vlpi_base, 0, 0);
 
 	vpe->idai = !!(val & GICR_VPENDBASER_IDAI);
 	vpe->pending_last = !!(val & GICR_VPENDBASER_PendingLast);
+=======
+	val = its_clear_vpend_valid(vlpi_base);
+
+	if (unlikely(val & GICR_VPENDBASER_Dirty)) {
+		pr_err_ratelimited("ITS virtual pending table not cleaning\n");
+		vpe->idai = false;
+		vpe->pending_last = true;
+	} else {
+		vpe->idai = !!(val & GICR_VPENDBASER_IDAI);
+		vpe->pending_last = !!(val & GICR_VPENDBASER_PendingLast);
+	}
+>>>>>>> master
 }
 
 static void its_vpe_invall(struct its_vpe *vpe)
@@ -5072,9 +5189,46 @@ static int __init its_probe_one(struct its_node *its)
 
 	its_enable_quirks(its);
 
+<<<<<<< HEAD
 	if (is_v4(its)) {
 		if (!(its->typer & GITS_TYPER_VMOVP)) {
 			err = its_compute_its_list_map(its);
+=======
+	val = readl_relaxed(its_base + GITS_PIDR2) & GIC_PIDR2_ARCH_MASK;
+	if (val != 0x30 && val != 0x40) {
+		pr_warn("ITS@%pa: No ITS detected, giving up\n", &res->start);
+		err = -ENODEV;
+		goto out_unmap;
+	}
+
+	err = its_force_quiescent(its_base);
+	if (err) {
+		pr_warn("ITS@%pa: Failed to quiesce, giving up\n", &res->start);
+		goto out_unmap;
+	}
+
+	pr_info("ITS %pR\n", res);
+
+	its = kzalloc(sizeof(*its), GFP_KERNEL);
+	if (!its) {
+		err = -ENOMEM;
+		goto out_unmap;
+	}
+
+	raw_spin_lock_init(&its->lock);
+	mutex_init(&its->dev_alloc_lock);
+	INIT_LIST_HEAD(&its->entry);
+	INIT_LIST_HEAD(&its->its_device_list);
+	typer = gic_read_typer(its_base + GITS_TYPER);
+	its->base = its_base;
+	its->phys_base = res->start;
+	its->ite_size = GITS_TYPER_ITT_ENTRY_SIZE(typer);
+	its->device_ids = GITS_TYPER_DEVBITS(typer);
+	its->is_v4 = !!(typer & GITS_TYPER_VLPIS);
+	if (its->is_v4) {
+		if (!(typer & GITS_TYPER_VMOVP)) {
+			err = its_compute_its_list_map(res, its_base);
+>>>>>>> master
 			if (err < 0)
 				goto out;
 

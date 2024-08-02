@@ -136,6 +136,7 @@ static __init int setup_vmw_sched_clock(char *s)
 }
 early_param("no-vmw-sched-clock", setup_vmw_sched_clock);
 
+<<<<<<< HEAD
 static __init int parse_no_stealacc(char *arg)
 {
 	steal_acc = false;
@@ -144,6 +145,9 @@ static __init int parse_no_stealacc(char *arg)
 early_param("no-steal-acc", parse_no_stealacc);
 
 static noinstr u64 vmware_sched_clock(void)
+=======
+static unsigned long long notrace vmware_sched_clock(void)
+>>>>>>> master
 {
 	unsigned long long ns;
 

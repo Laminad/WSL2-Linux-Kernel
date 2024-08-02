@@ -466,7 +466,11 @@ static int efifb_probe(struct platform_device *dev)
 	par->base = efifb_fix.smem_start;
 	par->size = size_remap;
 
+<<<<<<< HEAD
 	if (efi_enabled(EFI_MEMMAP) &&
+=======
+	if (efi_enabled(EFI_BOOT) &&
+>>>>>>> master
 	    !efi_mem_desc_lookup(efifb_fix.smem_start, &md)) {
 		if ((efifb_fix.smem_start + efifb_fix.smem_len) >
 		    (md.phys_addr + (md.num_pages << EFI_PAGE_SHIFT))) {

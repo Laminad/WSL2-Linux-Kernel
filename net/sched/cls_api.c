@@ -1672,8 +1672,13 @@ static inline int __tcf_classify(struct sk_buff *skb,
 reclassify:
 #endif
 	for (; tp; tp = rcu_dereference_bh(tp->next)) {
+<<<<<<< HEAD
 		__be16 protocol = skb_protocol(skb, false);
 		int err = 0;
+=======
+		__be16 protocol = tc_skb_protocol(skb);
+		int err;
+>>>>>>> master
 
 		if (n) {
 			struct tcf_exts *exts;
@@ -2318,11 +2323,21 @@ replay:
 			      flags, extack);
 	if (err == 0) {
 		tfilter_notify(net, skb, n, tp, block, q, parent, fh,
+<<<<<<< HEAD
 			       RTM_NEWTFILTER, false, rtnl_held, extack);
 		tfilter_put(tp, fh);
 		/* q pointer is NULL for shared blocks */
 		if (q)
 			q->flags &= ~TCQ_F_CAN_BYPASS;
+=======
+			       RTM_NEWTFILTER, false);
+		/* q pointer is NULL for shared blocks */
+		if (q)
+			q->flags &= ~TCQ_F_CAN_BYPASS;
+	} else {
+		if (tp_created)
+			tcf_proto_destroy(tp, NULL);
+>>>>>>> master
 	}
 
 errout:

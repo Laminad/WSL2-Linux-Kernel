@@ -110,6 +110,7 @@ struct ktermios {
 #define XTABS	TAB3
 
 /* c_cflag bit meaning */
+<<<<<<< HEAD
 #define CBAUD		0x0000001f
 #define CBAUDEX		0x00000000
 #define BOTHER		0x0000001f
@@ -140,6 +141,63 @@ struct ktermios {
 #define HUPCL		0x00004000
 #define CLOCAL		0x00008000
 #define CIBAUD		0x001f0000
+=======
+#define CBAUD	0000037
+#define  B0	0000000		/* hang up */
+#define  B50	0000001
+#define  B75	0000002
+#define  B110	0000003
+#define  B134	0000004
+#define  B150	0000005
+#define  B200	0000006
+#define  B300	0000007
+#define  B600	0000010
+#define  B1200	0000011
+#define  B1800	0000012
+#define  B2400	0000013
+#define  B4800	0000014
+#define  B9600	0000015
+#define  B19200	0000016
+#define  B38400	0000017
+#define EXTA B19200
+#define EXTB B38400
+#define CBAUDEX 0000000
+#define  B57600   00020
+#define  B115200  00021
+#define  B230400  00022
+#define  B460800  00023
+#define  B500000  00024
+#define  B576000  00025
+#define  B921600  00026
+#define B1000000  00027
+#define B1152000  00030
+#define B1500000  00031
+#define B2000000  00032
+#define B2500000  00033
+#define B3000000  00034
+#define B3500000  00035
+#define B4000000  00036
+#define BOTHER    00037
+
+#define CSIZE	00001400
+#define   CS5	00000000
+#define   CS6	00000400
+#define   CS7	00001000
+#define   CS8	00001400
+
+#define CSTOPB	00002000
+#define CREAD	00004000
+#define PARENB	00010000
+#define PARODD	00020000
+#define HUPCL	00040000
+
+#define CLOCAL	00100000
+#define CMSPAR	  010000000000		/* mark or space (stick) parity */
+#define CRTSCTS	  020000000000		/* flow control */
+>>>>>>> master
+
+#define CIBAUD	07600000
+#define IBSHIFT	16
 
 /* c_lflag bits */
 #define ISIG	0x00000080

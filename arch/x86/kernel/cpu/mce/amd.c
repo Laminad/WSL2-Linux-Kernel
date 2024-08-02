@@ -125,6 +125,14 @@ static struct smca_bank_name smca_names[] = {
 	[SMCA_GMI_PHY]			= { "gmi_phy",		"Global Memory Interconnect PHY Unit" },
 };
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/mce/amd.c
+=======
+static u32 smca_bank_addrs[MAX_NR_BANKS][NR_BLOCKS] __ro_after_init =
+{
+	[0 ... MAX_NR_BANKS - 1] = { [0 ... NR_BLOCKS - 1] = -1 }
+};
+
+>>>>>>> master:arch/x86/kernel/cpu/mcheck/mce_amd.c
 static const char *smca_get_name(enum smca_bank_types t)
 {
 	if (t >= N_SMCA_BANK_TYPES)
@@ -753,7 +761,11 @@ static void __log_error(unsigned int bank, u64 status, u64 addr, u64 misc)
 	mce_log(&m);
 }
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/mce/amd.c
 DEFINE_IDTENTRY_SYSVEC(sysvec_deferred_error)
+=======
+asmlinkage __visible void __irq_entry smp_deferred_error_interrupt(struct pt_regs *regs)
+>>>>>>> master:arch/x86/kernel/cpu/mcheck/mce_amd.c
 {
 	trace_deferred_error_apic_entry(DEFERRED_ERROR_VECTOR);
 	inc_irq_stat(irq_deferred_error_count);
@@ -1315,6 +1327,7 @@ int mce_threshold_remove_device(unsigned int cpu)
 {
 	struct threshold_bank **bp = this_cpu_read(threshold_banks);
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/mce/amd.c
 	if (!bp)
 		return 0;
 
@@ -1325,6 +1338,15 @@ int mce_threshold_remove_device(unsigned int cpu)
 	this_cpu_write(threshold_banks, NULL);
 
 	__threshold_remove_device(bp);
+=======
+	for (bank = 0; bank < mca_cfg.banks; ++bank) {
+		if (!(per_cpu(bank_map, cpu) & (1 << bank)))
+			continue;
+		threshold_remove_bank(cpu, bank);
+	}
+	kfree(per_cpu(threshold_banks, cpu));
+	per_cpu(threshold_banks, cpu) = NULL;
+>>>>>>> master:arch/x86/kernel/cpu/mcheck/mce_amd.c
 	return 0;
 }
 
@@ -1345,10 +1367,14 @@ int mce_threshold_create_device(unsigned int cpu)
 	struct threshold_bank **bp;
 	int err;
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/mce/amd.c
 	if (!mce_flags.amd_threshold)
 		return 0;
 
 	bp = this_cpu_read(threshold_banks);
+=======
+	bp = per_cpu(threshold_banks, cpu);
+>>>>>>> master:arch/x86/kernel/cpu/mcheck/mce_amd.c
 	if (bp)
 		return 0;
 
@@ -1360,9 +1386,31 @@ int mce_threshold_create_device(unsigned int cpu)
 	for (bank = 0; bank < numbanks; ++bank) {
 		if (!(this_cpu_read(bank_map) & BIT_ULL(bank)))
 			continue;
+<<<<<<< HEAD:arch/x86/kernel/cpu/mce/amd.c
 		err = threshold_create_bank(bp, cpu, bank);
 		if (err) {
 			__threshold_remove_device(bp);
+=======
+		err = threshold_create_bank(cpu, bank);
+		if (err)
+			goto err;
+	}
+	return err;
+err:
+	mce_threshold_remove_device(cpu);
+	return err;
+}
+
+static __init int threshold_init_device(void)
+{
+	unsigned lcpu = 0;
+
+	/* to hit CPUs online before the notifier is up */
+	for_each_online_cpu(lcpu) {
+		int err = mce_threshold_create_device(lcpu);
+
+		if (err)
+>>>>>>> master:arch/x86/kernel/cpu/mcheck/mce_amd.c
 			return err;
 		}
 	}
@@ -1370,5 +1418,9 @@ int mce_threshold_create_device(unsigned int cpu)
 
 	if (thresholding_irq_en)
 		mce_threshold_vector = amd_threshold_interrupt;
+<<<<<<< HEAD:arch/x86/kernel/cpu/mce/amd.c
+=======
+
+>>>>>>> master:arch/x86/kernel/cpu/mcheck/mce_amd.c
 	return 0;
 }

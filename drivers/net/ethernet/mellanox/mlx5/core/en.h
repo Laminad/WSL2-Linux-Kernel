@@ -245,6 +245,7 @@ struct mlx5e_umr_wqe {
 	struct mlx5_wqe_ctrl_seg       ctrl;
 	struct mlx5_wqe_umr_ctrl_seg   uctrl;
 	struct mlx5_mkey_seg           mkc;
+<<<<<<< HEAD
 	union {
 		DECLARE_FLEX_ARRAY(struct mlx5_mtt, inline_mtts);
 		DECLARE_FLEX_ARRAY(struct mlx5_klm, inline_klms);
@@ -262,6 +263,27 @@ enum mlx5e_priv_flag {
 	MLX5E_PFLAG_SKB_TX_MPWQE,
 	MLX5E_PFLAG_TX_PORT_TS,
 	MLX5E_NUM_PFLAGS, /* Keep last */
+=======
+	struct mlx5_mtt                inline_mtts[0];
+};
+
+extern const char mlx5e_self_tests[][ETH_GSTRING_LEN];
+
+static const char mlx5e_priv_flags[][ETH_GSTRING_LEN] = {
+	"rx_cqe_moder",
+	"tx_cqe_moder",
+	"rx_cqe_compress",
+	"rx_striding_rq",
+	"rx_no_csum_complete",
+};
+
+enum mlx5e_priv_flag {
+	MLX5E_PFLAG_RX_CQE_BASED_MODER = (1 << 0),
+	MLX5E_PFLAG_TX_CQE_BASED_MODER = (1 << 1),
+	MLX5E_PFLAG_RX_CQE_COMPRESS = (1 << 2),
+	MLX5E_PFLAG_RX_STRIDING_RQ = (1 << 3),
+	MLX5E_PFLAG_RX_NO_CSUM_COMPLETE = (1 << 4),
+>>>>>>> master
 };
 
 #define MLX5E_SET_PFLAG(params, pflag, enable)			\
@@ -331,6 +353,7 @@ static inline u8 mlx5e_get_dcb_num_tc(struct mlx5e_params *params)
  * declared in en/reporter_rx.c
  */
 enum {
+<<<<<<< HEAD
 	MLX5E_RQ_STATE_ENABLED = 0,
 	MLX5E_RQ_STATE_RECOVERING,
 	MLX5E_RQ_STATE_DIM,
@@ -341,6 +364,38 @@ enum {
 	MLX5E_RQ_STATE_MINI_CQE_ENHANCED,  /* set when enhanced mini_cqe_cap is used */
 	MLX5E_RQ_STATE_XSK, /* set to indicate an xsk rq */
 	MLX5E_NUM_RQ_STATES, /* Must be kept last */
+=======
+	MLX5_DCB_CHG_RESET,
+	MLX5_DCB_NO_CHG,
+	MLX5_DCB_CHG_NO_RESET,
+};
+
+struct mlx5e_dcbx {
+	enum mlx5_dcbx_oper_mode   mode;
+	struct mlx5e_cee_config    cee_cfg; /* pending configuration */
+	u8                         dscp_app_cnt;
+
+	/* The only setting that cannot be read from FW */
+	u8                         tc_tsa[IEEE_8021QAZ_MAX_TCS];
+	u8                         cap;
+
+	/* Buffer configuration */
+	bool                       manual_buffer;
+	u32                        cable_len;
+	u32                        xoff;
+};
+
+struct mlx5e_dcbx_dp {
+	u8                         dscp2prio[MLX5E_MAX_DSCP];
+	u8                         trust_state;
+};
+#endif
+
+enum {
+	MLX5E_RQ_STATE_ENABLED,
+	MLX5E_RQ_STATE_AM,
+	MLX5E_RQ_STATE_NO_CSUM_COMPLETE,
+>>>>>>> master
 };
 
 struct mlx5e_cq {
@@ -817,8 +872,11 @@ enum {
 	MLX5E_STATE_OPENED,
 	MLX5E_STATE_DESTROYING,
 	MLX5E_STATE_XDP_TX_ENABLED,
+<<<<<<< HEAD
 	MLX5E_STATE_XDP_ACTIVE,
 	MLX5E_STATE_CHANNELS_ACTIVE,
+=======
+>>>>>>> master
 };
 
 struct mlx5e_modify_sq_param {

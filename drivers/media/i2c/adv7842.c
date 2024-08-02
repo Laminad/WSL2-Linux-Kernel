@@ -775,8 +775,13 @@ static int edid_write_hdmi_segment(struct v4l2_subdev *sd, u8 port)
 		return 0;
 	}
 
+<<<<<<< HEAD
 	pa = v4l2_get_edid_phys_addr(edid, blocks * 128, &spa_loc);
 	err = v4l2_phys_addr_validate(pa, &parent_pa, NULL);
+=======
+	pa = v4l2_get_edid_phys_addr(edid, 256, &spa_loc);
+	err = v4l2_phys_addr_validate(pa, &pa, NULL);
+>>>>>>> master
 	if (err)
 		return err;
 

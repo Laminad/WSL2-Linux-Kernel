@@ -1008,7 +1008,11 @@ static void dlfb_ops_destroy(struct fb_info *info)
 		fb_dealloc_cmap(&info->cmap);
 	if (info->monspecs.modedb)
 		fb_destroy_modedb(info->monspecs.modedb);
+<<<<<<< HEAD
 	vfree(info->screen_buffer);
+=======
+	vfree(info->screen_base);
+>>>>>>> master
 
 	fb_destroy_modelist(&info->modelist);
 
@@ -1020,7 +1024,10 @@ static void dlfb_ops_destroy(struct fb_info *info)
 	}
 	vfree(dlfb->backing_buffer);
 	kfree(dlfb->edid);
+<<<<<<< HEAD
 	dlfb_free_urb_list(dlfb);
+=======
+>>>>>>> master
 	usb_put_dev(dlfb->udev);
 	kfree(dlfb);
 
@@ -1644,7 +1651,11 @@ static int dlfb_usb_probe(struct usb_interface *intf,
 	const struct device_attribute *attr;
 	struct dlfb_data *dlfb;
 	struct fb_info *info;
+<<<<<<< HEAD
 	int retval;
+=======
+	int retval = -ENOMEM;
+>>>>>>> master
 	struct usb_device *usbdev = interface_to_usbdev(intf);
 	static u8 out_ep[] = {OUT_EP_NUM + USB_DIR_OUT, 0};
 

@@ -586,10 +586,15 @@ static void vop_core_clks_disable(struct vop *vop)
 	clk_disable(vop->hclk);
 }
 
+<<<<<<< HEAD
 static void vop_win_disable(struct vop *vop, const struct vop_win *vop_win)
 {
 	const struct vop_win_data *win = vop_win->data;
 
+=======
+static void vop_win_disable(struct vop *vop, const struct vop_win_data *win)
+{
+>>>>>>> master
 	if (win->phy->scl && win->phy->scl->ext) {
 		VOP_SCL_SET_EXT(vop, win, yrgb_hor_scl_mode, SCALE_NONE);
 		VOP_SCL_SET_EXT(vop, win, yrgb_ver_scl_mode, SCALE_NONE);
@@ -598,10 +603,16 @@ static void vop_win_disable(struct vop *vop, const struct vop_win *vop_win)
 	}
 
 	VOP_WIN_SET(vop, win, enable, 0);
+<<<<<<< HEAD
 	vop->win_enabled &= ~BIT(VOP_WIN_TO_INDEX(vop_win));
 }
 
 static int vop_enable(struct drm_crtc *crtc, struct drm_crtc_state *old_state)
+=======
+}
+
+static int vop_enable(struct drm_crtc *crtc)
+>>>>>>> master
 {
 	struct vop *vop = to_vop(crtc);
 	int ret, i;
@@ -650,6 +661,7 @@ static int vop_enable(struct drm_crtc *crtc, struct drm_crtc_state *old_state)
 		for (i = 0; i < vop->data->win_size; i++) {
 			struct vop_win *vop_win = &vop->win[i];
 
+<<<<<<< HEAD
 			vop_win_disable(vop, vop_win);
 		}
 	}
@@ -662,6 +674,9 @@ static int vop_enable(struct drm_crtc *crtc, struct drm_crtc_state *old_state)
 		VOP_AFBC_SET(vop, enable, 0);
 		s = to_rockchip_crtc_state(crtc->state);
 		s->enable_afbc = false;
+=======
+		vop_win_disable(vop, win);
+>>>>>>> master
 	}
 
 	vop_cfg_done(vop);
@@ -892,7 +907,11 @@ static void vop_plane_atomic_disable(struct drm_plane *plane,
 
 	spin_lock(&vop->reg_lock);
 
+<<<<<<< HEAD
 	vop_win_disable(vop, vop_win);
+=======
+	vop_win_disable(vop, win);
+>>>>>>> master
 
 	spin_unlock(&vop->reg_lock);
 }
@@ -1197,6 +1216,7 @@ static bool vop_crtc_mode_fixup(struct drm_crtc *crtc,
 	struct vop *vop = to_vop(crtc);
 	unsigned long rate;
 
+<<<<<<< HEAD
 	/*
 	 * Clock craziness.
 	 *
@@ -1228,6 +1248,11 @@ static bool vop_crtc_mode_fixup(struct drm_crtc *crtc,
 		rate = clk_round_rate(vop->dclk,
 				      adjusted_mode->clock * 1000 + 999);
 	adjusted_mode->clock = DIV_ROUND_UP(rate, 1000);
+=======
+	adjusted_mode->clock =
+		DIV_ROUND_UP(clk_round_rate(vop->dclk, mode->clock * 1000),
+			     1000);
+>>>>>>> master
 
 	return true;
 }
@@ -2057,7 +2082,11 @@ static int vop_initial(struct vop *vop)
 		int channel = i * 2 + 1;
 
 		VOP_WIN_SET(vop, win, channel, (channel + 1) << 4 | channel);
+<<<<<<< HEAD
 		vop_win_disable(vop, vop_win);
+=======
+		vop_win_disable(vop, win);
+>>>>>>> master
 		VOP_WIN_SET(vop, win, gate, 1);
 	}
 

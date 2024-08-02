@@ -81,6 +81,11 @@ static int __net_init tipc_init_net(struct net *net)
 	if (err)
 		goto out_nametbl;
 
+<<<<<<< HEAD
+=======
+	INIT_LIST_HEAD(&tn->dist_queue);
+
+>>>>>>> master
 	err = tipc_bcast_init(net);
 	if (err)
 		goto out_bclink;
@@ -106,9 +111,12 @@ out_crypto:
 
 static void __net_exit tipc_exit_net(struct net *net)
 {
+<<<<<<< HEAD
 	struct tipc_net *tn = tipc_net(net);
 
 	tipc_detach_loopback(net);
+=======
+>>>>>>> master
 	tipc_net_stop(net);
 	/* Make sure the tipc_net_finalize_work() finished */
 	cancel_work_sync(&tn->work);
@@ -185,9 +193,44 @@ static int __init tipc_init(void)
 	if (err)
 		goto out_netlink_compat;
 
+<<<<<<< HEAD
 	pr_info("Started in single node mode\n");
 	return 0;
 
+=======
+	err = tipc_register_sysctl();
+	if (err)
+		goto out_sysctl;
+
+	err = register_pernet_device(&tipc_net_ops);
+	if (err)
+		goto out_pernet;
+
+	err = tipc_socket_init();
+	if (err)
+		goto out_socket;
+
+	err = register_pernet_device(&tipc_topsrv_net_ops);
+	if (err)
+		goto out_pernet_topsrv;
+
+	err = tipc_bearer_setup();
+	if (err)
+		goto out_bearer;
+
+	pr_info("Started in single node mode\n");
+	return 0;
+out_bearer:
+	unregister_pernet_device(&tipc_topsrv_net_ops);
+out_pernet_topsrv:
+	tipc_socket_stop();
+out_socket:
+	unregister_pernet_device(&tipc_net_ops);
+out_pernet:
+	tipc_unregister_sysctl();
+out_sysctl:
+	tipc_netlink_compat_stop();
+>>>>>>> master
 out_netlink_compat:
 	tipc_netlink_stop();
 out_netlink:
@@ -209,6 +252,7 @@ out_sysctl:
 
 static void __exit tipc_exit(void)
 {
+<<<<<<< HEAD
 	tipc_netlink_compat_stop();
 	tipc_netlink_stop();
 	tipc_bearer_cleanup();
@@ -216,6 +260,14 @@ static void __exit tipc_exit(void)
 	unregister_pernet_device(&tipc_topsrv_net_ops);
 	tipc_socket_stop();
 	unregister_pernet_device(&tipc_net_ops);
+=======
+	tipc_bearer_cleanup();
+	unregister_pernet_device(&tipc_topsrv_net_ops);
+	tipc_socket_stop();
+	unregister_pernet_device(&tipc_net_ops);
+	tipc_netlink_stop();
+	tipc_netlink_compat_stop();
+>>>>>>> master
 	tipc_unregister_sysctl();
 
 	pr_info("Deactivated\n");

@@ -1112,7 +1112,10 @@ static ssize_t write_v4_end_grace(struct file *file, char *buf, size_t size)
 		case '1':
 			if (!nn->nfsd_serv)
 				return -EBUSY;
+<<<<<<< HEAD
 			trace_nfsd_end_grace(netns(file));
+=======
+>>>>>>> master
 			nfsd4_end_grace(nn);
 			break;
 		default:
@@ -1524,6 +1527,7 @@ static __net_init int nfsd_net_init(struct net *net)
 	retval = nfsd_idmap_init(net);
 	if (retval)
 		goto out_idmap_error;
+<<<<<<< HEAD
 	retval = nfsd_net_reply_cache_init(nn);
 	if (retval)
 		goto out_repcache_error;
@@ -1532,6 +1536,13 @@ static __net_init int nfsd_net_init(struct net *net)
 	nfsd4_init_leases_net(nn);
 	get_random_bytes(&nn->siphash_key, sizeof(nn->siphash_key));
 	seqlock_init(&nn->writeverf_lock);
+=======
+	nn->nfsd4_lease = 90;	/* default lease time */
+	nn->nfsd4_grace = 90;
+	nn->somebody_reclaimed = false;
+	nn->clverifier_counter = prandom_u32();
+	nn->clientid_counter = prandom_u32();
+>>>>>>> master
 
 	return 0;
 

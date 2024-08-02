@@ -158,7 +158,10 @@ struct ice_link_status {
 	u16 max_frame_size;
 	u16 link_speed;
 	u16 req_speeds;
+<<<<<<< HEAD
 	u8 link_cfg_err;
+=======
+>>>>>>> master
 	u8 lse_ena;	/* Link Status Event notification */
 	u8 link_info;
 	u8 an_info;

@@ -30,7 +30,10 @@
 
 #define DEFAULT_CMD6_TIMEOUT_MS	500
 #define MIN_CACHE_EN_TIMEOUT_MS 1600
+<<<<<<< HEAD
 #define CACHE_FLUSH_TIMEOUT_MS 30000 /* 30s */
+=======
+>>>>>>> master
 
 static const unsigned int tran_exp[] = {
 	10000,		100000,		1000000,	10000000,
@@ -1233,6 +1236,7 @@ static int mmc_select_hs400(struct mmc_card *card)
 	mmc_set_timing(host, MMC_TIMING_MMC_HS400);
 	mmc_set_bus_speed(card);
 
+<<<<<<< HEAD
 	if (host->ops->execute_hs400_tuning) {
 		mmc_retune_disable(host);
 		err = host->ops->execute_hs400_tuning(host, card);
@@ -1248,6 +1252,15 @@ static int mmc_select_hs400(struct mmc_card *card)
 	if (err)
 		goto out_err;
 
+=======
+	if (host->ops->hs400_complete)
+		host->ops->hs400_complete(host);
+
+	err = mmc_switch_status(card);
+	if (err)
+		goto out_err;
+
+>>>>>>> master
 	return 0;
 
 out_err:
@@ -1853,6 +1866,10 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 			pr_warn("%s: Enabling HPI failed\n",
 				mmc_hostname(card->host));
 			card->ext_csd.hpi_en = 0;
+<<<<<<< HEAD
+=======
+			err = 0;
+>>>>>>> master
 		} else {
 			card->ext_csd.hpi_en = 1;
 		}

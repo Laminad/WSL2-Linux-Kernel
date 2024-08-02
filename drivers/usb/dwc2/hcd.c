@@ -4349,8 +4349,24 @@ static int _dwc2_hcd_suspend(struct usb_hcd *hcd)
 	if (hsotg->bus_suspended)
 		goto skip_power_saving;
 
+<<<<<<< HEAD
 	if (hsotg->flags.b.port_connect_status == 0)
 		goto skip_power_saving;
+=======
+	/*
+	 * Drive USB suspend and disable port Power
+	 * if usb bus is not suspended.
+	 */
+	if (!hsotg->bus_suspended) {
+		hprt0 = dwc2_read_hprt0(hsotg);
+		hprt0 |= HPRT0_SUSP;
+		hprt0 &= ~HPRT0_PWR;
+		dwc2_writel(hsotg, hprt0, HPRT0);
+		spin_unlock_irqrestore(&hsotg->lock, flags);
+		dwc2_vbus_supply_exit(hsotg);
+		spin_lock_irqsave(&hsotg->lock, flags);
+	}
+>>>>>>> master
 
 	switch (hsotg->params.power_down) {
 	case DWC2_POWER_DOWN_PARAM_PARTIAL:

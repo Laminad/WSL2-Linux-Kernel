@@ -84,6 +84,7 @@ err:
 	return err;
 }
 
+<<<<<<< HEAD
 static bool nft_ng_inc_reduce(struct nft_regs_track *track,
 				 const struct nft_expr *expr)
 {
@@ -94,6 +95,8 @@ static bool nft_ng_inc_reduce(struct nft_regs_track *track,
 	return false;
 }
 
+=======
+>>>>>>> master
 static int nft_ng_dump(struct sk_buff *skb, enum nft_registers dreg,
 		       u32 modulus, enum nft_ng_types type, u32 offset)
 {
@@ -121,6 +124,7 @@ static int nft_ng_inc_dump(struct sk_buff *skb,
 			   priv->offset);
 }
 
+<<<<<<< HEAD
 static void nft_ng_inc_destroy(const struct nft_ctx *ctx,
 			       const struct nft_expr *expr)
 {
@@ -129,6 +133,8 @@ static void nft_ng_inc_destroy(const struct nft_ctx *ctx,
 	kfree(priv->counter);
 }
 
+=======
+>>>>>>> master
 struct nft_ng_random {
 	u8			dreg;
 	u32			modulus;
@@ -169,8 +175,12 @@ static int nft_ng_random_init(const struct nft_ctx *ctx,
 					NULL, NFT_DATA_VALUE, sizeof(u32));
 }
 
+<<<<<<< HEAD
 static int nft_ng_random_dump(struct sk_buff *skb,
 			      const struct nft_expr *expr, bool reset)
+=======
+static int nft_ng_random_dump(struct sk_buff *skb, const struct nft_expr *expr)
+>>>>>>> master
 {
 	const struct nft_ng_random *priv = nft_expr_priv(expr);
 
@@ -178,6 +188,7 @@ static int nft_ng_random_dump(struct sk_buff *skb,
 			   priv->offset);
 }
 
+<<<<<<< HEAD
 static bool nft_ng_random_reduce(struct nft_regs_track *track,
 				 const struct nft_expr *expr)
 {
@@ -188,6 +199,8 @@ static bool nft_ng_random_reduce(struct nft_regs_track *track,
 	return false;
 }
 
+=======
+>>>>>>> master
 static struct nft_expr_type nft_ng_type;
 static const struct nft_expr_ops nft_ng_inc_ops = {
 	.type		= &nft_ng_type,
@@ -196,7 +209,10 @@ static const struct nft_expr_ops nft_ng_inc_ops = {
 	.init		= nft_ng_inc_init,
 	.destroy	= nft_ng_inc_destroy,
 	.dump		= nft_ng_inc_dump,
+<<<<<<< HEAD
 	.reduce		= nft_ng_inc_reduce,
+=======
+>>>>>>> master
 };
 
 static const struct nft_expr_ops nft_ng_random_ops = {
@@ -205,7 +221,10 @@ static const struct nft_expr_ops nft_ng_random_ops = {
 	.eval		= nft_ng_random_eval,
 	.init		= nft_ng_random_init,
 	.dump		= nft_ng_random_dump,
+<<<<<<< HEAD
 	.reduce		= nft_ng_random_reduce,
+=======
+>>>>>>> master
 };
 
 static const struct nft_expr_ops *

@@ -437,9 +437,14 @@ void __init paging_init(void)
 	}
 
 	min_addr = m68k_memory[0].addr;
+<<<<<<< HEAD
 	max_addr = min_addr + m68k_memory[0].size - 1;
 	memblock_add_node(m68k_memory[0].addr, m68k_memory[0].size, 0,
 			  MEMBLOCK_NONE);
+=======
+	max_addr = min_addr + m68k_memory[0].size;
+	memblock_add(m68k_memory[0].addr, m68k_memory[0].size);
+>>>>>>> master
 	for (i = 1; i < m68k_num_memory;) {
 		if (m68k_memory[i].addr < min_addr) {
 			printk("Ignoring memory chunk at 0x%lx:0x%lx before the first chunk\n",
@@ -450,9 +455,14 @@ void __init paging_init(void)
 				(m68k_num_memory - i) * sizeof(struct m68k_mem_info));
 			continue;
 		}
+<<<<<<< HEAD
 		memblock_add_node(m68k_memory[i].addr, m68k_memory[i].size, i,
 				  MEMBLOCK_NONE);
 		addr = m68k_memory[i].addr + m68k_memory[i].size - 1;
+=======
+		memblock_add(m68k_memory[i].addr, m68k_memory[i].size);
+		addr = m68k_memory[i].addr + m68k_memory[i].size;
+>>>>>>> master
 		if (addr > max_addr)
 			max_addr = addr;
 		i++;

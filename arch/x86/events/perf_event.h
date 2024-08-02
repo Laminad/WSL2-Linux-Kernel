@@ -323,12 +323,15 @@ struct cpu_hw_events {
 	u64				tfa_shadow;
 
 	/*
+<<<<<<< HEAD
 	 * Perf Metrics
 	 */
 	/* number of accepted metrics events */
 	int				n_metric;
 
 	/*
+=======
+>>>>>>> master
 	 * AMD specific bits
 	 */
 	struct amd_nb			*amd_nb;
@@ -920,12 +923,17 @@ struct x86_pmu {
 	/*
 	 * Intel host/guest support (KVM)
 	 */
+<<<<<<< HEAD
 	struct perf_guest_switch_msr *(*guest_get_msrs)(int *nr, void *data);
+=======
+	struct perf_guest_switch_msr *(*guest_get_msrs)(int *nr);
+>>>>>>> master
 
 	/*
 	 * Check period value for PERF_EVENT_IOC_PERIOD ioctl.
 	 */
 	int (*check_period) (struct perf_event *event, u64 period);
+<<<<<<< HEAD
 
 	int (*aux_output_match) (struct perf_event *event);
 
@@ -941,6 +949,8 @@ struct x86_pmu {
 	int				num_hybrid_pmus;
 	struct x86_hybrid_pmu		*hybrid_pmu;
 	u8 (*get_hybrid_cpu_type)	(void);
+=======
+>>>>>>> master
 };
 
 struct x86_perf_task_context_opt {
@@ -1001,10 +1011,13 @@ do {									\
 #define PMU_FL_EXCL_ENABLED	0x8 /* exclusive counter active */
 #define PMU_FL_PEBS_ALL		0x10 /* all events are valid PEBS events */
 #define PMU_FL_TFA		0x20 /* deal with TSX force abort */
+<<<<<<< HEAD
 #define PMU_FL_PAIR		0x40 /* merge counters for large incr. events */
 #define PMU_FL_INSTR_LATENCY	0x80 /* Support Instruction Latency in PEBS Memory Info Record */
 #define PMU_FL_MEM_LOADS_AUX	0x100 /* Require an auxiliary event for the complete memory info */
 #define PMU_FL_RETIRE_LATENCY	0x200 /* Support Retire Latency in PEBS */
+=======
+>>>>>>> master
 
 #define EVENT_VAR(_id)  event_attr_##_id
 #define EVENT_PTR(_id) &event_attr_##_id.attr.attr
@@ -1436,6 +1449,7 @@ static inline bool intel_pmu_has_bts(struct perf_event *event)
 	struct hw_perf_event *hwc = &event->hw;
 
 	return intel_pmu_has_bts_period(event, hwc->sample_period);
+<<<<<<< HEAD
 }
 
 static __always_inline void __intel_pmu_pebs_disable_all(void)
@@ -1455,6 +1469,8 @@ static __always_inline void __intel_pmu_lbr_disable(void)
 	rdmsrl(MSR_IA32_DEBUGCTLMSR, debugctl);
 	debugctl &= ~(DEBUGCTLMSR_LBR | DEBUGCTLMSR_FREEZE_LBRS_ON_PMI);
 	wrmsrl(MSR_IA32_DEBUGCTLMSR, debugctl);
+=======
+>>>>>>> master
 }
 
 int intel_pmu_save_and_restart(struct perf_event *event);

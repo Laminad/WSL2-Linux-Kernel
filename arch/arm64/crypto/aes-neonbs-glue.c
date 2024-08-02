@@ -311,6 +311,13 @@ static int __xts_crypt(struct skcipher_request *req, bool encrypt,
 	err = skcipher_walk_virt(&walk, req, false);
 	if (err)
 		return err;
+<<<<<<< HEAD
+=======
+
+	kernel_neon_begin();
+	neon_aes_ecb_encrypt(walk.iv, walk.iv, ctx->twkey, ctx->key.rounds, 1);
+	kernel_neon_end();
+>>>>>>> master
 
 	while (walk.nbytes >= AES_BLOCK_SIZE) {
 		int blocks = (walk.nbytes / AES_BLOCK_SIZE) & ~7;

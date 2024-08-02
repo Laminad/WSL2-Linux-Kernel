@@ -26,9 +26,15 @@ int gro_cells_receive(struct gro_cells *gcells, struct sk_buff *skb)
 
 	cell = this_cpu_ptr(gcells->cells);
 
+<<<<<<< HEAD
 	if (skb_queue_len(&cell->napi_skbs) > READ_ONCE(netdev_max_backlog)) {
 drop:
 		dev_core_stats_rx_dropped_inc(dev);
+=======
+	if (skb_queue_len(&cell->napi_skbs) > netdev_max_backlog) {
+drop:
+		atomic_long_inc(&dev->rx_dropped);
+>>>>>>> master
 		kfree_skb(skb);
 		res = NET_RX_DROP;
 		goto unlock;
@@ -113,7 +119,11 @@ void gro_cells_destroy(struct gro_cells *gcells)
 		struct gro_cell *cell = per_cpu_ptr(gcells->cells, i);
 
 		napi_disable(&cell->napi);
+<<<<<<< HEAD
 		__netif_napi_del(&cell->napi);
+=======
+		netif_napi_del(&cell->napi);
+>>>>>>> master
 		__skb_queue_purge(&cell->napi_skbs);
 	}
 	/* We need to observe an rcu grace period before freeing ->cells,

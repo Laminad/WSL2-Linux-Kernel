@@ -16,7 +16,11 @@ ifeq ($(CONFIG_RELOCATABLE), y)
 # Pass --no-apply-dynamic-relocs to restore pre-binutils-2.27 behaviour
 # for relative relocs, since this leads to better Image compression
 # with the relocation offsets always being zero.
+<<<<<<< HEAD
 LDFLAGS_vmlinux		+= -shared -Bsymbolic -z notext \
+=======
+LDFLAGS_vmlinux		+= -shared -Bsymbolic -z notext -z norelro \
+>>>>>>> master
 			$(call ld-option, --no-apply-dynamic-relocs)
 endif
 
@@ -36,10 +40,17 @@ ifeq ($(CONFIG_BROKEN_GAS_INST),y)
 $(warning Detected assembler with broken .inst; disassembly will be unreliable)
 endif
 
+<<<<<<< HEAD
 KBUILD_CFLAGS	+= -mgeneral-regs-only	\
 		   $(compat_vdso) $(cc_has_k_constraint)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, psabi)
 KBUILD_AFLAGS	+= $(compat_vdso)
+=======
+KBUILD_CFLAGS	+= -mgeneral-regs-only $(lseinstr) $(brokengasinst)
+KBUILD_CFLAGS	+= -fno-asynchronous-unwind-tables
+KBUILD_CFLAGS	+= $(call cc-disable-warning, psabi)
+KBUILD_AFLAGS	+= $(lseinstr) $(brokengasinst)
+>>>>>>> master
 
 KBUILD_CFLAGS	+= $(call cc-option,-mabi=lp64)
 KBUILD_AFLAGS	+= $(call cc-option,-mabi=lp64)
@@ -144,6 +155,15 @@ KBUILD_CFLAGS += -DKASAN_SHADOW_SCALE_SHIFT=$(KASAN_SHADOW_SCALE_SHIFT)
 KBUILD_CPPFLAGS += -DKASAN_SHADOW_SCALE_SHIFT=$(KASAN_SHADOW_SCALE_SHIFT)
 KBUILD_AFLAGS += -DKASAN_SHADOW_SCALE_SHIFT=$(KASAN_SHADOW_SCALE_SHIFT)
 
+<<<<<<< HEAD
+=======
+core-y		+= arch/arm64/kernel/ arch/arm64/mm/
+core-$(CONFIG_NET) += arch/arm64/net/
+core-$(CONFIG_KVM) += arch/arm64/kvm/
+core-$(CONFIG_XEN) += arch/arm64/xen/
+core-$(CONFIG_HYPERV) += arch/arm64/hyperv/
+core-$(CONFIG_CRYPTO) += arch/arm64/crypto/
+>>>>>>> master
 libs-y		:= arch/arm64/lib/ $(libs-y)
 libs-$(CONFIG_EFI_STUB) += $(objtree)/drivers/firmware/efi/libstub/lib.a
 

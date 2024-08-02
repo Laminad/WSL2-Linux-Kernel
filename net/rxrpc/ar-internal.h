@@ -284,10 +284,16 @@ struct rxrpc_security {
 struct rxrpc_local {
 	struct rcu_head		rcu;
 	atomic_t		active_users;	/* Number of users of the local endpoint */
+<<<<<<< HEAD
 	refcount_t		ref;		/* Number of references to the structure */
 	struct net		*net;		/* The network namespace */
 	struct rxrpc_net	*rxnet;		/* Our bits in the network namespace */
 	struct hlist_node	link;
+=======
+	atomic_t		usage;		/* Number of references to the structure */
+	struct rxrpc_net	*rxnet;		/* The network ns in which this resides */
+	struct list_head	link;
+>>>>>>> master
 	struct socket		*socket;	/* my UDP socket */
 	struct task_struct	*io_thread;
 	struct completion	io_thread_ready; /* Indication that the I/O thread started */
@@ -670,6 +676,7 @@ struct rxrpc_call {
 	rxrpc_seq_t		tx_prepared;	/* Highest Tx slot prepared. */
 	rxrpc_seq_t		tx_top;		/* Highest Tx slot allocated. */
 	u16			tx_backoff;	/* Delay to insert due to Tx failure */
+<<<<<<< HEAD
 	u8			tx_winsize;	/* Maximum size of Tx window */
 #define RXRPC_TX_MAX_WINDOW	128
 	ktime_t			tx_last_sent;	/* Last time a transmission occurred */
@@ -682,6 +689,8 @@ struct rxrpc_call {
 	rxrpc_seq_t		rx_consumed;	/* Highest packet consumed */
 	rxrpc_serial_t		rx_serial;	/* Highest serial received for this call */
 	u8			rx_winsize;	/* Size of Rx window */
+=======
+>>>>>>> master
 
 	/* TCP-style slow-start congestion control [RFC5681].  Since the SMSS
 	 * is fixed, we keep these numbers in terms of segments (ie. DATA
@@ -1101,12 +1110,21 @@ void rxrpc_send_version_request(struct rxrpc_local *local,
  */
 void rxrpc_local_dont_fragment(const struct rxrpc_local *local, bool set);
 struct rxrpc_local *rxrpc_lookup_local(struct net *, const struct sockaddr_rxrpc *);
+<<<<<<< HEAD
 struct rxrpc_local *rxrpc_get_local(struct rxrpc_local *, enum rxrpc_local_trace);
 struct rxrpc_local *rxrpc_get_local_maybe(struct rxrpc_local *, enum rxrpc_local_trace);
 void rxrpc_put_local(struct rxrpc_local *, enum rxrpc_local_trace);
 struct rxrpc_local *rxrpc_use_local(struct rxrpc_local *, enum rxrpc_local_trace);
 void rxrpc_unuse_local(struct rxrpc_local *, enum rxrpc_local_trace);
 void rxrpc_destroy_local(struct rxrpc_local *local);
+=======
+struct rxrpc_local *rxrpc_get_local(struct rxrpc_local *);
+struct rxrpc_local *rxrpc_get_local_maybe(struct rxrpc_local *);
+void rxrpc_put_local(struct rxrpc_local *);
+struct rxrpc_local *rxrpc_use_local(struct rxrpc_local *);
+void rxrpc_unuse_local(struct rxrpc_local *);
+void rxrpc_queue_local(struct rxrpc_local *);
+>>>>>>> master
 void rxrpc_destroy_all_locals(struct rxrpc_net *);
 
 static inline bool __rxrpc_use_local(struct rxrpc_local *local,
@@ -1182,9 +1200,16 @@ struct rxrpc_peer *rxrpc_alloc_peer(struct rxrpc_local *, gfp_t,
 				    enum rxrpc_peer_trace);
 void rxrpc_new_incoming_peer(struct rxrpc_local *local, struct rxrpc_peer *peer);
 void rxrpc_destroy_all_peers(struct rxrpc_net *);
+<<<<<<< HEAD
 struct rxrpc_peer *rxrpc_get_peer(struct rxrpc_peer *, enum rxrpc_peer_trace);
 struct rxrpc_peer *rxrpc_get_peer_maybe(struct rxrpc_peer *, enum rxrpc_peer_trace);
 void rxrpc_put_peer(struct rxrpc_peer *, enum rxrpc_peer_trace);
+=======
+struct rxrpc_peer *rxrpc_get_peer(struct rxrpc_peer *);
+struct rxrpc_peer *rxrpc_get_peer_maybe(struct rxrpc_peer *);
+void rxrpc_put_peer(struct rxrpc_peer *);
+void rxrpc_put_peer_locked(struct rxrpc_peer *);
+>>>>>>> master
 
 /*
  * proc.c

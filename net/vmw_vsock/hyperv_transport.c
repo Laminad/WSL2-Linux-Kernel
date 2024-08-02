@@ -16,6 +16,7 @@
 #include <asm/hyperv-tlfs.h>
 
 /* Older (VMBUS version 'VERSION_WIN10' or before) Windows hosts have some
+<<<<<<< HEAD
  * stricter requirements on the hv_sock ring buffer size of six 4K pages.
  * hyperv-tlfs defines HV_HYP_PAGE_SIZE as 4K. Newer hosts don't have this
  * limitation; but, keep the defaults the same for compat.
@@ -23,6 +24,15 @@
 #define RINGBUFFER_HVS_RCV_SIZE (HV_HYP_PAGE_SIZE * 6)
 #define RINGBUFFER_HVS_SND_SIZE (HV_HYP_PAGE_SIZE * 6)
 #define RINGBUFFER_HVS_MAX_SIZE (HV_HYP_PAGE_SIZE * 64)
+=======
+ * stricter requirements on the hv_sock ring buffer size of six 4K pages. Newer
+ * hosts don't have this limitation; but, keep the defaults the same for compat.
+ */
+#define PAGE_SIZE_4K		4096
+#define RINGBUFFER_HVS_RCV_SIZE (PAGE_SIZE_4K * 6)
+#define RINGBUFFER_HVS_SND_SIZE (PAGE_SIZE_4K * 6)
+#define RINGBUFFER_HVS_MAX_SIZE (PAGE_SIZE_4K * 64)
+>>>>>>> master
 
 /* The MTU is 16KB per the host side's design */
 #define HVS_MTU_SIZE		(1024 * 16)
@@ -375,6 +385,7 @@ static void hvs_open_connection(struct vmbus_channel *chan)
 	} else {
 		sndbuf = max_t(int, sk->sk_sndbuf, RINGBUFFER_HVS_SND_SIZE);
 		sndbuf = min_t(int, sndbuf, RINGBUFFER_HVS_MAX_SIZE);
+<<<<<<< HEAD
 		sndbuf = ALIGN(sndbuf, HV_HYP_PAGE_SIZE);
 		rcvbuf = max_t(int, sk->sk_rcvbuf, RINGBUFFER_HVS_RCV_SIZE);
 		rcvbuf = min_t(int, rcvbuf, RINGBUFFER_HVS_MAX_SIZE);
@@ -383,6 +394,14 @@ static void hvs_open_connection(struct vmbus_channel *chan)
 
 	chan->max_pkt_size = HVS_MAX_PKT_SIZE;
 
+=======
+		sndbuf = ALIGN(sndbuf, PAGE_SIZE);
+		rcvbuf = max_t(int, sk->sk_rcvbuf, RINGBUFFER_HVS_RCV_SIZE);
+		rcvbuf = min_t(int, rcvbuf, RINGBUFFER_HVS_MAX_SIZE);
+		rcvbuf = ALIGN(rcvbuf, PAGE_SIZE);
+	}
+
+>>>>>>> master
 	ret = vmbus_open(chan, sndbuf, rcvbuf, NULL, 0, hvs_channel_cb,
 			 conn_from_host ? new : sk);
 	if (ret != 0) {
@@ -479,16 +498,31 @@ static void hvs_shutdown_lock_held(struct hvsock *hvs, int mode)
 		return;
 
 	/* It can't fail: see hvs_channel_writable_bytes(). */
+<<<<<<< HEAD
 	(void)__hvs_send_data(hvs->chan, &hdr, 0);
+=======
+	(void)hvs_send_data(hvs->chan, (struct hvs_send_buf *)&hdr, 0);
+>>>>>>> master
 	hvs->fin_sent = true;
 }
 
 static int hvs_shutdown(struct vsock_sock *vsk, int mode)
 {
+<<<<<<< HEAD
 	if (!(mode & SEND_SHUTDOWN))
 		return 0;
 
 	hvs_shutdown_lock_held(vsk->trans, mode);
+=======
+	struct sock *sk = sk_vsock(vsk);
+
+	if (!(mode & SEND_SHUTDOWN))
+		return 0;
+
+	lock_sock(sk);
+	hvs_shutdown_lock_held(vsk->trans, mode);
+	release_sock(sk);
+>>>>>>> master
 	return 0;
 }
 
@@ -533,9 +567,18 @@ static bool hvs_close_lock_held(struct vsock_sock *vsk)
 
 static void hvs_release(struct vsock_sock *vsk)
 {
+<<<<<<< HEAD
 	bool remove_sock;
 
 	remove_sock = hvs_close_lock_held(vsk);
+=======
+	struct sock *sk = sk_vsock(vsk);
+	bool remove_sock;
+
+	lock_sock_nested(sk, SINGLE_DEPTH_NESTING);
+	remove_sock = hvs_close_lock_held(vsk);
+	release_sock(sk);
+>>>>>>> master
 	if (remove_sock)
 		vsock_remove_sock(vsk);
 }

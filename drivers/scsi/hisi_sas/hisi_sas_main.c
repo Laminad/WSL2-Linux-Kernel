@@ -5,6 +5,7 @@
  */
 
 #include "hisi_sas.h"
+#include "../libsas/sas_internal.h"
 #define DRV_NAME "hisi_sas"
 
 #define DEV_IS_GONE(dev) \
@@ -1089,7 +1090,12 @@ static void hisi_sas_do_release_task(struct hisi_hba *hisi_hba, struct sas_task 
 		ts->resp = SAS_TASK_COMPLETE;
 		ts->stat = SAS_ABORTED_TASK;
 		spin_lock_irqsave(&task->task_state_lock, flags);
+<<<<<<< HEAD
 		task->task_state_flags &= ~SAS_TASK_STATE_PENDING;
+=======
+		task->task_state_flags &=
+			~(SAS_TASK_STATE_PENDING | SAS_TASK_AT_INITIATOR);
+>>>>>>> master
 		if (!slot->is_internal && task->task_proto != SAS_PROTOCOL_SMP)
 			task->task_state_flags |= SAS_TASK_STATE_DONE;
 		spin_unlock_irqrestore(&task->task_state_lock, flags);
@@ -2019,18 +2025,29 @@ static void hisi_sas_phy_disconnected(struct hisi_sas_phy *phy)
 {
 	struct asd_sas_phy *sas_phy = &phy->sas_phy;
 	struct sas_phy *sphy = sas_phy->phy;
+<<<<<<< HEAD
 	unsigned long flags;
+=======
+	struct sas_phy_data *d = sphy->hostdata;
+>>>>>>> master
 
 	phy->phy_attached = 0;
 	phy->phy_type = 0;
 	phy->port = NULL;
 
+<<<<<<< HEAD
 	spin_lock_irqsave(&phy->lock, flags);
 	if (phy->enable)
 		sphy->negotiated_linkrate = SAS_LINK_RATE_UNKNOWN;
 	else
 		sphy->negotiated_linkrate = SAS_PHY_DISABLED;
 	spin_unlock_irqrestore(&phy->lock, flags);
+=======
+	if (d->enable)
+		sphy->negotiated_linkrate = SAS_LINK_RATE_UNKNOWN;
+	else
+		sphy->negotiated_linkrate = SAS_PHY_DISABLED;
+>>>>>>> master
 }
 
 void hisi_sas_phy_down(struct hisi_hba *hisi_hba, int phy_no, int rdy,

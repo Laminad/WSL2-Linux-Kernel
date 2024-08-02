@@ -305,10 +305,14 @@ static int perf_pmu__parse_scale(struct perf_pmu *pmu, struct perf_pmu_alias *al
 	int fd, ret = -1;
 	char path[PATH_MAX];
 
+<<<<<<< HEAD
 	len = perf_pmu__event_source_devices_scnprintf(path, sizeof(path));
 	if (!len)
 		return 0;
 	scnprintf(path + len, sizeof(path) - len, "%s/events/%s.scale", pmu->name, alias->name);
+=======
+	scnprintf(path, PATH_MAX, "%s/%s.scale", dir, name);
+>>>>>>> master
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1)
@@ -339,11 +343,15 @@ static int perf_pmu__parse_unit(struct perf_pmu *pmu, struct perf_pmu_alias *ali
 	ssize_t sret;
 	int fd;
 
+<<<<<<< HEAD
 
 	len = perf_pmu__event_source_devices_scnprintf(path, sizeof(path));
 	if (!len)
 		return 0;
 	scnprintf(path + len, sizeof(path) - len, "%s/events/%s.unit", pmu->name, alias->name);
+=======
+	scnprintf(path, PATH_MAX, "%s/%s.unit", dir, name);
+>>>>>>> master
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1)
@@ -374,10 +382,14 @@ perf_pmu__parse_per_pkg(struct perf_pmu *pmu, struct perf_pmu_alias *alias)
 	size_t len;
 	int fd;
 
+<<<<<<< HEAD
 	len = perf_pmu__event_source_devices_scnprintf(path, sizeof(path));
 	if (!len)
 		return 0;
 	scnprintf(path + len, sizeof(path) - len, "%s/events/%s.per-pkg", pmu->name, alias->name);
+=======
+	scnprintf(path, PATH_MAX, "%s/%s.per-pkg", dir, name);
+>>>>>>> master
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1)
@@ -395,10 +407,14 @@ static int perf_pmu__parse_snapshot(struct perf_pmu *pmu, struct perf_pmu_alias 
 	size_t len;
 	int fd;
 
+<<<<<<< HEAD
 	len = perf_pmu__event_source_devices_scnprintf(path, sizeof(path));
 	if (!len)
 		return 0;
 	scnprintf(path + len, sizeof(path) - len, "%s/events/%s.snapshot", pmu->name, alias->name);
+=======
+	scnprintf(path, PATH_MAX, "%s/%s.snapshot", dir, name);
+>>>>>>> master
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1)
@@ -953,14 +969,21 @@ static int pmu_add_cpu_aliases_map_callback(const struct pmu_event *pe,
  */
 void pmu_add_cpu_aliases_table(struct perf_pmu *pmu, const struct pmu_events_table *table)
 {
+<<<<<<< HEAD
 	pmu_events_table__for_each_event(table, pmu, pmu_add_cpu_aliases_map_callback, pmu);
 }
+=======
+	int i;
+	struct pmu_events_map *map;
+	const char *name = pmu->name;
+>>>>>>> master
 
 static void pmu_add_cpu_aliases(struct perf_pmu *pmu)
 {
 	if (!pmu->events_table)
 		return;
 
+<<<<<<< HEAD
 	if (pmu->cpu_aliases_added)
 		return;
 
@@ -986,6 +1009,42 @@ static int pmu_add_sys_aliases_iter_fn(const struct pmu_event *pe,
 				/*val_fd=*/ NULL,
 				pe,
 				EVENT_SRC_SYS_JSON);
+=======
+	/*
+	 * Found a matching PMU events table. Create aliases
+	 */
+	i = 0;
+	while (1) {
+		const char *cpu_name = is_arm_pmu_core(name) ? name : "cpu";
+		struct pmu_event *pe = &map->table[i++];
+		const char *pname = pe->pmu ? pe->pmu : cpu_name;
+
+		if (!pe->name) {
+			if (pe->metric_group || pe->metric_name)
+				continue;
+			break;
+		}
+
+		/*
+		 * uncore alias may be from different PMU
+		 * with common prefix
+		 */
+		if (pmu_is_uncore(name) &&
+		    !strncmp(pname, name, strlen(pname)))
+			goto new_alias;
+
+		if (strcmp(pname, name))
+			continue;
+
+new_alias:
+		/* need type casts to override 'const' */
+		__perf_pmu__new_alias(head, NULL, (char *)pe->name,
+				(char *)pe->desc, (char *)pe->event,
+				(char *)pe->long_desc, (char *)pe->topic,
+				(char *)pe->unit, (char *)pe->perpkg,
+				(char *)pe->metric_expr,
+				(char *)pe->metric_name);
+>>>>>>> master
 	}
 
 	return 0;

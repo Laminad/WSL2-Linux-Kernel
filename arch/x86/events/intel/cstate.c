@@ -84,6 +84,7 @@
  *			       Scope: Package (physical package)
  *	MSR_PKG_C8_RESIDENCY:  Package C8 Residency Counter.
  *			       perf code: 0x04
+<<<<<<< HEAD
  *			       Available model: HSW ULT,KBL,CNL,CML,ICL,TGL,RKL,
  *						ADL,RPL,MTL
  *			       Scope: Package (physical package)
@@ -96,6 +97,17 @@
  *			       perf code: 0x06
  *			       Available model: HSW ULT,KBL,GLM,CNL,CML,ICL,TGL,
  *						TNT,RKL,ADL,RPL,MTL
+=======
+ *			       Available model: HSW ULT,KBL,CNL
+ *			       Scope: Package (physical package)
+ *	MSR_PKG_C9_RESIDENCY:  Package C9 Residency Counter.
+ *			       perf code: 0x05
+ *			       Available model: HSW ULT,KBL,CNL
+ *			       Scope: Package (physical package)
+ *	MSR_PKG_C10_RESIDENCY: Package C10 Residency Counter.
+ *			       perf code: 0x06
+ *			       Available model: HSW ULT,KBL,GLM,CNL
+>>>>>>> master
  *			       Scope: Package (physical package)
  *
  */
@@ -640,9 +652,15 @@ static const struct x86_cpu_id intel_cstates_match[] __initconst = {
 
 	X86_MATCH_INTEL_FAM6_MODEL(HASWELL_L,		&hswult_cstates),
 
+<<<<<<< HEAD
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_SILVERMONT,	&slm_cstates),
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_SILVERMONT_D,	&slm_cstates),
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_AIRMONT,	&slm_cstates),
+=======
+	X86_CSTATES_MODEL(INTEL_FAM6_ATOM_SILVERMONT, slm_cstates),
+	X86_CSTATES_MODEL(INTEL_FAM6_ATOM_SILVERMONT_X, slm_cstates),
+	X86_CSTATES_MODEL(INTEL_FAM6_ATOM_AIRMONT,     slm_cstates),
+>>>>>>> master
 
 	X86_MATCH_INTEL_FAM6_MODEL(BROADWELL,		&snb_cstates),
 	X86_MATCH_INTEL_FAM6_MODEL(BROADWELL_D,		&snb_cstates),
@@ -653,16 +671,22 @@ static const struct x86_cpu_id intel_cstates_match[] __initconst = {
 	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE,		&snb_cstates),
 	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE_X,		&snb_cstates),
 
+<<<<<<< HEAD
 	X86_MATCH_INTEL_FAM6_MODEL(KABYLAKE_L,		&hswult_cstates),
 	X86_MATCH_INTEL_FAM6_MODEL(KABYLAKE,		&hswult_cstates),
 	X86_MATCH_INTEL_FAM6_MODEL(COMETLAKE_L,		&hswult_cstates),
 	X86_MATCH_INTEL_FAM6_MODEL(COMETLAKE,		&hswult_cstates),
+=======
+	X86_CSTATES_MODEL(INTEL_FAM6_KABYLAKE_MOBILE,  hswult_cstates),
+	X86_CSTATES_MODEL(INTEL_FAM6_KABYLAKE_DESKTOP, hswult_cstates),
+>>>>>>> master
 
 	X86_MATCH_INTEL_FAM6_MODEL(CANNONLAKE_L,	&cnl_cstates),
 
 	X86_MATCH_INTEL_FAM6_MODEL(XEON_PHI_KNL,	&knl_cstates),
 	X86_MATCH_INTEL_FAM6_MODEL(XEON_PHI_KNM,	&knl_cstates),
 
+<<<<<<< HEAD
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT,	&glm_cstates),
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT_D,	&glm_cstates),
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT_PLUS,	&glm_cstates),
@@ -690,6 +714,14 @@ static const struct x86_cpu_id intel_cstates_match[] __initconst = {
 	X86_MATCH_INTEL_FAM6_MODEL(RAPTORLAKE_S,	&adl_cstates),
 	X86_MATCH_INTEL_FAM6_MODEL(METEORLAKE,		&adl_cstates),
 	X86_MATCH_INTEL_FAM6_MODEL(METEORLAKE_L,	&adl_cstates),
+=======
+	X86_CSTATES_MODEL(INTEL_FAM6_ATOM_GOLDMONT, glm_cstates),
+	X86_CSTATES_MODEL(INTEL_FAM6_ATOM_GOLDMONT_X, glm_cstates),
+
+	X86_CSTATES_MODEL(INTEL_FAM6_ATOM_GOLDMONT_PLUS, glm_cstates),
+
+	X86_CSTATES_MODEL(INTEL_FAM6_ICELAKE_MOBILE, snb_cstates),
+>>>>>>> master
 	{ },
 };
 MODULE_DEVICE_TABLE(x86cpu, intel_cstates_match);

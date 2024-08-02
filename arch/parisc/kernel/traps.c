@@ -835,6 +835,16 @@ static void __init initialize_ivt(const void *iva)
 
 	/* Setup IVA and compute checksum for HPMC handler */
 	ivap[6] = (u32)__pa(os_hpmc);
+<<<<<<< HEAD
+=======
+	length = os_hpmc_size;
+	ivap[7] = length;
+
+	hpmcp = (u32 *)os_hpmc;
+
+	for (i=0; i<length/4; i++)
+	    check += *hpmcp++;
+>>>>>>> master
 
 	for (i=0; i<8; i++)
 	    check += ivap[i];

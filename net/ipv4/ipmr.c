@@ -65,6 +65,8 @@
 
 #include <linux/nospec.h>
 
+#include <linux/nospec.h>
+
 struct ipmr_rule {
 	struct fib_rule		common;
 };
@@ -1634,7 +1636,30 @@ int ipmr_ioctl(struct sock *sk, int cmd, void *arg)
 		vr = (struct sioc_vif_req *)arg;
 		if (vr->vifi >= mrt->maxvif)
 			return -EINVAL;
+<<<<<<< HEAD
 		vr->vifi = array_index_nospec(vr->vifi, mrt->maxvif);
+=======
+		vr.vifi = array_index_nospec(vr.vifi, mrt->maxvif);
+		read_lock(&mrt_lock);
+		vif = &mrt->vif_table[vr.vifi];
+		if (VIF_EXISTS(mrt, vr.vifi)) {
+			vr.icount = vif->pkt_in;
+			vr.ocount = vif->pkt_out;
+			vr.ibytes = vif->bytes_in;
+			vr.obytes = vif->bytes_out;
+			read_unlock(&mrt_lock);
+
+			if (copy_to_user(arg, &vr, sizeof(vr)))
+				return -EFAULT;
+			return 0;
+		}
+		read_unlock(&mrt_lock);
+		return -EADDRNOTAVAIL;
+	case SIOCGETSGCNT:
+		if (copy_from_user(&sr, arg, sizeof(sr)))
+			return -EFAULT;
+
+>>>>>>> master
 		rcu_read_lock();
 		vif = &mrt->vif_table[vr->vifi];
 		if (VIF_EXISTS(mrt, vr->vifi)) {
@@ -1704,7 +1729,11 @@ int ipmr_compat_ioctl(struct sock *sk, unsigned int cmd, void __user *arg)
 		if (vr.vifi >= mrt->maxvif)
 			return -EINVAL;
 		vr.vifi = array_index_nospec(vr.vifi, mrt->maxvif);
+<<<<<<< HEAD
 		rcu_read_lock();
+=======
+		read_lock(&mrt_lock);
+>>>>>>> master
 		vif = &mrt->vif_table[vr.vifi];
 		if (VIF_EXISTS(mrt, vr.vifi)) {
 			vr.icount = READ_ONCE(vif->pkt_in);

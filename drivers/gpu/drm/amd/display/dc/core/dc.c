@@ -808,6 +808,78 @@ static void dc_destruct(struct dc *dc)
 		dc->current_state = NULL;
 	}
 
+<<<<<<< HEAD
+=======
+	if (i >= dc->link_count)
+		ASSERT_CRITICAL(false);
+
+	dc_link_dp_set_drive_settings(dc->links[i], lt_settings);
+}
+
+void dc_link_perform_link_training(struct dc *dc,
+				   struct dc_link_settings *link_setting,
+				   bool skip_video_pattern)
+{
+	int i;
+
+	for (i = 0; i < dc->link_count; i++)
+		dc_link_dp_perform_link_training(
+			dc->links[i],
+			link_setting,
+			skip_video_pattern);
+}
+
+void dc_link_set_preferred_link_settings(struct dc *dc,
+					 struct dc_link_settings *link_setting,
+					 struct dc_link *link)
+{
+	struct dc_link_settings store_settings = *link_setting;
+	struct dc_stream_state *link_stream =
+		link->dc->current_state->res_ctx.pipe_ctx[0].stream;
+
+	link->preferred_link_setting = store_settings;
+	if (link_stream)
+		decide_link_settings(link_stream, &store_settings);
+
+	if ((store_settings.lane_count != LANE_COUNT_UNKNOWN) &&
+		(store_settings.link_rate != LINK_RATE_UNKNOWN))
+		dp_retrain_link_dp_test(link, &store_settings, false);
+}
+
+void dc_link_enable_hpd(const struct dc_link *link)
+{
+	dc_link_dp_enable_hpd(link);
+}
+
+void dc_link_disable_hpd(const struct dc_link *link)
+{
+	dc_link_dp_disable_hpd(link);
+}
+
+
+void dc_link_set_test_pattern(struct dc_link *link,
+			      enum dp_test_pattern test_pattern,
+			      const struct link_training_settings *p_link_settings,
+			      const unsigned char *p_custom_pattern,
+			      unsigned int cust_pattern_size)
+{
+	if (link != NULL)
+		dc_link_dp_set_test_pattern(
+			link,
+			test_pattern,
+			p_link_settings,
+			p_custom_pattern,
+			cust_pattern_size);
+}
+
+static void destruct(struct dc *dc)
+{
+	if (dc->current_state) {
+		dc_release_state(dc->current_state);
+		dc->current_state = NULL;
+	}
+
+>>>>>>> master
 	destroy_links(dc);
 
 	destroy_link_encoders(dc);
@@ -1957,8 +2029,15 @@ static enum dc_status dc_commit_state_no_check(struct dc *dc, struct dc_state *c
 		dc_trigger_sync(dc, context);
 	}
 
+<<<<<<< HEAD
 	if (dc->hwss.update_dsc_pg)
 		dc->hwss.update_dsc_pg(dc, context, true);
+=======
+	for (i = 0; i < context->stream_count; i++)
+		context->streams[i]->mode_changed = false;
+
+	dc_release_state(dc->current_state);
+>>>>>>> master
 
 	if (dc->ctx->dce_version >= DCE_VERSION_MAX)
 		TRACE_DCN_CLOCK_STATE(&context->bw_ctx.bw.dcn.clk);
@@ -2427,7 +2506,10 @@ static enum surface_update_type get_plane_info_update_type(const struct dc_surfa
 		elevate_update_type(&update_type, UPDATE_TYPE_MED);
 	}
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 	if (memcmp(&u->plane_info->tiling_info, &u->surface->tiling_info,
 			sizeof(union dc_tiling_info)) != 0) {
 		update_flags->bits.swizzle_change = 1;
@@ -2445,8 +2527,20 @@ static enum surface_update_type get_plane_info_update_type(const struct dc_surfa
 		}
 	}
 
+<<<<<<< HEAD
 	/* This should be UPDATE_TYPE_FAST if nothing has changed. */
 	return update_type;
+=======
+	if (update_flags->bits.rotation_change
+			|| update_flags->bits.stereo_format_change
+			|| update_flags->bits.pixel_format_change
+			|| update_flags->bits.bpp_change
+			|| update_flags->bits.bandwidth_change
+			|| update_flags->bits.output_tf_change)
+		return UPDATE_TYPE_FULL;
+
+	return UPDATE_TYPE_MED;
+>>>>>>> master
 }
 
 static enum surface_update_type get_scaling_info_update_type(
@@ -2521,7 +2615,14 @@ static enum surface_update_type det_surface_update(const struct dc *dc,
 		return UPDATE_TYPE_FULL;
 	}
 
+<<<<<<< HEAD
 	update_flags->raw = 0; // Reset all flags
+=======
+	if (u->surface->force_full_update) {
+		update_flags->bits.full_update = 1;
+		return UPDATE_TYPE_FULL;
+	}
+>>>>>>> master
 
 	type = get_plane_info_update_type(u);
 	elevate_update_type(&overall_type, type);
@@ -2545,9 +2646,12 @@ static enum surface_update_type det_surface_update(const struct dc *dc,
 	if (u->coeff_reduction_factor)
 		update_flags->bits.coeff_reduction_change = 1;
 
+<<<<<<< HEAD
 	if (u->gamut_remap_matrix)
 		update_flags->bits.gamut_remap_change = 1;
 
+=======
+>>>>>>> master
 	if (u->gamma) {
 		enum surface_pixel_format format = SURFACE_PIXEL_FORMAT_GRPH_BEGIN;
 
@@ -2560,6 +2664,7 @@ static enum surface_update_type det_surface_update(const struct dc *dc,
 			update_flags->bits.gamma_change = 1;
 	}
 
+<<<<<<< HEAD
 	if (u->lut3d_func || u->func_shaper)
 		update_flags->bits.lut_3d = 1;
 
@@ -2569,12 +2674,20 @@ static enum surface_update_type det_surface_update(const struct dc *dc,
 			elevate_update_type(&overall_type, UPDATE_TYPE_MED);
 		}
 
+=======
+>>>>>>> master
 	if (update_flags->bits.in_transfer_func_change) {
 		type = UPDATE_TYPE_MED;
 		elevate_update_type(&overall_type, type);
 	}
 
+<<<<<<< HEAD
 	if (update_flags->bits.lut_3d) {
+=======
+	if (update_flags->bits.input_csc_change
+			|| update_flags->bits.coeff_reduction_change
+			|| update_flags->bits.gamma_change) {
+>>>>>>> master
 		type = UPDATE_TYPE_FULL;
 		elevate_update_type(&overall_type, type);
 	}
@@ -3047,6 +3160,7 @@ static bool update_planes_and_stream_state(struct dc *dc,
 			return false;
 		}
 
+<<<<<<< HEAD
 		dc_resource_state_copy_construct(
 				dc->current_state, context);
 
@@ -3068,6 +3182,16 @@ static bool update_planes_and_stream_state(struct dc *dc,
 
 			BREAK_TO_DEBUGGER();
 			goto fail;
+=======
+		dc_resource_state_copy_construct(state, context);
+
+		for (i = 0; i < dc->res_pool->pipe_count; i++) {
+			struct pipe_ctx *new_pipe = &context->res_ctx.pipe_ctx[i];
+			struct pipe_ctx *old_pipe = &dc->current_state->res_ctx.pipe_ctx[i];
+
+			if (new_pipe->plane_state && new_pipe->plane_state != old_pipe->plane_state)
+				new_pipe->plane_state->force_full_update = true;
+>>>>>>> master
 		}
 	}
 
@@ -4594,10 +4718,18 @@ void dc_set_power_state(
 
 		dc->hwss.init_hw(dc);
 
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_DRM_AMD_DC_DCN2_0
+>>>>>>> master
 		if (dc->hwss.init_sys_ctx != NULL &&
 			dc->vm_pa_config.valid) {
 			dc->hwss.init_sys_ctx(dc->hwseq, dc, &dc->vm_pa_config);
 		}
+<<<<<<< HEAD
+=======
+#endif
+>>>>>>> master
 
 		break;
 	default:

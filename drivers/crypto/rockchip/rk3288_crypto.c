@@ -121,6 +121,77 @@ static int rk_crypto_pm_suspend(struct device *dev)
 	rk_crypto_disable_clk(rkdev);
 	reset_control_assert(rkdev->rst);
 
+<<<<<<< HEAD
+=======
+	return (align && (sg_src->length == sg_dst->length));
+}
+
+static int rk_load_data(struct rk_crypto_info *dev,
+			struct scatterlist *sg_src,
+			struct scatterlist *sg_dst)
+{
+	unsigned int count;
+
+	dev->aligned = dev->aligned ?
+		check_alignment(sg_src, sg_dst, dev->align_size) :
+		dev->aligned;
+	if (dev->aligned) {
+		count = min(dev->left_bytes, sg_src->length);
+		dev->left_bytes -= count;
+
+		if (!dma_map_sg(dev->dev, sg_src, 1, DMA_TO_DEVICE)) {
+			dev_err(dev->dev, "[%s:%d] dma_map_sg(src)  error\n",
+				__func__, __LINE__);
+			return -EINVAL;
+		}
+		dev->addr_in = sg_dma_address(sg_src);
+
+		if (sg_dst) {
+			if (!dma_map_sg(dev->dev, sg_dst, 1, DMA_FROM_DEVICE)) {
+				dev_err(dev->dev,
+					"[%s:%d] dma_map_sg(dst)  error\n",
+					__func__, __LINE__);
+				dma_unmap_sg(dev->dev, sg_src, 1,
+					     DMA_TO_DEVICE);
+				return -EINVAL;
+			}
+			dev->addr_out = sg_dma_address(sg_dst);
+		}
+	} else {
+		count = (dev->left_bytes > PAGE_SIZE) ?
+			PAGE_SIZE : dev->left_bytes;
+
+		if (!sg_pcopy_to_buffer(dev->first, dev->src_nents,
+					dev->addr_vir, count,
+					dev->total - dev->left_bytes)) {
+			dev_err(dev->dev, "[%s:%d] pcopy err\n",
+				__func__, __LINE__);
+			return -EINVAL;
+		}
+		dev->left_bytes -= count;
+		sg_init_one(&dev->sg_tmp, dev->addr_vir, count);
+		if (!dma_map_sg(dev->dev, &dev->sg_tmp, 1, DMA_TO_DEVICE)) {
+			dev_err(dev->dev, "[%s:%d] dma_map_sg(sg_tmp)  error\n",
+				__func__, __LINE__);
+			return -ENOMEM;
+		}
+		dev->addr_in = sg_dma_address(&dev->sg_tmp);
+
+		if (sg_dst) {
+			if (!dma_map_sg(dev->dev, &dev->sg_tmp, 1,
+					DMA_FROM_DEVICE)) {
+				dev_err(dev->dev,
+					"[%s:%d] dma_map_sg(sg_tmp)  error\n",
+					__func__, __LINE__);
+				dma_unmap_sg(dev->dev, &dev->sg_tmp, 1,
+					     DMA_TO_DEVICE);
+				return -ENOMEM;
+			}
+			dev->addr_out = sg_dma_address(&dev->sg_tmp);
+		}
+	}
+	dev->count = count;
+>>>>>>> master
 	return 0;
 }
 

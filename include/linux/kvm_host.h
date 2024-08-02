@@ -28,6 +28,7 @@
 #include <linux/rcuwait.h>
 #include <linux/refcount.h>
 #include <linux/nospec.h>
+<<<<<<< HEAD
 #include <linux/notifier.h>
 #include <linux/ftrace.h>
 #include <linux/hashtable.h>
@@ -35,6 +36,8 @@
 #include <linux/interval_tree.h>
 #include <linux/rbtree.h>
 #include <linux/xarray.h>
+=======
+>>>>>>> master
 #include <asm/signal.h>
 
 #include <linux/kvm.h>
@@ -194,6 +197,11 @@ bool kvm_make_all_cpus_request_except(struct kvm *kvm, unsigned int req,
 #define KVM_USERSPACE_IRQ_SOURCE_ID		0
 #define KVM_IRQFD_RESAMPLE_IRQ_SOURCE_ID	1
 
+<<<<<<< HEAD
+=======
+extern struct kmem_cache *kvm_vcpu_cache;
+
+>>>>>>> master
 extern struct mutex kvm_lock;
 extern struct list_head vm_list;
 
@@ -1149,7 +1157,14 @@ int kvm_set_memory_region(struct kvm *kvm,
 			  const struct kvm_userspace_memory_region *mem);
 int __kvm_set_memory_region(struct kvm *kvm,
 			    const struct kvm_userspace_memory_region *mem);
+<<<<<<< HEAD
 void kvm_arch_free_memslot(struct kvm *kvm, struct kvm_memory_slot *slot);
+=======
+void kvm_arch_free_memslot(struct kvm *kvm, struct kvm_memory_slot *free,
+			   struct kvm_memory_slot *dont);
+int kvm_arch_create_memslot(struct kvm *kvm, struct kvm_memory_slot *slot,
+			    unsigned long npages);
+>>>>>>> master
 void kvm_arch_memslots_updated(struct kvm *kvm, u64 gen);
 int kvm_arch_prepare_memory_region(struct kvm *kvm,
 				const struct kvm_memory_slot *old,
@@ -1472,10 +1487,13 @@ int kvm_arch_vcpu_runnable(struct kvm_vcpu *vcpu);
 bool kvm_arch_vcpu_in_kernel(struct kvm_vcpu *vcpu);
 int kvm_arch_vcpu_should_kick(struct kvm_vcpu *vcpu);
 bool kvm_arch_dy_runnable(struct kvm_vcpu *vcpu);
+<<<<<<< HEAD
 bool kvm_arch_dy_has_pending_interrupt(struct kvm_vcpu *vcpu);
 int kvm_arch_post_init_vm(struct kvm *kvm);
 void kvm_arch_pre_destroy_vm(struct kvm *kvm);
 int kvm_arch_create_vm_debugfs(struct kvm *kvm);
+=======
+>>>>>>> master
 
 #ifndef __KVM_HAVE_ARCH_VM_ALLOC
 /*
@@ -1769,9 +1787,15 @@ enum kvm_stat_kind {
 };
 
 struct kvm_stat_data {
+<<<<<<< HEAD
+=======
+	int offset;
+	int mode;
+>>>>>>> master
 	struct kvm *kvm;
 	const struct _kvm_stats_desc *desc;
 	enum kvm_stat_kind kind;
+	int mode;
 };
 
 struct _kvm_stats_desc {
@@ -2287,6 +2311,7 @@ int kvm_vm_create_worker_thread(struct kvm *kvm, kvm_vm_thread_fn_t thread_fn,
 				uintptr_t data, const char *name,
 				struct task_struct **thread_ptr);
 
+<<<<<<< HEAD
 #ifdef CONFIG_KVM_XFER_TO_GUEST_WORK
 static inline void kvm_handle_signal_exit(struct kvm_vcpu *vcpu)
 {
@@ -2318,4 +2343,6 @@ static inline void kvm_account_pgtable_pages(void *virt, int nr)
 /* Max number of entries allowed for each kvm dirty ring */
 #define  KVM_DIRTY_RING_MAX_ENTRIES  65536
 
+=======
+>>>>>>> master
 #endif

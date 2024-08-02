@@ -1035,9 +1035,15 @@ static long _zcrypt_send_ep11_cprb(bool userspace, struct ap_perms *perms,
 			goto out;
 		}
 
+<<<<<<< HEAD
 		uptr = (struct ep11_target_dev __force __user *)xcrb->targets;
 		if (z_copy_from_user(userspace, targets, uptr,
 				     target_num * sizeof(*targets))) {
+=======
+		uptr = (struct ep11_target_dev __force __user *) xcrb->targets;
+		if (copy_from_user(targets, uptr,
+				   target_num * sizeof(*targets))) {
+>>>>>>> master
 			func_code = 0;
 			rc = -EFAULT;
 			goto out_free;

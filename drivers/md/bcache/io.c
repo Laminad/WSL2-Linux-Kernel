@@ -66,8 +66,13 @@ void bch_count_backing_io_errors(struct cached_dev *dc, struct bio *bio)
 	 * we shouldn't count failed REQ_RAHEAD bio to dc->io_errors.
 	 */
 	if (bio->bi_opf & REQ_RAHEAD) {
+<<<<<<< HEAD
 		pr_warn_ratelimited("%pg: Read-ahead I/O failed on backing device, ignore\n",
 				    dc->bdev);
+=======
+		pr_warn_ratelimited("%s: Read-ahead I/O failed on backing device, ignore",
+				    dc->backing_dev_name);
+>>>>>>> master
 		return;
 	}
 

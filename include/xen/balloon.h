@@ -36,5 +36,8 @@ static inline void xen_balloon_init(void)
 {
 }
 #endif
+<<<<<<< HEAD
 
 #endif	/* _XEN_BALLOON_H */
+=======
+>>>>>>> master

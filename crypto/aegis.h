@@ -62,6 +62,7 @@ static __always_inline void crypto_aegis_aesenc(union aegis_block *dst,
 						const union aegis_block *key)
 {
 	const u8  *s  = src->bytes;
+<<<<<<< HEAD
 	const u32 *t = crypto_ft_tab[0];
 	u32 d0, d1, d2, d3;
 
@@ -69,6 +70,18 @@ static __always_inline void crypto_aegis_aesenc(union aegis_block *dst,
 	d1 = t[s[ 4]] ^ rol32(t[s[ 9]], 8) ^ rol32(t[s[14]], 16) ^ rol32(t[s[ 3]], 24);
 	d2 = t[s[ 8]] ^ rol32(t[s[13]], 8) ^ rol32(t[s[ 2]], 16) ^ rol32(t[s[ 7]], 24);
 	d3 = t[s[12]] ^ rol32(t[s[ 1]], 8) ^ rol32(t[s[ 6]], 16) ^ rol32(t[s[11]], 24);
+=======
+	const u32 *t0 = crypto_ft_tab[0];
+	const u32 *t1 = crypto_ft_tab[1];
+	const u32 *t2 = crypto_ft_tab[2];
+	const u32 *t3 = crypto_ft_tab[3];
+	u32 d0, d1, d2, d3;
+
+	d0 = t0[s[ 0]] ^ t1[s[ 5]] ^ t2[s[10]] ^ t3[s[15]];
+	d1 = t0[s[ 4]] ^ t1[s[ 9]] ^ t2[s[14]] ^ t3[s[ 3]];
+	d2 = t0[s[ 8]] ^ t1[s[13]] ^ t2[s[ 2]] ^ t3[s[ 7]];
+	d3 = t0[s[12]] ^ t1[s[ 1]] ^ t2[s[ 6]] ^ t3[s[11]];
+>>>>>>> master
 
 	dst->words32[0] = cpu_to_le32(d0) ^ key->words32[0];
 	dst->words32[1] = cpu_to_le32(d1) ^ key->words32[1];

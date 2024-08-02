@@ -105,9 +105,12 @@ struct sun4i_usb_phy_cfg {
 	u8 phyctl_offset;
 	bool dedicated_clocks;
 	bool phy0_dual_route;
+<<<<<<< HEAD
 	bool needs_phy2_siddq;
 	bool siddq_in_base;
 	bool poll_vbusen;
+=======
+>>>>>>> master
 	int missing_phys;
 };
 
@@ -585,7 +588,11 @@ static void sun4i_usb_phy0_id_vbus_det_scan(struct work_struct *work)
 	struct sun4i_usb_phy_data *data =
 		container_of(work, struct sun4i_usb_phy_data, detect.work);
 	struct phy *phy0 = data->phys[0].phy;
+<<<<<<< HEAD
 	struct sun4i_usb_phy *phy;
+=======
+	struct sun4i_usb_phy *phy = phy_get_drvdata(phy0);
+>>>>>>> master
 	bool force_session_end, id_notify = false, vbus_notify = false;
 	int id_det, vbus_det;
 

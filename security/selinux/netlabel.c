@@ -277,7 +277,11 @@ int selinux_netlbl_sctp_assoc_request(struct sctp_association *asoc,
 {
 	int rc;
 	struct netlbl_lsm_secattr secattr;
+<<<<<<< HEAD
 	struct sk_security_struct *sksec = asoc->base.sk->sk_security;
+=======
+	struct sk_security_struct *sksec = ep->base.sk->sk_security;
+>>>>>>> master
 	struct sockaddr_in addr4;
 	struct sockaddr_in6 addr6;
 
@@ -296,11 +300,19 @@ int selinux_netlbl_sctp_assoc_request(struct sctp_association *asoc,
 	if (ip_hdr(skb)->version == 4) {
 		addr4.sin_family = AF_INET;
 		addr4.sin_addr.s_addr = ip_hdr(skb)->saddr;
+<<<<<<< HEAD
 		rc = netlbl_conn_setattr(asoc->base.sk, (void *)&addr4, &secattr);
 	} else if (IS_ENABLED(CONFIG_IPV6) && ip_hdr(skb)->version == 6) {
 		addr6.sin6_family = AF_INET6;
 		addr6.sin6_addr = ipv6_hdr(skb)->saddr;
 		rc = netlbl_conn_setattr(asoc->base.sk, (void *)&addr6, &secattr);
+=======
+		rc = netlbl_conn_setattr(ep->base.sk, (void *)&addr4, &secattr);
+	} else if (IS_ENABLED(CONFIG_IPV6) && ip_hdr(skb)->version == 6) {
+		addr6.sin6_family = AF_INET6;
+		addr6.sin6_addr = ipv6_hdr(skb)->saddr;
+		rc = netlbl_conn_setattr(ep->base.sk, (void *)&addr6, &secattr);
+>>>>>>> master
 	} else {
 		rc = -EAFNOSUPPORT;
 	}

@@ -659,6 +659,7 @@ static int oom_reaper(void *unused)
 
 static void wake_oom_reaper(struct timer_list *timer)
 {
+<<<<<<< HEAD
 	struct task_struct *tsk = container_of(timer, struct task_struct,
 			oom_reaper_timer);
 	struct mm_struct *mm = tsk->signal->oom_mm;
@@ -667,6 +668,10 @@ static void wake_oom_reaper(struct timer_list *timer)
 	/* The victim managed to terminate on its own - see exit_mmap */
 	if (test_bit(MMF_OOM_SKIP, &mm->flags)) {
 		put_task_struct(tsk);
+=======
+	/* mm is already queued? */
+	if (test_and_set_bit(MMF_OOM_REAP_QUEUED, &tsk->signal->oom_mm->flags))
+>>>>>>> master
 		return;
 	}
 
@@ -1030,7 +1035,50 @@ static void oom_kill_process(struct oom_control *oc, const char *message)
 	task_unlock(victim);
 
 	if (__ratelimit(&oom_rs))
+<<<<<<< HEAD
 		dump_header(oc, victim);
+=======
+		dump_header(oc, p);
+
+	pr_err("%s: Kill process %d (%s) score %u or sacrifice child\n",
+		message, task_pid_nr(p), p->comm, points);
+
+	/*
+	 * If any of p's children has a different mm and is eligible for kill,
+	 * the one with the highest oom_badness() score is sacrificed for its
+	 * parent.  This attempts to lose the minimal amount of work done while
+	 * still freeing memory.
+	 */
+	read_lock(&tasklist_lock);
+
+	/*
+	 * The task 'p' might have already exited before reaching here. The
+	 * put_task_struct() will free task_struct 'p' while the loop still try
+	 * to access the field of 'p', so, get an extra reference.
+	 */
+	get_task_struct(p);
+	for_each_thread(p, t) {
+		list_for_each_entry(child, &t->children, sibling) {
+			unsigned int child_points;
+
+			if (process_shares_mm(child, p->mm))
+				continue;
+			/*
+			 * oom_badness() returns 0 if the thread is unkillable
+			 */
+			child_points = oom_badness(child,
+				oc->memcg, oc->nodemask, oc->totalpages);
+			if (child_points > victim_points) {
+				put_task_struct(victim);
+				victim = child;
+				victim_points = child_points;
+				get_task_struct(victim);
+			}
+		}
+	}
+	put_task_struct(p);
+	read_unlock(&tasklist_lock);
+>>>>>>> master
 
 	/*
 	 * Do we need to kill the entire memory cgroup?
@@ -1127,10 +1175,19 @@ bool out_of_memory(struct oom_control *oc)
 
 	/*
 	 * The OOM killer does not compensate for IO-less reclaim.
+<<<<<<< HEAD
 	 * But mem_cgroup_oom() has to invoke the OOM killer even
 	 * if it is a GFP_NOFS allocation.
 	 */
 	if (!(oc->gfp_mask & __GFP_FS) && !is_memcg_oom(oc))
+=======
+	 * pagefault_out_of_memory lost its gfp context so we have to
+	 * make sure exclude 0 mask - all other users should have at least
+	 * ___GFP_DIRECT_RECLAIM to get here. But mem_cgroup_oom() has to
+	 * invoke the OOM killer even if it is a GFP_NOFS allocation.
+	 */
+	if (oc->gfp_mask && !(oc->gfp_mask & __GFP_FS) && !is_memcg_oom(oc))
+>>>>>>> master
 		return true;
 
 	/*

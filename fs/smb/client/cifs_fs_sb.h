@@ -60,15 +60,21 @@ struct cifs_sb_info {
 
 	/* only used when CIFS_MOUNT_USE_PREFIX_PATH is set */
 	char *prepath;
+<<<<<<< HEAD:fs/smb/client/cifs_fs_sb.h
 
+=======
+>>>>>>> master:fs/cifs/cifs_fs_sb.h
 	/*
 	 * Indicate whether serverino option was turned off later
 	 * (cifs_autodisable_serverino) in order to match new mounts.
 	 */
 	bool mnt_cifs_serverino_autodisabled;
+<<<<<<< HEAD:fs/smb/client/cifs_fs_sb.h
 	/*
 	 * Available once the mount has completed.
 	 */
 	struct dentry *root;
+=======
+>>>>>>> master:fs/cifs/cifs_fs_sb.h
 };
 #endif				/* _CIFS_FS_SB_H */

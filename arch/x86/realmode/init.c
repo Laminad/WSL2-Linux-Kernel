@@ -29,6 +29,7 @@ void load_trampoline_pgtable(void)
 	if (boot_cpu_has(X86_FEATURE_PCID))
 		cr4_clear_bits(X86_CR4_PCIDE);
 
+<<<<<<< HEAD
 	write_cr3(real_mode_header->trampoline_pgd);
 #endif
 
@@ -41,6 +42,9 @@ void load_trampoline_pgtable(void)
 	 * trampoline_pgd is *actually* mapped into trampoline_pgd.
 	 */
 	__flush_tlb_all();
+=======
+	real_mode_header = (struct real_mode_header *) base;
+>>>>>>> master
 }
 
 void __init reserve_real_mode(void)

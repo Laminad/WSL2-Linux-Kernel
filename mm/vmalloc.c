@@ -1622,7 +1622,75 @@ retry:
 	 * If an allocation fails, the "vend" address is
 	 * returned. Therefore trigger the overflow path.
 	 */
+<<<<<<< HEAD
 	if (unlikely(addr == vend))
+=======
+	if (!free_vmap_cache ||
+			size < cached_hole_size ||
+			vstart < cached_vstart ||
+			align < cached_align) {
+nocache:
+		cached_hole_size = 0;
+		free_vmap_cache = NULL;
+	}
+	/* record if we encounter less permissive parameters */
+	cached_vstart = vstart;
+	cached_align = align;
+
+	/* find starting point for our search */
+	if (free_vmap_cache) {
+		first = rb_entry(free_vmap_cache, struct vmap_area, rb_node);
+		addr = ALIGN(first->va_end, align);
+		if (addr < vstart)
+			goto nocache;
+		if (addr + size < addr)
+			goto overflow;
+
+	} else {
+		addr = ALIGN(vstart, align);
+		if (addr + size < addr)
+			goto overflow;
+
+		n = vmap_area_root.rb_node;
+		first = NULL;
+
+		while (n) {
+			struct vmap_area *tmp;
+			tmp = rb_entry(n, struct vmap_area, rb_node);
+			if (tmp->va_end >= addr) {
+				first = tmp;
+				if (tmp->va_start <= addr)
+					break;
+				n = n->rb_left;
+			} else
+				n = n->rb_right;
+		}
+
+		if (!first)
+			goto found;
+	}
+
+	/* from the starting point, walk areas until a suitable hole is found */
+	while (addr + size > first->va_start && addr + size <= vend) {
+		if (addr + cached_hole_size < first->va_start)
+			cached_hole_size = first->va_start - addr;
+		addr = ALIGN(first->va_end, align);
+		if (addr + size < addr)
+			goto overflow;
+
+		if (list_is_last(&first->list, &vmap_area_list))
+			goto found;
+
+		first = list_next_entry(first, list);
+	}
+
+found:
+	/*
+	 * Check also calculated address against the vstart,
+	 * because it can be 0 because of big align request.
+	 */
+	if (addr + size > vend || addr < vstart)
+>>>>>>> master
 		goto overflow;
 
 	va->va_start = addr;
@@ -3336,6 +3404,12 @@ again:
 	area->addr = kasan_unpoison_vmalloc(area->addr, real_size, kasan_flags);
 
 	/*
+	 * First make sure the mappings are removed from all page-tables
+	 * before they are freed.
+	 */
+	vmalloc_sync_all();
+
+	/*
 	 * In this function, newly allocated vm_struct has VM_UNINITIALIZED
 	 * flag. It means that vm_struct is not fully initialized.
 	 * Now, it is fully initialized, so remove this flag here.
@@ -3871,8 +3945,12 @@ int remap_vmalloc_range_partial(struct vm_area_struct *vma, unsigned long uaddr,
 	if (!(area->flags & (VM_USERMAP | VM_DMA_COHERENT)))
 		return -EINVAL;
 
+<<<<<<< HEAD
 	if (check_add_overflow(size, off, &end_index) ||
 	    end_index > get_vm_area_size(area))
+=======
+	if (kaddr + size > area->addr + get_vm_area_size(area))
+>>>>>>> master
 		return -EINVAL;
 	kaddr += off;
 
@@ -3917,6 +3995,69 @@ int remap_vmalloc_range(struct vm_area_struct *vma, void *addr,
 }
 EXPORT_SYMBOL(remap_vmalloc_range);
 
+<<<<<<< HEAD
+=======
+/*
+ * Implement a stub for vmalloc_sync_all() if the architecture chose not to
+ * have one.
+ *
+ * The purpose of this function is to make sure the vmalloc area
+ * mappings are identical in all page-tables in the system.
+ */
+void __weak vmalloc_sync_all(void)
+{
+}
+
+
+static int f(pte_t *pte, pgtable_t table, unsigned long addr, void *data)
+{
+	pte_t ***p = data;
+
+	if (p) {
+		*(*p) = pte;
+		(*p)++;
+	}
+	return 0;
+}
+
+/**
+ *	alloc_vm_area - allocate a range of kernel address space
+ *	@size:		size of the area
+ *	@ptes:		returns the PTEs for the address space
+ *
+ *	Returns:	NULL on failure, vm_struct on success
+ *
+ *	This function reserves a range of kernel address space, and
+ *	allocates pagetables to map that range.  No actual mappings
+ *	are created.
+ *
+ *	If @ptes is non-NULL, pointers to the PTEs (in init_mm)
+ *	allocated for the VM area are returned.
+ */
+struct vm_struct *alloc_vm_area(size_t size, pte_t **ptes)
+{
+	struct vm_struct *area;
+
+	area = get_vm_area_caller(size, VM_IOREMAP,
+				__builtin_return_address(0));
+	if (area == NULL)
+		return NULL;
+
+	/*
+	 * This ensures that page tables are constructed for this region
+	 * of kernel virtual address space and mapped into init_mm.
+	 */
+	if (apply_to_page_range(&init_mm, (unsigned long)area->addr,
+				size, f, ptes ? &ptes : NULL)) {
+		free_vm_area(area);
+		return NULL;
+	}
+
+	return area;
+}
+EXPORT_SYMBOL_GPL(alloc_vm_area);
+
+>>>>>>> master
 void free_vm_area(struct vm_struct *area)
 {
 	struct vm_struct *ret;

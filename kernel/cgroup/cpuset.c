@@ -3979,22 +3979,33 @@ void cpuset_cpus_allowed(struct task_struct *tsk, struct cpumask *pmask)
  * which will not contain a sane cpumask during cases such as cpu hotplugging.
  * This is the absolute last resort for the scheduler and it is only used if
  * _every_ other avenue has been traveled.
+<<<<<<< HEAD
  *
  * Returns true if the affinity of @tsk was changed, false otherwise.
  **/
 
 bool cpuset_cpus_allowed_fallback(struct task_struct *tsk)
+=======
+ **/
+
+void cpuset_cpus_allowed_fallback(struct task_struct *tsk)
+>>>>>>> master
 {
 	const struct cpumask *possible_mask = task_cpu_possible_mask(tsk);
 	const struct cpumask *cs_mask;
 	bool changed = false;
 
 	rcu_read_lock();
+<<<<<<< HEAD
 	cs_mask = task_cs(tsk)->cpus_allowed;
 	if (is_in_v2_mode() && cpumask_subset(cs_mask, possible_mask)) {
 		do_set_cpus_allowed(tsk, cs_mask);
 		changed = true;
 	}
+=======
+	do_set_cpus_allowed(tsk, is_in_v2_mode() ?
+		task_cs(tsk)->cpus_allowed : cpu_possible_mask);
+>>>>>>> master
 	rcu_read_unlock();
 
 	/*

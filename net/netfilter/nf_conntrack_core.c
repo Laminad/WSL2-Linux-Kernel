@@ -21,6 +21,10 @@
 #include <linux/stddef.h>
 #include <linux/slab.h>
 #include <linux/random.h>
+<<<<<<< HEAD
+=======
+#include <linux/jhash.h>
+>>>>>>> master
 #include <linux/siphash.h>
 #include <linux/err.h>
 #include <linux/percpu.h>
@@ -486,7 +490,11 @@ EXPORT_SYMBOL_GPL(nf_ct_invert_tuple);
  */
 u32 nf_ct_get_id(const struct nf_conn *ct)
 {
+<<<<<<< HEAD
 	static siphash_aligned_key_t ct_id_seed;
+=======
+	static __read_mostly siphash_key_t ct_id_seed;
+>>>>>>> master
 	unsigned long a, b, c, d;
 
 	net_get_random_once(&ct_id_seed, sizeof(ct_id_seed));
@@ -1201,11 +1209,15 @@ __nf_conntrack_confirm(struct sk_buff *skb)
 		return NF_DROP;
 	}
 
+<<<<<<< HEAD
 	if (!nf_ct_ext_valid_pre(ct->ext)) {
 		NF_CT_STAT_INC(net, insert_failed);
 		goto dying;
 	}
 
+=======
+	pr_debug("Confirming conntrack %p\n", ct);
+>>>>>>> master
 	/* We have to check the DYING flag after unlink to prevent
 	 * a race against nf_ct_get_next_corpse() possibly called from
 	 * user context, else we insert an already 'dead' hash, blocking
@@ -1333,8 +1345,12 @@ nf_conntrack_tuple_taken(const struct nf_conntrack_tuple *tuple,
 			 * Let nf_ct_resolve_clash() deal with this later.
 			 */
 			if (nf_ct_tuple_equal(&ignored_conntrack->tuplehash[IP_CT_DIR_ORIGINAL].tuple,
+<<<<<<< HEAD
 					      &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple) &&
 					      nf_ct_zone_equal(ct, zone, IP_CT_DIR_ORIGINAL))
+=======
+					      &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple))
+>>>>>>> master
 				continue;
 
 			NF_CT_STAT_INC_ATOMIC(net, found);

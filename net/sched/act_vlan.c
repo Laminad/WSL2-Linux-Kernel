@@ -216,8 +216,13 @@ static int tcf_vlan_init(struct net *net, struct nlattr *nla,
 	action = parm->v_action;
 
 	if (!exists) {
+<<<<<<< HEAD
 		ret = tcf_idr_create_from_flags(tn, index, est, a,
 						&act_vlan_ops, bind, flags);
+=======
+		ret = tcf_idr_create(tn, index, est, a,
+				     &act_vlan_ops, bind, true);
+>>>>>>> master
 		if (ret) {
 			tcf_idr_cleanup(tn, index);
 			return ret;
@@ -414,6 +419,14 @@ static int tcf_vlan_offload_act_setup(struct tc_action *act, void *entry_data,
 	return 0;
 }
 
+static size_t tcf_vlan_get_fill_size(const struct tc_action *act)
+{
+	return nla_total_size(sizeof(struct tc_vlan))
+		+ nla_total_size(sizeof(u16)) /* TCA_VLAN_PUSH_VLAN_ID */
+		+ nla_total_size(sizeof(u16)) /* TCA_VLAN_PUSH_VLAN_PROTOCOL */
+		+ nla_total_size(sizeof(u8)); /* TCA_VLAN_PUSH_VLAN_PRIORITY */
+}
+
 static struct tc_action_ops act_vlan_ops = {
 	.kind		=	"vlan",
 	.id		=	TCA_ID_VLAN,
@@ -422,9 +435,15 @@ static struct tc_action_ops act_vlan_ops = {
 	.dump		=	tcf_vlan_dump,
 	.init		=	tcf_vlan_init,
 	.cleanup	=	tcf_vlan_cleanup,
+<<<<<<< HEAD
 	.stats_update	=	tcf_vlan_stats_update,
 	.get_fill_size	=	tcf_vlan_get_fill_size,
 	.offload_act_setup =	tcf_vlan_offload_act_setup,
+=======
+	.walk		=	tcf_vlan_walker,
+	.get_fill_size	=	tcf_vlan_get_fill_size,
+	.lookup		=	tcf_vlan_search,
+>>>>>>> master
 	.size		=	sizeof(struct tcf_vlan),
 };
 

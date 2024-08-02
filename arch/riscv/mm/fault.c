@@ -19,6 +19,7 @@
 
 #include <asm/ptrace.h>
 #include <asm/tlbflush.h>
+<<<<<<< HEAD
 
 #include "../kernel/head.h"
 
@@ -214,6 +215,8 @@ static inline bool access_error(unsigned long cause, struct vm_area_struct *vma)
 	}
 	return false;
 }
+=======
+>>>>>>> master
 
 /*
  * This routine handles page faults.  It determines the address and the
@@ -374,4 +377,91 @@ done:
 		return;
 	}
 	return;
+<<<<<<< HEAD
+=======
+
+do_sigbus:
+	up_read(&mm->mmap_sem);
+	/* Kernel mode? Handle exceptions or die */
+	if (!user_mode(regs))
+		goto no_context;
+	do_trap(regs, SIGBUS, BUS_ADRERR, addr, tsk);
+	return;
+
+vmalloc_fault:
+	{
+		pgd_t *pgd, *pgd_k;
+		pud_t *pud, *pud_k;
+		p4d_t *p4d, *p4d_k;
+		pmd_t *pmd, *pmd_k;
+		pte_t *pte_k;
+		int index;
+
+		if (user_mode(regs))
+			goto bad_area;
+
+		/*
+		 * Synchronize this task's top level page-table
+		 * with the 'reference' page table.
+		 *
+		 * Do _not_ use "tsk->active_mm->pgd" here.
+		 * We might be inside an interrupt in the middle
+		 * of a task switch.
+		 *
+		 * Note: Use the old spbtr name instead of using the current
+		 * satp name to support binutils 2.29 which doesn't know about
+		 * the privileged ISA 1.10 yet.
+		 */
+		index = pgd_index(addr);
+		pgd = (pgd_t *)pfn_to_virt(csr_read(sptbr)) + index;
+		pgd_k = init_mm.pgd + index;
+
+		if (!pgd_present(*pgd_k))
+			goto no_context;
+		set_pgd(pgd, *pgd_k);
+
+		p4d = p4d_offset(pgd, addr);
+		p4d_k = p4d_offset(pgd_k, addr);
+		if (!p4d_present(*p4d_k))
+			goto no_context;
+
+		pud = pud_offset(p4d, addr);
+		pud_k = pud_offset(p4d_k, addr);
+		if (!pud_present(*pud_k))
+			goto no_context;
+
+		/*
+		 * Since the vmalloc area is global, it is unnecessary
+		 * to copy individual PTEs
+		 */
+		pmd = pmd_offset(pud, addr);
+		pmd_k = pmd_offset(pud_k, addr);
+		if (!pmd_present(*pmd_k))
+			goto no_context;
+		set_pmd(pmd, *pmd_k);
+
+		/*
+		 * Make sure the actual PTE exists as well to
+		 * catch kernel vmalloc-area accesses to non-mapped
+		 * addresses. If we don't do this, this will just
+		 * silently loop forever.
+		 */
+		pte_k = pte_offset_kernel(pmd_k, addr);
+		if (!pte_present(*pte_k))
+			goto no_context;
+
+		/*
+		 * The kernel assumes that TLBs don't cache invalid
+		 * entries, but in RISC-V, SFENCE.VMA specifies an
+		 * ordering constraint, not a cache flush; it is
+		 * necessary even after writing invalid entries.
+		 * Relying on flush_tlb_fix_spurious_fault would
+		 * suffice, but the extra traps reduce
+		 * performance. So, eagerly SFENCE.VMA.
+		 */
+		local_flush_tlb_page(addr);
+
+		return;
+	}
+>>>>>>> master
 }

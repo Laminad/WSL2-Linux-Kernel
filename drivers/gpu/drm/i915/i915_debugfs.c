@@ -404,7 +404,521 @@ static int i915_frequency_info(struct seq_file *m, void *unused)
 	struct intel_gt *gt = to_gt(i915);
 	struct drm_printer p = drm_seq_file_printer(m);
 
+<<<<<<< HEAD
 	intel_gt_pm_frequency_dump(gt, &p);
+=======
+	seq_printf(m, "user.bypass_count = %u\n",
+		   i915->uncore.user_forcewake.count);
+
+	for_each_fw_domain(fw_domain, i915, tmp)
+		seq_printf(m, "%s.wake_count = %u\n",
+			   intel_uncore_forcewake_domain_to_str(fw_domain->id),
+			   READ_ONCE(fw_domain->wake_count));
+
+	return 0;
+}
+
+static void print_rc6_res(struct seq_file *m,
+			  const char *title,
+			  const i915_reg_t reg)
+{
+	struct drm_i915_private *dev_priv = node_to_i915(m->private);
+
+	seq_printf(m, "%s %u (%llu us)\n",
+		   title, I915_READ(reg),
+		   intel_rc6_residency_us(dev_priv, reg));
+}
+
+static int vlv_drpc_info(struct seq_file *m)
+{
+	struct drm_i915_private *dev_priv = node_to_i915(m->private);
+	u32 rcctl1, pw_status;
+
+	pw_status = I915_READ(VLV_GTLC_PW_STATUS);
+	rcctl1 = I915_READ(GEN6_RC_CONTROL);
+
+	seq_printf(m, "RC6 Enabled: %s\n",
+		   yesno(rcctl1 & (GEN7_RC_CTL_TO_MODE |
+					GEN6_RC_CTL_EI_MODE(1))));
+	seq_printf(m, "Render Power Well: %s\n",
+		   (pw_status & VLV_GTLC_PW_RENDER_STATUS_MASK) ? "Up" : "Down");
+	seq_printf(m, "Media Power Well: %s\n",
+		   (pw_status & VLV_GTLC_PW_MEDIA_STATUS_MASK) ? "Up" : "Down");
+
+	print_rc6_res(m, "Render RC6 residency since boot:", VLV_GT_RENDER_RC6);
+	print_rc6_res(m, "Media RC6 residency since boot:", VLV_GT_MEDIA_RC6);
+
+	return i915_forcewake_domains(m, NULL);
+}
+
+static int gen6_drpc_info(struct seq_file *m)
+{
+	struct drm_i915_private *dev_priv = node_to_i915(m->private);
+	u32 gt_core_status, rcctl1, rc6vids = 0;
+	u32 gen9_powergate_enable = 0, gen9_powergate_status = 0;
+
+	gt_core_status = I915_READ_FW(GEN6_GT_CORE_STATUS);
+	trace_i915_reg_rw(false, GEN6_GT_CORE_STATUS, gt_core_status, 4, true);
+
+	rcctl1 = I915_READ(GEN6_RC_CONTROL);
+	if (INTEL_GEN(dev_priv) >= 9) {
+		gen9_powergate_enable = I915_READ(GEN9_PG_ENABLE);
+		gen9_powergate_status = I915_READ(GEN9_PWRGT_DOMAIN_STATUS);
+	}
+
+	if (INTEL_GEN(dev_priv) <= 7) {
+		mutex_lock(&dev_priv->pcu_lock);
+		sandybridge_pcode_read(dev_priv, GEN6_PCODE_READ_RC6VIDS,
+				       &rc6vids);
+		mutex_unlock(&dev_priv->pcu_lock);
+	}
+
+	seq_printf(m, "RC1e Enabled: %s\n",
+		   yesno(rcctl1 & GEN6_RC_CTL_RC1e_ENABLE));
+	seq_printf(m, "RC6 Enabled: %s\n",
+		   yesno(rcctl1 & GEN6_RC_CTL_RC6_ENABLE));
+	if (INTEL_GEN(dev_priv) >= 9) {
+		seq_printf(m, "Render Well Gating Enabled: %s\n",
+			yesno(gen9_powergate_enable & GEN9_RENDER_PG_ENABLE));
+		seq_printf(m, "Media Well Gating Enabled: %s\n",
+			yesno(gen9_powergate_enable & GEN9_MEDIA_PG_ENABLE));
+	}
+	seq_printf(m, "Deep RC6 Enabled: %s\n",
+		   yesno(rcctl1 & GEN6_RC_CTL_RC6p_ENABLE));
+	seq_printf(m, "Deepest RC6 Enabled: %s\n",
+		   yesno(rcctl1 & GEN6_RC_CTL_RC6pp_ENABLE));
+	seq_puts(m, "Current RC state: ");
+	switch (gt_core_status & GEN6_RCn_MASK) {
+	case GEN6_RC0:
+		if (gt_core_status & GEN6_CORE_CPD_STATE_MASK)
+			seq_puts(m, "Core Power Down\n");
+		else
+			seq_puts(m, "on\n");
+		break;
+	case GEN6_RC3:
+		seq_puts(m, "RC3\n");
+		break;
+	case GEN6_RC6:
+		seq_puts(m, "RC6\n");
+		break;
+	case GEN6_RC7:
+		seq_puts(m, "RC7\n");
+		break;
+	default:
+		seq_puts(m, "Unknown\n");
+		break;
+	}
+
+	seq_printf(m, "Core Power Down: %s\n",
+		   yesno(gt_core_status & GEN6_CORE_CPD_STATE_MASK));
+	if (INTEL_GEN(dev_priv) >= 9) {
+		seq_printf(m, "Render Power Well: %s\n",
+			(gen9_powergate_status &
+			 GEN9_PWRGT_RENDER_STATUS_MASK) ? "Up" : "Down");
+		seq_printf(m, "Media Power Well: %s\n",
+			(gen9_powergate_status &
+			 GEN9_PWRGT_MEDIA_STATUS_MASK) ? "Up" : "Down");
+	}
+
+	/* Not exactly sure what this is */
+	print_rc6_res(m, "RC6 \"Locked to RPn\" residency since boot:",
+		      GEN6_GT_GFX_RC6_LOCKED);
+	print_rc6_res(m, "RC6 residency since boot:", GEN6_GT_GFX_RC6);
+	print_rc6_res(m, "RC6+ residency since boot:", GEN6_GT_GFX_RC6p);
+	print_rc6_res(m, "RC6++ residency since boot:", GEN6_GT_GFX_RC6pp);
+
+	if (INTEL_GEN(dev_priv) <= 7) {
+		seq_printf(m, "RC6   voltage: %dmV\n",
+			   GEN6_DECODE_RC6_VID(((rc6vids >> 0) & 0xff)));
+		seq_printf(m, "RC6+  voltage: %dmV\n",
+			   GEN6_DECODE_RC6_VID(((rc6vids >> 8) & 0xff)));
+		seq_printf(m, "RC6++ voltage: %dmV\n",
+			   GEN6_DECODE_RC6_VID(((rc6vids >> 16) & 0xff)));
+	}
+
+	return i915_forcewake_domains(m, NULL);
+}
+
+static int i915_drpc_info(struct seq_file *m, void *unused)
+{
+	struct drm_i915_private *dev_priv = node_to_i915(m->private);
+	int err;
+
+	intel_runtime_pm_get(dev_priv);
+
+	if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
+		err = vlv_drpc_info(m);
+	else if (INTEL_GEN(dev_priv) >= 6)
+		err = gen6_drpc_info(m);
+	else
+		err = ironlake_drpc_info(m);
+
+	intel_runtime_pm_put(dev_priv);
+
+	return err;
+}
+
+static int i915_frontbuffer_tracking(struct seq_file *m, void *unused)
+{
+	struct drm_i915_private *dev_priv = node_to_i915(m->private);
+
+	seq_printf(m, "FB tracking busy bits: 0x%08x\n",
+		   dev_priv->fb_tracking.busy_bits);
+
+	seq_printf(m, "FB tracking flip bits: 0x%08x\n",
+		   dev_priv->fb_tracking.flip_bits);
+
+	return 0;
+}
+
+static int i915_fbc_status(struct seq_file *m, void *unused)
+{
+	struct drm_i915_private *dev_priv = node_to_i915(m->private);
+	struct intel_fbc *fbc = &dev_priv->fbc;
+
+	if (!HAS_FBC(dev_priv))
+		return -ENODEV;
+
+	intel_runtime_pm_get(dev_priv);
+	mutex_lock(&fbc->lock);
+
+	if (intel_fbc_is_active(dev_priv))
+		seq_puts(m, "FBC enabled\n");
+	else
+		seq_printf(m, "FBC disabled: %s\n", fbc->no_fbc_reason);
+
+	if (intel_fbc_is_active(dev_priv)) {
+		u32 mask;
+
+		if (INTEL_GEN(dev_priv) >= 8)
+			mask = I915_READ(IVB_FBC_STATUS2) & BDW_FBC_COMP_SEG_MASK;
+		else if (INTEL_GEN(dev_priv) >= 7)
+			mask = I915_READ(IVB_FBC_STATUS2) & IVB_FBC_COMP_SEG_MASK;
+		else if (INTEL_GEN(dev_priv) >= 5)
+			mask = I915_READ(ILK_DPFC_STATUS) & ILK_DPFC_COMP_SEG_MASK;
+		else if (IS_G4X(dev_priv))
+			mask = I915_READ(DPFC_STATUS) & DPFC_COMP_SEG_MASK;
+		else
+			mask = I915_READ(FBC_STATUS) & (FBC_STAT_COMPRESSING |
+							FBC_STAT_COMPRESSED);
+
+		seq_printf(m, "Compressing: %s\n", yesno(mask));
+	}
+
+	mutex_unlock(&fbc->lock);
+	intel_runtime_pm_put(dev_priv);
+
+	return 0;
+}
+
+static int i915_fbc_false_color_get(void *data, u64 *val)
+{
+	struct drm_i915_private *dev_priv = data;
+
+	if (INTEL_GEN(dev_priv) < 7 || !HAS_FBC(dev_priv))
+		return -ENODEV;
+
+	*val = dev_priv->fbc.false_color;
+
+	return 0;
+}
+
+static int i915_fbc_false_color_set(void *data, u64 val)
+{
+	struct drm_i915_private *dev_priv = data;
+	u32 reg;
+
+	if (INTEL_GEN(dev_priv) < 7 || !HAS_FBC(dev_priv))
+		return -ENODEV;
+
+	mutex_lock(&dev_priv->fbc.lock);
+
+	reg = I915_READ(ILK_DPFC_CONTROL);
+	dev_priv->fbc.false_color = val;
+
+	I915_WRITE(ILK_DPFC_CONTROL, val ?
+		   (reg | FBC_CTL_FALSE_COLOR) :
+		   (reg & ~FBC_CTL_FALSE_COLOR));
+
+	mutex_unlock(&dev_priv->fbc.lock);
+	return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(i915_fbc_false_color_fops,
+			i915_fbc_false_color_get, i915_fbc_false_color_set,
+			"%llu\n");
+
+static int i915_ips_status(struct seq_file *m, void *unused)
+{
+	struct drm_i915_private *dev_priv = node_to_i915(m->private);
+
+	if (!HAS_IPS(dev_priv))
+		return -ENODEV;
+
+	intel_runtime_pm_get(dev_priv);
+
+	seq_printf(m, "Enabled by kernel parameter: %s\n",
+		   yesno(i915_modparams.enable_ips));
+
+	if (INTEL_GEN(dev_priv) >= 8) {
+		seq_puts(m, "Currently: unknown\n");
+	} else {
+		if (I915_READ(IPS_CTL) & IPS_ENABLE)
+			seq_puts(m, "Currently: enabled\n");
+		else
+			seq_puts(m, "Currently: disabled\n");
+	}
+
+	intel_runtime_pm_put(dev_priv);
+
+	return 0;
+}
+
+static int i915_sr_status(struct seq_file *m, void *unused)
+{
+	struct drm_i915_private *dev_priv = node_to_i915(m->private);
+	bool sr_enabled = false;
+
+	intel_runtime_pm_get(dev_priv);
+	intel_display_power_get(dev_priv, POWER_DOMAIN_INIT);
+
+	if (INTEL_GEN(dev_priv) >= 9)
+		/* no global SR status; inspect per-plane WM */;
+	else if (HAS_PCH_SPLIT(dev_priv))
+		sr_enabled = I915_READ(WM1_LP_ILK) & WM1_LP_SR_EN;
+	else if (IS_I965GM(dev_priv) || IS_G4X(dev_priv) ||
+		 IS_I945G(dev_priv) || IS_I945GM(dev_priv))
+		sr_enabled = I915_READ(FW_BLC_SELF) & FW_BLC_SELF_EN;
+	else if (IS_I915GM(dev_priv))
+		sr_enabled = I915_READ(INSTPM) & INSTPM_SELF_EN;
+	else if (IS_PINEVIEW(dev_priv))
+		sr_enabled = I915_READ(DSPFW3) & PINEVIEW_SELF_REFRESH_EN;
+	else if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
+		sr_enabled = I915_READ(FW_BLC_SELF_VLV) & FW_CSPWRDWNEN;
+
+	intel_display_power_put(dev_priv, POWER_DOMAIN_INIT);
+	intel_runtime_pm_put(dev_priv);
+
+	seq_printf(m, "self-refresh: %s\n", enableddisabled(sr_enabled));
+
+	return 0;
+}
+
+static int i915_emon_status(struct seq_file *m, void *unused)
+{
+	struct drm_i915_private *dev_priv = node_to_i915(m->private);
+	struct drm_device *dev = &dev_priv->drm;
+	unsigned long temp, chipset, gfx;
+	int ret;
+
+	if (!IS_GEN5(dev_priv))
+		return -ENODEV;
+
+	intel_runtime_pm_get(dev_priv);
+
+	ret = mutex_lock_interruptible(&dev->struct_mutex);
+	if (ret)
+		return ret;
+
+	temp = i915_mch_val(dev_priv);
+	chipset = i915_chipset_val(dev_priv);
+	gfx = i915_gfx_val(dev_priv);
+	mutex_unlock(&dev->struct_mutex);
+
+	seq_printf(m, "GMCH temp: %ld\n", temp);
+	seq_printf(m, "Chipset power: %ld\n", chipset);
+	seq_printf(m, "GFX power: %ld\n", gfx);
+	seq_printf(m, "Total power: %ld\n", chipset + gfx);
+
+	intel_runtime_pm_put(dev_priv);
+
+	return 0;
+}
+
+static int i915_ring_freq_table(struct seq_file *m, void *unused)
+{
+	struct drm_i915_private *dev_priv = node_to_i915(m->private);
+	struct intel_rps *rps = &dev_priv->gt_pm.rps;
+	unsigned int max_gpu_freq, min_gpu_freq;
+	int gpu_freq, ia_freq;
+	int ret;
+
+	if (!HAS_LLC(dev_priv))
+		return -ENODEV;
+
+	intel_runtime_pm_get(dev_priv);
+
+	ret = mutex_lock_interruptible(&dev_priv->pcu_lock);
+	if (ret)
+		goto out;
+
+	min_gpu_freq = rps->min_freq;
+	max_gpu_freq = rps->max_freq;
+	if (IS_GEN9_BC(dev_priv) || INTEL_GEN(dev_priv) >= 10) {
+		/* Convert GT frequency to 50 HZ units */
+		min_gpu_freq /= GEN9_FREQ_SCALER;
+		max_gpu_freq /= GEN9_FREQ_SCALER;
+	}
+
+	seq_puts(m, "GPU freq (MHz)\tEffective CPU freq (MHz)\tEffective Ring freq (MHz)\n");
+
+	for (gpu_freq = min_gpu_freq; gpu_freq <= max_gpu_freq; gpu_freq++) {
+		ia_freq = gpu_freq;
+		sandybridge_pcode_read(dev_priv,
+				       GEN6_PCODE_READ_MIN_FREQ_TABLE,
+				       &ia_freq);
+		seq_printf(m, "%d\t\t%d\t\t\t\t%d\n",
+			   intel_gpu_freq(dev_priv, (gpu_freq *
+						     (IS_GEN9_BC(dev_priv) ||
+						      INTEL_GEN(dev_priv) >= 10 ?
+						      GEN9_FREQ_SCALER : 1))),
+			   ((ia_freq >> 0) & 0xff) * 100,
+			   ((ia_freq >> 8) & 0xff) * 100);
+	}
+
+	mutex_unlock(&dev_priv->pcu_lock);
+
+out:
+	intel_runtime_pm_put(dev_priv);
+	return ret;
+}
+
+static int i915_opregion(struct seq_file *m, void *unused)
+{
+	struct drm_i915_private *dev_priv = node_to_i915(m->private);
+	struct drm_device *dev = &dev_priv->drm;
+	struct intel_opregion *opregion = &dev_priv->opregion;
+	int ret;
+
+	ret = mutex_lock_interruptible(&dev->struct_mutex);
+	if (ret)
+		goto out;
+
+	if (opregion->header)
+		seq_write(m, opregion->header, OPREGION_SIZE);
+
+	mutex_unlock(&dev->struct_mutex);
+
+out:
+	return 0;
+}
+
+static int i915_vbt(struct seq_file *m, void *unused)
+{
+	struct intel_opregion *opregion = &node_to_i915(m->private)->opregion;
+
+	if (opregion->vbt)
+		seq_write(m, opregion->vbt, opregion->vbt_size);
+
+	return 0;
+}
+
+static int i915_gem_framebuffer_info(struct seq_file *m, void *data)
+{
+	struct drm_i915_private *dev_priv = node_to_i915(m->private);
+	struct drm_device *dev = &dev_priv->drm;
+	struct intel_framebuffer *fbdev_fb = NULL;
+	struct drm_framebuffer *drm_fb;
+	int ret;
+
+	ret = mutex_lock_interruptible(&dev->struct_mutex);
+	if (ret)
+		return ret;
+
+#ifdef CONFIG_DRM_FBDEV_EMULATION
+	if (dev_priv->fbdev && dev_priv->fbdev->helper.fb) {
+		fbdev_fb = to_intel_framebuffer(dev_priv->fbdev->helper.fb);
+
+		seq_printf(m, "fbcon size: %d x %d, depth %d, %d bpp, modifier 0x%llx, refcount %d, obj ",
+			   fbdev_fb->base.width,
+			   fbdev_fb->base.height,
+			   fbdev_fb->base.format->depth,
+			   fbdev_fb->base.format->cpp[0] * 8,
+			   fbdev_fb->base.modifier,
+			   drm_framebuffer_read_refcount(&fbdev_fb->base));
+		describe_obj(m, intel_fb_obj(&fbdev_fb->base));
+		seq_putc(m, '\n');
+	}
+#endif
+
+	mutex_lock(&dev->mode_config.fb_lock);
+	drm_for_each_fb(drm_fb, dev) {
+		struct intel_framebuffer *fb = to_intel_framebuffer(drm_fb);
+		if (fb == fbdev_fb)
+			continue;
+
+		seq_printf(m, "user size: %d x %d, depth %d, %d bpp, modifier 0x%llx, refcount %d, obj ",
+			   fb->base.width,
+			   fb->base.height,
+			   fb->base.format->depth,
+			   fb->base.format->cpp[0] * 8,
+			   fb->base.modifier,
+			   drm_framebuffer_read_refcount(&fb->base));
+		describe_obj(m, intel_fb_obj(&fb->base));
+		seq_putc(m, '\n');
+	}
+	mutex_unlock(&dev->mode_config.fb_lock);
+	mutex_unlock(&dev->struct_mutex);
+
+	return 0;
+}
+
+static void describe_ctx_ring(struct seq_file *m, struct intel_ring *ring)
+{
+	seq_printf(m, " (ringbuffer, space: %d, head: %u, tail: %u, emit: %u)",
+		   ring->space, ring->head, ring->tail, ring->emit);
+}
+
+static int i915_context_status(struct seq_file *m, void *unused)
+{
+	struct drm_i915_private *dev_priv = node_to_i915(m->private);
+	struct drm_device *dev = &dev_priv->drm;
+	struct intel_engine_cs *engine;
+	struct i915_gem_context *ctx;
+	enum intel_engine_id id;
+	int ret;
+
+	ret = mutex_lock_interruptible(&dev->struct_mutex);
+	if (ret)
+		return ret;
+
+	list_for_each_entry(ctx, &dev_priv->contexts.list, link) {
+		seq_printf(m, "HW context %u ", ctx->hw_id);
+		if (ctx->pid) {
+			struct task_struct *task;
+
+			task = get_pid_task(ctx->pid, PIDTYPE_PID);
+			if (task) {
+				seq_printf(m, "(%s [%d]) ",
+					   task->comm, task->pid);
+				put_task_struct(task);
+			}
+		} else if (IS_ERR(ctx->file_priv)) {
+			seq_puts(m, "(deleted) ");
+		} else {
+			seq_puts(m, "(kernel) ");
+		}
+
+		seq_putc(m, ctx->remap_slice ? 'R' : 'r');
+		seq_putc(m, '\n');
+
+		for_each_engine(engine, dev_priv, id) {
+			struct intel_context *ce =
+				to_intel_context(ctx, engine);
+
+			seq_printf(m, "%s: ", engine->name);
+			if (ce->state)
+				describe_obj(m, ce->state->obj);
+			if (ce->ring)
+				describe_ctx_ring(m, ce->ring);
+			seq_putc(m, '\n');
+		}
+
+		seq_putc(m, '\n');
+	}
+
+	mutex_unlock(&dev->struct_mutex);
+>>>>>>> master
 
 	return 0;
 }

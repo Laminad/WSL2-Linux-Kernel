@@ -66,6 +66,7 @@ static unsigned int soc_dapm_read(struct snd_soc_dapm_context *dapm, int reg);
 
 /* dapm power sequences - make this per codec in the future */
 static int dapm_up_seq[] = {
+<<<<<<< HEAD
 	[snd_soc_dapm_pre] = 1,
 	[snd_soc_dapm_regulator_supply] = 2,
 	[snd_soc_dapm_pinctrl] = 2,
@@ -145,6 +146,87 @@ static int dapm_down_seq[] = {
 	[snd_soc_dapm_pinctrl] = 15,
 	[snd_soc_dapm_regulator_supply] = 15,
 	[snd_soc_dapm_post] = 16,
+=======
+	[snd_soc_dapm_pre] = 0,
+	[snd_soc_dapm_regulator_supply] = 1,
+	[snd_soc_dapm_pinctrl] = 1,
+	[snd_soc_dapm_clock_supply] = 1,
+	[snd_soc_dapm_supply] = 2,
+	[snd_soc_dapm_micbias] = 3,
+	[snd_soc_dapm_vmid] = 3,
+	[snd_soc_dapm_dai_link] = 2,
+	[snd_soc_dapm_dai_in] = 4,
+	[snd_soc_dapm_dai_out] = 4,
+	[snd_soc_dapm_aif_in] = 4,
+	[snd_soc_dapm_aif_out] = 4,
+	[snd_soc_dapm_mic] = 5,
+	[snd_soc_dapm_siggen] = 5,
+	[snd_soc_dapm_input] = 5,
+	[snd_soc_dapm_output] = 5,
+	[snd_soc_dapm_mux] = 6,
+	[snd_soc_dapm_demux] = 6,
+	[snd_soc_dapm_dac] = 7,
+	[snd_soc_dapm_switch] = 8,
+	[snd_soc_dapm_mixer] = 8,
+	[snd_soc_dapm_mixer_named_ctl] = 8,
+	[snd_soc_dapm_pga] = 9,
+	[snd_soc_dapm_buffer] = 9,
+	[snd_soc_dapm_scheduler] = 9,
+	[snd_soc_dapm_effect] = 9,
+	[snd_soc_dapm_src] = 9,
+	[snd_soc_dapm_asrc] = 9,
+	[snd_soc_dapm_encoder] = 9,
+	[snd_soc_dapm_decoder] = 9,
+	[snd_soc_dapm_adc] = 10,
+	[snd_soc_dapm_out_drv] = 11,
+	[snd_soc_dapm_hp] = 11,
+	[snd_soc_dapm_spk] = 11,
+	[snd_soc_dapm_line] = 11,
+	[snd_soc_dapm_sink] = 11,
+	[snd_soc_dapm_kcontrol] = 12,
+	[snd_soc_dapm_post] = 13,
+};
+
+static int dapm_down_seq[] = {
+	[snd_soc_dapm_pre] = 0,
+	[snd_soc_dapm_kcontrol] = 1,
+	[snd_soc_dapm_adc] = 2,
+	[snd_soc_dapm_hp] = 3,
+	[snd_soc_dapm_spk] = 3,
+	[snd_soc_dapm_line] = 3,
+	[snd_soc_dapm_out_drv] = 3,
+	[snd_soc_dapm_sink] = 3,
+	[snd_soc_dapm_pga] = 4,
+	[snd_soc_dapm_buffer] = 4,
+	[snd_soc_dapm_scheduler] = 4,
+	[snd_soc_dapm_effect] = 4,
+	[snd_soc_dapm_src] = 4,
+	[snd_soc_dapm_asrc] = 4,
+	[snd_soc_dapm_encoder] = 4,
+	[snd_soc_dapm_decoder] = 4,
+	[snd_soc_dapm_switch] = 5,
+	[snd_soc_dapm_mixer_named_ctl] = 5,
+	[snd_soc_dapm_mixer] = 5,
+	[snd_soc_dapm_dac] = 6,
+	[snd_soc_dapm_mic] = 7,
+	[snd_soc_dapm_siggen] = 7,
+	[snd_soc_dapm_input] = 7,
+	[snd_soc_dapm_output] = 7,
+	[snd_soc_dapm_micbias] = 8,
+	[snd_soc_dapm_vmid] = 8,
+	[snd_soc_dapm_mux] = 9,
+	[snd_soc_dapm_demux] = 9,
+	[snd_soc_dapm_aif_in] = 10,
+	[snd_soc_dapm_aif_out] = 10,
+	[snd_soc_dapm_dai_in] = 10,
+	[snd_soc_dapm_dai_out] = 10,
+	[snd_soc_dapm_dai_link] = 11,
+	[snd_soc_dapm_supply] = 12,
+	[snd_soc_dapm_clock_supply] = 13,
+	[snd_soc_dapm_pinctrl] = 13,
+	[snd_soc_dapm_regulator_supply] = 13,
+	[snd_soc_dapm_post] = 14,
+>>>>>>> master
 };
 
 static void dapm_assert_locked(struct snd_soc_dapm_context *dapm)
@@ -2198,13 +2280,35 @@ static const struct file_operations dapm_bias_fops = {
 void snd_soc_dapm_debugfs_init(struct snd_soc_dapm_context *dapm,
 	struct dentry *parent)
 {
+<<<<<<< HEAD
+=======
+	struct dentry *d;
+
+>>>>>>> master
 	if (!parent || IS_ERR(parent))
 		return;
 
 	dapm->debugfs_dapm = debugfs_create_dir("dapm", parent);
 
+<<<<<<< HEAD
 	debugfs_create_file("bias_level", 0444, dapm->debugfs_dapm, dapm,
 			    &dapm_bias_fops);
+=======
+	if (IS_ERR(dapm->debugfs_dapm)) {
+		dev_warn(dapm->dev,
+			 "ASoC: Failed to create DAPM debugfs directory %ld\n",
+			 PTR_ERR(dapm->debugfs_dapm));
+		return;
+	}
+
+	d = debugfs_create_file("bias_level", 0444,
+				dapm->debugfs_dapm, dapm,
+				&dapm_bias_fops);
+	if (IS_ERR(d))
+		dev_warn(dapm->dev,
+			 "ASoC: Failed to create bias level debugfs file: %ld\n",
+			 PTR_ERR(d));
+>>>>>>> master
 }
 
 static void dapm_debugfs_add_widget(struct snd_soc_dapm_widget *w)
@@ -2214,6 +2318,7 @@ static void dapm_debugfs_add_widget(struct snd_soc_dapm_widget *w)
 	if (!dapm->debugfs_dapm || !w->name)
 		return;
 
+<<<<<<< HEAD
 	debugfs_create_file(w->name, 0444, dapm->debugfs_dapm, w,
 			    &dapm_widget_power_fops);
 }
@@ -2226,6 +2331,15 @@ static void dapm_debugfs_free_widget(struct snd_soc_dapm_widget *w)
 		return;
 
 	debugfs_lookup_and_remove(w->name, dapm->debugfs_dapm);
+=======
+	d = debugfs_create_file(w->name, 0444,
+				dapm->debugfs_dapm, w,
+				&dapm_widget_power_fops);
+	if (IS_ERR(d))
+		dev_warn(w->dapm->dev,
+			 "ASoC: Failed to create %s debugfs file: %ld\n",
+			 w->name, PTR_ERR(d));
+>>>>>>> master
 }
 
 static void dapm_debugfs_cleanup(struct snd_soc_dapm_context *dapm)
@@ -4076,7 +4190,11 @@ snd_soc_dapm_free_kcontrol(struct snd_soc_card *card,
 	if (!w_param_text)
 		return;
 
+<<<<<<< HEAD
 	for (count = 0 ; count < num_c2c_params; count++)
+=======
+	for (count = 0 ; count < num_params; count++)
+>>>>>>> master
 		devm_kfree(card->dev, (void *)w_param_text[count]);
 	devm_kfree(card->dev, w_param_text);
 }

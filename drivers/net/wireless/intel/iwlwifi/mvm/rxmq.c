@@ -135,6 +135,7 @@ static int iwl_mvm_create_skb(struct iwl_mvm *mvm, struct sk_buff *skb,
 	 */
 	hdrlen += crypt_len;
 
+<<<<<<< HEAD
 	if (unlikely(headlen < hdrlen))
 		return -EINVAL;
 
@@ -142,6 +143,21 @@ static int iwl_mvm_create_skb(struct iwl_mvm *mvm, struct sk_buff *skb,
 	 * the only way we use, data + len is the next place that hdr would be put
 	 */
 	skb_set_mac_header(skb, skb->len);
+=======
+	if (WARN_ONCE(headlen < hdrlen,
+		      "invalid packet lengths (hdrlen=%d, len=%d, crypt_len=%d)\n",
+		      hdrlen, len, crypt_len)) {
+		/*
+		 * We warn and trace because we want to be able to see
+		 * it in trace-cmd as well.
+		 */
+		IWL_DEBUG_RX(mvm,
+			     "invalid packet lengths (hdrlen=%d, len=%d, crypt_len=%d)\n",
+			     hdrlen, len, crypt_len);
+		return -EINVAL;
+	}
+
+>>>>>>> master
 	skb_put_data(skb, hdr, hdrlen);
 	skb_put_data(skb, (u8 *)hdr + hdrlen + pad_len, headlen - hdrlen);
 
@@ -187,6 +203,7 @@ static int iwl_mvm_create_skb(struct iwl_mvm *mvm, struct sk_buff *skb,
 	}
 
 	return 0;
+<<<<<<< HEAD
 }
 
 /* put a TLV on the skb and return data pointer
@@ -230,6 +247,8 @@ static void iwl_mvm_add_rtap_sniffer_config(struct iwl_mvm *mvm,
 	memcpy(radiotap->data, &mvm->cur_aid, sizeof(mvm->cur_aid));
 
 	rx_status->flag |= RX_FLAG_RADIOTAP_TLV_AT_END;
+=======
+>>>>>>> master
 }
 
 /* iwl_mvm_pass_packet_to_mac80211 - passes the packet for mac80211 */
@@ -2619,6 +2638,7 @@ void iwl_mvm_rx_mpdu_mq(struct iwl_mvm *mvm, struct napi_struct *napi,
 		goto out;
 	}
 
+<<<<<<< HEAD
 	if (!iwl_mvm_reorder(mvm, napi, queue, sta, skb, desc) &&
 	    likely(!iwl_mvm_time_sync_frame(mvm, skb, hdr->addr2)) &&
 	    likely(!iwl_mvm_mei_filter_scan(mvm, skb))) {
@@ -2627,6 +2647,9 @@ void iwl_mvm_rx_mpdu_mq(struct iwl_mvm *mvm, struct napi_struct *napi,
 		    !(desc->amsdu_info & IWL_RX_MPDU_AMSDU_LAST_SUBFRAME))
 			rx_status->flag |= RX_FLAG_AMSDU_MORE;
 
+=======
+	if (!iwl_mvm_reorder(mvm, napi, queue, sta, skb, desc))
+>>>>>>> master
 		iwl_mvm_pass_packet_to_mac80211(mvm, napi, skb, queue, sta);
 	}
 out:

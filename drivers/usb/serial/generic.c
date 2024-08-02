@@ -371,6 +371,10 @@ void usb_serial_generic_read_bulk_callback(struct urb *urb)
 {
 	struct usb_serial_port *port = urb->context;
 	unsigned char *data = urb->transfer_buffer;
+<<<<<<< HEAD
+=======
+	unsigned long flags;
+>>>>>>> master
 	bool stopped = false;
 	int status = urb->status;
 	int i;
@@ -417,6 +421,7 @@ void usb_serial_generic_read_bulk_callback(struct urb *urb)
 	/*
 	 * Make sure URB is marked as free before checking the throttled flag
 	 * to avoid racing with unthrottle() on another CPU. Matches the
+<<<<<<< HEAD
 	 * smp_mb__after_atomic() in unthrottle().
 	 */
 	smp_mb__after_atomic();
@@ -428,6 +433,24 @@ void usb_serial_generic_read_bulk_callback(struct urb *urb)
 		return;
 
 	usb_serial_generic_submit_read_urb(port, i, GFP_ATOMIC);
+=======
+	 * smp_mb() in unthrottle().
+	 */
+	smp_mb__after_atomic();
+
+	if (stopped)
+		return;
+
+	/* Throttle the device if requested by tty */
+	spin_lock_irqsave(&port->lock, flags);
+	port->throttled = port->throttle_req;
+	if (!port->throttled) {
+		spin_unlock_irqrestore(&port->lock, flags);
+		usb_serial_generic_submit_read_urb(port, i, GFP_ATOMIC);
+	} else {
+		spin_unlock_irqrestore(&port->lock, flags);
+	}
+>>>>>>> master
 }
 EXPORT_SYMBOL_GPL(usb_serial_generic_read_bulk_callback);
 
@@ -489,9 +512,16 @@ void usb_serial_generic_unthrottle(struct tty_struct *tty)
 	 * Matches the smp_mb__after_atomic() in
 	 * usb_serial_generic_read_bulk_callback().
 	 */
+<<<<<<< HEAD
 	smp_mb__after_atomic();
 
 	usb_serial_generic_submit_read_urbs(port, GFP_KERNEL);
+=======
+	smp_mb();
+
+	if (was_throttled)
+		usb_serial_generic_submit_read_urbs(port, GFP_KERNEL);
+>>>>>>> master
 }
 EXPORT_SYMBOL_GPL(usb_serial_generic_unthrottle);
 

@@ -489,12 +489,42 @@ int pl111_versatile_init(struct device *dev, struct pl111_drm_dev_private *priv)
 
 	/* Versatile Express special handling */
 	if (versatile_clcd_type == VEXPRESS_CLCD_V2M) {
+<<<<<<< HEAD
 		int ret = pl111_vexpress_clcd_init(dev, np, priv);
 		of_node_put(np);
 		if (ret)
 			dev_err(dev, "Versatile Express init failed - %d", ret);
 		return ret;
+=======
+		struct platform_device *pdev;
+
+		/* Registers a driver for the muxfpga */
+		ret = vexpress_muxfpga_init();
+		if (ret) {
+			dev_err(dev, "unable to initialize muxfpga driver\n");
+			of_node_put(np);
+			return ret;
+		}
+
+		/* Call into deep Vexpress configuration API */
+		pdev = of_find_device_by_node(np);
+		if (!pdev) {
+			dev_err(dev, "can't find the sysreg device, deferring\n");
+			of_node_put(np);
+			return -EPROBE_DEFER;
+		}
+		map = dev_get_drvdata(&pdev->dev);
+		if (!map) {
+			dev_err(dev, "sysreg has not yet probed\n");
+			platform_device_put(pdev);
+			of_node_put(np);
+			return -EPROBE_DEFER;
+		}
+	} else {
+		map = syscon_node_to_regmap(np);
+>>>>>>> master
 	}
+	of_node_put(np);
 
 	/*
 	 * On the Integrator, check if we should use the IM-PD1 instead,

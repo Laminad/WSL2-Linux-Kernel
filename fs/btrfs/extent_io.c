@@ -1169,6 +1169,7 @@ static noinline_for_stack int writepage_delalloc(struct btrfs_inode *inode,
 	u64 delalloc_to_write = 0;
 	int ret = 0;
 
+<<<<<<< HEAD
 	while (delalloc_start < page_end) {
 		delalloc_end = page_end;
 		if (!find_lock_delalloc_range(&inode->vfs_inode, page,
@@ -1182,6 +1183,41 @@ static noinline_for_stack int writepage_delalloc(struct btrfs_inode *inode,
 		if (ret < 0)
 			return ret;
 
+=======
+	if (epd->extent_locked)
+		return 0;
+
+	while (delalloc_end < page_end) {
+		nr_delalloc = find_lock_delalloc_range(inode, tree,
+					       page,
+					       &delalloc_start,
+					       &delalloc_end,
+					       BTRFS_MAX_EXTENT_SIZE);
+		if (nr_delalloc == 0) {
+			delalloc_start = delalloc_end + 1;
+			continue;
+		}
+		ret = btrfs_run_delalloc_range(inode, page, delalloc_start,
+				delalloc_end, &page_started, nr_written, wbc);
+		/* File system has been set read-only */
+		if (ret) {
+			SetPageError(page);
+			/*
+			 * btrfs_run_delalloc_range should return < 0 for error
+			 * but just in case, we use > 0 here meaning the IO is
+			 * started, so we don't want to return > 0 unless
+			 * things are going well.
+			 */
+			ret = ret < 0 ? ret : -EIO;
+			goto done;
+		}
+		/*
+		 * delalloc_end is already one less than the total length, so
+		 * we don't subtract one from PAGE_SIZE
+		 */
+		delalloc_to_write += (delalloc_end - delalloc_start +
+				      PAGE_SIZE) >> PAGE_SHIFT;
+>>>>>>> master
 		delalloc_start = delalloc_end + 1;
 	}
 

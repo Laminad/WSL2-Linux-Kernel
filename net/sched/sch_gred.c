@@ -658,7 +658,11 @@ static int gred_change(struct Qdisc *sch, struct nlattr *opt,
 	if (tb[TCA_GRED_PARMS] == NULL && tb[TCA_GRED_STAB] == NULL) {
 		if (tb[TCA_GRED_LIMIT] != NULL)
 			sch->limit = nla_get_u32(tb[TCA_GRED_LIMIT]);
+<<<<<<< HEAD
 		return gred_change_table_def(sch, tb[TCA_GRED_DPS], extack);
+=======
+		return gred_change_table_def(sch, tb[TCA_GRED_DPS]);
+>>>>>>> master
 	}
 
 	if (tb[TCA_GRED_PARMS] == NULL ||

@@ -58,9 +58,15 @@ static enum amdgpu_dm_pipe_crc_source dm_parse_crc_source(const char *source)
 
 static bool dm_is_crc_source_crtc(enum amdgpu_dm_pipe_crc_source src)
 {
+<<<<<<< HEAD
 	return (src == AMDGPU_DM_PIPE_CRC_SOURCE_CRTC) ||
 	       (src == AMDGPU_DM_PIPE_CRC_SOURCE_CRTC_DITHER);
 }
+=======
+	struct dm_crtc_state *crtc_state = to_dm_crtc_state(crtc->state);
+	struct dc_stream_state *stream_state = crtc_state->stream;
+	bool enable;
+>>>>>>> master
 
 static bool dm_is_crc_source_dprx(enum amdgpu_dm_pipe_crc_source src)
 {
@@ -205,6 +211,7 @@ amdgpu_dm_crtc_verify_crc_source(struct drm_crtc *crtc, const char *src_name,
 		return -EINVAL;
 	}
 
+<<<<<<< HEAD
 	*values_cnt = 3;
 	return 0;
 }
@@ -363,11 +370,29 @@ int amdgpu_dm_crtc_set_crc_source(struct drm_crtc *crtc, const char *src_name)
 		ret = -EINVAL;
 		goto cleanup;
 	}
+=======
+	if (!stream_state) {
+		DRM_ERROR("No stream state for CRTC%d\n", crtc->index);
+		return -EINVAL;
+	}
+
+	enable = (source == AMDGPU_DM_PIPE_CRC_SOURCE_AUTO);
+
+	if (!dc_stream_configure_crc(stream_state->ctx->dc, stream_state,
+				     enable, enable))
+		return -EINVAL;
+
+	/* When enabling CRC, we should also disable dithering. */
+	dc_stream_set_dither_option(stream_state,
+				    enable ? DITHER_OPTION_TRUN8
+					   : DITHER_OPTION_DEFAULT);
+>>>>>>> master
 
 	/*
 	 * Reading the CRC requires the vblank interrupt handler to be
 	 * enabled. Keep a reference until CRC capture stops.
 	 */
+<<<<<<< HEAD
 	enabled = amdgpu_dm_is_valid_crc_source(cur_crc_src);
 	if (!enabled && enable) {
 		ret = drm_crtc_vblank_get(crtc);
@@ -396,6 +421,16 @@ int amdgpu_dm_crtc_set_crc_source(struct drm_crtc *crtc, const char *src_name)
 	acrtc->dm_irq_params.crc_src = source;
 	spin_unlock_irq(&drm_dev->event_lock);
 
+=======
+	if (!crtc_state->crc_enabled && enable)
+		drm_crtc_vblank_get(crtc);
+	else if (crtc_state->crc_enabled && !enable)
+		drm_crtc_vblank_put(crtc);
+
+	crtc_state->crc_enabled = enable;
+
+	*values_cnt = 3;
+>>>>>>> master
 	/* Reset crc_skipped on dm state */
 	crtc_state->crc_skip_count = 0;
 

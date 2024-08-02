@@ -183,11 +183,19 @@ static const struct attribute_group podhd_dev_attr_group = {
 static int podhd_dev_start(struct usb_line6_podhd *pod)
 {
 	int ret;
-	u8 init_bytes[8];
+	u8 *init_bytes;
 	int i;
 	struct usb_device *usbdev = pod->line6.usbdev;
 
+<<<<<<< HEAD
 	ret = usb_control_msg_send(usbdev, 0,
+=======
+	init_bytes = kmalloc(8, GFP_KERNEL);
+	if (!init_bytes)
+		return -ENOMEM;
+
+	ret = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0),
+>>>>>>> master
 					0x67, USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_DIR_OUT,
 					0x11, 0,
 					NULL, 0, LINE6_TIMEOUT, GFP_KERNEL);
@@ -200,8 +208,13 @@ static int podhd_dev_start(struct usb_line6_podhd *pod)
 	ret = usb_control_msg_recv(usbdev, 0, 0x67,
 					USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_DIR_IN,
 					0x11, 0x0,
+<<<<<<< HEAD
 					init_bytes, 3, LINE6_TIMEOUT, GFP_KERNEL);
 	if (ret) {
+=======
+					init_bytes, 3, LINE6_TIMEOUT * HZ);
+	if (ret < 0) {
+>>>>>>> master
 		dev_err(pod->line6.ifcdev,
 			"receive length failed (error %d)\n", ret);
 		goto exit;
@@ -220,8 +233,14 @@ static int podhd_dev_start(struct usb_line6_podhd *pod)
 					USB_REQ_SET_FEATURE,
 					USB_TYPE_STANDARD | USB_RECIP_DEVICE | USB_DIR_OUT,
 					1, 0,
+<<<<<<< HEAD
 					NULL, 0, LINE6_TIMEOUT, GFP_KERNEL);
 exit:
+=======
+					NULL, 0, LINE6_TIMEOUT * HZ);
+exit:
+	kfree(init_bytes);
+>>>>>>> master
 	return ret;
 }
 
@@ -471,8 +490,24 @@ static const struct line6_properties podhd_properties_table[] = {
 	[LINE6_PODHD500] = {
 		.id = "PODHD500",
 		.name = "POD HD500",
+<<<<<<< HEAD
 		.capabilities	= LINE6_CAP_PCM | LINE6_CAP_CONTROL
 				| LINE6_CAP_HWMON | LINE6_CAP_HWMON_CTL,
+=======
+		.capabilities	= LINE6_CAP_PCM
+				| LINE6_CAP_HWMON,
+		.altsetting = 0,
+		.ep_ctrl_r = 0x81,
+		.ep_ctrl_w = 0x01,
+		.ep_audio_r = 0x86,
+		.ep_audio_w = 0x02,
+	},
+	[LINE6_PODHD500_1] = {
+		.id = "PODHD500",
+		.name = "POD HD500",
+		.capabilities	= LINE6_CAP_PCM
+				| LINE6_CAP_HWMON,
+>>>>>>> master
 		.altsetting = 1,
 		.ctrl_if = 1,
 		.ep_ctrl_r = 0x81,

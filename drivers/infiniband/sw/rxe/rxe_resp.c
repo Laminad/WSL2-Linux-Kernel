@@ -458,6 +458,16 @@ static enum resp_states check_rkey(struct rxe_qp *qp,
 		if (pkt->mask & RXE_RETH_MASK)
 			qp_resp_from_reth(qp, pkt);
 
+<<<<<<< HEAD
+=======
+	if (pkt->mask & (RXE_READ_MASK | RXE_WRITE_MASK)) {
+		if (pkt->mask & RXE_RETH_MASK) {
+			qp->resp.va = reth_va(pkt);
+			qp->resp.rkey = reth_rkey(pkt);
+			qp->resp.resid = reth_len(pkt);
+			qp->resp.length = reth_len(pkt);
+		}
+>>>>>>> master
 		access = (pkt->mask & RXE_READ_MASK) ? IB_ACCESS_REMOTE_READ
 						     : IB_ACCESS_REMOTE_WRITE;
 	} else if (pkt->mask & RXE_FLUSH_MASK) {
@@ -889,8 +899,46 @@ static enum resp_states read_reply(struct rxe_qp *qp,
 	struct rxe_mr *mr;
 
 	if (!res) {
+<<<<<<< HEAD
 		res = rxe_prepare_res(qp, req_pkt, RXE_READ_MASK);
 		qp->resp.res = res;
+=======
+		/* This is the first time we process that request. Get a
+		 * resource
+		 */
+		res = &qp->resp.resources[qp->resp.res_head];
+
+		free_rd_atomic_resource(qp, res);
+		rxe_advance_resp_resource(qp);
+
+		res->type		= RXE_READ_MASK;
+		res->replay		= 0;
+
+		res->read.va		= qp->resp.va;
+		res->read.va_org	= qp->resp.va;
+
+		res->first_psn		= req_pkt->psn;
+
+		if (reth_len(req_pkt)) {
+			res->last_psn	= (req_pkt->psn +
+					   (reth_len(req_pkt) + mtu - 1) /
+					   mtu - 1) & BTH_PSN_MASK;
+		} else {
+			res->last_psn	= res->first_psn;
+		}
+		res->cur_psn		= req_pkt->psn;
+
+		res->read.resid		= qp->resp.resid;
+		res->read.length	= qp->resp.resid;
+		res->read.rkey		= qp->resp.rkey;
+
+		/* note res inherits the reference to mr from qp */
+		res->read.mr		= qp->resp.mr;
+		qp->resp.mr		= NULL;
+
+		qp->resp.res		= res;
+		res->state		= rdatm_res_state_new;
+>>>>>>> master
 	}
 
 	if (res->state == rdatm_res_state_new) {
@@ -1077,6 +1125,7 @@ static enum resp_states do_complete(struct rxe_qp *qp,
 	memset(&cqe, 0, sizeof(cqe));
 
 	if (qp->rcq->is_user) {
+<<<<<<< HEAD
 		uwc->status		= qp->resp.status;
 		uwc->qp_num		= qp->ibqp.qp_num;
 		uwc->wr_id		= wqe->wr_id;
@@ -1084,6 +1133,15 @@ static enum resp_states do_complete(struct rxe_qp *qp,
 		wc->status		= qp->resp.status;
 		wc->qp			= &qp->ibqp;
 		wc->wr_id		= wqe->wr_id;
+=======
+		uwc->status             = qp->resp.status;
+		uwc->qp_num             = qp->ibqp.qp_num;
+		uwc->wr_id              = wqe->wr_id;
+	} else {
+		wc->status              = qp->resp.status;
+		wc->qp                  = &qp->ibqp;
+		wc->wr_id               = wqe->wr_id;
+>>>>>>> master
 	}
 
 	if (wc->status == IB_WC_SUCCESS) {
@@ -1091,6 +1149,10 @@ static enum resp_states do_complete(struct rxe_qp *qp,
 		wc->opcode = (pkt->mask & RXE_IMMDT_MASK &&
 				pkt->mask & RXE_WRITE_MASK) ?
 					IB_WC_RECV_RDMA_WITH_IMM : IB_WC_RECV;
+<<<<<<< HEAD
+=======
+		wc->vendor_err = 0;
+>>>>>>> master
 		wc->byte_len = (pkt->mask & RXE_IMMDT_MASK &&
 				pkt->mask & RXE_WRITE_MASK) ?
 					qp->resp.length : wqe->dma.length - wqe->dma.resid;

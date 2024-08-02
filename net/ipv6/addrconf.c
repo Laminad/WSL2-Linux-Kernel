@@ -1078,8 +1078,16 @@ ipv6_add_addr(struct inet6_dev *idev, struct ifa6_config *cfg,
 	struct fib6_info *f6i = NULL;
 	int err = 0;
 
+<<<<<<< HEAD
 	if (addr_type == IPV6_ADDR_ANY) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid address");
+=======
+	if (addr_type == IPV6_ADDR_ANY ||
+	    (addr_type & IPV6_ADDR_MULTICAST &&
+	     !(cfg->ifa_flags & IFA_F_MCAUTOJOIN)) ||
+	    (!(idev->dev->flags & IFF_LOOPBACK) &&
+	     addr_type & IPV6_ADDR_LOOPBACK))
+>>>>>>> master
 		return ERR_PTR(-EADDRNOTAVAIL);
 	} else if (addr_type & IPV6_ADDR_MULTICAST &&
 		   !(cfg->ifa_flags & IFA_F_MCAUTOJOIN)) {
@@ -4967,8 +4975,8 @@ inet6_rtm_newaddr(struct sk_buff *skb, struct nlmsghdr *nlh,
 			 IFA_F_MCAUTOJOIN | IFA_F_OPTIMISTIC;
 
 	idev = ipv6_find_idev(dev);
-	if (IS_ERR(idev))
-		return PTR_ERR(idev);
+	if (!idev)
+		return -ENOBUFS;
 
 	if (!ipv6_allow_optimistic_dad(net, idev))
 		cfg.ifa_flags &= ~IFA_F_OPTIMISTIC;

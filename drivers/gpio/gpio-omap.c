@@ -316,6 +316,13 @@ static inline void omap_set_gpio_trigger(struct gpio_bank *bank, int gpio,
 		else
 			bank->enabled_non_wakeup_gpios &= ~gpio_bit;
 	}
+<<<<<<< HEAD
+=======
+
+	bank->level_mask =
+		readl_relaxed(bank->base + bank->regs->leveldetect0) |
+		readl_relaxed(bank->base + bank->regs->leveldetect1);
+>>>>>>> master
 }
 
 /*

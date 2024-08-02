@@ -214,6 +214,7 @@ v3d_irq_init(struct v3d_dev *v3d)
 		V3D_CORE_WRITE(core, V3D_CTL_INT_CLR, V3D_CORE_IRQS);
 	V3D_WRITE(V3D_HUB_INT_CLR, V3D_HUB_IRQS);
 
+<<<<<<< HEAD
 	irq1 = platform_get_irq_optional(v3d_to_pdev(v3d), 1);
 	if (irq1 == -EPROBE_DEFER)
 		return irq1;
@@ -239,13 +240,30 @@ v3d_irq_init(struct v3d_dev *v3d)
 		if (ret)
 			goto fail;
 	}
+=======
+	ret = devm_request_irq(v3d->dev, platform_get_irq(v3d->pdev, 0),
+			       v3d_hub_irq, IRQF_SHARED,
+			       "v3d_hub", v3d);
+	if (ret)
+		goto fail;
+
+	ret = devm_request_irq(v3d->dev, platform_get_irq(v3d->pdev, 1),
+			       v3d_irq, IRQF_SHARED,
+			       "v3d_core0", v3d);
+	if (ret)
+		goto fail;
+>>>>>>> master
 
 	v3d_irq_enable(v3d);
 	return 0;
 
 fail:
 	if (ret != -EPROBE_DEFER)
+<<<<<<< HEAD
 		dev_err(v3d->drm.dev, "IRQ setup failed: %d\n", ret);
+=======
+		dev_err(v3d->dev, "IRQ setup failed: %d\n", ret);
+>>>>>>> master
 	return ret;
 }
 

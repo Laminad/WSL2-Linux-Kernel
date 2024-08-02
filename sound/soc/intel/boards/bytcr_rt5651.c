@@ -868,7 +868,14 @@ static struct snd_soc_card byt_rt5651_card = {
 	.resume_post = byt_rt5651_resume,
 };
 
+<<<<<<< HEAD
 static const struct acpi_gpio_params ext_amp_enable_gpios = { 0, 0, false };
+=======
+static const struct x86_cpu_id baytrail_cpu_ids[] = {
+	{ X86_VENDOR_INTEL, 6, INTEL_FAM6_ATOM_SILVERMONT }, /* Valleyview */
+	{}
+};
+>>>>>>> master
 
 static const struct acpi_gpio_mapping cht_rt5651_gpios[] = {
 	/*

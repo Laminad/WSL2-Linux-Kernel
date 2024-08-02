@@ -411,6 +411,7 @@ static int rpcrdma_ep_create(struct rpcrdma_xprt *r_xprt)
 	ep->re_send_count = ep->re_send_batch;
 	init_waitqueue_head(&ep->re_connect_wait);
 
+<<<<<<< HEAD
 	ep->re_attr.send_cq = ib_alloc_cq_any(device, r_xprt,
 					      ep->re_attr.cap.max_send_wr,
 					      IB_POLL_WORKQUEUE);
@@ -418,6 +419,17 @@ static int rpcrdma_ep_create(struct rpcrdma_xprt *r_xprt)
 		rc = PTR_ERR(ep->re_attr.send_cq);
 		ep->re_attr.send_cq = NULL;
 		goto out_destroy;
+=======
+	sendcq = ib_alloc_cq(ia->ri_device, NULL,
+			     ep->rep_attr.cap.max_send_wr + 1,
+			     ia->ri_device->num_comp_vectors > 1 ? 1 : 0,
+			     IB_POLL_WORKQUEUE);
+	if (IS_ERR(sendcq)) {
+		rc = PTR_ERR(sendcq);
+		dprintk("RPC:       %s: failed to create send CQ: %i\n",
+			__func__, rc);
+		goto out1;
+>>>>>>> master
 	}
 
 	ep->re_attr.recv_cq = ib_alloc_cq_any(device, r_xprt,

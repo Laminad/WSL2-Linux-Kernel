@@ -49,8 +49,14 @@ static ssize_t pubek_show(struct device *dev, struct device_attribute *attr,
 
 	tpm_buf_append(&tpm_buf, anti_replay, sizeof(anti_replay));
 
+<<<<<<< HEAD
 	if (tpm_transmit_cmd(chip, &tpm_buf, READ_PUBEK_RESULT_MIN_BODY_SIZE,
 			     "attempting to read the PUBEK"))
+=======
+	if (tpm_transmit_cmd(chip, NULL, tpm_buf.data, PAGE_SIZE,
+			      READ_PUBEK_RESULT_MIN_BODY_SIZE, 0,
+			      "attempting to read the PUBEK"))
+>>>>>>> master
 		goto out_buf;
 
 	out = (struct tpm_readpubek_out *)&tpm_buf.data[10];
@@ -91,9 +97,15 @@ static ssize_t pcrs_show(struct device *dev, struct device_attribute *attr,
 	if (tpm_try_get_ops(chip))
 		return 0;
 
+<<<<<<< HEAD
 	if (tpm1_getcap(chip, TPM_CAP_PROP_PCR, &cap,
 			"attempting to determine the number of PCRS",
 			sizeof(cap.num_pcrs))) {
+=======
+	if (tpm_getcap(chip, TPM_CAP_PROP_PCR, &cap,
+		       "attempting to determine the number of PCRS",
+		       sizeof(cap.num_pcrs))) {
+>>>>>>> master
 		tpm_put_ops(chip);
 		return 0;
 	}
@@ -124,9 +136,15 @@ static ssize_t enabled_show(struct device *dev, struct device_attribute *attr,
 	if (tpm_try_get_ops(chip))
 		return 0;
 
+<<<<<<< HEAD
 	if (tpm1_getcap(chip, TPM_CAP_FLAG_PERM, &cap,
 			"attempting to determine the permanent enabled state",
 			sizeof(cap.perm_flags)))
+=======
+	if (tpm_getcap(chip, TPM_CAP_FLAG_PERM, &cap,
+		       "attempting to determine the permanent enabled state",
+		       sizeof(cap.perm_flags)))
+>>>>>>> master
 		goto out_ops;
 
 	rc = sprintf(buf, "%d\n", !cap.perm_flags.disable);
@@ -146,9 +164,15 @@ static ssize_t active_show(struct device *dev, struct device_attribute *attr,
 	if (tpm_try_get_ops(chip))
 		return 0;
 
+<<<<<<< HEAD
 	if (tpm1_getcap(chip, TPM_CAP_FLAG_PERM, &cap,
 			"attempting to determine the permanent active state",
 			sizeof(cap.perm_flags)))
+=======
+	if (tpm_getcap(chip, TPM_CAP_FLAG_PERM, &cap,
+		       "attempting to determine the permanent active state",
+		       sizeof(cap.perm_flags)))
+>>>>>>> master
 		goto out_ops;
 
 	rc = sprintf(buf, "%d\n", !cap.perm_flags.deactivated);
@@ -168,9 +192,15 @@ static ssize_t owned_show(struct device *dev, struct device_attribute *attr,
 	if (tpm_try_get_ops(chip))
 		return 0;
 
+<<<<<<< HEAD
 	if (tpm1_getcap(to_tpm_chip(dev), TPM_CAP_PROP_OWNER, &cap,
 			"attempting to determine the owner state",
 			sizeof(cap.owned)))
+=======
+	if (tpm_getcap(to_tpm_chip(dev), TPM_CAP_PROP_OWNER, &cap,
+		       "attempting to determine the owner state",
+		       sizeof(cap.owned)))
+>>>>>>> master
 		goto out_ops;
 
 	rc = sprintf(buf, "%d\n", cap.owned);
@@ -190,9 +220,15 @@ static ssize_t temp_deactivated_show(struct device *dev,
 	if (tpm_try_get_ops(chip))
 		return 0;
 
+<<<<<<< HEAD
 	if (tpm1_getcap(to_tpm_chip(dev), TPM_CAP_FLAG_VOL, &cap,
 			"attempting to determine the temporary state",
 			sizeof(cap.stclear_flags)))
+=======
+	if (tpm_getcap(to_tpm_chip(dev), TPM_CAP_FLAG_VOL, &cap,
+		       "attempting to determine the temporary state",
+		       sizeof(cap.stclear_flags)))
+>>>>>>> master
 		goto out_ops;
 
 	rc = sprintf(buf, "%d\n", cap.stclear_flags.deactivated);
@@ -206,7 +242,10 @@ static ssize_t caps_show(struct device *dev, struct device_attribute *attr,
 			 char *buf)
 {
 	struct tpm_chip *chip = to_tpm_chip(dev);
+<<<<<<< HEAD
 	struct tpm1_version *version;
+=======
+>>>>>>> master
 	ssize_t rc = 0;
 	char *str = buf;
 	cap_t cap;
@@ -214,14 +253,21 @@ static ssize_t caps_show(struct device *dev, struct device_attribute *attr,
 	if (tpm_try_get_ops(chip))
 		return 0;
 
+<<<<<<< HEAD
 	if (tpm1_getcap(chip, TPM_CAP_PROP_MANUFACTURER, &cap,
 			"attempting to determine the manufacturer",
 			sizeof(cap.manufacturer_id)))
+=======
+	if (tpm_getcap(chip, TPM_CAP_PROP_MANUFACTURER, &cap,
+		       "attempting to determine the manufacturer",
+		       sizeof(cap.manufacturer_id)))
+>>>>>>> master
 		goto out_ops;
 
 	str += sprintf(str, "Manufacturer: 0x%x\n",
 		       be32_to_cpu(cap.manufacturer_id));
 
+<<<<<<< HEAD
 	/* TPM 1.2 */
 	if (!tpm1_getcap(chip, TPM_CAP_VERSION_1_2, &cap,
 			 "attempting to determine the 1.2 version",
@@ -247,6 +293,34 @@ out_print:
 
 	rc = str - buf;
 
+=======
+	/* Try to get a TPM version 1.2 TPM_CAP_VERSION_INFO */
+	rc = tpm_getcap(chip, TPM_CAP_VERSION_1_2, &cap,
+			"attempting to determine the 1.2 version",
+			sizeof(cap.tpm_version_1_2));
+	if (!rc) {
+		str += sprintf(str,
+			       "TCG version: %d.%d\nFirmware version: %d.%d\n",
+			       cap.tpm_version_1_2.Major,
+			       cap.tpm_version_1_2.Minor,
+			       cap.tpm_version_1_2.revMajor,
+			       cap.tpm_version_1_2.revMinor);
+	} else {
+		/* Otherwise just use TPM_STRUCT_VER */
+		if (tpm_getcap(chip, TPM_CAP_VERSION_1_1, &cap,
+			       "attempting to determine the 1.1 version",
+			       sizeof(cap.tpm_version)))
+			goto out_ops;
+
+		str += sprintf(str,
+			       "TCG version: %d.%d\nFirmware version: %d.%d\n",
+			       cap.tpm_version.Major,
+			       cap.tpm_version.Minor,
+			       cap.tpm_version.revMajor,
+			       cap.tpm_version.revMinor);
+}
+	rc = str - buf;
+>>>>>>> master
 out_ops:
 	tpm_put_ops(chip);
 	return rc;

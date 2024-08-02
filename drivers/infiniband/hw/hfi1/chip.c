@@ -13365,6 +13365,10 @@ static int set_up_context_variables(struct hfi1_devdata *dd)
 	int ret;
 	unsigned ngroups;
 	int rmt_count;
+<<<<<<< HEAD
+=======
+	int user_rmt_reduced;
+>>>>>>> master
 	u32 n_usr_ctxts;
 	u32 send_contexts = chip_send_contexts(dd);
 	u32 rcv_contexts = chip_rcv_contexts(dd);
@@ -13418,6 +13422,7 @@ static int set_up_context_variables(struct hfi1_devdata *dd)
 		n_usr_ctxts = rcv_contexts - num_kernel_contexts;
 	}
 
+<<<<<<< HEAD
 	num_netdev_contexts =
 		hfi1_num_netdev_contexts(dd, rcv_contexts -
 					 (num_kernel_contexts + n_usr_ctxts),
@@ -13451,6 +13456,28 @@ static int set_up_context_variables(struct hfi1_devdata *dd)
 		dd_dev_err(dd, "RMT overflow: reducing # user contexts from %u to %u\n",
 			   n_usr_ctxts, n_usr_ctxts - over);
 		n_usr_ctxts -= over;
+=======
+	/*
+	 * The RMT entries are currently allocated as shown below:
+	 * 1. QOS (0 to 128 entries);
+	 * 2. FECN for PSM (num_user_contexts + num_vnic_contexts);
+	 * 3. VNIC (num_vnic_contexts).
+	 * It should be noted that PSM FECN oversubscribe num_vnic_contexts
+	 * entries of RMT because both VNIC and PSM could allocate any receive
+	 * context between dd->first_dyn_alloc_text and dd->num_rcv_contexts,
+	 * and PSM FECN must reserve an RMT entry for each possible PSM receive
+	 * context.
+	 */
+	rmt_count = qos_rmt_entries(dd, NULL, NULL) + (num_vnic_contexts * 2);
+	if (rmt_count + n_usr_ctxts > NUM_MAP_ENTRIES) {
+		user_rmt_reduced = NUM_MAP_ENTRIES - rmt_count;
+		dd_dev_err(dd,
+			   "RMT size is reducing the number of user receive contexts from %u to %d\n",
+			   n_usr_ctxts,
+			   user_rmt_reduced);
+		/* recalculate */
+		n_usr_ctxts = user_rmt_reduced;
+>>>>>>> master
 	}
 
 	/* the first N are kernel contexts, the rest are user/netdev contexts */
@@ -14442,6 +14469,7 @@ static void init_fecn_handling(struct hfi1_devdata *dd,
 	int i, idx, regoff, regidx, start;
 	u8 offset;
 	u32 total_cnt;
+<<<<<<< HEAD
 
 	if (HFI1_CAP_IS_KSET(TID_RDMA))
 		/* Exclude context 0 */
@@ -14454,6 +14482,13 @@ static void init_fecn_handling(struct hfi1_devdata *dd,
 	/* there needs to be enough room in the map table */
 	if (rmt->used + total_cnt >= NUM_MAP_ENTRIES) {
 		dd_dev_err(dd, "FECN handling disabled - too many contexts allocated\n");
+=======
+
+	/* there needs to be enough room in the map table */
+	total_cnt = dd->num_rcv_contexts - dd->first_dyn_alloc_ctxt;
+	if (rmt->used + total_cnt >= NUM_MAP_ENTRIES) {
+		dd_dev_err(dd, "User FECN handling disabled - too many user contexts allocated\n");
+>>>>>>> master
 		return;
 	}
 
@@ -14635,6 +14670,7 @@ void hfi1_deinit_vnic_rsm(struct hfi1_devdata *dd)
 	clear_rsm_rule(dd, RSM_INS_VNIC);
 }
 
+<<<<<<< HEAD
 void hfi1_deinit_aip_rsm(struct hfi1_devdata *dd)
 {
 	/* only actually clear the rule if it's the last user asking to do so */
@@ -14642,6 +14678,8 @@ void hfi1_deinit_aip_rsm(struct hfi1_devdata *dd)
 		clear_rsm_rule(dd, RSM_INS_AIP);
 }
 
+=======
+>>>>>>> master
 static int init_rxe(struct hfi1_devdata *dd)
 {
 	struct rsm_map_table *rmt;

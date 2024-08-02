@@ -265,8 +265,47 @@ static void rxrpc_queue_packet(struct rxrpc_sock *rx, struct rxrpc_call *call,
 		rxrpc_notify_end_tx(rx, call, notify_end_tx);
 	spin_unlock(&call->tx_lock);
 
+<<<<<<< HEAD
 	if (poke)
 		rxrpc_poke_call(call, rxrpc_call_poke_start);
+=======
+	if (seq == 1 && rxrpc_is_client_call(call))
+		rxrpc_expose_client_call(call);
+
+	ret = rxrpc_send_data_packet(call, skb, false);
+	if (ret < 0) {
+		switch (ret) {
+		case -ENETUNREACH:
+		case -EHOSTUNREACH:
+		case -ECONNREFUSED:
+			rxrpc_set_call_completion(call,
+						  RXRPC_CALL_LOCAL_ERROR,
+						  0, ret);
+			rxrpc_notify_socket(call);
+			goto out;
+		}
+		_debug("need instant resend %d", ret);
+		rxrpc_instant_resend(call, ix);
+	} else {
+		unsigned long now = jiffies, resend_at;
+
+		if (call->peer->rtt_usage > 1)
+			resend_at = nsecs_to_jiffies(call->peer->rtt * 3 / 2);
+		else
+			resend_at = rxrpc_resend_timeout;
+		if (resend_at < 1)
+			resend_at = 1;
+
+		resend_at += now;
+		WRITE_ONCE(call->resend_at, resend_at);
+		rxrpc_reduce_call_timer(call, resend_at, now,
+					rxrpc_timer_set_for_send);
+	}
+
+out:
+	rxrpc_free_skb(skb, rxrpc_skb_tx_freed);
+	_leave("");
+>>>>>>> master
 }
 
 /*
@@ -659,12 +698,17 @@ int rxrpc_do_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg, size_t len)
 		switch (rxrpc_call_state(call)) {
 		case RXRPC_CALL_CLIENT_AWAIT_CONN:
 		case RXRPC_CALL_SERVER_SECURING:
+<<<<<<< HEAD
 			if (p.command == RXRPC_CMD_SEND_ABORT)
 				break;
 			fallthrough;
 		case RXRPC_CALL_UNINITIALISED:
 		case RXRPC_CALL_SERVER_PREALLOC:
 			rxrpc_put_call(call, rxrpc_call_put_sendmsg);
+=======
+		case RXRPC_CALL_SERVER_ACCEPTING:
+			rxrpc_put_call(call, rxrpc_call_put);
+>>>>>>> master
 			ret = -EBUSY;
 			goto error_release_sock;
 		default:

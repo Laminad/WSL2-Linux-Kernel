@@ -843,6 +843,7 @@ __hwmon_device_register(struct device *dev, const char *name, void *drvdata,
 		goto ida_remove;
 	}
 
+<<<<<<< HEAD
 	INIT_LIST_HEAD(&hwdev->tzdata);
 
 	if (hdev->of_node && chip && chip->ops->read &&
@@ -856,6 +857,30 @@ __hwmon_device_register(struct device *dev, const char *name, void *drvdata,
 			 * from device_unregister(), will free it.
 			 */
 			goto ida_remove;
+=======
+	if (dev && dev->of_node && chip && chip->ops->read &&
+	    chip->info[0]->type == hwmon_chip &&
+	    (chip->info[0]->config[0] & HWMON_C_REGISTER_TZ)) {
+		const struct hwmon_channel_info **info = chip->info;
+
+		for (i = 1; info[i]; i++) {
+			if (info[i]->type != hwmon_temp)
+				continue;
+
+			for (j = 0; info[i]->config[j]; j++) {
+				if (!chip->ops->is_visible(drvdata, hwmon_temp,
+							   hwmon_temp_input, j))
+					continue;
+				if (info[i]->config[j] & HWMON_T_INPUT) {
+					err = hwmon_thermal_add_sensor(dev,
+								hwdev, j);
+					if (err) {
+						device_unregister(hdev);
+						goto ida_remove;
+					}
+				}
+			}
+>>>>>>> master
 		}
 	}
 

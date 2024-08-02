@@ -396,7 +396,13 @@ EXPORT_SYMBOL_GPL(tty_ldisc_receive_buf);
 
 static void lookahead_bufs(struct tty_port *port, struct tty_buffer *head)
 {
+<<<<<<< HEAD
 	head->lookahead = max(head->lookahead, head->read);
+=======
+	unsigned char *p = char_buf_ptr(head, head->read);
+	char	      *f = NULL;
+	int n;
+>>>>>>> master
 
 	while (head) {
 		struct tty_buffer *next;

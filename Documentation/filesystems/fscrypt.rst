@@ -339,10 +339,14 @@ Supported modes
 Currently, the following pairs of encryption modes are supported:
 
 - AES-256-XTS for contents and AES-256-CTS-CBC for filenames
+<<<<<<< HEAD
 - AES-256-XTS for contents and AES-256-HCTR2 for filenames
 - Adiantum for both contents and filenames
 - AES-128-CBC-ESSIV for contents and AES-128-CTS-CBC for filenames
 - SM4-XTS for contents and SM4-CTS-CBC for filenames
+=======
+- AES-128-CBC for contents and AES-128-CTS-CBC for filenames
+>>>>>>> master
 
 Authenticated encryption modes are not currently supported because of
 the difficulty of dealing with ciphertext expansion.  Therefore,
@@ -355,6 +359,7 @@ block cipher in `CTS-CBC mode
 <https://en.wikipedia.org/wiki/Ciphertext_stealing>`_ or a wide-block
 cipher.
 
+<<<<<<< HEAD
 The (AES-256-XTS, AES-256-CTS-CBC) pair is the recommended default.
 It is also the only option that is *guaranteed* to always be supported
 if the kernel supports fscrypt at all; see `Kernel config options`_.
@@ -450,6 +455,12 @@ acceleration is recommended:
 
 Contents encryption
 -------------------
+=======
+New encryption modes can be added relatively easily, without changes
+to individual filesystems.  However, authenticated encryption (AE)
+modes are not currently supported because of the difficulty of dealing
+with ciphertext expansion.
+>>>>>>> master
 
 For file contents, each filesystem block is encrypted independently.
 Starting from Linux kernel 5.5, encryption of filesystems with block

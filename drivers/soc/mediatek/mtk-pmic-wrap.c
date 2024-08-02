@@ -1829,7 +1829,10 @@ static void pwrap_config_cipher(struct pmic_wrapper *wrp, const u32 *dew_regs)
 static int pwrap_init_cipher(struct pmic_wrapper *wrp)
 {
 	int ret;
+<<<<<<< HEAD
 	bool tmp;
+=======
+>>>>>>> master
 	u32 rdata = 0;
 
 	pwrap_writel(wrp, 0x1, PWRAP_CIPHER_SWRST);

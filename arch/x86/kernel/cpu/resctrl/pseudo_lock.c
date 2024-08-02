@@ -965,9 +965,58 @@ static int measure_residency_fn(struct perf_event_attr *miss_attr,
 	void *mem_r;
 	u64 tmp;
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/resctrl/pseudo_lock.c
 	miss_event = perf_event_create_kernel_counter(miss_attr, plr->cpu,
 						      NULL, NULL, NULL);
 	if (IS_ERR(miss_event))
+=======
+	/*
+	 * Non-architectural event for the Goldmont Microarchitecture
+	 * from Intel x86 Architecture Software Developer Manual (SDM):
+	 * MEM_LOAD_UOPS_RETIRED D1H (event number)
+	 * Umask values:
+	 *     L1_HIT   01H
+	 *     L2_HIT   02H
+	 *     L1_MISS  08H
+	 *     L2_MISS  10H
+	 *
+	 * On Broadwell Microarchitecture the MEM_LOAD_UOPS_RETIRED event
+	 * has two "no fix" errata associated with it: BDM35 and BDM100. On
+	 * this platform we use the following events instead:
+	 *  L2_RQSTS 24H (Documented in https://download.01.org/perfmon/BDW/)
+	 *       REFERENCES FFH
+	 *       MISS       3FH
+	 *  LONGEST_LAT_CACHE 2EH (Documented in SDM)
+	 *       REFERENCE 4FH
+	 *       MISS      41H
+	 */
+
+	/*
+	 * Start by setting flags for IA32_PERFEVTSELx:
+	 *     OS  (Operating system mode)  0x2
+	 *     INT (APIC interrupt enable)  0x10
+	 *     EN  (Enable counter)         0x40
+	 *
+	 * Then add the Umask value and event number to select performance
+	 * event.
+	 */
+
+	switch (boot_cpu_data.x86_model) {
+	case INTEL_FAM6_ATOM_GOLDMONT:
+	case INTEL_FAM6_ATOM_GOLDMONT_PLUS:
+		l2_hit_bits = (0x52ULL << 16) | (0x2 << 8) | 0xd1;
+		l2_miss_bits = (0x52ULL << 16) | (0x10 << 8) | 0xd1;
+		break;
+	case INTEL_FAM6_BROADWELL_X:
+		/* On BDW the l2_hit_bits count references, not hits */
+		l2_hit_bits = (0x52ULL << 16) | (0xff << 8) | 0x24;
+		l2_miss_bits = (0x52ULL << 16) | (0x3f << 8) | 0x24;
+		/* On BDW the l3_hit_bits count references, not hits */
+		l3_hit_bits = (0x52ULL << 16) | (0x4f << 8) | 0x2e;
+		l3_miss_bits = (0x52ULL << 16) | (0x41 << 8) | 0x2e;
+		break;
+	default:
+>>>>>>> master:arch/x86/kernel/cpu/intel_rdt_pseudo_lock.c
 		goto out;
 
 	hit_event = perf_event_create_kernel_counter(hit_attr, plr->cpu,

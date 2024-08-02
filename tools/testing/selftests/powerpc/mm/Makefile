@@ -2,12 +2,16 @@
 noarg:
 	$(MAKE) -C ../
 
+<<<<<<< HEAD
 TEST_GEN_PROGS := hugetlb_vs_thp_test subpage_prot prot_sao segv_errors wild_bctr \
 		  large_vm_fork_separation bad_accesses exec_prot pkey_exec_prot \
 		  pkey_siginfo stack_expansion_signal stack_expansion_ldst \
 		  large_vm_gpr_corruption
 TEST_PROGS := stress_code_patching.sh
 
+=======
+TEST_GEN_PROGS := hugetlb_vs_thp_test subpage_prot prot_sao segv_errors
+>>>>>>> master
 TEST_GEN_PROGS_EXTENDED := tlbie_test
 TEST_GEN_FILES := tempfile
 
@@ -26,6 +30,7 @@ $(OUTPUT)/exec_prot: CFLAGS += -m64
 $(OUTPUT)/pkey_exec_prot: CFLAGS += -m64
 $(OUTPUT)/pkey_siginfo: CFLAGS += -m64
 
+<<<<<<< HEAD
 $(OUTPUT)/stack_expansion_signal: ../utils.c ../pmu/lib.c
 
 $(OUTPUT)/stack_expansion_ldst: CFLAGS += -fno-stack-protector
@@ -36,3 +41,6 @@ $(OUTPUT)/tempfile:
 
 $(OUTPUT)/tlbie_test: LDLIBS += -lpthread
 $(OUTPUT)/pkey_siginfo: LDLIBS += -lpthread
+=======
+$(OUTPUT)/tlbie_test: LDLIBS += -lpthread
+>>>>>>> master

@@ -125,11 +125,14 @@ class Event(dict):
                 continue
             if not data_equal(self[t], other[t]):
                 log.warning("expected %s=%s, got %s" % (t, self[t], other[t]))
+<<<<<<< HEAD
 
 def parse_version(version):
     if not version:
         return None
     return [int(v) for v in version.split(".")[0:2]]
+=======
+>>>>>>> master
 
 # Test file description needs to have following sections:
 # [config]

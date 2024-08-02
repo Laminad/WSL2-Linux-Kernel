@@ -246,8 +246,13 @@ unsigned long prepare_ftrace_return(unsigned long ra, unsigned long sp,
 	if (unlikely(atomic_read(&current->tracing_graph_pause)))
 		goto out;
 	ip -= MCOUNT_INSN_SIZE;
+<<<<<<< HEAD
 	if (!function_graph_enter(ra, ip, 0, (void *) sp))
 		ra = (unsigned long) return_to_handler;
+=======
+	if (!function_graph_enter(parent, ip, 0, NULL))
+		parent = (unsigned long) return_to_handler;
+>>>>>>> master
 out:
 	return ra;
 }

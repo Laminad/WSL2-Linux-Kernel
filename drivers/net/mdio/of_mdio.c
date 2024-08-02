@@ -45,7 +45,63 @@ EXPORT_SYMBOL(of_mdiobus_phy_device_register);
 static int of_mdiobus_register_phy(struct mii_bus *mdio,
 				    struct device_node *child, u32 addr)
 {
+<<<<<<< HEAD:drivers/net/mdio/of_mdio.c
 	return fwnode_mdiobus_register_phy(mdio, of_fwnode_handle(child), addr);
+=======
+	struct phy_device *phy;
+	bool is_c45;
+	int rc;
+	u32 phy_id;
+
+	is_c45 = of_device_is_compatible(child,
+					 "ethernet-phy-ieee802.3-c45");
+
+	if (!is_c45 && !of_get_phy_id(child, &phy_id))
+		phy = phy_device_create(mdio, addr, phy_id, 0, NULL);
+	else
+		phy = get_phy_device(mdio, addr, is_c45);
+	if (IS_ERR(phy))
+		return PTR_ERR(phy);
+
+	rc = of_irq_get(child, 0);
+	if (rc == -EPROBE_DEFER) {
+		phy_device_free(phy);
+		return rc;
+	}
+	if (rc > 0) {
+		phy->irq = rc;
+		mdio->irq[addr] = rc;
+	} else {
+		phy->irq = mdio->irq[addr];
+	}
+
+	if (of_property_read_bool(child, "broken-turn-around"))
+		mdio->phy_ignore_ta_mask |= 1 << addr;
+
+	of_property_read_u32(child, "reset-assert-us",
+			     &phy->mdio.reset_assert_delay);
+	of_property_read_u32(child, "reset-deassert-us",
+			     &phy->mdio.reset_deassert_delay);
+
+	/* Associate the OF node with the device structure so it
+	 * can be looked up later */
+	of_node_get(child);
+	phy->mdio.dev.of_node = child;
+	phy->mdio.dev.fwnode = of_fwnode_handle(child);
+
+	/* All data is now stored in the phy struct;
+	 * register it */
+	rc = phy_device_register(phy);
+	if (rc) {
+		phy_device_free(phy);
+		of_node_put(child);
+		return rc;
+	}
+
+	dev_dbg(&mdio->dev, "registered phy %pOFn at address %i\n",
+		child, addr);
+	return 0;
+>>>>>>> master:drivers/of/of_mdio.c
 }
 
 static int of_mdiobus_register_device(struct mii_bus *mdio,

@@ -212,6 +212,7 @@ static const struct mmp_intc_conf mmp2_conf = {
 	.conf_disable	= 0x0,
 	.conf_mask	= MMP2_ICU_INT_ROUTE_PJ4_IRQ |
 			  MMP2_ICU_INT_ROUTE_PJ4_FIQ,
+<<<<<<< HEAD
 };
 
 static struct mmp_intc_conf mmp3_conf = {
@@ -220,6 +221,8 @@ static struct mmp_intc_conf mmp3_conf = {
 	.conf_mask	= MMP2_ICU_INT_ROUTE_PJ4_IRQ |
 			  MMP2_ICU_INT_ROUTE_PJ4_FIQ,
 	.conf2_mask	= 0xf0,
+=======
+>>>>>>> master
 };
 
 static void __exception_irq_entry mmp_handle_irq(struct pt_regs *regs)

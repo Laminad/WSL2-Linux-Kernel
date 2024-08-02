@@ -685,6 +685,7 @@ static const struct drm_i915_reg_descriptor gen9_blt_regs[] = {
 	REG64_IDX(RING_TIMESTAMP, BSD_RING_BASE),
 	REG32(BCS_SWCTRL),
 	REG64_IDX(RING_TIMESTAMP, BLT_RING_BASE),
+<<<<<<< HEAD
 	REG32_IDX(RING_CTX_TIMESTAMP, BLT_RING_BASE),
 	REG64_BASE_IDX(GEN8_RING_CS_GPR, BLT_RING_BASE, 0),
 	REG64_BASE_IDX(GEN8_RING_CS_GPR, BLT_RING_BASE, 1),
@@ -702,6 +703,24 @@ static const struct drm_i915_reg_descriptor gen9_blt_regs[] = {
 	REG64_BASE_IDX(GEN8_RING_CS_GPR, BLT_RING_BASE, 13),
 	REG64_BASE_IDX(GEN8_RING_CS_GPR, BLT_RING_BASE, 14),
 	REG64_BASE_IDX(GEN8_RING_CS_GPR, BLT_RING_BASE, 15),
+=======
+	REG64_IDX(BCS_GPR, 0),
+	REG64_IDX(BCS_GPR, 1),
+	REG64_IDX(BCS_GPR, 2),
+	REG64_IDX(BCS_GPR, 3),
+	REG64_IDX(BCS_GPR, 4),
+	REG64_IDX(BCS_GPR, 5),
+	REG64_IDX(BCS_GPR, 6),
+	REG64_IDX(BCS_GPR, 7),
+	REG64_IDX(BCS_GPR, 8),
+	REG64_IDX(BCS_GPR, 9),
+	REG64_IDX(BCS_GPR, 10),
+	REG64_IDX(BCS_GPR, 11),
+	REG64_IDX(BCS_GPR, 12),
+	REG64_IDX(BCS_GPR, 13),
+	REG64_IDX(BCS_GPR, 14),
+	REG64_IDX(BCS_GPR, 15),
+>>>>>>> master
 };
 
 #undef REG64
@@ -796,6 +815,17 @@ static u32 gen9_blt_get_cmd_length_mask(u32 cmd_header)
 		return 0xFF;
 
 	DRM_DEBUG("CMD: Abnormal blt cmd length! 0x%08X\n", cmd_header);
+	return 0;
+}
+
+static u32 gen9_blt_get_cmd_length_mask(u32 cmd_header)
+{
+	u32 client = cmd_header >> INSTR_CLIENT_SHIFT;
+
+	if (client == INSTR_MI_CLIENT || client == INSTR_BC_CLIENT)
+		return 0xFF;
+
+	DRM_DEBUG_DRIVER("CMD: Abnormal blt cmd length! 0x%08X\n", cmd_header);
 	return 0;
 }
 
@@ -958,9 +988,15 @@ int intel_engine_init_cmd_parser(struct intel_engine_cs *engine)
 	int cmd_table_count;
 	int ret;
 
+<<<<<<< HEAD
 	if (GRAPHICS_VER(engine->i915) != 7 && !(GRAPHICS_VER(engine->i915) == 9 &&
 						 engine->class == COPY_ENGINE_CLASS))
 		return 0;
+=======
+	if (!IS_GEN7(engine->i915) && !(IS_GEN9(engine->i915) &&
+					engine->id == BCS))
+		return;
+>>>>>>> master
 
 	switch (engine->class) {
 	case RENDER_CLASS:
@@ -982,14 +1018,24 @@ int intel_engine_init_cmd_parser(struct intel_engine_cs *engine)
 		}
 		engine->get_cmd_length_mask = gen7_render_get_cmd_length_mask;
 		break;
+<<<<<<< HEAD
 	case VIDEO_DECODE_CLASS:
+=======
+	case VCS:
+>>>>>>> master
 		cmd_tables = gen7_video_cmd_table;
 		cmd_table_count = ARRAY_SIZE(gen7_video_cmd_table);
 		engine->get_cmd_length_mask = gen7_bsd_get_cmd_length_mask;
 		break;
+<<<<<<< HEAD
 	case COPY_ENGINE_CLASS:
 		engine->get_cmd_length_mask = gen7_blt_get_cmd_length_mask;
 		if (GRAPHICS_VER(engine->i915) == 9) {
+=======
+	case BCS:
+		engine->get_cmd_length_mask = gen7_blt_get_cmd_length_mask;
+		if (IS_GEN9(engine->i915)) {
+>>>>>>> master
 			cmd_tables = gen9_blt_cmd_table;
 			cmd_table_count = ARRAY_SIZE(gen9_blt_cmd_table);
 			engine->get_cmd_length_mask =
@@ -1005,7 +1051,11 @@ int intel_engine_init_cmd_parser(struct intel_engine_cs *engine)
 			cmd_table_count = ARRAY_SIZE(gen7_blt_cmd_table);
 		}
 
+<<<<<<< HEAD
 		if (GRAPHICS_VER(engine->i915) == 9) {
+=======
+		if (IS_GEN9(engine->i915)) {
+>>>>>>> master
 			engine->reg_tables = gen9_blt_reg_tables;
 			engine->reg_table_count =
 				ARRAY_SIZE(gen9_blt_reg_tables);
@@ -1017,7 +1067,11 @@ int intel_engine_init_cmd_parser(struct intel_engine_cs *engine)
 			engine->reg_table_count = ARRAY_SIZE(ivb_blt_reg_tables);
 		}
 		break;
+<<<<<<< HEAD
 	case VIDEO_ENHANCEMENT_CLASS:
+=======
+	case VECS:
+>>>>>>> master
 		cmd_tables = hsw_vebox_cmd_table;
 		cmd_table_count = ARRAY_SIZE(hsw_vebox_cmd_table);
 		/* VECS can use the same length_mask function as VCS */
@@ -1049,6 +1103,7 @@ int intel_engine_init_cmd_parser(struct intel_engine_cs *engine)
 	}
 
 	engine->flags |= I915_ENGINE_USING_CMD_PARSER;
+<<<<<<< HEAD
 
 out:
 	if (intel_engine_requires_cmd_parser(engine) &&
@@ -1056,6 +1111,8 @@ out:
 		return -EINVAL;
 
 	return 0;
+=======
+>>>>>>> master
 }
 
 /**
@@ -1247,7 +1304,11 @@ static bool check_cmd(const struct intel_engine_cs *engine,
 		return true;
 
 	if (desc->flags & CMD_DESC_REJECT) {
+<<<<<<< HEAD
 		DRM_DEBUG("CMD: Rejected command: 0x%08X\n", *cmd);
+=======
+		DRM_DEBUG_DRIVER("CMD: Rejected command: 0x%08X\n", *cmd);
+>>>>>>> master
 		return false;
 	}
 
@@ -1342,17 +1403,29 @@ static bool check_cmd(const struct intel_engine_cs *engine,
 	return true;
 }
 
+<<<<<<< HEAD
 static int check_bbstart(u32 *cmd, u32 offset, u32 length,
 			 u32 batch_length,
 			 u64 batch_addr,
 			 u64 shadow_addr,
 			 const unsigned long *jump_whitelist)
+=======
+static int check_bbstart(const struct i915_gem_context *ctx,
+			 u32 *cmd, u32 offset, u32 length,
+			 u32 batch_len,
+			 u64 batch_start,
+			 u64 shadow_batch_start)
+>>>>>>> master
 {
 	u64 jump_offset, jump_target;
 	u32 target_cmd_offset, target_cmd_index;
 
 	/* For igt compatibility on older platforms */
+<<<<<<< HEAD
 	if (!jump_whitelist) {
+=======
+	if (CMDPARSER_USES_GGTT(ctx->i915)) {
+>>>>>>> master
 		DRM_DEBUG("CMD: Rejecting BB_START for ggtt based submission\n");
 		return -EACCES;
 	}
@@ -1363,14 +1436,23 @@ static int check_bbstart(u32 *cmd, u32 offset, u32 length,
 		return -EINVAL;
 	}
 
+<<<<<<< HEAD
 	jump_target = *(u64 *)(cmd + 1);
 	jump_offset = jump_target - batch_addr;
+=======
+	jump_target = *(u64*)(cmd+1);
+	jump_offset = jump_target - batch_start;
+>>>>>>> master
 
 	/*
 	 * Any underflow of jump_target is guaranteed to be outside the range
 	 * of a u32, so >= test catches both too large and too small
 	 */
+<<<<<<< HEAD
 	if (jump_offset >= batch_length) {
+=======
+	if (jump_offset >= batch_len) {
+>>>>>>> master
 		DRM_DEBUG("CMD: BB_START to 0x%llx jumps out of BB\n",
 			  jump_target);
 		return -EINVAL;
@@ -1378,20 +1460,35 @@ static int check_bbstart(u32 *cmd, u32 offset, u32 length,
 
 	/*
 	 * This cannot overflow a u32 because we already checked jump_offset
+<<<<<<< HEAD
 	 * is within the BB, and the batch_length is a u32
+=======
+	 * is within the BB, and the batch_len is a u32
+>>>>>>> master
 	 */
 	target_cmd_offset = lower_32_bits(jump_offset);
 	target_cmd_index = target_cmd_offset / sizeof(u32);
 
+<<<<<<< HEAD
 	*(u64 *)(cmd + 1) = shadow_addr + target_cmd_offset;
+=======
+	*(u64*)(cmd + 1) = shadow_batch_start + target_cmd_offset;
+>>>>>>> master
 
 	if (target_cmd_index == offset)
 		return 0;
 
+<<<<<<< HEAD
 	if (IS_ERR(jump_whitelist))
 		return PTR_ERR(jump_whitelist);
 
 	if (!test_bit(target_cmd_index, jump_whitelist)) {
+=======
+	if (ctx->jump_whitelist_cmds <= target_cmd_index) {
+		DRM_DEBUG("CMD: Rejecting BB_START - truncated whitelist array\n");
+		return -EINVAL;
+	} else if (!test_bit(target_cmd_index, ctx->jump_whitelist)) {
+>>>>>>> master
 		DRM_DEBUG("CMD: BB_START to 0x%llx not a previously executed cmd\n",
 			  jump_target);
 		return -EINVAL;
@@ -1400,6 +1497,7 @@ static int check_bbstart(u32 *cmd, u32 offset, u32 length,
 	return 0;
 }
 
+<<<<<<< HEAD
 static unsigned long *alloc_whitelist(u32 batch_length)
 {
 	unsigned long *jmp;
@@ -1417,11 +1515,48 @@ static unsigned long *alloc_whitelist(u32 batch_length)
 		return ERR_PTR(-ENOMEM);
 
 	return jmp;
+=======
+static void init_whitelist(struct i915_gem_context *ctx, u32 batch_len)
+{
+	const u32 batch_cmds = DIV_ROUND_UP(batch_len, sizeof(u32));
+	const u32 exact_size = BITS_TO_LONGS(batch_cmds);
+	u32 next_size = BITS_TO_LONGS(roundup_pow_of_two(batch_cmds));
+	unsigned long *next_whitelist;
+
+	if (CMDPARSER_USES_GGTT(ctx->i915))
+		return;
+
+	if (batch_cmds <= ctx->jump_whitelist_cmds) {
+		bitmap_zero(ctx->jump_whitelist, batch_cmds);
+		return;
+	}
+
+again:
+	next_whitelist = kcalloc(next_size, sizeof(long), GFP_KERNEL);
+	if (next_whitelist) {
+		kfree(ctx->jump_whitelist);
+		ctx->jump_whitelist = next_whitelist;
+		ctx->jump_whitelist_cmds =
+			next_size * BITS_PER_BYTE * sizeof(long);
+		return;
+	}
+
+	if (next_size > exact_size) {
+		next_size = exact_size;
+		goto again;
+	}
+
+	DRM_DEBUG("CMD: Failed to extend whitelist. BB_START may be disallowed\n");
+	bitmap_zero(ctx->jump_whitelist, ctx->jump_whitelist_cmds);
+
+	return;
+>>>>>>> master
 }
 
 #define LENGTH_BIAS 2
 
 /**
+<<<<<<< HEAD
  * intel_engine_cmd_parser() - parse a batch buffer for privilege violations
  * @engine: the engine on which the batch is to execute
  * @batch: the batch buffer in question
@@ -1429,6 +1564,17 @@ static unsigned long *alloc_whitelist(u32 batch_length)
  * @batch_length: length of the commands in batch_obj
  * @shadow: validated copy of the batch buffer in question
  * @trampoline: true if we need to trampoline into privileged execution
+=======
+ * i915_parse_cmds() - parse a submitted batch buffer for privilege violations
+ * @ctx: the context in which the batch is to execute
+ * @engine: the engine on which the batch is to execute
+ * @batch_obj: the batch buffer in question
+ * @batch_start: Canonical base address of batch
+ * @batch_start_offset: byte offset in the batch at which execution starts
+ * @batch_len: length of the commands in batch_obj
+ * @shadow_batch_obj: copy of the batch buffer in question
+ * @shadow_batch_start: Canonical base address of shadow_batch_obj
+>>>>>>> master
  *
  * Parses the specified batch buffer looking for privilege violations as
  * described in the overview.
@@ -1437,12 +1583,23 @@ static unsigned long *alloc_whitelist(u32 batch_length)
  * if the batch appears legal but should use hardware parsing
  */
 
+<<<<<<< HEAD
 int intel_engine_cmd_parser(struct intel_engine_cs *engine,
 			    struct i915_vma *batch,
 			    unsigned long batch_offset,
 			    unsigned long batch_length,
 			    struct i915_vma *shadow,
 			    bool trampoline)
+=======
+int intel_engine_cmd_parser(struct i915_gem_context *ctx,
+			    struct intel_engine_cs *engine,
+			    struct drm_i915_gem_object *batch_obj,
+			    u64 batch_start,
+			    u32 batch_start_offset,
+			    u32 batch_len,
+			    struct drm_i915_gem_object *shadow_batch_obj,
+			    u64 shadow_batch_start)
+>>>>>>> master
 {
 	u32 *cmd, *batch_end, offset = 0;
 	struct drm_i915_cmd_descriptor default_desc = noop_desc;
@@ -1466,6 +1623,7 @@ int intel_engine_cmd_parser(struct intel_engine_cs *engine,
 		return PTR_ERR(cmd);
 	}
 
+<<<<<<< HEAD
 	jump_whitelist = NULL;
 	if (!trampoline)
 		/* Defer failure until attempted use */
@@ -1473,6 +1631,9 @@ int intel_engine_cmd_parser(struct intel_engine_cs *engine,
 
 	shadow_addr = gen8_canonical_addr(i915_vma_offset(shadow));
 	batch_addr = gen8_canonical_addr(i915_vma_offset(batch) + batch_offset);
+=======
+	init_whitelist(ctx, batch_len);
+>>>>>>> master
 
 	/*
 	 * We use the batch length as size because the shadow object is as
@@ -1490,7 +1651,11 @@ int intel_engine_cmd_parser(struct intel_engine_cs *engine,
 		if (!desc) {
 			DRM_DEBUG("CMD: Unrecognized command: 0x%08X\n", *cmd);
 			ret = -EINVAL;
+<<<<<<< HEAD
 			break;
+=======
+			goto err;
+>>>>>>> master
 		}
 
 		if (desc->flags & CMD_DESC_FIXED)
@@ -1504,13 +1669,33 @@ int intel_engine_cmd_parser(struct intel_engine_cs *engine,
 				  length,
 				  batch_end - cmd);
 			ret = -EINVAL;
-			break;
+			goto err;
 		}
 
 		if (!check_cmd(engine, desc, cmd, length)) {
 			ret = -EACCES;
+			goto err;
+		}
+
+		if (desc->cmd.value == MI_BATCH_BUFFER_START) {
+			ret = check_bbstart(ctx, cmd, offset, length,
+					    batch_len, batch_start,
+					    shadow_batch_start);
+
+			if (ret)
+				goto err;
 			break;
 		}
+
+<<<<<<< HEAD
+		if (!check_cmd(engine, desc, cmd, length)) {
+			ret = -EACCES;
+			break;
+		}
+=======
+		if (ctx->jump_whitelist_cmds > offset)
+			set_bit(offset, ctx->jump_whitelist);
+>>>>>>> master
 
 		if (cmd_desc_is(desc, MI_BATCH_BUFFER_START)) {
 			ret = check_bbstart(cmd, offset, length, batch_length,
@@ -1527,10 +1712,11 @@ int intel_engine_cmd_parser(struct intel_engine_cs *engine,
 		if  (cmd >= batch_end) {
 			DRM_DEBUG("CMD: Got to the end of the buffer w/o a BBE cmd!\n");
 			ret = -EINVAL;
-			break;
+			goto err;
 		}
 	} while (1);
 
+<<<<<<< HEAD
 	if (trampoline) {
 		/*
 		 * With the trampoline, the shadow is executed twice.
@@ -1574,6 +1760,16 @@ int intel_engine_cmd_parser(struct intel_engine_cs *engine,
 	if (!IS_ERR_OR_NULL(jump_whitelist))
 		kfree(jump_whitelist);
 	i915_gem_object_unpin_map(shadow->obj);
+=======
+	if (needs_clflush_after) {
+		void *ptr = page_mask_bits(shadow_batch_obj->mm.mapping);
+
+		drm_clflush_virt_range(ptr, (void *)(cmd + 1) - ptr);
+	}
+
+err:
+	i915_gem_object_unpin_map(shadow_batch_obj);
+>>>>>>> master
 	return ret;
 }
 
@@ -1592,7 +1788,11 @@ int i915_cmd_parser_get_version(struct drm_i915_private *dev_priv)
 	bool active = false;
 
 	/* If the command parser is not enabled, report 0 - unsupported */
+<<<<<<< HEAD
 	for_each_uabi_engine(engine, dev_priv) {
+=======
+	for_each_engine(engine, dev_priv, id) {
+>>>>>>> master
 		if (intel_engine_using_cmd_parser(engine)) {
 			active = true;
 			break;

@@ -831,6 +831,7 @@ static int phylink_parse_fixedlink(struct phylink *pl,
 			       pl->supported, true);
 	linkmode_zero(pl->supported);
 	phylink_set(pl->supported, MII);
+<<<<<<< HEAD
 
 	if (pause)
 		phylink_set(pl->supported, Pause);
@@ -841,6 +842,10 @@ static int phylink_parse_fixedlink(struct phylink *pl,
 	if (autoneg)
 		phylink_set(pl->supported, Autoneg);
 
+=======
+	phylink_set(pl->supported, Pause);
+	phylink_set(pl->supported, Asym_Pause);
+>>>>>>> master
 	if (s) {
 		__set_bit(s->bit, pl->supported);
 		__set_bit(s->bit, pl->link_config.lp_advertising);
@@ -1262,6 +1267,7 @@ static void phylink_mac_pcs_get_state(struct phylink *pl,
 	linkmode_copy(state->advertising, pl->link_config.advertising);
 	linkmode_zero(state->lp_advertising);
 	state->interface = pl->link_config.interface;
+<<<<<<< HEAD
 	state->rate_matching = pl->link_config.rate_matching;
 	if (linkmode_test_bit(ETHTOOL_LINK_MODE_Autoneg_BIT,
 			      state->advertising)) {
@@ -1273,6 +1279,12 @@ static void phylink_mac_pcs_get_state(struct phylink *pl,
 		state->duplex = pl->link_config.duplex;
 		state->pause = pl->link_config.pause;
 	}
+=======
+	state->an_enabled = pl->link_config.an_enabled;
+	state->speed = SPEED_UNKNOWN;
+	state->duplex = DUPLEX_UNKNOWN;
+	state->pause = MLO_PAUSE_NONE;
+>>>>>>> master
 	state->an_complete = 0;
 	state->link = 1;
 
@@ -1298,7 +1310,20 @@ static void phylink_get_fixed_state(struct phylink *pl,
 	phylink_resolve_an_pause(state);
 }
 
+<<<<<<< HEAD
 static void phylink_mac_initial_config(struct phylink *pl, bool force_restart)
+=======
+/* Flow control is resolved according to our and the link partners
+ * advertisements using the following drawn from the 802.3 specs:
+ *  Local device  Link partner
+ *  Pause AsymDir Pause AsymDir Result
+ *    1     X       1     X     TX+RX
+ *    0     1       1     1     TX
+ *    1     1       0     1     RX
+ */
+static void phylink_resolve_flow(struct phylink *pl,
+				 struct phylink_link_state *state)
+>>>>>>> master
 {
 	struct phylink_link_state link_state;
 
@@ -1317,8 +1342,18 @@ static void phylink_mac_initial_config(struct phylink *pl, bool force_restart)
 			link_state.pause = MLO_PAUSE_NONE;
 		break;
 
+<<<<<<< HEAD
 	default: /* can't happen */
 		return;
+=======
+		if (pause & MLO_PAUSE_SYM)
+			new_pause = MLO_PAUSE_TX | MLO_PAUSE_RX;
+		else if (pause & MLO_PAUSE_ASYM)
+			new_pause = state->pause & MLO_PAUSE_SYM ?
+				 MLO_PAUSE_TX : MLO_PAUSE_RX;
+	} else {
+		new_pause = pl->link_config.pause & MLO_PAUSE_TXRX_MASK;
+>>>>>>> master
 	}
 
 	link_state.link = false;
@@ -1499,6 +1534,7 @@ static void phylink_resolve(struct work_struct *w)
 		}
 	}
 
+<<<<<<< HEAD
 	if (mac_config) {
 		if (link_state.interface != pl->link_config.interface) {
 			/* The interface has changed, force the link down and
@@ -1510,6 +1546,26 @@ static void phylink_resolve(struct work_struct *w)
 			}
 			phylink_major_config(pl, false, &link_state);
 			pl->link_config.interface = link_state.interface;
+=======
+	if (link_state.link != netif_carrier_ok(ndev)) {
+		if (!link_state.link) {
+			netif_carrier_off(ndev);
+			pl->ops->mac_link_down(ndev, pl->link_an_mode,
+					       pl->cur_interface);
+			netdev_info(ndev, "Link is Down\n");
+		} else {
+			pl->cur_interface = link_state.interface;
+			pl->ops->mac_link_up(ndev, pl->link_an_mode,
+					     pl->cur_interface, pl->phydev);
+
+			netif_carrier_on(ndev);
+
+			netdev_info(ndev,
+				    "Link is Up - %s/%s - flow control %s\n",
+				    phy_speed_to_str(link_state.speed),
+				    phy_duplex_to_str(link_state.duplex),
+				    phylink_pause_to_str(link_state.pause));
+>>>>>>> master
 		}
 	}
 
@@ -1544,12 +1600,15 @@ static void phylink_run_resolve_and_disable(struct phylink *pl, int bit)
 	}
 }
 
+<<<<<<< HEAD
 static void phylink_enable_and_run_resolve(struct phylink *pl, int bit)
 {
 	clear_bit(bit, &pl->phylink_disable_state);
 	phylink_run_resolve(pl);
 }
 
+=======
+>>>>>>> master
 static void phylink_fixed_poll(struct timer_list *t)
 {
 	struct phylink *pl = container_of(t, struct phylink, link_poll);
@@ -2079,6 +2138,9 @@ void phylink_start(struct phylink *pl)
 
 	pl->pcs_state = PCS_STATE_STARTING;
 
+	/* Always set the carrier off */
+	netif_carrier_off(pl->netdev);
+
 	/* Apply the link configuration to the MAC when starting. This allows
 	 * a fixed-link to start with the correct parameters, and also
 	 * ensures that we set the appropriate advertisement for Serdes links.
@@ -2148,10 +2210,13 @@ void phylink_stop(struct phylink *pl)
 	}
 
 	phylink_run_resolve_and_disable(pl, PHYLINK_DISABLE_STOPPED);
+<<<<<<< HEAD
 
 	pl->pcs_state = PCS_STATE_DOWN;
 
 	phylink_pcs_disable(pl->pcs);
+=======
+>>>>>>> master
 }
 EXPORT_SYMBOL_GPL(phylink_stop);
 

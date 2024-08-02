@@ -659,7 +659,11 @@ static int bnxt_qplib_process_qp_event(struct bnxt_qplib_rcfw *rcfw,
 		 *
 		 */
 
+<<<<<<< HEAD
 		spin_lock_irqsave_nested(&hwq->lock, flags,
+=======
+		spin_lock_irqsave_nested(&cmdq->lock, flags,
+>>>>>>> master
 					 SINGLE_DEPTH_NESTING);
 		cookie = le16_to_cpu(qp_event->cookie);
 		blocked = cookie & RCFW_CMD_IS_BLOCKING;

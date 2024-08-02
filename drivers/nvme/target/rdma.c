@@ -701,7 +701,11 @@ static void nvmet_rdma_send_done(struct ib_cq *cq, struct ib_wc *wc)
 {
 	struct nvmet_rdma_rsp *rsp =
 		container_of(wc->wr_cqe, struct nvmet_rdma_rsp, send_cqe);
+<<<<<<< HEAD
 	struct nvmet_rdma_queue *queue = wc->qp->qp_context;
+=======
+	struct nvmet_rdma_queue *queue = cq->cq_context;
+>>>>>>> master
 
 	nvmet_rdma_release_rsp(rsp);
 

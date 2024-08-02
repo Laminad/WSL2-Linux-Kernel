@@ -35,6 +35,15 @@ struct vmcoredd_node {
 
 #ifdef CONFIG_PROC_KCORE
 void __init kclist_add(struct kcore_list *, void *, size_t, int type);
+<<<<<<< HEAD
+=======
+static inline
+void kclist_add_remap(struct kcore_list *m, void *addr, void *vaddr, size_t sz)
+{
+	m->vaddr = (unsigned long)vaddr;
+	kclist_add(m, addr, sz, KCORE_REMAP);
+}
+>>>>>>> master
 
 extern int __init register_mem_pfn_is_ram(int (*fn)(unsigned long pfn));
 #else

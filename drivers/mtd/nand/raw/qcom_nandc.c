@@ -152,12 +152,18 @@
 #define	OP_PAGE_READ			0x2
 #define	OP_PAGE_READ_WITH_ECC		0x3
 #define	OP_PAGE_READ_WITH_ECC_SPARE	0x4
+<<<<<<< HEAD
 #define	OP_PAGE_READ_ONFI_READ		0x5
+=======
+>>>>>>> master
 #define	OP_PROGRAM_PAGE			0x6
 #define	OP_PAGE_PROGRAM_WITH_ECC	0x7
 #define	OP_PROGRAM_PAGE_SPARE		0x9
 #define	OP_BLOCK_ERASE			0xa
+<<<<<<< HEAD
 #define	OP_CHECK_STATUS			0xc
+=======
+>>>>>>> master
 #define	OP_FETCH_ID			0xb
 #define	OP_RESET_DEVICE			0xd
 
@@ -1303,6 +1309,142 @@ static void config_nand_cw_write(struct nand_chip *chip)
 	write_reg_dma(nandc, NAND_READ_STATUS, 1, NAND_BAM_NEXT_SGL);
 }
 
+<<<<<<< HEAD
+=======
+/*
+ * the following functions are used within chip->cmdfunc() to perform different
+ * NAND_CMD_* commands
+ */
+
+/* sets up descriptors for NAND_CMD_PARAM */
+static int nandc_param(struct qcom_nand_host *host)
+{
+	struct nand_chip *chip = &host->chip;
+	struct qcom_nand_controller *nandc = get_qcom_nand_controller(chip);
+
+	/*
+	 * NAND_CMD_PARAM is called before we know much about the FLASH chip
+	 * in use. we configure the controller to perform a raw read of 512
+	 * bytes to read onfi params
+	 */
+	nandc_set_reg(nandc, NAND_FLASH_CMD, OP_PAGE_READ | PAGE_ACC | LAST_PAGE);
+	nandc_set_reg(nandc, NAND_ADDR0, 0);
+	nandc_set_reg(nandc, NAND_ADDR1, 0);
+	nandc_set_reg(nandc, NAND_DEV0_CFG0, 0 << CW_PER_PAGE
+					| 512 << UD_SIZE_BYTES
+					| 5 << NUM_ADDR_CYCLES
+					| 0 << SPARE_SIZE_BYTES);
+	nandc_set_reg(nandc, NAND_DEV0_CFG1, 7 << NAND_RECOVERY_CYCLES
+					| 0 << CS_ACTIVE_BSY
+					| 17 << BAD_BLOCK_BYTE_NUM
+					| 1 << BAD_BLOCK_IN_SPARE_AREA
+					| 2 << WR_RD_BSY_GAP
+					| 0 << WIDE_FLASH
+					| 1 << DEV0_CFG1_ECC_DISABLE);
+	nandc_set_reg(nandc, NAND_EBI2_ECC_BUF_CFG, 1 << ECC_CFG_ECC_DISABLE);
+
+	/* configure CMD1 and VLD for ONFI param probing */
+	nandc_set_reg(nandc, NAND_DEV_CMD_VLD,
+		      (nandc->vld & ~READ_START_VLD));
+	nandc_set_reg(nandc, NAND_DEV_CMD1,
+		      (nandc->cmd1 & ~(0xFF << READ_ADDR))
+		      | NAND_CMD_PARAM << READ_ADDR);
+
+	nandc_set_reg(nandc, NAND_EXEC_CMD, 1);
+
+	nandc_set_reg(nandc, NAND_DEV_CMD1_RESTORE, nandc->cmd1);
+	nandc_set_reg(nandc, NAND_DEV_CMD_VLD_RESTORE, nandc->vld);
+	nandc_set_read_loc(nandc, 0, 0, 512, 1);
+
+	write_reg_dma(nandc, NAND_DEV_CMD_VLD, 1, 0);
+	write_reg_dma(nandc, NAND_DEV_CMD1, 1, NAND_BAM_NEXT_SGL);
+
+	nandc->buf_count = 512;
+	memset(nandc->data_buffer, 0xff, nandc->buf_count);
+
+	config_nand_single_cw_page_read(nandc, false);
+
+	read_data_dma(nandc, FLASH_BUF_ACC, nandc->data_buffer,
+		      nandc->buf_count, 0);
+
+	/* restore CMD1 and VLD regs */
+	write_reg_dma(nandc, NAND_DEV_CMD1_RESTORE, 1, 0);
+	write_reg_dma(nandc, NAND_DEV_CMD_VLD_RESTORE, 1, NAND_BAM_NEXT_SGL);
+
+	return 0;
+}
+
+/* sets up descriptors for NAND_CMD_ERASE1 */
+static int erase_block(struct qcom_nand_host *host, int page_addr)
+{
+	struct nand_chip *chip = &host->chip;
+	struct qcom_nand_controller *nandc = get_qcom_nand_controller(chip);
+
+	nandc_set_reg(nandc, NAND_FLASH_CMD,
+		      OP_BLOCK_ERASE | PAGE_ACC | LAST_PAGE);
+	nandc_set_reg(nandc, NAND_ADDR0, page_addr);
+	nandc_set_reg(nandc, NAND_ADDR1, 0);
+	nandc_set_reg(nandc, NAND_DEV0_CFG0,
+		      host->cfg0_raw & ~(7 << CW_PER_PAGE));
+	nandc_set_reg(nandc, NAND_DEV0_CFG1, host->cfg1_raw);
+	nandc_set_reg(nandc, NAND_EXEC_CMD, 1);
+	nandc_set_reg(nandc, NAND_FLASH_STATUS, host->clrflashstatus);
+	nandc_set_reg(nandc, NAND_READ_STATUS, host->clrreadstatus);
+
+	write_reg_dma(nandc, NAND_FLASH_CMD, 3, NAND_BAM_NEXT_SGL);
+	write_reg_dma(nandc, NAND_DEV0_CFG0, 2, NAND_BAM_NEXT_SGL);
+	write_reg_dma(nandc, NAND_EXEC_CMD, 1, NAND_BAM_NEXT_SGL);
+
+	read_reg_dma(nandc, NAND_FLASH_STATUS, 1, NAND_BAM_NEXT_SGL);
+
+	write_reg_dma(nandc, NAND_FLASH_STATUS, 1, 0);
+	write_reg_dma(nandc, NAND_READ_STATUS, 1, NAND_BAM_NEXT_SGL);
+
+	return 0;
+}
+
+/* sets up descriptors for NAND_CMD_READID */
+static int read_id(struct qcom_nand_host *host, int column)
+{
+	struct nand_chip *chip = &host->chip;
+	struct qcom_nand_controller *nandc = get_qcom_nand_controller(chip);
+
+	if (column == -1)
+		return 0;
+
+	nandc_set_reg(nandc, NAND_FLASH_CMD, OP_FETCH_ID);
+	nandc_set_reg(nandc, NAND_ADDR0, column);
+	nandc_set_reg(nandc, NAND_ADDR1, 0);
+	nandc_set_reg(nandc, NAND_FLASH_CHIP_SELECT,
+		      nandc->props->is_bam ? 0 : DM_EN);
+	nandc_set_reg(nandc, NAND_EXEC_CMD, 1);
+
+	write_reg_dma(nandc, NAND_FLASH_CMD, 4, NAND_BAM_NEXT_SGL);
+	write_reg_dma(nandc, NAND_EXEC_CMD, 1, NAND_BAM_NEXT_SGL);
+
+	read_reg_dma(nandc, NAND_READ_ID, 1, NAND_BAM_NEXT_SGL);
+
+	return 0;
+}
+
+/* sets up descriptors for NAND_CMD_RESET */
+static int reset(struct qcom_nand_host *host)
+{
+	struct nand_chip *chip = &host->chip;
+	struct qcom_nand_controller *nandc = get_qcom_nand_controller(chip);
+
+	nandc_set_reg(nandc, NAND_FLASH_CMD, OP_RESET_DEVICE);
+	nandc_set_reg(nandc, NAND_EXEC_CMD, 1);
+
+	write_reg_dma(nandc, NAND_FLASH_CMD, 1, NAND_BAM_NEXT_SGL);
+	write_reg_dma(nandc, NAND_EXEC_CMD, 1, NAND_BAM_NEXT_SGL);
+
+	read_reg_dma(nandc, NAND_FLASH_STATUS, 1, NAND_BAM_NEXT_SGL);
+
+	return 0;
+}
+
+>>>>>>> master
 /* helpers to submit/free our list of dma descriptors */
 static int submit_descs(struct qcom_nand_controller *nandc)
 {
@@ -3299,7 +3441,21 @@ static int qcom_nand_host_init_and_register(struct qcom_nand_controller *nandc,
 	if (ret)
 		return ret;
 
+<<<<<<< HEAD
 	ret = mtd_device_parse_register(mtd, probes, NULL, NULL, 0);
+=======
+	if (nandc->props->is_bam) {
+		free_bam_transaction(nandc);
+		nandc->bam_txn = alloc_bam_transaction(nandc);
+		if (!nandc->bam_txn) {
+			dev_err(nandc->dev,
+				"failed to allocate bam transaction\n");
+			return -ENOMEM;
+		}
+	}
+
+	ret = mtd_device_register(mtd, NULL, 0);
+>>>>>>> master
 	if (ret)
 		goto err;
 
@@ -3321,7 +3477,11 @@ static int qcom_probe_nand_devices(struct qcom_nand_controller *nandc)
 	struct device *dev = nandc->dev;
 	struct device_node *dn = dev->of_node, *child;
 	struct qcom_nand_host *host;
+<<<<<<< HEAD
 	int ret = -ENODEV;
+=======
+	int ret;
+>>>>>>> master
 
 	for_each_available_child_of_node(dn, child) {
 		host = devm_kzalloc(dev, sizeof(*host), GFP_KERNEL);

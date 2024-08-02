@@ -1265,7 +1265,11 @@ static int adf7242_probe(struct spi_device *spi)
 					     WQ_MEM_RECLAIM);
 	if (unlikely(!lp->wqueue)) {
 		ret = -ENOMEM;
+<<<<<<< HEAD
 		goto err_alloc_wq;
+=======
+		goto err_hw_init;
+>>>>>>> master
 	}
 
 	ret = adf7242_hw_init(lp);

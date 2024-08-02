@@ -708,6 +708,7 @@ again:
 		mcp->mb[3] = 0;
 		mcp->mb[4] = 0;
 		mcp->mb[11] = 0;
+<<<<<<< HEAD
 
 		/* Enable BPM? */
 		if (ha->flags.lr_detected) {
@@ -715,6 +716,27 @@ again:
 			if (IS_BPM_RANGE_CAPABLE(ha))
 				mcp->mb[4] |=
 				    ha->lr_distance << LR_DIST_FW_POS;
+=======
+		ha->flags.using_lr_setting = 0;
+		if (IS_QLA25XX(ha) || IS_QLA81XX(ha) || IS_QLA83XX(ha) ||
+		    IS_QLA27XX(ha)) {
+			if (ql2xautodetectsfp) {
+				if (ha->flags.detected_lr_sfp) {
+					mcp->mb[4] |=
+					    qla25xx_set_sfp_lr_dist(ha);
+					ha->flags.using_lr_setting = 1;
+				}
+			} else {
+				struct nvram_81xx *nv = ha->nvram;
+				/* set LR distance if specified in nvram */
+				if (nv->enhanced_features &
+				    NEF_LR_DIST_ENABLE) {
+					mcp->mb[4] |=
+					    qla25xx_set_nvr_lr_dist(ha);
+					ha->flags.using_lr_setting = 1;
+				}
+			}
+>>>>>>> master
 		}
 
 		if (ql2xnvmeenable && (IS_QLA27XX(ha) || IS_QLA28XX(ha)))
@@ -743,11 +765,16 @@ again:
 		if (ha->flags.exchoffld_enabled)
 			mcp->mb[4] |= ENABLE_EXCHANGE_OFFLD;
 
+<<<<<<< HEAD
 		if (semaphore)
 			mcp->mb[11] |= EXE_FW_FORCE_SEMAPHORE;
 
 		mcp->out_mb |= MBX_4 | MBX_3 | MBX_2 | MBX_1 | MBX_11;
 		mcp->in_mb |= MBX_5 | MBX_3 | MBX_2 | MBX_1;
+=======
+		mcp->out_mb |= MBX_4 | MBX_3 | MBX_2 | MBX_1 | MBX_11;
+		mcp->in_mb |= MBX_3 | MBX_2 | MBX_1;
+>>>>>>> master
 	} else {
 		mcp->mb[1] = LSW(risc_addr);
 		mcp->out_mb |= MBX_1;
@@ -3949,7 +3976,11 @@ qla2x00_set_idma_speed(scsi_qla_host_t *vha, uint16_t loop_id,
 	mcp->mb[0] = MBC_PORT_PARAMS;
 	mcp->mb[1] = loop_id;
 	mcp->mb[2] = BIT_0;
+<<<<<<< HEAD
 	mcp->mb[3] = port_speed & 0x3F;
+=======
+	mcp->mb[3] = port_speed & (BIT_5|BIT_4|BIT_3|BIT_2|BIT_1|BIT_0);
+>>>>>>> master
 	mcp->mb[9] = vha->vp_idx;
 	mcp->out_mb = MBX_9|MBX_3|MBX_2|MBX_1|MBX_0;
 	mcp->in_mb = MBX_3|MBX_1|MBX_0;

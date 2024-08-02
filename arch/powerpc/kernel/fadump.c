@@ -162,13 +162,21 @@ int __init early_init_dt_scan_fw_dump(unsigned long node, const char *uname,
  * If fadump is registered, check if the memory provided
  * falls within boot memory area and reserved memory area.
  */
+<<<<<<< HEAD
 int is_fadump_memory_area(u64 addr, unsigned long size)
 {
 	u64 d_start, d_end;
+=======
+int is_fadump_memory_area(u64 addr, ulong size)
+{
+	u64 d_start = fw_dump.reserve_dump_area_start;
+	u64 d_end = d_start + fw_dump.reserve_dump_area_size;
+>>>>>>> master
 
 	if (!fw_dump.dump_registered)
 		return 0;
 
+<<<<<<< HEAD
 	if (!size)
 		return 0;
 
@@ -178,6 +186,12 @@ int is_fadump_memory_area(u64 addr, unsigned long size)
 		return 1;
 
 	return (addr <= fw_dump.boot_mem_top);
+=======
+	if (((addr + size) > d_start) && (addr <= d_end))
+		return 1;
+
+	return (addr + size) > RMA_START && addr <= fw_dump.boot_memory_size;
+>>>>>>> master
 }
 
 int should_fadump_crash(void)

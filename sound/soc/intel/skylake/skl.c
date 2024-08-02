@@ -836,6 +836,7 @@ static void skl_probe_work(struct work_struct *work)
 		goto out_err;
 	}
 
+<<<<<<< HEAD
 	err = skl_machine_device_register(skl);
 	if (err < 0) {
 		dev_err(bus->dev, "machine register failed: %d\n", err);
@@ -851,6 +852,31 @@ static void skl_probe_work(struct work_struct *work)
 	if (IS_ENABLED(CONFIG_SND_SOC_HDAC_HDMI))
 		snd_hdac_display_power(bus, HDA_CODEC_IDX_CONTROLLER, false);
 
+=======
+	if (bus->ppcap) {
+		err = skl_machine_device_register(skl);
+		if (err < 0) {
+			dev_err(bus->dev, "machine register failed: %d\n", err);
+			goto out_err;
+		}
+	}
+
+	/*
+	 * we are done probing so decrement link counts
+	 */
+	list_for_each_entry(hlink, &bus->hlink_list, list)
+		snd_hdac_ext_bus_link_put(bus, hlink);
+
+	if (IS_ENABLED(CONFIG_SND_SOC_HDAC_HDMI)) {
+		err = snd_hdac_display_power(bus, false);
+		if (err < 0) {
+			dev_err(bus->dev, "Cannot turn off display power on i915\n");
+			skl_machine_device_unregister(skl);
+			return;
+		}
+	}
+
+>>>>>>> master
 	/* configure PM */
 	pm_runtime_put_noidle(bus->dev);
 	pm_runtime_allow(bus->dev);

@@ -46,7 +46,10 @@
 #include <linux/pkeys.h>
 #include <linux/oom.h>
 #include <linux/sched/mm.h>
+<<<<<<< HEAD
 #include <linux/ksm.h>
+=======
+>>>>>>> master
 
 #include <linux/uaccess.h>
 #include <asm/cacheflush.h>
@@ -2063,12 +2066,18 @@ int expand_downwards(struct vm_area_struct *vma, unsigned long address)
 	MA_STATE(mas, &mm->mm_mt, vma->vm_start, vma->vm_start);
 	struct vm_area_struct *prev;
 	int error = 0;
+<<<<<<< HEAD
 
 	if (!(vma->vm_flags & VM_GROWSDOWN))
 		return -EFAULT;
 
 	address &= PAGE_MASK;
 	if (address < mmap_min_addr || address < FIRST_USER_ADDRESS)
+=======
+
+	address &= PAGE_MASK;
+	if (address < mmap_min_addr)
+>>>>>>> master
 		return -EPERM;
 
 	/* Enforce stack_guard_gap */
@@ -2176,9 +2185,14 @@ struct vm_area_struct *find_extend_vma_locked(struct mm_struct *mm, unsigned lon
 	vma = find_vma_prev(mm, addr, &prev);
 	if (vma && (vma->vm_start <= addr))
 		return vma;
+<<<<<<< HEAD
 	if (!prev)
 		return NULL;
 	if (expand_stack_locked(prev, addr))
+=======
+	/* don't alter vm_end if the coredump is running */
+	if (!prev || !mmget_still_valid(mm) || expand_stack(prev, addr))
+>>>>>>> master
 		return NULL;
 	if (prev->vm_flags & VM_LOCKED)
 		populate_vma_page_range(prev, addr, prev->vm_end, NULL);
@@ -2203,6 +2217,14 @@ struct vm_area_struct *find_extend_vma_locked(struct mm_struct *mm, unsigned lon
 		return NULL;
 	if (vma->vm_start <= addr)
 		return vma;
+<<<<<<< HEAD
+=======
+	if (!(vma->vm_flags & VM_GROWSDOWN))
+		return NULL;
+	/* don't alter vm_start if the coredump is running */
+	if (!mmget_still_valid(mm))
+		return NULL;
+>>>>>>> master
 	start = vma->vm_start;
 	if (expand_stack_locked(vma, addr))
 		return NULL;

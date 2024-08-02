@@ -21,6 +21,7 @@
 #include "denali.h"
 
 #define DENALI_NAND_NAME    "denali-nand"
+#define DENALI_DEFAULT_OOB_SKIP_BYTES	8
 
 /* for Indexed Addressing */
 #define DENALI_INDEXED_CTRL	0x00
@@ -912,6 +913,60 @@ static int denali_setup_interface(struct nand_chip *chip, int chipnr,
 	return 0;
 }
 
+<<<<<<< HEAD
+=======
+static void denali_reset_banks(struct denali_nand_info *denali)
+{
+	u32 irq_status;
+	int i;
+
+	for (i = 0; i < denali->max_banks; i++) {
+		denali->active_bank = i;
+
+		denali_reset_irq(denali);
+
+		iowrite32(DEVICE_RESET__BANK(i),
+			  denali->reg + DEVICE_RESET);
+
+		irq_status = denali_wait_for_irq(denali,
+			INTR__RST_COMP | INTR__INT_ACT | INTR__TIME_OUT);
+		if (!(irq_status & INTR__INT_ACT))
+			break;
+	}
+
+	dev_dbg(denali->dev, "%d chips connected\n", i);
+	denali->max_banks = i;
+}
+
+static void denali_hw_init(struct denali_nand_info *denali)
+{
+	/*
+	 * The REVISION register may not be reliable.  Platforms are allowed to
+	 * override it.
+	 */
+	if (!denali->revision)
+		denali->revision = swab16(ioread32(denali->reg + REVISION));
+
+	/*
+	 * Set how many bytes should be skipped before writing data in OOB.
+	 * If a non-zero value has already been set (by firmware or something),
+	 * just use it.  Otherwise, set the driver default.
+	 */
+	denali->oob_skip_bytes = ioread32(denali->reg + SPARE_AREA_SKIP_BYTES);
+	if (!denali->oob_skip_bytes) {
+		denali->oob_skip_bytes = DENALI_DEFAULT_OOB_SKIP_BYTES;
+		iowrite32(denali->oob_skip_bytes,
+			  denali->reg + SPARE_AREA_SKIP_BYTES);
+	}
+
+	denali_detect_max_banks(denali);
+	iowrite32(0x0F, denali->reg + RB_PIN_ENABLED);
+	iowrite32(CHIP_EN_DONT_CARE__FLAG, denali->reg + CHIP_ENABLE_DONT_CARE);
+
+	iowrite32(0xffff, denali->reg + SPARE_AREA_MARKER);
+}
+
+>>>>>>> master
 int denali_calc_ecc_bytes(int step_size, int strength)
 {
 	/* BCH code.  Denali requires ecc.bytes to be multiple of 2 */

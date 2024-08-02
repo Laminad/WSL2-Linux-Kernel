@@ -604,8 +604,11 @@ int br_add_if(struct net_bridge *br, struct net_device *dev,
 
 	err = dev_set_allmulti(dev, 1);
 	if (err) {
+<<<<<<< HEAD
 		br_multicast_del_port(p);
 		netdev_put(dev, &p->dev_tracker);
+=======
+>>>>>>> master
 		kfree(p);	/* kobject not yet init'd, manually free */
 		goto err1;
 	}
@@ -719,6 +722,10 @@ err2:
 	kobject_put(&p->kobj);
 	dev_set_allmulti(dev, -1);
 err1:
+<<<<<<< HEAD
+=======
+	dev_put(dev);
+>>>>>>> master
 	return err;
 }
 

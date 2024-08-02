@@ -210,7 +210,15 @@ static int nf_flow_tuple_ip(struct nf_flowtable_ctx *ctx, struct sk_buff *skb,
 	if (iph->ttl <= 1)
 		return -1;
 
+<<<<<<< HEAD
 	if (!pskb_may_pull(skb, thoff + ctx->hdrsize))
+=======
+	if (iph->ttl <= 1)
+		return -1;
+
+	thoff = iph->ihl * 4;
+	if (!pskb_may_pull(skb, thoff + sizeof(*ports)))
+>>>>>>> master
 		return -1;
 
 	switch (ipproto) {
@@ -444,6 +452,7 @@ nf_flow_offload_ip_hook(void *priv, struct sk_buff *skb,
 	dir = tuplehash->tuple.dir;
 	flow = container_of(tuplehash, struct flow_offload, tuplehash[dir]);
 
+<<<<<<< HEAD
 	switch (tuplehash->tuple.xmit_type) {
 	case FLOW_OFFLOAD_XMIT_NEIGH:
 		rt = (struct rtable *)tuplehash->tuple.dst_cache;
@@ -464,6 +473,10 @@ nf_flow_offload_ip_hook(void *priv, struct sk_buff *skb,
 		ret = NF_DROP;
 		break;
 	}
+=======
+	if (unlikely(nf_flow_exceeds_mtu(skb, flow->tuplehash[dir].tuple.mtu)))
+		return NF_ACCEPT;
+>>>>>>> master
 
 	return ret;
 }
@@ -607,7 +620,15 @@ static int nf_flow_tuple_ipv6(struct nf_flowtable_ctx *ctx, struct sk_buff *skb,
 	if (ip6h->hop_limit <= 1)
 		return -1;
 
+<<<<<<< HEAD
 	if (!pskb_may_pull(skb, thoff + ctx->hdrsize))
+=======
+	if (ip6h->hop_limit <= 1)
+		return -1;
+
+	thoff = sizeof(*ip6h);
+	if (!pskb_may_pull(skb, thoff + sizeof(*ports)))
+>>>>>>> master
 		return -1;
 
 	switch (nexthdr) {

@@ -74,6 +74,7 @@ static struct afs_cell *afs_find_cell_locked(struct afs_net *net,
 	while (p) {
 		cell = rb_entry(p, struct afs_cell, net_node);
 
+<<<<<<< HEAD
 		n = strncasecmp(cell->name, name,
 				min_t(size_t, cell->name_len, namesz));
 		if (n == 0)
@@ -85,6 +86,18 @@ static struct afs_cell *afs_find_cell_locked(struct afs_net *net,
 		else
 			goto found;
 	}
+=======
+		if (!name) {
+			cell = rcu_dereference_raw(net->ws_cell);
+			if (cell) {
+				afs_get_cell(cell);
+				ret = 0;
+				break;
+			}
+			ret = -EDESTADDRREQ;
+			continue;
+		}
+>>>>>>> master
 
 	return ERR_PTR(-ENOENT);
 
@@ -101,10 +114,19 @@ struct afs_cell *afs_find_cell(struct afs_net *net,
 {
 	struct afs_cell *cell;
 
+<<<<<<< HEAD
 	down_read(&net->cells_lock);
 	cell = afs_find_cell_locked(net, name, namesz, reason);
 	up_read(&net->cells_lock);
 	return cell;
+=======
+	done_seqretry(&net->cells_lock, seq);
+
+	if (ret != 0 && cell)
+		afs_put_cell(net, cell);
+
+	return ret == 0 ? cell : ERR_PTR(ret);
+>>>>>>> master
 }
 
 /*

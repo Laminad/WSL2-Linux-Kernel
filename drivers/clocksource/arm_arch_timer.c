@@ -390,7 +390,11 @@ static u64 notrace arm64_858921_read_cntvct_el0(void)
 	do {								\
 		_val = read_sysreg(reg);				\
 		_retries--;						\
+<<<<<<< HEAD
 	} while (((_val + 1) & GENMASK(8, 0)) <= 1 && _retries);	\
+=======
+	} while (((_val + 1) & GENMASK(9, 0)) <= 1 && _retries);	\
+>>>>>>> master
 									\
 	WARN_ON_ONCE(!_retries);					\
 	_val;								\
@@ -405,6 +409,19 @@ static u64 notrace sun50i_a64_read_cntvct_el0(void)
 {
 	return __sun50i_a64_read_reg(cntvct_el0);
 }
+<<<<<<< HEAD
+=======
+
+static u32 notrace sun50i_a64_read_cntp_tval_el0(void)
+{
+	return read_sysreg(cntp_cval_el0) - sun50i_a64_read_cntpct_el0();
+}
+
+static u32 notrace sun50i_a64_read_cntv_tval_el0(void)
+{
+	return read_sysreg(cntv_cval_el0) - sun50i_a64_read_cntvct_el0();
+}
+>>>>>>> master
 #endif
 
 #ifdef CONFIG_ARM_ARCH_TIMER_OOL_WORKAROUND
@@ -513,6 +530,19 @@ static const struct arch_timer_erratum_workaround ool_workarounds[] = {
 		.id = (void *)ARM64_WORKAROUND_1418040,
 		.desc = "ARM erratum 1418040",
 		.disable_compat_vdso = true,
+	},
+#endif
+#ifdef CONFIG_SUN50I_ERRATUM_UNKNOWN1
+	{
+		.match_type = ate_match_dt,
+		.id = "allwinner,erratum-unknown1",
+		.desc = "Allwinner erratum UNKNOWN1",
+		.read_cntp_tval_el0 = sun50i_a64_read_cntp_tval_el0,
+		.read_cntv_tval_el0 = sun50i_a64_read_cntv_tval_el0,
+		.read_cntpct_el0 = sun50i_a64_read_cntpct_el0,
+		.read_cntvct_el0 = sun50i_a64_read_cntvct_el0,
+		.set_next_event_phys = erratum_set_next_event_tval_phys,
+		.set_next_event_virt = erratum_set_next_event_tval_virt,
 	},
 #endif
 };

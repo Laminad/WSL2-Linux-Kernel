@@ -326,17 +326,34 @@ int crypto_aegis128_process_crypt(struct aegis_state *state,
 					        u8 *dst, const u8 *src,
 					        unsigned int size))
 {
+<<<<<<< HEAD:crypto/aegis128-core.c
 	int err = 0;
+=======
+	struct skcipher_walk walk;
+>>>>>>> master:crypto/aegis128.c
 
 	while (walk->nbytes) {
 		unsigned int nbytes = walk->nbytes;
 
+<<<<<<< HEAD:crypto/aegis128-core.c
 		if (nbytes < walk->total)
 			nbytes = round_down(nbytes, walk->stride);
 
 		crypt(state, walk->dst.virt.addr, walk->src.virt.addr, nbytes);
 
 		err = skcipher_walk_done(walk, walk->nbytes - nbytes);
+=======
+	while (walk.nbytes) {
+		unsigned int nbytes = walk.nbytes;
+
+		if (nbytes < walk.total)
+			nbytes = round_down(nbytes, walk.stride);
+
+		ops->crypt_chunk(state, walk.dst.virt.addr, walk.src.virt.addr,
+				 nbytes);
+
+		skcipher_walk_done(&walk, walk.nbytes - nbytes);
+>>>>>>> master:crypto/aegis128.c
 	}
 	return err;
 }

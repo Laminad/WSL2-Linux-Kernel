@@ -718,11 +718,19 @@ int ext4_try_to_write_inline_data(struct address_space *mapping,
 		goto out_up_read;
 	}
 
+<<<<<<< HEAD
 	if (!folio_test_uptodate(folio)) {
 		ret = ext4_read_inline_folio(inode, folio);
 		if (ret < 0) {
 			folio_unlock(folio);
 			folio_put(folio);
+=======
+	if (!PageUptodate(page)) {
+		ret = ext4_read_inline_page(inode, page);
+		if (ret < 0) {
+			unlock_page(page);
+			put_page(page);
+>>>>>>> master
 			goto out_up_read;
 		}
 	}
@@ -1893,6 +1901,50 @@ out:
 	return error;
 }
 
+<<<<<<< HEAD
+=======
+int ext4_inline_data_fiemap(struct inode *inode,
+			    struct fiemap_extent_info *fieinfo,
+			    int *has_inline, __u64 start, __u64 len)
+{
+	__u64 physical = 0;
+	__u64 inline_len;
+	__u32 flags = FIEMAP_EXTENT_DATA_INLINE | FIEMAP_EXTENT_NOT_ALIGNED |
+		FIEMAP_EXTENT_LAST;
+	int error = 0;
+	struct ext4_iloc iloc;
+
+	down_read(&EXT4_I(inode)->xattr_sem);
+	if (!ext4_has_inline_data(inode)) {
+		*has_inline = 0;
+		goto out;
+	}
+	inline_len = min_t(size_t, ext4_get_inline_size(inode),
+			   i_size_read(inode));
+	if (start >= inline_len)
+		goto out;
+	if (start + len < inline_len)
+		inline_len = start + len;
+	inline_len -= start;
+
+	error = ext4_get_inode_loc(inode, &iloc);
+	if (error)
+		goto out;
+
+	physical = (__u64)iloc.bh->b_blocknr << inode->i_sb->s_blocksize_bits;
+	physical += (char *)ext4_raw_inode(&iloc) - iloc.bh->b_data;
+	physical += offsetof(struct ext4_inode, i_block);
+
+	brelse(iloc.bh);
+out:
+	up_read(&EXT4_I(inode)->xattr_sem);
+	if (physical)
+		error = fiemap_fill_next_extent(fieinfo, start, physical,
+						inline_len, flags);
+	return (error < 0 ? error : 0);
+}
+
+>>>>>>> master
 int ext4_inline_data_truncate(struct inode *inode, int *has_inline)
 {
 	handle_t *handle;

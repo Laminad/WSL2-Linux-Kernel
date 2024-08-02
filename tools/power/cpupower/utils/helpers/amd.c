@@ -115,12 +115,21 @@ int decode_pstates(unsigned int cpu, int boost_states,
 		}
 		if (read_msr(cpu, MSR_AMD_PSTATE + i, &pstate.val))
 			return -1;
+<<<<<<< HEAD
 
 		/* The enabled bit (bit 63) is common for all families */
 		if (!pstate.pstatedef.en)
 			continue;
 
 		pstates[i] = get_cof(pstate);
+=======
+		if ((cpu_family == 0x17) && (!pstate.fam17h_bits.en))
+			continue;
+		else if (!pstate.bits.en)
+			continue;
+
+		pstates[i] = get_cof(cpu_family, pstate);
+>>>>>>> master
 	}
 	*no = i;
 	return 0;

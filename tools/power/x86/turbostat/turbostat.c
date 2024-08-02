@@ -2350,6 +2350,7 @@ done:
  * (>= PCL__7) and to index pkg_cstate_limit_strings[].
  */
 
+<<<<<<< HEAD
 #define PCLUKN 0		/* Unknown */
 #define PCLRSV 1		/* Reserved */
 #define PCL__0 2		/* PC0 */
@@ -2376,6 +2377,37 @@ int nhm_pkg_cstate_limits[16] =
     { PCL__0, PCL__1, PCL__3, PCL__6, PCL__7, PCLRSV, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
 	PCLRSV, PCLRSV
 };
+=======
+#define PCLUKN 0 /* Unknown */
+#define PCLRSV 1 /* Reserved */
+#define PCL__0 2 /* PC0 */
+#define PCL__1 3 /* PC1 */
+#define PCL__2 4 /* PC2 */
+#define PCL__3 5 /* PC3 */
+#define PCL__4 6 /* PC4 */
+#define PCL__6 7 /* PC6 */
+#define PCL_6N 8 /* PC6 No Retention */
+#define PCL_6R 9 /* PC6 Retention */
+#define PCL__7 10 /* PC7 */
+#define PCL_7S 11 /* PC7 Shrink */
+#define PCL__8 12 /* PC8 */
+#define PCL__9 13 /* PC9 */
+#define PCL_10 14 /* PC10 */
+#define PCLUNL 15 /* Unlimited */
+
+int pkg_cstate_limit = PCLUKN;
+char *pkg_cstate_limit_strings[] = { "reserved", "unknown", "pc0", "pc1", "pc2",
+	"pc3", "pc4", "pc6", "pc6n", "pc6r", "pc7", "pc7s", "pc8", "pc9", "pc10", "unlimited"};
+
+int nhm_pkg_cstate_limits[16] = {PCL__0, PCL__1, PCL__3, PCL__6, PCL__7, PCLRSV, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV};
+int snb_pkg_cstate_limits[16] = {PCL__0, PCL__2, PCL_6N, PCL_6R, PCL__7, PCL_7S, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV};
+int hsw_pkg_cstate_limits[16] = {PCL__0, PCL__2, PCL__3, PCL__6, PCL__7, PCL_7S, PCL__8, PCL__9, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV};
+int slv_pkg_cstate_limits[16] = {PCL__0, PCL__1, PCLRSV, PCLRSV, PCL__4, PCLRSV, PCL__6, PCL__7, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCL__6, PCL__7};
+int amt_pkg_cstate_limits[16] = {PCLUNL, PCL__1, PCL__2, PCLRSV, PCLRSV, PCLRSV, PCL__6, PCL__7, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV};
+int phi_pkg_cstate_limits[16] = {PCL__0, PCL__2, PCL_6N, PCL_6R, PCLRSV, PCLRSV, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV};
+int glm_pkg_cstate_limits[16] = {PCLUNL, PCL__1, PCL__3, PCL__6, PCL__7, PCL_7S, PCL__8, PCL__9, PCL_10, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV};
+int skx_pkg_cstate_limits[16] = {PCL__0, PCL__2, PCL_6N, PCL_6R, PCLRSV, PCLRSV, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV};
+>>>>>>> master
 
 int snb_pkg_cstate_limits[16] =
     { PCL__0, PCL__2, PCL_6N, PCL_6R, PCL__7, PCL_7S, PCLRSV, PCLUNL, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV, PCLRSV,
@@ -2524,10 +2556,14 @@ int has_turbo_ratio_group_limits(int family, int model)
 	switch (model) {
 	case INTEL_FAM6_ATOM_GOLDMONT:
 	case INTEL_FAM6_SKYLAKE_X:
+<<<<<<< HEAD
 	case INTEL_FAM6_ICELAKE_X:
 	case INTEL_FAM6_SAPPHIRERAPIDS_X:
 	case INTEL_FAM6_ATOM_GOLDMONT_D:
 	case INTEL_FAM6_ATOM_TREMONT_D:
+=======
+	case INTEL_FAM6_ATOM_GOLDMONT_X:
+>>>>>>> master
 		return 1;
 	default:
 		return 0;
@@ -3739,6 +3775,7 @@ int probe_nhm_msrs(unsigned int family, unsigned int model)
 		pkg_cstate_limits = skx_pkg_cstate_limits;
 		has_misc_feature_control = 1;
 		break;
+<<<<<<< HEAD
 	case INTEL_FAM6_ICELAKE_X:	/* ICX */
 		pkg_cstate_limits = icx_pkg_cstate_limits;
 		has_misc_feature_control = 1;
@@ -3747,6 +3784,11 @@ int probe_nhm_msrs(unsigned int family, unsigned int model)
 		no_MSR_MISC_PWR_MGMT = 1;
 		/* FALLTHRU */
 	case INTEL_FAM6_ATOM_SILVERMONT_D:	/* AVN */
+=======
+	case INTEL_FAM6_ATOM_SILVERMONT:	/* BYT */
+		no_MSR_MISC_PWR_MGMT = 1;
+	case INTEL_FAM6_ATOM_SILVERMONT_X:	/* AVN */
+>>>>>>> master
 		pkg_cstate_limits = slv_pkg_cstate_limits;
 		break;
 	case INTEL_FAM6_ATOM_AIRMONT:	/* AMT */
@@ -3758,9 +3800,13 @@ int probe_nhm_msrs(unsigned int family, unsigned int model)
 		break;
 	case INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */
 	case INTEL_FAM6_ATOM_GOLDMONT_PLUS:
+<<<<<<< HEAD
 	case INTEL_FAM6_ATOM_GOLDMONT_D:	/* DNV */
 	case INTEL_FAM6_ATOM_TREMONT:	/* EHL */
 	case INTEL_FAM6_ATOM_TREMONT_D:	/* JVL */
+=======
+	case INTEL_FAM6_ATOM_GOLDMONT_X:	/* DNV */
+>>>>>>> master
 		pkg_cstate_limits = glm_pkg_cstate_limits;
 		break;
 	default:
@@ -3811,7 +3857,11 @@ int is_dnv(unsigned int family, unsigned int model)
 		return 0;
 
 	switch (model) {
+<<<<<<< HEAD
 	case INTEL_FAM6_ATOM_GOLDMONT_D:
+=======
+	case INTEL_FAM6_ATOM_GOLDMONT_X:
+>>>>>>> master
 		return 1;
 	}
 	return 0;
@@ -4538,7 +4588,11 @@ double get_tdp_intel(unsigned int model)
 
 	switch (model) {
 	case INTEL_FAM6_ATOM_SILVERMONT:
+<<<<<<< HEAD
 	case INTEL_FAM6_ATOM_SILVERMONT_D:
+=======
+	case INTEL_FAM6_ATOM_SILVERMONT_X:
+>>>>>>> master
 		return 30.0;
 	default:
 		return 135.0;
@@ -4689,7 +4743,11 @@ void rapl_probe_intel(unsigned int family, unsigned int model)
 		}
 		break;
 	case INTEL_FAM6_ATOM_SILVERMONT:	/* BYT */
+<<<<<<< HEAD
 	case INTEL_FAM6_ATOM_SILVERMONT_D:	/* AVN */
+=======
+	case INTEL_FAM6_ATOM_SILVERMONT_X:	/* AVN */
+>>>>>>> master
 		do_rapl = RAPL_PKG | RAPL_CORES;
 		if (rapl_joules) {
 			BIC_PRESENT(BIC_Pkg_J);
@@ -4699,10 +4757,15 @@ void rapl_probe_intel(unsigned int family, unsigned int model)
 			BIC_PRESENT(BIC_CorWatt);
 		}
 		break;
+<<<<<<< HEAD
 	case INTEL_FAM6_ATOM_GOLDMONT_D:	/* DNV */
 		do_rapl =
 		    RAPL_PKG | RAPL_DRAM | RAPL_DRAM_POWER_INFO | RAPL_DRAM_PERF_STATUS | RAPL_PKG_PERF_STATUS |
 		    RAPL_PKG_POWER_INFO | RAPL_CORES_ENERGY_STATUS;
+=======
+	case INTEL_FAM6_ATOM_GOLDMONT_X:	/* DNV */
+		do_rapl = RAPL_PKG | RAPL_DRAM | RAPL_DRAM_POWER_INFO | RAPL_DRAM_PERF_STATUS | RAPL_PKG_PERF_STATUS | RAPL_PKG_POWER_INFO | RAPL_CORES_ENERGY_STATUS;
+>>>>>>> master
 		BIC_PRESENT(BIC_PKG__);
 		BIC_PRESENT(BIC_RAM__);
 		if (rapl_joules) {
@@ -5066,9 +5129,13 @@ int has_snb_msrs(unsigned int family, unsigned int model)
 	case INTEL_FAM6_SAPPHIRERAPIDS_X:	/* SPR */
 	case INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */
 	case INTEL_FAM6_ATOM_GOLDMONT_PLUS:
+<<<<<<< HEAD
 	case INTEL_FAM6_ATOM_GOLDMONT_D:	/* DNV */
 	case INTEL_FAM6_ATOM_TREMONT:	/* EHL */
 	case INTEL_FAM6_ATOM_TREMONT_D:	/* JVL */
+=======
+	case INTEL_FAM6_ATOM_GOLDMONT_X:	/* DNV */
+>>>>>>> master
 		return 1;
 	}
 	return 0;
@@ -5101,7 +5168,10 @@ int has_c8910_msrs(unsigned int family, unsigned int model)
 	case INTEL_FAM6_CANNONLAKE_L:	/* CNL */
 	case INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */
 	case INTEL_FAM6_ATOM_GOLDMONT_PLUS:
+<<<<<<< HEAD
 	case INTEL_FAM6_ATOM_TREMONT:	/* EHL */
+=======
+>>>>>>> master
 		return 1;
 	}
 	return 0;
@@ -5141,7 +5211,11 @@ int is_slm(unsigned int family, unsigned int model)
 
 	switch (model) {
 	case INTEL_FAM6_ATOM_SILVERMONT:	/* BYT */
+<<<<<<< HEAD
 	case INTEL_FAM6_ATOM_SILVERMONT_D:	/* AVN */
+=======
+	case INTEL_FAM6_ATOM_SILVERMONT_X:	/* AVN */
+>>>>>>> master
 		return 1;
 	}
 	return 0;
@@ -5676,7 +5750,11 @@ void process_cpuid()
 				case INTEL_FAM6_SKYLAKE_L:	/* SKL */
 					crystal_hz = 24000000;	/* 24.0 MHz */
 					break;
+<<<<<<< HEAD
 				case INTEL_FAM6_ATOM_GOLDMONT_D:	/* DNV */
+=======
+				case INTEL_FAM6_ATOM_GOLDMONT_X:	/* DNV */
+>>>>>>> master
 					crystal_hz = 25000000;	/* 25.0 MHz */
 					break;
 				case INTEL_FAM6_ATOM_GOLDMONT:	/* BXT */

@@ -15840,6 +15840,7 @@ lpfc_sli4_queue_alloc(struct lpfc_hba *phba, uint32_t page_size,
 	pgcnt = ALIGN(entry_size * entry_count, hw_page_size) / hw_page_size;
 
 	/* If needed, Adjust page count to match the max the adapter supports */
+<<<<<<< HEAD
 	if (pgcnt > phba->sli4_hba.pc_sli4_params.wqpcnt)
 		pgcnt = phba->sli4_hba.pc_sli4_params.wqpcnt;
 
@@ -15847,6 +15848,11 @@ lpfc_sli4_queue_alloc(struct lpfc_hba *phba, uint32_t page_size,
 			     GFP_KERNEL, cpu_to_node(cpu));
 	if (!queue)
 		return NULL;
+=======
+	if (phba->sli4_hba.pc_sli4_params.wqpcnt &&
+	    (queue->page_count > phba->sli4_hba.pc_sli4_params.wqpcnt))
+		queue->page_count = phba->sli4_hba.pc_sli4_params.wqpcnt;
+>>>>>>> master
 
 	INIT_LIST_HEAD(&queue->list);
 	INIT_LIST_HEAD(&queue->_poll_list);

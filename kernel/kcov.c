@@ -72,6 +72,7 @@ struct kcov {
 	int			sequence;
 };
 
+<<<<<<< HEAD
 struct kcov_remote_area {
 	struct list_head	list;
 	unsigned int		size;
@@ -161,6 +162,8 @@ static void kcov_remote_area_put(struct kcov_remote_area *area,
 	kmsan_unpoison_memory(&area->list, sizeof(area->list));
 }
 
+=======
+>>>>>>> master
 static notrace bool check_kcov_mode(enum kcov_mode needed_mode, struct task_struct *t)
 {
 	unsigned int mode;

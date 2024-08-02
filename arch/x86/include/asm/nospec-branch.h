@@ -4,8 +4,11 @@
 #define _ASM_X86_NOSPEC_BRANCH_H_
 
 #include <linux/static_key.h>
+<<<<<<< HEAD
 #include <linux/objtool.h>
 #include <linux/linkage.h>
+=======
+>>>>>>> master
 
 #include <asm/alternative.h>
 #include <asm/cpufeatures.h>
@@ -356,6 +359,7 @@
 	".long 999b\n\t"					\
 	".popsection\n\t"
 
+<<<<<<< HEAD
 typedef u8 retpoline_thunk_t[RETPOLINE_THUNK_SIZE];
 extern retpoline_thunk_t __x86_indirect_thunk_array[];
 extern retpoline_thunk_t __x86_indirect_call_thunk_array[];
@@ -443,6 +447,9 @@ static inline void x86_set_skl_return_thunk(void) {}
 #include <asm/GEN-for-each-reg.h>
 #undef GEN
 
+=======
+#ifdef CONFIG_RETPOLINE
+>>>>>>> master
 #ifdef CONFIG_X86_64
 
 /*
@@ -450,6 +457,10 @@ static inline void x86_set_skl_return_thunk(void) {}
  * which is ensured when CONFIG_RETPOLINE is defined.
  */
 # define CALL_NOSPEC						\
+<<<<<<< HEAD
+=======
+	ANNOTATE_NOSPEC_ALTERNATIVE				\
+>>>>>>> master
 	ALTERNATIVE_2(						\
 	ANNOTATE_RETPOLINE_SAFE					\
 	"call *%[thunk_target]\n",				\
@@ -458,8 +469,12 @@ static inline void x86_set_skl_return_thunk(void) {}
 	"lfence;\n"						\
 	ANNOTATE_RETPOLINE_SAFE					\
 	"call *%[thunk_target]\n",				\
+<<<<<<< HEAD
 	X86_FEATURE_RETPOLINE_LFENCE)
 
+=======
+	X86_FEATURE_RETPOLINE_AMD)
+>>>>>>> master
 # define THUNK_TARGET(addr) [thunk_target] "r" (addr)
 
 #else /* CONFIG_X86_32 */
@@ -469,6 +484,10 @@ static inline void x86_set_skl_return_thunk(void) {}
  * here, anyway.
  */
 # define CALL_NOSPEC						\
+<<<<<<< HEAD
+=======
+	ANNOTATE_NOSPEC_ALTERNATIVE				\
+>>>>>>> master
 	ALTERNATIVE_2(						\
 	ANNOTATE_RETPOLINE_SAFE					\
 	"call *%[thunk_target]\n",				\
@@ -488,7 +507,11 @@ static inline void x86_set_skl_return_thunk(void) {}
 	"lfence;\n"						\
 	ANNOTATE_RETPOLINE_SAFE					\
 	"call *%[thunk_target]\n",				\
+<<<<<<< HEAD
 	X86_FEATURE_RETPOLINE_LFENCE)
+=======
+	X86_FEATURE_RETPOLINE_AMD)
+>>>>>>> master
 
 # define THUNK_TARGET(addr) [thunk_target] "rm" (addr)
 #endif
@@ -500,6 +523,7 @@ static inline void x86_set_skl_return_thunk(void) {}
 /* The Spectre V2 mitigation variants */
 enum spectre_v2_mitigation {
 	SPECTRE_V2_NONE,
+<<<<<<< HEAD
 	SPECTRE_V2_RETPOLINE,
 	SPECTRE_V2_LFENCE,
 	SPECTRE_V2_EIBRS,
@@ -513,6 +537,19 @@ enum spectre_v2_user_mitigation {
 	SPECTRE_V2_USER_NONE,
 	SPECTRE_V2_USER_STRICT,
 	SPECTRE_V2_USER_STRICT_PREFERRED,
+	SPECTRE_V2_USER_PRCTL,
+	SPECTRE_V2_USER_SECCOMP,
+=======
+	SPECTRE_V2_RETPOLINE_GENERIC,
+	SPECTRE_V2_RETPOLINE_AMD,
+	SPECTRE_V2_IBRS_ENHANCED,
+>>>>>>> master
+};
+
+/* The indirect branch speculation control variants */
+enum spectre_v2_user_mitigation {
+	SPECTRE_V2_USER_NONE,
+	SPECTRE_V2_USER_STRICT,
 	SPECTRE_V2_USER_PRCTL,
 	SPECTRE_V2_USER_SECCOMP,
 };
@@ -577,6 +614,7 @@ DECLARE_STATIC_KEY_FALSE(switch_to_cond_stibp);
 DECLARE_STATIC_KEY_FALSE(switch_mm_cond_ibpb);
 DECLARE_STATIC_KEY_FALSE(switch_mm_always_ibpb);
 
+<<<<<<< HEAD
 DECLARE_STATIC_KEY_FALSE(mds_idle_clear);
 
 DECLARE_STATIC_KEY_FALSE(switch_mm_cond_l1d_flush);
@@ -585,6 +623,11 @@ DECLARE_STATIC_KEY_FALSE(mmio_stale_data_clear);
 
 extern u16 mds_verw_sel;
 
+=======
+DECLARE_STATIC_KEY_FALSE(mds_user_clear);
+DECLARE_STATIC_KEY_FALSE(mds_idle_clear);
+
+>>>>>>> master
 #include <asm/segment.h>
 
 /**
@@ -594,7 +637,11 @@ extern u16 mds_verw_sel;
  * combination with microcode which triggers a CPU buffer flush when the
  * instruction is executed.
  */
+<<<<<<< HEAD
 static __always_inline void mds_clear_cpu_buffers(void)
+=======
+static inline void mds_clear_cpu_buffers(void)
+>>>>>>> master
 {
 	static const u16 ds = __KERNEL_DS;
 
@@ -611,11 +658,29 @@ static __always_inline void mds_clear_cpu_buffers(void)
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * mds_user_clear_cpu_buffers - Mitigation for MDS and TAA vulnerability
+ *
+ * Clear CPU buffers if the corresponding static key is enabled
+ */
+static inline void mds_user_clear_cpu_buffers(void)
+{
+	if (static_branch_likely(&mds_user_clear))
+		mds_clear_cpu_buffers();
+}
+
+/**
+>>>>>>> master
  * mds_idle_clear_cpu_buffers - Mitigation for MDS vulnerability
  *
  * Clear CPU buffers if the corresponding static key is enabled
  */
+<<<<<<< HEAD
 static __always_inline void mds_idle_clear_cpu_buffers(void)
+=======
+static inline void mds_idle_clear_cpu_buffers(void)
+>>>>>>> master
 {
 	if (static_branch_likely(&mds_idle_clear))
 		mds_clear_cpu_buffers();

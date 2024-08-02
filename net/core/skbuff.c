@@ -683,6 +683,130 @@ nodata:
 EXPORT_SYMBOL(__alloc_skb);
 
 /**
+<<<<<<< HEAD
+=======
+ * __build_skb - build a network buffer
+ * @data: data buffer provided by caller
+ * @frag_size: size of data, or 0 if head was kmalloced
+ *
+ * Allocate a new &sk_buff. Caller provides space holding head and
+ * skb_shared_info. @data must have been allocated by kmalloc() only if
+ * @frag_size is 0, otherwise data should come from the page allocator
+ *  or vmalloc()
+ * The return is the new skb buffer.
+ * On a failure the return is %NULL, and @data is not freed.
+ * Notes :
+ *  Before IO, driver allocates only data buffer where NIC put incoming frame
+ *  Driver should add room at head (NET_SKB_PAD) and
+ *  MUST add room at tail (SKB_DATA_ALIGN(skb_shared_info))
+ *  After IO, driver calls build_skb(), to allocate sk_buff and populate it
+ *  before giving packet to stack.
+ *  RX rings only contains data buffers, not full skbs.
+ */
+struct sk_buff *__build_skb(void *data, unsigned int frag_size)
+{
+	struct skb_shared_info *shinfo;
+	struct sk_buff *skb;
+	unsigned int size = frag_size ? : ksize(data);
+
+	skb = kmem_cache_alloc(skbuff_head_cache, GFP_ATOMIC);
+	if (!skb)
+		return NULL;
+
+	size -= SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
+
+	memset(skb, 0, offsetof(struct sk_buff, tail));
+	skb->truesize = SKB_TRUESIZE(size);
+	refcount_set(&skb->users, 1);
+	skb->head = data;
+	skb->data = data;
+	skb_reset_tail_pointer(skb);
+	skb->end = skb->tail + size;
+	skb->mac_header = (typeof(skb->mac_header))~0U;
+	skb->transport_header = (typeof(skb->transport_header))~0U;
+
+	/* make sure we initialize shinfo sequentially */
+	shinfo = skb_shinfo(skb);
+	memset(shinfo, 0, offsetof(struct skb_shared_info, dataref));
+	atomic_set(&shinfo->dataref, 1);
+
+	return skb;
+}
+
+/* build_skb() is wrapper over __build_skb(), that specifically
+ * takes care of skb->head and skb->pfmemalloc
+ * This means that if @frag_size is not zero, then @data must be backed
+ * by a page fragment, not kmalloc() or vmalloc()
+ */
+struct sk_buff *build_skb(void *data, unsigned int frag_size)
+{
+	struct sk_buff *skb = __build_skb(data, frag_size);
+
+	if (skb && frag_size) {
+		skb->head_frag = 1;
+		if (page_is_pfmemalloc(virt_to_head_page(data)))
+			skb->pfmemalloc = 1;
+	}
+	return skb;
+}
+EXPORT_SYMBOL(build_skb);
+
+#define NAPI_SKB_CACHE_SIZE	64
+
+struct napi_alloc_cache {
+	struct page_frag_cache page;
+	unsigned int skb_count;
+	void *skb_cache[NAPI_SKB_CACHE_SIZE];
+};
+
+static DEFINE_PER_CPU(struct page_frag_cache, netdev_alloc_cache);
+static DEFINE_PER_CPU(struct napi_alloc_cache, napi_alloc_cache);
+
+static void *__netdev_alloc_frag(unsigned int fragsz, gfp_t gfp_mask)
+{
+	struct page_frag_cache *nc;
+	unsigned long flags;
+	void *data;
+
+	local_irq_save(flags);
+	nc = this_cpu_ptr(&netdev_alloc_cache);
+	data = page_frag_alloc(nc, fragsz, gfp_mask);
+	local_irq_restore(flags);
+	return data;
+}
+
+/**
+ * netdev_alloc_frag - allocate a page fragment
+ * @fragsz: fragment size
+ *
+ * Allocates a frag from a page for receive buffer.
+ * Uses GFP_ATOMIC allocations.
+ */
+void *netdev_alloc_frag(unsigned int fragsz)
+{
+	fragsz = SKB_DATA_ALIGN(fragsz);
+
+	return __netdev_alloc_frag(fragsz, GFP_ATOMIC);
+}
+EXPORT_SYMBOL(netdev_alloc_frag);
+
+static void *__napi_alloc_frag(unsigned int fragsz, gfp_t gfp_mask)
+{
+	struct napi_alloc_cache *nc = this_cpu_ptr(&napi_alloc_cache);
+
+	return page_frag_alloc(&nc->page, fragsz, gfp_mask);
+}
+
+void *napi_alloc_frag(unsigned int fragsz)
+{
+	fragsz = SKB_DATA_ALIGN(fragsz);
+
+	return __napi_alloc_frag(fragsz, GFP_ATOMIC);
+}
+EXPORT_SYMBOL(napi_alloc_frag);
+
+/**
+>>>>>>> master
  *	__netdev_alloc_skb - allocate an skbuff for rx on a specific device
  *	@dev: network device to receive on
  *	@len: length to allocate
@@ -4477,6 +4601,25 @@ struct sk_buff *skb_segment(struct sk_buff *head_skb,
 		}
 	}
 
+	if (list_skb && !list_skb->head_frag && skb_headlen(list_skb) &&
+	    (skb_shinfo(head_skb)->gso_type & SKB_GSO_DODGY)) {
+		/* gso_size is untrusted, and we have a frag_list with a linear
+		 * non head_frag head.
+		 *
+		 * (we assume checking the first list_skb member suffices;
+		 * i.e if either of the list_skb members have non head_frag
+		 * head, then the first one has too).
+		 *
+		 * If head_skb's headlen does not fit requested gso_size, it
+		 * means that the frag_list members do NOT terminate on exact
+		 * gso_size boundaries. Hence we cannot perform skb_frag_t page
+		 * sharing. Therefore we must fallback to copying the frag_list
+		 * skbs; we do so by disabling SG.
+		 */
+		if (mss != GSO_BY_FRAGS && mss != skb_headlen(head_skb))
+			features &= ~NETIF_F_SG;
+	}
+
 	__skb_push(head_skb, doffset);
 	proto = skb_network_protocol(head_skb, NULL);
 	if (unlikely(!proto))
@@ -4813,8 +4956,13 @@ static __always_inline unsigned int skb_ext_total_length(void)
 	unsigned int l = SKB_EXT_CHUNKSIZEOF(struct skb_ext);
 	int i;
 
+<<<<<<< HEAD
 	for (i = 0; i < ARRAY_SIZE(skb_ext_type_len); i++)
 		l += skb_ext_type_len[i];
+=======
+	if (unlikely(p->len + len >= 65536 || NAPI_GRO_CB(skb)->flush))
+		return -E2BIG;
+>>>>>>> master
 
 	return l;
 }
@@ -5865,7 +6013,11 @@ void skb_scrub_packet(struct sk_buff *skb, bool xnet)
 
 #ifdef CONFIG_NET_SWITCHDEV
 	skb->offload_fwd_mark = 0;
+<<<<<<< HEAD
 	skb->offload_l3_fwd_mark = 0;
+=======
+	skb->offload_mr_fwd_mark = 0;
+>>>>>>> master
 #endif
 
 	if (!xnet)
@@ -6318,7 +6470,11 @@ struct sk_buff *alloc_skb_with_frags(unsigned long header_len,
 	unsigned long chunk;
 	struct sk_buff *skb;
 	struct page *page;
+<<<<<<< HEAD
 	int nr_frags = 0;
+=======
+	int i;
+>>>>>>> master
 
 	*errcode = -EMSGSIZE;
 	if (unlikely(data_len > MAX_SKB_FRAGS * (PAGE_SIZE << order)))

@@ -980,12 +980,22 @@ static int analogix_dp_commit(struct analogix_dp_device *dp)
 	if (ret)
 		return ret;
 
+<<<<<<< HEAD
 	if (analogix_dp_detect_sink_psr(dp)) {
+=======
+	/* Check whether panel supports fast training */
+	ret = analogix_dp_fast_link_train_detection(dp);
+	if (ret)
+		dp->psr_enable = false;
+
+	if (dp->psr_enable) {
+>>>>>>> master
 		ret = analogix_dp_enable_sink_psr(dp);
 		if (ret)
 			return ret;
 	}
 
+<<<<<<< HEAD
 	return ret;
 }
 
@@ -1013,6 +1023,8 @@ static int analogix_dp_enable_psr(struct analogix_dp_device *dp)
 	ret = analogix_dp_send_psr_spd(dp, &psr_vsc, true);
 	if (!ret)
 		analogix_dp_set_analog_power_down(dp, POWER_ALL, true);
+=======
+>>>>>>> master
 
 	return ret;
 }

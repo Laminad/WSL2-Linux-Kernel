@@ -6,7 +6,10 @@
 #include <linux/swapfile.h>
 #include <linux/swapops.h>
 #include <linux/kmemleak.h>
+<<<<<<< HEAD
 #include <linux/sched/task.h>
+=======
+>>>>>>> master
 
 #include <asm/set_memory.h>
 #include <asm/cpu_device_id.h>

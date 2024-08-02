@@ -2177,6 +2177,11 @@ int mlx4_get_module_info(struct mlx4_dev *dev, u8 port,
 		 */
 		size -= offset + size - I2C_PAGE_SIZE;
 
+<<<<<<< HEAD
+=======
+	i2c_addr = I2C_ADDR_LOW;
+
+>>>>>>> master
 	cable_info = (struct mlx4_cable_info *)inmad->data;
 	cable_info->dev_mem_address = cpu_to_be16(offset);
 	cable_info->page_num = page_num;

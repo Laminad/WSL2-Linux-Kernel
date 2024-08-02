@@ -1751,6 +1751,13 @@ static int __init dsa_init_module(void)
 	rc = dsa_slave_register_notifier();
 	if (rc)
 		goto register_notifier_fail;
+<<<<<<< HEAD
+=======
+
+	rc = dsa_legacy_register();
+	if (rc)
+		goto legacy_register_fail;
+>>>>>>> master
 
 	dev_add_pack(&dsa_pack_type);
 
@@ -1762,9 +1769,14 @@ static int __init dsa_init_module(void)
 
 	return 0;
 
+<<<<<<< HEAD
 netlink_register_fail:
 	dsa_slave_unregister_notifier();
 	dev_remove_pack(&dsa_pack_type);
+=======
+legacy_register_fail:
+	dsa_slave_unregister_notifier();
+>>>>>>> master
 register_notifier_fail:
 	destroy_workqueue(dsa_owq);
 

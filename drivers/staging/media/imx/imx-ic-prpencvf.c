@@ -735,7 +735,11 @@ static int prp_start(struct prp_priv *priv)
 	return 0;
 
 out_free_eof_irq:
+<<<<<<< HEAD
 	devm_free_irq(ic_priv->ipu_dev, priv->eof_irq, priv);
+=======
+	devm_free_irq(ic_priv->dev, priv->eof_irq, priv);
+>>>>>>> master
 out_free_nfb4eof_irq:
 	devm_free_irq(ic_priv->ipu_dev, priv->nfb4eof_irq, priv);
 out_unsetup:
@@ -773,8 +777,13 @@ static void prp_stop(struct prp_priv *priv)
 		v4l2_warn(&ic_priv->sd,
 			  "upstream stream off failed: %d\n", ret);
 
+<<<<<<< HEAD
 	devm_free_irq(ic_priv->ipu_dev, priv->eof_irq, priv);
 	devm_free_irq(ic_priv->ipu_dev, priv->nfb4eof_irq, priv);
+=======
+	devm_free_irq(ic_priv->dev, priv->eof_irq, priv);
+	devm_free_irq(ic_priv->dev, priv->nfb4eof_irq, priv);
+>>>>>>> master
 
 	prp_unsetup(priv, VB2_BUF_STATE_ERROR);
 

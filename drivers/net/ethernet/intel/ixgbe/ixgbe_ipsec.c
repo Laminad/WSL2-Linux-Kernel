@@ -5,11 +5,14 @@
 #include <net/xfrm.h>
 #include <crypto/aead.h>
 #include <linux/if_bridge.h>
+<<<<<<< HEAD
 
 #define IXGBE_IPSEC_KEY_BITS  160
 static const char aes_gcm_name[] = "rfc4106(gcm(aes))";
 
 static void ixgbe_ipsec_del_sa(struct xfrm_state *xs);
+=======
+>>>>>>> master
 
 /**
  * ixgbe_ipsec_set_tx_sa - set the Tx SA registers

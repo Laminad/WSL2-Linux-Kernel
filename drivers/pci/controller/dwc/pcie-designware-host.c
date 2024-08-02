@@ -75,9 +75,16 @@ irqreturn_t dw_handle_msi_irq(struct dw_pcie_rp *pp)
 		pos = 0;
 		while ((pos = find_next_bit(&val, MAX_MSI_IRQS_PER_CTRL,
 					    pos)) != MAX_MSI_IRQS_PER_CTRL) {
+<<<<<<< HEAD
 			generic_handle_domain_irq(pp->irq_domain,
 						  (i * MAX_MSI_IRQS_PER_CTRL) +
 						  pos);
+=======
+			irq = irq_find_mapping(pp->irq_domain,
+					       (i * MAX_MSI_IRQS_PER_CTRL) +
+					       pos);
+			generic_handle_irq(irq);
+>>>>>>> master
 			pos++;
 		}
 	}
@@ -135,8 +142,15 @@ static void dw_pci_bottom_mask(struct irq_data *d)
 	res = ctrl * MSI_REG_CTRL_BLOCK_SIZE;
 	bit = d->hwirq % MAX_MSI_IRQS_PER_CTRL;
 
+<<<<<<< HEAD
 	pp->irq_mask[ctrl] |= BIT(bit);
 	dw_pcie_writel_dbi(pci, PCIE_MSI_INTR0_MASK + res, pp->irq_mask[ctrl]);
+=======
+		pp->irq_status[ctrl] &= ~(1 << bit);
+		dw_pcie_wr_own_conf(pp, PCIE_MSI_INTR0_MASK + res, 4,
+				    ~pp->irq_status[ctrl]);
+	}
+>>>>>>> master
 
 	raw_spin_unlock_irqrestore(&pp->lock, flags);
 }
@@ -154,23 +168,48 @@ static void dw_pci_bottom_unmask(struct irq_data *d)
 	res = ctrl * MSI_REG_CTRL_BLOCK_SIZE;
 	bit = d->hwirq % MAX_MSI_IRQS_PER_CTRL;
 
+<<<<<<< HEAD
 	pp->irq_mask[ctrl] &= ~BIT(bit);
 	dw_pcie_writel_dbi(pci, PCIE_MSI_INTR0_MASK + res, pp->irq_mask[ctrl]);
+=======
+		pp->irq_status[ctrl] |= 1 << bit;
+		dw_pcie_wr_own_conf(pp, PCIE_MSI_INTR0_MASK + res, 4,
+				    ~pp->irq_status[ctrl]);
+	}
+>>>>>>> master
 
 	raw_spin_unlock_irqrestore(&pp->lock, flags);
 }
 
 static void dw_pci_bottom_ack(struct irq_data *d)
 {
+<<<<<<< HEAD
 	struct dw_pcie_rp *pp  = irq_data_get_irq_chip_data(d);
 	struct dw_pcie *pci = to_dw_pcie_from_pp(pp);
 	unsigned int res, bit, ctrl;
+=======
+	struct pcie_port *pp  = irq_data_get_irq_chip_data(d);
+	unsigned int res, bit, ctrl;
+	unsigned long flags;
+>>>>>>> master
 
 	ctrl = d->hwirq / MAX_MSI_IRQS_PER_CTRL;
 	res = ctrl * MSI_REG_CTRL_BLOCK_SIZE;
 	bit = d->hwirq % MAX_MSI_IRQS_PER_CTRL;
+<<<<<<< HEAD
 
 	dw_pcie_writel_dbi(pci, PCIE_MSI_INTR0_STATUS + res, BIT(bit));
+=======
+
+	raw_spin_lock_irqsave(&pp->lock, flags);
+
+	dw_pcie_wr_own_conf(pp, PCIE_MSI_INTR0_STATUS + res, 4, 1 << bit);
+
+	if (pp->ops->msi_irq_ack)
+		pp->ops->msi_irq_ack(d->hwirq, pp);
+
+	raw_spin_unlock_irqrestore(&pp->lock, flags);
+>>>>>>> master
 }
 
 static struct irq_chip dw_pci_msi_bottom_irq_chip = {
@@ -268,6 +307,9 @@ static void dw_pcie_free_msi(struct dw_pcie_rp *pp)
 
 	irq_domain_remove(pp->msi_domain);
 	irq_domain_remove(pp->irq_domain);
+
+	if (pp->msi_page)
+		__free_page(pp->msi_page);
 }
 
 static void dw_pcie_msi_init(struct dw_pcie_rp *pp)
@@ -287,6 +329,7 @@ static int dw_pcie_parse_split_msi_irq(struct dw_pcie_rp *pp)
 {
 	struct dw_pcie *pci = to_dw_pcie_from_pp(pp);
 	struct device *dev = pci->dev;
+<<<<<<< HEAD
 	struct platform_device *pdev = to_platform_device(dev);
 	u32 ctrl, max_vectors;
 	int irq;
@@ -305,6 +348,18 @@ static int dw_pcie_parse_split_msi_irq(struct dw_pcie_rp *pp)
 					     msi_name);
 
 		pp->msi_irq[ctrl] = irq;
+=======
+	u64 msi_target;
+
+	pp->msi_page = alloc_page(GFP_KERNEL);
+	pp->msi_data = dma_map_page(dev, pp->msi_page, 0, PAGE_SIZE,
+				    DMA_FROM_DEVICE);
+	if (dma_mapping_error(dev, pp->msi_data)) {
+		dev_err(dev, "Failed to map MSI data\n");
+		__free_page(pp->msi_page);
+		pp->msi_page = NULL;
+		return;
+>>>>>>> master
 	}
 
 	/* If no "msiX" IRQs, caller should fallback to "msi" IRQ */
@@ -406,6 +461,7 @@ int dw_pcie_host_init(struct dw_pcie_rp *pp)
 
 	raw_spin_lock_init(&pp->lock);
 
+<<<<<<< HEAD
 	ret = dw_pcie_get_resources(pci);
 	if (ret)
 		return ret;
@@ -414,6 +470,30 @@ int dw_pcie_host_init(struct dw_pcie_rp *pp)
 	if (res) {
 		pp->cfg0_size = resource_size(res);
 		pp->cfg0_base = res->start;
+=======
+	cfg_res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "config");
+	if (cfg_res) {
+		pp->cfg0_size = resource_size(cfg_res) >> 1;
+		pp->cfg1_size = resource_size(cfg_res) >> 1;
+		pp->cfg0_base = cfg_res->start;
+		pp->cfg1_base = cfg_res->start + pp->cfg0_size;
+	} else if (!pp->va_cfg0_base) {
+		dev_err(dev, "Missing *config* reg space\n");
+	}
+
+	bridge = devm_pci_alloc_host_bridge(dev, 0);
+	if (!bridge)
+		return -ENOMEM;
+
+	ret = devm_of_pci_get_host_bridge_resources(dev, 0, 0xff,
+					&bridge->windows, &pp->io_base);
+	if (ret)
+		return ret;
+
+	ret = devm_request_pci_bus_resources(dev, &bridge->windows);
+	if (ret)
+		return ret;
+>>>>>>> master
 
 		pp->va_cfg0_base = devm_pci_remap_cfg_resource(dev, res);
 		if (IS_ERR(pp->va_cfg0_base))
@@ -423,6 +503,7 @@ int dw_pcie_host_init(struct dw_pcie_rp *pp)
 		return -ENODEV;
 	}
 
+<<<<<<< HEAD
 	bridge = devm_pci_alloc_host_bridge(dev, 0);
 	if (!bridge)
 		return -ENOMEM;
@@ -440,11 +521,86 @@ int dw_pcie_host_init(struct dw_pcie_rp *pp)
 	/* Set default bus ops */
 	bridge->ops = &dw_pcie_ops;
 	bridge->child_ops = &dw_child_pcie_ops;
+=======
+	if (!pci->dbi_base) {
+		pci->dbi_base = devm_pci_remap_cfgspace(dev,
+						pp->cfg->start,
+						resource_size(pp->cfg));
+		if (!pci->dbi_base) {
+			dev_err(dev, "Error with ioremap\n");
+			return -ENOMEM;
+		}
+	}
+
+	pp->mem_base = pp->mem->start;
+
+	if (!pp->va_cfg0_base) {
+		pp->va_cfg0_base = devm_pci_remap_cfgspace(dev,
+					pp->cfg0_base, pp->cfg0_size);
+		if (!pp->va_cfg0_base) {
+			dev_err(dev, "Error with ioremap in function\n");
+			return -ENOMEM;
+		}
+	}
+
+	if (!pp->va_cfg1_base) {
+		pp->va_cfg1_base = devm_pci_remap_cfgspace(dev,
+						pp->cfg1_base,
+						pp->cfg1_size);
+		if (!pp->va_cfg1_base) {
+			dev_err(dev, "Error with ioremap\n");
+			return -ENOMEM;
+		}
+	}
+
+	ret = of_property_read_u32(np, "num-viewport", &pci->num_viewport);
+	if (ret)
+		pci->num_viewport = 2;
+
+	if (pci_msi_enabled()) {
+		/*
+		 * If a specific SoC driver needs to change the
+		 * default number of vectors, it needs to implement
+		 * the set_num_vectors callback.
+		 */
+		if (!pp->ops->set_num_vectors) {
+			pp->num_vectors = MSI_DEF_NUM_VECTORS;
+		} else {
+			pp->ops->set_num_vectors(pp);
+
+			if (pp->num_vectors > MAX_MSI_IRQS ||
+			    pp->num_vectors == 0) {
+				dev_err(dev,
+					"Invalid number of vectors\n");
+				return -EINVAL;
+			}
+		}
+
+		if (!pp->ops->msi_host_init) {
+			ret = dw_pcie_allocate_domains(pp);
+			if (ret)
+				return ret;
+
+			if (pp->msi_irq)
+				irq_set_chained_handler_and_data(pp->msi_irq,
+							    dw_chained_msi_isr,
+							    pp);
+		} else {
+			ret = pp->ops->msi_host_init(pp);
+			if (ret < 0)
+				return ret;
+		}
+	}
+>>>>>>> master
 
 	if (pp->ops->host_init) {
 		ret = pp->ops->host_init(pp);
 		if (ret)
+<<<<<<< HEAD
 			return ret;
+=======
+			goto err_free_msi;
+>>>>>>> master
 	}
 
 	if (pci_msi_enabled()) {
@@ -504,6 +660,7 @@ int dw_pcie_host_init(struct dw_pcie_rp *pp)
 
 	return 0;
 
+<<<<<<< HEAD
 err_stop_link:
 	dw_pcie_stop_link(pci);
 
@@ -518,6 +675,11 @@ err_deinit_host:
 	if (pp->ops->host_deinit)
 		pp->ops->host_deinit(pp);
 
+=======
+err_free_msi:
+	if (pci_msi_enabled() && !pp->ops->msi_host_init)
+		dw_pcie_free_msi(pp);
+>>>>>>> master
 	return ret;
 }
 EXPORT_SYMBOL_GPL(dw_pcie_host_init);
@@ -748,6 +910,7 @@ int dw_pcie_setup_rc(struct dw_pcie_rp *pp)
 	if (pp->has_msi_ctrl) {
 		num_ctrls = pp->num_vectors / MAX_MSI_IRQS_PER_CTRL;
 
+<<<<<<< HEAD
 		/* Initialize IRQ Status array */
 		for (ctrl = 0; ctrl < num_ctrls; ctrl++) {
 			dw_pcie_writel_dbi(pci, PCIE_MSI_INTR0_MASK +
@@ -760,6 +923,18 @@ int dw_pcie_setup_rc(struct dw_pcie_rp *pp)
 	}
 
 	dw_pcie_msi_init(pp);
+=======
+	/* Initialize IRQ Status array */
+	for (ctrl = 0; ctrl < num_ctrls; ctrl++) {
+		dw_pcie_wr_own_conf(pp, PCIE_MSI_INTR0_MASK +
+					(ctrl * MSI_REG_CTRL_BLOCK_SIZE),
+				    4, ~0);
+		dw_pcie_wr_own_conf(pp, PCIE_MSI_INTR0_ENABLE +
+					(ctrl * MSI_REG_CTRL_BLOCK_SIZE),
+				    4, ~0);
+		pp->irq_status[ctrl] = 0;
+	}
+>>>>>>> master
 
 	/* Setup RC BARs */
 	dw_pcie_writel_dbi(pci, PCI_BASE_ADDRESS_0, 0x00000004);

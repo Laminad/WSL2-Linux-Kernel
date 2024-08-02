@@ -151,6 +151,7 @@ config I2C_I801
 	    Cedar Fork (PCH)
 	    Ice Lake (PCH)
 	    Comet Lake (PCH)
+<<<<<<< HEAD
 	    Elkhart Lake (PCH)
 	    Tiger Lake (PCH)
 	    Jasper Lake (SOC)
@@ -159,6 +160,8 @@ config I2C_I801
 	    Raptor Lake (PCH)
 	    Meteor Lake (SOC and PCH)
 	    Birch Stream (SOC)
+=======
+>>>>>>> master
 
 	  This driver can also be built as a module.  If so, the module
 	  will be called i2c-i801.
@@ -895,8 +898,13 @@ config I2C_OCORES
 
 config I2C_OMAP
 	tristate "OMAP I2C adapter"
+<<<<<<< HEAD
 	depends on ARCH_OMAP || ARCH_K3 || COMPILE_TEST
 	default MACH_OMAP_OSK
+=======
+	depends on ARCH_OMAP || ARCH_K3
+	default y if MACH_OMAP_H3 || MACH_OMAP_OSK
+>>>>>>> master
 	help
 	  If you say yes to this option, support will be included for the
 	  I2C interface on the Texas Instruments OMAP1/2 family of processors.

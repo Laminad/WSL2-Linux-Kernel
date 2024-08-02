@@ -53,9 +53,20 @@ static int
 scmi_cpufreq_set_target(struct cpufreq_policy *policy, unsigned int index)
 {
 	struct scmi_data *priv = policy->driver_data;
+<<<<<<< HEAD
 	u64 freq = policy->freq_table[index].frequency;
 
 	return perf_ops->freq_set(ph, priv->domain_id, freq * 1000, false);
+=======
+	struct scmi_perf_ops *perf_ops = handle->perf_ops;
+	u64 freq = policy->freq_table[index].frequency;
+
+	ret = perf_ops->freq_set(handle, priv->domain_id, freq * 1000, false);
+	if (!ret)
+		arch_set_freq_scale(policy->related_cpus, freq,
+				    policy->cpuinfo.max_freq);
+	return ret;
+>>>>>>> master
 }
 
 static unsigned int scmi_cpufreq_fast_switch(struct cpufreq_policy *policy,

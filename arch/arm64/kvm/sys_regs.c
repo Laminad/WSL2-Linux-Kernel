@@ -714,6 +714,7 @@ static unsigned int pmu_visibility(const struct kvm_vcpu *vcpu,
 	if (kvm_vcpu_has_pmu(vcpu))
 		return 0;
 
+<<<<<<< HEAD
 	return REG_HIDDEN;
 }
 
@@ -776,6 +777,16 @@ static u64 reset_pmcr(struct kvm_vcpu *vcpu, const struct sys_reg_desc *r)
 	__vcpu_sys_reg(vcpu, r->reg) = pmcr;
 
 	return __vcpu_sys_reg(vcpu, r->reg);
+=======
+	pmcr = read_sysreg(pmcr_el0);
+	/*
+	 * Writable bits of PMCR_EL0 (ARMV8_PMU_PMCR_MASK) are reset to UNKNOWN
+	 * except PMCR.E resetting to zero.
+	 */
+	val = ((pmcr & ~ARMV8_PMU_PMCR_MASK)
+	       | (ARMV8_PMU_PMCR_MASK & 0xdecafbad)) & (~ARMV8_PMU_PMCR_E);
+	__vcpu_sys_reg(vcpu, r->reg) = val;
+>>>>>>> master
 }
 
 static bool check_pmu_access_disabled(struct kvm_vcpu *vcpu, u64 flags)
@@ -1113,10 +1124,13 @@ static bool access_pmuserenr(struct kvm_vcpu *vcpu, struct sys_reg_params *p,
 	  trap_wvr, reset_wvr, 0, 0,  get_wvr, set_wvr },		\
 	{ SYS_DESC(SYS_DBGWCRn_EL1(n)),					\
 	  trap_wcr, reset_wcr, 0, 0,  get_wcr, set_wcr }
+<<<<<<< HEAD
 
 #define PMU_SYS_REG(name)						\
 	SYS_DESC(SYS_##name), .reset = reset_pmu_reg,			\
 	.visibility = pmu_visibility
+=======
+>>>>>>> master
 
 /* Macro to expand the PMEVCNTRn_EL0 register */
 #define PMU_PMEVCNTR_EL0(n)						\
@@ -2166,6 +2180,7 @@ static const struct sys_reg_desc sys_reg_descs[] = {
 	{ SYS_DESC(SYS_CTR_EL0), access_ctr },
 	{ SYS_DESC(SYS_SVCR), undef_access },
 
+<<<<<<< HEAD
 	{ PMU_SYS_REG(PMCR_EL0), .access = access_pmcr,
 	  .reset = reset_pmcr, .reg = PMCR_EL0 },
 	{ PMU_SYS_REG(PMCNTENSET_EL0),
@@ -2194,6 +2209,19 @@ static const struct sys_reg_desc sys_reg_descs[] = {
 	  .access = access_pmu_evtyper, .reset = NULL },
 	{ PMU_SYS_REG(PMXEVCNTR_EL0),
 	  .access = access_pmu_evcntr, .reset = NULL },
+=======
+	{ SYS_DESC(SYS_PMCR_EL0), access_pmcr, reset_pmcr, PMCR_EL0 },
+	{ SYS_DESC(SYS_PMCNTENSET_EL0), access_pmcnten, reset_unknown, PMCNTENSET_EL0 },
+	{ SYS_DESC(SYS_PMCNTENCLR_EL0), access_pmcnten, NULL, PMCNTENSET_EL0 },
+	{ SYS_DESC(SYS_PMOVSCLR_EL0), access_pmovs, NULL, PMOVSSET_EL0 },
+	{ SYS_DESC(SYS_PMSWINC_EL0), access_pmswinc, reset_unknown, PMSWINC_EL0 },
+	{ SYS_DESC(SYS_PMSELR_EL0), access_pmselr, reset_unknown, PMSELR_EL0 },
+	{ SYS_DESC(SYS_PMCEID0_EL0), access_pmceid },
+	{ SYS_DESC(SYS_PMCEID1_EL0), access_pmceid },
+	{ SYS_DESC(SYS_PMCCNTR_EL0), access_pmu_evcntr, reset_unknown, PMCCNTR_EL0 },
+	{ SYS_DESC(SYS_PMXEVTYPER_EL0), access_pmu_evtyper },
+	{ SYS_DESC(SYS_PMXEVCNTR_EL0), access_pmu_evcntr },
+>>>>>>> master
 	/*
 	 * PMUSERENR_EL0 resets as unknown in 64bit mode while it resets as zero
 	 * in 32bit mode. Here we choose to reset it as zero for consistency.
@@ -2388,6 +2416,7 @@ static const struct sys_reg_desc sys_reg_descs[] = {
 	{ SYS_DESC(SYS_SP_EL1), access_sp_el1},
 
 	{ SYS_DESC(SYS_IFSR32_EL2), NULL, reset_unknown, IFSR32_EL2 },
+<<<<<<< HEAD
 	EL2_REG(AFSR0_EL2, access_rw, reset_val, 0),
 	EL2_REG(AFSR1_EL2, access_rw, reset_val, 0),
 	EL2_REG(ESR_EL2, access_rw, reset_val, 0),
@@ -2427,6 +2456,9 @@ static const struct sys_reg_desc sys_reg_descs[] = {
 	EL12_REG(CNTKCTL, access_rw, reset_val, 0),
 
 	EL2_REG(SP_EL2, NULL, reset_unknown, 0),
+=======
+	{ SYS_DESC(SYS_FPEXC32_EL2), NULL, reset_val, FPEXC32_EL2, 0x700 },
+>>>>>>> master
 };
 
 static const struct sys_reg_desc *first_idreg;
@@ -3121,6 +3153,7 @@ static bool emulate_sys_reg(struct kvm_vcpu *vcpu,
 	return false;
 }
 
+<<<<<<< HEAD
 static void kvm_reset_id_regs(struct kvm_vcpu *vcpu)
 {
 	const struct sys_reg_desc *idreg = first_idreg;
@@ -3165,6 +3198,22 @@ void kvm_reset_sys_regs(struct kvm_vcpu *vcpu)
 		if (r->reset)
 			r->reset(vcpu, r);
 	}
+=======
+static void reset_sys_reg_descs(struct kvm_vcpu *vcpu,
+				const struct sys_reg_desc *table, size_t num,
+				unsigned long *bmap)
+{
+	unsigned long i;
+
+	for (i = 0; i < num; i++)
+		if (table[i].reset) {
+			int reg = table[i].reg;
+
+			table[i].reset(vcpu, &table[i]);
+			if (reg > 0 && reg < NR_SYS_REGS)
+				set_bit(reg, bmap);
+		}
+>>>>>>> master
 }
 
 /**
@@ -3593,6 +3642,7 @@ int __init kvm_sys_reg_table_init(void)
 	for (i = 0; i < ARRAY_SIZE(invariant_sys_regs); i++)
 		invariant_sys_regs[i].reset(NULL, &invariant_sys_regs[i]);
 
+<<<<<<< HEAD
 	/* Find the first idreg (SYS_ID_PFR0_EL1) in sys_reg_descs. */
 	params = encoding_to_params(SYS_ID_PFR0_EL1);
 	first_idreg = find_reg(&params, sys_reg_descs, ARRAY_SIZE(sys_reg_descs));
@@ -3603,4 +3653,49 @@ int __init kvm_sys_reg_table_init(void)
 		return populate_nv_trap_config();
 
 	return 0;
+=======
+	/*
+	 * CLIDR format is awkward, so clean it up.  See ARM B4.1.20:
+	 *
+	 *   If software reads the Cache Type fields from Ctype1
+	 *   upwards, once it has seen a value of 0b000, no caches
+	 *   exist at further-out levels of the hierarchy. So, for
+	 *   example, if Ctype3 is the first Cache Type field with a
+	 *   value of 0b000, the values of Ctype4 to Ctype7 must be
+	 *   ignored.
+	 */
+	get_clidr_el1(NULL, &clidr); /* Ugly... */
+	cache_levels = clidr.val;
+	for (i = 0; i < 7; i++)
+		if (((cache_levels >> (i*3)) & 7) == 0)
+			break;
+	/* Clear all higher bits. */
+	cache_levels &= (1 << (i*3))-1;
+}
+
+/**
+ * kvm_reset_sys_regs - sets system registers to reset value
+ * @vcpu: The VCPU pointer
+ *
+ * This function finds the right table above and sets the registers on the
+ * virtual CPU struct to their architecturally defined reset values.
+ */
+void kvm_reset_sys_regs(struct kvm_vcpu *vcpu)
+{
+	size_t num;
+	const struct sys_reg_desc *table;
+	DECLARE_BITMAP(bmap, NR_SYS_REGS) = { 0, };
+
+	/* Generic chip reset first (so target could override). */
+	reset_sys_reg_descs(vcpu, sys_reg_descs, ARRAY_SIZE(sys_reg_descs), bmap);
+
+	table = get_target_table(vcpu->arch.target, true, &num);
+	reset_sys_reg_descs(vcpu, table, num, bmap);
+
+	for (num = 1; num < NR_SYS_REGS; num++) {
+		if (WARN(!test_bit(num, bmap),
+			 "Didn't reset __vcpu_sys_reg(%zi)\n", num))
+			break;
+	}
+>>>>>>> master
 }

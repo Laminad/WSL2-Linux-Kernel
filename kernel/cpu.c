@@ -592,10 +592,14 @@ static void lockdep_release_cpus_lock(void)
 void __weak arch_smt_update(void) { }
 
 #ifdef CONFIG_HOTPLUG_SMT
+<<<<<<< HEAD
 
 enum cpuhp_smt_control cpu_smt_control __read_mostly = CPU_SMT_ENABLED;
 static unsigned int cpu_smt_max_threads __ro_after_init;
 unsigned int cpu_smt_num_threads __read_mostly = UINT_MAX;
+=======
+enum cpuhp_smt_control cpu_smt_control __read_mostly = CPU_SMT_ENABLED;
+>>>>>>> master
 
 void __init cpu_smt_disable(bool force)
 {
@@ -616,12 +620,18 @@ void __init cpu_smt_disable(bool force)
  * The decision whether SMT is supported can only be done after the full
  * CPU identification. Called from architecture code.
  */
+<<<<<<< HEAD
 void __init cpu_smt_set_num_threads(unsigned int num_threads,
 				    unsigned int max_threads)
 {
 	WARN_ON(!num_threads || (num_threads > max_threads));
 
 	if (max_threads == 1)
+=======
+void __init cpu_smt_check_topology(void)
+{
+	if (!topology_smt_supported())
+>>>>>>> master
 		cpu_smt_control = CPU_SMT_NOT_SUPPORTED;
 
 	cpu_smt_max_threads = max_threads;
@@ -652,6 +662,7 @@ early_param("nosmt", smt_cmdline_disable);
  */
 static inline bool cpu_smt_thread_allowed(unsigned int cpu)
 {
+<<<<<<< HEAD
 #ifdef CONFIG_SMT_NUM_THREADS_DYNAMIC
 	return topology_smt_thread_allowed(cpu);
 #else
@@ -672,6 +683,11 @@ static inline bool cpu_bootable(unsigned int cpu)
 	if (cpu_smt_control == CPU_SMT_NOT_SUPPORTED)
 		return true;
 
+=======
+	if (cpu_smt_control == CPU_SMT_ENABLED)
+		return true;
+
+>>>>>>> master
 	if (topology_is_primary_thread(cpu))
 		return true;
 
@@ -1002,12 +1018,27 @@ static inline bool can_rollback_cpu(struct cpuhp_cpu_state *st)
 	return st->state <= CPUHP_BRINGUP_CPU;
 }
 
+static inline bool can_rollback_cpu(struct cpuhp_cpu_state *st)
+{
+	if (IS_ENABLED(CONFIG_HOTPLUG_CPU))
+		return true;
+	/*
+	 * When CPU hotplug is disabled, then taking the CPU down is not
+	 * possible because takedown_cpu() and the architecture and
+	 * subsystem specific mechanisms are not available. So the CPU
+	 * which would be completely unplugged again needs to stay around
+	 * in the current state.
+	 */
+	return st->state <= CPUHP_BRINGUP_CPU;
+}
+
 static int cpuhp_up_callbacks(unsigned int cpu, struct cpuhp_cpu_state *st,
 			      enum cpuhp_state target)
 {
 	enum cpuhp_state prev_state = st->state;
 	int ret = 0;
 
+<<<<<<< HEAD
 	ret = cpuhp_invoke_callback_range(true, cpu, st, target);
 	if (ret) {
 		pr_debug("CPU UP failed (%d) CPU %u state %s (%d)\n",
@@ -1018,6 +1049,18 @@ static int cpuhp_up_callbacks(unsigned int cpu, struct cpuhp_cpu_state *st,
 		if (can_rollback_cpu(st))
 			WARN_ON(cpuhp_invoke_callback_range(false, cpu, st,
 							    prev_state));
+=======
+	while (st->state < target) {
+		st->state++;
+		ret = cpuhp_invoke_callback(cpu, st->state, true, NULL, NULL);
+		if (ret) {
+			if (can_rollback_cpu(st)) {
+				st->target = prev_state;
+				undo_cpu_up(cpu, st);
+			}
+			break;
+		}
+>>>>>>> master
 	}
 	return ret;
 }
@@ -1491,7 +1534,10 @@ out:
 	 */
 	lockup_detector_cleanup();
 	arch_smt_update();
+<<<<<<< HEAD
 	cpu_up_down_serialize_trainwrecks(tasks_frozen);
+=======
+>>>>>>> master
 	return ret;
 }
 
@@ -1725,7 +1771,10 @@ static int _cpu_up(unsigned int cpu, int tasks_frozen, enum cpuhp_state target)
 out:
 	cpus_write_unlock();
 	arch_smt_update();
+<<<<<<< HEAD
 	cpu_up_down_serialize_trainwrecks(tasks_frozen);
+=======
+>>>>>>> master
 	return ret;
 }
 
@@ -2819,11 +2868,14 @@ static ssize_t fail_store(struct device *dev, struct device_attribute *attr,
 	if (ret)
 		return ret;
 
+<<<<<<< HEAD
 	if (fail == CPUHP_INVALID) {
 		st->fail = fail;
 		return count;
 	}
 
+=======
+>>>>>>> master
 	if (fail < CPUHP_OFFLINE || fail > CPUHP_ONLINE)
 		return -EINVAL;
 
@@ -2917,9 +2969,86 @@ static const struct attribute_group cpuhp_cpu_root_attr_group = {
 
 static bool cpu_smt_num_threads_valid(unsigned int threads)
 {
+<<<<<<< HEAD
 	if (IS_ENABLED(CONFIG_SMT_NUM_THREADS_DYNAMIC))
 		return threads >= 1 && threads <= cpu_smt_max_threads;
 	return threads == 1 || threads == cpu_smt_max_threads;
+=======
+	return snprintf(buf, PAGE_SIZE - 2, "%s\n", smt_states[cpu_smt_control]);
+}
+
+static void cpuhp_offline_cpu_device(unsigned int cpu)
+{
+	struct device *dev = get_cpu_device(cpu);
+
+	dev->offline = true;
+	/* Tell user space about the state change */
+	kobject_uevent(&dev->kobj, KOBJ_OFFLINE);
+}
+
+static void cpuhp_online_cpu_device(unsigned int cpu)
+{
+	struct device *dev = get_cpu_device(cpu);
+
+	dev->offline = false;
+	/* Tell user space about the state change */
+	kobject_uevent(&dev->kobj, KOBJ_ONLINE);
+}
+
+int cpuhp_smt_disable(enum cpuhp_smt_control ctrlval)
+{
+	int cpu, ret = 0;
+
+	cpu_maps_update_begin();
+	for_each_online_cpu(cpu) {
+		if (topology_is_primary_thread(cpu))
+			continue;
+		ret = cpu_down_maps_locked(cpu, CPUHP_OFFLINE);
+		if (ret)
+			break;
+		/*
+		 * As this needs to hold the cpu maps lock it's impossible
+		 * to call device_offline() because that ends up calling
+		 * cpu_down() which takes cpu maps lock. cpu maps lock
+		 * needs to be held as this might race against in kernel
+		 * abusers of the hotplug machinery (thermal management).
+		 *
+		 * So nothing would update device:offline state. That would
+		 * leave the sysfs entry stale and prevent onlining after
+		 * smt control has been changed to 'off' again. This is
+		 * called under the sysfs hotplug lock, so it is properly
+		 * serialized against the regular offline usage.
+		 */
+		cpuhp_offline_cpu_device(cpu);
+	}
+	if (!ret) {
+		cpu_smt_control = ctrlval;
+		arch_smt_update();
+	}
+	cpu_maps_update_done();
+	return ret;
+}
+
+int cpuhp_smt_enable(void)
+{
+	int cpu, ret = 0;
+
+	cpu_maps_update_begin();
+	cpu_smt_control = CPU_SMT_ENABLED;
+	arch_smt_update();
+	for_each_present_cpu(cpu) {
+		/* Skip online CPUs and CPUs on offline nodes */
+		if (cpu_online(cpu) || !node_online(cpu_to_node(cpu)))
+			continue;
+		ret = _cpu_up(cpu, 0, CPUHP_ONLINE);
+		if (ret)
+			break;
+		/* See comment in cpuhp_smt_disable() */
+		cpuhp_online_cpu_device(cpu);
+	}
+	cpu_maps_update_done();
+	return ret;
+>>>>>>> master
 }
 
 static ssize_t
@@ -3197,7 +3326,10 @@ void __init boot_cpu_hotplug_init(void)
 	this_cpu_write(cpuhp_state.target, CPUHP_ONLINE);
 }
 
+<<<<<<< HEAD
 #ifdef CONFIG_CPU_MITIGATIONS
+=======
+>>>>>>> master
 /*
  * These are used for a global "mitigations=" cmdline option for toggling
  * optional CPU mitigations.
@@ -3208,7 +3340,12 @@ enum cpu_mitigations {
 	CPU_MITIGATIONS_AUTO_NOSMT,
 };
 
+<<<<<<< HEAD
 static enum cpu_mitigations cpu_mitigations __ro_after_init = CPU_MITIGATIONS_AUTO;
+=======
+static enum cpu_mitigations cpu_mitigations __ro_after_init =
+	CPU_MITIGATIONS_AUTO;
+>>>>>>> master
 
 static int __init mitigations_parse_cmdline(char *arg)
 {
@@ -3224,6 +3361,10 @@ static int __init mitigations_parse_cmdline(char *arg)
 
 	return 0;
 }
+<<<<<<< HEAD
+=======
+early_param("mitigations", mitigations_parse_cmdline);
+>>>>>>> master
 
 /* mitigations=off */
 bool cpu_mitigations_off(void)
@@ -3238,6 +3379,7 @@ bool cpu_mitigations_auto_nosmt(void)
 	return cpu_mitigations == CPU_MITIGATIONS_AUTO_NOSMT;
 }
 EXPORT_SYMBOL_GPL(cpu_mitigations_auto_nosmt);
+<<<<<<< HEAD
 #else
 static int __init mitigations_parse_cmdline(char *arg)
 {
@@ -3246,3 +3388,5 @@ static int __init mitigations_parse_cmdline(char *arg)
 }
 #endif
 early_param("mitigations", mitigations_parse_cmdline);
+=======
+>>>>>>> master

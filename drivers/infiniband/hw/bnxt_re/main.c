@@ -1454,8 +1454,13 @@ static int bnxt_re_dev_init(struct bnxt_re_dev *rdev, u8 wqe_mode)
 	/* Registered a new RoCE device instance to netdev */
 	rc = bnxt_re_register_netdev(rdev);
 	if (rc) {
+<<<<<<< HEAD
 		ibdev_err(&rdev->ibdev,
 			  "Failed to register with netedev: %#x\n", rc);
+=======
+		rtnl_unlock();
+		pr_err("Failed to register with netedev: %#x\n", rc);
+>>>>>>> master
 		return -EINVAL;
 	}
 	set_bit(BNXT_RE_FLAG_NETDEV_REGISTERED, &rdev->flags);
@@ -1658,9 +1663,47 @@ static void bnxt_re_setup_cc(struct bnxt_re_dev *rdev, bool enable)
 	if (rdev->is_virtfn)
 		return;
 
+<<<<<<< HEAD
 	/* Currently enabling only for GenP5 adapters */
 	if (!bnxt_qplib_is_chip_gen_p5(rdev->chip_ctx))
 		return;
+=======
+	switch (re_work->event) {
+	case NETDEV_REGISTER:
+		rc = bnxt_re_ib_reg(rdev);
+		if (rc) {
+			dev_err(rdev_to_dev(rdev),
+				"Failed to register with IB: %#x", rc);
+			bnxt_re_remove_one(rdev);
+			bnxt_re_dev_unreg(rdev);
+			goto exit;
+		}
+		break;
+	case NETDEV_UP:
+		bnxt_re_dispatch_event(&rdev->ibdev, NULL, 1,
+				       IB_EVENT_PORT_ACTIVE);
+		break;
+	case NETDEV_DOWN:
+		bnxt_re_dev_stop(rdev);
+		break;
+	case NETDEV_CHANGE:
+		if (!netif_carrier_ok(rdev->netdev))
+			bnxt_re_dev_stop(rdev);
+		else if (netif_carrier_ok(rdev->netdev))
+			bnxt_re_dispatch_event(&rdev->ibdev, NULL, 1,
+					       IB_EVENT_PORT_ACTIVE);
+		ib_get_eth_speed(&rdev->ibdev, 1, &rdev->active_speed,
+				 &rdev->active_width);
+		break;
+	default:
+		break;
+	}
+	smp_mb__before_atomic();
+	atomic_dec(&rdev->sched_count);
+exit:
+	kfree(re_work);
+}
+>>>>>>> master
 
 	if (enable) {
 		cc_param.enable  = 1;

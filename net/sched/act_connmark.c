@@ -107,7 +107,11 @@ static int tcf_connmark_init(struct net *net, struct nlattr *nla,
 	struct tcf_chain *goto_ch = NULL;
 	struct tcf_connmark_info *ci;
 	struct tc_connmark *parm;
+<<<<<<< HEAD
 	int ret = 0, err;
+=======
+	int ret = 0;
+>>>>>>> master
 	u32 index;
 
 	if (!nla)
@@ -121,20 +125,31 @@ static int tcf_connmark_init(struct net *net, struct nlattr *nla,
 	if (!tb[TCA_CONNMARK_PARMS])
 		return -EINVAL;
 
+<<<<<<< HEAD
 	nparms = kzalloc(sizeof(*nparms), GFP_KERNEL);
 	if (!nparms)
 		return -ENOMEM;
 
+=======
+>>>>>>> master
 	parm = nla_data(tb[TCA_CONNMARK_PARMS]);
 	index = parm->index;
 	ret = tcf_idr_check_alloc(tn, &index, a, bind);
 	if (!ret) {
+<<<<<<< HEAD
 		ret = tcf_idr_create_from_flags(tn, index, est, a,
 						&act_connmark_ops, bind, flags);
 		if (ret) {
 			tcf_idr_cleanup(tn, index);
 			err = ret;
 			goto out_free;
+=======
+		ret = tcf_idr_create(tn, index, est, a,
+				     &act_connmark_ops, bind, false);
+		if (ret) {
+			tcf_idr_cleanup(tn, index);
+			return ret;
+>>>>>>> master
 		}
 
 		ci = to_connmark(*a);

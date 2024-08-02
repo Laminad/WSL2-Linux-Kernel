@@ -790,6 +790,45 @@ static int __init opal_sysfs_init(void)
 	return 0;
 }
 
+<<<<<<< HEAD
+=======
+static ssize_t symbol_map_read(struct file *fp, struct kobject *kobj,
+			       struct bin_attribute *bin_attr,
+			       char *buf, loff_t off, size_t count)
+{
+	return memory_read_from_buffer(buf, count, &off, bin_attr->private,
+				       bin_attr->size);
+}
+
+static struct bin_attribute symbol_map_attr = {
+	.attr = {.name = "symbol_map", .mode = 0400},
+	.read = symbol_map_read
+};
+
+static void opal_export_symmap(void)
+{
+	const __be64 *syms;
+	unsigned int size;
+	struct device_node *fw;
+	int rc;
+
+	fw = of_find_node_by_path("/ibm,opal/firmware");
+	if (!fw)
+		return;
+	syms = of_get_property(fw, "symbol-map", &size);
+	if (!syms || size != 2 * sizeof(__be64))
+		return;
+
+	/* Setup attributes */
+	symbol_map_attr.private = __va(be64_to_cpu(syms[0]));
+	symbol_map_attr.size = be64_to_cpu(syms[1]);
+
+	rc = sysfs_create_bin_file(opal_kobj, &symbol_map_attr);
+	if (rc)
+		pr_warn("Error %d creating OPAL symbols file\n", rc);
+}
+
+>>>>>>> master
 static ssize_t export_attr_read(struct file *fp, struct kobject *kobj,
 				struct bin_attribute *bin_attr, char *buf,
 				loff_t off, size_t count)

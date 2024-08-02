@@ -476,10 +476,15 @@ static int posix_cpu_timer_del(struct k_itimer *timer)
 	unsigned long flags;
 	int ret = 0;
 
+<<<<<<< HEAD
 	rcu_read_lock();
 	p = cpu_timer_task_rcu(timer);
 	if (!p)
 		goto out;
+=======
+	if (WARN_ON_ONCE(!p))
+		return -EINVAL;
+>>>>>>> master
 
 	/*
 	 * Protect against sighand release/switch in exit/exec and process/
@@ -631,6 +636,7 @@ static int posix_cpu_timer_set(struct k_itimer *timer, int timer_flags,
 	unsigned long flags;
 	int ret = 0;
 
+<<<<<<< HEAD
 	rcu_read_lock();
 	p = cpu_timer_task_rcu(timer);
 	if (!p) {
@@ -641,6 +647,10 @@ static int posix_cpu_timer_set(struct k_itimer *timer, int timer_flags,
 		rcu_read_unlock();
 		return -ESRCH;
 	}
+=======
+	if (WARN_ON_ONCE(!p))
+		return -EINVAL;
+>>>>>>> master
 
 	/*
 	 * Use the to_ktime conversion because that clamps the maximum
@@ -742,7 +752,12 @@ static int posix_cpu_timer_set(struct k_itimer *timer, int timer_flags,
 	 * Install the new reload setting, and
 	 * set up the signal and overrun bookkeeping.
 	 */
+<<<<<<< HEAD
 	timer->it_interval = timespec64_to_ktime(new->it_interval);
+=======
+	timer->it.cpu.incr = timespec64_to_ns(&new->it_interval);
+	timer->it_interval = ns_to_ktime(timer->it.cpu.incr);
+>>>>>>> master
 
 	/*
 	 * This acts as a modification timestamp for the timer,
@@ -787,6 +802,7 @@ static int posix_cpu_timer_set(struct k_itimer *timer, int timer_flags,
 
 static void posix_cpu_timer_get(struct k_itimer *timer, struct itimerspec64 *itp)
 {
+<<<<<<< HEAD
 	clockid_t clkid = CPUCLOCK_WHICH(timer->it_clock);
 	struct cpu_timer *ctmr = &timer->it.cpu;
 	u64 now, expires = cpu_timer_getexpires(ctmr);
@@ -796,6 +812,13 @@ static void posix_cpu_timer_get(struct k_itimer *timer, struct itimerspec64 *itp
 	p = cpu_timer_task_rcu(timer);
 	if (!p)
 		goto out;
+=======
+	struct task_struct *p = timer->it.cpu.task;
+	u64 now;
+
+	if (WARN_ON_ONCE(!p))
+		return;
+>>>>>>> master
 
 	/*
 	 * Easy part: convert the reload time.
@@ -1046,12 +1069,17 @@ static void check_process_timers(struct task_struct *tsk,
  */
 static void posix_cpu_timer_rearm(struct k_itimer *timer)
 {
+<<<<<<< HEAD
 	clockid_t clkid = CPUCLOCK_WHICH(timer->it_clock);
 	struct task_struct *p;
+=======
+	struct task_struct *p = timer->it.cpu.task;
+>>>>>>> master
 	struct sighand_struct *sighand;
 	unsigned long flags;
 	u64 now;
 
+<<<<<<< HEAD
 	rcu_read_lock();
 	p = cpu_timer_task_rcu(timer);
 	if (!p)
@@ -1061,6 +1089,10 @@ static void posix_cpu_timer_rearm(struct k_itimer *timer)
 	sighand = lock_task_sighand(p, &flags);
 	if (unlikely(sighand == NULL))
 		goto out;
+=======
+	if (WARN_ON_ONCE(!p))
+		return;
+>>>>>>> master
 
 	/*
 	 * Fetch the current sample and update the timer's expiry time.
@@ -1463,8 +1495,15 @@ void set_process_cpu_timer(struct task_struct *tsk, unsigned int clkid,
 {
 	u64 now, *nextevt;
 
+<<<<<<< HEAD
 	if (WARN_ON_ONCE(clkid >= CPUCLOCK_SCHED))
 		return;
+=======
+	if (WARN_ON_ONCE(clock_idx >= CPUCLOCK_SCHED))
+		return;
+
+	ret = cpu_timer_sample_group(clock_idx, tsk, &now);
+>>>>>>> master
 
 	nextevt = &tsk->signal->posix_cputimers.bases[clkid].nextevt;
 	now = cpu_clock_sample_group(clkid, tsk, true);

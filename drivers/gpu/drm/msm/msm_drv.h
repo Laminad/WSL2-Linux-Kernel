@@ -57,12 +57,19 @@ struct msm_disp_state;
 
 #define FRAC_16_16(mult, div)    (((mult) << 16) / (div))
 
+<<<<<<< HEAD
 enum msm_dp_controller {
 	MSM_DP_CONTROLLER_0,
 	MSM_DP_CONTROLLER_1,
 	MSM_DP_CONTROLLER_2,
 	MSM_DP_CONTROLLER_3,
 	MSM_DP_CONTROLLER_COUNT,
+=======
+struct msm_file_private {
+	rwlock_t queuelock;
+	struct list_head submitqueues;
+	int queueid;
+>>>>>>> master
 };
 
 enum msm_dsi_controller {

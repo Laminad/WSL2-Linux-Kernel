@@ -45,8 +45,22 @@ static int udl_usb_reset_resume(struct usb_interface *interface)
 
 	udl_select_std_channel(udl);
 
+<<<<<<< HEAD
 	return drm_mode_config_helper_resume(dev);
 }
+=======
+static void udl_driver_release(struct drm_device *dev)
+{
+	udl_fini(dev);
+	udl_modeset_cleanup(dev);
+	drm_dev_fini(dev);
+	kfree(dev);
+}
+
+static struct drm_driver driver = {
+	.driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_PRIME,
+	.release = udl_driver_release,
+>>>>>>> master
 
 /*
  * FIXME: Dma-buf sharing requires DMA support by the importing device.
@@ -84,6 +98,7 @@ static const struct drm_driver driver = {
 
 static struct udl_device *udl_driver_create(struct usb_interface *interface)
 {
+<<<<<<< HEAD
 	struct udl_device *udl;
 	int r;
 
@@ -98,6 +113,33 @@ static struct udl_device *udl_driver_create(struct usb_interface *interface)
 
 	usb_set_intfdata(interface, udl);
 
+=======
+	struct usb_device *udev = interface_to_usbdev(interface);
+	struct udl_device *udl;
+	int r;
+
+	udl = kzalloc(sizeof(*udl), GFP_KERNEL);
+	if (!udl)
+		return ERR_PTR(-ENOMEM);
+
+	r = drm_dev_init(&udl->drm, &driver, &interface->dev);
+	if (r) {
+		kfree(udl);
+		return ERR_PTR(r);
+	}
+
+	udl->udev = udev;
+	udl->drm.dev_private = udl;
+
+	r = udl_init(udl);
+	if (r) {
+		drm_dev_fini(&udl->drm);
+		kfree(udl);
+		return ERR_PTR(r);
+	}
+
+	usb_set_intfdata(interface, udl);
+>>>>>>> master
 	return udl;
 }
 
@@ -116,10 +158,19 @@ static int udl_usb_probe(struct usb_interface *interface,
 		return r;
 
 	DRM_INFO("Initialized udl on minor %d\n", udl->drm.primary->index);
+<<<<<<< HEAD
 
 	drm_fbdev_generic_setup(&udl->drm, 0);
 
 	return 0;
+=======
+
+	return 0;
+
+err_free:
+	drm_dev_put(&udl->drm);
+	return r;
+>>>>>>> master
 }
 
 static void udl_usb_disconnect(struct usb_interface *interface)

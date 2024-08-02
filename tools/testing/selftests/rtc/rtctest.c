@@ -300,7 +300,11 @@ TEST_F(rtc, alarm_wkalm_set) {
 	ASSERT_EQ(new, secs);
 }
 
+<<<<<<< HEAD
 TEST_F_TIMEOUT(rtc, alarm_alm_set_minute, 65) {
+=======
+TEST_F(rtc, alarm_alm_set_minute) {
+>>>>>>> master
 	struct timeval tv = { .tv_sec = 62 };
 	unsigned long data;
 	struct rtc_time tm;
@@ -308,10 +312,13 @@ TEST_F_TIMEOUT(rtc, alarm_alm_set_minute, 65) {
 	time_t secs, new;
 	int rc;
 
+<<<<<<< HEAD
 	if (self->fd == -1 && errno == ENOENT)
 		SKIP(return, "Skipping test since %s does not exist", rtc_file);
 	ASSERT_NE(-1, self->fd);
 
+=======
+>>>>>>> master
 	rc = ioctl(self->fd, RTC_RD_TIME, &tm);
 	ASSERT_NE(-1, rc);
 
@@ -357,7 +364,11 @@ TEST_F_TIMEOUT(rtc, alarm_alm_set_minute, 65) {
 	ASSERT_EQ(new, secs);
 }
 
+<<<<<<< HEAD
 TEST_F_TIMEOUT(rtc, alarm_wkalm_set_minute, 65) {
+=======
+TEST_F(rtc, alarm_wkalm_set_minute) {
+>>>>>>> master
 	struct timeval tv = { .tv_sec = 62 };
 	struct rtc_wkalrm alarm = { 0 };
 	struct rtc_time tm;
@@ -366,10 +377,13 @@ TEST_F_TIMEOUT(rtc, alarm_wkalm_set_minute, 65) {
 	time_t secs, new;
 	int rc;
 
+<<<<<<< HEAD
 	if (self->fd == -1 && errno == ENOENT)
 		SKIP(return, "Skipping test since %s does not exist", rtc_file);
 	ASSERT_NE(-1, self->fd);
 
+=======
+>>>>>>> master
 	rc = ioctl(self->fd, RTC_RD_TIME, &alarm.time);
 	ASSERT_NE(-1, rc);
 

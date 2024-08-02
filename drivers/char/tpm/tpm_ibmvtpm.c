@@ -130,6 +130,7 @@ static int tpm_ibmvtpm_recv(struct tpm_chip *chip, u8 *buf, size_t count)
 }
 
 /**
+<<<<<<< HEAD
  * ibmvtpm_crq_send_init - Send a CRQ initialize message
  * @ibmvtpm:	vtpm device struct
  *
@@ -188,6 +189,8 @@ static int tpm_ibmvtpm_resume(struct device *dev)
 }
 
 /**
+=======
+>>>>>>> master
  * tpm_ibmvtpm_send() - Send a TPM command
  * @chip:	tpm chip struct
  * @buf:	buffer contains data to send
@@ -250,8 +253,15 @@ again:
 			goto again;
 		}
 		dev_err(ibmvtpm->dev, "tpm_ibmvtpm_send failed rc=%d\n", rc);
+<<<<<<< HEAD
 		ibmvtpm->tpm_processing_cmd = 0;
 	}
+=======
+		rc = 0;
+		ibmvtpm->tpm_processing_cmd = false;
+	} else
+		rc = 0;
+>>>>>>> master
 
 	spin_unlock(&ibmvtpm->rtce_lock);
 	return 0;

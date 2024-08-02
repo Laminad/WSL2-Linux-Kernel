@@ -88,14 +88,17 @@ static inline struct sk_buff *__skb_dequeue_bad_txq(struct Qdisc *q)
 			skb = __skb_dequeue(&q->skb_bad_txq);
 			if (qdisc_is_percpu_stats(q)) {
 				qdisc_qstats_cpu_backlog_dec(q, skb);
-				qdisc_qstats_cpu_qlen_dec(q);
+				qdisc_qstats_atomic_qlen_dec(q);
 			} else {
 				qdisc_qstats_backlog_dec(q, skb);
 				q->q.qlen--;
 			}
 		} else {
 			skb = SKB_XOFF_MAGIC;
+<<<<<<< HEAD
 			qdisc_maybe_clear_missed(q, txq);
+=======
+>>>>>>> master
 		}
 	}
 
@@ -129,7 +132,7 @@ static inline void qdisc_enqueue_skb_bad_txq(struct Qdisc *q,
 
 	if (qdisc_is_percpu_stats(q)) {
 		qdisc_qstats_cpu_backlog_inc(q, skb);
-		qdisc_qstats_cpu_qlen_inc(q);
+		qdisc_qstats_atomic_qlen_inc(q);
 	} else {
 		qdisc_qstats_backlog_inc(q, skb);
 		q->q.qlen++;
@@ -153,6 +156,7 @@ static inline void dev_requeue_skb(struct sk_buff *skb, struct Qdisc *q)
 
 		__skb_queue_tail(&q->gso_skb, skb);
 
+<<<<<<< HEAD
 		/* it's still part of the queue */
 		if (qdisc_is_percpu_stats(q)) {
 			qdisc_qstats_cpu_requeues_inc(q);
@@ -163,6 +167,11 @@ static inline void dev_requeue_skb(struct sk_buff *skb, struct Qdisc *q)
 			qdisc_qstats_backlog_inc(q, skb);
 			q->q.qlen++;
 		}
+=======
+		qdisc_qstats_cpu_requeues_inc(q);
+		qdisc_qstats_cpu_backlog_inc(q, skb);
+		qdisc_qstats_atomic_qlen_inc(q);
+>>>>>>> master
 
 		skb = next;
 	}
@@ -261,7 +270,7 @@ static struct sk_buff *dequeue_skb(struct Qdisc *q, bool *validate,
 			skb = __skb_dequeue(&q->gso_skb);
 			if (qdisc_is_percpu_stats(q)) {
 				qdisc_qstats_cpu_backlog_dec(q, skb);
-				qdisc_qstats_cpu_qlen_dec(q);
+				qdisc_qstats_atomic_qlen_dec(q);
 			} else {
 				qdisc_qstats_backlog_dec(q, skb);
 				q->q.qlen--;
@@ -736,7 +745,15 @@ static int pfifo_fast_enqueue(struct sk_buff *skb, struct Qdisc *qdisc,
 			return qdisc_drop(skb, qdisc, to_free);
 	}
 
+<<<<<<< HEAD
 	qdisc_update_stats_at_enqueue(qdisc, pkt_len);
+=======
+	qdisc_qstats_atomic_qlen_inc(qdisc);
+	/* Note: skb can not be used after skb_array_produce(),
+	 * so we better not use qdisc_qstats_cpu_backlog_inc()
+	 */
+	this_cpu_add(qdisc->cpu_qstats->backlog, pkt_len);
+>>>>>>> master
 	return NET_XMIT_SUCCESS;
 }
 
@@ -757,6 +774,7 @@ retry:
 		skb = __skb_array_consume(q);
 	}
 	if (likely(skb)) {
+<<<<<<< HEAD
 		qdisc_update_stats_at_dequeue(qdisc, skb);
 	} else if (need_retry &&
 		   READ_ONCE(qdisc->state) & QDISC_STATE_NON_EMPTY) {
@@ -776,6 +794,11 @@ retry:
 		need_retry = false;
 
 		goto retry;
+=======
+		qdisc_qstats_cpu_backlog_dec(qdisc, skb);
+		qdisc_bstats_cpu_update(qdisc, skb);
+		qdisc_qstats_atomic_qlen_dec(qdisc);
+>>>>>>> master
 	}
 
 	return skb;
@@ -819,10 +842,14 @@ static void pfifo_fast_reset(struct Qdisc *qdisc)
 		for_each_possible_cpu(i) {
 			struct gnet_stats_queue *q;
 
+<<<<<<< HEAD
 			q = per_cpu_ptr(qdisc->cpu_qstats, i);
 			q->backlog = 0;
 			q->qlen = 0;
 		}
+=======
+		q->backlog = 0;
+>>>>>>> master
 	}
 }
 
@@ -1051,7 +1078,20 @@ static void qdisc_free_cb(struct rcu_head *head)
 
 static void __qdisc_destroy(struct Qdisc *qdisc)
 {
+<<<<<<< HEAD
 	const struct Qdisc_ops  *ops = qdisc->ops;
+=======
+	const struct Qdisc_ops *ops;
+	struct sk_buff *skb, *tmp;
+
+	if (!qdisc)
+		return;
+	ops = qdisc->ops;
+
+	if (qdisc->flags & TCQ_F_BUILTIN ||
+	    !refcount_dec_and_test(&qdisc->refcnt))
+		return;
+>>>>>>> master
 
 #ifdef CONFIG_NET_SCHED
 	qdisc_hash_del(qdisc);

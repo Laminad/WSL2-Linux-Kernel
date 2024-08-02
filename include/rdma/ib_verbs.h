@@ -56,6 +56,7 @@ struct hw_stats_device_data;
 extern struct workqueue_struct *ib_wq;
 extern struct workqueue_struct *ib_comp_wq;
 extern struct workqueue_struct *ib_comp_unbound_wq;
+<<<<<<< HEAD
 
 struct ib_ucq_object;
 
@@ -129,6 +130,8 @@ __printf(2, 3) __cold
 static inline
 void ibdev_dbg_ratelimited(const struct ib_device *ibdev, const char *format, ...) {}
 #endif
+=======
+>>>>>>> master
 
 union ib_gid {
 	u8	raw[16];
@@ -1322,7 +1325,10 @@ enum ib_wr_opcode {
 	IB_WR_RDMA_READ = IB_UVERBS_WR_RDMA_READ,
 	IB_WR_ATOMIC_CMP_AND_SWP = IB_UVERBS_WR_ATOMIC_CMP_AND_SWP,
 	IB_WR_ATOMIC_FETCH_AND_ADD = IB_UVERBS_WR_ATOMIC_FETCH_AND_ADD,
+<<<<<<< HEAD
 	IB_WR_BIND_MW = IB_UVERBS_WR_BIND_MW,
+=======
+>>>>>>> master
 	IB_WR_LSO = IB_UVERBS_WR_TSO,
 	IB_WR_SEND_WITH_INV = IB_UVERBS_WR_SEND_WITH_INV,
 	IB_WR_RDMA_READ_WITH_INV = IB_UVERBS_WR_RDMA_READ_WITH_INV,
@@ -1331,12 +1337,19 @@ enum ib_wr_opcode {
 		IB_UVERBS_WR_MASKED_ATOMIC_CMP_AND_SWP,
 	IB_WR_MASKED_ATOMIC_FETCH_AND_ADD =
 		IB_UVERBS_WR_MASKED_ATOMIC_FETCH_AND_ADD,
+<<<<<<< HEAD
 	IB_WR_FLUSH = IB_UVERBS_WR_FLUSH,
 	IB_WR_ATOMIC_WRITE = IB_UVERBS_WR_ATOMIC_WRITE,
 
 	/* These are kernel only and can not be issued by userspace */
 	IB_WR_REG_MR = 0x20,
 	IB_WR_REG_MR_INTEGRITY,
+=======
+
+	/* These are kernel only and can not be issued by userspace */
+	IB_WR_REG_MR = 0x20,
+	IB_WR_REG_SIG_MR,
+>>>>>>> master
 
 	/* reserve values for low level drivers' internal use.
 	 * These values will not be used at all in the ib core layer.
@@ -1580,12 +1593,19 @@ struct ib_ah {
 typedef void (*ib_comp_handler)(struct ib_cq *cq, void *cq_context);
 
 enum ib_poll_context {
+<<<<<<< HEAD
 	IB_POLL_SOFTIRQ,	   /* poll from softirq context */
 	IB_POLL_WORKQUEUE,	   /* poll from workqueue */
 	IB_POLL_UNBOUND_WORKQUEUE, /* poll from unbound workqueue */
 	IB_POLL_LAST_POOL_TYPE = IB_POLL_UNBOUND_WORKQUEUE,
 
 	IB_POLL_DIRECT,		   /* caller context, no hw completions */
+=======
+	IB_POLL_DIRECT,		   /* caller context, no hw completions */
+	IB_POLL_SOFTIRQ,	   /* poll from softirq context */
+	IB_POLL_WORKQUEUE,	   /* poll from workqueue */
+	IB_POLL_UNBOUND_WORKQUEUE, /* poll from unbound workqueue */
+>>>>>>> master
 };
 
 struct ib_cq {
@@ -1605,6 +1625,7 @@ struct ib_cq {
 		struct work_struct	work;
 	};
 	struct workqueue_struct *comp_wq;
+<<<<<<< HEAD
 	struct dim *dim;
 
 	/* updated only by trace points */
@@ -1613,6 +1634,8 @@ struct ib_cq {
 	u8 shared:1;
 	unsigned int comp_vector;
 
+=======
+>>>>>>> master
 	/*
 	 * Implementation details of the RDMA core, don't use in drivers:
 	 */

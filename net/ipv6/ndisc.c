@@ -1841,7 +1841,11 @@ enum skb_drop_reason ndisc_rcv(struct sk_buff *skb)
 	switch (msg->icmph.icmp6_type) {
 	case NDISC_NEIGHBOUR_SOLICITATION:
 		memset(NEIGH_CB(skb), 0, sizeof(struct neighbour_cb));
+<<<<<<< HEAD
 		reason = ndisc_recv_ns(skb);
+=======
+		ndisc_recv_ns(skb);
+>>>>>>> master
 		break;
 
 	case NDISC_NEIGHBOUR_ADVERTISEMENT:

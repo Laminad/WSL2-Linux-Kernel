@@ -153,6 +153,7 @@
 			interrupt-names = "macirq";
 			mac-address = [00 00 00 00 00 00];
 			resets = <&rst EMAC0_RESET>, <&rst EMAC0_OCP_RESET>;
+<<<<<<< HEAD
 			reset-names = "stmmaceth", "ahb";
 			clocks = <&clkmgr STRATIX10_EMAC0_CLK>, <&clkmgr STRATIX10_EMAC_PTP_CLK>;
 			clock-names = "stmmaceth", "ptp_ref";
@@ -160,6 +161,14 @@
 			rx-fifo-depth = <16384>;
 			snps,multicast-filter-bins = <256>;
 			iommus = <&smmu 1>;
+=======
+			reset-names = "stmmaceth", "stmmaceth-ocp";
+			clocks = <&clkmgr STRATIX10_EMAC0_CLK>;
+			clock-names = "stmmaceth";
+			tx-fifo-depth = <16384>;
+			rx-fifo-depth = <16384>;
+			snps,multicast-filter-bins = <256>;
+>>>>>>> master
 			altr,sysmgr-syscon = <&sysmgr 0x44 0>;
 			status = "disabled";
 		};
@@ -171,6 +180,7 @@
 			interrupt-names = "macirq";
 			mac-address = [00 00 00 00 00 00];
 			resets = <&rst EMAC1_RESET>, <&rst EMAC1_OCP_RESET>;
+<<<<<<< HEAD
 			reset-names = "stmmaceth", "ahb";
 			clocks = <&clkmgr STRATIX10_EMAC1_CLK>, <&clkmgr STRATIX10_EMAC_PTP_CLK>;
 			clock-names = "stmmaceth", "ptp_ref";
@@ -179,6 +189,15 @@
 			snps,multicast-filter-bins = <256>;
 			iommus = <&smmu 2>;
 			altr,sysmgr-syscon = <&sysmgr 0x48 8>;
+=======
+			reset-names = "stmmaceth", "stmmaceth-ocp";
+			clocks = <&clkmgr STRATIX10_EMAC1_CLK>;
+			clock-names = "stmmaceth";
+			tx-fifo-depth = <16384>;
+			rx-fifo-depth = <16384>;
+			snps,multicast-filter-bins = <256>;
+			altr,sysmgr-syscon = <&sysmgr 0x48 0>;
+>>>>>>> master
 			status = "disabled";
 		};
 
@@ -189,6 +208,7 @@
 			interrupt-names = "macirq";
 			mac-address = [00 00 00 00 00 00];
 			resets = <&rst EMAC2_RESET>, <&rst EMAC2_OCP_RESET>;
+<<<<<<< HEAD
 			reset-names = "stmmaceth", "ahb";
 			clocks = <&clkmgr STRATIX10_EMAC2_CLK>, <&clkmgr STRATIX10_EMAC_PTP_CLK>;
 			clock-names = "stmmaceth", "ptp_ref";
@@ -197,6 +217,15 @@
 			snps,multicast-filter-bins = <256>;
 			iommus = <&smmu 3>;
 			altr,sysmgr-syscon = <&sysmgr 0x4c 16>;
+=======
+			reset-names = "stmmaceth", "stmmaceth-ocp";
+			clocks = <&clkmgr STRATIX10_EMAC2_CLK>;
+			clock-names = "stmmaceth";
+			tx-fifo-depth = <16384>;
+			rx-fifo-depth = <16384>;
+			snps,multicast-filter-bins = <256>;
+			altr,sysmgr-syscon = <&sysmgr 0x4c 0>;
+>>>>>>> master
 			status = "disabled";
 		};
 
@@ -429,8 +458,22 @@
 		};
 
 		sysmgr: sysmgr@ffd12000 {
+<<<<<<< HEAD
 			compatible = "altr,sys-mgr-s10","altr,sys-mgr";
 			reg = <0xffd12000 0x228>;
+=======
+			compatible = "altr,sys-mgr", "syscon";
+			reg = <0xffd12000 0x228>;
+		};
+
+		/* Local timer */
+		timer {
+			compatible = "arm,armv8-timer";
+			interrupts = <1 13 0xf08>,
+				     <1 14 0xf08>,
+				     <1 11 0xf08>,
+				     <1 10 0xf08>;
+>>>>>>> master
 		};
 
 		timer0: timer0@ffc03000 {

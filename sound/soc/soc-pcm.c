@@ -1033,8 +1033,20 @@ static int __soc_pcm_hw_params(struct snd_soc_pcm_runtime *rtd,
 		tmp_params = *params;
 
 		/* fixup params based on TDM slot masks */
+<<<<<<< HEAD
 		if (tdm_mask)
 			soc_pcm_codec_params_fixup(&tmp_params, tdm_mask);
+=======
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
+		    codec_dai->tx_mask)
+			soc_pcm_codec_params_fixup(&codec_params,
+						   codec_dai->tx_mask);
+
+		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE &&
+		    codec_dai->rx_mask)
+			soc_pcm_codec_params_fixup(&codec_params,
+						   codec_dai->rx_mask);
+>>>>>>> master
 
 		ret = snd_soc_dai_hw_params(codec_dai, substream,
 					    &tmp_params);

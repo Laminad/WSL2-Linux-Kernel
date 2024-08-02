@@ -146,12 +146,15 @@ struct mlx5e_sw_stats {
 	u64 tx_mpwqe_pkts;
 	u64 rx_lro_packets;
 	u64 rx_lro_bytes;
+<<<<<<< HEAD
 	u64 rx_gro_packets;
 	u64 rx_gro_bytes;
 	u64 rx_gro_skbs;
 	u64 rx_gro_match_packets;
 	u64 rx_gro_large_hds;
 	u64 rx_mcast_packets;
+=======
+>>>>>>> master
 	u64 rx_ecn_mark;
 	u64 rx_removed_vlan_packets;
 	u64 rx_csum_unnecessary;
@@ -345,12 +348,15 @@ struct mlx5e_rq_stats {
 	u64 csum_none;
 	u64 lro_packets;
 	u64 lro_bytes;
+<<<<<<< HEAD
 	u64 gro_packets;
 	u64 gro_bytes;
 	u64 gro_skbs;
 	u64 gro_match_packets;
 	u64 gro_large_hds;
 	u64 mcast_packets;
+=======
+>>>>>>> master
 	u64 ecn_mark;
 	u64 removed_vlan_packets;
 	u64 xdp_drop;
@@ -411,8 +417,11 @@ struct mlx5e_sq_stats {
 	u64 csum_partial_inner;
 	u64 added_vlan_packets;
 	u64 nop;
+<<<<<<< HEAD
 	u64 mpwqe_blks;
 	u64 mpwqe_pkts;
+=======
+>>>>>>> master
 #ifdef CONFIG_MLX5_EN_TLS
 	u64 tls_encrypted_packets;
 	u64 tls_encrypted_bytes;

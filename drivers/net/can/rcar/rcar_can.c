@@ -19,6 +19,7 @@
 
 #define RCAR_CAN_DRV_NAME	"rcar_can"
 
+<<<<<<< HEAD
 /* Clock Select Register settings */
 enum CLKR {
 	CLKR_CLKP1 = 0, /* Peripheral clock (clkp1) */
@@ -26,6 +27,8 @@ enum CLKR {
 	CLKR_CLKEXT = 3, /* Externally input clock */
 };
 
+=======
+>>>>>>> master
 #define RCAR_SUPPORTED_CLOCKS	(BIT(CLKR_CLKP1) | BIT(CLKR_CLKP2) | \
 				 BIT(CLKR_CLKEXT))
 

@@ -377,6 +377,7 @@ pointed by REDIRECT. This should not be possible on local system as setting
 "trusted." xattrs will require CAP_SYS_ADMIN. But it should be possible
 for untrusted layers like from a pen drive.
 
+<<<<<<< HEAD:Documentation/filesystems/overlayfs.rst
 Note: redirect_dir={off|nofollow|follow[*]} and nfs_export=on mount options
 conflict with metacopy=on, and will result in an error.
 
@@ -475,6 +476,14 @@ supports these values:
     will only be used if the data file has fs-verity enabled,
     otherwise a full copy-up is used.
 
+=======
+Note: redirect_dir={off|nofollow|follow(*)} conflicts with metacopy=on, and
+results in an error.
+
+(*) redirect_dir=follow only conflicts with metacopy=on if upperdir=... is
+given.
+
+>>>>>>> master:Documentation/filesystems/overlayfs.txt
 Sharing and copying layers
 --------------------------
 

@@ -706,6 +706,7 @@ retry:
 					m = kzalloc(sizeof(*m) +
 					    AHASH_INIT_SIZE * dsize,
 					    GFP_ATOMIC);
+<<<<<<< HEAD
 					if (!m) {
 						ret = -ENOMEM;
 						goto cleanup;
@@ -717,6 +718,17 @@ retry:
 					RCU_INIT_POINTER(hbucket(t, key), m);
 				} else if (m->pos >= m->size) {
 					struct hbucket *ht;
+=======
+				if (!m) {
+					ret = -ENOMEM;
+					goto cleanup;
+				}
+				m->size = AHASH_INIT_SIZE;
+				extsize += ext_size(AHASH_INIT_SIZE, dsize);
+				RCU_INIT_POINTER(hbucket(t, key), m);
+			} else if (m->pos >= m->size) {
+				struct hbucket *ht;
+>>>>>>> master
 
 					if (m->size >= AHASH_MAX(h)) {
 						ret = -EAGAIN;

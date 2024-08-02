@@ -260,6 +260,11 @@ static __init int efivar_ssdt_load(void)
 
 	if (!efivar_ssdt[0])
 		return 0;
+<<<<<<< HEAD
+=======
+
+	ret = efivar_init(efivar_ssdt_iter, &entries, true, &entries);
+>>>>>>> master
 
 	name = kzalloc(name_size, GFP_KERNEL);
 	if (!name)

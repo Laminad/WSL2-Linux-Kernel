@@ -1445,12 +1445,23 @@ void pci_acpi_setup(struct device *dev, struct acpi_device *adev)
 
 void pci_acpi_cleanup(struct device *dev, struct acpi_device *adev)
 {
+<<<<<<< HEAD
 	struct pci_dev *pci_dev = to_pci_dev(dev);
+=======
+	struct acpi_device *adev = ACPI_COMPANION(dev);
+	struct pci_dev *pci_dev = to_pci_dev(dev);
+
+	if (!adev)
+		return;
+>>>>>>> master
 
 	pci_acpi_remove_edr_notifier(pci_dev);
 	pci_acpi_remove_pm_notifier(adev);
 	if (adev->wakeup.flags.valid) {
+<<<<<<< HEAD
 		acpi_device_power_remove_dependent(adev, dev);
+=======
+>>>>>>> master
 		if (pci_dev->bridge_d3)
 			device_wakeup_disable(dev);
 

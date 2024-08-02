@@ -1786,9 +1786,41 @@ static void __sched rtlock_slowlock_locked(struct rt_mutex_base *lock)
 	/* Save current state and set state to TASK_RTLOCK_WAIT */
 	current_save_and_set_rtlock_wait_state();
 
+<<<<<<< HEAD
 	trace_contention_begin(lock, LCB_F_RT);
 
 	task_blocks_on_rt_mutex(lock, &waiter, current, NULL, RT_MUTEX_MIN_CHAINWALK);
+=======
+/**
+ * __rt_mutex_start_proxy_lock() - Start lock acquisition for another task
+ * @lock:		the rt_mutex to take
+ * @waiter:		the pre-initialized rt_mutex_waiter
+ * @task:		the task to prepare
+ *
+ * Starts the rt_mutex acquire; it enqueues the @waiter and does deadlock
+ * detection. It does not wait, see rt_mutex_wait_proxy_lock() for that.
+ *
+ * NOTE: does _NOT_ remove the @waiter on failure; must either call
+ * rt_mutex_wait_proxy_lock() or rt_mutex_cleanup_proxy_lock() after this.
+ *
+ * Returns:
+ *  0 - task blocked on lock
+ *  1 - acquired the lock for task, caller should wake it up
+ * <0 - error
+ *
+ * Special API call for PI-futex support.
+ */
+int __rt_mutex_start_proxy_lock(struct rt_mutex *lock,
+			      struct rt_mutex_waiter *waiter,
+			      struct task_struct *task)
+{
+	int ret;
+
+	lockdep_assert_held(&lock->wait_lock);
+
+	if (try_to_take_rt_mutex(lock, task, NULL))
+		return 1;
+>>>>>>> master
 
 	for (;;) {
 		/* Try to acquire the lock again */
@@ -1808,9 +1840,98 @@ static void __sched rtlock_slowlock_locked(struct rt_mutex_base *lock)
 		set_current_state(TASK_RTLOCK_WAIT);
 	}
 
+<<<<<<< HEAD
 	/* Restore the task state */
 	current_restore_rtlock_saved_state();
 
+=======
+	debug_rt_mutex_print_deadlock(waiter);
+
+	return ret;
+}
+
+/**
+ * rt_mutex_start_proxy_lock() - Start lock acquisition for another task
+ * @lock:		the rt_mutex to take
+ * @waiter:		the pre-initialized rt_mutex_waiter
+ * @task:		the task to prepare
+ *
+ * Starts the rt_mutex acquire; it enqueues the @waiter and does deadlock
+ * detection. It does not wait, see rt_mutex_wait_proxy_lock() for that.
+ *
+ * NOTE: unlike __rt_mutex_start_proxy_lock this _DOES_ remove the @waiter
+ * on failure.
+ *
+ * Returns:
+ *  0 - task blocked on lock
+ *  1 - acquired the lock for task, caller should wake it up
+ * <0 - error
+ *
+ * Special API call for PI-futex support.
+ */
+int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
+			      struct rt_mutex_waiter *waiter,
+			      struct task_struct *task)
+{
+	int ret;
+
+	raw_spin_lock_irq(&lock->wait_lock);
+	ret = __rt_mutex_start_proxy_lock(lock, waiter, task);
+	if (unlikely(ret))
+		remove_waiter(lock, waiter);
+	raw_spin_unlock_irq(&lock->wait_lock);
+
+	return ret;
+}
+
+/**
+ * rt_mutex_next_owner - return the next owner of the lock
+ *
+ * @lock: the rt lock query
+ *
+ * Returns the next owner of the lock or NULL
+ *
+ * Caller has to serialize against other accessors to the lock
+ * itself.
+ *
+ * Special API call for PI-futex support
+ */
+struct task_struct *rt_mutex_next_owner(struct rt_mutex *lock)
+{
+	if (!rt_mutex_has_waiters(lock))
+		return NULL;
+
+	return rt_mutex_top_waiter(lock)->task;
+}
+
+/**
+ * rt_mutex_wait_proxy_lock() - Wait for lock acquisition
+ * @lock:		the rt_mutex we were woken on
+ * @to:			the timeout, null if none. hrtimer should already have
+ *			been started.
+ * @waiter:		the pre-initialized rt_mutex_waiter
+ *
+ * Wait for the the lock acquisition started on our behalf by
+ * rt_mutex_start_proxy_lock(). Upon failure, the caller must call
+ * rt_mutex_cleanup_proxy_lock().
+ *
+ * Returns:
+ *  0 - success
+ * <0 - error, one of -EINTR, -ETIMEDOUT
+ *
+ * Special API call for PI-futex support
+ */
+int rt_mutex_wait_proxy_lock(struct rt_mutex *lock,
+			       struct hrtimer_sleeper *to,
+			       struct rt_mutex_waiter *waiter)
+{
+	int ret;
+
+	raw_spin_lock_irq(&lock->wait_lock);
+	/* sleep on the mutex */
+	set_current_state(TASK_INTERRUPTIBLE);
+	ret = __rt_mutex_slowlock(lock, TASK_INTERRUPTIBLE, to, waiter);
+>>>>>>> master
 	/*
 	 * try_to_take_rt_mutex() sets the waiter bit unconditionally.
 	 * We might have to fix that up:
@@ -1821,7 +1942,32 @@ static void __sched rtlock_slowlock_locked(struct rt_mutex_base *lock)
 	trace_contention_end(lock, 0);
 }
 
+<<<<<<< HEAD
 static __always_inline void __sched rtlock_slowlock(struct rt_mutex_base *lock)
+=======
+/**
+ * rt_mutex_cleanup_proxy_lock() - Cleanup failed lock acquisition
+ * @lock:		the rt_mutex we were woken on
+ * @waiter:		the pre-initialized rt_mutex_waiter
+ *
+ * Attempt to clean up after a failed __rt_mutex_start_proxy_lock() or
+ * rt_mutex_wait_proxy_lock().
+ *
+ * Unless we acquired the lock; we're still enqueued on the wait-list and can
+ * in fact still be granted ownership until we're removed. Therefore we can
+ * find we are in fact the owner and must disregard the
+ * rt_mutex_wait_proxy_lock() failure.
+ *
+ * Returns:
+ *  true  - did the cleanup, we done.
+ *  false - we acquired the lock after rt_mutex_wait_proxy_lock() returned,
+ *          caller should disregards its return value.
+ *
+ * Special API call for PI-futex support
+ */
+bool rt_mutex_cleanup_proxy_lock(struct rt_mutex *lock,
+				 struct rt_mutex_waiter *waiter)
+>>>>>>> master
 {
 	unsigned long flags;
 

@@ -157,14 +157,60 @@ struct metric {
 	struct evlist *evlist;
 };
 
+<<<<<<< HEAD
 static void metric__watchdog_constraint_hint(const char *name, bool foot)
+=======
+static bool record_evsel(int *ind, struct perf_evsel **start,
+			 int idnum,
+			 struct perf_evsel **metric_events,
+			 struct perf_evsel *ev)
+{
+	metric_events[*ind] = ev;
+	if (*ind == 0)
+		*start = ev;
+	if (++*ind == idnum) {
+		metric_events[*ind] = NULL;
+		return true;
+	}
+	return false;
+}
+
+static struct perf_evsel *find_evsel_group(struct perf_evlist *perf_evlist,
+					   const char **ids,
+					   int idnum,
+					   struct perf_evsel **metric_events)
+>>>>>>> master
 {
 	static bool violate_nmi_constraint;
 
+<<<<<<< HEAD
 	if (!foot) {
 		pr_warning("Not grouping metric %s's events.\n", name);
 		violate_nmi_constraint = true;
 		return;
+=======
+	evlist__for_each_entry (perf_evlist, ev) {
+		if (ev->collect_stat)
+			continue;
+		if (!strcmp(ev->name, ids[ind])) {
+			if (record_evsel(&ind, &start, idnum,
+					 metric_events, ev))
+				return start;
+		} else {
+			/*
+			 * We saw some other event that is not
+			 * in our list of events. Discard
+			 * the whole match and start again.
+			 */
+			ind = 0;
+			start = NULL;
+			if (!strcmp(ev->name, ids[ind])) {
+				if (record_evsel(&ind, &start, idnum,
+						 metric_events, ev))
+					return start;
+			}
+		}
+>>>>>>> master
 	}
 
 	if (!violate_nmi_constraint)
@@ -258,9 +304,43 @@ static bool contains_metric_id(struct evsel **metric_events, int num_events,
 {
 	int i;
 
+<<<<<<< HEAD
 	for (i = 0; i < num_events; i++) {
 		if (!strcmp(evsel__metric_id(metric_events[i]), metric_id))
 			return true;
+=======
+	list_for_each_entry (eg, groups, nd) {
+		struct perf_evsel **metric_events;
+
+		metric_events = calloc(sizeof(void *), eg->idnum + 1);
+		if (!metric_events) {
+			ret = -ENOMEM;
+			break;
+		}
+		evsel = find_evsel_group(perf_evlist, eg->ids, eg->idnum,
+					 metric_events);
+		if (!evsel) {
+			pr_debug("Cannot resolve %s: %s\n",
+					eg->metric_name, eg->metric_expr);
+			continue;
+		}
+		for (i = 0; i < eg->idnum; i++)
+			metric_events[i]->collect_stat = true;
+		me = metricgroup__lookup(metric_events_list, evsel, true);
+		if (!me) {
+			ret = -ENOMEM;
+			break;
+		}
+		expr = malloc(sizeof(struct metric_expr));
+		if (!expr) {
+			ret = -ENOMEM;
+			break;
+		}
+		expr->metric_expr = eg->metric_expr;
+		expr->metric_name = eg->metric_name;
+		expr->metric_events = metric_events;
+		list_add(&expr->nd, &me->head);
+>>>>>>> master
 	}
 	return false;
 }

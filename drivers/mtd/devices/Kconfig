@@ -188,7 +188,11 @@ comment "Disk-On-Chip Device Drivers"
 config MTD_DOCG3
 	tristate "M-Systems Disk-On-Chip G3"
 	select BCH
+<<<<<<< HEAD
 	select BCH_CONST_PARAMS if !MTD_NAND_ECC_SW_BCH
+=======
+	select BCH_CONST_PARAMS if !MTD_NAND_BCH
+>>>>>>> master
 	select BITREVERSE
 	help
 	  This provides an MTD device driver for the M-Systems DiskOnChip

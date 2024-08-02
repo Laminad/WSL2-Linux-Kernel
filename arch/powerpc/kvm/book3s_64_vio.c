@@ -677,6 +677,7 @@ long kvmppc_h_put_tce_indirect(struct kvm_vcpu *vcpu,
 			goto unlock_exit;
 	}
 
+<<<<<<< HEAD
 	for (i = 0; i < npages; ++i) {
 		/*
 		 * This looks unsafe, because we validate, then regrab
@@ -695,6 +696,11 @@ long kvmppc_h_put_tce_indirect(struct kvm_vcpu *vcpu,
 		tce = be64_to_cpu(tce);
 
 		if (kvmppc_tce_to_ua(vcpu->kvm, tce, &ua)) {
+=======
+		if (kvmppc_gpa_to_ua(vcpu->kvm,
+				tce & ~(TCE_PCI_READ | TCE_PCI_WRITE),
+				&ua, NULL)) {
+>>>>>>> master
 			ret = H_PARAMETER;
 			goto unlock_exit;
 		}

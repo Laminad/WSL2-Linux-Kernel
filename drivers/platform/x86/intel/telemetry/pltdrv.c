@@ -177,8 +177,13 @@ static struct telemetry_plt_config telem_glk_config = {
 };
 
 static const struct x86_cpu_id telemetry_cpu_ids[] = {
+<<<<<<< HEAD:drivers/platform/x86/intel/telemetry/pltdrv.c
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT,	&telem_apl_config),
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT_PLUS,	&telem_glk_config),
+=======
+	TELEM_CPU(INTEL_FAM6_ATOM_GOLDMONT, telem_apl_config),
+	TELEM_CPU(INTEL_FAM6_ATOM_GOLDMONT_PLUS, telem_glk_config),
+>>>>>>> master:drivers/platform/x86/intel_telemetry_pltdrv.c
 	{}
 };
 

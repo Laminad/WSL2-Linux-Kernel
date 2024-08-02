@@ -742,6 +742,41 @@ DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_NVIDIA, 0x0bf0, tegra_pcie_relax_enable);
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_NVIDIA, 0x0bf1, tegra_pcie_relax_enable);
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_NVIDIA, 0x0e1c, tegra_pcie_relax_enable);
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_NVIDIA, 0x0e1d, tegra_pcie_relax_enable);
+<<<<<<< HEAD
+=======
+
+static int tegra_pcie_request_resources(struct tegra_pcie *pcie)
+{
+	struct pci_host_bridge *host = pci_host_bridge_from_priv(pcie);
+	struct list_head *windows = &host->windows;
+	struct device *dev = pcie->dev;
+	int err;
+
+	pci_add_resource_offset(windows, &pcie->pio, pcie->offset.io);
+	pci_add_resource_offset(windows, &pcie->mem, pcie->offset.mem);
+	pci_add_resource_offset(windows, &pcie->prefetch, pcie->offset.mem);
+	pci_add_resource(windows, &pcie->busn);
+
+	err = devm_request_pci_bus_resources(dev, windows);
+	if (err < 0) {
+		pci_free_resource_list(windows);
+		return err;
+	}
+
+	pci_remap_iospace(&pcie->pio, pcie->io.start);
+
+	return 0;
+}
+
+static void tegra_pcie_free_resources(struct tegra_pcie *pcie)
+{
+	struct pci_host_bridge *host = pci_host_bridge_from_priv(pcie);
+	struct list_head *windows = &host->windows;
+
+	pci_unmap_iospace(&pcie->pio);
+	pci_free_resource_list(windows);
+}
+>>>>>>> master
 
 static int tegra_pcie_map_irq(const struct pci_dev *pdev, u8 slot, u8 pin)
 {

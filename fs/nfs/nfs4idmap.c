@@ -564,9 +564,18 @@ nfs_idmap_prepare_pipe_upcall(struct idmap *idmap,
 static void nfs_idmap_complete_pipe_upcall(struct idmap_legacy_upcalldata *data,
 					   int ret)
 {
+<<<<<<< HEAD
 	complete_request_key(data->authkey, ret);
 	key_put(data->authkey);
 	kfree(data);
+=======
+	struct key *authkey = idmap->idmap_upcall_data->authkey;
+
+	kfree(idmap->idmap_upcall_data);
+	idmap->idmap_upcall_data = NULL;
+	complete_request_key(authkey, ret);
+	key_put(authkey);
+>>>>>>> master
 }
 
 static void nfs_idmap_abort_pipe_upcall(struct idmap *idmap,
@@ -583,7 +592,11 @@ static int nfs_idmap_legacy_upcall(struct key *authkey, void *aux)
 	struct request_key_auth *rka = get_request_key_auth(authkey);
 	struct rpc_pipe_msg *msg;
 	struct idmap_msg *im;
+<<<<<<< HEAD
 	struct idmap *idmap = aux;
+=======
+	struct idmap *idmap = (struct idmap *)aux;
+>>>>>>> master
 	struct key *key = rka->target_key;
 	int ret = -ENOKEY;
 
@@ -667,7 +680,10 @@ idmap_pipe_downcall(struct file *filp, const char __user *src, size_t mlen)
 	struct request_key_auth *rka;
 	struct rpc_inode *rpci = RPC_I(file_inode(filp));
 	struct idmap *idmap = (struct idmap *)rpci->private;
+<<<<<<< HEAD
 	struct idmap_legacy_upcalldata *data;
+=======
+>>>>>>> master
 	struct key *authkey;
 	struct idmap_msg im;
 	size_t namelen_in;
@@ -681,7 +697,11 @@ idmap_pipe_downcall(struct file *filp, const char __user *src, size_t mlen)
 	if (data == NULL)
 		goto out_noupcall;
 
+<<<<<<< HEAD
 	authkey = data->authkey;
+=======
+	authkey = idmap->idmap_upcall_data->authkey;
+>>>>>>> master
 	rka = get_request_key_auth(authkey);
 
 	if (mlen != sizeof(im)) {
@@ -705,8 +725,14 @@ idmap_pipe_downcall(struct file *filp, const char __user *src, size_t mlen)
 		goto out;
 	}
 
+<<<<<<< HEAD
 	ret = nfs_idmap_read_and_verify_message(&im, &data->idmap_msg,
 						rka->target_key, authkey);
+=======
+	ret = nfs_idmap_read_and_verify_message(&im,
+			&idmap->idmap_upcall_data->idmap_msg,
+			rka->target_key, authkey);
+>>>>>>> master
 	if (ret >= 0) {
 		key_set_timeout(rka->target_key, nfs_idmap_cache_timeout);
 		ret = mlen;

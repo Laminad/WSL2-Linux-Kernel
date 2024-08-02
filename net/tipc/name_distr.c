@@ -245,8 +245,21 @@ static void tipc_publ_purge(struct net *net, struct publication *p, u32 addr)
 	if (_p)
 		tipc_node_unsubscribe(net, &_p->binding_node, addr);
 	spin_unlock_bh(&tn->nametbl_lock);
+<<<<<<< HEAD
 	if (_p)
 		kfree_rcu(_p, rcu);
+=======
+
+	if (p != publ) {
+		pr_err("Unable to remove publication from failed node\n"
+		       " (type=%u, lower=%u, node=0x%x, port=%u, key=%u)\n",
+		       publ->type, publ->lower, publ->node, publ->port,
+		       publ->key);
+	}
+
+	if (p)
+		kfree_rcu(p, rcu);
+>>>>>>> master
 }
 
 void tipc_publ_notify(struct net *net, struct list_head *nsub_list,

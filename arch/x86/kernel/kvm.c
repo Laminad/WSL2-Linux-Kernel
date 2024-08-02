@@ -535,8 +535,12 @@ static void __send_ipi_mask(const struct cpumask *mask, int vector)
 		} else {
 			ret = kvm_hypercall4(KVM_HC_SEND_IPI, (unsigned long)ipi_bitmap,
 				(unsigned long)(ipi_bitmap >> BITS_PER_LONG), min, icr);
+<<<<<<< HEAD
 			WARN_ONCE(ret < 0, "kvm-guest: failed to send PV IPI: %ld",
 				  ret);
+=======
+			WARN_ONCE(ret < 0, "KVM: failed to send PV IPI: %ld", ret);
+>>>>>>> master
 			min = max = apic_id;
 			ipi_bitmap = 0;
 		}
@@ -546,8 +550,12 @@ static void __send_ipi_mask(const struct cpumask *mask, int vector)
 	if (ipi_bitmap) {
 		ret = kvm_hypercall4(KVM_HC_SEND_IPI, (unsigned long)ipi_bitmap,
 			(unsigned long)(ipi_bitmap >> BITS_PER_LONG), min, icr);
+<<<<<<< HEAD
 		WARN_ONCE(ret < 0, "kvm-guest: failed to send PV IPI: %ld",
 			  ret);
+=======
+		WARN_ONCE(ret < 0, "KVM: failed to send PV IPI: %ld", ret);
+>>>>>>> master
 	}
 
 	local_irq_restore(flags);
@@ -1061,6 +1069,42 @@ static void kvm_wait(u8 *ptr, u8 val)
 	}
 }
 
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_X86_32
+__visible bool __kvm_vcpu_is_preempted(long cpu)
+{
+	struct kvm_steal_time *src = &per_cpu(steal_time, cpu);
+
+	return !!(src->preempted & KVM_VCPU_PREEMPTED);
+}
+PV_CALLEE_SAVE_REGS_THUNK(__kvm_vcpu_is_preempted);
+
+#else
+
+#include <asm/asm-offsets.h>
+
+extern bool __raw_callee_save___kvm_vcpu_is_preempted(long);
+
+/*
+ * Hand-optimize version for x86-64 to avoid 8 64-bit register saving and
+ * restoring to/from the stack.
+ */
+asm(
+".pushsection .text;"
+".global __raw_callee_save___kvm_vcpu_is_preempted;"
+".type __raw_callee_save___kvm_vcpu_is_preempted, @function;"
+"__raw_callee_save___kvm_vcpu_is_preempted:"
+"movq	__per_cpu_offset(,%rdi,8), %rax;"
+"cmpb	$0, " __stringify(KVM_STEAL_TIME_preempted) "+steal_time(%rax);"
+"setne	%al;"
+"ret;"
+".size __raw_callee_save___kvm_vcpu_is_preempted, .-__raw_callee_save___kvm_vcpu_is_preempted;"
+".popsection");
+
+#endif
+
+>>>>>>> master
 /*
  * Setup pv_lock_ops to exploit KVM_FEATURE_PV_UNHALT if present.
  */

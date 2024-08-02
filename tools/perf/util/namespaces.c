@@ -17,8 +17,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <asm/bug.h>
+<<<<<<< HEAD
 #include <linux/kernel.h>
 #include <linux/zalloc.h>
+=======
+>>>>>>> master
 
 static const char *perf_ns__names[] = {
 	[NET_NS_INDEX]		= "net",
@@ -294,6 +297,13 @@ void nsinfo__mountns_enter(struct nsinfo *nsi,
 	oldcwd = get_current_dir_name();
 	if (!oldcwd)
 		return;
+<<<<<<< HEAD
+=======
+
+	oldns = open(curpath, O_RDONLY);
+	if (oldns < 0)
+		goto errout;
+>>>>>>> master
 
 	oldns = open(curpath, O_RDONLY);
 	if (oldns < 0)

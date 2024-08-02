@@ -259,7 +259,10 @@ static int radeon_pci_probe(struct pci_dev *pdev,
 			    const struct pci_device_id *ent)
 {
 	unsigned long flags = 0;
+<<<<<<< HEAD
 	struct drm_device *dev;
+=======
+>>>>>>> master
 	int ret;
 
 	if (!ent)

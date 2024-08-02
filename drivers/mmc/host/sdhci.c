@@ -1564,9 +1564,14 @@ static void __sdhci_finish_data(struct sdhci_host *host, bool sw_data_timeout)
 	 */
 	if (data->error) {
 		if (!host->cmd || host->cmd == data_cmd)
+<<<<<<< HEAD
 			sdhci_reset_for(host, REQUEST_ERROR);
 		else
 			sdhci_reset_for(host, REQUEST_ERROR_DATA_ONLY);
+=======
+			sdhci_do_reset(host, SDHCI_RESET_CMD);
+		sdhci_do_reset(host, SDHCI_RESET_DATA);
+>>>>>>> master
 	}
 
 	if ((host->flags & (SDHCI_REQ_USE_DMA | SDHCI_USE_ADMA)) ==
@@ -1591,8 +1596,13 @@ static void __sdhci_finish_data(struct sdhci_host *host, bool sw_data_timeout)
 	 * b) error in multiblock transfer
 	 */
 	if (data->stop &&
+<<<<<<< HEAD
 	    ((!data->mrq->sbc && !sdhci_auto_cmd12(host, data->mrq)) ||
 	     data->error)) {
+=======
+	    (data->error ||
+	     !data->mrq->sbc)) {
+>>>>>>> master
 		/*
 		 * 'cap_cmd_during_tfr' request must not use the command line
 		 * after mmc_command_done() has been called. It is upper layer's
@@ -1982,8 +1992,13 @@ void sdhci_enable_clk(struct sdhci_host *host, u16 clk)
 	clk |= SDHCI_CLOCK_INT_EN;
 	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
 
+<<<<<<< HEAD
 	/* Wait max 150 ms */
 	timeout = ktime_add_ms(ktime_get(), 150);
+=======
+	/* Wait max 20 ms */
+	timeout = ktime_add_ms(ktime_get(), 20);
+>>>>>>> master
 	while (1) {
 		bool timedout = ktime_after(ktime_get(), timeout);
 
@@ -2271,7 +2286,9 @@ void sdhci_set_uhs_signaling(struct sdhci_host *host, unsigned timing)
 		ctrl_2 |= SDHCI_CTRL_UHS_SDR104;
 	else if (timing == MMC_TIMING_UHS_SDR12)
 		ctrl_2 |= SDHCI_CTRL_UHS_SDR12;
-	else if (timing == MMC_TIMING_UHS_SDR25)
+	else if (timing == MMC_TIMING_SD_HS ||
+		 timing == MMC_TIMING_MMC_HS ||
+		 timing == MMC_TIMING_UHS_SDR25)
 		ctrl_2 |= SDHCI_CTRL_UHS_SDR25;
 	else if (timing == MMC_TIMING_UHS_SDR50)
 		ctrl_2 |= SDHCI_CTRL_UHS_SDR50;
@@ -3298,9 +3315,13 @@ static void sdhci_cmd_irq(struct sdhci_host *host, u32 intmask, u32 *intmask_p)
 			sdhci_err_stats_inc(host, CMD_TIMEOUT);
 		} else {
 			host->cmd->error = -EILSEQ;
+<<<<<<< HEAD
 			if (!mmc_op_tuning(host->cmd->opcode))
 				sdhci_err_stats_inc(host, CMD_CRC);
 		}
+=======
+
+>>>>>>> master
 		/* Treat data command CRC error the same as data CRC error */
 		if (host->cmd->data &&
 		    (intmask & (SDHCI_INT_CRC | SDHCI_INT_TIMEOUT)) ==
@@ -3322,11 +3343,17 @@ static void sdhci_cmd_irq(struct sdhci_host *host, u32 intmask, u32 *intmask_p)
 			  -ETIMEDOUT :
 			  -EILSEQ;
 
+<<<<<<< HEAD
 		sdhci_err_stats_inc(host, AUTO_CMD);
 
 		if (sdhci_auto_cmd23(host, mrq)) {
 			mrq->sbc->error = err;
 			__sdhci_finish_mrq(host, mrq);
+=======
+		if (mrq->sbc && (host->flags & SDHCI_AUTO_CMD23)) {
+			mrq->sbc->error = err;
+			sdhci_finish_mrq(host, mrq);
+>>>>>>> master
 			return;
 		}
 	}
@@ -3442,6 +3469,7 @@ static void sdhci_data_irq(struct sdhci_host *host, u32 intmask)
 		SDHCI_GET_CMD(sdhci_readw(host, SDHCI_COMMAND))
 			!= MMC_BUS_TEST_R) {
 		host->data->error = -EILSEQ;
+<<<<<<< HEAD
 		if (!mmc_op_tuning(SDHCI_GET_CMD(sdhci_readw(host, SDHCI_COMMAND))))
 			sdhci_err_stats_inc(host, DAT_CRC);
 		if (intmask & SDHCI_INT_TUNING_ERROR) {
@@ -3451,6 +3479,9 @@ static void sdhci_data_irq(struct sdhci_host *host, u32 intmask)
 			sdhci_writew(host, ctrl2, SDHCI_HOST_CONTROL2);
 		}
 	} else if (intmask & SDHCI_INT_ADMA_ERROR) {
+=======
+	else if (intmask & SDHCI_INT_ADMA_ERROR) {
+>>>>>>> master
 		pr_err("%s: ADMA error: 0x%08x\n", mmc_hostname(host->mmc),
 		       intmask);
 		sdhci_adma_show_error(host);

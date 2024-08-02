@@ -310,7 +310,11 @@ static void snapshot_buf(struct msm_rd_state *rd,
 		struct msm_gem_submit *submit, int idx,
 		uint64_t iova, uint32_t size, bool full)
 {
+<<<<<<< HEAD
 	struct drm_gem_object *obj = submit->bos[idx].obj;
+=======
+	struct msm_gem_object *obj = submit->bos[idx].obj;
+>>>>>>> master
 	unsigned offset = 0;
 	const char *buf;
 

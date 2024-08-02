@@ -150,6 +150,7 @@
 	cpu0-supply = <&buck2_reg>;
 };
 
+<<<<<<< HEAD:arch/arm/boot/dts/samsung/exynos4412-odroid-common.dtsi
 &cpu0_opp_table {
 	opp-1000000000 {
 		opp-suspend;
@@ -174,6 +175,8 @@
 	};
 };
 
+=======
+>>>>>>> master:arch/arm/boot/dts/exynos4412-odroid-common.dtsi
 &pinctrl_1 {
 	gpio_power_key: power-key-pins {
 		samsung,pins = "gpx1-3";
@@ -192,7 +195,11 @@
 		samsung,pin-pud = <EXYNOS_PIN_PULL_DOWN>;
 	};
 
+<<<<<<< HEAD:arch/arm/boot/dts/samsung/exynos4412-odroid-common.dtsi
 	emmc_rstn: emmc-rstn-pins {
+=======
+	emmc_rstn: emmc-rstn {
+>>>>>>> master:arch/arm/boot/dts/exynos4412-odroid-common.dtsi
 		samsung,pins = "gpk1-2";
 		samsung,pin-pud = <EXYNOS_PIN_PULL_NONE>;
 	};

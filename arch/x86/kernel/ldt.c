@@ -355,7 +355,11 @@ static void unmap_ldt_struct(struct mm_struct *mm, struct ldt_struct *ldt)
 		return;
 
 	/* LDT map/unmap is only required for PTI */
+<<<<<<< HEAD
 	if (!boot_cpu_has(X86_FEATURE_PTI))
+=======
+	if (!static_cpu_has(X86_FEATURE_PTI))
+>>>>>>> master
 		return;
 
 	nr_pages = DIV_ROUND_UP(ldt->nr_entries * LDT_ENTRY_SIZE, PAGE_SIZE);
@@ -367,6 +371,7 @@ static void unmap_ldt_struct(struct mm_struct *mm, struct ldt_struct *ldt)
 
 		va = (unsigned long)ldt_slot_va(ldt->slot) + offset;
 		ptep = get_locked_pte(mm, va, &ptl);
+<<<<<<< HEAD
 		if (!WARN_ON_ONCE(!ptep)) {
 			pte_clear(mm, va, ptep);
 			pte_unmap_unlock(ptep, ptl);
@@ -375,6 +380,14 @@ static void unmap_ldt_struct(struct mm_struct *mm, struct ldt_struct *ldt)
 
 	va = (unsigned long)ldt_slot_va(ldt->slot);
 	flush_tlb_mm_range(mm, va, va + nr_pages * PAGE_SIZE, PAGE_SHIFT, false);
+=======
+		pte_clear(mm, va, ptep);
+		pte_unmap_unlock(ptep, ptl);
+	}
+
+	va = (unsigned long)ldt_slot_va(ldt->slot);
+	flush_tlb_mm_range(mm, va, va + nr_pages * PAGE_SIZE, 0);
+>>>>>>> master
 }
 
 #else /* !CONFIG_PAGE_TABLE_ISOLATION */

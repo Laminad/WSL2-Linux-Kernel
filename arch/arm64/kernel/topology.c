@@ -45,9 +45,12 @@ int __init parse_acpi_topology(void)
 {
 	int cpu, topology_id;
 
+<<<<<<< HEAD
 	if (acpi_disabled)
 		return 0;
 
+=======
+>>>>>>> master
 	for_each_possible_cpu(cpu) {
 		topology_id = find_acpi_cpu_topology(cpu, 0);
 		if (topology_id < 0)

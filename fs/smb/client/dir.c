@@ -108,9 +108,17 @@ char *__build_path_from_dentry_optional_prefix(struct dentry *direntry, void *pa
 		return ERR_PTR(-ENAMETOOLONG);
 	if (pplen) {
 		cifs_dbg(FYI, "using cifs_sb prepath <%s>\n", cifs_sb->prepath);
+<<<<<<< HEAD:fs/smb/client/dir.c
 		s -= pplen;
 		memcpy(s + 1, cifs_sb->prepath, pplen - 1);
 		*s = '/';
+=======
+		memcpy(full_path+dfsplen+1, cifs_sb->prepath, pplen-1);
+		full_path[dfsplen] = dirsep;
+		for (i = 0; i < pplen-1; i++)
+			if (full_path[dfsplen+1+i] == '/')
+				full_path[dfsplen+1+i] = CIFS_DIR_SEP(cifs_sb);
+>>>>>>> master:fs/cifs/dir.c
 	}
 	if (dirsep != '/') {
 		/* BB test paths to Windows with '/' in the midst of prepath */
@@ -740,7 +748,10 @@ static int
 cifs_d_revalidate(struct dentry *direntry, unsigned int flags)
 {
 	struct inode *inode;
+<<<<<<< HEAD:fs/smb/client/dir.c
 	int rc;
+=======
+>>>>>>> master:fs/cifs/dir.c
 
 	if (flags & LOOKUP_RCU)
 		return -ECHILD;
@@ -750,6 +761,7 @@ cifs_d_revalidate(struct dentry *direntry, unsigned int flags)
 		if ((flags & LOOKUP_REVAL) && !CIFS_CACHE_READ(CIFS_I(inode)))
 			CIFS_I(inode)->time = 0; /* force reval */
 
+<<<<<<< HEAD:fs/smb/client/dir.c
 		rc = cifs_revalidate_dentry(direntry);
 		if (rc) {
 			cifs_dbg(FYI, "cifs_revalidate_dentry failed with rc=%d", rc);
@@ -769,6 +781,10 @@ cifs_d_revalidate(struct dentry *direntry, unsigned int flags)
 				return rc;
 			}
 		}
+=======
+		if (cifs_revalidate_dentry(direntry))
+			return 0;
+>>>>>>> master:fs/cifs/dir.c
 		else {
 			/*
 			 * If the inode wasn't known to be a dfs entry when

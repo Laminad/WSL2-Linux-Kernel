@@ -310,6 +310,7 @@ static int mlx5_query_module_id(struct mlx5_core_dev *dev, int module_num,
 	if (err)
 		return err;
 
+<<<<<<< HEAD
 	status = MLX5_GET(mcia_reg, out, status);
 	if (status) {
 		mlx5_core_err(dev, "query_mcia_reg failed: status: 0x%x\n",
@@ -381,6 +382,17 @@ static int mlx5_query_mcia(struct mlx5_core_dev *dev,
 	u16 size;
 
 	size = min_t(int, params->size, mlx5_mcia_max_bytes(dev));
+=======
+	memset(in, 0, sizeof(in));
+	size = min_t(int, size, MLX5_EEPROM_MAX_BYTES);
+
+	if (offset < MLX5_EEPROM_PAGE_LENGTH &&
+	    offset + size > MLX5_EEPROM_PAGE_LENGTH)
+		/* Cross pages read, read until offset 256 in low page */
+		size -= offset + size - MLX5_EEPROM_PAGE_LENGTH;
+
+	i2c_addr = MLX5_I2C_ADDR_LOW;
+>>>>>>> master
 
 	MLX5_SET(mcia_reg, in, l, 0);
 	MLX5_SET(mcia_reg, in, size, size);

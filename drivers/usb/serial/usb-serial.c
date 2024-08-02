@@ -357,6 +357,11 @@ static void serial_cleanup(struct tty_struct *tty)
 	serial = port->serial;
 	owner = serial->type->driver.owner;
 
+<<<<<<< HEAD
+=======
+	usb_autopm_put_interface(serial->interface);
+
+>>>>>>> master
 	usb_serial_put(serial);
 	module_put(owner);
 }

@@ -735,13 +735,18 @@ void rxrpc_destroy_all_calls(struct rxrpc_net *rxnet)
 	_enter("");
 
 	if (!list_empty(&rxnet->calls)) {
+<<<<<<< HEAD
 		spin_lock(&rxnet->call_lock);
+=======
+		write_lock(&rxnet->call_lock);
+>>>>>>> master
 
 		while (!list_empty(&rxnet->calls)) {
 			call = list_entry(rxnet->calls.next,
 					  struct rxrpc_call, link);
 			_debug("Zapping call %p", call);
 
+<<<<<<< HEAD
 			rxrpc_see_call(call, rxrpc_call_see_zap);
 			list_del_init(&call->link);
 
@@ -756,6 +761,22 @@ void rxrpc_destroy_all_calls(struct rxrpc_net *rxnet)
 		}
 
 		spin_unlock(&rxnet->call_lock);
+=======
+			rxrpc_see_call(call);
+			list_del_init(&call->link);
+
+			pr_err("Call %p still in use (%d,%s,%lx,%lx)!\n",
+			       call, atomic_read(&call->usage),
+			       rxrpc_call_states[call->state],
+			       call->flags, call->events);
+
+			write_unlock(&rxnet->call_lock);
+			cond_resched();
+			write_lock(&rxnet->call_lock);
+		}
+
+		write_unlock(&rxnet->call_lock);
+>>>>>>> master
 	}
 
 	atomic_dec(&rxnet->nr_calls);

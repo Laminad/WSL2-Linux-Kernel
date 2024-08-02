@@ -142,8 +142,12 @@ int amdgpu_fence_emit(struct amdgpu_ring *ring, struct dma_fence **f, struct amd
 		      unsigned int flags)
 {
 	struct amdgpu_device *adev = ring->adev;
+<<<<<<< HEAD
 	struct dma_fence *fence;
 	struct amdgpu_fence *am_fence;
+=======
+	struct amdgpu_fence *fence;
+>>>>>>> master
 	struct dma_fence __rcu **ptr;
 	uint32_t seq;
 	int r;
@@ -199,6 +203,7 @@ int amdgpu_fence_emit(struct amdgpu_ring *ring, struct dma_fence **f, struct amd
 		}
 	}
 
+<<<<<<< HEAD
 	to_amdgpu_fence(fence)->start_timestamp = ktime_get();
 
 	/* This function can't be called concurrently anyway, otherwise
@@ -207,6 +212,14 @@ int amdgpu_fence_emit(struct amdgpu_ring *ring, struct dma_fence **f, struct amd
 	rcu_assign_pointer(*ptr, dma_fence_get(fence));
 
 	*f = fence;
+=======
+	/* This function can't be called concurrently anyway, otherwise
+	 * emitting the fence would mess up the hardware ring buffer.
+	 */
+	rcu_assign_pointer(*ptr, dma_fence_get(&fence->base));
+
+	*f = &fence->base;
+>>>>>>> master
 
 	return 0;
 }

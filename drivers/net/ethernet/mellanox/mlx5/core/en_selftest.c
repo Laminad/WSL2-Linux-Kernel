@@ -35,7 +35,34 @@
 #include <net/udp.h>
 #include "en.h"
 #include "en/port.h"
+<<<<<<< HEAD
 #include "eswitch.h"
+=======
+
+enum {
+	MLX5E_ST_LINK_STATE,
+	MLX5E_ST_LINK_SPEED,
+	MLX5E_ST_HEALTH_INFO,
+#ifdef CONFIG_INET
+	MLX5E_ST_LOOPBACK,
+#endif
+	MLX5E_ST_NUM,
+};
+
+const char mlx5e_self_tests[MLX5E_ST_NUM][ETH_GSTRING_LEN] = {
+	"Link Test",
+	"Speed Test",
+	"Health Test",
+#ifdef CONFIG_INET
+	"Loopback Test",
+#endif
+};
+
+int mlx5e_self_test_num(struct mlx5e_priv *priv)
+{
+	return ARRAY_SIZE(mlx5e_self_tests);
+}
+>>>>>>> master
 
 static int mlx5e_test_health_info(struct mlx5e_priv *priv)
 {

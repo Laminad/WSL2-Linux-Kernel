@@ -714,11 +714,19 @@ out:
 static int geneve_open(struct net_device *dev)
 {
 	struct geneve_dev *geneve = netdev_priv(dev);
+<<<<<<< HEAD
 	bool metadata = geneve->cfg.collect_md;
 	bool ipv4, ipv6;
 	int ret = 0;
 
 	ipv6 = geneve->cfg.info.mode & IP_TUNNEL_INFO_IPV6 || metadata;
+=======
+	bool metadata = geneve->collect_md;
+	bool ipv4, ipv6;
+	int ret = 0;
+
+	ipv6 = geneve->info.mode & IP_TUNNEL_INFO_IPV6 || metadata;
+>>>>>>> master
 	ipv4 = !ipv6 || metadata;
 #if IS_ENABLED(CONFIG_IPV6)
 	if (ipv6) {

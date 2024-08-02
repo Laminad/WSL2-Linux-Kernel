@@ -969,8 +969,13 @@ dma_chan_prep_dma_memcpy(struct dma_chan *dchan, dma_addr_t dst_adr,
 	return vchan_tx_prep(&chan->vc, &desc->vd, flags);
 
 err_desc_get:
+<<<<<<< HEAD
 	if (desc)
 		axi_desc_put(desc);
+=======
+	if (first)
+		axi_desc_put(first);
+>>>>>>> master
 	return NULL;
 }
 

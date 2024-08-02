@@ -227,18 +227,28 @@ static inline const char *f2fs_xattr_prefix(int index,
 }
 
 static struct f2fs_xattr_entry *__find_xattr(void *base_addr,
+<<<<<<< HEAD
 				void *last_base_addr, void **last_addr,
 				int index, size_t len, const char *name)
+=======
+				void *last_base_addr, int index,
+				size_t len, const char *name)
+>>>>>>> master
 {
 	struct f2fs_xattr_entry *entry;
 
 	list_for_each_xattr(entry, base_addr) {
 		if ((void *)(entry) + sizeof(__u32) > last_base_addr ||
+<<<<<<< HEAD
 			(void *)XATTR_NEXT_ENTRY(entry) > last_base_addr) {
 			if (last_addr)
 				*last_addr = entry;
 			return NULL;
 		}
+=======
+			(void *)XATTR_NEXT_ENTRY(entry) > last_base_addr)
+			return NULL;
+>>>>>>> master
 
 		if (entry->e_name_index != index)
 			continue;
@@ -258,9 +268,31 @@ static struct f2fs_xattr_entry *__find_inline_xattr(struct inode *inode,
 	unsigned int inline_size = inline_xattr_size(inode);
 	void *max_addr = base_addr + inline_size;
 
+<<<<<<< HEAD
 	entry = __find_xattr(base_addr, max_addr, last_addr, index, len, name);
 	if (!entry)
 		return NULL;
+
+	/* inline xattr header or entry across max inline xattr size */
+	if (IS_XATTR_LAST_ENTRY(entry) &&
+		(void *)entry + sizeof(__u32) > max_addr) {
+		*last_addr = entry;
+		return NULL;
+=======
+	list_for_each_xattr(entry, base_addr) {
+		if ((void *)entry + sizeof(__u32) > max_addr ||
+			(void *)XATTR_NEXT_ENTRY(entry) > max_addr) {
+			*last_addr = entry;
+			return NULL;
+		}
+		if (entry->e_name_index != index)
+			continue;
+		if (entry->e_name_len != len)
+			continue;
+		if (!memcmp(entry->e_name, name, len))
+			break;
+>>>>>>> master
+	}
 
 	/* inline xattr header or entry across max inline xattr size */
 	if (IS_XATTR_LAST_ENTRY(entry) &&
@@ -317,8 +349,12 @@ static int read_xattr_block(struct inode *inode, void *txattr_addr)
 static int lookup_all_xattrs(struct inode *inode, struct page *ipage,
 				unsigned int index, unsigned int len,
 				const char *name, struct f2fs_xattr_entry **xe,
+<<<<<<< HEAD
 				void **base_addr, int *base_size,
 				bool *is_inline)
+=======
+				void **base_addr, int *base_size)
+>>>>>>> master
 {
 	void *cur_addr, *txattr_addr, *last_txattr_addr;
 	void *last_addr = NULL;
@@ -329,12 +365,21 @@ static int lookup_all_xattrs(struct inode *inode, struct page *ipage,
 	if (!xnid && !inline_size)
 		return -ENODATA;
 
+<<<<<<< HEAD
 	*base_size = XATTR_SIZE(inode) + XATTR_PADDING_SIZE;
 	txattr_addr = xattr_alloc(F2FS_I_SB(inode), *base_size, is_inline);
 	if (!txattr_addr)
 		return -ENOMEM;
 
 	last_txattr_addr = (void *)txattr_addr + XATTR_SIZE(inode);
+=======
+	*base_size = XATTR_SIZE(xnid, inode) + XATTR_PADDING_SIZE;
+	txattr_addr = f2fs_kzalloc(F2FS_I_SB(inode), *base_size, GFP_NOFS);
+	if (!txattr_addr)
+		return -ENOMEM;
+
+	last_txattr_addr = (void *)txattr_addr + XATTR_SIZE(xnid, inode);
+>>>>>>> master
 
 	/* read from inline xattr */
 	if (inline_size) {
@@ -362,6 +407,7 @@ static int lookup_all_xattrs(struct inode *inode, struct page *ipage,
 	else
 		cur_addr = txattr_addr;
 
+<<<<<<< HEAD
 	*xe = __find_xattr(cur_addr, last_txattr_addr, NULL, index, len, name);
 	if (!*xe) {
 		f2fs_err(F2FS_I_SB(inode), "lookup inode (%lu) has corrupted xattr",
@@ -370,6 +416,11 @@ static int lookup_all_xattrs(struct inode *inode, struct page *ipage,
 		err = -ENODATA;
 		f2fs_handle_error(F2FS_I_SB(inode),
 					ERROR_CORRUPTED_XATTR);
+=======
+	*xe = __find_xattr(cur_addr, last_txattr_addr, index, len, name);
+	if (!*xe) {
+		err = -EFSCORRUPTED;
+>>>>>>> master
 		goto out;
 	}
 check:
@@ -519,7 +570,10 @@ int f2fs_getxattr(struct inode *inode, int index, const char *name,
 	unsigned int size, len;
 	void *base_addr = NULL;
 	int base_size;
+<<<<<<< HEAD
 	bool is_inline;
+=======
+>>>>>>> master
 
 	if (name == NULL)
 		return -EINVAL;
@@ -531,9 +585,14 @@ int f2fs_getxattr(struct inode *inode, int index, const char *name,
 	if (!ipage)
 		f2fs_down_read(&F2FS_I(inode)->i_xattr_sem);
 	error = lookup_all_xattrs(inode, ipage, index, len, name,
+<<<<<<< HEAD
 				&entry, &base_addr, &base_size, &is_inline);
 	if (!ipage)
 		f2fs_up_read(&F2FS_I(inode)->i_xattr_sem);
+=======
+				&entry, &base_addr, &base_size);
+	up_read(&F2FS_I(inode)->i_xattr_sem);
+>>>>>>> master
 	if (error)
 		return error;
 
@@ -631,6 +690,10 @@ static int __f2fs_setxattr(struct inode *inode, int index,
 {
 	struct f2fs_xattr_entry *here, *last;
 	void *base_addr, *last_base_addr;
+<<<<<<< HEAD
+=======
+	nid_t xnid = F2FS_I(inode)->i_xattr_nid;
+>>>>>>> master
 	int found, newsize;
 	size_t len;
 	__u32 new_hsize;
@@ -654,6 +717,7 @@ retry:
 	if (error)
 		return error;
 
+<<<<<<< HEAD
 	last_base_addr = (void *)base_addr + XATTR_SIZE(inode);
 
 	/* find entry with wanted name. */
@@ -675,6 +739,14 @@ retry:
 		error = -EFSCORRUPTED;
 		f2fs_handle_error(F2FS_I_SB(inode),
 					ERROR_CORRUPTED_XATTR);
+=======
+	last_base_addr = (void *)base_addr + XATTR_SIZE(xnid, inode);
+
+	/* find entry with wanted name. */
+	here = __find_xattr(base_addr, last_base_addr, index, len, name);
+	if (!here) {
+		error = -EFSCORRUPTED;
+>>>>>>> master
 		goto exit;
 	}
 

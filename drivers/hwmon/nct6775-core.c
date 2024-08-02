@@ -3557,7 +3557,11 @@ int nct6775_probe(struct device *dev, struct nct6775_data *data,
 		data->REG_FAN_TIME[1] = NCT6106_REG_FAN_STEP_UP_TIME;
 		data->REG_FAN_TIME[2] = NCT6106_REG_FAN_STEP_DOWN_TIME;
 		data->REG_TOLERANCE_H = NCT6106_REG_TOLERANCE_H;
+<<<<<<< HEAD:drivers/hwmon/nct6775-core.c
 		data->REG_PWM[0] = NCT6116_REG_PWM;
+=======
+		data->REG_PWM[0] = NCT6106_REG_PWM;
+>>>>>>> master:drivers/hwmon/nct6775.c
 		data->REG_PWM[1] = NCT6106_REG_FAN_START_OUTPUT;
 		data->REG_PWM[2] = NCT6106_REG_FAN_STOP_OUTPUT;
 		data->REG_PWM[5] = NCT6106_REG_WEIGHT_DUTY_STEP;

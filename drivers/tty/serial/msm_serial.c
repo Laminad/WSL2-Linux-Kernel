@@ -395,8 +395,13 @@ static inline void msm_wait_for_xmitr(struct uart_port *port)
 {
 	unsigned int timeout = 500000;
 
+<<<<<<< HEAD
 	while (!(msm_read(port, MSM_UART_SR) & MSM_UART_SR_TX_EMPTY)) {
 		if (msm_read(port, MSM_UART_ISR) & MSM_UART_ISR_TX_READY)
+=======
+	while (!(msm_read(port, UART_SR) & UART_SR_TX_EMPTY)) {
+		if (msm_read(port, UART_ISR) & UART_ISR_TX_READY)
+>>>>>>> master
 			break;
 		udelay(1);
 		if (!timeout--)
@@ -894,6 +899,8 @@ static void msm_handle_tx(struct uart_port *port)
 			tf = port->membase + UARTDM_TF;
 		else
 			tf = port->membase + MSM_UART_TF;
+
+		buf[0] = port->x_char;
 
 		buf[0] = port->x_char;
 

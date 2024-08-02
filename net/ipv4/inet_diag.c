@@ -109,6 +109,15 @@ static size_t inet_sk_attr_size(struct sock *sk,
 		aux = handler->idiag_get_aux_size(sk, net_admin);
 
 	return	  nla_total_size(sizeof(struct tcp_info))
+<<<<<<< HEAD
+=======
+		+ nla_total_size(1) /* INET_DIAG_SHUTDOWN */
+		+ nla_total_size(1) /* INET_DIAG_TOS */
+		+ nla_total_size(1) /* INET_DIAG_TCLASS */
+		+ nla_total_size(4) /* INET_DIAG_MARK */
+		+ nla_total_size(4) /* INET_DIAG_CLASS_ID */
+		+ nla_total_size(sizeof(struct inet_diag_meminfo))
+>>>>>>> master
 		+ nla_total_size(sizeof(struct inet_diag_msg))
 		+ inet_diag_msg_attrs_size()
 		+ nla_total_size(sizeof(struct inet_diag_meminfo))
@@ -359,6 +368,7 @@ int inet_sk_diag_fill(struct sock *sk, struct inet_connection_sock *icsk,
 			goto errout;
 	}
 
+<<<<<<< HEAD
 	/* Keep it at the end for potential retry with a larger skb,
 	 * or else do best-effort fitting, which is only done for the
 	 * first_nlmsg.
@@ -374,6 +384,21 @@ int inet_sk_diag_fill(struct sock *sk, struct inet_connection_sock *icsk,
 		err = bpf_sk_storage_diag_put(cb_data->bpf_stg_diag, sk, skb,
 					      INET_DIAG_SK_BPF_STORAGES,
 					      &total_nla_size);
+=======
+	if (ext & (1 << (INET_DIAG_CLASS_ID - 1)) ||
+	    ext & (1 << (INET_DIAG_TCLASS - 1))) {
+		u32 classid = 0;
+
+#ifdef CONFIG_SOCK_CGROUP_DATA
+		classid = sock_cgroup_classid(&sk->sk_cgrp_data);
+#endif
+		/* Fallback to socket priority if class id isn't set.
+		 * Classful qdiscs use it as direct reference to class.
+		 * For cgroup2 classid is always zero.
+		 */
+		if (!classid)
+			classid = sk->sk_priority;
+>>>>>>> master
 
 		if (!err)
 			goto out;

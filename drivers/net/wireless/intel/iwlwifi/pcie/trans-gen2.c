@@ -340,10 +340,14 @@ void iwl_trans_pcie_gen2_fw_alive(struct iwl_trans *trans, u32 scd_addr)
 	/* now that we got alive we can free the fw image & the context info.
 	 * paging memory cannot be freed included since FW will still use it
 	 */
+<<<<<<< HEAD
 	if (trans->trans_cfg->device_family >= IWL_DEVICE_FAMILY_AX210)
 		iwl_pcie_ctxt_info_gen3_free(trans, true);
 	else
 		iwl_pcie_ctxt_info_free(trans);
+=======
+	iwl_pcie_ctxt_info_free(trans);
+>>>>>>> master
 
 	/*
 	 * Re-enable all the interrupts, including the RF-Kill one, now that
@@ -352,6 +356,7 @@ void iwl_trans_pcie_gen2_fw_alive(struct iwl_trans *trans, u32 scd_addr)
 	iwl_enable_interrupts(trans);
 	mutex_lock(&trans_pcie->mutex);
 	iwl_pcie_check_hw_rf_kill(trans);
+<<<<<<< HEAD
 
 	iwl_pcie_get_rf_name(trans);
 	mutex_unlock(&trans_pcie->mutex);
@@ -442,6 +447,9 @@ static void iwl_pcie_spin_for_iml(struct iwl_trans *trans)
 	 * we're all happy - but if not we'll fail on alive timeout or get some
 	 * other error out.
 	 */
+=======
+	mutex_unlock(&trans_pcie->mutex);
+>>>>>>> master
 }
 
 int iwl_trans_pcie_gen2_start_fw(struct iwl_trans *trans,

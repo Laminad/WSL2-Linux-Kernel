@@ -63,11 +63,23 @@ static int page_array_alloc(struct page_array *pa, unsigned int len)
 	if (len == 0)
 		return -EINVAL;
 
+<<<<<<< HEAD
 	pa->pa_nr = len;
 
 	pa->pa_iova = kcalloc(len, sizeof(*pa->pa_iova), GFP_KERNEL);
 	if (!pa->pa_iova)
 		return -ENOMEM;
+=======
+	pa->pa_iova_pfn = kcalloc(pa->pa_nr,
+				  sizeof(*pa->pa_iova_pfn) +
+				  sizeof(*pa->pa_pfn),
+				  GFP_KERNEL);
+	if (unlikely(!pa->pa_iova_pfn)) {
+		pa->pa_nr = 0;
+		return -ENOMEM;
+	}
+	pa->pa_pfn = pa->pa_iova_pfn + pa->pa_nr;
+>>>>>>> master
 
 	pa->pa_page = kcalloc(len, sizeof(*pa->pa_page), GFP_KERNEL);
 	if (!pa->pa_page) {
@@ -388,7 +400,16 @@ static int ccwchain_calc_length(u64 iova, struct channel_program *cp)
 		 * the TIC can either jump to the TIC or a CCW immediately
 		 * after the TIC, depending on the results of its operation.
 		 */
+<<<<<<< HEAD
 		if (!ccw_is_chain(ccw) && !is_tic_within_range(ccw, iova, cnt))
+=======
+		if ((!cp->orb.cmd.c64 || cp->orb.cmd.i2k) && ccw_is_idal(ccw)) {
+			kfree(p);
+			return -EOPNOTSUPP;
+		}
+
+		if ((!ccw_is_chain(ccw)) && (!ccw_is_tic(ccw)))
+>>>>>>> master
 			break;
 
 		ccw++;
@@ -630,7 +651,11 @@ static int ccwchain_fetch_ccw(struct ccw1 *ccw,
 	 */
 	ret = page_array_alloc(pa, idaw_nr);
 	if (ret < 0)
+<<<<<<< HEAD
 		goto out_free_idaws;
+=======
+		goto out_unpin;
+>>>>>>> master
 
 	/*
 	 * Copy guest IDAWs into page_array, in case the memory they

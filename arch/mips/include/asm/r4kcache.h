@@ -22,7 +22,11 @@
 #include <asm/cpu-type.h>
 #include <asm/mipsmtregs.h>
 #include <asm/mmzone.h>
+<<<<<<< HEAD
 #include <asm/unroll.h>
+=======
+#include <linux/uaccess.h> /* for uaccess_kernel() */
+>>>>>>> master
 
 extern void (*r4k_blast_dcache)(void);
 extern void (*r4k_blast_icache)(void);
@@ -322,8 +326,12 @@ static inline void blast_##pfx##cache##lsize##_node(long node)		\
 									\
 	for (ws = 0; ws < ws_end; ws += ws_inc)				\
 		for (addr = start; addr < end; addr += lsize * 32)	\
+<<<<<<< HEAD
 			cache_unroll(32, kernel_cache, indexop,		\
 				     addr | ws, lsize);			\
+=======
+			cache##lsize##_unroll32(addr|ws, indexop);	\
+>>>>>>> master
 }
 
 __BUILD_BLAST_CACHE_NODE(s, scache, Index_Writeback_Inv_SD, Hit_Writeback_Inv_SD, 16)

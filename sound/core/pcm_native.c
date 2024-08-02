@@ -74,12 +74,25 @@ static int snd_pcm_open(struct file *file, struct snd_pcm *pcm, int stream);
 
 static DECLARE_RWSEM(snd_pcm_link_rwsem);
 
+<<<<<<< HEAD
 void snd_pcm_group_init(struct snd_pcm_group *group)
 {
 	spin_lock_init(&group->lock);
 	mutex_init(&group->mutex);
 	INIT_LIST_HEAD(&group->substreams);
 	refcount_set(&group->refs, 1);
+=======
+/* Writer in rwsem may block readers even during its waiting in queue,
+ * and this may lead to a deadlock when the code path takes read sem
+ * twice (e.g. one in snd_pcm_action_nonatomic() and another in
+ * snd_pcm_stream_lock()).  As a (suboptimal) workaround, let writer to
+ * sleep until all the readers are completed without blocking by writer.
+ */
+static inline void down_write_nonfifo(struct rw_semaphore *lock)
+{
+	while (!down_write_trylock(lock))
+		msleep(1);
+>>>>>>> master
 }
 
 /* define group lock helpers */
@@ -1672,7 +1685,11 @@ static int snd_pcm_pre_suspend(struct snd_pcm_substream *substream,
 			       snd_pcm_state_t state)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
+<<<<<<< HEAD
 	switch (runtime->state) {
+=======
+	switch (runtime->status->state) {
+>>>>>>> master
 	case SNDRV_PCM_STATE_SUSPENDED:
 		return -EBUSY;
 	/* unresumable PCM state; return -EBUSY for skipping suspend */
@@ -1753,6 +1770,7 @@ int snd_pcm_suspend_all(struct snd_pcm *pcm)
 	if (! pcm)
 		return 0;
 
+<<<<<<< HEAD
 	for_each_pcm_substream(pcm, stream, substream) {
 		/* FIXME: the open/close code should lock this as well */
 		if (!substream->runtime)
@@ -1768,6 +1786,26 @@ int snd_pcm_suspend_all(struct snd_pcm *pcm)
 		err = snd_pcm_suspend(substream);
 		if (err < 0 && err != -EBUSY)
 			return err;
+=======
+	for (stream = 0; stream < 2; stream++) {
+		for (substream = pcm->streams[stream].substream;
+		     substream; substream = substream->next) {
+			/* FIXME: the open/close code should lock this as well */
+			if (substream->runtime == NULL)
+				continue;
+
+			/*
+			 * Skip BE dai link PCM's that are internal and may
+			 * not have their substream ops set.
+			 */
+			if (!substream->ops)
+				continue;
+
+			err = snd_pcm_suspend(substream);
+			if (err < 0 && err != -EBUSY)
+				return err;
+		}
+>>>>>>> master
 	}
 
 	for_each_pcm_substream(pcm, stream, substream)
@@ -2277,11 +2315,18 @@ static int snd_pcm_link(struct snd_pcm_substream *substream, int fd)
 		res = -ENOMEM;
 		goto _nolock;
 	}
+<<<<<<< HEAD
 	snd_pcm_group_init(group);
 
 	down_write(&snd_pcm_link_rwsem);
 	if (substream->runtime->state == SNDRV_PCM_STATE_OPEN ||
 	    substream->runtime->state != substream1->runtime->state ||
+=======
+	down_write_nonfifo(&snd_pcm_link_rwsem);
+	write_lock_irq(&snd_pcm_link_rwlock);
+	if (substream->runtime->status->state == SNDRV_PCM_STATE_OPEN ||
+	    substream->runtime->status->state != substream1->runtime->status->state ||
+>>>>>>> master
 	    substream->pcm->nonatomic != substream1->pcm->nonatomic) {
 		res = -EBADFD;
 		goto _end;
@@ -2328,8 +2373,13 @@ static int snd_pcm_unlink(struct snd_pcm_substream *substream)
 	bool do_free = false;
 	int res = 0;
 
+<<<<<<< HEAD
 	down_write(&snd_pcm_link_rwsem);
 
+=======
+	down_write_nonfifo(&snd_pcm_link_rwsem);
+	write_lock_irq(&snd_pcm_link_rwlock);
+>>>>>>> master
 	if (!snd_pcm_stream_linked(substream)) {
 		res = -EALREADY;
 		goto _end;

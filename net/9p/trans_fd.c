@@ -119,7 +119,11 @@ struct p9_conn {
 	struct list_head unsent_req_list;
 	struct p9_req_t *rreq;
 	struct p9_req_t *wreq;
+<<<<<<< HEAD
 	char tmp_buf[P9_HDRSZ];
+=======
+	char tmp_buf[7];
+>>>>>>> master
 	struct p9_fcall rc;
 	int wpos;
 	int wsize;
@@ -335,6 +339,7 @@ static void p9_read_work(struct work_struct *work)
 			goto error;
 		}
 
+<<<<<<< HEAD
 		if (m->rc.size > m->rreq->rc.capacity) {
 			p9_debug(P9_DEBUG_ERROR,
 				 "requested packet size too big: %d for tag %d with capacity %zd\n",
@@ -352,6 +357,16 @@ static void p9_read_work(struct work_struct *work)
 			err = -EIO;
 			goto error;
 		}
+=======
+		if (!m->rreq->rc.sdata) {
+			p9_debug(P9_DEBUG_ERROR,
+				 "No recv fcall for tag %d (req %p), disconnecting!\n",
+				 m->rc.tag, m->rreq);
+			m->rreq = NULL;
+			err = -EIO;
+			goto error;
+		}
+>>>>>>> master
 		m->rc.sdata = m->rreq->rc.sdata;
 		memcpy(m->rc.sdata, m->tmp_buf, m->rc.capacity);
 		m->rc.capacity = m->rc.size;
@@ -363,6 +378,7 @@ static void p9_read_work(struct work_struct *work)
 	if ((m->rreq) && (m->rc.offset == m->rc.capacity)) {
 		p9_debug(P9_DEBUG_TRANS, "got new packet\n");
 		m->rreq->rc.size = m->rc.offset;
+<<<<<<< HEAD
 		spin_lock(&m->req_lock);
 		if (m->rreq->status == REQ_STATUS_SENT) {
 			list_del(&m->rreq->req_list);
@@ -373,17 +389,33 @@ static void p9_read_work(struct work_struct *work)
 				 "Ignore replies associated with a cancelled request\n");
 		} else {
 			spin_unlock(&m->req_lock);
+=======
+		spin_lock(&m->client->lock);
+		if (m->rreq->status == REQ_STATUS_SENT) {
+			list_del(&m->rreq->req_list);
+			p9_client_cb(m->client, m->rreq, REQ_STATUS_RCVD);
+		} else {
+			spin_unlock(&m->client->lock);
+>>>>>>> master
 			p9_debug(P9_DEBUG_ERROR,
 				 "Request tag %d errored out while we were reading the reply\n",
 				 m->rc.tag);
 			err = -EIO;
 			goto error;
 		}
+<<<<<<< HEAD
 		spin_unlock(&m->req_lock);
 		m->rc.sdata = NULL;
 		m->rc.offset = 0;
 		m->rc.capacity = 0;
 		p9_req_put(m->client, m->rreq);
+=======
+		spin_unlock(&m->client->lock);
+		m->rc.sdata = NULL;
+		m->rc.offset = 0;
+		m->rc.capacity = 0;
+		p9_req_put(m->rreq);
+>>>>>>> master
 		m->rreq = NULL;
 	}
 
@@ -475,7 +507,11 @@ static void p9_write_work(struct work_struct *work)
 		m->wpos = 0;
 		p9_req_get(req);
 		m->wreq = req;
+<<<<<<< HEAD
 		spin_unlock(&m->req_lock);
+=======
+		spin_unlock(&m->client->lock);
+>>>>>>> master
 	}
 
 	p9_debug(P9_DEBUG_TRANS, "mux %p pos %d size %d\n",
@@ -497,7 +533,11 @@ static void p9_write_work(struct work_struct *work)
 	m->wpos += err;
 	if (m->wpos == m->wsize) {
 		m->wpos = m->wsize = 0;
+<<<<<<< HEAD
 		p9_req_put(m->client, m->wreq);
+=======
+		p9_req_put(m->wreq);
+>>>>>>> master
 		m->wreq = NULL;
 	}
 
@@ -702,8 +742,13 @@ static int p9_fd_cancel(struct p9_client *client, struct p9_req_t *req)
 
 	if (req->status == REQ_STATUS_UNSENT) {
 		list_del(&req->req_list);
+<<<<<<< HEAD
 		WRITE_ONCE(req->status, REQ_STATUS_FLSHD);
 		p9_req_put(client, req);
+=======
+		req->status = REQ_STATUS_FLSHD;
+		p9_req_put(req);
+>>>>>>> master
 		ret = 0;
 	}
 	spin_unlock(&m->req_lock);
@@ -731,10 +776,15 @@ static int p9_fd_cancelled(struct p9_client *client, struct p9_req_t *req)
 	 * remove it from the list.
 	 */
 	list_del(&req->req_list);
+<<<<<<< HEAD
 	WRITE_ONCE(req->status, REQ_STATUS_FLSHD);
 	spin_unlock(&m->req_lock);
 
 	p9_req_put(client, req);
+=======
+	spin_unlock(&client->lock);
+	p9_req_put(req);
+>>>>>>> master
 
 	return 0;
 }
@@ -908,12 +958,20 @@ static void p9_conn_destroy(struct p9_conn *m)
 	p9_mux_poll_stop(m);
 	cancel_work_sync(&m->rq);
 	if (m->rreq) {
+<<<<<<< HEAD
 		p9_req_put(m->client, m->rreq);
+=======
+		p9_req_put(m->rreq);
+>>>>>>> master
 		m->rreq = NULL;
 	}
 	cancel_work_sync(&m->wq);
 	if (m->wreq) {
+<<<<<<< HEAD
 		p9_req_put(m->client, m->wreq);
+=======
+		p9_req_put(m->wreq);
+>>>>>>> master
 		m->wreq = NULL;
 	}
 

@@ -65,7 +65,11 @@ static const struct clk_ops clk_fixup_mux_ops = {
 	.set_parent = clk_fixup_mux_set_parent,
 };
 
+<<<<<<< HEAD
 struct clk_hw *imx_clk_hw_fixup_mux(const char *name, void __iomem *reg,
+=======
+struct clk *imx_clk_fixup_mux(const char *name, void __iomem *reg,
+>>>>>>> master
 			      u8 shift, u8 width, const char * const *parents,
 			      int num_parents, void (*fixup)(u32 *val))
 {

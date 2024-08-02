@@ -31,12 +31,26 @@ static int ipvlan_set_port_mode(struct ipvl_port *port, u16 nval,
 		}
 		if (nval == IPVLAN_MODE_L3S) {
 			/* New mode is L3S */
+<<<<<<< HEAD
 			err = ipvlan_l3s_register(port);
 			if (err)
 				goto fail;
 		} else if (port->mode == IPVLAN_MODE_L3S) {
 			/* Old mode was L3S */
 			ipvlan_l3s_unregister(port);
+=======
+			err = ipvlan_register_nf_hook(read_pnet(&port->pnet));
+			if (!err) {
+				mdev->l3mdev_ops = &ipvl_l3mdev_ops;
+				mdev->priv_flags |= IFF_L3MDEV_RX_HANDLER;
+			} else
+				goto fail;
+		} else if (port->mode == IPVLAN_MODE_L3S) {
+			/* Old mode was L3S */
+			mdev->priv_flags &= ~IFF_L3MDEV_RX_HANDLER;
+			ipvlan_unregister_nf_hook(read_pnet(&port->pnet));
+			mdev->l3mdev_ops = NULL;
+>>>>>>> master
 		}
 		port->mode = nval;
 	}
@@ -96,9 +110,17 @@ static void ipvlan_port_destroy(struct net_device *dev)
 	struct ipvl_port *port = ipvlan_port_get_rtnl(dev);
 	struct sk_buff *skb;
 
+<<<<<<< HEAD
 	netdev_put(dev, &port->dev_tracker);
 	if (port->mode == IPVLAN_MODE_L3S)
 		ipvlan_l3s_unregister(port);
+=======
+	if (port->mode == IPVLAN_MODE_L3S) {
+		dev->priv_flags &= ~IFF_L3MDEV_RX_HANDLER;
+		ipvlan_unregister_nf_hook(dev_net(dev));
+		dev->l3mdev_ops = NULL;
+	}
+>>>>>>> master
 	netdev_rx_handler_unregister(dev);
 	cancel_work_sync(&port->wq);
 	while ((skb = __skb_dequeue(&port->backlog)) != NULL) {
@@ -117,9 +139,15 @@ static void ipvlan_port_destroy(struct net_device *dev)
 	(IPVLAN_ALWAYS_ON_OFLOADS | NETIF_F_LLTX | NETIF_F_VLAN_CHALLENGED)
 
 #define IPVLAN_FEATURES \
+<<<<<<< HEAD
 	(NETIF_F_SG | NETIF_F_HW_CSUM | NETIF_F_HIGHDMA | NETIF_F_FRAGLIST | \
 	 NETIF_F_GSO | NETIF_F_ALL_TSO | NETIF_F_GSO_ROBUST | \
 	 NETIF_F_GRO | NETIF_F_RXCSUM | \
+=======
+	(NETIF_F_SG | NETIF_F_CSUM_MASK | NETIF_F_HIGHDMA | NETIF_F_FRAGLIST | \
+	 NETIF_F_GSO | NETIF_F_TSO | NETIF_F_GSO_ROBUST | \
+	 NETIF_F_TSO_ECN | NETIF_F_TSO6 | NETIF_F_GRO | NETIF_F_RXCSUM | \
+>>>>>>> master
 	 NETIF_F_HW_VLAN_CTAG_FILTER | NETIF_F_HW_VLAN_STAG_FILTER)
 
 	/* NETIF_F_GSO_ENCAP_ALL NETIF_F_GSO_SOFTWARE Newly added */

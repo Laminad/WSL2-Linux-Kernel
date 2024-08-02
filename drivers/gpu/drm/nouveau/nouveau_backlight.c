@@ -102,7 +102,31 @@ nv40_backlight_init(struct nouveau_encoder *encoder,
 	struct nvif_object *device = &drm->client.device.object;
 
 	if (!(nvif_rd32(device, NV40_PMC_BACKLIGHT) & NV40_PMC_BACKLIGHT_MASK))
+<<<<<<< HEAD
 		return -ENODEV;
+=======
+		return 0;
+
+	memset(&props, 0, sizeof(struct backlight_properties));
+	props.type = BACKLIGHT_RAW;
+	props.max_brightness = 31;
+	if (!nouveau_get_backlight_name(backlight_name, &bl_connector)) {
+		NV_ERROR(drm, "Failed to retrieve a unique name for the backlight interface\n");
+		return 0;
+	}
+	bd = backlight_device_register(backlight_name , connector->kdev, drm,
+				       &nv40_bl_ops, &props);
+
+	if (IS_ERR(bd)) {
+		if (bl_connector.id >= 0)
+			ida_simple_remove(&bl_ida, bl_connector.id);
+		return PTR_ERR(bd);
+	}
+	list_add(&bl_connector.head, &drm->bl_connectors);
+	drm->backlight = bd;
+	bd->props.brightness = nv40_get_intensity(bd);
+	backlight_update_status(bd);
+>>>>>>> master
 
 	props->max_brightness = 31;
 	*ops = &nv40_bl_ops;
@@ -355,6 +379,19 @@ nv50_backlight_init(struct nouveau_backlight *bl,
 
 	props->max_brightness = 100;
 
+<<<<<<< HEAD
+=======
+	if (IS_ERR(bd)) {
+		if (bl_connector.id >= 0)
+			ida_simple_remove(&bl_ida, bl_connector.id);
+		return PTR_ERR(bd);
+	}
+
+	list_add(&bl_connector.head, &drm->bl_connectors);
+	drm->backlight = bd;
+	bd->props.brightness = bd->ops->get_brightness(bd);
+	backlight_update_status(bd);
+>>>>>>> master
 	return 0;
 }
 

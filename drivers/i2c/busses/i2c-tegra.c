@@ -1444,6 +1444,7 @@ static const struct i2c_algorithm tegra_i2c_algo = {
 
 /* payload size is only 12 bit */
 static const struct i2c_adapter_quirks tegra_i2c_quirks = {
+<<<<<<< HEAD
 	.flags = I2C_AQ_NO_ZERO_LEN,
 	.max_read_len = SZ_4K,
 	.max_write_len = SZ_4K - I2C_PACKET_HEADER_SIZE,
@@ -1456,6 +1457,10 @@ static const struct i2c_adapter_quirks tegra194_i2c_quirks = {
 
 static struct i2c_bus_recovery_info tegra_i2c_recovery_info = {
 	.recover_bus = tegra_i2c_issue_bus_clear,
+=======
+	.max_read_len = 4096,
+	.max_write_len = 4096 - 12,
+>>>>>>> master
 };
 
 static const struct tegra_i2c_hw_feature tegra20_i2c_hw = {

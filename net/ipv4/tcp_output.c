@@ -181,10 +181,10 @@ static inline void tcp_event_ack_sent(struct sock *sk, u32 rcv_nxt)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 
-	if (unlikely(tp->compressed_ack)) {
+	if (unlikely(tp->compressed_ack > TCP_FASTRETRANS_THRESH)) {
 		NET_ADD_STATS(sock_net(sk), LINUX_MIB_TCPACKCOMPRESSED,
-			      tp->compressed_ack);
-		tp->compressed_ack = 0;
+			      tp->compressed_ack - TCP_FASTRETRANS_THRESH);
+		tp->compressed_ack = TCP_FASTRETRANS_THRESH;
 		if (hrtimer_try_to_cancel(&tp->compressed_ack_timer) == 1)
 			__sock_put(sk);
 	}
@@ -1546,7 +1546,11 @@ int tcp_fragment(struct sock *sk, enum tcp_queue tcp_queue,
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 	struct sk_buff *buff;
+<<<<<<< HEAD
 	int old_factor;
+=======
+	int nsize, old_factor;
+>>>>>>> master
 	long limit;
 	int nlen;
 	u8 flags;
@@ -1561,7 +1565,11 @@ int tcp_fragment(struct sock *sk, enum tcp_queue tcp_queue,
 	 * SO_SNDBUF values.
 	 * Also allow first and last skb in retransmit queue to be split.
 	 */
+<<<<<<< HEAD
 	limit = sk->sk_sndbuf + 2 * SKB_TRUESIZE(GSO_LEGACY_MAX_SIZE);
+=======
+	limit = sk->sk_sndbuf + 2 * SKB_TRUESIZE(GSO_MAX_SIZE);
+>>>>>>> master
 	if (unlikely((sk->sk_wmem_queued >> 1) > limit &&
 		     tcp_queue != TCP_FRAG_IN_WRITE_QUEUE &&
 		     skb != tcp_rtx_queue_head(sk) &&
@@ -1570,7 +1578,11 @@ int tcp_fragment(struct sock *sk, enum tcp_queue tcp_queue,
 		return -ENOMEM;
 	}
 
+<<<<<<< HEAD
 	if (skb_unclone_keeptruesize(skb, gfp))
+=======
+	if (skb_unclone(skb, gfp))
+>>>>>>> master
 		return -ENOMEM;
 
 	/* Get a new skb... force flag on. */
@@ -1719,8 +1731,12 @@ static inline int __tcp_mtu_to_mss(struct sock *sk, int pmtu)
 	mss_now -= icsk->icsk_ext_hdr_len;
 
 	/* Then reserve room for full set of TCP options and 8 bytes of data */
+<<<<<<< HEAD
 	mss_now = max(mss_now,
 		      READ_ONCE(sock_net(sk)->ipv4.sysctl_tcp_min_snd_mss));
+=======
+	mss_now = max(mss_now, sock_net(sk)->ipv4.sysctl_tcp_min_snd_mss);
+>>>>>>> master
 	return mss_now;
 }
 
@@ -2186,7 +2202,10 @@ static bool tcp_tso_should_defer(struct sock *sk, struct sk_buff *skb,
 	struct tcp_sock *tp = tcp_sk(sk);
 	struct sk_buff *head;
 	int win_divisor;
+<<<<<<< HEAD
 	s64 delta;
+=======
+>>>>>>> master
 
 	if (icsk->icsk_ca_state >= TCP_CA_Recovery)
 		goto send_now;
@@ -2268,8 +2287,12 @@ static bool tcp_tso_should_defer(struct sock *sk, struct sk_buff *skb,
 	}
 
 	/* If this packet won't get more data, do not wait. */
+<<<<<<< HEAD
 	if ((TCP_SKB_CB(skb)->tcp_flags & TCPHDR_FIN) ||
 	    TCP_SKB_CB(skb)->eor)
+=======
+	if (TCP_SKB_CB(skb)->tcp_flags & TCPHDR_FIN)
+>>>>>>> master
 		goto send_now;
 
 	return true;
@@ -2312,9 +2335,13 @@ static bool tcp_can_coalesce_send_queue_head(struct sock *sk, int len)
 		if (len <= skb->len)
 			break;
 
+<<<<<<< HEAD
 		if (unlikely(TCP_SKB_CB(skb)->eor) ||
 		    tcp_has_tx_tstamp(skb) ||
 		    !skb_pure_zcopy_same(skb, next))
+=======
+		if (unlikely(TCP_SKB_CB(skb)->eor) || tcp_has_tx_tstamp(skb))
+>>>>>>> master
 			return false;
 
 		len -= skb->len;
@@ -2891,11 +2918,22 @@ void tcp_send_loss_probe(struct sock *sk)
 	if (unlikely(!skb)) {
 		WARN_ONCE(tp->packets_out,
 			  "invalid inflight: %u state %u cwnd %u mss %d\n",
+<<<<<<< HEAD
 			  tp->packets_out, sk->sk_state, tcp_snd_cwnd(tp), mss);
+=======
+			  tp->packets_out, sk->sk_state, tp->snd_cwnd, mss);
+>>>>>>> master
 		inet_csk(sk)->icsk_pending = 0;
 		return;
 	}
 
+<<<<<<< HEAD
+=======
+	/* At most one outstanding TLP retransmission. */
+	if (tp->tlp_high_seq)
+		goto rearm_timer;
+
+>>>>>>> master
 	if (skb_still_in_host_queue(sk, skb))
 		goto rearm_timer;
 
@@ -3160,9 +3198,19 @@ static bool tcp_collapse_retrans(struct sock *sk, struct sk_buff *skb)
 
 	BUG_ON(tcp_skb_pcount(skb) != 1 || tcp_skb_pcount(next_skb) != 1);
 
+<<<<<<< HEAD
 	if (next_skb_size && !tcp_skb_shift(skb, next_skb, 1, next_skb_size))
 		return false;
 
+=======
+	if (next_skb_size) {
+		if (next_skb_size <= skb_availroom(skb))
+			skb_copy_bits(next_skb, 0, skb_put(skb, next_skb_size),
+				      next_skb_size);
+		else if (!tcp_skb_shift(skb, next_skb, 1, next_skb_size))
+			return false;
+	}
+>>>>>>> master
 	tcp_highest_sack_replace(sk, next_skb, skb);
 
 	/* Update sequence range on original skb. */

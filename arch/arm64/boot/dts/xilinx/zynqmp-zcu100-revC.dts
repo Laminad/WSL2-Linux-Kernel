@@ -116,6 +116,7 @@
 		compatible = "mmc-pwrseq-simple";
 		reset-gpios = <&gpio 7 GPIO_ACTIVE_LOW>; /* WIFI_EN */
 		post-power-on-delay-ms = <10>;
+<<<<<<< HEAD
 	};
 
 	ina226 {
@@ -133,6 +134,8 @@
 		compatible = "fixed-clock";
 		#clock-cells = <0>;
 		clock-frequency = <27000000>;
+=======
+>>>>>>> master
 	};
 };
 

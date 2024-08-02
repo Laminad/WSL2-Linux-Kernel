@@ -455,7 +455,28 @@ static int _rtl_init_deferred_work(struct ieee80211_hw *hw)
 
 	/* <2> work queue */
 	rtlpriv->works.hw = hw;
+<<<<<<< HEAD
 	rtlpriv->works.rtl_wq = wq;
+=======
+	rtlpriv->works.rtl_wq = alloc_workqueue("%s", 0, 0, rtlpriv->cfg->name);
+	if (unlikely(!rtlpriv->works.rtl_wq)) {
+		pr_err("Failed to allocate work queue\n");
+		return;
+	}
+
+	INIT_DELAYED_WORK(&rtlpriv->works.watchdog_wq,
+			  (void *)rtl_watchdog_wq_callback);
+	INIT_DELAYED_WORK(&rtlpriv->works.ips_nic_off_wq,
+			  (void *)rtl_ips_nic_off_wq_callback);
+	INIT_DELAYED_WORK(&rtlpriv->works.ps_work,
+			  (void *)rtl_swlps_wq_callback);
+	INIT_DELAYED_WORK(&rtlpriv->works.ps_rfon_wq,
+			  (void *)rtl_swlps_rfon_wq_callback);
+	INIT_DELAYED_WORK(&rtlpriv->works.fwevt_wq,
+			  (void *)rtl_fwevt_wq_callback);
+	INIT_DELAYED_WORK(&rtlpriv->works.c2hcmd_wq,
+			  (void *)rtl_c2hcmd_wq_callback);
+>>>>>>> master
 
 	INIT_DELAYED_WORK(&rtlpriv->works.watchdog_wq,
 			  rtl_watchdog_wq_callback);

@@ -321,9 +321,13 @@ __poll_t dccp_poll(struct file *file, struct socket *sock,
 	int state;
 
 	sock_poll_wait(file, sock, wait);
+<<<<<<< HEAD
 
 	state = inet_sk_state_load(sk);
 	if (state == DCCP_LISTEN)
+=======
+	if (sk->sk_state == DCCP_LISTEN)
+>>>>>>> master
 		return inet_csk_listen_poll(sk);
 
 	/* Socket is not locked. We are protected from async events

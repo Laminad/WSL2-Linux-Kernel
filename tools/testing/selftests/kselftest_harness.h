@@ -699,14 +699,18 @@
 	if (_metadata->passed && _metadata->step < 253) \
 		_metadata->step++;
 
+<<<<<<< HEAD
 #define is_signed_type(var)       (!!(((__typeof__(var))(-1)) < (__typeof__(var))1))
 
+=======
+>>>>>>> master
 #define __EXPECT(_expected, _expected_str, _seen, _seen_str, _t, _assert) do { \
 	/* Avoid multiple evaluation of the cases */ \
 	__typeof__(_expected) __exp = (_expected); \
 	__typeof__(_seen) __seen = (_seen); \
 	if (_assert) __INC_STEP(_metadata); \
 	if (!(__exp _t __seen)) { \
+<<<<<<< HEAD
 		/* Report with actual signedness to avoid weird output. */ \
 		switch (is_signed_type(__exp) * 2 + is_signed_type(__seen)) { \
 		case 0: { \
@@ -742,6 +746,13 @@
 			break; \
 			} \
 		} \
+=======
+		unsigned long long __exp_print = (uintptr_t)__exp; \
+		unsigned long long __seen_print = (uintptr_t)__seen; \
+		__TH_LOG("Expected %s (%llu) %s %s (%llu)", \
+			 _expected_str, __exp_print, #_t, \
+			 _seen_str, __seen_print); \
+>>>>>>> master
 		_metadata->passed = 0; \
 		/* Ensure the optional handler is triggered */ \
 		_metadata->trigger = 1; \

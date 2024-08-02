@@ -148,6 +148,7 @@ struct mapped_device {
 #endif
 };
 
+<<<<<<< HEAD
 /*
  * Bits for the flags field of struct mapped_device.
  */
@@ -163,6 +164,11 @@ struct mapped_device {
 #define DMF_EMULATE_ZONE_APPEND 9
 
 void disable_discard(struct mapped_device *md);
+=======
+int md_in_flight(struct mapped_device *md);
+void disable_discard(struct mapped_device *md);
+void disable_write_same(struct mapped_device *md);
+>>>>>>> master
 void disable_write_zeroes(struct mapped_device *md);
 
 static inline sector_t dm_get_size(struct mapped_device *md)

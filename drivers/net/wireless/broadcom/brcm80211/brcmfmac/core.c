@@ -510,8 +510,14 @@ void brcmf_rx_frame(struct device *dev, struct sk_buff *skb, bool handle_event,
 		brcmf_proto_rxreorder(ifp, skb);
 	} else {
 		/* Process special event packets */
+<<<<<<< HEAD
 		if (handle_event) {
 			gfp_t gfp = inirq ? GFP_ATOMIC : GFP_KERNEL;
+=======
+		if (handle_event)
+			brcmf_fweh_process_skb(ifp->drvr, skb,
+					       BCMILCP_SUBTYPE_VENDOR_LONG);
+>>>>>>> master
 
 			brcmf_fweh_process_skb(ifp->drvr, skb,
 					       BCMILCP_SUBTYPE_VENDOR_LONG, gfp);
@@ -531,7 +537,11 @@ void brcmf_rx_event(struct device *dev, struct sk_buff *skb)
 	if (brcmf_rx_hdrpull(drvr, skb, &ifp))
 		return;
 
+<<<<<<< HEAD
 	brcmf_fweh_process_skb(ifp->drvr, skb, 0, GFP_KERNEL);
+=======
+	brcmf_fweh_process_skb(ifp->drvr, skb, 0);
+>>>>>>> master
 	brcmu_pkt_buf_free_skb(skb);
 }
 
@@ -1432,6 +1442,12 @@ void brcmf_detach(struct device *dev)
 #endif
 
 	brcmf_bus_change_state(bus_if, BRCMF_BUS_DOWN);
+<<<<<<< HEAD
+=======
+
+	brcmf_proto_detach_pre_delif(drvr);
+
+>>>>>>> master
 	/* make sure primary interface removed last */
 	for (i = BRCMF_MAX_IFS - 1; i > -1; i--) {
 		if (drvr->iflist[i])
@@ -1439,8 +1455,12 @@ void brcmf_detach(struct device *dev)
 	}
 	brcmf_bus_stop(drvr->bus_if);
 
+<<<<<<< HEAD
 	brcmf_fweh_detach(drvr);
 	brcmf_proto_detach(drvr);
+=======
+	brcmf_proto_detach_post_delif(drvr);
+>>>>>>> master
 
 	if (drvr->mon_if) {
 		brcmf_net_detach(drvr->mon_if->ndev, false);

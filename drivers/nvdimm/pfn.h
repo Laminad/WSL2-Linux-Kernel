@@ -41,10 +41,14 @@ struct nd_pfn_sb {
 	/* minor-version-2 record the base alignment of the mapping */
 	__le32 align;
 	/* minor-version-3 guarantee the padding and flags are zero */
+<<<<<<< HEAD
 	/* minor-version-4 record the page size and struct page size */
 	__le32 page_size;
 	__le16 page_struct_size;
 	u8 padding[3994];
+=======
+	u8 padding[4000];
+>>>>>>> master
 	__le64 checksum;
 };
 

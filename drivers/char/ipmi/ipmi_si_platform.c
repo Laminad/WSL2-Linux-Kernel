@@ -202,7 +202,11 @@ static int platform_ipmi_probe(struct platform_device *pdev)
 
 	pr_info("ipmi_si: %s: %s %#lx regsize %d spacing %d irq %d\n",
 		ipmi_addr_src_to_str(addr_source),
+<<<<<<< HEAD
 		(io.addr_space == IPMI_IO_ADDR_SPACE) ? "io" : "mem",
+=======
+		(io.addr_type == IPMI_IO_ADDR_SPACE) ? "io" : "mem",
+>>>>>>> master
 		io.addr_data, io.regsize, io.regspacing, io.irq);
 
 	ipmi_si_add_smi(&io);
@@ -354,7 +358,10 @@ static int acpi_ipmi_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
+<<<<<<< HEAD
 	io.dev = dev;
+=======
+>>>>>>> master
 	io.regsize = DEFAULT_REGSIZE;
 	io.regshift = 0;
 
@@ -416,6 +423,7 @@ static int ipmi_remove(struct platform_device *pdev)
 	return 0;
 }
 
+<<<<<<< HEAD
 static int pdev_match_name(struct device *dev, const void *data)
 {
 	struct platform_device *pdev = to_platform_device(dev);
@@ -442,6 +450,11 @@ static const struct platform_device_id si_plat_ids[] = {
 	{ "hardcode-ipmi-si", 0 },
 	{ "hotmod-ipmi-si", 0 },
 	{ }
+=======
+static const struct platform_device_id si_plat_ids[] = {
+    { "hardcode-ipmi-si", 0 },
+    { }
+>>>>>>> master
 };
 
 struct platform_driver ipmi_platform_driver = {

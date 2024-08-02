@@ -1041,9 +1041,15 @@ static uint32_t
 lpfc_disc_set_adisc(struct lpfc_vport *vport, struct lpfc_nodelist *ndlp)
 {
 	if (!(ndlp->nlp_flag & NLP_RPI_REGISTERED)) {
+<<<<<<< HEAD
 		spin_lock_irq(&ndlp->lock);
 		ndlp->nlp_flag &= ~NLP_NPR_ADISC;
 		spin_unlock_irq(&ndlp->lock);
+=======
+		spin_lock_irq(shost->host_lock);
+		ndlp->nlp_flag &= ~NLP_NPR_ADISC;
+		spin_unlock_irq(shost->host_lock);
+>>>>>>> master
 		return 0;
 	}
 
@@ -1052,16 +1058,26 @@ lpfc_disc_set_adisc(struct lpfc_vport *vport, struct lpfc_nodelist *ndlp)
 		if (vport->cfg_use_adisc && ((vport->fc_flag & FC_RSCN_MODE) ||
 		    ((ndlp->nlp_fcp_info & NLP_FCP_2_DEVICE) &&
 		     (ndlp->nlp_type & NLP_FCP_TARGET)))) {
+<<<<<<< HEAD
 			spin_lock_irq(&ndlp->lock);
+=======
+			spin_lock_irq(shost->host_lock);
+>>>>>>> master
 			ndlp->nlp_flag |= NLP_NPR_ADISC;
 			spin_unlock_irq(&ndlp->lock);
 			return 1;
 		}
 	}
 
+<<<<<<< HEAD
 	spin_lock_irq(&ndlp->lock);
 	ndlp->nlp_flag &= ~NLP_NPR_ADISC;
 	spin_unlock_irq(&ndlp->lock);
+=======
+	spin_lock_irq(shost->host_lock);
+	ndlp->nlp_flag &= ~NLP_NPR_ADISC;
+	spin_unlock_irq(shost->host_lock);
+>>>>>>> master
 	lpfc_unreg_rpi(vport, ndlp);
 	return 0;
 }

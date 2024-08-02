@@ -103,9 +103,14 @@ void sctp_packet_config(struct sctp_packet *packet, __u32 vtag,
 		sctp_transport_route(tp, NULL, sp);
 		if (asoc->param_flags & SPP_PMTUD_ENABLE)
 			sctp_assoc_sync_pmtu(asoc);
+<<<<<<< HEAD
 	} else if (!sctp_transport_pl_enabled(tp) &&
 		   asoc->param_flags & SPP_PMTUD_ENABLE) {
 		if (!sctp_transport_pmtu_check(tp))
+=======
+	} else if (!sctp_transport_pmtu_check(tp)) {
+		if (asoc->param_flags & SPP_PMTUD_ENABLE)
+>>>>>>> master
 			sctp_assoc_sync_pmtu(asoc);
 	}
 

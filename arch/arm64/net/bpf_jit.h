@@ -119,6 +119,7 @@
 	aarch64_insn_gen_load_store_ex(Rt, Rn, Rs, A64_SIZE(sf), \
 				       AARCH64_INSN_LDST_STORE_REL_EX)
 
+<<<<<<< HEAD
 /*
  * LSE atomics
  *
@@ -150,6 +151,11 @@
 #define A64_CASAL(sf, Rt, Rn, Rs) \
 	aarch64_insn_gen_cas(Rt, Rn, Rs, A64_SIZE(sf), \
 		AARCH64_INSN_MEM_ORDER_ACQREL)
+=======
+/* LSE atomics */
+#define A64_STADD(sf, Rn, Rs) \
+	aarch64_insn_gen_stadd(Rn, Rs, A64_SIZE(sf))
+>>>>>>> master
 
 /* Add/subtract (immediate) */
 #define A64_ADDSUB_IMM(sf, Rd, Rn, imm12, type) \

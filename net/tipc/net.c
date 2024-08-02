@@ -106,6 +106,15 @@
  *     - A local spin_lock protecting the queue of subscriber events.
 */
 
+<<<<<<< HEAD
+=======
+struct tipc_net_work {
+	struct work_struct work;
+	struct net *net;
+	u32 addr;
+};
+
+>>>>>>> master
 static void tipc_net_finalize(struct net *net, u32 addr);
 
 int tipc_net_init(struct net *net, u8 *node_id, u32 addr)
@@ -129,14 +138,18 @@ static void tipc_net_finalize(struct net *net, u32 addr)
 	struct tipc_socket_addr sk = {0, addr};
 	struct tipc_uaddr ua;
 
+<<<<<<< HEAD
 	tipc_uaddr(&ua, TIPC_SERVICE_RANGE, TIPC_CLUSTER_SCOPE,
 		   TIPC_NODE_STATE, addr, addr);
 
+=======
+>>>>>>> master
 	if (cmpxchg(&tn->node_addr, 0, addr))
 		return;
 	tipc_set_node_addr(net, addr);
 	tipc_named_reinit(net);
 	tipc_sk_reinit(net);
+<<<<<<< HEAD
 	tipc_mon_reinit_self(net);
 	tipc_nametbl_publish(net, &ua, &sk, addr);
 }
@@ -146,6 +159,31 @@ void tipc_net_finalize_work(struct work_struct *work)
 	struct tipc_net *tn = container_of(work, struct tipc_net, work);
 
 	tipc_net_finalize(tipc_link_net(tn->bcl), tn->trial_addr);
+=======
+	tipc_nametbl_publish(net, TIPC_CFG_SRV, addr, addr,
+			     TIPC_CLUSTER_SCOPE, 0, addr);
+}
+
+static void tipc_net_finalize_work(struct work_struct *work)
+{
+	struct tipc_net_work *fwork;
+
+	fwork = container_of(work, struct tipc_net_work, work);
+	tipc_net_finalize(fwork->net, fwork->addr);
+	kfree(fwork);
+}
+
+void tipc_sched_net_finalize(struct net *net, u32 addr)
+{
+	struct tipc_net_work *fwork = kzalloc(sizeof(*fwork), GFP_ATOMIC);
+
+	if (!fwork)
+		return;
+	INIT_WORK(&fwork->work, tipc_net_finalize_work);
+	fwork->net = net;
+	fwork->addr = addr;
+	schedule_work(&fwork->work);
+>>>>>>> master
 }
 
 void tipc_net_stop(struct net *net)

@@ -576,8 +576,13 @@ static int mtr_map_region(struct hns_roce_dev *hr_dev, struct hns_roce_mtr *mtr,
 	int count, npage;
 	int offset, end;
 	__le64 *mtts;
+<<<<<<< HEAD
 	u64 addr;
 	int i;
+=======
+	u32 bt_page_size;
+	u32 i;
+>>>>>>> master
 
 	offset = region->offset;
 	end = offset + region->count;
@@ -601,9 +606,18 @@ static int mtr_map_region(struct hns_roce_dev *hr_dev, struct hns_roce_mtr *mtr,
 	return npage;
 }
 
+<<<<<<< HEAD
 static inline bool mtr_has_mtt(struct hns_roce_buf_attr *attr)
 {
 	int i;
+=======
+	mtts = hns_roce_table_find(hr_dev, table,
+				mtt->first_seg +
+				start_index / HNS_ROCE_MTT_ENTRY_PER_SEG,
+				&dma_handle);
+	if (!mtts)
+		return -ENOMEM;
+>>>>>>> master
 
 	for (i = 0; i < attr->region_count; i++)
 		if (attr->region[i].hopnum != HNS_ROCE_HOP_NUM_0 &&

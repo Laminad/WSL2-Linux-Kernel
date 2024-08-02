@@ -185,7 +185,11 @@ static int free_dind_blocks(handle_t *handle,
 	unsigned long max_entries = inode->i_sb->s_blocksize >> 2;
 	int err;
 
+<<<<<<< HEAD
 	bh = ext4_sb_bread(sb, le32_to_cpu(i_data), 0);
+=======
+	bh = ext4_sb_bread(inode->i_sb, le32_to_cpu(i_data), 0);
+>>>>>>> master
 	if (IS_ERR(bh))
 		return PTR_ERR(bh);
 

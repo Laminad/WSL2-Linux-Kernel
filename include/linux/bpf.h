@@ -81,6 +81,7 @@ struct bpf_map_ops {
 	int (*map_get_next_key)(struct bpf_map *map, void *key, void *next_key);
 	void (*map_release_uref)(struct bpf_map *map);
 	void *(*map_lookup_elem_sys_only)(struct bpf_map *map, void *key);
+<<<<<<< HEAD
 	int (*map_lookup_batch)(struct bpf_map *map, const union bpf_attr *attr,
 				union bpf_attr __user *uattr);
 	int (*map_lookup_and_delete_elem)(struct bpf_map *map, void *key,
@@ -93,6 +94,8 @@ struct bpf_map_ops {
 				union bpf_attr __user *uattr);
 	int (*map_delete_batch)(struct bpf_map *map, const union bpf_attr *attr,
 				union bpf_attr __user *uattr);
+=======
+>>>>>>> master
 
 	/* funcs callable from userspace and from eBPF programs */
 	void *(*map_lookup_elem)(struct bpf_map *map, void *key);
@@ -1890,7 +1893,32 @@ int bpf_prog_array_copy(struct bpf_prog_array *old_array,
 			u64 bpf_cookie,
 			struct bpf_prog_array **new_array);
 
+<<<<<<< HEAD
 struct bpf_run_ctx {};
+=======
+#define __BPF_PROG_RUN_ARRAY(array, ctx, func, check_non_null)	\
+	({						\
+		struct bpf_prog_array_item *_item;	\
+		struct bpf_prog *_prog;			\
+		struct bpf_prog_array *_array;		\
+		u32 _ret = 1;				\
+		preempt_disable();			\
+		rcu_read_lock();			\
+		_array = rcu_dereference(array);	\
+		if (unlikely(check_non_null && !_array))\
+			goto _out;			\
+		_item = &_array->items[0];		\
+		while ((_prog = READ_ONCE(_item->prog))) {		\
+			bpf_cgroup_storage_set(_item->cgroup_storage);	\
+			_ret &= func(_prog, ctx);	\
+			_item++;			\
+		}					\
+_out:							\
+		rcu_read_unlock();			\
+		preempt_enable();			\
+		_ret;					\
+	 })
+>>>>>>> master
 
 struct bpf_cg_run_ctx {
 	struct bpf_run_ctx run_ctx;

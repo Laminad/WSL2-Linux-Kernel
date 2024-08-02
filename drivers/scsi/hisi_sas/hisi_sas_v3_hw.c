@@ -685,6 +685,7 @@ static void init_reg_v3_hw(struct hisi_hba *hisi_hba)
 		hisi_sas_phy_write32(hisi_hba, i, PHYCTRL_OOB_RESTART_MSK, 0x1);
 		hisi_sas_phy_write32(hisi_hba, i, STP_LINK_TIMER, 0x7f7a120);
 		hisi_sas_phy_write32(hisi_hba, i, CON_CFG_DRIVER, 0x2a0a01);
+<<<<<<< HEAD
 		hisi_sas_phy_write32(hisi_hba, i, SAS_EC_INT_COAL_TIME,
 				     0x30f4240);
 		hisi_sas_phy_write32(hisi_hba, i, AIP_LIMIT, 0x2ffff);
@@ -703,6 +704,11 @@ static void init_reg_v3_hw(struct hisi_hba *hisi_hba)
 						      TXDEEMPH_G1 + (j * 0x4));
 			hisi_hba->debugfs_bist_ffe[i][j] = val;
 		}
+=======
+		hisi_sas_phy_write32(hisi_hba, i, SAS_SSP_CON_TIMER_CFG, 0x32);
+		/* used for 12G negotiate */
+		hisi_sas_phy_write32(hisi_hba, i, COARSETUNE_TIME, 0x1e);
+>>>>>>> master
 	}
 
 	for (i = 0; i < hisi_hba->queue_count; i++) {

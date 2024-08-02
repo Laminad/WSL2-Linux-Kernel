@@ -700,7 +700,11 @@ volatile int dup_pd_silent; /* Be silent abt it or complain (default) */
 void do_tlb_overlap_fault(unsigned long cause, unsigned long address,
 			  struct pt_regs *regs)
 {
+<<<<<<< HEAD
 	struct cpuinfo_arc_mmu *mmu = &mmuinfo;
+=======
+	struct cpuinfo_arc_mmu *mmu = &cpuinfo_arc700[smp_processor_id()].mmu;
+>>>>>>> master
 	unsigned long flags;
 	int set, n_ways = mmu->ways;
 

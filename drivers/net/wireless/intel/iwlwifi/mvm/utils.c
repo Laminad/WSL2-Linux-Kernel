@@ -242,20 +242,32 @@ u8 iwl_mvm_next_antenna(struct iwl_mvm *mvm, u8 valid, u8 last_idx)
 
 /**
  * iwl_mvm_send_lq_cmd() - Send link quality command
+<<<<<<< HEAD
  * @mvm: Driver data.
  * @lq: Link quality command to send.
+=======
+ * @sync: This command can be sent synchronously.
+>>>>>>> master
  *
  * The link quality command is sent as the last step of station creation.
  * This is the special case in which init is set and we call a callback in
  * this case to clear the state indicating that station creation is in
  * progress.
  */
+<<<<<<< HEAD
 int iwl_mvm_send_lq_cmd(struct iwl_mvm *mvm, struct iwl_lq_cmd *lq)
+=======
+int iwl_mvm_send_lq_cmd(struct iwl_mvm *mvm, struct iwl_lq_cmd *lq, bool sync)
+>>>>>>> master
 {
 	struct iwl_host_cmd cmd = {
 		.id = LQ_CMD,
 		.len = { sizeof(struct iwl_lq_cmd), },
+<<<<<<< HEAD
 		.flags = CMD_ASYNC,
+=======
+		.flags = sync ? 0 : CMD_ASYNC,
+>>>>>>> master
 		.data = { lq, },
 	};
 

@@ -125,11 +125,15 @@ static void __init zone_sizes_init(unsigned long min, unsigned long max_low,
 int pfn_valid(unsigned long pfn)
 {
 	phys_addr_t addr = __pfn_to_phys(pfn);
+<<<<<<< HEAD
 	unsigned long pageblock_size = PAGE_SIZE * pageblock_nr_pages;
+=======
+>>>>>>> master
 
 	if (__phys_to_pfn(addr) != pfn)
 		return 0;
 
+<<<<<<< HEAD
 	/*
 	 * If address less than pageblock_size bytes away from a present
 	 * memory chunk there still will be a memory map entry for it
@@ -141,6 +145,9 @@ int pfn_valid(unsigned long pfn)
 		return 1;
 
 	return 0;
+=======
+	return memblock_is_map_memory(__pfn_to_phys(pfn));
+>>>>>>> master
 }
 EXPORT_SYMBOL(pfn_valid);
 #endif

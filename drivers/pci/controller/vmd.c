@@ -136,9 +136,17 @@ struct vmd_dev {
 	struct irq_domain	*irq_domain;
 	struct pci_bus		*bus;
 	u8			busn_start;
+<<<<<<< HEAD
 	u8			first_vec;
 	char			*name;
 	int			instance;
+=======
+
+#ifdef CONFIG_X86_DEV_DMA_OPS
+	struct dma_map_ops	dma_ops;
+	struct dma_domain	dma_domain;
+#endif
+>>>>>>> master
 };
 
 static inline struct vmd_dev *vmd_from_bus(struct pci_bus *bus)
@@ -378,8 +386,14 @@ static void vmd_remove_irq_domain(struct vmd_dev *vmd)
 static void __iomem *vmd_cfg_addr(struct vmd_dev *vmd, struct pci_bus *bus,
 				  unsigned int devfn, int reg, int len)
 {
+<<<<<<< HEAD
 	unsigned int busnr_ecam = bus->number - vmd->busn_start;
 	u32 offset = PCIE_ECAM_OFFSET(busnr_ecam, devfn, reg);
+=======
+	char __iomem *addr = vmd->cfgbar +
+			     ((bus->number - vmd->busn_start) << 20) +
+			     (devfn << 12) + reg;
+>>>>>>> master
 
 	if (offset + len >= resource_size(&vmd->dev->resource[VMD_CFGBAR]))
 		return NULL;
@@ -787,9 +801,12 @@ static int vmd_enable_domain(struct vmd_dev *vmd, unsigned long features)
 	LIST_HEAD(resources);
 	resource_size_t offset[2] = {0};
 	resource_size_t membar2_offset = 0x2000;
+<<<<<<< HEAD
 	struct pci_bus *child;
 	struct pci_dev *dev;
 	int ret;
+=======
+>>>>>>> master
 
 	/*
 	 * Shadow registers may exist in certain VMD device ids which allow
@@ -798,6 +815,7 @@ static int vmd_enable_domain(struct vmd_dev *vmd, unsigned long features)
 	 * or 0, depending on an enable bit in the VMD device.
 	 */
 	if (features & VMD_FEAT_HAS_MEMBAR_SHADOW) {
+<<<<<<< HEAD
 		membar2_offset = MB2_SHADOW_OFFSET + MB2_SHADOW_SIZE;
 		ret = vmd_get_phys_offsets(vmd, true, &offset[0], &offset[1]);
 		if (ret)
@@ -806,6 +824,28 @@ static int vmd_enable_domain(struct vmd_dev *vmd, unsigned long features)
 		ret = vmd_get_phys_offsets(vmd, false, &offset[0], &offset[1]);
 		if (ret)
 			return ret;
+=======
+		u32 vmlock;
+		int ret;
+
+		membar2_offset = MB2_SHADOW_OFFSET + MB2_SHADOW_SIZE;
+		ret = pci_read_config_dword(vmd->dev, PCI_REG_VMLOCK, &vmlock);
+		if (ret || vmlock == ~0)
+			return -ENODEV;
+
+		if (MB2_SHADOW_EN(vmlock)) {
+			void __iomem *membar2;
+
+			membar2 = pci_iomap(vmd->dev, VMD_MEMBAR2, 0);
+			if (!membar2)
+				return -ENOMEM;
+			offset[0] = vmd->dev->resource[VMD_MEMBAR1].start -
+					readq(membar2 + MB2_SHADOW_OFFSET);
+			offset[1] = vmd->dev->resource[VMD_MEMBAR2].start -
+					readq(membar2 + MB2_SHADOW_OFFSET + 8);
+			pci_iounmap(vmd->dev, membar2);
+		}
+>>>>>>> master
 	}
 
 	/*
@@ -813,9 +853,19 @@ static int vmd_enable_domain(struct vmd_dev *vmd, unsigned long features)
 	 * limits the bus range to between 0-127, 128-255, or 224-255
 	 */
 	if (features & VMD_FEAT_HAS_BUS_RESTRICTIONS) {
+<<<<<<< HEAD
 		ret = vmd_get_bus_number_start(vmd);
 		if (ret)
 			return ret;
+=======
+		u32 vmcap, vmconfig;
+
+		pci_read_config_dword(vmd->dev, PCI_REG_VMCAP, &vmcap);
+		pci_read_config_dword(vmd->dev, PCI_REG_VMCONFIG, &vmconfig);
+		if (BUS_RESTRICT_CAP(vmcap) &&
+		    (BUS_RESTRICT_CFG(vmconfig) == 0x1))
+			vmd->busn_start = 128;
+>>>>>>> master
 	}
 
 	res = &vmd->dev->resource[VMD_CFGBAR];
@@ -908,7 +958,11 @@ static int vmd_enable_domain(struct vmd_dev *vmd, unsigned long features)
 	pci_add_resource_offset(&resources, &vmd->resources[2], offset[1]);
 
 	vmd->bus = pci_create_root_bus(&vmd->dev->dev, vmd->busn_start,
+<<<<<<< HEAD
 				       &vmd_ops, sd, &resources);
+=======
+					&vmd_ops, sd, &resources);
+>>>>>>> master
 	if (!vmd->bus) {
 		pci_free_resource_list(&resources);
 		vmd_remove_irq_domain(vmd);

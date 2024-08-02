@@ -77,10 +77,18 @@ enum p9_req_status_t {
 struct p9_req_t {
 	int status;
 	int t_err;
+<<<<<<< HEAD
 	refcount_t refcount;
 	wait_queue_head_t wq;
 	struct p9_fcall tc;
 	struct p9_fcall rc;
+=======
+	struct kref refcount;
+	wait_queue_head_t wq;
+	struct p9_fcall tc;
+	struct p9_fcall rc;
+	void *aux;
+>>>>>>> master
 	struct list_head req_list;
 };
 
@@ -224,15 +232,24 @@ int p9_client_mkdir_dotl(struct p9_fid *fid, const char *name, int mode,
 int p9_client_lock_dotl(struct p9_fid *fid, struct p9_flock *flock, u8 *status);
 int p9_client_getlock_dotl(struct p9_fid *fid, struct p9_getlock *fl);
 void p9_fcall_fini(struct p9_fcall *fc);
+<<<<<<< HEAD
 struct p9_req_t *p9_tag_lookup(struct p9_client *c, u16 tag);
 
 static inline void p9_req_get(struct p9_req_t *r)
 {
 	refcount_inc(&r->refcount);
+=======
+struct p9_req_t *p9_tag_lookup(struct p9_client *, u16);
+
+static inline void p9_req_get(struct p9_req_t *r)
+{
+	kref_get(&r->refcount);
+>>>>>>> master
 }
 
 static inline int p9_req_try_get(struct p9_req_t *r)
 {
+<<<<<<< HEAD
 	return refcount_inc_not_zero(&r->refcount);
 }
 
@@ -277,6 +294,12 @@ static inline int p9_fid_put(struct p9_fid *fid)
 
 	return p9_client_clunk(fid);
 }
+=======
+	return kref_get_unless_zero(&r->refcount);
+}
+
+int p9_req_put(struct p9_req_t *r);
+>>>>>>> master
 
 void p9_client_cb(struct p9_client *c, struct p9_req_t *req, int status);
 

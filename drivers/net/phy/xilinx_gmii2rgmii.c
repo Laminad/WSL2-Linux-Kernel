@@ -31,7 +31,19 @@ static void xgmiitorgmii_configure(struct gmii2rgmii *priv, int speed)
 {
 	struct mii_bus *bus = priv->mdio->bus;
 	int addr = priv->mdio->addr;
+<<<<<<< HEAD
 	u16 val;
+=======
+	u16 val = 0;
+	int err;
+
+	if (priv->phy_drv->read_status)
+		err = priv->phy_drv->read_status(phydev);
+	else
+		err = genphy_read_status(phydev);
+	if (err < 0)
+		return err;
+>>>>>>> master
 
 	val = mdiobus_read(bus, addr, XILINX_GMII2RGMII_REG);
 	val &= ~XILINX_GMII2RGMII_SPEED_MASK;

@@ -10,6 +10,10 @@
 #include <linux/workqueue.h>
 #include <linux/smp.h>
 
+<<<<<<< HEAD
+=======
+#include <linux/blk-mq.h>
+>>>>>>> master
 #include "blk.h"
 #include "blk-mq.h"
 
@@ -34,6 +38,11 @@ static void blk_mq_hw_sysfs_release(struct kobject *kobj)
 	struct blk_mq_hw_ctx *hctx = container_of(kobj, struct blk_mq_hw_ctx,
 						  kobj);
 
+<<<<<<< HEAD
+=======
+	if (hctx->flags & BLK_MQ_F_BLOCKING)
+		cleanup_srcu_struct(hctx->srcu);
+>>>>>>> master
 	blk_free_flush_queue(hctx->fq);
 	sbitmap_free(&hctx->ctx_map);
 	free_cpumask_var(hctx->cpumask);

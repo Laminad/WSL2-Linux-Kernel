@@ -685,7 +685,11 @@ static long restore_tm_user_regs(struct pt_regs *regs,
 	 *
 	 * Pull in the MSR TM bits from the user context
 	 */
+<<<<<<< HEAD
 	regs_set_return_msr(regs, (regs->msr & ~MSR_TS_MASK) | (msr_hi & MSR_TS_MASK));
+=======
+	regs->msr = (regs->msr & ~MSR_TS_MASK) | (msr_hi & MSR_TS_MASK);
+>>>>>>> master
 	/* Now, recheckpoint.  This loads up all of the checkpointed (older)
 	 * registers, including FP and V[S]Rs.  After recheckpointing, the
 	 * transactional versions should be loaded.
@@ -709,6 +713,7 @@ static long restore_tm_user_regs(struct pt_regs *regs,
 
 	preempt_enable();
 
+<<<<<<< HEAD
 	return 0;
 
 failed:
@@ -719,6 +724,8 @@ failed:
 static long restore_tm_user_regs(struct pt_regs *regs, struct mcontext __user *sr,
 				 struct mcontext __user *tm_sr)
 {
+=======
+>>>>>>> master
 	return 0;
 }
 #endif

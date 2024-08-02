@@ -3549,7 +3549,10 @@ static int ni_cdio_check_chanlist(struct comedi_device *dev,
 static int ni_cdio_cmdtest(struct comedi_device *dev,
 			   struct comedi_subdevice *s, struct comedi_cmd *cmd)
 {
+<<<<<<< HEAD:drivers/comedi/drivers/ni_mio_common.c
 	struct ni_private *devpriv = dev->private;
+=======
+>>>>>>> master:drivers/staging/comedi/drivers/ni_mio_common.c
 	unsigned int bytes_per_scan;
 	int err = 0;
 

@@ -59,6 +59,7 @@
 #define RX_ENTER_HIBERN8			0x00A7
 #define RX_BYPASS_8B10B_ENABLE			0x00A8
 #define RX_TERMINATION_FORCE_ENABLE		0x00A9
+<<<<<<< HEAD:include/ufs/unipro.h
 #define RXCALCTRL				0x00B4
 #define RXSQCTRL				0x00B5
 #define CFGRXCDR8				0x00BA
@@ -66,6 +67,10 @@
 #define CFGRXOVR6				0x00BF
 #define RXDIRECTCTRL2				0x00C7
 #define CFGRXOVR4				0x00E9
+=======
+#define RX_MIN_ACTIVATETIME_CAPABILITY		0x008F
+#define RX_HIBERN8TIME_CAPABILITY		0x0092
+>>>>>>> master:drivers/scsi/ufs/unipro.h
 #define RX_REFCLKFREQ				0x00EB
 #define	RX_CFGCLKFREQVAL			0x00EC
 #define CFGWIDEINLN				0x00F0

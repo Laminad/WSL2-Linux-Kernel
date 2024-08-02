@@ -267,6 +267,7 @@ static void wil_move_all_rx_buff_to_free_list(struct wil6210_priv *wil,
 	struct list_head *active = &wil->rx_buff_mgmt.active;
 	dma_addr_t pa;
 
+<<<<<<< HEAD
 	if (!wil->rx_buff_mgmt.buff_arr)
 		return;
 
@@ -275,6 +276,13 @@ static void wil_move_all_rx_buff_to_free_list(struct wil6210_priv *wil,
 			list_first_entry(active, struct wil_rx_buff, list);
 		struct sk_buff *skb = rx_buff->skb;
 
+=======
+	while (!list_empty(active)) {
+		struct wil_rx_buff *rx_buff =
+			list_first_entry(active, struct wil_rx_buff, list);
+		struct sk_buff *skb = rx_buff->skb;
+
+>>>>>>> master
 		if (unlikely(!skb)) {
 			wil_err(wil, "No Rx skb at buff_id %d\n", rx_buff->id);
 		} else {
@@ -917,12 +925,18 @@ again:
 	wil->rx_buff_mgmt.buff_arr[buff_id].skb = NULL;
 	if (!skb) {
 		wil_err(wil, "No Rx skb at buff_id %d\n", buff_id);
+<<<<<<< HEAD
 		wil_rx_status_reset_buff_id(sring);
 		/* Move the buffer from the active list to the free list */
 		list_move_tail(&wil->rx_buff_mgmt.buff_arr[buff_id].list,
 			       &wil->rx_buff_mgmt.free);
 		wil_sring_advance_swhead(sring);
 		sring->invalid_buff_id_cnt++;
+=======
+		/* Move the buffer from the active list to the free list */
+		list_move(&wil->rx_buff_mgmt.buff_arr[buff_id].list,
+			  &wil->rx_buff_mgmt.free);
+>>>>>>> master
 		goto again;
 	}
 

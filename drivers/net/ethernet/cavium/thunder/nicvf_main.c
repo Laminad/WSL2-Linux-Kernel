@@ -1452,10 +1452,13 @@ int nicvf_open(struct net_device *netdev)
 	struct nicvf *nic = netdev_priv(netdev);
 	struct queue_set *qs = nic->qs;
 	struct nicvf_cq_poll *cq_poll = NULL;
+<<<<<<< HEAD
 
 	/* wait till all queued set_rx_mode tasks completes if any */
 	if (nic->nicvf_rx_mode_wq)
 		drain_workqueue(nic->nicvf_rx_mode_wq);
+=======
+>>>>>>> master
 
 	netif_carrier_off(netdev);
 
@@ -1549,6 +1552,7 @@ int nicvf_open(struct net_device *netdev)
 
 	/* Send VF config done msg to PF */
 	nicvf_send_cfg_done(nic);
+<<<<<<< HEAD
 
 	if (nic->nicvf_rx_mode_wq) {
 		INIT_DELAYED_WORK(&nic->link_change_work,
@@ -1556,6 +1560,8 @@ int nicvf_open(struct net_device *netdev)
 		queue_delayed_work(nic->nicvf_rx_mode_wq,
 				   &nic->link_change_work, 0);
 	}
+=======
+>>>>>>> master
 
 	return 0;
 cleanup:
@@ -1870,8 +1876,18 @@ static int nicvf_xdp_setup(struct nicvf *nic, struct bpf_prog *prog)
 
 	if (nic->xdp_prog) {
 		/* Attach BPF program */
+<<<<<<< HEAD
 		bpf_prog_add(nic->xdp_prog, nic->rx_queues - 1);
 		bpf_attached = true;
+=======
+		nic->xdp_prog = bpf_prog_add(nic->xdp_prog, nic->rx_queues - 1);
+		if (!IS_ERR(nic->xdp_prog)) {
+			bpf_attached = true;
+		} else {
+			ret = PTR_ERR(nic->xdp_prog);
+			nic->xdp_prog = NULL;
+		}
+>>>>>>> master
 	}
 
 	/* Calculate Tx queues needed for XDP and network stack */
@@ -1990,7 +2006,11 @@ static void __nicvf_set_rx_mode_task(u8 mode, struct xcast_addr_list *mc_addrs,
 		 * its' own LMAC to the filter to accept packets for it.
 		 */
 		mbx.xcast.msg = NIC_MBOX_MSG_ADD_MCAST;
+<<<<<<< HEAD
 		mbx.xcast.mac = 0;
+=======
+		mbx.xcast.data.mac = 0;
+>>>>>>> master
 		if (nicvf_send_msg_to_pf(nic, &mbx) < 0)
 			goto free_mc;
 	}
@@ -2000,7 +2020,11 @@ static void __nicvf_set_rx_mode_task(u8 mode, struct xcast_addr_list *mc_addrs,
 		/* now go through kernel list of MACs and add them one by one */
 		for (idx = 0; idx < mc_addrs->count; idx++) {
 			mbx.xcast.msg = NIC_MBOX_MSG_ADD_MCAST;
+<<<<<<< HEAD
 			mbx.xcast.mac = mc_addrs->mc[idx];
+=======
+			mbx.xcast.data.mac = mc_addrs->mc[idx];
+>>>>>>> master
 			if (nicvf_send_msg_to_pf(nic, &mbx) < 0)
 				goto free_mc;
 		}

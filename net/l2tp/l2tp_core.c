@@ -208,10 +208,20 @@ struct l2tp_tunnel *l2tp_tunnel_get(const struct net *net, u32 tunnel_id)
 	struct l2tp_tunnel *tunnel;
 
 	rcu_read_lock_bh();
+<<<<<<< HEAD
 	tunnel = idr_find(&pn->l2tp_tunnel_idr, tunnel_id);
 	if (tunnel && refcount_inc_not_zero(&tunnel->ref_count)) {
 		rcu_read_unlock_bh();
 		return tunnel;
+=======
+	list_for_each_entry_rcu(tunnel, &pn->l2tp_tunnel_list, list) {
+		if (tunnel->tunnel_id == tunnel_id &&
+		    refcount_inc_not_zero(&tunnel->ref_count)) {
+			rcu_read_unlock_bh();
+
+			return tunnel;
+		}
+>>>>>>> master
 	}
 	rcu_read_unlock_bh();
 
@@ -227,8 +237,13 @@ struct l2tp_tunnel *l2tp_tunnel_get_nth(const struct net *net, int nth)
 	int count = 0;
 
 	rcu_read_lock_bh();
+<<<<<<< HEAD
 	idr_for_each_entry_ul(&pn->l2tp_tunnel_idr, tunnel, tmp, tunnel_id) {
 		if (tunnel && ++count > nth &&
+=======
+	list_for_each_entry_rcu(tunnel, &pn->l2tp_tunnel_list, list) {
+		if (++count > nth &&
+>>>>>>> master
 		    refcount_inc_not_zero(&tunnel->ref_count)) {
 			rcu_read_unlock_bh();
 			return tunnel;
@@ -807,9 +822,26 @@ static int l2tp_udp_recv_core(struct l2tp_tunnel *tunnel, struct sk_buff *skb)
 
 	/* Short packet? */
 	if (!pskb_may_pull(skb, L2TP_HDR_SIZE_MAX)) {
+<<<<<<< HEAD
 		pr_debug_ratelimited("%s: recv short packet (len=%d)\n",
 				     tunnel->name, skb->len);
 		goto invalid;
+=======
+		l2tp_info(tunnel, L2TP_MSG_DATA,
+			  "%s: recv short packet (len=%d)\n",
+			  tunnel->name, skb->len);
+		goto error;
+	}
+
+	/* Trace packet contents, if enabled */
+	if (tunnel->debug & L2TP_MSG_DATA) {
+		length = min(32u, skb->len);
+		if (!pskb_may_pull(skb, length))
+			goto error;
+
+		pr_debug("%s: recv\n", tunnel->name);
+		print_hex_dump_bytes("", DUMP_PREFIX_OFFSET, skb->data, length);
+>>>>>>> master
 	}
 
 	/* Point to L2TP header */
@@ -872,6 +904,10 @@ static int l2tp_udp_recv_core(struct l2tp_tunnel *tunnel, struct sk_buff *skb)
 		goto invalid;
 	}
 
+	if (tunnel->version == L2TP_HDR_VER_3 &&
+	    l2tp_v3_ensure_opt_in_linear(session, skb, &ptr, &optr))
+		goto error;
+
 	l2tp_recv_common(session, skb, ptr, optr, hdrflags, length);
 	l2tp_session_dec_refcount(session);
 
@@ -897,6 +933,7 @@ int l2tp_udp_encap_recv(struct sock *sk, struct sk_buff *skb)
 {
 	struct l2tp_tunnel *tunnel;
 
+<<<<<<< HEAD
 	/* Note that this is called from the encap_rcv hook inside an
 	 * RCU-protected region, but without the socket being locked.
 	 * Hence we use rcu_dereference_sk_user_data to access the
@@ -907,6 +944,10 @@ int l2tp_udp_encap_recv(struct sock *sk, struct sk_buff *skb)
 	if (!tunnel)
 		goto pass_up;
 	if (WARN_ON(tunnel->magic != L2TP_TUNNEL_MAGIC))
+=======
+	tunnel = rcu_dereference_sk_user_data(sk);
+	if (tunnel == NULL)
+>>>>>>> master
 		goto pass_up;
 
 	if (l2tp_udp_recv_core(tunnel, skb))
@@ -1479,6 +1520,7 @@ int l2tp_tunnel_register(struct l2tp_tunnel *tunnel, struct net *net,
 			goto err;
 	}
 
+<<<<<<< HEAD
 	sk = sock->sk;
 	lock_sock(sk);
 	write_lock_bh(&sk->sk_callback_lock);
@@ -1487,6 +1529,26 @@ int l2tp_tunnel_register(struct l2tp_tunnel *tunnel, struct net *net,
 		goto err_inval_sock;
 	rcu_assign_sk_user_data(sk, tunnel);
 	write_unlock_bh(&sk->sk_callback_lock);
+=======
+	tunnel->l2tp_net = net;
+	pn = l2tp_pernet(net);
+
+	spin_lock_bh(&pn->l2tp_tunnel_list_lock);
+	list_for_each_entry(tunnel_walk, &pn->l2tp_tunnel_list, list) {
+		if (tunnel_walk->tunnel_id == tunnel->tunnel_id) {
+			spin_unlock_bh(&pn->l2tp_tunnel_list_lock);
+
+			ret = -EEXIST;
+			goto err_sock;
+		}
+	}
+	list_add_rcu(&tunnel->list, &pn->l2tp_tunnel_list);
+	spin_unlock_bh(&pn->l2tp_tunnel_list_lock);
+>>>>>>> master
+
+	sk = sock->sk;
+	sock_hold(sk);
+	tunnel->sock = sk;
 
 	if (tunnel->encap == L2TP_ENCAPTYPE_UDP) {
 		struct udp_tunnel_sock_cfg udp_cfg = {

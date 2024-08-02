@@ -1732,9 +1732,41 @@ static struct sk_buff *dpaa_cleanup_tx_fd(const struct dpaa_priv *priv,
 		}
 	}
 
+<<<<<<< HEAD
 	if (qm_fd_get_format(fd) == qm_fd_sg)
 		/* Free the page that we allocated on Tx for the SGT */
 		free_pages((unsigned long)vaddr, 0);
+=======
+	if (unlikely(qm_fd_get_format(fd) == qm_fd_sg)) {
+		nr_frags = skb_shinfo(skb)->nr_frags;
+		dma_unmap_single(dev, addr,
+				 qm_fd_get_offset(fd) + DPAA_SGT_SIZE,
+				 dma_dir);
+
+		/* The sgt buffer has been allocated with netdev_alloc_frag(),
+		 * it's from lowmem.
+		 */
+		sgt = phys_to_virt(addr + qm_fd_get_offset(fd));
+
+		/* sgt[0] is from lowmem, was dma_map_single()-ed */
+		dma_unmap_single(dev, qm_sg_addr(&sgt[0]),
+				 qm_sg_entry_get_len(&sgt[0]), dma_dir);
+
+		/* remaining pages were mapped with skb_frag_dma_map() */
+		for (i = 1; i <= nr_frags; i++) {
+			WARN_ON(qm_sg_entry_is_ext(&sgt[i]));
+
+			dma_unmap_page(dev, qm_sg_addr(&sgt[i]),
+				       qm_sg_entry_get_len(&sgt[i]), dma_dir);
+		}
+
+		/* Free the page frag that we allocated on Tx */
+		skb_free_frag(phys_to_virt(addr));
+	} else {
+		dma_unmap_single(dev, addr,
+				 skb_tail_pointer(skb) - (u8 *)skbh, dma_dir);
+	}
+>>>>>>> master
 
 	return skb;
 }
@@ -2341,7 +2373,11 @@ dpaa_start_xmit(struct sk_buff *skb, struct net_device *net_dev)
 	txq = netdev_get_tx_queue(net_dev, queue_mapping);
 
 	/* LLTX requires to do our own update of trans_start */
+<<<<<<< HEAD
 	txq_trans_cond_update(txq);
+=======
+	txq->trans_start = jiffies;
+>>>>>>> master
 
 	if (priv->tx_tstamp && skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP) {
 		fd.cmd |= cpu_to_be32(FM_FD_CMD_UPD);

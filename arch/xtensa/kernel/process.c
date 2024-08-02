@@ -149,6 +149,7 @@ static void local_coprocessor_flush_all(void *info)
 
 void coprocessor_flush_all(struct thread_info *ti)
 {
+<<<<<<< HEAD
 	if (ti->cpenable) {
 		/* pairs with memw (2) in fast_coprocessor */
 		smp_rmb();
@@ -157,6 +158,23 @@ void coprocessor_flush_all(struct thread_info *ti)
 					 ti, true);
 	}
 }
+=======
+	unsigned long cpenable, old_cpenable;
+	int i;
+
+	preempt_disable();
+
+	RSR_CPENABLE(old_cpenable);
+	cpenable = ti->cpenable;
+	WSR_CPENABLE(cpenable);
+
+	for (i = 0; i < XCHAL_CP_MAX; i++) {
+		if ((cpenable & 1) != 0 && coprocessor_owner[i] == ti)
+			coprocessor_flush(ti, i);
+		cpenable >>= 1;
+	}
+	WSR_CPENABLE(old_cpenable);
+>>>>>>> master
 
 static void local_coprocessor_flush_release_all(void *info)
 {
@@ -393,7 +411,11 @@ unsigned long __get_wchan(struct task_struct *p)
 
 		/* Stack layout: sp-4: ra, sp-3: sp' */
 
+<<<<<<< HEAD
 		pc = MAKE_PC_FROM_RA(SPILL_SLOT(sp, 0), _text);
+=======
+		pc = MAKE_PC_FROM_RA(SPILL_SLOT(sp, 0), sp);
+>>>>>>> master
 		sp = SPILL_SLOT(sp, 1);
 	} while (count++ < 16);
 	return 0;

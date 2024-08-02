@@ -2527,13 +2527,21 @@ void amdgpu_vm_get_task_info(struct amdgpu_device *adev, u32 pasid,
 	struct amdgpu_vm *vm;
 	unsigned long flags;
 
+<<<<<<< HEAD
 	xa_lock_irqsave(&adev->vm_manager.pasids, flags);
+=======
+	spin_lock_irqsave(&adev->vm_manager.pasid_lock, flags);
+>>>>>>> master
 
 	vm = xa_load(&adev->vm_manager.pasids, pasid);
 	if (vm)
 		*task_info = vm->task_info;
 
+<<<<<<< HEAD
 	xa_unlock_irqrestore(&adev->vm_manager.pasids, flags);
+=======
+	spin_unlock_irqrestore(&adev->vm_manager.pasid_lock, flags);
+>>>>>>> master
 }
 
 /**

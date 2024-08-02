@@ -108,6 +108,25 @@ err_ws:
 }
 EXPORT_SYMBOL_GPL(wakeup_source_create);
 
+<<<<<<< HEAD
+=======
+/**
+ * wakeup_source_drop - Prepare a struct wakeup_source object for destruction.
+ * @ws: Wakeup source to prepare for destruction.
+ *
+ * Callers must ensure that __pm_stay_awake() or __pm_wakeup_event() will never
+ * be run in parallel with this function for the same wakeup source object.
+ */
+void wakeup_source_drop(struct wakeup_source *ws)
+{
+	if (!ws)
+		return;
+
+	__pm_relax(ws);
+}
+EXPORT_SYMBOL_GPL(wakeup_source_drop);
+
+>>>>>>> master
 /*
  * Record wakeup_source statistics being deleted into a dummy wakeup_source.
  */

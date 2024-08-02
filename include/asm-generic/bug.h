@@ -91,6 +91,7 @@ extern __printf(4, 5)
 void warn_slowpath_fmt(const char *file, const int line, unsigned taint,
 		       const char *fmt, ...);
 extern __printf(1, 2) void __warn_printk(const char *fmt, ...);
+<<<<<<< HEAD
 
 #ifndef __WARN_FLAGS
 #define __WARN()		__WARN_printf(TAINT_WARN, NULL)
@@ -114,6 +115,14 @@ extern __printf(1, 2) void __warn_printk(const char *fmt, ...);
 			     BUGFLAG_TAINT(TAINT_WARN));	\
 	unlikely(__ret_warn_on);				\
 })
+=======
+#define __WARN() do { \
+	printk(KERN_WARNING CUT_HERE); __WARN_TAINT(TAINT_WARN); \
+} while (0)
+#define __WARN_printf(arg...)	__WARN_printf_taint(TAINT_WARN, arg)
+#define __WARN_printf_taint(taint, arg...)				\
+	do { __warn_printk(arg); __WARN_TAINT(taint); } while (0)
+>>>>>>> master
 #endif
 
 /* used internally by panic.c */

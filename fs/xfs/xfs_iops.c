@@ -234,7 +234,11 @@ xfs_generic_create(
 		 * d_tmpfile can immediately set it back to zero.
 		 */
 		set_nlink(inode, 1);
+<<<<<<< HEAD
 		d_tmpfile(tmpfile, inode);
+=======
+		d_tmpfile(dentry, inode);
+>>>>>>> master
 	} else
 		d_instantiate(dentry, inode);
 
@@ -584,16 +588,23 @@ xfs_vn_getattr(
 		}
 	}
 
+<<<<<<< HEAD
 	if ((request_mask & STATX_CHANGE_COOKIE) && IS_I_VERSION(inode)) {
 		stat->change_cookie = inode_query_iversion(inode);
 		stat->result_mask |= STATX_CHANGE_COOKIE;
 	}
 
+=======
+>>>>>>> master
 	/*
 	 * Note: If you add another clause to set an attribute flag, please
 	 * update attributes_mask below.
 	 */
+<<<<<<< HEAD
 	if (ip->i_diflags & XFS_DIFLAG_IMMUTABLE)
+=======
+	if (ip->i_d.di_flags & XFS_DIFLAG_IMMUTABLE)
+>>>>>>> master
 		stat->attributes |= STATX_ATTR_IMMUTABLE;
 	if (ip->i_diflags & XFS_DIFLAG_APPEND)
 		stat->attributes |= STATX_ATTR_APPEND;
@@ -769,6 +780,12 @@ xfs_setattr_nonsize(
 
 	return 0;
 
+<<<<<<< HEAD
+=======
+out_cancel:
+	xfs_trans_cancel(tp);
+	xfs_iunlock(ip, XFS_ILOCK_EXCL);
+>>>>>>> master
 out_dqrele:
 	xfs_qm_dqrele(udqp);
 	xfs_qm_dqrele(gdqp);

@@ -76,6 +76,7 @@ void __weak arch_irq_work_raise(void)
 	 */
 }
 
+<<<<<<< HEAD
 static __always_inline void irq_work_raise(struct irq_work *work)
 {
 	if (trace_ipi_send_cpu_enabled() && arch_irq_work_has_interrupt())
@@ -110,6 +111,20 @@ static void __irq_work_queue_local(struct irq_work *work)
 	/* If the work is "lazy", handle it from next tick if any */
 	if (!lazy_work || tick_nohz_tick_stopped())
 		irq_work_raise(work);
+=======
+/* Enqueue on current CPU, work must already be claimed and preempt disabled */
+static void __irq_work_queue_local(struct irq_work *work)
+{
+	/* If the work is "lazy", handle it from next tick if any */
+	if (work->flags & IRQ_WORK_LAZY) {
+		if (llist_add(&work->llnode, this_cpu_ptr(&lazy_list)) &&
+		    tick_nohz_tick_stopped())
+			arch_irq_work_raise();
+	} else {
+		if (llist_add(&work->llnode, this_cpu_ptr(&raised_list)))
+			arch_irq_work_raise();
+	}
+>>>>>>> master
 }
 
 /* Enqueue the irq work @work on the current CPU */
@@ -147,12 +162,16 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
 	if (!irq_work_claim(work))
 		return false;
 
+<<<<<<< HEAD
 	kasan_record_aux_stack_noalloc(work);
 
+=======
+>>>>>>> master
 	preempt_disable();
 	if (cpu != smp_processor_id()) {
 		/* Arch remote IPI send/receive backend aren't NMI safe */
 		WARN_ON_ONCE(in_nmi());
+<<<<<<< HEAD
 
 		/*
 		 * On PREEMPT_RT the items which are not marked as
@@ -175,12 +194,23 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
 		__irq_work_queue_local(work);
 	}
 out:
+=======
+		if (llist_add(&work->llnode, &per_cpu(raised_list, cpu)))
+			arch_send_call_function_single_ipi(cpu);
+	} else {
+		__irq_work_queue_local(work);
+	}
+>>>>>>> master
 	preempt_enable();
 
 	return true;
 #endif /* CONFIG_SMP */
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
 bool irq_work_needs_cpu(void)
 {
 	struct llist_head *raised, *lazy;

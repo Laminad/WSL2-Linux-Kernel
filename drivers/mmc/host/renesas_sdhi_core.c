@@ -913,7 +913,14 @@ int renesas_sdhi_probe(struct platform_device *pdev,
 	struct renesas_sdhi *priv;
 	int num_irqs, irq, ret, i;
 	struct resource *res;
+<<<<<<< HEAD
 	u16 ver;
+=======
+	int irq, ret, i;
+	u16 ver;
+
+	of_data = of_device_get_match_data(&pdev->dev);
+>>>>>>> master
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res)
@@ -1003,11 +1010,21 @@ int renesas_sdhi_probe(struct platform_device *pdev,
 		host->ops.card_busy = renesas_sdhi_card_busy;
 		host->ops.start_signal_voltage_switch =
 			renesas_sdhi_start_signal_voltage_switch;
+<<<<<<< HEAD
 		host->sdcard_irq_setbit_mask = TMIO_STAT_ALWAYS_SET_27;
 		host->sdcard_irq_mask_all = TMIO_MASK_ALL_RCAR2;
 		host->reset = renesas_sdhi_reset;
 	} else {
 		host->sdcard_irq_mask_all = TMIO_MASK_ALL;
+=======
+
+		/* SDR and HS200/400 registers requires HW reset */
+		if (of_data && of_data->scc_offset) {
+			priv->scc_ctl = host->ctl + of_data->scc_offset;
+			host->mmc->caps |= MMC_CAP_HW_RESET;
+			host->hw_reset = renesas_sdhi_hw_reset;
+		}
+>>>>>>> master
 	}
 
 	/* Orginally registers were 16 bit apart, could be 32 or 64 nowadays */
@@ -1052,6 +1069,13 @@ int renesas_sdhi_probe(struct platform_device *pdev,
 	/* GEN2_SDR104 is first known SDHI to use 32bit block count */
 	if (ver < SDHI_VER_GEN2_SDR104 && mmc_data->max_blk_count > U16_MAX)
 		mmc_data->max_blk_count = U16_MAX;
+<<<<<<< HEAD
+=======
+
+	ret = tmio_mmc_host_probe(host);
+	if (ret < 0)
+		goto edisclk;
+>>>>>>> master
 
 	/* One Gen2 SDHI incarnation does NOT have a CBSY bit */
 	if (ver == SDHI_VER_GEN2_SDR50)
@@ -1065,6 +1089,7 @@ int renesas_sdhi_probe(struct platform_device *pdev,
 			quirks->hs400_calib_table + 1);
 	}
 
+<<<<<<< HEAD
 	/* these have an EXTOP bit */
 	if (ver >= SDHI_VER_GEN3_SD)
 		host->get_timeout_cycles = renesas_sdhi_gen3_get_cycles;
@@ -1080,6 +1105,8 @@ int renesas_sdhi_probe(struct platform_device *pdev,
 		bool use_4tap = sdhi_has_quirk(priv, hs400_4taps);
 		bool hit = false;
 
+=======
+>>>>>>> master
 		for (i = 0; i < of_data->taps_num; i++) {
 			if (taps[i].clk_rate == 0 ||
 			    taps[i].clk_rate == host->mmc->f_max) {
@@ -1095,11 +1122,22 @@ int renesas_sdhi_probe(struct platform_device *pdev,
 		if (!hit)
 			dev_warn(&host->pdev->dev, "Unknown clock rate for tuning\n");
 
+<<<<<<< HEAD
 		host->check_retune = renesas_sdhi_check_scc_error;
 		host->ops.execute_tuning = renesas_sdhi_execute_tuning;
 		host->ops.prepare_hs400_tuning = renesas_sdhi_prepare_hs400_tuning;
 		host->ops.hs400_downgrade = renesas_sdhi_disable_scc;
 		host->ops.hs400_complete = renesas_sdhi_hs400_complete;
+=======
+		host->init_tuning = renesas_sdhi_init_tuning;
+		host->prepare_tuning = renesas_sdhi_prepare_tuning;
+		host->select_tuning = renesas_sdhi_select_tuning;
+		host->check_scc_error = renesas_sdhi_check_scc_error;
+		host->prepare_hs400_tuning =
+			renesas_sdhi_prepare_hs400_tuning;
+		host->hs400_downgrade = renesas_sdhi_disable_scc;
+		host->hs400_complete = renesas_sdhi_hs400_complete;
+>>>>>>> master
 	}
 
 	sd_ctrl_write32_as_16_and_16(host, CTL_IRQ_MASK, host->sdcard_irq_mask_all);

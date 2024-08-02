@@ -9,7 +9,10 @@
 #include <linux/uidgid.h>
 #include <net/inet_frag.h>
 #include <linux/rcupdate.h>
+<<<<<<< HEAD
 #include <linux/seqlock.h>
+=======
+>>>>>>> master
 #include <linux/siphash.h>
 
 struct ctl_table_header;

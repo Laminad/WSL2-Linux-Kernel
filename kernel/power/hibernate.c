@@ -352,6 +352,10 @@ static int create_image(int platform_mode)
 	if (!in_suspend)
 		error = arch_resume_nosmt();
 
+	/* Allow architectures to do nosmt-specific post-resume dances */
+	if (!in_suspend)
+		error = arch_resume_nosmt();
+
  Platform_finish:
 	platform_finish(platform_mode);
 

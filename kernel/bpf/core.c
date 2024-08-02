@@ -558,8 +558,13 @@ void bpf_prog_kallsyms_del_all(struct bpf_prog *fp)
 int bpf_jit_enable   __read_mostly = IS_BUILTIN(CONFIG_BPF_JIT_DEFAULT_ON);
 int bpf_jit_kallsyms __read_mostly = IS_BUILTIN(CONFIG_BPF_JIT_DEFAULT_ON);
 int bpf_jit_harden   __read_mostly;
+<<<<<<< HEAD
 long bpf_jit_limit   __read_mostly;
 long bpf_jit_limit_max __read_mostly;
+=======
+int bpf_jit_kallsyms __read_mostly;
+long bpf_jit_limit   __read_mostly;
+>>>>>>> master
 
 static void
 bpf_prog_ksym_set_addr(struct bpf_prog *prog)
@@ -796,6 +801,7 @@ int bpf_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
 	return ret;
 }
 
+<<<<<<< HEAD
 int bpf_jit_add_poke_descriptor(struct bpf_prog *prog,
 				struct bpf_jit_poke_descriptor *poke)
 {
@@ -976,6 +982,8 @@ out:
 	mutex_unlock(&pack_mutex);
 }
 
+=======
+>>>>>>> master
 static atomic_long_t bpf_jit_current;
 
 /* Can be overridden by an arch's JIT compiler if it has a custom,
@@ -994,18 +1002,31 @@ u64 __weak bpf_jit_alloc_exec_limit(void)
 static int __init bpf_jit_charge_init(void)
 {
 	/* Only used as heuristic here to derive limit. */
+<<<<<<< HEAD
 	bpf_jit_limit_max = bpf_jit_alloc_exec_limit();
 	bpf_jit_limit = min_t(u64, round_up(bpf_jit_limit_max >> 1,
+=======
+	bpf_jit_limit = min_t(u64, round_up(bpf_jit_alloc_exec_limit() >> 2,
+>>>>>>> master
 					    PAGE_SIZE), LONG_MAX);
 	return 0;
 }
 pure_initcall(bpf_jit_charge_init);
 
+<<<<<<< HEAD
 int bpf_jit_charge_modmem(u32 size)
 {
 	if (atomic_long_add_return(size, &bpf_jit_current) > READ_ONCE(bpf_jit_limit)) {
 		if (!bpf_capable()) {
 			atomic_long_sub(size, &bpf_jit_current);
+=======
+static int bpf_jit_charge_modmem(u32 pages)
+{
+	if (atomic_long_add_return(pages, &bpf_jit_current) >
+	    (bpf_jit_limit >> PAGE_SHIFT)) {
+		if (!capable(CAP_SYS_ADMIN)) {
+			atomic_long_sub(pages, &bpf_jit_current);
+>>>>>>> master
 			return -EPERM;
 		}
 	}
@@ -1013,6 +1034,7 @@ int bpf_jit_charge_modmem(u32 size)
 	return 0;
 }
 
+<<<<<<< HEAD
 void bpf_jit_uncharge_modmem(u32 size)
 {
 	atomic_long_sub(size, &bpf_jit_current);
@@ -1026,6 +1048,11 @@ void *__weak bpf_jit_alloc_exec(unsigned long size)
 void __weak bpf_jit_free_exec(void *addr)
 {
 	module_memfree(addr);
+=======
+static void bpf_jit_uncharge_modmem(u32 pages)
+{
+	atomic_long_sub(pages, &bpf_jit_current);
+>>>>>>> master
 }
 
 struct bpf_binary_header *
@@ -1034,29 +1061,47 @@ bpf_jit_binary_alloc(unsigned int proglen, u8 **image_ptr,
 		     bpf_jit_fill_hole_t bpf_fill_ill_insns)
 {
 	struct bpf_binary_header *hdr;
+<<<<<<< HEAD
 	u32 size, hole, start;
 
 	WARN_ON_ONCE(!is_power_of_2(alignment) ||
 		     alignment > BPF_IMAGE_ALIGNMENT);
+=======
+	u32 size, hole, start, pages;
+>>>>>>> master
 
 	/* Most of BPF filters are really small, but if some of them
 	 * fill a page, allow at least 128 extra bytes to insert a
 	 * random section of illegal instructions.
 	 */
 	size = round_up(proglen + sizeof(*hdr) + 128, PAGE_SIZE);
+<<<<<<< HEAD
 
 	if (bpf_jit_charge_modmem(size))
 		return NULL;
 	hdr = bpf_jit_alloc_exec(size);
 	if (!hdr) {
 		bpf_jit_uncharge_modmem(size);
+=======
+	pages = size / PAGE_SIZE;
+
+	if (bpf_jit_charge_modmem(pages))
+		return NULL;
+	hdr = module_alloc(size);
+	if (!hdr) {
+		bpf_jit_uncharge_modmem(pages);
+>>>>>>> master
 		return NULL;
 	}
 
 	/* Fill space with illegal/arch-dep instructions. */
 	bpf_fill_ill_insns(hdr, size);
 
+<<<<<<< HEAD
 	hdr->size = size;
+=======
+	hdr->pages = pages;
+>>>>>>> master
 	hole = min_t(unsigned int, size - (proglen + sizeof(*hdr)),
 		     PAGE_SIZE - sizeof(*hdr));
 	start = get_random_u32_below(hole) & ~(alignment - 1);
@@ -1069,6 +1114,7 @@ bpf_jit_binary_alloc(unsigned int proglen, u8 **image_ptr,
 
 void bpf_jit_binary_free(struct bpf_binary_header *hdr)
 {
+<<<<<<< HEAD
 	u32 size = hdr->size;
 
 	bpf_jit_free_exec(hdr);
@@ -1185,6 +1231,12 @@ bpf_jit_binary_hdr(const struct bpf_prog *fp)
 
 	addr = real_start & PAGE_MASK;
 	return (void *)addr;
+=======
+	u32 pages = hdr->pages;
+
+	module_memfree(hdr);
+	bpf_jit_uncharge_modmem(pages);
+>>>>>>> master
 }
 
 /* This symbol is only overridden by archs that have different
@@ -1809,6 +1861,7 @@ select_insn:
 		(*(s64 *) &DST) >>= IMM;
 		CONT;
 	ALU64_MOD_X:
+<<<<<<< HEAD
 		switch (OFF) {
 		case 0:
 			div64_u64_rem(DST, SRC, &AX);
@@ -1863,6 +1916,22 @@ select_insn:
 				DST = (u32)AX;
 			break;
 		}
+=======
+		div64_u64_rem(DST, SRC, &AX);
+		DST = AX;
+		CONT;
+	ALU_MOD_X:
+		AX = (u32) DST;
+		DST = do_div(AX, (u32) SRC);
+		CONT;
+	ALU64_MOD_K:
+		div64_u64_rem(DST, IMM, &AX);
+		DST = AX;
+		CONT;
+	ALU_MOD_K:
+		AX = (u32) DST;
+		DST = do_div(AX, (u32) IMM);
+>>>>>>> master
 		CONT;
 	ALU64_DIV_X:
 		switch (OFF) {
@@ -1875,6 +1944,7 @@ select_insn:
 		}
 		CONT;
 	ALU_DIV_X:
+<<<<<<< HEAD
 		switch (OFF) {
 		case 0:
 			AX = (u32) DST;
@@ -1890,6 +1960,11 @@ select_insn:
 				DST = (u32)-AX;
 			break;
 		}
+=======
+		AX = (u32) DST;
+		do_div(AX, (u32) SRC);
+		DST = (u32) AX;
+>>>>>>> master
 		CONT;
 	ALU64_DIV_K:
 		switch (OFF) {
@@ -1902,6 +1977,7 @@ select_insn:
 		}
 		CONT;
 	ALU_DIV_K:
+<<<<<<< HEAD
 		switch (OFF) {
 		case 0:
 			AX = (u32) DST;
@@ -1917,6 +1993,11 @@ select_insn:
 				DST = (u32)-AX;
 			break;
 		}
+=======
+		AX = (u32) DST;
+		do_div(AX, (u32) IMM);
+		DST = (u32) AX;
+>>>>>>> master
 		CONT;
 	ALU_END_TO_BE:
 		switch (IMM) {
@@ -2172,7 +2253,11 @@ out:
 static unsigned int PROG_NAME(stack_size)(const void *ctx, const struct bpf_insn *insn) \
 { \
 	u64 stack[stack_size / sizeof(u64)]; \
+<<<<<<< HEAD
 	u64 regs[MAX_BPF_EXT_REG] = {}; \
+=======
+	u64 regs[MAX_BPF_EXT_REG]; \
+>>>>>>> master
 \
 	FP = (u64) (unsigned long) &stack[ARRAY_SIZE(stack)]; \
 	ARG1 = (u64) (unsigned long) ctx; \

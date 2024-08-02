@@ -56,20 +56,31 @@ static void *find_uac_clock_desc(struct usb_host_interface *iface, int id,
 
 static bool validate_clock_source(void *p, int id, int proto)
 {
+<<<<<<< HEAD
 	union uac23_clock_source_desc *cs = p;
 
 	return GET_VAL(cs, proto, bClockID) == id;
+=======
+	struct uac_clock_source_descriptor *cs = p;
+	return cs->bClockID == id;
+>>>>>>> master
 }
 
 static bool validate_clock_selector(void *p, int id, int proto)
 {
+<<<<<<< HEAD
 	union uac23_clock_selector_desc *cs = p;
 
 	return GET_VAL(cs, proto, bClockID) == id;
+=======
+	struct uac3_clock_source_descriptor *cs = p;
+	return cs->bClockID == id;
+>>>>>>> master
 }
 
 static bool validate_clock_multiplier(void *p, int id, int proto)
 {
+<<<<<<< HEAD
 	union uac23_clock_multiplier_desc *cs = p;
 
 	return GET_VAL(cs, proto, bClockID) == id;
@@ -81,6 +92,34 @@ static obj *name(struct snd_usb_audio *chip, int id, int proto)	\
 	return find_uac_clock_desc(chip->ctrl_intf, id, validator,	\
 				   proto == UAC_VERSION_3 ? (type3) : (type2), \
 				   proto);				\
+=======
+	struct uac_clock_selector_descriptor *cs = p;
+	return cs->bClockID == id;
+}
+
+static bool validate_clock_selector_v3(void *p, int id)
+{
+	struct uac3_clock_selector_descriptor *cs = p;
+	return cs->bClockID == id;
+}
+
+static bool validate_clock_multiplier_v2(void *p, int id)
+{
+	struct uac_clock_multiplier_descriptor *cs = p;
+	return cs->bClockID == id;
+}
+
+static bool validate_clock_multiplier_v3(void *p, int id)
+{
+	struct uac3_clock_multiplier_descriptor *cs = p;
+	return cs->bClockID == id;
+}
+
+#define DEFINE_FIND_HELPER(name, obj, validator, type)		\
+static obj *name(struct usb_host_interface *iface, int id)	\
+{								\
+	return find_uac_clock_desc(iface, id, validator, type);	\
+>>>>>>> master
 }
 
 DEFINE_FIND_HELPER(snd_usb_find_clock_source,

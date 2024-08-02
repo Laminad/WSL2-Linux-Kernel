@@ -1086,6 +1086,24 @@ void edac_mc_handle_error(const enum hw_event_mc_err_type type,
 		prefix = " ";
 	}
 
+<<<<<<< HEAD
 	edac_raw_mc_handle_error(e);
+=======
+	/* Sanity-check driver-supplied grain value. */
+	if (WARN_ON_ONCE(!e->grain))
+		e->grain = 1;
+
+	grain_bits = fls_long(e->grain - 1);
+
+	/* Report the error via the trace interface */
+	if (IS_ENABLED(CONFIG_RAS))
+		trace_mc_event(type, e->msg, e->label, e->error_count,
+			       mci->mc_idx, e->top_layer, e->mid_layer,
+			       e->low_layer,
+			       (e->page_frame_number << PAGE_SHIFT) | e->offset_in_page,
+			       grain_bits, e->syndrome, e->other_detail);
+
+	edac_raw_mc_handle_error(type, mci, e);
+>>>>>>> master
 }
 EXPORT_SYMBOL_GPL(edac_mc_handle_error);

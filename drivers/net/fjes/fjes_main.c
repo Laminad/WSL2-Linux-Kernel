@@ -1051,6 +1051,133 @@ static int fjes_poll(struct napi_struct *napi, int budget)
 	return work_done;
 }
 
+<<<<<<< HEAD
+=======
+/* fjes_probe - Device Initialization Routine */
+static int fjes_probe(struct platform_device *plat_dev)
+{
+	struct fjes_adapter *adapter;
+	struct net_device *netdev;
+	struct resource *res;
+	struct fjes_hw *hw;
+	int err;
+
+	err = -ENOMEM;
+	netdev = alloc_netdev_mq(sizeof(struct fjes_adapter), "es%d",
+				 NET_NAME_UNKNOWN, fjes_netdev_setup,
+				 FJES_MAX_QUEUES);
+
+	if (!netdev)
+		goto err_out;
+
+	SET_NETDEV_DEV(netdev, &plat_dev->dev);
+
+	dev_set_drvdata(&plat_dev->dev, netdev);
+	adapter = netdev_priv(netdev);
+	adapter->netdev = netdev;
+	adapter->plat_dev = plat_dev;
+	hw = &adapter->hw;
+	hw->back = adapter;
+
+	/* setup the private structure */
+	err = fjes_sw_init(adapter);
+	if (err)
+		goto err_free_netdev;
+
+	INIT_WORK(&adapter->force_close_task, fjes_force_close_task);
+	adapter->force_reset = false;
+	adapter->open_guard = false;
+
+	adapter->txrx_wq = alloc_workqueue(DRV_NAME "/txrx", WQ_MEM_RECLAIM, 0);
+	if (unlikely(!adapter->txrx_wq)) {
+		err = -ENOMEM;
+		goto err_free_netdev;
+	}
+
+	adapter->control_wq = alloc_workqueue(DRV_NAME "/control",
+					      WQ_MEM_RECLAIM, 0);
+	if (unlikely(!adapter->control_wq)) {
+		err = -ENOMEM;
+		goto err_free_txrx_wq;
+	}
+
+	INIT_WORK(&adapter->tx_stall_task, fjes_tx_stall_task);
+	INIT_WORK(&adapter->raise_intr_rxdata_task,
+		  fjes_raise_intr_rxdata_task);
+	INIT_WORK(&adapter->unshare_watch_task, fjes_watch_unshare_task);
+	adapter->unshare_watch_bitmask = 0;
+
+	INIT_DELAYED_WORK(&adapter->interrupt_watch_task, fjes_irq_watch_task);
+	adapter->interrupt_watch_enable = false;
+
+	res = platform_get_resource(plat_dev, IORESOURCE_MEM, 0);
+	hw->hw_res.start = res->start;
+	hw->hw_res.size = resource_size(res);
+	hw->hw_res.irq = platform_get_irq(plat_dev, 0);
+	err = fjes_hw_init(&adapter->hw);
+	if (err)
+		goto err_free_control_wq;
+
+	/* setup MAC address (02:00:00:00:00:[epid])*/
+	netdev->dev_addr[0] = 2;
+	netdev->dev_addr[1] = 0;
+	netdev->dev_addr[2] = 0;
+	netdev->dev_addr[3] = 0;
+	netdev->dev_addr[4] = 0;
+	netdev->dev_addr[5] = hw->my_epid; /* EPID */
+
+	err = register_netdev(netdev);
+	if (err)
+		goto err_hw_exit;
+
+	netif_carrier_off(netdev);
+
+	fjes_dbg_adapter_init(adapter);
+
+	return 0;
+
+err_hw_exit:
+	fjes_hw_exit(&adapter->hw);
+err_free_control_wq:
+	destroy_workqueue(adapter->control_wq);
+err_free_txrx_wq:
+	destroy_workqueue(adapter->txrx_wq);
+err_free_netdev:
+	free_netdev(netdev);
+err_out:
+	return err;
+}
+
+/* fjes_remove - Device Removal Routine */
+static int fjes_remove(struct platform_device *plat_dev)
+{
+	struct net_device *netdev = dev_get_drvdata(&plat_dev->dev);
+	struct fjes_adapter *adapter = netdev_priv(netdev);
+	struct fjes_hw *hw = &adapter->hw;
+
+	fjes_dbg_adapter_exit(adapter);
+
+	cancel_delayed_work_sync(&adapter->interrupt_watch_task);
+	cancel_work_sync(&adapter->unshare_watch_task);
+	cancel_work_sync(&adapter->raise_intr_rxdata_task);
+	cancel_work_sync(&adapter->tx_stall_task);
+	if (adapter->control_wq)
+		destroy_workqueue(adapter->control_wq);
+	if (adapter->txrx_wq)
+		destroy_workqueue(adapter->txrx_wq);
+
+	unregister_netdev(netdev);
+
+	fjes_hw_exit(hw);
+
+	netif_napi_del(&adapter->napi);
+
+	free_netdev(netdev);
+
+	return 0;
+}
+
+>>>>>>> master
 static int fjes_sw_init(struct fjes_adapter *adapter)
 {
 	struct net_device *netdev = adapter->netdev;

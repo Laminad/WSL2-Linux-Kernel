@@ -81,6 +81,7 @@ int inotify_handle_inode_event(struct fsnotify_mark *inode_mark, u32 mask,
 			      fsn_mark);
 
 	/*
+<<<<<<< HEAD
 	 * We can be racing with mark being detached. Don't report event with
 	 * invalid wd.
 	 */
@@ -88,13 +89,21 @@ int inotify_handle_inode_event(struct fsnotify_mark *inode_mark, u32 mask,
 	if (wd == -1)
 		return 0;
 	/*
+=======
+>>>>>>> master
 	 * Whoever is interested in the event, pays for the allocation. Do not
 	 * trigger OOM killer in the target monitoring memcg as it may have
 	 * security repercussion.
 	 */
+<<<<<<< HEAD
 	old_memcg = set_active_memcg(group->memcg);
 	event = kmalloc(alloc_len, GFP_KERNEL_ACCOUNT | __GFP_RETRY_MAYFAIL);
 	set_active_memcg(old_memcg);
+=======
+	memalloc_use_memcg(group->memcg);
+	event = kmalloc(alloc_len, GFP_KERNEL_ACCOUNT | __GFP_RETRY_MAYFAIL);
+	memalloc_unuse_memcg();
+>>>>>>> master
 
 	if (unlikely(!event)) {
 		/*

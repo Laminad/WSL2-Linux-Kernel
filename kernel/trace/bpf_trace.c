@@ -389,7 +389,92 @@ BPF_CALL_5(bpf_trace_printk, char *, fmt, u32, fmt_size, u64, arg1,
 
 	bpf_bprintf_cleanup(&data);
 
+<<<<<<< HEAD
 	return ret;
+=======
+		/* fmt[i] != 0 && fmt[last] == 0, so we can access fmt[i + 1] */
+		i++;
+		if (fmt[i] == 'l') {
+			mod[fmt_cnt]++;
+			i++;
+		} else if (fmt[i] == 'p' || fmt[i] == 's') {
+			mod[fmt_cnt]++;
+			/* disallow any further format extensions */
+			if (fmt[i + 1] != 0 &&
+			    !isspace(fmt[i + 1]) &&
+			    !ispunct(fmt[i + 1]))
+				return -EINVAL;
+			fmt_cnt++;
+			if (fmt[i] == 's') {
+				if (str_seen)
+					/* allow only one '%s' per fmt string */
+					return -EINVAL;
+				str_seen = true;
+
+				switch (fmt_cnt) {
+				case 1:
+					unsafe_addr = arg1;
+					arg1 = (long) buf;
+					break;
+				case 2:
+					unsafe_addr = arg2;
+					arg2 = (long) buf;
+					break;
+				case 3:
+					unsafe_addr = arg3;
+					arg3 = (long) buf;
+					break;
+				}
+				buf[0] = 0;
+				strncpy_from_unsafe(buf,
+						    (void *) (long) unsafe_addr,
+						    sizeof(buf));
+			}
+			continue;
+		}
+
+		if (fmt[i] == 'l') {
+			mod[fmt_cnt]++;
+			i++;
+		}
+
+		if (fmt[i] != 'i' && fmt[i] != 'd' &&
+		    fmt[i] != 'u' && fmt[i] != 'x')
+			return -EINVAL;
+		fmt_cnt++;
+	}
+
+/* Horrid workaround for getting va_list handling working with different
+ * argument type combinations generically for 32 and 64 bit archs.
+ */
+#define __BPF_TP_EMIT()	__BPF_ARG3_TP()
+#define __BPF_TP(...)							\
+	__trace_printk(0 /* Fake ip */,					\
+		       fmt, ##__VA_ARGS__)
+
+#define __BPF_ARG1_TP(...)						\
+	((mod[0] == 2 || (mod[0] == 1 && __BITS_PER_LONG == 64))	\
+	  ? __BPF_TP(arg1, ##__VA_ARGS__)				\
+	  : ((mod[0] == 1 || (mod[0] == 0 && __BITS_PER_LONG == 32))	\
+	      ? __BPF_TP((long)arg1, ##__VA_ARGS__)			\
+	      : __BPF_TP((u32)arg1, ##__VA_ARGS__)))
+
+#define __BPF_ARG2_TP(...)						\
+	((mod[1] == 2 || (mod[1] == 1 && __BITS_PER_LONG == 64))	\
+	  ? __BPF_ARG1_TP(arg2, ##__VA_ARGS__)				\
+	  : ((mod[1] == 1 || (mod[1] == 0 && __BITS_PER_LONG == 32))	\
+	      ? __BPF_ARG1_TP((long)arg2, ##__VA_ARGS__)		\
+	      : __BPF_ARG1_TP((u32)arg2, ##__VA_ARGS__)))
+
+#define __BPF_ARG3_TP(...)						\
+	((mod[2] == 2 || (mod[2] == 1 && __BITS_PER_LONG == 64))	\
+	  ? __BPF_ARG2_TP(arg3, ##__VA_ARGS__)				\
+	  : ((mod[2] == 1 || (mod[2] == 0 && __BITS_PER_LONG == 32))	\
+	      ? __BPF_ARG2_TP((long)arg3, ##__VA_ARGS__)		\
+	      : __BPF_ARG2_TP((u32)arg3, ##__VA_ARGS__)))
+
+	return __BPF_TP_EMIT();
+>>>>>>> master
 }
 
 static const struct bpf_func_proto bpf_trace_printk_proto = {
@@ -657,7 +742,12 @@ static DEFINE_PER_CPU(int, bpf_trace_nest_level);
 BPF_CALL_5(bpf_perf_event_output, struct pt_regs *, regs, struct bpf_map *, map,
 	   u64, flags, void *, data, u64, size)
 {
+<<<<<<< HEAD
 	struct bpf_trace_sample_data *sds;
+=======
+	struct bpf_trace_sample_data *sds = this_cpu_ptr(&bpf_trace_sds);
+	int nest_level = this_cpu_inc_return(bpf_trace_nest_level);
+>>>>>>> master
 	struct perf_raw_record raw = {
 		.frag = {
 			.size = size,
@@ -665,12 +755,17 @@ BPF_CALL_5(bpf_perf_event_output, struct pt_regs *, regs, struct bpf_map *, map,
 		},
 	};
 	struct perf_sample_data *sd;
+<<<<<<< HEAD
 	int nest_level, err;
 
 	preempt_disable();
 	sds = this_cpu_ptr(&bpf_trace_sds);
 	nest_level = this_cpu_inc_return(bpf_trace_nest_level);
 
+=======
+	int err;
+
+>>>>>>> master
 	if (WARN_ON_ONCE(nest_level > ARRAY_SIZE(sds->sds))) {
 		err = -EBUSY;
 		goto out;
@@ -687,9 +782,15 @@ BPF_CALL_5(bpf_perf_event_output, struct pt_regs *, regs, struct bpf_map *, map,
 	perf_sample_save_raw_data(sd, &raw);
 
 	err = __bpf_perf_event_output(regs, map, flags, sd);
+<<<<<<< HEAD
 out:
 	this_cpu_dec(bpf_trace_nest_level);
 	preempt_enable();
+=======
+
+out:
+	this_cpu_dec(bpf_trace_nest_level);
+>>>>>>> master
 	return err;
 }
 

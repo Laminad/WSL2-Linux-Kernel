@@ -121,6 +121,7 @@ static int clk_main_osc_is_prepared(struct clk_hw *hw)
 	regmap_read(regmap, AT91_PMC_SR, &status);
 
 	return (status & AT91_PMC_MOSCS) && clk_main_parent_select(tmp);
+<<<<<<< HEAD
 }
 
 static int clk_main_osc_save_context(struct clk_hw *hw)
@@ -138,6 +139,8 @@ static void clk_main_osc_restore_context(struct clk_hw *hw)
 
 	if (osc->pms.status)
 		clk_main_osc_prepare(hw);
+=======
+>>>>>>> master
 }
 
 static const struct clk_ops main_osc_ops = {
@@ -512,6 +515,7 @@ static u8 clk_sam9x5_main_get_parent(struct clk_hw *hw)
 	regmap_read(clkmain->regmap, AT91_CKGR_MOR, &status);
 
 	return clk_main_parent_select(status);
+<<<<<<< HEAD
 }
 
 static int clk_sam9x5_main_save_context(struct clk_hw *hw)
@@ -535,6 +539,8 @@ static void clk_sam9x5_main_restore_context(struct clk_hw *hw)
 
 	if (clkmain->pms.status)
 		clk_sam9x5_main_prepare(hw);
+=======
+>>>>>>> master
 }
 
 static const struct clk_ops sam9x5_main_ops = {

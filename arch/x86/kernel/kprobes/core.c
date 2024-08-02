@@ -462,10 +462,23 @@ void *alloc_insn_page(void)
 		return NULL;
 
 	/*
+<<<<<<< HEAD
 	 * TODO: Once additional kernel code protection mechanisms are set, ensure
 	 * that the page was not maliciously altered and it is still zeroed.
 	 */
 	set_memory_rox((unsigned long)page, 1);
+=======
+	 * First make the page read-only, and only then make it executable to
+	 * prevent it from being W+X in between.
+	 */
+	set_memory_ro((unsigned long)page, 1);
+
+	/*
+	 * TODO: Once additional kernel code protection mechanisms are set, ensure
+	 * that the page was not maliciously altered and it is still zeroed.
+	 */
+	set_memory_x((unsigned long)page, 1);
+>>>>>>> master
 
 	return page;
 }
@@ -474,6 +487,7 @@ void *alloc_insn_page(void)
 
 static void kprobe_emulate_ifmodifiers(struct kprobe *p, struct pt_regs *regs)
 {
+<<<<<<< HEAD
 	switch (p->ainsn.opcode) {
 	case 0xfa:	/* cli */
 		regs->flags &= ~(X86_EFLAGS_IF);
@@ -713,6 +727,15 @@ static int prepare_emulation(struct kprobe *p, struct insn *insn)
 	p->ainsn.size = insn->length;
 
 	return 0;
+=======
+	/*
+	 * First make the page non-executable, and only then make it writable to
+	 * prevent it from being W+X in between.
+	 */
+	set_memory_nx((unsigned long)page, 1);
+	set_memory_rw((unsigned long)page, 1);
+	module_memfree(page);
+>>>>>>> master
 }
 
 static int arch_copy_kprobe(struct kprobe *p)
@@ -848,7 +871,32 @@ static void kprobe_post_process(struct kprobe *cur, struct pt_regs *regs,
 		reset_current_kprobe();
 	}
 }
+<<<<<<< HEAD
 NOKPROBE_SYMBOL(kprobe_post_process);
+=======
+
+static nokprobe_inline void restore_btf(void)
+{
+	if (test_thread_flag(TIF_BLOCKSTEP)) {
+		unsigned long debugctl = get_debugctlmsr();
+
+		debugctl |= DEBUGCTLMSR_BTF;
+		update_debugctlmsr(debugctl);
+	}
+}
+
+void arch_prepare_kretprobe(struct kretprobe_instance *ri, struct pt_regs *regs)
+{
+	unsigned long *sara = stack_addr(regs);
+
+	ri->ret_addr = (kprobe_opcode_t *) *sara;
+	ri->fp = sara;
+
+	/* Replace the return addr with trampoline addr */
+	*sara = (unsigned long) &kretprobe_trampoline;
+}
+NOKPROBE_SYMBOL(arch_prepare_kretprobe);
+>>>>>>> master
 
 static void setup_singlestep(struct kprobe *p, struct pt_regs *regs,
 			     struct kprobe_ctlblk *kcb, int reenter)
@@ -1020,6 +1068,310 @@ int kprobe_int3_handler(struct pt_regs *regs)
 }
 NOKPROBE_SYMBOL(kprobe_int3_handler);
 
+<<<<<<< HEAD
+=======
+/*
+ * When a retprobed function returns, this code saves registers and
+ * calls trampoline_handler() runs, which calls the kretprobe's handler.
+ */
+asm(
+	".global kretprobe_trampoline\n"
+	".type kretprobe_trampoline, @function\n"
+	"kretprobe_trampoline:\n"
+#ifdef CONFIG_X86_64
+	/* We don't bother saving the ss register */
+	"	pushq %rsp\n"
+	"	pushfq\n"
+	SAVE_REGS_STRING
+	"	movq %rsp, %rdi\n"
+	"	call trampoline_handler\n"
+	/* Replace saved sp with true return address. */
+	"	movq %rax, 152(%rsp)\n"
+	RESTORE_REGS_STRING
+	"	popfq\n"
+#else
+	"	pushf\n"
+	SAVE_REGS_STRING
+	"	movl %esp, %eax\n"
+	"	call trampoline_handler\n"
+	/* Move flags to cs */
+	"	movl 56(%esp), %edx\n"
+	"	movl %edx, 52(%esp)\n"
+	/* Replace saved flags with true return address. */
+	"	movl %eax, 56(%esp)\n"
+	RESTORE_REGS_STRING
+	"	popf\n"
+#endif
+	"	ret\n"
+	".size kretprobe_trampoline, .-kretprobe_trampoline\n"
+);
+NOKPROBE_SYMBOL(kretprobe_trampoline);
+STACK_FRAME_NON_STANDARD(kretprobe_trampoline);
+
+static struct kprobe kretprobe_kprobe = {
+	.addr = (void *)kretprobe_trampoline,
+};
+
+/*
+ * Called from kretprobe_trampoline
+ */
+__visible __used void *trampoline_handler(struct pt_regs *regs)
+{
+	struct kprobe_ctlblk *kcb;
+	struct kretprobe_instance *ri = NULL;
+	struct hlist_head *head, empty_rp;
+	struct hlist_node *tmp;
+	unsigned long flags, orig_ret_address = 0;
+	unsigned long trampoline_address = (unsigned long)&kretprobe_trampoline;
+	kprobe_opcode_t *correct_ret_addr = NULL;
+	void *frame_pointer;
+	bool skipped = false;
+
+	preempt_disable();
+
+	/*
+	 * Set a dummy kprobe for avoiding kretprobe recursion.
+	 * Since kretprobe never run in kprobe handler, kprobe must not
+	 * be running at this point.
+	 */
+	kcb = get_kprobe_ctlblk();
+	__this_cpu_write(current_kprobe, &kretprobe_kprobe);
+	kcb->kprobe_status = KPROBE_HIT_ACTIVE;
+
+	INIT_HLIST_HEAD(&empty_rp);
+	kretprobe_hash_lock(current, &head, &flags);
+	/* fixup registers */
+#ifdef CONFIG_X86_64
+	regs->cs = __KERNEL_CS;
+	/* On x86-64, we use pt_regs->sp for return address holder. */
+	frame_pointer = &regs->sp;
+#else
+	regs->cs = __KERNEL_CS | get_kernel_rpl();
+	regs->gs = 0;
+	/* On x86-32, we use pt_regs->flags for return address holder. */
+	frame_pointer = &regs->flags;
+#endif
+	regs->ip = trampoline_address;
+	regs->orig_ax = ~0UL;
+
+	/*
+	 * It is possible to have multiple instances associated with a given
+	 * task either because multiple functions in the call path have
+	 * return probes installed on them, and/or more than one
+	 * return probe was registered for a target function.
+	 *
+	 * We can handle this because:
+	 *     - instances are always pushed into the head of the list
+	 *     - when multiple return probes are registered for the same
+	 *	 function, the (chronologically) first instance's ret_addr
+	 *	 will be the real return address, and all the rest will
+	 *	 point to kretprobe_trampoline.
+	 */
+	hlist_for_each_entry(ri, head, hlist) {
+		if (ri->task != current)
+			/* another task is sharing our hash bucket */
+			continue;
+		/*
+		 * Return probes must be pushed on this hash list correct
+		 * order (same as return order) so that it can be poped
+		 * correctly. However, if we find it is pushed it incorrect
+		 * order, this means we find a function which should not be
+		 * probed, because the wrong order entry is pushed on the
+		 * path of processing other kretprobe itself.
+		 */
+		if (ri->fp != frame_pointer) {
+			if (!skipped)
+				pr_warn("kretprobe is stacked incorrectly. Trying to fixup.\n");
+			skipped = true;
+			continue;
+		}
+
+		orig_ret_address = (unsigned long)ri->ret_addr;
+		if (skipped)
+			pr_warn("%ps must be blacklisted because of incorrect kretprobe order\n",
+				ri->rp->kp.addr);
+
+		if (orig_ret_address != trampoline_address)
+			/*
+			 * This is the real return address. Any other
+			 * instances associated with this task are for
+			 * other calls deeper on the call stack
+			 */
+			break;
+	}
+
+	kretprobe_assert(ri, orig_ret_address, trampoline_address);
+
+	correct_ret_addr = ri->ret_addr;
+	hlist_for_each_entry_safe(ri, tmp, head, hlist) {
+		if (ri->task != current)
+			/* another task is sharing our hash bucket */
+			continue;
+		if (ri->fp != frame_pointer)
+			continue;
+
+		orig_ret_address = (unsigned long)ri->ret_addr;
+		if (ri->rp && ri->rp->handler) {
+			__this_cpu_write(current_kprobe, &ri->rp->kp);
+			ri->ret_addr = correct_ret_addr;
+			ri->rp->handler(ri, regs);
+			__this_cpu_write(current_kprobe, &kretprobe_kprobe);
+		}
+
+		recycle_rp_inst(ri, &empty_rp);
+
+		if (orig_ret_address != trampoline_address)
+			/*
+			 * This is the real return address. Any other
+			 * instances associated with this task are for
+			 * other calls deeper on the call stack
+			 */
+			break;
+	}
+
+	kretprobe_hash_unlock(current, &flags);
+
+	__this_cpu_write(current_kprobe, NULL);
+	preempt_enable();
+
+	hlist_for_each_entry_safe(ri, tmp, &empty_rp, hlist) {
+		hlist_del(&ri->hlist);
+		kfree(ri);
+	}
+	return (void *)orig_ret_address;
+}
+NOKPROBE_SYMBOL(trampoline_handler);
+
+/*
+ * Called after single-stepping.  p->addr is the address of the
+ * instruction whose first byte has been replaced by the "int 3"
+ * instruction.  To avoid the SMP problems that can occur when we
+ * temporarily put back the original opcode to single-step, we
+ * single-stepped a copy of the instruction.  The address of this
+ * copy is p->ainsn.insn.
+ *
+ * This function prepares to return from the post-single-step
+ * interrupt.  We have to fix up the stack as follows:
+ *
+ * 0) Except in the case of absolute or indirect jump or call instructions,
+ * the new ip is relative to the copied instruction.  We need to make
+ * it relative to the original instruction.
+ *
+ * 1) If the single-stepped instruction was pushfl, then the TF and IF
+ * flags are set in the just-pushed flags, and may need to be cleared.
+ *
+ * 2) If the single-stepped instruction was a call, the return address
+ * that is atop the stack is the address following the copied instruction.
+ * We need to make it the address following the original instruction.
+ *
+ * If this is the first time we've single-stepped the instruction at
+ * this probepoint, and the instruction is boostable, boost it: add a
+ * jump instruction after the copied instruction, that jumps to the next
+ * instruction after the probepoint.
+ */
+static void resume_execution(struct kprobe *p, struct pt_regs *regs,
+			     struct kprobe_ctlblk *kcb)
+{
+	unsigned long *tos = stack_addr(regs);
+	unsigned long copy_ip = (unsigned long)p->ainsn.insn;
+	unsigned long orig_ip = (unsigned long)p->addr;
+	kprobe_opcode_t *insn = p->ainsn.insn;
+
+	/* Skip prefixes */
+	insn = skip_prefixes(insn);
+
+	regs->flags &= ~X86_EFLAGS_TF;
+	switch (*insn) {
+	case 0x9c:	/* pushfl */
+		*tos &= ~(X86_EFLAGS_TF | X86_EFLAGS_IF);
+		*tos |= kcb->kprobe_old_flags;
+		break;
+	case 0xc2:	/* iret/ret/lret */
+	case 0xc3:
+	case 0xca:
+	case 0xcb:
+	case 0xcf:
+	case 0xea:	/* jmp absolute -- ip is correct */
+		/* ip is already adjusted, no more changes required */
+		p->ainsn.boostable = true;
+		goto no_change;
+	case 0xe8:	/* call relative - Fix return addr */
+		*tos = orig_ip + (*tos - copy_ip);
+		break;
+#ifdef CONFIG_X86_32
+	case 0x9a:	/* call absolute -- same as call absolute, indirect */
+		*tos = orig_ip + (*tos - copy_ip);
+		goto no_change;
+#endif
+	case 0xff:
+		if ((insn[1] & 0x30) == 0x10) {
+			/*
+			 * call absolute, indirect
+			 * Fix return addr; ip is correct.
+			 * But this is not boostable
+			 */
+			*tos = orig_ip + (*tos - copy_ip);
+			goto no_change;
+		} else if (((insn[1] & 0x31) == 0x20) ||
+			   ((insn[1] & 0x31) == 0x21)) {
+			/*
+			 * jmp near and far, absolute indirect
+			 * ip is correct. And this is boostable
+			 */
+			p->ainsn.boostable = true;
+			goto no_change;
+		}
+	default:
+		break;
+	}
+
+	regs->ip += orig_ip - copy_ip;
+
+no_change:
+	restore_btf();
+}
+NOKPROBE_SYMBOL(resume_execution);
+
+/*
+ * Interrupts are disabled on entry as trap1 is an interrupt gate and they
+ * remain disabled throughout this function.
+ */
+int kprobe_debug_handler(struct pt_regs *regs)
+{
+	struct kprobe *cur = kprobe_running();
+	struct kprobe_ctlblk *kcb = get_kprobe_ctlblk();
+
+	if (!cur)
+		return 0;
+
+	resume_execution(cur, regs, kcb);
+	regs->flags |= kcb->kprobe_saved_flags;
+
+	if ((kcb->kprobe_status != KPROBE_REENTER) && cur->post_handler) {
+		kcb->kprobe_status = KPROBE_HIT_SSDONE;
+		cur->post_handler(cur, regs, 0);
+	}
+
+	/* Restore back the original saved kprobes variables and continue. */
+	if (kcb->kprobe_status == KPROBE_REENTER) {
+		restore_previous_kprobe(kcb);
+		goto out;
+	}
+	reset_current_kprobe();
+out:
+	/*
+	 * if somebody else is singlestepping across a probe point, flags
+	 * will have TF set, in which case, continue the remaining processing
+	 * of do_debug, as if this is not a probe hit.
+	 */
+	if (regs->flags & X86_EFLAGS_TF)
+		return 0;
+
+	return 1;
+}
+NOKPROBE_SYMBOL(kprobe_debug_handler);
+
+>>>>>>> master
 int kprobe_fault_handler(struct pt_regs *regs, int trapnr)
 {
 	struct kprobe *cur = kprobe_running();

@@ -267,6 +267,7 @@ int hw_atl_utils_soft_reset(struct aq_hw_s *self)
 		 * We should work around this by forcing its state back to DEINIT
 		 */
 		hw_atl_utils_mpi_set_state(self, MPI_DEINIT);
+<<<<<<< HEAD
 		err = readx_poll_timeout_atomic(hw_atl_utils_mpi_get_state,
 						self, val,
 						(val & HW_ATL_MPI_STATE_MSK) ==
@@ -295,6 +296,13 @@ int hw_atl_utils_soft_reset(struct aq_hw_s *self)
 			if (err)
 				aq_pr_err("reset sema2 timeout");
 		}
+=======
+		AQ_HW_WAIT_FOR((aq_hw_read_reg(self, HW_ATL_MPI_STATE_ADR) &
+			       HW_ATL_MPI_STATE_MSK) == MPI_DEINIT,
+			       10, 1000U);
+		if (err)
+			return err;
+>>>>>>> master
 	}
 
 	if (self->rbl_enabled)

@@ -162,13 +162,17 @@
 #define MLXPLAT_CPLD_LPC_REG_TACHO4_OFFSET	0xe7
 #define MLXPLAT_CPLD_LPC_REG_TACHO5_OFFSET	0xe8
 #define MLXPLAT_CPLD_LPC_REG_TACHO6_OFFSET	0xe9
+<<<<<<< HEAD
 #define MLXPLAT_CPLD_LPC_REG_PWM2_OFFSET	0xea
+=======
+>>>>>>> master
 #define MLXPLAT_CPLD_LPC_REG_TACHO7_OFFSET	0xeb
 #define MLXPLAT_CPLD_LPC_REG_TACHO8_OFFSET	0xec
 #define MLXPLAT_CPLD_LPC_REG_TACHO9_OFFSET	0xed
 #define MLXPLAT_CPLD_LPC_REG_TACHO10_OFFSET	0xee
 #define MLXPLAT_CPLD_LPC_REG_TACHO11_OFFSET	0xef
 #define MLXPLAT_CPLD_LPC_REG_TACHO12_OFFSET	0xf0
+<<<<<<< HEAD
 #define MLXPLAT_CPLD_LPC_REG_TACHO13_OFFSET	0xf1
 #define MLXPLAT_CPLD_LPC_REG_TACHO14_OFFSET	0xf2
 #define MLXPLAT_CPLD_LPC_REG_PWM3_OFFSET	0xf3
@@ -182,6 +186,8 @@
 #define MLXPLAT_CPLD_LPC_REG_CONFIG1_OFFSET	0xfb
 #define MLXPLAT_CPLD_LPC_REG_CONFIG2_OFFSET	0xfc
 #define MLXPLAT_CPLD_LPC_REG_CONFIG3_OFFSET	0xfd
+=======
+>>>>>>> master
 #define MLXPLAT_CPLD_LPC_IO_RANGE		0x100
 
 #define MLXPLAT_CPLD_LPC_PIO_OFFSET		0x10000UL
@@ -6562,7 +6568,38 @@ static int mlxplat_probe(struct platform_device *pdev)
 	if (!mlxplat_regmap_config)
 		mlxplat_regmap_config = &mlxplat_mlxcpld_regmap_config;
 
+<<<<<<< HEAD
 	priv->regmap = devm_regmap_init(&mlxplat_dev->dev, NULL,
+=======
+	nr = (nr == MLXPLAT_CPLD_MAX_PHYS_ADAPTER_NUM) ? -1 : nr;
+	priv->pdev_i2c = platform_device_register_simple("i2c_mlxcpld", nr,
+							 NULL, 0);
+	if (IS_ERR(priv->pdev_i2c)) {
+		err = PTR_ERR(priv->pdev_i2c);
+		goto fail_alloc;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(mlxplat_mux_data); i++) {
+		priv->pdev_mux[i] = platform_device_register_resndata(
+						&priv->pdev_i2c->dev,
+						"i2c-mux-reg", i, NULL,
+						0, &mlxplat_mux_data[i],
+						sizeof(mlxplat_mux_data[i]));
+		if (IS_ERR(priv->pdev_mux[i])) {
+			err = PTR_ERR(priv->pdev_mux[i]);
+			goto fail_platform_mux_register;
+		}
+	}
+
+	mlxplat_mlxcpld_regmap_ctx.base = devm_ioport_map(&mlxplat_dev->dev,
+			       mlxplat_lpc_resources[1].start, 1);
+	if (!mlxplat_mlxcpld_regmap_ctx.base) {
+		err = -ENOMEM;
+		goto fail_platform_mux_register;
+	}
+
+	mlxplat_hotplug->regmap = devm_regmap_init(&mlxplat_dev->dev, NULL,
+>>>>>>> master
 					&mlxplat_mlxcpld_regmap_ctx,
 					mlxplat_regmap_config);
 	if (IS_ERR(priv->regmap)) {

@@ -182,6 +182,10 @@ struct rxe_resp_info {
 	u32			resid;
 	u32			rkey;
 	u32			length;
+<<<<<<< HEAD
+=======
+	u64			atomic_orig;
+>>>>>>> master
 
 	/* SRQ only */
 	struct {

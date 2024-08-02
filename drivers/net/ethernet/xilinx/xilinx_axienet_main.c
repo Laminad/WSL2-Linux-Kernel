@@ -695,7 +695,17 @@ static int axienet_free_tx_chain(struct axienet_local *lp, u32 first_bd,
 			*sizep += status & XAXIDMA_BD_STS_ACTUAL_LEN_MASK;
 	}
 
+<<<<<<< HEAD
 	return i;
+=======
+	ndev->stats.tx_packets += packets;
+	ndev->stats.tx_bytes += size;
+
+	/* Matches barrier in axienet_start_xmit */
+	smp_mb();
+
+	netif_wake_queue(ndev);
+>>>>>>> master
 }
 
 /**
@@ -804,6 +814,7 @@ axienet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 	orig_tail_ptr = lp->tx_bd_tail;
 	new_tail_ptr = orig_tail_ptr;
 
+<<<<<<< HEAD
 	num_frag = skb_shinfo(skb)->nr_frags;
 	cur_p = &lp->tx_bd_v[orig_tail_ptr];
 
@@ -816,6 +827,22 @@ axienet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 		if (net_ratelimit())
 			netdev_warn(ndev, "TX ring unexpectedly full\n");
 		return NETDEV_TX_BUSY;
+=======
+	if (axienet_check_tx_bd_space(lp, num_frag)) {
+		if (netif_queue_stopped(ndev))
+			return NETDEV_TX_BUSY;
+
+		netif_stop_queue(ndev);
+
+		/* Matches barrier in axienet_start_xmit_done */
+		smp_mb();
+
+		/* Space might have just been freed - check again */
+		if (axienet_check_tx_bd_space(lp, num_frag))
+			return NETDEV_TX_BUSY;
+
+		netif_wake_queue(ndev);
+>>>>>>> master
 	}
 
 	if (skb->ip_summed == CHECKSUM_PARTIAL) {
@@ -2033,10 +2060,25 @@ static int axienet_probe(struct platform_device *pdev)
 		lp->tx_irq = platform_get_irq(pdev, 0);
 		lp->eth_irq = platform_get_irq_optional(pdev, 2);
 	}
+<<<<<<< HEAD
 	if (IS_ERR(lp->dma_regs)) {
 		dev_err(&pdev->dev, "could not map DMA regs\n");
 		ret = PTR_ERR(lp->dma_regs);
 		goto cleanup_clk;
+=======
+	ret = of_address_to_resource(np, 0, &dmares);
+	if (ret) {
+		dev_err(&pdev->dev, "unable to get DMA resource\n");
+		of_node_put(np);
+		goto free_netdev;
+	}
+	lp->dma_regs = devm_ioremap_resource(&pdev->dev, &dmares);
+	if (IS_ERR(lp->dma_regs)) {
+		dev_err(&pdev->dev, "could not map DMA regs\n");
+		ret = PTR_ERR(lp->dma_regs);
+		of_node_put(np);
+		goto free_netdev;
+>>>>>>> master
 	}
 	if ((lp->rx_irq <= 0) || (lp->tx_irq <= 0)) {
 		dev_err(&pdev->dev, "could not determine irqs\n");

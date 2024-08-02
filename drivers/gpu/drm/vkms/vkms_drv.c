@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0+
+<<<<<<< HEAD
 
 /**
  * DOC: vkms (Virtual Kernel Modesetting)
@@ -8,6 +9,8 @@
  * a virtual display with no need of a hardware display capability, releasing
  * the GPU in DRM API tests.
  */
+=======
+>>>>>>> master
 
 #include <linux/module.h>
 #include <linux/platform_device.h>

@@ -593,8 +593,12 @@ __poll_t tcp_poll(struct file *file, struct socket *sock, poll_table *wait)
 	}
 	/* This barrier is coupled with smp_wmb() in tcp_reset() */
 	smp_rmb();
+<<<<<<< HEAD
 	if (READ_ONCE(sk->sk_err) ||
 	    !skb_queue_empty_lockless(&sk->sk_error_queue))
+=======
+	if (sk->sk_err || !skb_queue_empty_lockless(&sk->sk_error_queue))
+>>>>>>> master
 		mask |= EPOLLERR;
 
 	return mask;
@@ -928,11 +932,200 @@ int tcp_send_mss(struct sock *sk, int *size_goal, int flags)
 	return mss_now;
 }
 
+<<<<<<< HEAD
 /* In some cases, sendmsg() could have added an skb to the write queue,
  * but failed adding payload on it. We need to remove it to consume less
  * memory, but more importantly be able to generate EPOLLOUT for Edge Trigger
  * epoll() users. Another reason is that tcp_write_xmit() does not like
  * finding an empty skb in the write queue.
+=======
+/* In some cases, both sendpage() and sendmsg() could have added
+ * an skb to the write queue, but failed adding payload on it.
+ * We need to remove it to consume less memory, but more
+ * importantly be able to generate EPOLLOUT for Edge Trigger epoll()
+ * users.
+ */
+static void tcp_remove_empty_skb(struct sock *sk, struct sk_buff *skb)
+{
+	if (skb && !skb->len) {
+		tcp_unlink_write_queue(skb, sk);
+		if (tcp_write_queue_empty(sk))
+			tcp_chrono_stop(sk, TCP_CHRONO_BUSY);
+		sk_wmem_free_skb(sk, skb);
+	}
+}
+
+ssize_t do_tcp_sendpages(struct sock *sk, struct page *page, int offset,
+			 size_t size, int flags)
+{
+	struct tcp_sock *tp = tcp_sk(sk);
+	int mss_now, size_goal;
+	int err;
+	ssize_t copied;
+	long timeo = sock_sndtimeo(sk, flags & MSG_DONTWAIT);
+
+	/* Wait for a connection to finish. One exception is TCP Fast Open
+	 * (passive side) where data is allowed to be sent before a connection
+	 * is fully established.
+	 */
+	if (((1 << sk->sk_state) & ~(TCPF_ESTABLISHED | TCPF_CLOSE_WAIT)) &&
+	    !tcp_passive_fastopen(sk)) {
+		err = sk_stream_wait_connect(sk, &timeo);
+		if (err != 0)
+			goto out_err;
+	}
+
+	sk_clear_bit(SOCKWQ_ASYNC_NOSPACE, sk);
+
+	mss_now = tcp_send_mss(sk, &size_goal, flags);
+	copied = 0;
+
+	err = -EPIPE;
+	if (sk->sk_err || (sk->sk_shutdown & SEND_SHUTDOWN))
+		goto out_err;
+
+	while (size > 0) {
+		struct sk_buff *skb = tcp_write_queue_tail(sk);
+		int copy, i;
+		bool can_coalesce;
+
+		if (!skb || (copy = size_goal - skb->len) <= 0 ||
+		    !tcp_skb_can_collapse_to(skb)) {
+new_segment:
+			if (!sk_stream_memory_free(sk))
+				goto wait_for_sndbuf;
+
+			skb = sk_stream_alloc_skb(sk, 0, sk->sk_allocation,
+					tcp_rtx_and_write_queues_empty(sk));
+			if (!skb)
+				goto wait_for_memory;
+
+			skb_entail(sk, skb);
+			copy = size_goal;
+		}
+
+		if (copy > size)
+			copy = size;
+
+		i = skb_shinfo(skb)->nr_frags;
+		can_coalesce = skb_can_coalesce(skb, i, page, offset);
+		if (!can_coalesce && i >= sysctl_max_skb_frags) {
+			tcp_mark_push(tp, skb);
+			goto new_segment;
+		}
+		if (!sk_wmem_schedule(sk, copy))
+			goto wait_for_memory;
+
+		if (can_coalesce) {
+			skb_frag_size_add(&skb_shinfo(skb)->frags[i - 1], copy);
+		} else {
+			get_page(page);
+			skb_fill_page_desc(skb, i, page, offset, copy);
+		}
+
+		if (!(flags & MSG_NO_SHARED_FRAGS))
+			skb_shinfo(skb)->tx_flags |= SKBTX_SHARED_FRAG;
+
+		skb->len += copy;
+		skb->data_len += copy;
+		skb->truesize += copy;
+		sk->sk_wmem_queued += copy;
+		sk_mem_charge(sk, copy);
+		skb->ip_summed = CHECKSUM_PARTIAL;
+		tp->write_seq += copy;
+		TCP_SKB_CB(skb)->end_seq += copy;
+		tcp_skb_pcount_set(skb, 0);
+
+		if (!copied)
+			TCP_SKB_CB(skb)->tcp_flags &= ~TCPHDR_PSH;
+
+		copied += copy;
+		offset += copy;
+		size -= copy;
+		if (!size)
+			goto out;
+
+		if (skb->len < size_goal || (flags & MSG_OOB))
+			continue;
+
+		if (forced_push(tp)) {
+			tcp_mark_push(tp, skb);
+			__tcp_push_pending_frames(sk, mss_now, TCP_NAGLE_PUSH);
+		} else if (skb == tcp_send_head(sk))
+			tcp_push_one(sk, mss_now);
+		continue;
+
+wait_for_sndbuf:
+		set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
+wait_for_memory:
+		tcp_push(sk, flags & ~MSG_MORE, mss_now,
+			 TCP_NAGLE_PUSH, size_goal);
+
+		err = sk_stream_wait_memory(sk, &timeo);
+		if (err != 0)
+			goto do_error;
+
+		mss_now = tcp_send_mss(sk, &size_goal, flags);
+	}
+
+out:
+	if (copied) {
+		tcp_tx_timestamp(sk, sk->sk_tsflags);
+		if (!(flags & MSG_SENDPAGE_NOTLAST))
+			tcp_push(sk, flags, mss_now, tp->nonagle, size_goal);
+	}
+	return copied;
+
+do_error:
+	tcp_remove_empty_skb(sk, tcp_write_queue_tail(sk));
+	if (copied)
+		goto out;
+out_err:
+	/* make sure we wake any epoll edge trigger waiter */
+	if (unlikely(skb_queue_len(&sk->sk_write_queue) == 0 &&
+		     err == -EAGAIN)) {
+		sk->sk_write_space(sk);
+		tcp_chrono_stop(sk, TCP_CHRONO_SNDBUF_LIMITED);
+	}
+	return sk_stream_error(sk, flags, err);
+}
+EXPORT_SYMBOL_GPL(do_tcp_sendpages);
+
+int tcp_sendpage_locked(struct sock *sk, struct page *page, int offset,
+			size_t size, int flags)
+{
+	if (!(sk->sk_route_caps & NETIF_F_SG))
+		return sock_no_sendpage_locked(sk, page, offset, size, flags);
+
+	tcp_rate_check_app_limited(sk);  /* is sending application-limited? */
+
+	return do_tcp_sendpages(sk, page, offset, size, flags);
+}
+EXPORT_SYMBOL_GPL(tcp_sendpage_locked);
+
+int tcp_sendpage(struct sock *sk, struct page *page, int offset,
+		 size_t size, int flags)
+{
+	int ret;
+
+	lock_sock(sk);
+	ret = tcp_sendpage_locked(sk, page, offset, size, flags);
+	release_sock(sk);
+
+	return ret;
+}
+EXPORT_SYMBOL(tcp_sendpage);
+
+/* Do not bother using a page frag for very small frames.
+ * But use this heuristic only for the first skb in write queue.
+ *
+ * Having no payload in skb->head allows better SACK shifting
+ * in tcp_shift_skb_data(), reducing sack/rack overhead, because
+ * write queue has less skbs.
+ * Each skb can hold up to MAX_SKB_FRAGS * 32Kbytes, or ~0.5 MB.
+ * This also speeds up tso_fragment(), since it wont fallback
+ * to tcp_fragment().
+>>>>>>> master
  */
 void tcp_remove_empty_skb(struct sock *sk)
 {
@@ -1049,6 +1242,7 @@ int tcp_sendmsg_locked(struct sock *sk, struct msghdr *msg, size_t size)
 
 	flags = msg->msg_flags;
 
+<<<<<<< HEAD
 	if ((flags & MSG_ZEROCOPY) && size) {
 		if (msg->msg_ubuf) {
 			uarg = msg->msg_ubuf;
@@ -1065,6 +1259,12 @@ int tcp_sendmsg_locked(struct sock *sk, struct msghdr *msg, size_t size)
 				zc = MSG_ZEROCOPY;
 			else
 				uarg_to_msgzc(uarg)->zerocopy = 0;
+=======
+	if (flags & MSG_ZEROCOPY && size && sock_flag(sk, SOCK_ZEROCOPY)) {
+		if ((1 << sk->sk_state) & ~(TCPF_ESTABLISHED | TCPF_CLOSE_WAIT)) {
+			err = -EINVAL;
+			goto out_err;
+>>>>>>> master
 		}
 	} else if (unlikely(msg->msg_flags & MSG_SPLICE_PAGES) && size) {
 		if (sk->sk_route_caps & NETIF_F_SG)
@@ -1318,7 +1518,13 @@ out_nopush:
 	return copied + copied_syn;
 
 do_error:
+<<<<<<< HEAD
 	tcp_remove_empty_skb(sk);
+=======
+	skb = tcp_write_queue_tail(sk);
+do_fault:
+	tcp_remove_empty_skb(sk, skb);
+>>>>>>> master
 
 	if (copied + copied_syn)
 		goto out;
@@ -2333,6 +2539,21 @@ static int tcp_recvmsg_locked(struct sock *sk, struct msghdr *msg, size_t len,
 	long timeo;
 	struct sk_buff *skb, *last;
 	u32 urg_hole = 0;
+<<<<<<< HEAD
+=======
+	struct scm_timestamping tss;
+	bool has_tss = false;
+	bool has_cmsg;
+
+	if (unlikely(flags & MSG_ERRQUEUE))
+		return inet_recv_error(sk, msg, len, addr_len);
+
+	if (sk_can_busy_loop(sk) && skb_queue_empty_lockless(&sk->sk_receive_queue) &&
+	    (sk->sk_state == TCP_ESTABLISHED))
+		sk_busy_loop(sk, nonblock);
+
+	lock_sock(sk);
+>>>>>>> master
 
 	err = -ENOTCONN;
 	if (sk->sk_state == TCP_LISTEN)
@@ -2931,6 +3152,7 @@ adjudge_to_death:
 out:
 	bh_unlock_sock(sk);
 	local_bh_enable();
+<<<<<<< HEAD
 }
 
 void tcp_close(struct sock *sk, long timeout)
@@ -2940,6 +3162,9 @@ void tcp_close(struct sock *sk, long timeout)
 	release_sock(sk);
 	if (!sk->sk_net_refcnt)
 		inet_csk_clear_xmit_timers_sync(sk);
+=======
+	release_sock(sk);
+>>>>>>> master
 	sock_put(sk);
 }
 EXPORT_SYMBOL(tcp_close);
@@ -3030,6 +3255,7 @@ int tcp_disconnect(struct sock *sk, int flags)
 	tp->srtt_us = 0;
 	tp->mdev_us = jiffies_to_usecs(TCP_TIMEOUT_INIT);
 	tp->rcv_rtt_last_tsecr = 0;
+<<<<<<< HEAD
 
 	seq = tp->write_seq + tp->max_window + 2;
 	if (!seq)
@@ -3037,6 +3263,12 @@ int tcp_disconnect(struct sock *sk, int flags)
 	WRITE_ONCE(tp->write_seq, seq);
 
 	icsk->icsk_backoff = 0;
+=======
+	tp->write_seq += tp->max_window + 2;
+	if (tp->write_seq == 0)
+		tp->write_seq = 1;
+	tp->snd_cwnd = 2;
+>>>>>>> master
 	icsk->icsk_probes_out = 0;
 	icsk->icsk_probes_tstamp = 0;
 	icsk->icsk_rto = TCP_TIMEOUT_INIT;
@@ -3437,11 +3669,19 @@ int do_tcp_setsockopt(struct sock *sk, int level, int optname,
 			return -EFAULT;
 		name[val] = 0;
 
+<<<<<<< HEAD
 		sockopt_lock_sock(sk);
 		err = tcp_set_congestion_control(sk, name, !has_current_bpf_ctx(),
 						 sockopt_ns_capable(sock_net(sk)->user_ns,
 								    CAP_NET_ADMIN));
 		sockopt_release_sock(sk);
+=======
+		lock_sock(sk);
+		err = tcp_set_congestion_control(sk, name, true, true,
+						 ns_capable(sock_net(sk)->user_ns,
+							    CAP_NET_ADMIN));
+		release_sock(sk);
+>>>>>>> master
 		return err;
 	}
 	case TCP_ULP: {

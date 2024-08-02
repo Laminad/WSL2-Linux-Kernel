@@ -65,6 +65,42 @@ static int scsi_dev_type_suspend(struct device *dev,
 	return err;
 }
 
+<<<<<<< HEAD
+=======
+static int scsi_dev_type_resume(struct device *dev,
+		int (*cb)(struct device *, const struct dev_pm_ops *))
+{
+	const struct dev_pm_ops *pm = dev->driver ? dev->driver->pm : NULL;
+	int err = 0;
+
+	err = cb(dev, pm);
+	scsi_device_resume(to_scsi_device(dev));
+	dev_dbg(dev, "scsi resume: %d\n", err);
+
+	if (err == 0) {
+		pm_runtime_disable(dev);
+		err = pm_runtime_set_active(dev);
+		pm_runtime_enable(dev);
+
+		/*
+		 * Forcibly set runtime PM status of request queue to "active"
+		 * to make sure we can again get requests from the queue
+		 * (see also blk_pm_peek_request()).
+		 *
+		 * The resume hook will correct runtime PM status of the disk.
+		 */
+		if (!err && scsi_is_sdev_device(dev)) {
+			struct scsi_device *sdev = to_scsi_device(dev);
+
+			if (sdev->request_queue->dev)
+				blk_set_runtime_active(sdev->request_queue);
+		}
+	}
+
+	return err;
+}
+
+>>>>>>> master
 static int
 scsi_bus_suspend_common(struct device *dev,
 		int (*cb)(struct device *, const struct dev_pm_ops *))
@@ -84,11 +120,31 @@ static int scsi_bus_resume_common(struct device *dev,
 	if (!scsi_is_sdev_device(dev))
 		return 0;
 
+<<<<<<< HEAD
 	err = cb(dev, pm);
 	scsi_device_resume(to_scsi_device(dev));
 	dev_dbg(dev, "scsi resume: %d\n", err);
 
 	return err;
+=======
+	if (fn) {
+		async_schedule_domain(fn, dev, &scsi_sd_pm_domain);
+
+		/*
+		 * If a user has disabled async probing a likely reason
+		 * is due to a storage enclosure that does not inject
+		 * staggered spin-ups.  For safety, make resume
+		 * synchronous as well in that case.
+		 */
+		if (strncmp(scsi_scan_type, "async", 5) != 0)
+			async_synchronize_full_domain(&scsi_sd_pm_domain);
+	} else {
+		pm_runtime_disable(dev);
+		pm_runtime_set_active(dev);
+		pm_runtime_enable(dev);
+	}
+	return 0;
+>>>>>>> master
 }
 
 static int scsi_bus_prepare(struct device *dev)

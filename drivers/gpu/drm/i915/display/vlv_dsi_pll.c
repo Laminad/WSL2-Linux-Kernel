@@ -415,10 +415,15 @@ static void glk_dsi_program_esc_clock(struct drm_device *dev,
 
 	txesc2_div = min_t(u32, div2_value, 10);
 
+<<<<<<< HEAD:drivers/gpu/drm/i915/display/vlv_dsi_pll.c
 	intel_de_write(dev_priv, MIPIO_TXESC_CLK_DIV1,
 		       (1 << (txesc1_div - 1)) & GLK_TX_ESC_CLK_DIV1_MASK);
 	intel_de_write(dev_priv, MIPIO_TXESC_CLK_DIV2,
 		       (1 << (txesc2_div - 1)) & GLK_TX_ESC_CLK_DIV2_MASK);
+=======
+	I915_WRITE(MIPIO_TXESC_CLK_DIV1, (1 << (txesc1_div - 1)) & GLK_TX_ESC_CLK_DIV1_MASK);
+	I915_WRITE(MIPIO_TXESC_CLK_DIV2, (1 << (txesc2_div - 1)) & GLK_TX_ESC_CLK_DIV2_MASK);
+>>>>>>> master:drivers/gpu/drm/i915/vlv_dsi_pll.c
 }
 
 /* Program BXT Mipi clocks and dividers */

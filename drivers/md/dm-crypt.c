@@ -56,6 +56,10 @@ struct convert_context {
 	struct bvec_iter iter_in;
 	struct bio *bio_out;
 	struct bvec_iter iter_out;
+<<<<<<< HEAD
+=======
+	u64 cc_sector;
+>>>>>>> master
 	atomic_t cc_pending;
 	u64 cc_sector;
 	union {
@@ -2947,6 +2951,7 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
 	}
 	/* The rest is crypto API spec */
 	cipher_api = tmp;
+<<<<<<< HEAD
 
 	/* Alloc AEAD, can be used only in new format. */
 	if (crypt_integrity_aead(cc)) {
@@ -2956,6 +2961,8 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
 			return ret;
 		}
 	}
+=======
+>>>>>>> master
 
 	if (*ivmode && !strcmp(*ivmode, "lmk"))
 		cc->tfms_count = 64;

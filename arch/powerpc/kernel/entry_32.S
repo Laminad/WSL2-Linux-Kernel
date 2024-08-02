@@ -224,7 +224,11 @@ fast_exception_return:
 	mtcr	r10
 	lwz	r10,_LINK(r11)
 	mtlr	r10
+<<<<<<< HEAD
 	/* Clear the exception marker on the stack to avoid confusing stacktrace */
+=======
+	/* Clear the exception_marker on the stack to avoid confusing stacktrace */
+>>>>>>> master
 	li	r10, 0
 	stw	r10, 8(r11)
 	REST_GPR(10, r11)
@@ -262,7 +266,237 @@ interrupt_return:
 	kuep_unlock
 	bne-	.Lrestore_nvgprs
 
+<<<<<<< HEAD
 .Lfast_user_interrupt_return:
+=======
+	.globl	ret_from_except
+ret_from_except:
+	/* Hard-disable interrupts so that current_thread_info()->flags
+	 * can't change between when we test it and when we return
+	 * from the interrupt. */
+	/* Note: We don't bother telling lockdep about it */
+	LOAD_MSR_KERNEL(r10,MSR_KERNEL)
+	SYNC			/* Some chip revs have problems here... */
+	MTMSRD(r10)		/* disable interrupts */
+
+	lwz	r3,_MSR(r1)	/* Returning to user mode? */
+	andi.	r0,r3,MSR_PR
+	beq	resume_kernel
+
+user_exc_return:		/* r10 contains MSR_KERNEL here */
+	/* Check current_thread_info()->flags */
+	CURRENT_THREAD_INFO(r9, r1)
+	lwz	r9,TI_FLAGS(r9)
+	andi.	r0,r9,_TIF_USER_WORK_MASK
+	bne	do_work
+
+restore_user:
+#if defined(CONFIG_4xx) || defined(CONFIG_BOOKE)
+	/* Check whether this process has its own DBCR0 value.  The internal
+	   debug mode bit tells us that dbcr0 should be loaded. */
+	lwz	r0,THREAD+THREAD_DBCR0(r2)
+	andis.	r10,r0,DBCR0_IDM@h
+	bnel-	load_dbcr0
+#endif
+#ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+	CURRENT_THREAD_INFO(r9, r1)
+	ACCOUNT_CPU_USER_EXIT(r9, r10, r11)
+#endif
+
+	b	restore
+
+/* N.B. the only way to get here is from the beq following ret_from_except. */
+resume_kernel:
+	/* check current_thread_info, _TIF_EMULATE_STACK_STORE */
+	CURRENT_THREAD_INFO(r9, r1)
+	lwz	r8,TI_FLAGS(r9)
+	andis.	r0,r8,_TIF_EMULATE_STACK_STORE@h
+	beq+	1f
+
+	addi	r8,r1,INT_FRAME_SIZE	/* Get the kprobed function entry */
+
+	lwz	r3,GPR1(r1)
+	subi	r3,r3,INT_FRAME_SIZE	/* dst: Allocate a trampoline exception frame */
+	mr	r4,r1			/* src:  current exception frame */
+	mr	r1,r3			/* Reroute the trampoline frame to r1 */
+
+	/* Copy from the original to the trampoline. */
+	li	r5,INT_FRAME_SIZE/4	/* size: INT_FRAME_SIZE */
+	li	r6,0			/* start offset: 0 */
+	mtctr	r5
+2:	lwzx	r0,r6,r4
+	stwx	r0,r6,r3
+	addi	r6,r6,4
+	bdnz	2b
+
+	/* Do real store operation to complete stwu */
+	lwz	r5,GPR1(r1)
+	stw	r8,0(r5)
+
+	/* Clear _TIF_EMULATE_STACK_STORE flag */
+	lis	r11,_TIF_EMULATE_STACK_STORE@h
+	addi	r5,r9,TI_FLAGS
+0:	lwarx	r8,0,r5
+	andc	r8,r8,r11
+#ifdef CONFIG_IBM405_ERR77
+	dcbt	0,r5
+#endif
+	stwcx.	r8,0,r5
+	bne-	0b
+1:
+
+#ifdef CONFIG_PREEMPT
+	/* check current_thread_info->preempt_count */
+	lwz	r0,TI_PREEMPT(r9)
+	cmpwi	0,r0,0		/* if non-zero, just restore regs and return */
+	bne	restore
+	andi.	r8,r8,_TIF_NEED_RESCHED
+	beq+	restore
+	lwz	r3,_MSR(r1)
+	andi.	r0,r3,MSR_EE	/* interrupts off? */
+	beq	restore		/* don't schedule if so */
+#ifdef CONFIG_TRACE_IRQFLAGS
+	/* Lockdep thinks irqs are enabled, we need to call
+	 * preempt_schedule_irq with IRQs off, so we inform lockdep
+	 * now that we -did- turn them off already
+	 */
+	bl	trace_hardirqs_off
+#endif
+1:	bl	preempt_schedule_irq
+	CURRENT_THREAD_INFO(r9, r1)
+	lwz	r3,TI_FLAGS(r9)
+	andi.	r0,r3,_TIF_NEED_RESCHED
+	bne-	1b
+#ifdef CONFIG_TRACE_IRQFLAGS
+	/* And now, to properly rebalance the above, we tell lockdep they
+	 * are being turned back on, which will happen when we return
+	 */
+	bl	trace_hardirqs_on
+#endif
+#endif /* CONFIG_PREEMPT */
+
+	/* interrupts are hard-disabled at this point */
+restore:
+#ifdef CONFIG_44x
+BEGIN_MMU_FTR_SECTION
+	b	1f
+END_MMU_FTR_SECTION_IFSET(MMU_FTR_TYPE_47x)
+	lis	r4,icache_44x_need_flush@ha
+	lwz	r5,icache_44x_need_flush@l(r4)
+	cmplwi	cr0,r5,0
+	beq+	1f
+	li	r6,0
+	iccci	r0,r0
+	stw	r6,icache_44x_need_flush@l(r4)
+1:
+#endif  /* CONFIG_44x */
+
+	lwz	r9,_MSR(r1)
+#ifdef CONFIG_TRACE_IRQFLAGS
+	/* Lockdep doesn't know about the fact that IRQs are temporarily turned
+	 * off in this assembly code while peeking at TI_FLAGS() and such. However
+	 * we need to inform it if the exception turned interrupts off, and we
+	 * are about to trun them back on.
+	 *
+	 * The problem here sadly is that we don't know whether the exceptions was
+	 * one that turned interrupts off or not. So we always tell lockdep about
+	 * turning them on here when we go back to wherever we came from with EE
+	 * on, even if that may meen some redudant calls being tracked. Maybe later
+	 * we could encode what the exception did somewhere or test the exception
+	 * type in the pt_regs but that sounds overkill
+	 */
+	andi.	r10,r9,MSR_EE
+	beq	1f
+	/*
+	 * Since the ftrace irqsoff latency trace checks CALLER_ADDR1,
+	 * which is the stack frame here, we need to force a stack frame
+	 * in case we came from user space.
+	 */
+	stwu	r1,-32(r1)
+	mflr	r0
+	stw	r0,4(r1)
+	stwu	r1,-32(r1)
+	bl	trace_hardirqs_on
+	lwz	r1,0(r1)
+	lwz	r1,0(r1)
+	lwz	r9,_MSR(r1)
+1:
+#endif /* CONFIG_TRACE_IRQFLAGS */
+
+	lwz	r0,GPR0(r1)
+	lwz	r2,GPR2(r1)
+	REST_4GPRS(3, r1)
+	REST_2GPRS(7, r1)
+
+	lwz	r10,_XER(r1)
+	lwz	r11,_CTR(r1)
+	mtspr	SPRN_XER,r10
+	mtctr	r11
+
+	PPC405_ERR77(0,r1)
+BEGIN_FTR_SECTION
+	lwarx	r11,0,r1
+END_FTR_SECTION_IFSET(CPU_FTR_NEED_PAIRED_STWCX)
+	stwcx.	r0,0,r1			/* to clear the reservation */
+
+#if !(defined(CONFIG_4xx) || defined(CONFIG_BOOKE))
+	andi.	r10,r9,MSR_RI		/* check if this exception occurred */
+	beql	nonrecoverable		/* at a bad place (MSR:RI = 0) */
+
+	lwz	r10,_CCR(r1)
+	lwz	r11,_LINK(r1)
+	mtcrf	0xFF,r10
+	mtlr	r11
+
+	/* Clear the exception_marker on the stack to avoid confusing stacktrace */
+	li	r10, 0
+	stw	r10, 8(r1)
+	/*
+	 * Once we put values in SRR0 and SRR1, we are in a state
+	 * where exceptions are not recoverable, since taking an
+	 * exception will trash SRR0 and SRR1.  Therefore we clear the
+	 * MSR:RI bit to indicate this.  If we do take an exception,
+	 * we can't return to the point of the exception but we
+	 * can restart the exception exit path at the label
+	 * exc_exit_restart below.  -- paulus
+	 */
+	LOAD_MSR_KERNEL(r10,MSR_KERNEL & ~MSR_RI)
+	SYNC
+	MTMSRD(r10)		/* clear the RI bit */
+	.globl exc_exit_restart
+exc_exit_restart:
+	lwz	r12,_NIP(r1)
+#if defined(CONFIG_PPC_8xx) && defined(CONFIG_PERF_EVENTS)
+	mtspr	SPRN_NRI, r0
+#endif
+	mtspr	SPRN_SRR0,r12
+	mtspr	SPRN_SRR1,r9
+	REST_4GPRS(9, r1)
+	lwz	r1,GPR1(r1)
+	.globl exc_exit_restart_end
+exc_exit_restart_end:
+	SYNC
+	RFI
+
+#else /* !(CONFIG_4xx || CONFIG_BOOKE) */
+	/*
+	 * This is a bit different on 4xx/Book-E because it doesn't have
+	 * the RI bit in the MSR.
+	 * The TLB miss handler checks if we have interrupted
+	 * the exception exit path and restarts it if so
+	 * (well maybe one day it will... :).
+	 */
+	lwz	r11,_LINK(r1)
+	mtlr	r11
+	lwz	r10,_CCR(r1)
+	mtcrf	0xff,r10
+	/* Clear the exception_marker on the stack to avoid confusing stacktrace */
+	li	r10, 0
+	stw	r10, 8(r1)
+	REST_2GPRS(9, r1)
+	.globl exc_exit_restart
+exc_exit_restart:
+>>>>>>> master
 	lwz	r11,_NIP(r1)
 	lwz	r12,_MSR(r1)
 	mtspr	SPRN_SRR0,r11

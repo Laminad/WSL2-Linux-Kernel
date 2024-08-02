@@ -2122,6 +2122,12 @@ static void artpec6_crypto_task(unsigned long data)
 		pr_debug("Completing request %p\n", req);
 
 		list_move_tail(&req->list, &complete_done);
+<<<<<<< HEAD
+=======
+
+		artpec6_crypto_dma_unmap_all(req);
+		artpec6_crypto_copy_bounce_buffers(req);
+>>>>>>> master
 
 		ac->pending_count--;
 	}
@@ -2137,13 +2143,30 @@ static void artpec6_crypto_task(unsigned long data)
 		artpec6_crypto_dma_unmap_all(req);
 		artpec6_crypto_copy_bounce_buffers(req);
 		artpec6_crypto_common_destroy(req);
+<<<<<<< HEAD
 
+=======
+	}
+
+	artpec6_crypto_process_queue(ac, &complete_in_progress);
+
+	spin_unlock_bh(&ac->queue_lock);
+
+	/* Perform the completion callbacks without holding the queue lock
+	 * to allow new request submissions from the callbacks.
+	 */
+	list_for_each_entry_safe(req, n, &complete_done, list) {
+>>>>>>> master
 		req->complete(req->req);
 	}
 
 	list_for_each_entry_safe(req, n, &complete_in_progress,
 				 complete_in_progress) {
+<<<<<<< HEAD
 		crypto_request_complete(req->req, -EINPROGRESS);
+=======
+		req->req->complete(req->req, -EINPROGRESS);
+>>>>>>> master
 	}
 }
 

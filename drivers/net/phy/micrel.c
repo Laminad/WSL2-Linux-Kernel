@@ -644,6 +644,7 @@ static int ksz8041_config_aneg(struct phy_device *phydev)
 	return genphy_config_aneg(phydev);
 }
 
+<<<<<<< HEAD
 static int ksz8051_ksz8795_match_phy_device(struct phy_device *phydev,
 					    const bool ksz_8051)
 {
@@ -766,10 +767,13 @@ static int ksz8081_read_status(struct phy_device *phydev)
 	return genphy_read_status(phydev);
 }
 
+=======
+>>>>>>> master
 static int ksz8061_config_init(struct phy_device *phydev)
 {
 	int ret;
 
+<<<<<<< HEAD
 	/* Chip can be powered down by the bootstrap code. */
 	ret = phy_read(phydev, MII_BMCR);
 	if (ret < 0)
@@ -781,6 +785,8 @@ static int ksz8061_config_init(struct phy_device *phydev)
 		usleep_range(1000, 2000);
 	}
 
+=======
+>>>>>>> master
 	ret = phy_write_mmd(phydev, MDIO_MMD_PMAPMD, MDIO_DEVID1, 0xB61A);
 	if (ret)
 		return ret;
@@ -788,11 +794,14 @@ static int ksz8061_config_init(struct phy_device *phydev)
 	return kszphy_config_init(phydev);
 }
 
+<<<<<<< HEAD
 static int ksz8795_match_phy_device(struct phy_device *phydev)
 {
 	return ksz8051_ksz8795_match_phy_device(phydev, false);
 }
 
+=======
+>>>>>>> master
 static int ksz9021_load_values_from_of(struct phy_device *phydev,
 				       const struct device_node *of_node,
 				       u16 reg,
@@ -4845,10 +4854,17 @@ static struct phy_driver ksphy_driver[] = {
 	.phy_id		= PHY_ID_KSZ8061,
 	.name		= "Micrel KSZ8061",
 	.phy_id_mask	= MICREL_PHY_ID_MASK,
+<<<<<<< HEAD
 	/* PHY_BASIC_FEATURES */
 	.probe		= kszphy_probe,
 	.config_init	= ksz8061_config_init,
 	.soft_reset	= genphy_soft_reset,
+=======
+	.features	= PHY_BASIC_FEATURES,
+	.flags		= PHY_HAS_INTERRUPT,
+	.config_init	= ksz8061_config_init,
+	.ack_interrupt	= kszphy_ack_interrupt,
+>>>>>>> master
 	.config_intr	= kszphy_config_intr,
 	.handle_interrupt = kszphy_handle_interrupt,
 	.suspend	= kszphy_suspend,

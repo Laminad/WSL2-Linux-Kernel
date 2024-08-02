@@ -210,7 +210,11 @@ fill_with_dentries(struct dir_context *ctx, const char *name, int namelen,
 	dentry = lookup_one_len(name, dbuf->xadir, namelen);
 	if (IS_ERR(dentry)) {
 		dbuf->err = PTR_ERR(dentry);
+<<<<<<< HEAD
 		return false;
+=======
+		return PTR_ERR(dentry);
+>>>>>>> master
 	} else if (d_really_is_negative(dentry)) {
 		/* A directory entry exists, but no file? */
 		reiserfs_error(dentry->d_sb, "xattr-20003",
@@ -219,7 +223,11 @@ fill_with_dentries(struct dir_context *ctx, const char *name, int namelen,
 			       dentry, dbuf->xadir);
 		dput(dentry);
 		dbuf->err = -EIO;
+<<<<<<< HEAD
 		return false;
+=======
+		return -EIO;
+>>>>>>> master
 	}
 
 	dbuf->dentries[dbuf->count++] = dentry;

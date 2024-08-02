@@ -197,6 +197,7 @@ static inline __s32 nf_flow_timeout_delta(unsigned int timeout)
 
 struct nf_flow_route {
 	struct {
+<<<<<<< HEAD
 		struct dst_entry		*dst;
 		struct {
 			u32			ifindex;
@@ -214,6 +215,9 @@ struct nf_flow_route {
 			u8			h_dest[ETH_ALEN];
 		} out;
 		enum flow_offload_xmit_type	xmit_type;
+=======
+		struct dst_entry	*dst;
+>>>>>>> master
 	} tuple[FLOW_OFFLOAD_DIR_MAX];
 };
 

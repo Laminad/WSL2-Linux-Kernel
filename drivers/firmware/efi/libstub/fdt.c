@@ -132,7 +132,11 @@ static efi_status_t update_fdt(void *orig_fdt, unsigned long orig_fdt_size,
 		}
 	}
 
+<<<<<<< HEAD
 	/* Shrink the FDT back to its minimum size: */
+=======
+	/* shrink the FDT back to its minimum size */
+>>>>>>> master
 	fdt_pack(fdt);
 
 	return EFI_SUCCESS;
@@ -294,7 +298,11 @@ efi_status_t allocate_new_fdt_and_exit_boot(void *handle,
 	if (status == EFI_SUCCESS) {
 		efi_set_virtual_address_map_t *svam;
 
+<<<<<<< HEAD
 		if (efi_novamap)
+=======
+		if (novamap())
+>>>>>>> master
 			return EFI_SUCCESS;
 
 		/* Install the new virtual address map */

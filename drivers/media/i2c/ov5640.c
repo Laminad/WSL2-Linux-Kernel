@@ -520,6 +520,7 @@ static u32 ov5640_code_to_bpp(struct ov5640_dev *sensor, u32 code)
  * over i2c.
  */
 /* YUV422 UYVY VGA@30fps */
+<<<<<<< HEAD
 
 static const struct v4l2_mbus_framefmt ov5640_csi2_default_fmt = {
 	.code = MEDIA_BUS_FMT_UYVY8_1X16,
@@ -546,6 +547,13 @@ static const struct v4l2_mbus_framefmt ov5640_dvp_default_fmt = {
 static const struct reg_value ov5640_init_setting[] = {
 	{0x3103, 0x11, 0, 0},
 	{0x3103, 0x03, 0, 0}, {0x3630, 0x36, 0, 0},
+=======
+static const struct reg_value ov5640_init_setting_30fps_VGA[] = {
+	{0x3103, 0x11, 0, 0}, {0x3008, 0x82, 0, 5}, {0x3008, 0x42, 0, 0},
+	{0x3103, 0x03, 0, 0}, {0x3017, 0x00, 0, 0}, {0x3018, 0x00, 0, 0},
+	{0x3034, 0x18, 0, 0}, {0x3035, 0x14, 0, 0}, {0x3036, 0x38, 0, 0},
+	{0x3037, 0x13, 0, 0}, {0x3630, 0x36, 0, 0},
+>>>>>>> master
 	{0x3631, 0x0e, 0, 0}, {0x3632, 0xe2, 0, 0}, {0x3633, 0x12, 0, 0},
 	{0x3621, 0xe0, 0, 0}, {0x3704, 0xa0, 0, 0}, {0x3703, 0x5a, 0, 0},
 	{0x3715, 0x78, 0, 0}, {0x3717, 0x01, 0, 0}, {0x370b, 0x60, 0, 0},
@@ -568,7 +576,13 @@ static const struct reg_value ov5640_init_setting[] = {
 	{0x4001, 0x02, 0, 0}, {0x4004, 0x02, 0, 0}, {0x3000, 0x00, 0, 0},
 	{0x3002, 0x1c, 0, 0}, {0x3004, 0xff, 0, 0}, {0x3006, 0xc3, 0, 0},
 	{0x302e, 0x08, 0, 0}, {0x4300, 0x3f, 0, 0},
+<<<<<<< HEAD
 	{0x501f, 0x00, 0, 0}, {0x440e, 0x00, 0, 0}, {0x4837, 0x0a, 0, 0},
+=======
+	{0x501f, 0x00, 0, 0}, {0x4713, 0x03, 0, 0}, {0x4407, 0x04, 0, 0},
+	{0x440e, 0x00, 0, 0}, {0x460b, 0x35, 0, 0}, {0x460c, 0x22, 0, 0},
+	{0x4837, 0x0a, 0, 0}, {0x3824, 0x02, 0, 0},
+>>>>>>> master
 	{0x5000, 0xa7, 0, 0}, {0x5001, 0xa3, 0, 0}, {0x5180, 0xff, 0, 0},
 	{0x5181, 0xf2, 0, 0}, {0x5182, 0x00, 0, 0}, {0x5183, 0x14, 0, 0},
 	{0x5184, 0x25, 0, 0}, {0x5185, 0x24, 0, 0}, {0x5186, 0x09, 0, 0},
@@ -1276,6 +1290,7 @@ static int ov5640_mod_reg(struct ov5640_dev *sensor, u16 reg,
 	return ov5640_write_reg(sensor, reg, val);
 }
 
+<<<<<<< HEAD
 /*
  * After trying the various combinations, reading various
  * documentations spread around the net, and from the various
@@ -1644,10 +1659,13 @@ static int ov5640_set_jpeg_timings(struct ov5640_dev *sensor,
 	return ov5640_write_reg16(sensor, OV5640_REG_VFIFO_VSIZE, mode->height);
 }
 
+=======
+>>>>>>> master
 /* download ov5640 settings to sensor through i2c */
 static int ov5640_set_timings(struct ov5640_dev *sensor,
 			      const struct ov5640_mode_info *mode)
 {
+<<<<<<< HEAD
 	const struct ov5640_timings *timings;
 	const struct v4l2_rect *analog_crop;
 	const struct v4l2_rect *crop;
@@ -1713,6 +1731,27 @@ static int ov5640_set_timings(struct ov5640_dev *sensor,
 
 static void ov5640_load_regs(struct ov5640_dev *sensor,
 			     const struct reg_value *regs, unsigned int regnum)
+=======
+	int ret;
+
+	ret = ov5640_write_reg16(sensor, OV5640_REG_TIMING_DVPHO, mode->hact);
+	if (ret < 0)
+		return ret;
+
+	ret = ov5640_write_reg16(sensor, OV5640_REG_TIMING_DVPVO, mode->vact);
+	if (ret < 0)
+		return ret;
+
+	ret = ov5640_write_reg16(sensor, OV5640_REG_TIMING_HTS, mode->htot);
+	if (ret < 0)
+		return ret;
+
+	return ov5640_write_reg16(sensor, OV5640_REG_TIMING_VTS, mode->vtot);
+}
+
+static int ov5640_load_regs(struct ov5640_dev *sensor,
+			    const struct ov5640_mode_info *mode)
+>>>>>>> master
 {
 	unsigned int i;
 	u32 delay_ms;
@@ -1744,6 +1783,12 @@ static void ov5640_load_regs(struct ov5640_dev *sensor,
 	}
 }
 
+<<<<<<< HEAD
+=======
+	return ov5640_set_timings(sensor, mode);
+}
+
+>>>>>>> master
 static int ov5640_set_autoexposure(struct ov5640_dev *sensor, bool on)
 {
 	return ov5640_mod_reg(sensor, OV5640_REG_AEC_PK_MANUAL,
@@ -2314,8 +2359,12 @@ static int ov5640_set_mode_direct(struct ov5640_dev *sensor,
 		return -EINVAL;
 
 	/* Write capture setting */
+<<<<<<< HEAD
 	ov5640_load_regs(sensor, mode->reg_data, mode->reg_data_size);
 	return ov5640_set_timings(sensor, mode);
+=======
+	return ov5640_load_regs(sensor, mode);
+>>>>>>> master
 }
 
 static int ov5640_set_mode(struct ov5640_dev *sensor)
@@ -2342,6 +2391,7 @@ static int ov5640_set_mode(struct ov5640_dev *sensor)
 		if (ret)
 			goto restore_auto_gain;
 	}
+<<<<<<< HEAD
 
 	if (ov5640_is_csi2(sensor))
 		ret = ov5640_set_mipi_pclk(sensor);
@@ -2349,6 +2399,8 @@ static int ov5640_set_mode(struct ov5640_dev *sensor)
 		ret = ov5640_set_dvp_pclk(sensor);
 	if (ret < 0)
 		return 0;
+=======
+>>>>>>> master
 
 	if ((dn_mode == SUBSAMPLING && orig_dn_mode == SCALING) ||
 	    (dn_mode == SCALING && orig_dn_mode == SUBSAMPLING)) {
@@ -2413,8 +2465,15 @@ static int ov5640_restore_mode(struct ov5640_dev *sensor)
 	int ret;
 
 	/* first load the initial register values */
+<<<<<<< HEAD
 	ov5640_load_regs(sensor, ov5640_init_setting,
 			 ARRAY_SIZE(ov5640_init_setting));
+=======
+	ret = ov5640_load_regs(sensor, &ov5640_mode_init_data);
+	if (ret < 0)
+		return ret;
+	sensor->last_mode = &ov5640_mode_init_data;
+>>>>>>> master
 
 	ret = ov5640_mod_reg(sensor, OV5640_REG_SYS_ROOT_DIVIDER, 0x3f,
 			     (ilog2(OV5640_SCLK2X_ROOT_DIV) << 2) |
@@ -2468,12 +2527,20 @@ static void ov5640_powerup_sequence(struct ov5640_dev *sensor)
 	}
 	usleep_range(20000, 25000);	/* t4 */
 
+<<<<<<< HEAD
 	/*
 	 * software standby: allows registers programming;
 	 * exit at restore_mode() for CSI, s_stream(1) for DVP
 	 */
 	ov5640_write_reg(sensor, OV5640_REG_SYS_CTRL0,
 			 OV5640_REG_SYS_CTRL0_SW_PWDN);
+=======
+	gpiod_set_value_cansleep(sensor->reset_gpio, 1);
+	usleep_range(1000, 2000);
+
+	gpiod_set_value_cansleep(sensor->reset_gpio, 0);
+	usleep_range(20000, 25000);
+>>>>>>> master
 }
 
 static int ov5640_set_power_on(struct ov5640_dev *sensor)
@@ -2707,6 +2774,7 @@ static int ov5640_set_power(struct ov5640_dev *sensor, bool on)
 		ret = ov5640_restore_mode(sensor);
 		if (ret)
 			goto power_off;
+<<<<<<< HEAD
 	}
 
 	if (sensor->ep.bus_type == V4L2_MBUS_CSI2_DPHY)
@@ -2719,6 +2787,70 @@ static int ov5640_set_power(struct ov5640_dev *sensor, bool on)
 	if (!on)
 		ov5640_set_power_off(sensor);
 
+=======
+
+		/* We're done here for DVP bus, while CSI-2 needs setup. */
+		if (sensor->ep.bus_type != V4L2_MBUS_CSI2)
+			return 0;
+
+		/*
+		 * Power up MIPI HS Tx and LS Rx; 2 data lanes mode
+		 *
+		 * 0x300e = 0x40
+		 * [7:5] = 010	: 2 data lanes mode (see FIXME note in
+		 *		  "ov5640_set_stream_mipi()")
+		 * [4] = 0	: Power up MIPI HS Tx
+		 * [3] = 0	: Power up MIPI LS Rx
+		 * [2] = 0	: MIPI interface disabled
+		 */
+		ret = ov5640_write_reg(sensor,
+				       OV5640_REG_IO_MIPI_CTRL00, 0x40);
+		if (ret)
+			goto power_off;
+
+		/*
+		 * Gate clock and set LP11 in 'no packets mode' (idle)
+		 *
+		 * 0x4800 = 0x24
+		 * [5] = 1	: Gate clock when 'no packets'
+		 * [2] = 1	: MIPI bus in LP11 when 'no packets'
+		 */
+		ret = ov5640_write_reg(sensor,
+				       OV5640_REG_MIPI_CTRL00, 0x24);
+		if (ret)
+			goto power_off;
+
+		/*
+		 * Set data lanes and clock in LP11 when 'sleeping'
+		 *
+		 * 0x3019 = 0x70
+		 * [6] = 1	: MIPI data lane 2 in LP11 when 'sleeping'
+		 * [5] = 1	: MIPI data lane 1 in LP11 when 'sleeping'
+		 * [4] = 1	: MIPI clock lane in LP11 when 'sleeping'
+		 */
+		ret = ov5640_write_reg(sensor,
+				       OV5640_REG_PAD_OUTPUT00, 0x70);
+		if (ret)
+			goto power_off;
+
+		/* Give lanes some time to coax into LP11 state. */
+		usleep_range(500, 1000);
+
+	} else {
+		if (sensor->ep.bus_type == V4L2_MBUS_CSI2) {
+			/* Reset MIPI bus settings to their default values. */
+			ov5640_write_reg(sensor,
+					 OV5640_REG_IO_MIPI_CTRL00, 0x58);
+			ov5640_write_reg(sensor,
+					 OV5640_REG_MIPI_CTRL00, 0x04);
+			ov5640_write_reg(sensor,
+					 OV5640_REG_PAD_OUTPUT00, 0x00);
+		}
+
+		ov5640_set_power_off(sensor);
+	}
+
+>>>>>>> master
 	return 0;
 
 power_off:
@@ -2954,6 +3086,7 @@ static int ov5640_set_fmt(struct v4l2_subdev *sd,
 	struct ov5640_dev *sensor = to_ov5640_dev(sd);
 	const struct ov5640_mode_info *new_mode;
 	struct v4l2_mbus_framefmt *mbus_fmt = &format->format;
+	struct v4l2_mbus_framefmt *fmt;
 	int ret;
 
 	if (format->pad != 0)
@@ -2970,10 +3103,19 @@ static int ov5640_set_fmt(struct v4l2_subdev *sd,
 	if (ret)
 		goto out;
 
+<<<<<<< HEAD
 	if (format->which == V4L2_SUBDEV_FORMAT_TRY) {
 		*v4l2_subdev_get_try_format(sd, sd_state, 0) = *mbus_fmt;
 		goto out;
 	}
+=======
+	if (format->which == V4L2_SUBDEV_FORMAT_TRY)
+		fmt = v4l2_subdev_get_try_format(sd, cfg, 0);
+	else
+		fmt = &sensor->fmt;
+
+	*fmt = *mbus_fmt;
+>>>>>>> master
 
 	if (new_mode != sensor->current_mode) {
 		sensor->current_fr = new_mode->def_fps;
@@ -2983,11 +3125,14 @@ static int ov5640_set_fmt(struct v4l2_subdev *sd,
 	if (mbus_fmt->code != sensor->fmt.code)
 		sensor->pending_fmt_change = true;
 
+<<<<<<< HEAD
 	/* update format even if code is unchanged, resolution might change */
 	sensor->fmt = *mbus_fmt;
 
 	ov5640_update_pixel_rate(sensor);
 
+=======
+>>>>>>> master
 out:
 	mutex_unlock(&sensor->lock);
 	return ret;
@@ -3714,8 +3859,18 @@ static int ov5640_s_stream(struct v4l2_subdev *sd, int enable)
 	if (sensor->streaming == !enable) {
 		if (enable && sensor->pending_mode_change) {
 			ret = ov5640_set_mode(sensor);
+<<<<<<< HEAD
+=======
 			if (ret)
 				goto out;
+		}
+
+		if (enable && sensor->pending_fmt_change) {
+			ret = ov5640_set_framefmt(sensor, &sensor->fmt);
+>>>>>>> master
+			if (ret)
+				goto out;
+			sensor->pending_fmt_change = false;
 		}
 
 		if (enable && sensor->pending_fmt_change) {
@@ -3841,16 +3996,35 @@ static int ov5640_probe(struct i2c_client *client)
 
 	/*
 	 * default init sequence initialize sensor to
+<<<<<<< HEAD
 	 * YUV422 UYVY VGA(30FPS in parallel mode, 60 in MIPI CSI-2 mode)
 	 */
+=======
+	 * YUV422 UYVY VGA@30fps
+	 */
+	fmt = &sensor->fmt;
+	fmt->code = MEDIA_BUS_FMT_UYVY8_2X8;
+	fmt->colorspace = V4L2_COLORSPACE_SRGB;
+	fmt->ycbcr_enc = V4L2_MAP_YCBCR_ENC_DEFAULT(fmt->colorspace);
+	fmt->quantization = V4L2_QUANTIZATION_FULL_RANGE;
+	fmt->xfer_func = V4L2_MAP_XFER_FUNC_DEFAULT(fmt->colorspace);
+	fmt->width = 640;
+	fmt->height = 480;
+	fmt->field = V4L2_FIELD_NONE;
+>>>>>>> master
 	sensor->frame_interval.numerator = 1;
 	sensor->frame_interval.denominator = ov5640_framerates[OV5640_30_FPS];
 	sensor->current_fr = OV5640_30_FPS;
 	sensor->current_mode =
+<<<<<<< HEAD
 		&ov5640_mode_data[OV5640_MODE_VGA_640_480];
 	sensor->last_mode = sensor->current_mode;
 	sensor->current_link_freq =
 		ov5640_csi2_link_freqs[OV5640_DEFAULT_LINK_FREQ];
+=======
+		&ov5640_mode_data[OV5640_30_FPS][OV5640_MODE_VGA_640_480];
+	sensor->last_mode = sensor->current_mode;
+>>>>>>> master
 
 	sensor->ae_target = 52;
 

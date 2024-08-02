@@ -172,6 +172,11 @@ static size_t eeh_dump_dev_log(struct eeh_dev *edev, char *buf, size_t len)
 	int n = 0, l = 0;
 	char buffer[128];
 
+	if (!pdn) {
+		pr_warn("EEH: Note: No error log for absent device.\n");
+		return 0;
+	}
+
 	n += scnprintf(buf+n, len-n, "%04x:%02x:%02x.%01x\n",
 			edev->pe->phb->global_number, edev->bdfn >> 8,
 			PCI_SLOT(edev->bdfn), PCI_FUNC(edev->bdfn));
@@ -346,7 +351,35 @@ void eeh_slot_error_detail(struct eeh_pe *pe, int severity)
  */
 static inline unsigned long eeh_token_to_phys(unsigned long token)
 {
+<<<<<<< HEAD
 	return ppc_find_vmap_phys(token);
+=======
+	pte_t *ptep;
+	unsigned long pa;
+	int hugepage_shift;
+
+	/*
+	 * We won't find hugepages here(this is iomem). Hence we are not
+	 * worried about _PAGE_SPLITTING/collapse. Also we will not hit
+	 * page table free, because of init_mm.
+	 */
+	ptep = find_init_mm_pte(token, &hugepage_shift);
+	if (!ptep)
+		return token;
+
+	pa = pte_pfn(*ptep);
+
+	/* On radix we can do hugepage mappings for io, so handle that */
+	if (hugepage_shift) {
+		pa <<= hugepage_shift;
+		pa |= token & ((1ul << hugepage_shift) - 1);
+	} else {
+		pa <<= PAGE_SHIFT;
+		pa |= token & (PAGE_SIZE - 1);
+	}
+
+	return pa;
+>>>>>>> master
 }
 
 /*

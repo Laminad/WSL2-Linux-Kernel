@@ -569,7 +569,11 @@ static int snd_compress_check_input(struct snd_compr_params *params)
 {
 	/* first let's check the buffer parameter's */
 	if (params->buffer.fragment_size == 0 ||
+<<<<<<< HEAD
 	    params->buffer.fragments > U32_MAX / params->buffer.fragment_size ||
+=======
+	    params->buffer.fragments > INT_MAX / params->buffer.fragment_size ||
+>>>>>>> master
 	    params->buffer.fragments == 0)
 		return -EINVAL;
 

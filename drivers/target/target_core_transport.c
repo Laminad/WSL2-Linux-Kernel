@@ -220,6 +220,7 @@ void transport_subsystem_check_init(void)
 	sub_api_initialized = 1;
 }
 
+<<<<<<< HEAD
 static void target_release_cmd_refcnt(struct percpu_ref *ref)
 {
 	struct target_cmd_counter *cmd_cnt  = container_of(ref,
@@ -268,17 +269,32 @@ void target_free_cmd_counter(struct target_cmd_counter *cmd_cnt)
 }
 EXPORT_SYMBOL_GPL(target_free_cmd_counter);
 
+=======
+static void target_release_sess_cmd_refcnt(struct percpu_ref *ref)
+{
+	struct se_session *sess = container_of(ref, typeof(*sess), cmd_count);
+
+	wake_up(&sess->cmd_list_wq);
+}
+
+>>>>>>> master
 /**
  * transport_init_session - initialize a session object
  * @se_sess: Session object pointer.
  *
  * The caller must have zero-initialized @se_sess before calling this function.
  */
-void transport_init_session(struct se_session *se_sess)
+int transport_init_session(struct se_session *se_sess)
 {
 	INIT_LIST_HEAD(&se_sess->sess_list);
 	INIT_LIST_HEAD(&se_sess->sess_acl_list);
 	spin_lock_init(&se_sess->sess_cmd_lock);
+<<<<<<< HEAD
+=======
+	init_waitqueue_head(&se_sess->cmd_list_wq);
+	return percpu_ref_init(&se_sess->cmd_count,
+			       target_release_sess_cmd_refcnt, 0, GFP_KERNEL);
+>>>>>>> master
 }
 EXPORT_SYMBOL(transport_init_session);
 
@@ -289,6 +305,7 @@ EXPORT_SYMBOL(transport_init_session);
 struct se_session *transport_alloc_session(enum target_prot_op sup_prot_ops)
 {
 	struct se_session *se_sess;
+	int ret;
 
 	se_sess = kmem_cache_zalloc(se_sess_cache, GFP_KERNEL);
 	if (!se_sess) {
@@ -296,7 +313,11 @@ struct se_session *transport_alloc_session(enum target_prot_op sup_prot_ops)
 				" se_sess_cache\n");
 		return ERR_PTR(-ENOMEM);
 	}
-	transport_init_session(se_sess);
+	ret = transport_init_session(se_sess);
+	if (ret < 0) {
+		kmem_cache_free(se_sess_cache, se_sess);
+		return ERR_PTR(ret);
+	}
 	se_sess->sup_prot_ops = sup_prot_ops;
 
 	return se_sess;
@@ -634,8 +655,12 @@ void transport_free_session(struct se_session *se_sess)
 		sbitmap_queue_free(&se_sess->sess_tag_pool);
 		kvfree(se_sess->sess_cmd_map);
 	}
+<<<<<<< HEAD
 	if (se_sess->cmd_cnt)
 		target_free_cmd_counter(se_sess->cmd_cnt);
+=======
+	percpu_ref_exit(&se_sess->cmd_count);
+>>>>>>> master
 	kmem_cache_free(se_sess_cache, se_sess);
 }
 EXPORT_SYMBOL(transport_free_session);
@@ -3011,6 +3036,15 @@ int target_get_sess_cmd(struct se_cmd *se_cmd, bool ack_kref)
 		if (!percpu_ref_tryget_live(&se_cmd->cmd_cnt->refcnt))
 			ret = -ESHUTDOWN;
 	}
+<<<<<<< HEAD
+=======
+	se_cmd->transport_state |= CMD_T_PRE_EXECUTE;
+	list_add_tail(&se_cmd->se_cmd_list, &se_sess->sess_cmd_list);
+	percpu_ref_get(&se_sess->cmd_count);
+out:
+	spin_unlock_irqrestore(&se_sess->sess_cmd_lock, flags);
+
+>>>>>>> master
 	if (ret && ack_kref)
 		target_put_sess_cmd(se_cmd);
 
@@ -3031,6 +3065,7 @@ static void target_free_cmd_mem(struct se_cmd *cmd)
 static void target_release_cmd_kref(struct kref *kref)
 {
 	struct se_cmd *se_cmd = container_of(kref, struct se_cmd, cmd_kref);
+<<<<<<< HEAD
 	struct target_cmd_counter *cmd_cnt = se_cmd->cmd_cnt;
 	struct completion *free_compl = se_cmd->free_compl;
 	struct completion *abrt_compl = se_cmd->abrt_compl;
@@ -3044,6 +3079,24 @@ static void target_release_cmd_kref(struct kref *kref)
 
 	if (cmd_cnt)
 		percpu_ref_put(&cmd_cnt->refcnt);
+=======
+	struct se_session *se_sess = se_cmd->se_sess;
+	struct completion *compl = se_cmd->compl;
+	unsigned long flags;
+
+	if (se_sess) {
+		spin_lock_irqsave(&se_sess->sess_cmd_lock, flags);
+		list_del_init(&se_cmd->se_cmd_list);
+		spin_unlock_irqrestore(&se_sess->sess_cmd_lock, flags);
+	}
+
+	target_free_cmd_mem(se_cmd);
+	se_cmd->se_tfo->release_cmd(se_cmd);
+	if (compl)
+		complete(compl);
+
+	percpu_ref_put(&se_sess->cmd_count);
+>>>>>>> master
 }
 
 /**
@@ -3164,10 +3217,20 @@ EXPORT_SYMBOL(target_show_cmd);
 
 static void target_stop_cmd_counter_confirm(struct percpu_ref *ref)
 {
+<<<<<<< HEAD
 	struct target_cmd_counter *cmd_cnt = container_of(ref,
 						struct target_cmd_counter,
 						refcnt);
 	complete_all(&cmd_cnt->stop_done);
+=======
+	unsigned long flags;
+
+	spin_lock_irqsave(&se_sess->sess_cmd_lock, flags);
+	se_sess->sess_tearing_down = 1;
+	spin_unlock_irqrestore(&se_sess->sess_cmd_lock, flags);
+
+	percpu_ref_kill(&se_sess->cmd_count);
+>>>>>>> master
 }
 
 /**
@@ -3221,7 +3284,23 @@ EXPORT_SYMBOL_GPL(target_wait_for_cmds);
  */
 void target_wait_for_sess_cmds(struct se_session *se_sess)
 {
+<<<<<<< HEAD
 	target_wait_for_cmds(se_sess->cmd_cnt);
+=======
+	struct se_cmd *cmd;
+	int ret;
+
+	WARN_ON_ONCE(!se_sess->sess_tearing_down);
+
+	do {
+		ret = wait_event_timeout(se_sess->cmd_list_wq,
+				percpu_ref_is_zero(&se_sess->cmd_count),
+				180 * HZ);
+		list_for_each_entry(cmd, &se_sess->sess_cmd_list, se_cmd_list)
+			target_show_cmd("session shutdown: still waiting for ",
+					cmd);
+	} while (ret <= 0);
+>>>>>>> master
 }
 EXPORT_SYMBOL(target_wait_for_sess_cmds);
 

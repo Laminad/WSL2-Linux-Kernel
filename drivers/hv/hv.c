@@ -308,10 +308,15 @@ void hv_synic_enable_regs(unsigned int cpu)
 	hv_set_register(HV_REGISTER_SIEFP, siefp.as_uint64);
 
 	/* Setup the shared SINT. */
+<<<<<<< HEAD
 	if (vmbus_irq != -1)
 		enable_percpu_irq(vmbus_irq, 0);
 	shared_sint.as_uint64 = hv_get_register(HV_REGISTER_SINT0 +
 					VMBUS_MESSAGE_SINT);
+=======
+	hv_enable_vmbus_irq();
+	hv_get_synint_state(VMBUS_MESSAGE_SINT, shared_sint.as_uint64);
+>>>>>>> master
 
 	shared_sint.vector = vmbus_interrupt;
 	shared_sint.masked = false;
@@ -497,10 +502,42 @@ int hv_synic_cleanup(unsigned int cpu)
 	if (vmbus_proto_version >= VERSION_WIN10_V4_1 && hv_synic_event_pending())
 		return -EBUSY;
 
+<<<<<<< HEAD
 always_cleanup:
 	hv_stimer_legacy_cleanup(cpu);
 
 	hv_synic_disable_regs(cpu);
+=======
+		clockevents_unbind_device(hv_cpu->clk_evt, cpu);
+		hv_ce_shutdown(hv_cpu->clk_evt);
+	}
+
+	hv_get_synint_state(VMBUS_MESSAGE_SINT, shared_sint.as_uint64);
+
+	shared_sint.masked = 1;
+
+	/* Need to correctly cleanup in the case of SMP!!! */
+	/* Disable the interrupt */
+	hv_set_synint_state(VMBUS_MESSAGE_SINT, shared_sint.as_uint64);
+
+	hv_get_simp(simp.as_uint64);
+	simp.simp_enabled = 0;
+	simp.base_simp_gpa = 0;
+
+	hv_set_simp(simp.as_uint64);
+
+	hv_get_siefp(siefp.as_uint64);
+	siefp.siefp_enabled = 0;
+	siefp.base_siefp_gpa = 0;
+
+	hv_set_siefp(siefp.as_uint64);
+
+	/* Disable the global synic bit */
+	hv_get_synic_state(sctrl.as_uint64);
+	sctrl.enable = 0;
+	hv_set_synic_state(sctrl.as_uint64);
+	hv_disable_vmbus_irq();
+>>>>>>> master
 
 	return 0;
 }

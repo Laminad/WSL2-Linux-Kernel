@@ -1475,8 +1475,13 @@ static int kvp_set_ip_info(char *if_name, struct hv_kvp_ipaddr_value *new_val)
 	 * invoke the external script to do its magic.
 	 */
 
+<<<<<<< HEAD
 	str_len = snprintf(cmd, sizeof(cmd), KVP_SCRIPTS_PATH "%s %s %s",
 			   "hv_set_ifconfig", if_filename, nm_filename);
+=======
+	str_len = snprintf(cmd, sizeof(cmd), KVP_SCRIPTS_PATH "%s %s",
+			   "hv_set_ifconfig", if_file);
+>>>>>>> master
 	/*
 	 * This is a little overcautious, but it's necessary to suppress some
 	 * false warnings from gcc 8.0.1.

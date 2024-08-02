@@ -350,6 +350,7 @@ static void pmc_dbgfs_register(struct pmc_dev *pmc)
 }
 #endif /* CONFIG_DEBUG_FS */
 
+<<<<<<< HEAD
 static bool pmc_clk_is_critical = true;
 
 static int dmi_callback(const struct dmi_system_id *d)
@@ -374,6 +375,8 @@ out:
 	return 1;
 }
 
+=======
+>>>>>>> master
 /*
  * Some systems need one or more of their pmc_plt_clks to be
  * marked as critical.
@@ -382,13 +385,17 @@ static const struct dmi_system_id critclk_systems[] = {
 	{
 		/* pmc_plt_clk0 is used for an external HSIC USB HUB */
 		.ident = "MPL CEC1x",
+<<<<<<< HEAD
 		.callback = dmi_callback,
+=======
+>>>>>>> master
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "MPL AG"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "CEC10 Family"),
 		},
 	},
 	{
+<<<<<<< HEAD
 		/*
 		 * Lex System / Lex Computech Co. makes a lot of Bay Trail
 		 * based embedded boards which often come with multiple
@@ -399,10 +406,18 @@ static const struct dmi_system_id critclk_systems[] = {
 		.callback = dmi_callback,
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "Lex BayTrail"),
+=======
+		/* pmc_plt_clk0 - 3 are used for the 4 ethernet controllers */
+		.ident = "Lex 3I380D",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Lex BayTrail"),
+			DMI_MATCH(DMI_PRODUCT_NAME, "3I380D"),
+>>>>>>> master
 		},
 	},
 	{
 		/* pmc_plt_clk* - are used for ethernet controllers */
+<<<<<<< HEAD
 		.ident = "Beckhoff Baytrail",
 		.callback = dmi_callback,
 		.matches = {
@@ -418,6 +433,46 @@ static const struct dmi_system_id critclk_systems[] = {
 		},
 	},
 	{}
+=======
+		.ident = "Beckhoff CB3163",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Beckhoff Automation"),
+			DMI_MATCH(DMI_BOARD_NAME, "CB3163"),
+		},
+	},
+	{
+		/* pmc_plt_clk* - are used for ethernet controllers */
+		.ident = "Beckhoff CB4063",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Beckhoff Automation"),
+			DMI_MATCH(DMI_BOARD_NAME, "CB4063"),
+		},
+	},
+	{
+		/* pmc_plt_clk* - are used for ethernet controllers */
+		.ident = "Beckhoff CB6263",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Beckhoff Automation"),
+			DMI_MATCH(DMI_BOARD_NAME, "CB6263"),
+		},
+	},
+	{
+		/* pmc_plt_clk* - are used for ethernet controllers */
+		.ident = "Beckhoff CB6363",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "Beckhoff Automation"),
+			DMI_MATCH(DMI_BOARD_NAME, "CB6363"),
+		},
+	},
+	{
+		.ident = "SIMATIC IPC227E",
+		.matches = {
+			DMI_MATCH(DMI_SYS_VENDOR, "SIEMENS AG"),
+			DMI_MATCH(DMI_PRODUCT_VERSION, "6ES7647-8B"),
+		},
+	},
+	{ /*sentinel*/ }
+>>>>>>> master
 };
 
 static int pmc_setup_clks(struct pci_dev *pdev, void __iomem *pmc_regmap,
@@ -425,6 +480,7 @@ static int pmc_setup_clks(struct pci_dev *pdev, void __iomem *pmc_regmap,
 {
 	struct platform_device *clkdev;
 	struct pmc_clk_data *clk_data;
+	const struct dmi_system_id *d = dmi_first_match(critclk_systems);
 
 	clk_data = kzalloc(sizeof(*clk_data), GFP_KERNEL);
 	if (!clk_data)
@@ -432,8 +488,15 @@ static int pmc_setup_clks(struct pci_dev *pdev, void __iomem *pmc_regmap,
 
 	clk_data->base = pmc_regmap; /* offset is added by client */
 	clk_data->clks = pmc_data->clks;
+<<<<<<< HEAD
 	if (dmi_check_system(critclk_systems))
 		clk_data->critical = pmc_clk_is_critical;
+=======
+	if (d) {
+		clk_data->critical = true;
+		pr_info("%s critclks quirk enabled\n", d->ident);
+	}
+>>>>>>> master
 
 	clkdev = platform_device_register_data(&pdev->dev, "clk-pmc-atom",
 					       PLATFORM_DEVID_NONE,

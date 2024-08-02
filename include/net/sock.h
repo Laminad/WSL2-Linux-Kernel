@@ -317,12 +317,16 @@ struct sk_filter;
   *	@sk_timer: sock cleanup timer
   *	@sk_stamp: time stamp of last packet received
   *	@sk_stamp_seq: lock for accessing sk_stamp on 32 bit architectures only
+<<<<<<< HEAD
   *	@sk_tsflags: SO_TIMESTAMPING flags
   *	@sk_use_task_frag: allow sk_page_frag() to use current->task_frag.
   *			   Sockets that can be used under memory reclaim should
   *			   set this to false.
   *	@sk_bind_phc: SO_TIMESTAMPING bind PHC index of PTP virtual clock
   *	              for timestamping
+=======
+  *	@sk_tsflags: SO_TIMESTAMPING socket options
+>>>>>>> master
   *	@sk_tskey: counter to disambiguate concurrent tstamp requests
   *	@sk_zckey: counter to order MSG_ZEROCOPY notifications
   *	@sk_socket: Identd and reporting IO signals
@@ -508,7 +512,13 @@ struct sock {
 #if BITS_PER_LONG==32
 	seqlock_t		sk_stamp_seq;
 #endif
+<<<<<<< HEAD
 	atomic_t		sk_tskey;
+=======
+	u16			sk_tsflags;
+	u8			sk_shutdown;
+	u32			sk_tskey;
+>>>>>>> master
 	atomic_t		sk_zckey;
 	u32			sk_tsflags;
 	u8			sk_shutdown;
@@ -1723,7 +1733,10 @@ static inline void lock_sock(struct sock *sk)
 	lock_sock_nested(sk, 0);
 }
 
+<<<<<<< HEAD
 void __lock_sock(struct sock *sk);
+=======
+>>>>>>> master
 void __release_sock(struct sock *sk);
 void release_sock(struct sock *sk);
 
@@ -2392,6 +2405,12 @@ static inline bool skwq_has_sleeper(struct socket_wq *wq)
  * @p:              poll_table
  *
  * See the comments in the wq_has_sleeper function.
+ *
+ * Do not derive sock from filp->private_data here. An SMC socket establishes
+ * an internal TCP socket that is used in the fallback case. All socket
+ * operations on the SMC socket are then forwarded to the TCP socket. In case of
+ * poll, the filp->private_data pointer references the SMC socket because the
+ * TCP socket has no file assigned.
  */
 static inline void sock_poll_wait(struct file *filp, struct socket *sock,
 				  poll_table *p)
@@ -2585,6 +2604,7 @@ static inline void sk_stream_moderate_sndbuf(struct sock *sk)
  * @sk: socket
  *
  * Use the per task page_frag instead of the per socket one for
+<<<<<<< HEAD
  * optimization when we know that we're in process context and own
  * everything that's associated with %current.
  *
@@ -2599,6 +2619,18 @@ static inline void sk_stream_moderate_sndbuf(struct sock *sk)
 static inline struct page_frag *sk_page_frag(struct sock *sk)
 {
 	if (sk->sk_use_task_frag)
+=======
+ * optimization when we know that we're in the normal context and owns
+ * everything that's associated with %current.
+ *
+ * gfpflags_allow_blocking() isn't enough here as direct reclaim may nest
+ * inside other socket operations and end up recursing into sk_page_frag()
+ * while it's already in use.
+ */
+static inline struct page_frag *sk_page_frag(struct sock *sk)
+{
+	if (gfpflags_normal_context(sk->sk_allocation))
+>>>>>>> master
 		return &current->task_frag;
 
 	return &sk->sk_frag;
@@ -2756,7 +2788,11 @@ static inline void sock_recv_cmsgs(struct msghdr *msg, struct sock *sk,
 		__sock_recv_cmsgs(msg, sk, skb);
 	else if (unlikely(sock_flag(sk, SOCK_TIMESTAMP)))
 		sock_write_timestamp(sk, skb->tstamp);
+<<<<<<< HEAD
 	else if (unlikely(sock_read_timestamp(sk) == SK_DEFAULT_STAMP))
+=======
+	else if (unlikely(sk->sk_stamp == SK_DEFAULT_STAMP))
+>>>>>>> master
 		sock_write_timestamp(sk, 0);
 }
 

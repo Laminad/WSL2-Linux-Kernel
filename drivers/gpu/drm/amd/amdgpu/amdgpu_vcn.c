@@ -802,7 +802,11 @@ int amdgpu_vcn_enc_ring_test_ring(struct amdgpu_ring *ring)
 {
 	struct amdgpu_device *adev = ring->adev;
 	uint32_t rptr;
+<<<<<<< HEAD
 	unsigned int i;
+=======
+	unsigned i;
+>>>>>>> master
 	int r;
 
 	if (amdgpu_sriov_vf(adev))
@@ -811,6 +815,10 @@ int amdgpu_vcn_enc_ring_test_ring(struct amdgpu_ring *ring)
 	r = amdgpu_ring_alloc(ring, 16);
 	if (r)
 		return r;
+<<<<<<< HEAD
+=======
+	}
+>>>>>>> master
 
 	rptr = amdgpu_ring_get_rptr(ring);
 

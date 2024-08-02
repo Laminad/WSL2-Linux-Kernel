@@ -67,7 +67,11 @@
 #define PADCFG0_GPIROUTSMI		BIT(18)
 #define PADCFG0_GPIROUTNMI		BIT(17)
 #define PADCFG0_PMODE_SHIFT		10
+<<<<<<< HEAD
 #define PADCFG0_PMODE_MASK		GENMASK(13, 10)
+=======
+#define PADCFG0_PMODE_MASK		(0xf << PADCFG0_PMODE_SHIFT)
+>>>>>>> master
 #define PADCFG0_PMODE_GPIO		0
 #define PADCFG0_GPIORXDIS		BIT(9)
 #define PADCFG0_GPIOTXDIS		BIT(8)
@@ -448,6 +452,7 @@ static void __intel_gpio_set_direction(void __iomem *padcfg0, bool input)
 	writel(value, padcfg0);
 }
 
+<<<<<<< HEAD
 static int __intel_gpio_get_gpio_mode(u32 value)
 {
 	return (value & PADCFG0_PMODE_MASK) >> PADCFG0_PMODE_SHIFT;
@@ -456,6 +461,11 @@ static int __intel_gpio_get_gpio_mode(u32 value)
 static int intel_gpio_get_gpio_mode(void __iomem *padcfg0)
 {
 	return __intel_gpio_get_gpio_mode(readl(padcfg0));
+=======
+static int intel_gpio_get_gpio_mode(void __iomem *padcfg0)
+{
+	return (readl(padcfg0) & PADCFG0_PMODE_MASK) >> PADCFG0_PMODE_SHIFT;
+>>>>>>> master
 }
 
 static void intel_gpio_set_gpio_mode(void __iomem *padcfg0)
@@ -496,10 +506,14 @@ static int intel_gpio_request_enable(struct pinctrl_dev *pctldev,
 		return -EBUSY;
 	}
 
+<<<<<<< HEAD
 	if (!intel_pad_is_unlocked(pctrl, pin)) {
 		raw_spin_unlock_irqrestore(&pctrl->lock, flags);
 		return 0;
 	}
+=======
+	padcfg0 = intel_get_padcfg(pctrl, pin, PADCFG0);
+>>>>>>> master
 
 	/*
 	 * If pin is already configured in GPIO mode, we assume that
@@ -513,6 +527,12 @@ static int intel_gpio_request_enable(struct pinctrl_dev *pctldev,
 	}
 
 	intel_gpio_set_gpio_mode(padcfg0);
+<<<<<<< HEAD
+=======
+
+	/* Disable TX buffer and enable RX (this will be input) */
+	__intel_gpio_set_direction(padcfg0, true);
+>>>>>>> master
 
 	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
 

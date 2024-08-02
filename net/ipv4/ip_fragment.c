@@ -274,7 +274,11 @@ static int ip_frag_reinit(struct ipq *qp)
 /* Add new segment to existing queue. */
 static int ip_frag_queue(struct ipq *qp, struct sk_buff *skb)
 {
+<<<<<<< HEAD
 	struct net *net = qp->q.fqdir->net;
+=======
+	struct net *net = container_of(qp->q.net, struct net, ipv4.frags);
+>>>>>>> master
 	int ihl, end, flags, offset;
 	struct sk_buff *prev_tail;
 	struct net_device *dev;
@@ -389,9 +393,14 @@ static int ip_frag_queue(struct ipq *qp, struct sk_buff *skb)
 
 insert_error:
 	if (err == IPFRAG_DUP) {
+<<<<<<< HEAD
 		SKB_DR_SET(reason, DUP_FRAG);
 		err = -EINVAL;
 		goto err;
+=======
+		kfree_skb(skb);
+		return -EINVAL;
+>>>>>>> master
 	}
 	err = -EINVAL;
 	__IP_INC_STATS(net, IPSTATS_MIB_REASM_OVERLAPS);
@@ -436,8 +445,12 @@ static int ip_frag_reasm(struct ipq *qp, struct sk_buff *skb,
 	if (len > 65535)
 		goto out_oversize;
 
+<<<<<<< HEAD
 	inet_frag_reasm_finish(&qp->q, skb, reasm_data,
 			       ip_frag_coalesce_ok(qp));
+=======
+	inet_frag_reasm_finish(&qp->q, skb, reasm_data);
+>>>>>>> master
 
 	skb->dev = dev;
 	IPCB(skb)->frag_max_size = max(qp->max_df_size, qp->q.max_size);

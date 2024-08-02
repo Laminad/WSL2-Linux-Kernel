@@ -705,7 +705,21 @@ static void esdhc_writew_le(struct sdhci_host *host, u16 val, int reg)
 		else
 			new_val &= ~ESDHC_VENDOR_SPEC_VSELECT;
 		writel(new_val, host->ioaddr + ESDHC_VENDOR_SPEC);
+<<<<<<< HEAD
 		if (imx_data->socdata->flags & ESDHC_FLAG_STD_TUNING) {
+=======
+		if (imx_data->socdata->flags & ESDHC_FLAG_MAN_TUNING) {
+			new_val = readl(host->ioaddr + ESDHC_MIX_CTRL);
+			if (val & SDHCI_CTRL_TUNED_CLK) {
+				new_val |= ESDHC_MIX_CTRL_SMPCLK_SEL;
+				new_val |= ESDHC_MIX_CTRL_AUTO_TUNE_EN;
+			} else {
+				new_val &= ~ESDHC_MIX_CTRL_SMPCLK_SEL;
+				new_val &= ~ESDHC_MIX_CTRL_AUTO_TUNE_EN;
+			}
+			writel(new_val , host->ioaddr + ESDHC_MIX_CTRL);
+		} else if (imx_data->socdata->flags & ESDHC_FLAG_STD_TUNING) {
+>>>>>>> master
 			u32 v = readl(host->ioaddr + SDHCI_AUTO_CMD_STATUS);
 			u32 m = readl(host->ioaddr + ESDHC_MIX_CTRL);
 			if (val & SDHCI_CTRL_TUNED_CLK) {
@@ -1252,6 +1266,7 @@ static void esdhc_set_strobe_dll(struct sdhci_host *host)
 	u32 v;
 	int ret;
 
+<<<<<<< HEAD
 	/* disable clock before enabling strobe dll */
 	writel(readl(host->ioaddr + ESDHC_VENDOR_SPEC) &
 		~ESDHC_VENDOR_SPEC_FRC_SDCLK_ON,
@@ -1283,6 +1298,22 @@ static void esdhc_set_strobe_dll(struct sdhci_host *host)
 	if (ret == -ETIMEDOUT)
 		dev_warn(mmc_dev(host->mmc),
 		"warning! HS400 strobe DLL status REF/SLV not lock in 50us, STROBE DLL status is %x!\n", v);
+=======
+	/* Reset the tuning circuit */
+	if (esdhc_is_usdhc(imx_data)) {
+		if (imx_data->socdata->flags & ESDHC_FLAG_MAN_TUNING) {
+			ctrl = readl(host->ioaddr + ESDHC_MIX_CTRL);
+			ctrl &= ~ESDHC_MIX_CTRL_SMPCLK_SEL;
+			ctrl &= ~ESDHC_MIX_CTRL_FBCLK_SEL;
+			writel(ctrl, host->ioaddr + ESDHC_MIX_CTRL);
+			writel(0, host->ioaddr + ESDHC_TUNE_CTRL_STATUS);
+		} else if (imx_data->socdata->flags & ESDHC_FLAG_STD_TUNING) {
+			ctrl = readl(host->ioaddr + SDHCI_AUTO_CMD_STATUS);
+			ctrl &= ~ESDHC_MIX_CTRL_SMPCLK_SEL;
+			writel(ctrl, host->ioaddr + SDHCI_AUTO_CMD_STATUS);
+		}
+	}
+>>>>>>> master
 }
 
 static void esdhc_set_uhs_signaling(struct sdhci_host *host, unsigned timing)
@@ -1440,10 +1471,15 @@ static void sdhci_esdhc_imx_hwinit(struct sdhci_host *host)
 		 * erratum ESDHC_FLAG_ERR004536 fix for MX6Q TO1.2 and MX6DL
 		 * TO1.1, it's harmless for MX6SL
 		 */
+<<<<<<< HEAD
 		if (!(imx_data->socdata->flags & ESDHC_FLAG_SKIP_ERR004536)) {
 			writel(readl(host->ioaddr + 0x6c) & ~BIT(7),
 				host->ioaddr + 0x6c);
 		}
+=======
+		writel(readl(host->ioaddr + 0x6c) & ~BIT(7),
+			host->ioaddr + 0x6c);
+>>>>>>> master
 
 		/* disable DLL_CTRL delay line settings */
 		writel(0x0, host->ioaddr + ESDHC_DLL_CTRL);

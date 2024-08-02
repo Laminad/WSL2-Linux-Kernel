@@ -67,6 +67,8 @@ struct dmz_dev {
 
 	unsigned int		flags;
 
+	unsigned int		flags;
+
 	sector_t		zone_nr_sectors;
 
 	unsigned int		nr_rnd;
@@ -88,6 +90,9 @@ struct dmz_dev {
 #define DMZ_BDEV_DYING		(1 << 0)
 #define DMZ_CHECK_BDEV		(2 << 0)
 #define DMZ_BDEV_REGULAR	(4 << 0)
+
+/* Device flags. */
+#define DMZ_BDEV_DYING		(1 << 0)
 
 /*
  * Zone descriptor.
@@ -241,6 +246,26 @@ static inline void dmz_activate_zone(struct dm_zone *zone)
 {
 	atomic_inc(&zone->refcount);
 }
+<<<<<<< HEAD
+=======
+
+/*
+ * Deactivate a zone. This decrement the zone reference counter
+ * indicating that all BIOs to the zone have completed when the count is 0.
+ */
+static inline void dmz_deactivate_zone(struct dm_zone *zone)
+{
+	atomic_dec(&zone->refcount);
+}
+
+/*
+ * Test if a zone is active, that is, has a refcount > 0.
+ */
+static inline bool dmz_is_active(struct dm_zone *zone)
+{
+	return atomic_read(&zone->refcount);
+}
+>>>>>>> master
 
 int dmz_lock_zone_reclaim(struct dm_zone *zone);
 void dmz_unlock_zone_reclaim(struct dm_zone *zone);
@@ -280,6 +305,7 @@ void dmz_schedule_reclaim(struct dmz_reclaim *zrc);
  * Functions defined in dm-zoned-target.c
  */
 bool dmz_bdev_is_dying(struct dmz_dev *dmz_dev);
+<<<<<<< HEAD
 bool dmz_check_bdev(struct dmz_dev *dmz_dev);
 
 /*
@@ -299,5 +325,7 @@ static inline bool dmz_is_active(struct dm_zone *zone)
 {
 	return atomic_read(&zone->refcount);
 }
+=======
+>>>>>>> master
 
 #endif /* DM_ZONED_H */

@@ -391,8 +391,22 @@ static int stub_probe(struct usb_device *udev)
 		goto err_port;
 	}
 
+<<<<<<< HEAD
 	return 0;
 
+=======
+	rc = stub_add_files(&udev->dev);
+	if (rc) {
+		dev_err(&udev->dev, "stub_add_files for %s\n", udev_busid);
+		goto err_files;
+	}
+
+	return 0;
+
+err_files:
+	usb_hub_release_port(udev->parent, udev->portnum,
+			     (struct usb_dev_state *) udev);
+>>>>>>> master
 err_port:
 	dev_set_drvdata(&udev->dev, NULL);
 
@@ -409,7 +423,10 @@ call_put_busid_priv:
 	put_busid_priv(busid_priv);
 
 sdev_free:
+<<<<<<< HEAD
 	usb_put_dev(udev);
+=======
+>>>>>>> master
 	stub_device_free(sdev);
 
 	return rc;
@@ -464,6 +481,7 @@ static void stub_disconnect(struct usb_device *udev)
 	/* release port */
 	rc = usb_hub_release_port(udev->parent, udev->portnum,
 				  (struct usb_dev_state *) udev);
+<<<<<<< HEAD
 	/*
 	 * NOTE: If a HUB disconnect triggered disconnect of the down stream
 	 * device usb_hub_release_port will return -ENODEV so we can safely ignore
@@ -471,6 +489,10 @@ static void stub_disconnect(struct usb_device *udev)
 	 */
 	if (rc && (rc != -ENODEV)) {
 		dev_dbg(&udev->dev, "unable to release port (%i)\n", rc);
+=======
+	if (rc) {
+		dev_dbg(&udev->dev, "unable to release port\n");
+>>>>>>> master
 		return;
 	}
 

@@ -454,7 +454,11 @@ static int fsl_asrc_config_pair(struct fsl_asrc_pair *pair, bool use_ideal_rate)
 		return -EINVAL;
 	}
 
+<<<<<<< HEAD
 	if ((outrate >= 5512 && outrate <= 30000) &&
+=======
+	if ((outrate >= 8000 && outrate <= 30000) &&
+>>>>>>> master
 	    (outrate > 24 * inrate || inrate > 8 * outrate)) {
 		pair_err("exceed supported ratio range [1/24, 8] for \
 				inrate/outrate: %d/%d\n", inrate, outrate);

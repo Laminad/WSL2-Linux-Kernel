@@ -36,8 +36,11 @@
 #include <net/tc_act/tc_mirred.h>
 #include <net/vxlan.h>
 #include <net/mpls.h>
+<<<<<<< HEAD
 #include <net/netdev_queues.h>
 #include <net/xdp_sock_drv.h>
+=======
+>>>>>>> master
 #include <net/xfrm.h>
 
 #include "ixgbe.h"
@@ -8823,7 +8826,11 @@ netdev_tx_t ixgbe_xmit_frame_ring(struct sk_buff *skb,
 
 #endif /* IXGBE_FCOE */
 
+<<<<<<< HEAD
 #ifdef CONFIG_IXGBE_IPSEC
+=======
+#ifdef CONFIG_XFRM_OFFLOAD
+>>>>>>> master
 	if (xfrm_offload(skb) &&
 	    !ixgbe_ipsec_tx(tx_ring, first, &ipsec_tx))
 		goto out_drop;

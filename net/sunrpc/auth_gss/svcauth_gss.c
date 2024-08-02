@@ -1943,10 +1943,18 @@ bad_wrap:
 static int
 svcauth_gss_release(struct svc_rqst *rqstp)
 {
+<<<<<<< HEAD
 	struct sunrpc_net *sn = net_generic(SVC_NET(rqstp), sunrpc_net_id);
 	struct gss_svc_data *gsd = rqstp->rq_auth_data;
 	struct rpc_gss_wire_cred *gc;
 	int stat;
+=======
+	struct gss_svc_data *gsd = (struct gss_svc_data *)rqstp->rq_auth_data;
+	struct rpc_gss_wire_cred *gc = &gsd->clcred;
+	struct xdr_buf *resbuf = &rqstp->rq_res;
+	int stat = -EINVAL;
+	struct sunrpc_net *sn = net_generic(SVC_NET(rqstp), sunrpc_net_id);
+>>>>>>> master
 
 	if (!gsd)
 		goto out;

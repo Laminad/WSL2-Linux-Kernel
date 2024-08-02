@@ -904,7 +904,14 @@ void start_kernel(void)
 	smp_prepare_boot_cpu();	/* arch-specific boot-cpu hooks */
 	boot_cpu_hotplug_init();
 
+<<<<<<< HEAD
 	pr_notice("Kernel command line: %s\n", saved_command_line);
+=======
+	build_all_zonelists(NULL);
+	page_alloc_init();
+
+	pr_notice("Kernel command line: %s\n", boot_command_line);
+>>>>>>> master
 	/* parameters may set static keys */
 	jump_label_init();
 	parse_early_param();
@@ -920,9 +927,12 @@ void start_kernel(void)
 		parse_args("Setting extra init args", extra_init_args,
 			   NULL, 0, -1, -1, NULL, set_init_arg);
 
+<<<<<<< HEAD
 	/* Architectural and non-timekeeping rng init, before allocator init */
 	random_init_early(command_line);
 
+=======
+>>>>>>> master
 	/*
 	 * These use large bootmem allocations and must precede
 	 * initalization of page allocator
@@ -1030,6 +1040,11 @@ void start_kernel(void)
 		initrd_start = 0;
 	}
 #endif
+<<<<<<< HEAD
+=======
+	kmemleak_init();
+	debug_objects_mem_init();
+>>>>>>> master
 	setup_per_cpu_pageset();
 	numa_policy_init();
 	acpi_early_init();
@@ -1549,6 +1564,8 @@ static noinline void __init kernel_init_freeable(void)
 	workqueue_init_topology();
 	padata_init();
 	page_alloc_init_late();
+	/* Initialize page ext after all struct pages are initialized. */
+	page_ext_init();
 
 	do_basic_setup();
 

@@ -52,6 +52,10 @@ struct error_hdr {
 #define REP82_ERROR_INVALID_COMMAND	    0x30
 #define REP82_ERROR_MALFORMED_MSG	    0x40
 #define REP82_ERROR_INVALID_SPECIAL_CMD	    0x41
+<<<<<<< HEAD
+=======
+#define REP82_ERROR_INVALID_DOMAIN_PRECHECK 0x42
+>>>>>>> master
 #define REP82_ERROR_RESERVED_FIELDO	    0x50 /* old value	*/
 #define REP82_ERROR_WORD_ALIGNMENT	    0x60
 #define REP82_ERROR_MESSAGE_LENGTH	    0x80
@@ -83,6 +87,7 @@ static inline int convert_error(struct zcrypt_queue *zq,
 	int queue = AP_QID_QUEUE(zq->queue->qid);
 
 	switch (ehdr->reply_code) {
+<<<<<<< HEAD
 	case REP82_ERROR_INVALID_MSG_LEN:	 /* 0x23 */
 	case REP82_ERROR_RESERVD_FIELD:		 /* 0x24 */
 	case REP82_ERROR_FORMAT_FIELD:		 /* 0x29 */
@@ -100,6 +105,22 @@ static inline int convert_error(struct zcrypt_queue *zq,
 		/* RY indicates malformed request */
 		ZCRYPT_DBF_WARN("%s dev=%02x.%04x RY=0x%02x => rc=EINVAL\n",
 				__func__, card, queue, ehdr->reply_code);
+=======
+	case REP82_ERROR_OPERAND_INVALID:
+	case REP82_ERROR_OPERAND_SIZE:
+	case REP82_ERROR_EVEN_MOD_IN_OPND:
+	case REP88_ERROR_MESSAGE_MALFORMD:
+	case REP82_ERROR_INVALID_DOMAIN_PRECHECK:
+	case REP82_ERROR_INVALID_DOMAIN_PENDING:
+	case REP82_ERROR_INVALID_SPECIAL_CMD:
+	//   REP88_ERROR_INVALID_KEY		// '82' CEX2A
+	//   REP88_ERROR_OPERAND		// '84' CEX2A
+	//   REP88_ERROR_OPERAND_EVEN_MOD	// '85' CEX2A
+		/* Invalid input data. */
+		ZCRYPT_DBF(DBF_WARN,
+			   "device=%02x.%04x reply=0x%02x => rc=EINVAL\n",
+			   card, queue, ehdr->reply_code);
+>>>>>>> master
 		return -EINVAL;
 	case REP82_ERROR_MACHINE_FAILURE:	 /* 0x10 */
 	case REP82_ERROR_MESSAGE_TYPE:		 /* 0x20 */

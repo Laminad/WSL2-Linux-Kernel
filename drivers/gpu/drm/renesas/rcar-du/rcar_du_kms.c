@@ -591,8 +591,16 @@ static int rcar_du_encoders_init_one(struct rcar_du_device *rcdu,
 	ret = rcar_du_encoder_init(rcdu, output, entity);
 	if (ret && ret != -EPROBE_DEFER && ret != -ENOLINK)
 		dev_warn(rcdu->dev,
+<<<<<<< HEAD:drivers/gpu/drm/renesas/rcar-du/rcar_du_kms.c
 			 "failed to initialize encoder %pOF on output %s (%d), skipping\n",
 			 entity, rcar_du_output_name(output), ret);
+=======
+			 "no encoder found for endpoint %pOF, skipping\n",
+			 ep->local_node);
+		of_node_put(entity);
+		return -ENODEV;
+	}
+>>>>>>> master:drivers/gpu/drm/rcar-du/rcar_du_kms.c
 
 	of_node_put(entity);
 

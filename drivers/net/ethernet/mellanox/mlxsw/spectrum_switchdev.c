@@ -558,7 +558,11 @@ static void mlxsw_sp_bridge_port_put(struct mlxsw_sp_bridge *bridge,
 {
 	struct mlxsw_sp_bridge_device *bridge_device;
 
+<<<<<<< HEAD
 	if (!refcount_dec_and_test(&bridge_port->ref_count))
+=======
+	if (--bridge_port->ref_count != 0)
+>>>>>>> master
 		return;
 	bridge_device = bridge_port->bridge_device;
 	mlxsw_sp_bridge_port_destroy(bridge_port);
@@ -1643,9 +1647,16 @@ static enum mlxsw_reg_sfd_op mlxsw_sp_sfd_op(bool adding)
 			MLXSW_REG_SFD_OP_WRITE_REMOVE;
 }
 
+<<<<<<< HEAD
 static int
 mlxsw_sp_port_fdb_tun_uc_op4(struct mlxsw_sp *mlxsw_sp, bool dynamic,
 			     const char *mac, u16 fid, __be32 addr, bool adding)
+=======
+static int __mlxsw_sp_port_fdb_uc_op(struct mlxsw_sp *mlxsw_sp, u8 local_port,
+				     const char *mac, u16 fid, bool adding,
+				     enum mlxsw_reg_sfd_rec_action action,
+				     enum mlxsw_reg_sfd_rec_policy policy)
+>>>>>>> master
 {
 	char *sfd_pl;
 	u8 num_rec;
@@ -1658,9 +1669,13 @@ mlxsw_sp_port_fdb_tun_uc_op4(struct mlxsw_sp *mlxsw_sp, bool dynamic,
 
 	uip = be32_to_cpu(addr);
 	mlxsw_reg_sfd_pack(sfd_pl, mlxsw_sp_sfd_op(adding), 0);
+<<<<<<< HEAD
 	mlxsw_reg_sfd_uc_tunnel_pack4(sfd_pl, 0,
 				      mlxsw_sp_sfd_rec_policy(dynamic), mac,
 				      fid, MLXSW_REG_SFD_REC_ACTION_NOP, uip);
+=======
+	mlxsw_reg_sfd_uc_pack(sfd_pl, 0, policy, mac, fid, action, local_port);
+>>>>>>> master
 	num_rec = mlxsw_reg_sfd_num_rec_get(sfd_pl);
 	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(sfd), sfd_pl);
 	if (err)
@@ -1678,6 +1693,7 @@ static int mlxsw_sp_port_fdb_tun_uc_op6_sfd_write(struct mlxsw_sp *mlxsw_sp,
 						  const char *mac, u16 fid,
 						  u32 kvdl_index, bool adding)
 {
+<<<<<<< HEAD
 	char *sfd_pl;
 	u8 num_rec;
 	int err;
@@ -1811,6 +1827,10 @@ static int mlxsw_sp_port_fdb_uc_op(struct mlxsw_sp *mlxsw_sp, u16 local_port,
 {
 	return __mlxsw_sp_port_fdb_uc_op(mlxsw_sp, local_port, mac, fid, vid,
 					 adding, MLXSW_REG_SFD_REC_ACTION_NOP,
+=======
+	return __mlxsw_sp_port_fdb_uc_op(mlxsw_sp, local_port, mac, fid, adding,
+					 MLXSW_REG_SFD_REC_ACTION_NOP,
+>>>>>>> master
 					 mlxsw_sp_sfd_rec_policy(dynamic));
 }
 
@@ -2185,6 +2205,13 @@ static int mlxsw_sp_port_mdb_add(struct mlxsw_sp_port *mlxsw_sp_port,
 	struct mlxsw_sp_bridge_port *bridge_port;
 	struct mlxsw_sp_mdb_entry *mdb_entry;
 	u16 fid_index;
+<<<<<<< HEAD
+=======
+	int err = 0;
+
+	if (switchdev_trans_ph_commit(trans))
+		return 0;
+>>>>>>> master
 
 	bridge_port = mlxsw_sp_bridge_port_find(mlxsw_sp->bridge, orig_dev);
 	if (!bridge_port)
@@ -2691,7 +2718,11 @@ mlxsw_sp_bridge_8021d_port_leave(struct mlxsw_sp_bridge_device *bridge_device,
 
 	vid = is_vlan_dev(dev) ? vlan_dev_vlan_id(dev) : MLXSW_SP_DEFAULT_VID;
 	mlxsw_sp_port_vlan = mlxsw_sp_port_vlan_find_by_vid(mlxsw_sp_port, vid);
+<<<<<<< HEAD
 	if (!mlxsw_sp_port_vlan || !mlxsw_sp_port_vlan->bridge_port)
+=======
+	if (!mlxsw_sp_port_vlan)
+>>>>>>> master
 		return;
 
 	mlxsw_sp_port_vlan_bridge_leave(mlxsw_sp_port_vlan);

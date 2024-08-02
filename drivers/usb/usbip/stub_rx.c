@@ -464,7 +464,11 @@ static void stub_recv_cmd_submit(struct stub_device *sdev,
 	int nents;
 	int num_urbs = 1;
 	int pipe = get_pipe(sdev, pdu);
+<<<<<<< HEAD
 	int use_sg = pdu->u.cmd_submit.transfer_flags & USBIP_URB_DMA_MAP_SG;
+=======
+	int use_sg = pdu->u.cmd_submit.transfer_flags & URB_DMA_MAP_SG;
+>>>>>>> master
 	int support_sg = 1;
 	int np = 0;
 	int ret, i;
@@ -482,11 +486,14 @@ static void stub_recv_cmd_submit(struct stub_device *sdev,
 		return;
 
 	buf_len = (unsigned long long)pdu->u.cmd_submit.transfer_buffer_length;
+<<<<<<< HEAD
 
 	if (use_sg && !buf_len) {
 		dev_err(&udev->dev, "sg buffer with zero length\n");
 		goto err_malloc;
 	}
+=======
+>>>>>>> master
 
 	/* allocate urb transfer buffer, if needed */
 	if (buf_len) {
@@ -494,6 +501,7 @@ static void stub_recv_cmd_submit(struct stub_device *sdev,
 			sgl = sgl_alloc(buf_len, GFP_KERNEL, &nents);
 			if (!sgl)
 				goto err_malloc;
+<<<<<<< HEAD
 
 			/* Check if the server's HCD supports SG */
 			if (!udev->bus->sg_tablesize) {
@@ -516,11 +524,96 @@ static void stub_recv_cmd_submit(struct stub_device *sdev,
 				pdu->u.cmd_submit.transfer_flags &=
 								~USBIP_URB_DMA_MAP_SG;
 			}
+=======
+>>>>>>> master
 		} else {
 			buffer = kzalloc(buf_len, GFP_KERNEL);
 			if (!buffer)
 				goto err_malloc;
 		}
+	}
+
+<<<<<<< HEAD
+	/* allocate urb array */
+	priv->num_urbs = num_urbs;
+	priv->urbs = kmalloc_array(num_urbs, sizeof(*priv->urbs), GFP_KERNEL);
+	if (!priv->urbs)
+		goto err_urbs;
+
+	/* setup a urb */
+	if (support_sg) {
+		if (usb_pipeisoc(pipe))
+			np = pdu->u.cmd_submit.number_of_packets;
+
+		priv->urbs[0] = usb_alloc_urb(np, GFP_KERNEL);
+		if (!priv->urbs[0])
+			goto err_urb;
+
+		if (buf_len) {
+			if (use_sg) {
+				priv->urbs[0]->sg = sgl;
+				priv->urbs[0]->num_sgs = nents;
+				priv->urbs[0]->transfer_buffer = NULL;
+			} else {
+				priv->urbs[0]->transfer_buffer = buffer;
+			}
+		}
+
+		/* copy urb setup packet */
+		priv->urbs[0]->setup_packet = kmemdup(&pdu->u.cmd_submit.setup,
+					8, GFP_KERNEL);
+		if (!priv->urbs[0]->setup_packet) {
+			usbip_event_add(ud, SDEV_EVENT_ERROR_MALLOC);
+			return;
+		}
+
+		usbip_pack_pdu(pdu, priv->urbs[0], USBIP_CMD_SUBMIT, 0);
+	} else {
+		for_each_sg(sgl, sg, nents, i) {
+			priv->urbs[i] = usb_alloc_urb(0, GFP_KERNEL);
+			/* The URBs which is previously allocated will be freed
+			 * in stub_device_cleanup_urbs() if error occurs.
+			 */
+			if (!priv->urbs[i])
+				goto err_urb;
+
+			usbip_pack_pdu(pdu, priv->urbs[i], USBIP_CMD_SUBMIT, 0);
+			priv->urbs[i]->transfer_buffer = sg_virt(sg);
+			priv->urbs[i]->transfer_buffer_length = sg->length;
+		}
+		priv->sgl = sgl;
+	}
+
+	for (i = 0; i < num_urbs; i++) {
+		/* set other members from the base header of pdu */
+		priv->urbs[i]->context = (void *) priv;
+		priv->urbs[i]->dev = udev;
+		priv->urbs[i]->pipe = pipe;
+		priv->urbs[i]->complete = stub_complete;
+
+		/* no need to submit an intercepted request, but harmless? */
+		tweak_special_requests(priv->urbs[i]);
+
+		masking_bogus_flags(priv->urbs[i]);
+	}
+
+=======
+	/* Check if the server's HCD supports SG */
+	if (use_sg && !udev->bus->sg_tablesize) {
+		/*
+		 * If the server's HCD doesn't support SG, break a single SG
+		 * request into several URBs and map each SG list entry to
+		 * corresponding URB buffer. The previously allocated SG
+		 * list is stored in priv->sgl (If the server's HCD support SG,
+		 * SG list is stored only in urb->sg) and it is used as an
+		 * indicator that the server split single SG request into
+		 * several URBs. Later, priv->sgl is used by stub_complete() and
+		 * stub_send_ret_submit() to reassemble the divied URBs.
+		 */
+		support_sg = 0;
+		num_urbs = nents;
+		priv->completed_urbs = 0;
+		pdu->u.cmd_submit.transfer_flags &= ~URB_DMA_MAP_SG;
 	}
 
 	/* allocate urb array */
@@ -586,6 +679,7 @@ static void stub_recv_cmd_submit(struct stub_device *sdev,
 		masking_bogus_flags(priv->urbs[i]);
 	}
 
+>>>>>>> master
 	if (stub_recv_xbuff(ud, priv) < 0)
 		return;
 

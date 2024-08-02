@@ -740,9 +740,28 @@ int trace_pid_write(struct trace_pid_list *filtered_pids,
 	 * the user. If the operation fails, then the current list is
 	 * not modified.
 	 */
+<<<<<<< HEAD
 	pid_list = trace_pid_list_alloc();
 	if (!pid_list) {
 		trace_parser_put(&parser);
+=======
+	pid_list = kmalloc(sizeof(*pid_list), GFP_KERNEL);
+	if (!pid_list) {
+		trace_parser_put(&parser);
+		return -ENOMEM;
+	}
+
+	pid_list->pid_max = READ_ONCE(pid_max);
+
+	/* Only truncating will shrink pid_max */
+	if (filtered_pids && filtered_pids->pid_max > pid_list->pid_max)
+		pid_list->pid_max = filtered_pids->pid_max;
+
+	pid_list->pids = vzalloc((pid_list->pid_max + 7) >> 3);
+	if (!pid_list->pids) {
+		trace_parser_put(&parser);
+		kfree(pid_list);
+>>>>>>> master
 		return -ENOMEM;
 	}
 
@@ -4344,6 +4363,7 @@ static void print_func_help_header_irq(struct array_buffer *buf, struct seq_file
 
 	print_event_info(buf, m);
 
+<<<<<<< HEAD
 	seq_printf(m, "#                            %.*s  _-----=> irqs-off/BH-disabled\n", prec, space);
 	seq_printf(m, "#                            %.*s / _----=> need-resched\n", prec, space);
 	seq_printf(m, "#                            %.*s| / _---=> hardirq/softirq\n", prec, space);
@@ -4352,6 +4372,22 @@ static void print_func_help_header_irq(struct array_buffer *buf, struct seq_file
 	seq_printf(m, "#                            %.*s|||| /     delay\n", prec, space);
 	seq_printf(m, "#           TASK-PID  %.*s CPU#  |||||  TIMESTAMP  FUNCTION\n", prec, "     TGID   ");
 	seq_printf(m, "#              | |    %.*s   |   |||||     |         |\n", prec, "       |    ");
+=======
+	seq_printf(m, "#                          %s  _-----=> irqs-off\n",
+		   tgid ? tgid_space : space);
+	seq_printf(m, "#                          %s / _----=> need-resched\n",
+		   tgid ? tgid_space : space);
+	seq_printf(m, "#                          %s| / _---=> hardirq/softirq\n",
+		   tgid ? tgid_space : space);
+	seq_printf(m, "#                          %s|| / _--=> preempt-depth\n",
+		   tgid ? tgid_space : space);
+	seq_printf(m, "#                          %s||| /     delay\n",
+		   tgid ? tgid_space : space);
+	seq_printf(m, "#           TASK-PID %sCPU#  ||||    TIMESTAMP  FUNCTION\n",
+		   tgid ? "   TGID   " : space);
+	seq_printf(m, "#              | |   %s  |   ||||       |         |\n",
+		   tgid ? "     |    " : space);
+>>>>>>> master
 }
 
 void
@@ -4897,7 +4933,11 @@ __tracing_open(struct inode *inode, struct file *file, bool snapshot)
 	if (iter->cpu_file == RING_BUFFER_ALL_CPUS) {
 		for_each_tracing_cpu(cpu) {
 			iter->buffer_iter[cpu] =
+<<<<<<< HEAD
 				ring_buffer_read_prepare(iter->array_buffer->buffer,
+=======
+				ring_buffer_read_prepare(iter->trace_buffer->buffer,
+>>>>>>> master
 							 cpu, GFP_KERNEL);
 		}
 		ring_buffer_read_prepare_sync();
@@ -4908,7 +4948,11 @@ __tracing_open(struct inode *inode, struct file *file, bool snapshot)
 	} else {
 		cpu = iter->cpu_file;
 		iter->buffer_iter[cpu] =
+<<<<<<< HEAD
 			ring_buffer_read_prepare(iter->array_buffer->buffer,
+=======
+			ring_buffer_read_prepare(iter->trace_buffer->buffer,
+>>>>>>> master
 						 cpu, GFP_KERNEL);
 		ring_buffer_read_prepare_sync();
 		ring_buffer_read_start(iter->buffer_iter[cpu]);
@@ -5195,9 +5239,22 @@ static int show_traces_open(struct inode *inode, struct file *file)
 	struct seq_file *m;
 	int ret;
 
+<<<<<<< HEAD
 	ret = tracing_check_open_get_tr(tr);
 	if (ret)
+=======
+	if (tracing_disabled)
+		return -ENODEV;
+
+	if (trace_array_get(tr) < 0)
+		return -ENODEV;
+
+	ret = seq_open(file, &show_traces_seq_ops);
+	if (ret) {
+		trace_array_put(tr);
+>>>>>>> master
 		return ret;
+	}
 
 	ret = seq_open(file, &show_traces_seq_ops);
 	if (ret) {
@@ -6962,6 +7019,10 @@ waitagain:
 	trace_iterator_reset(iter);
 	cpumask_clear(iter->started);
 	trace_seq_init(&iter->seq);
+<<<<<<< HEAD
+=======
+	iter->pos = -1;
+>>>>>>> master
 
 	trace_event_read_lock();
 	trace_access_lock(iter->cpu_file);
@@ -7690,7 +7751,19 @@ tracing_snapshot_write(struct file *filp, const char __user *ubuf, size_t cnt,
 #endif
 		if (tr->allocated_snapshot)
 			ret = resize_buffer_duplicate_size(&tr->max_buffer,
+<<<<<<< HEAD
 					&tr->array_buffer, iter->cpu_file);
+=======
+					&tr->trace_buffer, iter->cpu_file);
+		else
+			ret = tracing_alloc_snapshot_instance(tr);
+		if (ret < 0)
+			break;
+		local_irq_disable();
+		/* Now, we're going to swap */
+		if (iter->cpu_file == RING_BUFFER_ALL_CPUS)
+			update_max_tr(tr, current, smp_processor_id());
+>>>>>>> master
 		else
 			ret = tracing_alloc_snapshot_instance(tr);
 		if (ret < 0)
@@ -8433,6 +8506,10 @@ static bool buffer_pipe_buf_get(struct pipe_inode_info *pipe,
 /* Pipe buffer operations for a buffer. */
 static const struct pipe_buf_operations buffer_pipe_buf_ops = {
 	.release		= buffer_pipe_buf_release,
+<<<<<<< HEAD
+=======
+	.steal			= generic_pipe_buf_nosteal,
+>>>>>>> master
 	.get			= buffer_pipe_buf_get,
 };
 
@@ -8501,7 +8578,11 @@ tracing_buffers_splice_read(struct file *file, loff_t *ppos,
 		}
 
 		refcount_set(&ref->refcount, 1);
+<<<<<<< HEAD
 		ref->buffer = iter->array_buffer->buffer;
+=======
+		ref->buffer = iter->trace_buffer->buffer;
+>>>>>>> master
 		ref->page = ring_buffer_alloc_read_page(ref->buffer, iter->cpu_file);
 		if (IS_ERR(ref->page)) {
 			ret = PTR_ERR(ref->page);

@@ -1529,9 +1529,13 @@ int ecc_make_pub_key(unsigned int curve_id, unsigned int ndigits,
 	}
 
 	ecc_point_mult(pk, &curve->g, priv, NULL, curve, ndigits);
+<<<<<<< HEAD
 
 	/* SP800-56A rev 3 5.6.2.1.3 key check */
 	if (ecc_is_pubkey_valid_full(curve, pk)) {
+=======
+	if (ecc_point_is_zero(pk)) {
+>>>>>>> master
 		ret = -EAGAIN;
 		goto err_free_point;
 	}
@@ -1648,11 +1652,14 @@ int crypto_ecdh_shared_secret(unsigned int curve_id, unsigned int ndigits,
 	}
 
 	ecc_point_mult(product, pk, priv, rand_z, curve, ndigits);
+<<<<<<< HEAD
 
 	if (ecc_point_is_zero(product)) {
 		ret = -EFAULT;
 		goto err_validity;
 	}
+=======
+>>>>>>> master
 
 	ecc_swap_digits(product->x, secret, ndigits);
 

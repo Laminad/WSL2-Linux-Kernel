@@ -1206,11 +1206,14 @@ static void brcmf_usb_probe_phase2(struct device *dev, int ret,
 	if (ret)
 		goto error;
 
+<<<<<<< HEAD
 	/* Attach to the common driver interface */
 	ret = brcmf_attach(devinfo->dev);
 	if (ret)
 		goto error;
 
+=======
+>>>>>>> master
 	complete(&devinfo->dev_init_done);
 	return;
 error:

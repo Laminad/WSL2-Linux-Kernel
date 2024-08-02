@@ -253,6 +253,7 @@ static int omap_abe_probe(struct platform_device *pdev)
 
 	priv->dai_links[0].name = "DMIC";
 	priv->dai_links[0].stream_name = "TWL6040";
+<<<<<<< HEAD:sound/soc/ti/omap-abe-twl6040.c
 	priv->dai_links[0].cpus = link0_cpus;
 	priv->dai_links[0].num_cpus = 1;
 	priv->dai_links[0].cpus->of_node = dai_node;
@@ -261,6 +262,12 @@ static int omap_abe_probe(struct platform_device *pdev)
 	priv->dai_links[0].platforms->of_node = dai_node;
 	priv->dai_links[0].codecs = link0_codecs;
 	priv->dai_links[0].num_codecs = 1;
+=======
+	priv->dai_links[0].cpu_of_node = dai_node;
+	priv->dai_links[0].platform_of_node = dai_node;
+	priv->dai_links[0].codec_dai_name = "twl6040-legacy";
+	priv->dai_links[0].codec_name = "twl6040-codec";
+>>>>>>> master:sound/soc/omap/omap-abe-twl6040.c
 	priv->dai_links[0].init = omap_abe_twl6040_init;
 	priv->dai_links[0].ops = &omap_abe_ops;
 
@@ -269,6 +276,7 @@ static int omap_abe_probe(struct platform_device *pdev)
 		num_links = 2;
 		priv->dai_links[1].name = "TWL6040";
 		priv->dai_links[1].stream_name = "DMIC Capture";
+<<<<<<< HEAD:sound/soc/ti/omap-abe-twl6040.c
 		priv->dai_links[1].cpus = link1_cpus;
 		priv->dai_links[1].num_cpus = 1;
 		priv->dai_links[1].cpus->of_node = dai_node;
@@ -277,6 +285,12 @@ static int omap_abe_probe(struct platform_device *pdev)
 		priv->dai_links[1].platforms->of_node = dai_node;
 		priv->dai_links[1].codecs = link1_codecs;
 		priv->dai_links[1].num_codecs = 1;
+=======
+		priv->dai_links[1].cpu_of_node = dai_node;
+		priv->dai_links[1].platform_of_node = dai_node;
+		priv->dai_links[1].codec_dai_name = "dmic-hifi";
+		priv->dai_links[1].codec_name = "dmic-codec";
+>>>>>>> master:sound/soc/omap/omap-abe-twl6040.c
 		priv->dai_links[1].init = omap_abe_dmic_init;
 		priv->dai_links[1].ops = &omap_abe_dmic_ops;
 	} else {
@@ -292,6 +306,14 @@ static int omap_abe_probe(struct platform_device *pdev)
 
 	card->fully_routed = 1;
 
+<<<<<<< HEAD:sound/soc/ti/omap-abe-twl6040.c
+=======
+	if (!priv->mclk_freq) {
+		dev_err(&pdev->dev, "MCLK frequency missing\n");
+		return -ENODEV;
+	}
+
+>>>>>>> master:sound/soc/omap/omap-abe-twl6040.c
 	card->dai_link = priv->dai_links;
 	card->num_links = num_links;
 

@@ -1,7 +1,20 @@
+<<<<<<< HEAD
 // SPDX-License-Identifier: GPL-2.0+
 /* Driver for Asix PHYs
  *
  * Author: Michael Schmitz <schmitzmic@gmail.com>
+=======
+// SPDX-License-Identifier: GPL-2.0
+/* Driver for Asix PHYs
+ *
+ * Author: Michael Schmitz <schmitzmic@gmail.com>
+ *
+ * This program is free software; you can redistribute  it and/or modify it
+ * under  the terms of  the GNU General  Public License as published by the
+ * Free Software Foundation;  either version 2 of the  License, or (at your
+ * option) any later version.
+ *
+>>>>>>> master
  */
 #include <linux/kernel.h>
 #include <linux/errno.h>
@@ -10,8 +23,11 @@
 #include <linux/mii.h>
 #include <linux/phy.h>
 
+<<<<<<< HEAD
 #define PHY_ID_ASIX_AX88772A		0x003b1861
 #define PHY_ID_ASIX_AX88772C		0x003b1881
+=======
+>>>>>>> master
 #define PHY_ID_ASIX_AX88796B		0x003b1841
 
 MODULE_DESCRIPTION("Asix PHY driver");
@@ -41,6 +57,7 @@ static int asix_soft_reset(struct phy_device *phydev)
 	return genphy_soft_reset(phydev);
 }
 
+<<<<<<< HEAD
 /* AX88772A is not working properly with some old switches (NETGEAR EN 108TP):
  * after autoneg is done and the link status is reported as active, the MII_LPA
  * register is 0. This issue is not reproducible on AX88772C.
@@ -116,14 +133,24 @@ static struct phy_driver asix_driver[] = {
 	.name		= "Asix Electronics AX88796B",
 	.phy_id_mask	= 0xfffffff0,
 	/* PHY_BASIC_FEATURES */
+=======
+static struct phy_driver asix_driver[] = { {
+	.phy_id		= PHY_ID_ASIX_AX88796B,
+	.name		= "Asix Electronics AX88796B",
+	.phy_id_mask	= 0xfffffff0,
+	.features	= PHY_BASIC_FEATURES,
+>>>>>>> master
 	.soft_reset	= asix_soft_reset,
 } };
 
 module_phy_driver(asix_driver);
 
 static struct mdio_device_id __maybe_unused asix_tbl[] = {
+<<<<<<< HEAD
 	{ PHY_ID_MATCH_EXACT(PHY_ID_ASIX_AX88772A) },
 	{ PHY_ID_MATCH_EXACT(PHY_ID_ASIX_AX88772C) },
+=======
+>>>>>>> master
 	{ PHY_ID_ASIX_AX88796B, 0xfffffff0 },
 	{ }
 };

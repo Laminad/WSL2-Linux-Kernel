@@ -1672,7 +1672,11 @@ static int rcar_canfd_rx_poll(struct napi_struct *napi, int quota)
 	if (num_pkts < quota) {
 		if (napi_complete_done(napi, num_pkts)) {
 			/* Enable Rx FIFO interrupts */
+<<<<<<< HEAD
 			rcar_canfd_set_bit(priv->base, RCANFD_RFCC(gpriv, ridx),
+=======
+			rcar_canfd_set_bit(priv->base, RCANFD_RFCC(ridx),
+>>>>>>> master
 					   RCANFD_RFCC_RFIE);
 		}
 	}

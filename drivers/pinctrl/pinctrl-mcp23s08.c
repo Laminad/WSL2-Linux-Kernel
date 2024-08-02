@@ -597,7 +597,92 @@ int mcp23s08_probe_one(struct mcp23s08 *mcp, struct device *dev,
 	mcp->chip.get_multiple = mcp23s08_get_multiple;
 	mcp->chip.direction_output = mcp23s08_direction_output;
 	mcp->chip.set = mcp23s08_set;
+<<<<<<< HEAD
 	mcp->chip.set_multiple = mcp23s08_set_multiple;
+=======
+	mcp->chip.dbg_show = mcp23s08_dbg_show;
+#ifdef CONFIG_OF_GPIO
+	mcp->chip.of_gpio_n_cells = 2;
+	mcp->chip.of_node = dev->of_node;
+#endif
+
+	switch (type) {
+#ifdef CONFIG_SPI_MASTER
+	case MCP_TYPE_S08:
+	case MCP_TYPE_S17:
+		switch (type) {
+		case MCP_TYPE_S08:
+			one_regmap_config =
+				devm_kmemdup(dev, &mcp23x08_regmap,
+					sizeof(struct regmap_config), GFP_KERNEL);
+			mcp->reg_shift = 0;
+			mcp->chip.ngpio = 8;
+			mcp->chip.label = devm_kasprintf(dev, GFP_KERNEL,
+					"mcp23s08.%d", raw_chip_address);
+			break;
+		case MCP_TYPE_S17:
+			one_regmap_config =
+				devm_kmemdup(dev, &mcp23x17_regmap,
+					sizeof(struct regmap_config), GFP_KERNEL);
+			mcp->reg_shift = 1;
+			mcp->chip.ngpio = 16;
+			mcp->chip.label = devm_kasprintf(dev, GFP_KERNEL,
+					"mcp23s17.%d", raw_chip_address);
+			break;
+		}
+		if (!one_regmap_config)
+			return -ENOMEM;
+
+		one_regmap_config->name = devm_kasprintf(dev, GFP_KERNEL, "%d", raw_chip_address);
+		mcp->regmap = devm_regmap_init(dev, &mcp23sxx_spi_regmap, mcp,
+					       one_regmap_config);
+		break;
+
+	case MCP_TYPE_S18:
+		one_regmap_config =
+			devm_kmemdup(dev, &mcp23x17_regmap,
+				sizeof(struct regmap_config), GFP_KERNEL);
+		if (!one_regmap_config)
+			return -ENOMEM;
+		mcp->regmap = devm_regmap_init(dev, &mcp23sxx_spi_regmap, mcp,
+					       one_regmap_config);
+		mcp->reg_shift = 1;
+		mcp->chip.ngpio = 16;
+		mcp->chip.label = "mcp23s18";
+		break;
+#endif /* CONFIG_SPI_MASTER */
+
+#if IS_ENABLED(CONFIG_I2C)
+	case MCP_TYPE_008:
+		mcp->regmap = devm_regmap_init_i2c(data, &mcp23x08_regmap);
+		mcp->reg_shift = 0;
+		mcp->chip.ngpio = 8;
+		mcp->chip.label = "mcp23008";
+		break;
+
+	case MCP_TYPE_017:
+		mcp->regmap = devm_regmap_init_i2c(data, &mcp23x17_regmap);
+		mcp->reg_shift = 1;
+		mcp->chip.ngpio = 16;
+		mcp->chip.label = "mcp23017";
+		break;
+
+	case MCP_TYPE_018:
+		mcp->regmap = devm_regmap_init_i2c(data, &mcp23x17_regmap);
+		mcp->reg_shift = 1;
+		mcp->chip.ngpio = 16;
+		mcp->chip.label = "mcp23018";
+		break;
+#endif /* CONFIG_I2C */
+
+	default:
+		dev_err(dev, "invalid device type (%d)\n", type);
+		return -EINVAL;
+	}
+
+	if (IS_ERR(mcp->regmap))
+		return PTR_ERR(mcp->regmap);
+>>>>>>> master
 
 	mcp->chip.base = base;
 	mcp->chip.can_sleep = true;
@@ -613,6 +698,10 @@ int mcp23s08_probe_one(struct mcp23s08 *mcp, struct device *dev,
 	ret = mcp_read(mcp, MCP_IOCON, &status);
 	if (ret < 0)
 		return dev_err_probe(dev, ret, "can't identify chip %d\n", addr);
+
+	ret = devm_gpiochip_add_data(dev, &mcp->chip, mcp);
+	if (ret < 0)
+		goto fail;
 
 	mcp->irq_controller =
 		device_property_read_bool(dev, "interrupt-controller");
@@ -662,10 +751,21 @@ int mcp23s08_probe_one(struct mcp23s08 *mcp, struct device *dev,
 		girq->threaded = true;
 	}
 
+<<<<<<< HEAD
 	ret = devm_gpiochip_add_data(dev, &mcp->chip, mcp);
 	if (ret < 0)
 		return dev_err_probe(dev, ret, "can't add GPIO chip\n");
 
+=======
+	if (one_regmap_config) {
+		mcp->pinctrl_desc.name = devm_kasprintf(dev, GFP_KERNEL,
+				"mcp23xxx-pinctrl.%d", raw_chip_address);
+		if (!mcp->pinctrl_desc.name)
+			return -ENOMEM;
+	} else {
+		mcp->pinctrl_desc.name = "mcp23xxx-pinctrl";
+	}
+>>>>>>> master
 	mcp->pinctrl_desc.pctlops = &mcp_pinctrl_ops;
 	mcp->pinctrl_desc.confops = &mcp_pinconf_ops;
 	mcp->pinctrl_desc.npins = mcp->chip.ngpio;

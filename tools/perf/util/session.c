@@ -31,6 +31,7 @@
 #include "thread-stack.h"
 #include "sample-raw.h"
 #include "stat.h"
+<<<<<<< HEAD
 #include "tsc.h"
 #include "ui/progress.h"
 #include "util.h"
@@ -99,6 +100,9 @@ static int perf_session__process_compressed_event(struct perf_session *session,
 #else /* !HAVE_ZSTD_SUPPORT */
 #define perf_session__process_compressed_event perf_session__process_compressed_event_stub
 #endif
+=======
+#include "arch/common.h"
+>>>>>>> master
 
 static int perf_session__deliver_event(struct perf_session *session,
 				       union perf_event *event,
@@ -1413,7 +1417,11 @@ static void dump_read(struct evsel *evsel, union perf_event *event)
 	if (!evsel)
 		return;
 
+<<<<<<< HEAD
 	read_format = evsel->core.attr.read_format;
+=======
+	read_format = evsel->attr.read_format;
+>>>>>>> master
 
 	if (read_format & PERF_FORMAT_TOTAL_TIME_ENABLED)
 		printf("... time enabled : %" PRI_lu64 "\n", read_event->time_enabled);

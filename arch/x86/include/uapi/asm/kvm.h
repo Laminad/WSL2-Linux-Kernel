@@ -431,6 +431,7 @@ struct kvm_sync_regs {
 	struct kvm_vcpu_events events;
 };
 
+<<<<<<< HEAD
 #define KVM_X86_QUIRK_LINT0_REENABLED		(1 << 0)
 #define KVM_X86_QUIRK_CD_NW_CLEARED		(1 << 1)
 #define KVM_X86_QUIRK_LAPIC_MMIO_HOLE		(1 << 2)
@@ -441,6 +442,12 @@ struct kvm_sync_regs {
 
 #define KVM_STATE_NESTED_FORMAT_VMX	0
 #define KVM_STATE_NESTED_FORMAT_SVM	1
+=======
+#define KVM_X86_QUIRK_LINT0_REENABLED	(1 << 0)
+#define KVM_X86_QUIRK_CD_NW_CLEARED	(1 << 1)
+#define KVM_X86_QUIRK_LAPIC_MMIO_HOLE	(1 << 2)
+#define KVM_X86_QUIRK_OUT_7E_INC_RIP	(1 << 3)
+>>>>>>> master
 
 #define KVM_STATE_NESTED_GUEST_MODE	0x00000001
 #define KVM_STATE_NESTED_RUN_PENDING	0x00000002

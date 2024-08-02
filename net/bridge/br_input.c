@@ -81,8 +81,11 @@ int br_handle_frame_finish(struct net *net, struct sock *sk, struct sk_buff *skb
 	struct net_bridge_mcast_port *pmctx;
 	struct net_bridge_mdb_entry *mdst;
 	bool local_rcv, mcast_hit = false;
+<<<<<<< HEAD
 	struct net_bridge_mcast *brmctx;
 	struct net_bridge_vlan *vlan;
+=======
+>>>>>>> master
 	struct net_bridge *br;
 	bool promisc;
 	u16 vid = 0;
@@ -140,9 +143,13 @@ int br_handle_frame_finish(struct net *net, struct sock *sk, struct sk_buff *skb
 	if (p->flags & BR_LEARNING)
 		br_fdb_update(br, p, eth_hdr(skb)->h_source, vid, 0);
 
+<<<<<<< HEAD
 	promisc = !!(br->dev->flags & IFF_PROMISC);
 	local_rcv = promisc;
 
+=======
+	local_rcv = !!(br->dev->flags & IFF_PROMISC);
+>>>>>>> master
 	if (is_multicast_ether_addr(eth_hdr(skb)->h_dest)) {
 		/* by definition the broadcast is also a multicast address */
 		if (is_broadcast_ether_addr(eth_hdr(skb)->h_dest)) {
@@ -196,7 +203,10 @@ int br_handle_frame_finish(struct net *net, struct sock *sk, struct sk_buff *skb
 		break;
 	case BR_PKT_UNICAST:
 		dst = br_fdb_find_rcu(br, eth_hdr(skb)->h_dest, vid);
+<<<<<<< HEAD
 		break;
+=======
+>>>>>>> master
 	default:
 		break;
 	}
@@ -248,6 +258,7 @@ static int br_handle_local_finish(struct net *net, struct sock *sk, struct sk_bu
 
 	/* return 1 to signal the okfn() was called so it's ok to use the skb */
 	return 1;
+<<<<<<< HEAD
 }
 
 static int nf_hook_bridge_pre(struct sk_buff *skb, struct sk_buff **pskb)
@@ -316,6 +327,8 @@ static int br_process_frame_type(struct net_bridge_port *p,
 			return tmp->frame_handler(p, skb);
 
 	return 0;
+=======
+>>>>>>> master
 }
 
 /*
@@ -391,8 +404,11 @@ static rx_handler_result_t br_handle_frame(struct sk_buff **pskb)
 				goto forward;
 		}
 
+<<<<<<< HEAD
 		BR_INPUT_SKB_CB(skb)->promisc = false;
 
+=======
+>>>>>>> master
 		/* The else clause should be hit when nf_hook():
 		 *   - returns < 0 (drop/error)
 		 *   - returns = 0 (stolen/nf_queue)

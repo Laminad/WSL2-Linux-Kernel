@@ -498,6 +498,7 @@ nfp_flower_calculate_key_layers(struct nfp_app *app,
 		 * space, thus we need to ensure we include a IPv4/IPv6 key
 		 * layer if we have not done so already.
 		 */
+<<<<<<< HEAD
 		if (!basic.key) {
 			NL_SET_ERR_MSG_MOD(extack, "unsupported offload: match on TCP flags requires a match on L3 protocol");
 			return -EOPNOTSUPP;
@@ -506,18 +507,33 @@ nfp_flower_calculate_key_layers(struct nfp_app *app,
 		if (!(key_layer & NFP_FLOWER_LAYER_IPV4) &&
 		    !(key_layer & NFP_FLOWER_LAYER_IPV6)) {
 			switch (basic.key->n_proto) {
+=======
+		if (!key_basic)
+			return -EOPNOTSUPP;
+
+		if (!(key_layer & NFP_FLOWER_LAYER_IPV4) &&
+		    !(key_layer & NFP_FLOWER_LAYER_IPV6)) {
+			switch (key_basic->n_proto) {
+>>>>>>> master
 			case cpu_to_be16(ETH_P_IP):
 				key_layer |= NFP_FLOWER_LAYER_IPV4;
 				key_size += sizeof(struct nfp_flower_ipv4);
 				break;
 
 			case cpu_to_be16(ETH_P_IPV6):
+<<<<<<< HEAD
 					key_layer |= NFP_FLOWER_LAYER_IPV6;
+=======
+				key_layer |= NFP_FLOWER_LAYER_IPV6;
+>>>>>>> master
 				key_size += sizeof(struct nfp_flower_ipv6);
 				break;
 
 			default:
+<<<<<<< HEAD
 				NL_SET_ERR_MSG_MOD(extack, "unsupported offload: match on TCP flags requires a match on IPv4/IPv6");
+=======
+>>>>>>> master
 				return -EOPNOTSUPP;
 			}
 		}

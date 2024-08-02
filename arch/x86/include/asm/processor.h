@@ -723,6 +723,7 @@ enum mds_mitigations {
 	MDS_MITIGATION_VMWERV,
 };
 
+<<<<<<< HEAD
 #ifdef CONFIG_X86_SGX
 int arch_memory_failure(unsigned long pfn, int flags);
 #define arch_memory_failure arch_memory_failure
@@ -750,5 +751,13 @@ static inline void weak_wrmsr_fence(void)
 {
 	alternative("mfence; lfence", "", ALT_NOT(X86_FEATURE_APIC_MSRS_FENCE));
 }
+=======
+enum taa_mitigations {
+	TAA_MITIGATION_OFF,
+	TAA_MITIGATION_UCODE_NEEDED,
+	TAA_MITIGATION_VERW,
+	TAA_MITIGATION_TSX_DISABLED,
+};
+>>>>>>> master
 
 #endif /* _ASM_X86_PROCESSOR_H */

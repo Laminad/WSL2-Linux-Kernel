@@ -24,7 +24,11 @@ enum cpuid_leafs
 	CPUID_7_0_EBX,
 	CPUID_D_1_EAX,
 	CPUID_LNX_4,
+<<<<<<< HEAD
 	CPUID_7_1_EAX,
+=======
+	CPUID_DUMMY,
+>>>>>>> master
 	CPUID_8000_0008_EBX,
 	CPUID_6_EAX,
 	CPUID_8000_000A_EDX,
@@ -157,6 +161,11 @@ extern void clear_cpu_cap(struct cpuinfo_x86 *c, unsigned int bit);
 
 #define setup_force_cpu_bug(bit) setup_force_cpu_cap(bit)
 
+<<<<<<< HEAD
+=======
+#if defined(__clang__) && !defined(CONFIG_CC_HAS_ASM_GOTO)
+
+>>>>>>> master
 /*
  * Static testing of CPU features. Used the same as boot_cpu_has(). It
  * statically patches the target code for additional performance. Use

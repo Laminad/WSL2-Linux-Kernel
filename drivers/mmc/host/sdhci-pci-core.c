@@ -465,11 +465,16 @@ struct intel_host {
 	int	drv_strength;
 	bool	d3_retune;
 	bool	rpm_retune_ok;
+<<<<<<< HEAD
 	bool	needs_pwr_off;
 	u32	glk_rx_ctrl1;
 	u32	glk_tun_val;
 	u32	active_ltr;
 	u32	idle_ltr;
+=======
+	u32	glk_rx_ctrl1;
+	u32	glk_tun_val;
+>>>>>>> master
 };
 
 static const guid_t intel_dsm_guid =
@@ -1878,6 +1883,7 @@ static const struct pci_device_id pci_ids[] = {
 	SDHCI_PCI_DEVICE(INTEL, CNPH_SD,   intel_byt_sd),
 	SDHCI_PCI_DEVICE(INTEL, ICP_EMMC,  intel_glk_emmc),
 	SDHCI_PCI_DEVICE(INTEL, ICP_SD,    intel_byt_sd),
+<<<<<<< HEAD
 	SDHCI_PCI_DEVICE(INTEL, EHL_EMMC,  intel_glk_emmc),
 	SDHCI_PCI_DEVICE(INTEL, EHL_SD,    intel_byt_sd),
 	SDHCI_PCI_DEVICE(INTEL, CML_EMMC,  intel_glk_emmc),
@@ -1888,6 +1894,10 @@ static const struct pci_device_id pci_ids[] = {
 	SDHCI_PCI_DEVICE(INTEL, LKF_EMMC,  intel_glk_emmc),
 	SDHCI_PCI_DEVICE(INTEL, LKF_SD,    intel_byt_sd),
 	SDHCI_PCI_DEVICE(INTEL, ADL_EMMC,  intel_glk_emmc),
+=======
+	SDHCI_PCI_DEVICE(INTEL, CML_EMMC,  intel_glk_emmc),
+	SDHCI_PCI_DEVICE(INTEL, CML_SD,    intel_byt_sd),
+>>>>>>> master
 	SDHCI_PCI_DEVICE(O2, 8120,     o2),
 	SDHCI_PCI_DEVICE(O2, 8220,     o2),
 	SDHCI_PCI_DEVICE(O2, 8221,     o2),
@@ -2109,12 +2119,20 @@ static struct sdhci_pci_slot *sdhci_pci_probe_slot(
 
 	if (slot->cd_idx >= 0) {
 		ret = mmc_gpiod_request_cd(host->mmc, "cd", slot->cd_idx,
+<<<<<<< HEAD
 					   slot->cd_override_level, 0);
+=======
+					   slot->cd_override_level, 0, NULL);
+>>>>>>> master
 		if (ret && ret != -EPROBE_DEFER)
 			ret = mmc_gpiod_request_cd(host->mmc, NULL,
 						   slot->cd_idx,
 						   slot->cd_override_level,
+<<<<<<< HEAD
 						   0);
+=======
+						   0, NULL);
+>>>>>>> master
 		if (ret == -EPROBE_DEFER)
 			goto remove;
 

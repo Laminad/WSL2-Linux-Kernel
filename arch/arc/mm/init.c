@@ -106,6 +106,10 @@ void __init setup_arch_memory(void)
 	 * the crash
 	 */
 
+<<<<<<< HEAD
+=======
+	memblock_add_node(low_mem_start, low_mem_sz, 0);
+>>>>>>> master
 	memblock_reserve(CONFIG_LINUX_LINK_BASE,
 			 __pa(_end) - CONFIG_LINUX_LINK_BASE);
 

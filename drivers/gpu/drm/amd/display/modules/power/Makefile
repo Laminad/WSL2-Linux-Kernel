@@ -28,4 +28,24 @@ MOD_POWER = power_helpers.o
 AMD_DAL_MOD_POWER = $(addprefix $(AMDDALPATH)/modules/power/,$(MOD_POWER))
 #$(info ************  DAL POWER MODULE MAKEFILE ************)
 
+<<<<<<< HEAD:drivers/gpu/drm/amd/display/modules/power/Makefile
 AMD_DISPLAY_FILES += $(AMD_DAL_MOD_POWER)
+=======
+ifdef CONFIG_CC_IS_CLANG
+calcs_ccflags += -msse2
+endif
+
+CFLAGS_dcn_calcs.o := $(calcs_ccflags)
+CFLAGS_dcn_calc_auto.o := $(calcs_ccflags)
+CFLAGS_dcn_calc_math.o := $(calcs_ccflags) -Wno-tautological-compare
+
+BW_CALCS = dce_calcs.o bw_fixed.o custom_float.o
+
+ifdef CONFIG_DRM_AMD_DC_DCN1_0
+BW_CALCS += dcn_calcs.o dcn_calc_math.o dcn_calc_auto.o
+endif
+
+AMD_DAL_BW_CALCS = $(addprefix $(AMDDALPATH)/dc/calcs/,$(BW_CALCS))
+
+AMD_DISPLAY_FILES += $(AMD_DAL_BW_CALCS)
+>>>>>>> master:drivers/gpu/drm/amd/display/dc/calcs/Makefile

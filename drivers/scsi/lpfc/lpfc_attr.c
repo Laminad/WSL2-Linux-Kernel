@@ -525,7 +525,7 @@ lpfc_nvme_info_show(struct device *dev, struct device_attribute *attr,
 		  phba->sli4_hba.io_xri_max,
 		  lpfc_sli4_get_els_iocb_cnt(phba));
 	if (strlcat(buf, tmp, PAGE_SIZE) >= PAGE_SIZE)
-		goto buffer_done;
+		goto rcu_unlock_buf_done;
 
 	/* Port state is only one of two values for now. */
 	if (localport->port_id)
@@ -541,7 +541,7 @@ lpfc_nvme_info_show(struct device *dev, struct device_attribute *attr,
 		  wwn_to_u64(vport->fc_nodename.u.wwn),
 		  localport->port_id, statep);
 	if (strlcat(buf, tmp, PAGE_SIZE) >= PAGE_SIZE)
-		goto buffer_done;
+		goto rcu_unlock_buf_done;
 
 	spin_lock_irq(shost->host_lock);
 
@@ -570,30 +570,50 @@ lpfc_nvme_info_show(struct device *dev, struct device_attribute *attr,
 
 		/* Tab in to show lport ownership. */
 		if (strlcat(buf, "NVME RPORT       ", PAGE_SIZE) >= PAGE_SIZE)
+<<<<<<< HEAD
 			goto unlock_buf_done;
 		if (phba->brd_no >= 10) {
 			if (strlcat(buf, " ", PAGE_SIZE) >= PAGE_SIZE)
 				goto unlock_buf_done;
+=======
+			goto rcu_unlock_buf_done;
+		if (phba->brd_no >= 10) {
+			if (strlcat(buf, " ", PAGE_SIZE) >= PAGE_SIZE)
+				goto rcu_unlock_buf_done;
+>>>>>>> master
 		}
 
 		scnprintf(tmp, sizeof(tmp), "WWPN x%llx ",
 			  nrport->port_name);
 		if (strlcat(buf, tmp, PAGE_SIZE) >= PAGE_SIZE)
+<<<<<<< HEAD
 			goto unlock_buf_done;
+=======
+			goto rcu_unlock_buf_done;
+>>>>>>> master
 
 		scnprintf(tmp, sizeof(tmp), "WWNN x%llx ",
 			  nrport->node_name);
 		if (strlcat(buf, tmp, PAGE_SIZE) >= PAGE_SIZE)
+<<<<<<< HEAD
 			goto unlock_buf_done;
+=======
+			goto rcu_unlock_buf_done;
+>>>>>>> master
 
 		scnprintf(tmp, sizeof(tmp), "DID x%06x ",
 			  nrport->port_id);
 		if (strlcat(buf, tmp, PAGE_SIZE) >= PAGE_SIZE)
+<<<<<<< HEAD
 			goto unlock_buf_done;
+=======
+			goto rcu_unlock_buf_done;
+>>>>>>> master
 
 		/* An NVME rport can have multiple roles. */
 		if (nrport->port_role & FC_PORT_ROLE_NVME_INITIATOR) {
 			if (strlcat(buf, "INITIATOR ", PAGE_SIZE) >= PAGE_SIZE)
+<<<<<<< HEAD
 				goto unlock_buf_done;
 		}
 		if (nrport->port_role & FC_PORT_ROLE_NVME_TARGET) {
@@ -603,6 +623,17 @@ lpfc_nvme_info_show(struct device *dev, struct device_attribute *attr,
 		if (nrport->port_role & FC_PORT_ROLE_NVME_DISCOVERY) {
 			if (strlcat(buf, "DISCSRVC ", PAGE_SIZE) >= PAGE_SIZE)
 				goto unlock_buf_done;
+=======
+				goto rcu_unlock_buf_done;
+		}
+		if (nrport->port_role & FC_PORT_ROLE_NVME_TARGET) {
+			if (strlcat(buf, "TARGET ", PAGE_SIZE) >= PAGE_SIZE)
+				goto rcu_unlock_buf_done;
+		}
+		if (nrport->port_role & FC_PORT_ROLE_NVME_DISCOVERY) {
+			if (strlcat(buf, "DISCSRVC ", PAGE_SIZE) >= PAGE_SIZE)
+				goto rcu_unlock_buf_done;
+>>>>>>> master
 		}
 		if (nrport->port_role & ~(FC_PORT_ROLE_NVME_INITIATOR |
 					  FC_PORT_ROLE_NVME_TARGET |
@@ -610,12 +641,20 @@ lpfc_nvme_info_show(struct device *dev, struct device_attribute *attr,
 			scnprintf(tmp, sizeof(tmp), "UNKNOWN ROLE x%x",
 				  nrport->port_role);
 			if (strlcat(buf, tmp, PAGE_SIZE) >= PAGE_SIZE)
+<<<<<<< HEAD
 				goto unlock_buf_done;
+=======
+				goto rcu_unlock_buf_done;
+>>>>>>> master
 		}
 
 		scnprintf(tmp, sizeof(tmp), "%s\n", statep);
 		if (strlcat(buf, tmp, PAGE_SIZE) >= PAGE_SIZE)
+<<<<<<< HEAD
 			goto unlock_buf_done;
+=======
+			goto rcu_unlock_buf_done;
+>>>>>>> master
 	}
 	spin_unlock_irq(shost->host_lock);
 
@@ -677,11 +716,19 @@ lpfc_nvme_info_show(struct device *dev, struct device_attribute *attr,
 		  atomic_read(&lport->cmpl_fcp_err));
 	strlcat(buf, tmp, PAGE_SIZE);
 
+<<<<<<< HEAD
 	/* host_lock is already unlocked. */
 	goto buffer_done;
 
  unlock_buf_done:
 	spin_unlock_irq(shost->host_lock);
+=======
+	/* RCU is already unlocked. */
+	goto buffer_done;
+
+ rcu_unlock_buf_done:
+	rcu_read_unlock();
+>>>>>>> master
 
  buffer_done:
 	len = strnlen(buf, PAGE_SIZE);
@@ -919,6 +966,28 @@ lpfc_programtype_show(struct device *dev, struct device_attribute *attr,
 	struct lpfc_hba   *phba = vport->phba;
 
 	return scnprintf(buf, PAGE_SIZE, "%s\n", phba->ProgramType);
+<<<<<<< HEAD
+=======
+}
+
+/**
+ * lpfc_mlomgmt_show - Return the Menlo Maintenance sli flag
+ * @dev: class converted to a Scsi_host structure.
+ * @attr: device attribute, not used.
+ * @buf: on return contains the Menlo Maintenance sli flag.
+ *
+ * Returns: size of formatted string.
+ **/
+static ssize_t
+lpfc_mlomgmt_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct Scsi_Host  *shost = class_to_shost(dev);
+	struct lpfc_vport *vport = (struct lpfc_vport *)shost->hostdata;
+	struct lpfc_hba   *phba = vport->phba;
+
+	return scnprintf(buf, PAGE_SIZE, "%d\n",
+		(phba->sli.sli_flag & LPFC_MENLO_MAINT));
+>>>>>>> master
 }
 
 /**
@@ -992,8 +1061,12 @@ lpfc_hdw_show(struct device *dev, struct device_attribute *attr, char *buf)
 	lpfc_vpd_t *vp = &phba->vpd;
 
 	lpfc_jedec_to_ascii(vp->rev.biuRev, hdw);
+<<<<<<< HEAD
 	return scnprintf(buf, PAGE_SIZE, "%s %08x %08x\n", hdw,
 			 vp->rev.smRev, vp->rev.smFwRev);
+=======
+	return scnprintf(buf, PAGE_SIZE, "%s\n", hdw);
+>>>>>>> master
 }
 
 /**
@@ -1090,7 +1163,14 @@ lpfc_link_state_show(struct device *dev, struct device_attribute *attr,
 					"Unknown\n");
 			break;
 		}
+<<<<<<< HEAD
 		if (phba->fc_topology == LPFC_TOPOLOGY_LOOP) {
+=======
+		if (phba->sli.sli_flag & LPFC_MENLO_MAINT)
+			len += scnprintf(buf + len, PAGE_SIZE-len,
+					"   Menlo Maint Mode\n");
+		else if (phba->fc_topology == LPFC_TOPOLOGY_LOOP) {
+>>>>>>> master
 			if (vport->fc_flag & FC_PUBLIC_LOOP)
 				len += scnprintf(buf + len, PAGE_SIZE-len,
 						"   Public Loop\n");
@@ -1098,6 +1178,7 @@ lpfc_link_state_show(struct device *dev, struct device_attribute *attr,
 				len += scnprintf(buf + len, PAGE_SIZE-len,
 						"   Private Loop\n");
 		} else {
+<<<<<<< HEAD
 			if (vport->fc_flag & FC_FABRIC) {
 				if (phba->sli_rev == LPFC_SLI_REV4 &&
 				    vport->port_type == LPFC_PHYSICAL_PORT &&
@@ -1111,6 +1192,12 @@ lpfc_link_state_show(struct device *dev, struct device_attribute *attr,
 							 PAGE_SIZE - len,
 							 "   Fabric\n");
 			} else {
+=======
+			if (vport->fc_flag & FC_FABRIC)
+				len += scnprintf(buf + len, PAGE_SIZE-len,
+						"   Fabric\n");
+			else
+>>>>>>> master
 				len += scnprintf(buf + len, PAGE_SIZE-len,
 						"   Point-2-Point\n");
 			}
@@ -1822,6 +1909,7 @@ lpfc_nport_evt_cnt_show(struct device *dev, struct device_attribute *attr,
 	struct lpfc_hba   *phba = vport->phba;
 
 	return scnprintf(buf, PAGE_SIZE, "%d\n", phba->nport_event_cnt);
+<<<<<<< HEAD
 }
 
 static int
@@ -1984,6 +2072,8 @@ lpfc_xcvr_data_show(struct device *dev, struct device_attribute *attr,
 out_free_rdp:
 	kfree(rdp_context);
 	return len;
+=======
+>>>>>>> master
 }
 
 /**
@@ -2308,6 +2398,7 @@ lpfc_used_rpi_show(struct device *dev, struct device_attribute *attr,
 	struct lpfc_max_cfg_param *max_cfg_param;
 	u32 cnt = 0, acnt = 0;
 
+<<<<<<< HEAD
 	if (phba->sli_rev == LPFC_SLI_REV4) {
 		sli4_hba = &phba->sli4_hba;
 		max_cfg_param = &sli4_hba->max_cfg_param;
@@ -2317,6 +2408,10 @@ lpfc_used_rpi_show(struct device *dev, struct device_attribute *attr,
 		if (lpfc_get_hba_info(phba, NULL, NULL, &cnt, &acnt, NULL, NULL))
 			return scnprintf(buf, PAGE_SIZE, "%d\n", (cnt - acnt));
 	}
+=======
+	if (lpfc_get_hba_info(phba, NULL, NULL, &cnt, &acnt, NULL, NULL))
+		return scnprintf(buf, PAGE_SIZE, "%d\n", (cnt - acnt));
+>>>>>>> master
 	return scnprintf(buf, PAGE_SIZE, "Unknown\n");
 }
 
@@ -2373,6 +2468,7 @@ lpfc_used_xri_show(struct device *dev, struct device_attribute *attr,
 	struct lpfc_max_cfg_param *max_cfg_param;
 	u32 cnt = 0, acnt = 0;
 
+<<<<<<< HEAD
 	if (phba->sli_rev == LPFC_SLI_REV4) {
 		sli4_hba = &phba->sli4_hba;
 		max_cfg_param = &sli4_hba->max_cfg_param;
@@ -2382,6 +2478,10 @@ lpfc_used_xri_show(struct device *dev, struct device_attribute *attr,
 		if (lpfc_get_hba_info(phba, &cnt, &acnt, NULL, NULL, NULL, NULL))
 			return scnprintf(buf, PAGE_SIZE, "%d\n", (cnt - acnt));
 	}
+=======
+	if (lpfc_get_hba_info(phba, &cnt, &acnt, NULL, NULL, NULL, NULL))
+		return scnprintf(buf, PAGE_SIZE, "%d\n", (cnt - acnt));
+>>>>>>> master
 	return scnprintf(buf, PAGE_SIZE, "Unknown\n");
 }
 
@@ -2438,6 +2538,7 @@ lpfc_used_vpi_show(struct device *dev, struct device_attribute *attr,
 	struct lpfc_max_cfg_param *max_cfg_param;
 	u32 cnt = 0, acnt = 0;
 
+<<<<<<< HEAD
 	if (phba->sli_rev == LPFC_SLI_REV4) {
 		sli4_hba = &phba->sli4_hba;
 		max_cfg_param = &sli4_hba->max_cfg_param;
@@ -2447,6 +2548,10 @@ lpfc_used_vpi_show(struct device *dev, struct device_attribute *attr,
 		if (lpfc_get_hba_info(phba, NULL, NULL, NULL, NULL, &cnt, &acnt))
 			return scnprintf(buf, PAGE_SIZE, "%d\n", (cnt - acnt));
 	}
+=======
+	if (lpfc_get_hba_info(phba, NULL, NULL, NULL, NULL, &cnt, &acnt))
+		return scnprintf(buf, PAGE_SIZE, "%d\n", (cnt - acnt));
+>>>>>>> master
 	return scnprintf(buf, PAGE_SIZE, "Unknown\n");
 }
 
@@ -2586,6 +2691,69 @@ lpfc_poll_store(struct device *dev, struct device_attribute *attr,
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * lpfc_fips_level_show - Return the current FIPS level for the HBA
+ * @dev: class unused variable.
+ * @attr: device attribute, not used.
+ * @buf: on return contains the module description text.
+ *
+ * Returns: size of formatted string.
+ **/
+static ssize_t
+lpfc_fips_level_show(struct device *dev,  struct device_attribute *attr,
+		     char *buf)
+{
+	struct Scsi_Host  *shost = class_to_shost(dev);
+	struct lpfc_vport *vport = (struct lpfc_vport *) shost->hostdata;
+	struct lpfc_hba   *phba = vport->phba;
+
+	return scnprintf(buf, PAGE_SIZE, "%d\n", phba->fips_level);
+}
+
+/**
+ * lpfc_fips_rev_show - Return the FIPS Spec revision for the HBA
+ * @dev: class unused variable.
+ * @attr: device attribute, not used.
+ * @buf: on return contains the module description text.
+ *
+ * Returns: size of formatted string.
+ **/
+static ssize_t
+lpfc_fips_rev_show(struct device *dev,  struct device_attribute *attr,
+		   char *buf)
+{
+	struct Scsi_Host  *shost = class_to_shost(dev);
+	struct lpfc_vport *vport = (struct lpfc_vport *) shost->hostdata;
+	struct lpfc_hba   *phba = vport->phba;
+
+	return scnprintf(buf, PAGE_SIZE, "%d\n", phba->fips_spec_rev);
+}
+
+/**
+ * lpfc_dss_show - Return the current state of dss and the configured state
+ * @dev: class converted to a Scsi_host structure.
+ * @attr: device attribute, not used.
+ * @buf: on return contains the formatted text.
+ *
+ * Returns: size of formatted string.
+ **/
+static ssize_t
+lpfc_dss_show(struct device *dev, struct device_attribute *attr,
+	      char *buf)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct lpfc_vport *vport = (struct lpfc_vport *) shost->hostdata;
+	struct lpfc_hba   *phba = vport->phba;
+
+	return scnprintf(buf, PAGE_SIZE, "%s - %sOperational\n",
+			(phba->cfg_enable_dss) ? "Enabled" : "Disabled",
+			(phba->sli3_options & LPFC_SLI3_DSS_ENABLED) ?
+				"" : "Not ");
+}
+
+/**
+>>>>>>> master
  * lpfc_sriov_hw_max_virtfn_show - Return maximum number of virtual functions
  * @dev: class converted to a Scsi_host structure.
  * @attr: device attribute, not used.
@@ -2609,6 +2777,14 @@ lpfc_sriov_hw_max_virtfn_show(struct device *dev,
 
 	max_nr_virtfn = lpfc_sli_sriov_nr_virtfn_get(phba);
 	return scnprintf(buf, PAGE_SIZE, "%d\n", max_nr_virtfn);
+<<<<<<< HEAD
+=======
+}
+
+static inline bool lpfc_rangecheck(uint val, uint min, uint max)
+{
+	return val >= min && val <= max;
+>>>>>>> master
 }
 
 /**
@@ -3045,6 +3221,209 @@ lpfc_wwn_set(const char *buf, size_t cnt, char wwn[])
 	return 0;
 }
 
+<<<<<<< HEAD
+=======
+	/*
+	 * We're doing a simple sanity check for soft_wwpn setting.
+	 * We require that the user write a specific key to enable
+	 * the soft_wwpn attribute to be settable. Once the attribute
+	 * is written, the enable key resets. If further updates are
+	 * desired, the key must be written again to re-enable the
+	 * attribute.
+	 *
+	 * The "key" is not secret - it is a hardcoded string shown
+	 * here. The intent is to protect against the random user or
+	 * application that is just writing attributes.
+	 */
+	if (vvvl == 1 && cpu_to_be32(*fawwpn_key) == FAPWWN_KEY_VENDOR) {
+		lpfc_printf_log(phba, KERN_ERR, LOG_INIT,
+				 "0051 "LPFC_DRIVER_NAME" soft wwpn can not"
+				 " be enabled: fawwpn is enabled\n");
+		return -EINVAL;
+	}
+
+	/* count may include a LF at end of string */
+	if (buf[cnt-1] == '\n')
+		cnt--;
+
+	if ((cnt != strlen(lpfc_soft_wwn_key)) ||
+	    (strncmp(buf, lpfc_soft_wwn_key, strlen(lpfc_soft_wwn_key)) != 0))
+		return -EINVAL;
+
+	phba->soft_wwn_enable = 1;
+
+	dev_printk(KERN_WARNING, &phba->pcidev->dev,
+		   "lpfc%d: soft_wwpn assignment has been enabled.\n",
+		   phba->brd_no);
+	dev_printk(KERN_WARNING, &phba->pcidev->dev,
+		   "  The soft_wwpn feature is not supported by Broadcom.");
+
+	return count;
+}
+static DEVICE_ATTR_WO(lpfc_soft_wwn_enable);
+
+/**
+ * lpfc_soft_wwpn_show - Return the cfg soft ww port name of the adapter
+ * @dev: class device that is converted into a Scsi_host.
+ * @attr: device attribute, not used.
+ * @buf: on return contains the wwpn in hexadecimal.
+ *
+ * Returns: size of formatted string.
+ **/
+static ssize_t
+lpfc_soft_wwpn_show(struct device *dev, struct device_attribute *attr,
+		    char *buf)
+{
+	struct Scsi_Host  *shost = class_to_shost(dev);
+	struct lpfc_vport *vport = (struct lpfc_vport *) shost->hostdata;
+	struct lpfc_hba   *phba = vport->phba;
+
+	return scnprintf(buf, PAGE_SIZE, "0x%llx\n",
+			(unsigned long long)phba->cfg_soft_wwpn);
+}
+
+/**
+ * lpfc_soft_wwpn_store - Set the ww port name of the adapter
+ * @dev class device that is converted into a Scsi_host.
+ * @attr: device attribute, not used.
+ * @buf: contains the wwpn in hexadecimal.
+ * @count: number of wwpn bytes in buf
+ *
+ * Returns:
+ * -EACCES hba reset not enabled, adapter over temp
+ * -EINVAL soft wwn not enabled, count is invalid, invalid wwpn byte invalid
+ * -EIO error taking adapter offline or online
+ * value of count on success
+ **/
+static ssize_t
+lpfc_soft_wwpn_store(struct device *dev, struct device_attribute *attr,
+		     const char *buf, size_t count)
+{
+	struct Scsi_Host  *shost = class_to_shost(dev);
+	struct lpfc_vport *vport = (struct lpfc_vport *) shost->hostdata;
+	struct lpfc_hba   *phba = vport->phba;
+	struct completion online_compl;
+	int stat1 = 0, stat2 = 0;
+	unsigned int cnt = count;
+	u8 wwpn[WWN_SZ];
+	int rc;
+
+	if (!phba->cfg_enable_hba_reset)
+		return -EACCES;
+	spin_lock_irq(&phba->hbalock);
+	if (phba->over_temp_state == HBA_OVER_TEMP) {
+		spin_unlock_irq(&phba->hbalock);
+		return -EACCES;
+	}
+	spin_unlock_irq(&phba->hbalock);
+	/* count may include a LF at end of string */
+	if (buf[cnt-1] == '\n')
+		cnt--;
+
+	if (!phba->soft_wwn_enable)
+		return -EINVAL;
+
+	/* lock setting wwpn, wwnn down */
+	phba->soft_wwn_enable = 0;
+
+	rc = lpfc_wwn_set(buf, cnt, wwpn);
+	if (rc) {
+		/* not able to set wwpn, unlock it */
+		phba->soft_wwn_enable = 1;
+		return rc;
+	}
+
+	phba->cfg_soft_wwpn = wwn_to_u64(wwpn);
+	fc_host_port_name(shost) = phba->cfg_soft_wwpn;
+	if (phba->cfg_soft_wwnn)
+		fc_host_node_name(shost) = phba->cfg_soft_wwnn;
+
+	dev_printk(KERN_NOTICE, &phba->pcidev->dev,
+		   "lpfc%d: Reinitializing to use soft_wwpn\n", phba->brd_no);
+
+	stat1 = lpfc_do_offline(phba, LPFC_EVT_OFFLINE);
+	if (stat1)
+		lpfc_printf_log(phba, KERN_ERR, LOG_INIT,
+				"0463 lpfc_soft_wwpn attribute set failed to "
+				"reinit adapter - %d\n", stat1);
+	init_completion(&online_compl);
+	rc = lpfc_workq_post_event(phba, &stat2, &online_compl,
+				   LPFC_EVT_ONLINE);
+	if (rc == 0)
+		return -ENOMEM;
+
+	wait_for_completion(&online_compl);
+	if (stat2)
+		lpfc_printf_log(phba, KERN_ERR, LOG_INIT,
+				"0464 lpfc_soft_wwpn attribute set failed to "
+				"reinit adapter - %d\n", stat2);
+	return (stat1 || stat2) ? -EIO : count;
+}
+static DEVICE_ATTR_RW(lpfc_soft_wwpn);
+
+/**
+ * lpfc_soft_wwnn_show - Return the cfg soft ww node name for the adapter
+ * @dev: class device that is converted into a Scsi_host.
+ * @attr: device attribute, not used.
+ * @buf: on return contains the wwnn in hexadecimal.
+ *
+ * Returns: size of formatted string.
+ **/
+static ssize_t
+lpfc_soft_wwnn_show(struct device *dev, struct device_attribute *attr,
+		    char *buf)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct lpfc_hba *phba = ((struct lpfc_vport *)shost->hostdata)->phba;
+	return scnprintf(buf, PAGE_SIZE, "0x%llx\n",
+			(unsigned long long)phba->cfg_soft_wwnn);
+}
+
+/**
+ * lpfc_soft_wwnn_store - sets the ww node name of the adapter
+ * @cdev: class device that is converted into a Scsi_host.
+ * @buf: contains the ww node name in hexadecimal.
+ * @count: number of wwnn bytes in buf.
+ *
+ * Returns:
+ * -EINVAL soft wwn not enabled, count is invalid, invalid wwnn byte invalid
+ * value of count on success
+ **/
+static ssize_t
+lpfc_soft_wwnn_store(struct device *dev, struct device_attribute *attr,
+		     const char *buf, size_t count)
+{
+	struct Scsi_Host *shost = class_to_shost(dev);
+	struct lpfc_hba *phba = ((struct lpfc_vport *)shost->hostdata)->phba;
+	unsigned int cnt = count;
+	u8 wwnn[WWN_SZ];
+	int rc;
+
+	/* count may include a LF at end of string */
+	if (buf[cnt-1] == '\n')
+		cnt--;
+
+	if (!phba->soft_wwn_enable)
+		return -EINVAL;
+
+	rc = lpfc_wwn_set(buf, cnt, wwnn);
+	if (rc) {
+		/* Allow wwnn to be set many times, as long as the enable
+		 * is set. However, once the wwpn is set, everything locks.
+		 */
+		return rc;
+	}
+
+	phba->cfg_soft_wwnn = wwn_to_u64(wwnn);
+
+	dev_printk(KERN_NOTICE, &phba->pcidev->dev,
+		   "lpfc%d: soft_wwnn set. Value will take effect upon "
+		   "setting of the soft_wwpn\n", phba->brd_no);
+
+	return count;
+}
+static DEVICE_ATTR_RW(lpfc_soft_wwnn);
+>>>>>>> master
 
 /**
  * lpfc_oas_tgt_show - Return wwpn of target whose luns maybe enabled for
@@ -5029,10 +5408,23 @@ lpfc_fcp_cpu_map_show(struct device *dev, struct device_attribute *attr,
 	case 1:
 		len += scnprintf(buf + len, PAGE_SIZE-len,
 				"fcp_cpu_map: HBA centric mapping (%d): "
+<<<<<<< HEAD
 				"%d of %d CPUs online from %d possible CPUs\n",
 				phba->cfg_fcp_cpu_map, num_online_cpus(),
 				num_present_cpus(),
 				phba->sli4_hba.num_possible_cpu);
+=======
+				"%d online CPUs\n",
+				phba->cfg_fcp_cpu_map,
+				phba->sli4_hba.num_online_cpu);
+		break;
+	case 2:
+		len += scnprintf(buf + len, PAGE_SIZE-len,
+				"fcp_cpu_map: Driver centric mapping (%d): "
+				"%d online CPUs\n",
+				phba->cfg_fcp_cpu_map,
+				phba->sli4_hba.num_online_cpu);
+>>>>>>> master
 		break;
 	}
 
@@ -5040,6 +5432,7 @@ lpfc_fcp_cpu_map_show(struct device *dev, struct device_attribute *attr,
 	       phba->sli4_hba.num_possible_cpu) {
 		cpup = &phba->sli4_hba.cpu_map[phba->sli4_hba.curr_disp_cpu];
 
+<<<<<<< HEAD
 		if (!cpu_present(phba->sli4_hba.curr_disp_cpu))
 			len += scnprintf(buf + len, PAGE_SIZE - len,
 					"CPU %02d not present\n",
@@ -5059,6 +5452,20 @@ lpfc_fcp_cpu_map_show(struct device *dev, struct device_attribute *attr,
 					buf + len, PAGE_SIZE - len,
 					"CPU %02d EQ None hdwq %04d "
 					"physid %d coreid %d ht %d ua %d\n",
+=======
+		/* margin should fit in this and the truncated message */
+		if (cpup->irq == LPFC_VECTOR_MAP_EMPTY)
+			len += scnprintf(buf + len, PAGE_SIZE-len,
+					"CPU %02d io_chan %02d "
+					"physid %d coreid %d\n",
+					phba->sli4_hba.curr_disp_cpu,
+					cpup->channel_id, cpup->phys_id,
+					cpup->core_id);
+		else
+			len += scnprintf(buf + len, PAGE_SIZE-len,
+					"CPU %02d io_chan %02d "
+					"physid %d coreid %d IRQ %d\n",
+>>>>>>> master
 					phba->sli4_hba.curr_disp_cpu,
 					cpup->hdwq, cpup->phys_id,
 					cpup->core_id,
@@ -5095,8 +5502,12 @@ lpfc_fcp_cpu_map_show(struct device *dev, struct device_attribute *attr,
 		if (phba->sli4_hba.curr_disp_cpu <
 				phba->sli4_hba.num_possible_cpu &&
 				(len >= (PAGE_SIZE - 64))) {
+<<<<<<< HEAD
 			len += scnprintf(buf + len,
 					PAGE_SIZE - len, "more...\n");
+=======
+			len += scnprintf(buf + len, PAGE_SIZE-len, "more...\n");
+>>>>>>> master
 			break;
 		}
 	}

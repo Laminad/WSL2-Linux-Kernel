@@ -789,6 +789,10 @@ static int pvscsi_queue_lck(struct scsi_cmnd *cmd)
 		return SCSI_MLQUEUE_HOST_BUSY;
 	}
 
+<<<<<<< HEAD
+=======
+	cmd->scsi_done = done;
+>>>>>>> master
 	op = cmd->cmnd[0];
 
 	dev_dbg(&cmd->device->sdev_gendev,

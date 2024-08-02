@@ -769,6 +769,16 @@ static void mceusb_dev_printdata(struct mceusb_dev *ir, u8 *buf, int buf_len,
 	default:
 		break;
 	}
+<<<<<<< HEAD
+=======
+
+	if (cmd == MCE_IRDATA_TRAILER)
+		dev_dbg(dev, "End of raw IR data");
+	else if ((cmd != MCE_CMD_PORT_IR) &&
+		 ((cmd & MCE_PORT_MASK) == MCE_COMMAND_IRDATA))
+		dev_dbg(dev, "Raw IR data, %d pulse/space samples",
+			cmd & MCE_PACKET_LENGTH_MASK);
+>>>>>>> master
 #endif
 }
 
@@ -1454,6 +1464,11 @@ static void mceusb_gen1_init(struct mceusb_dev *ir)
 
 	/* get hw/sw revision? */
 	mce_command_out(ir, GET_REVISION, sizeof(GET_REVISION));
+<<<<<<< HEAD
+=======
+
+	kfree(data);
+>>>>>>> master
 }
 
 static void mceusb_gen2_init(struct mceusb_dev *ir)

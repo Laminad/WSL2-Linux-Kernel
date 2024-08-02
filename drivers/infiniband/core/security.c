@@ -707,6 +707,7 @@ int ib_mad_agent_security_setup(struct ib_mad_agent *agent,
 	if (ret)
 		goto free_security;
 
+<<<<<<< HEAD
 	WRITE_ONCE(agent->smp_allowed, true);
 	list_add(&agent->mad_agent_sec_list, &mad_agent_list);
 	spin_unlock(&mad_agent_list_lock);
@@ -714,6 +715,18 @@ int ib_mad_agent_security_setup(struct ib_mad_agent *agent,
 
 free_security:
 	spin_unlock(&mad_agent_list_lock);
+=======
+	agent->lsm_nb.notifier_call = ib_mad_agent_security_change;
+	ret = register_lsm_notifier(&agent->lsm_nb);
+	if (ret)
+		goto free_security;
+
+	agent->smp_allowed = true;
+	agent->lsm_nb_reg = true;
+	return 0;
+
+free_security:
+>>>>>>> master
 	security_ib_free_security(agent->security);
 	return ret;
 }
@@ -723,11 +736,16 @@ void ib_mad_agent_security_cleanup(struct ib_mad_agent *agent)
 	if (!rdma_protocol_ib(agent->device, agent->port_num))
 		return;
 
+<<<<<<< HEAD
 	if (agent->qp->qp_type == IB_QPT_SMI) {
 		spin_lock(&mad_agent_list_lock);
 		list_del(&agent->mad_agent_sec_list);
 		spin_unlock(&mad_agent_list_lock);
 	}
+=======
+	if (agent->lsm_nb_reg)
+		unregister_lsm_notifier(&agent->lsm_nb);
+>>>>>>> master
 
 	security_ib_free_security(agent->security);
 }

@@ -1305,10 +1305,16 @@ int get_registers(struct r8152 *tp, u16 value, u16 index, u16 size, void *data)
 	if (!tmp)
 		return -ENOMEM;
 
+<<<<<<< HEAD
 	ret = r8152_control_msg(tp, tp->pipe_ctrl_in,
 				RTL8152_REQ_GET_REGS, RTL8152_REQT_READ,
 				value, index, tmp, size, "read");
 
+=======
+	ret = usb_control_msg(tp->udev, usb_rcvctrlpipe(tp->udev, 0),
+			      RTL8152_REQ_GET_REGS, RTL8152_REQT_READ,
+			      value, index, tmp, size, 500);
+>>>>>>> master
 	if (ret < 0)
 		memset(data, 0xff, size);
 	else
@@ -8644,10 +8650,16 @@ static int rtl8152_reset_resume(struct usb_interface *intf)
 	struct r8152 *tp = usb_get_intfdata(intf);
 
 	clear_bit(SELECTIVE_SUSPEND, &tp->flags);
+<<<<<<< HEAD
 	rtl_reset_ocp_base(tp);
 	tp->rtl_ops.init(tp);
 	queue_delayed_work(system_long_wq, &tp->hw_phy_work, 0);
 	set_ethernet_addr(tp, true);
+=======
+	tp->rtl_ops.init(tp);
+	queue_delayed_work(system_long_wq, &tp->hw_phy_work, 0);
+	set_ethernet_addr(tp);
+>>>>>>> master
 	return rtl8152_resume(intf);
 }
 
@@ -9988,6 +10000,7 @@ static void rtl8152_disconnect(struct usb_interface *intf)
 
 /* table of devices that work with this driver */
 static const struct usb_device_id rtl8152_table[] = {
+<<<<<<< HEAD
 	/* Realtek */
 	{ USB_DEVICE(VENDOR_ID_REALTEK, 0x8050) },
 	{ USB_DEVICE(VENDOR_ID_REALTEK, 0x8053) },
@@ -10017,6 +10030,24 @@ static const struct usb_device_id rtl8152_table[] = {
 	{ USB_DEVICE(VENDOR_ID_TPLINK,  0x0601) },
 	{ USB_DEVICE(VENDOR_ID_DLINK,   0xb301) },
 	{ USB_DEVICE(VENDOR_ID_ASUS,    0x1976) },
+=======
+	{REALTEK_USB_DEVICE(VENDOR_ID_REALTEK, 0x8050)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_REALTEK, 0x8152)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_REALTEK, 0x8153)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_MICROSOFT, 0x07ab)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_MICROSOFT, 0x07c6)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_SAMSUNG, 0xa101)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x304f)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x3062)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x3069)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x7205)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x720c)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0x7214)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LENOVO,  0xa387)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_LINKSYS, 0x0041)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_NVIDIA,  0x09ff)},
+	{REALTEK_USB_DEVICE(VENDOR_ID_TPLINK,  0x0601)},
+>>>>>>> master
 	{}
 };
 

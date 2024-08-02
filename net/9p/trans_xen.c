@@ -154,8 +154,12 @@ again:
 	masked_cons = xen_9pfs_mask(cons, XEN_9PFS_RING_SIZE(ring));
 
 	xen_9pfs_write_packet(ring->data.out, p9_req->tc.sdata, size,
+<<<<<<< HEAD
 			      &masked_prod, masked_cons,
 			      XEN_9PFS_RING_SIZE(ring));
+=======
+			      &masked_prod, masked_cons, XEN_9PFS_RING_SIZE);
+>>>>>>> master
 
 	WRITE_ONCE(p9_req->status, REQ_STATUS_SENT);
 	virt_wmb();			/* write ring before updating pointer */
@@ -163,7 +167,11 @@ again:
 	ring->intf->out_prod = prod;
 	spin_unlock_irqrestore(&ring->lock, flags);
 	notify_remote_via_irq(ring->irq);
+<<<<<<< HEAD
 	p9_req_put(client, p9_req);
+=======
+	p9_req_put(p9_req);
+>>>>>>> master
 
 	return 0;
 }
@@ -208,6 +216,7 @@ static void p9_xen_response(struct work_struct *work)
 			continue;
 		}
 
+<<<<<<< HEAD
 		if (h.size > req->rc.capacity) {
 			dev_warn(&priv->dev->dev,
 				 "requested packet size too big: %d for tag %d with capacity %zd\n",
@@ -215,6 +224,10 @@ static void p9_xen_response(struct work_struct *work)
 			WRITE_ONCE(req->status, REQ_STATUS_ERROR);
 			goto recv_error;
 		}
+=======
+		memcpy(&req->rc, &h, sizeof(h));
+		req->rc.offset = 0;
+>>>>>>> master
 
 		req->rc.size = h.size;
 		req->rc.id = h.id;
@@ -387,6 +400,7 @@ static int xen_9pfs_front_init(struct xenbus_device *dev)
 	versions = xenbus_read(XBT_NIL, dev->otherend, "versions", &len);
 	if (IS_ERR(versions))
 		return PTR_ERR(versions);
+<<<<<<< HEAD
 	for (v = versions; *v; v++) {
 		if (simple_strtoul(v, &v, 10) == 1) {
 			v = NULL;
@@ -394,6 +408,9 @@ static int xen_9pfs_front_init(struct xenbus_device *dev)
 		}
 	}
 	if (v) {
+=======
+	if (strcmp(versions, "1")) {
+>>>>>>> master
 		kfree(versions);
 		return -EINVAL;
 	}

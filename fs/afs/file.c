@@ -232,9 +232,19 @@ struct afs_read *afs_alloc_read(gfp_t gfp)
 void afs_put_read(struct afs_read *req)
 {
 	if (refcount_dec_and_test(&req->usage)) {
+<<<<<<< HEAD
 		if (req->cleanup)
 			req->cleanup(req);
 		key_put(req->key);
+=======
+		if (req->pages) {
+			for (i = 0; i < req->nr_pages; i++)
+				if (req->pages[i])
+					put_page(req->pages[i]);
+			if (req->pages != req->array)
+				kfree(req->pages);
+		}
+>>>>>>> master
 		kfree(req);
 	}
 }

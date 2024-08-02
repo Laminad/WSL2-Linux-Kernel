@@ -51,8 +51,11 @@ enum axp288_adc_id {
 struct axp288_adc_info {
 	int irq;
 	struct regmap *regmap;
+<<<<<<< HEAD
 	/* lock to protect against multiple access to the device */
 	struct mutex lock;
+=======
+>>>>>>> master
 	bool ts_enabled;
 };
 
@@ -199,6 +202,7 @@ static const struct dmi_system_id axp288_adc_ts_bias_override[] = {
 		},
 		.driver_data = (void *)(uintptr_t)AXP288_ADC_TS_BIAS_80UA,
 	},
+<<<<<<< HEAD
 	{
 		/* Nuvision Solo 10 Draw */
 		.matches = {
@@ -207,6 +211,8 @@ static const struct dmi_system_id axp288_adc_ts_bias_override[] = {
 		},
 		.driver_data = (void *)(uintptr_t)AXP288_ADC_TS_BIAS_80UA,
 	},
+=======
+>>>>>>> master
 	{}
 };
 

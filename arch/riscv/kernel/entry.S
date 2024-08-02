@@ -93,6 +93,20 @@ _save_context:
 	/* Handle interrupts */
 	tail do_irq
 1:
+<<<<<<< HEAD
+=======
+	/* Exceptions run with interrupts enabled or disabled
+	   depending on the state of sstatus.SR_SPIE */
+	andi t0, s1, SR_SPIE
+	beqz t0, 1f
+	csrs sstatus, SR_SIE
+
+1:
+	/* Handle syscalls */
+	li t0, EXC_SYSCALL
+	beq s4, t0, handle_syscall
+
+>>>>>>> master
 	/* Handle other exceptions */
 	slli t0, s4, RISCV_LGPTR
 	la t1, excp_vect_table

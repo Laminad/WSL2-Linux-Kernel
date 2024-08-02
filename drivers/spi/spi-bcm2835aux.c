@@ -231,8 +231,13 @@ static void bcm2835aux_spi_transfer_helper(struct bcm2835aux_spi *bs)
 
 static irqreturn_t bcm2835aux_spi_interrupt(int irq, void *dev_id)
 {
+<<<<<<< HEAD
 	struct spi_controller *host = dev_id;
 	struct bcm2835aux_spi *bs = spi_controller_get_devdata(host);
+=======
+	struct spi_master *master = dev_id;
+	struct bcm2835aux_spi *bs = spi_master_get_devdata(master);
+>>>>>>> master
 
 	/* IRQ may be shared, so return if our interrupts are disabled */
 	if (!(bcm2835aux_rd(bs, BCM2835_AUX_SPI_CNTL1) &
@@ -303,9 +308,12 @@ static int bcm2835aux_spi_transfer_one_poll(struct spi_controller *host,
 {
 	struct bcm2835aux_spi *bs = spi_controller_get_devdata(host);
 	unsigned long timeout;
+<<<<<<< HEAD
 
 	/* update statistics */
 	bs->count_transfer_polling++;
+=======
+>>>>>>> master
 
 	/* configure spi */
 	bcm2835aux_wr(bs, BCM2835_AUX_SPI_CNTL1, bs->cntl[1]);

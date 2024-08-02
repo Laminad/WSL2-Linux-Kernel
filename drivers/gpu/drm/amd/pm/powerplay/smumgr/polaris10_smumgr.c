@@ -1663,9 +1663,39 @@ static int polaris10_populate_clock_stretcher_data_table(struct pp_hwmgr *hwmgr)
 	/* Read SMU_Eefuse to read and calculate RO and determine
 	 * if the part is SS or FF. if RO >= 1660MHz, part is FF.
 	 */
+<<<<<<< HEAD:drivers/gpu/drm/amd/pm/powerplay/smumgr/polaris10_smumgr.c
 	atomctrl_read_efuse(hwmgr, STRAP_ASIC_RO_LSB, STRAP_ASIC_RO_MSB, &efuse);
 	ro = ((efuse * (data->ro_range_maximum - data->ro_range_minimum)) / 255) +
 		data->ro_range_minimum;
+=======
+	efuse = cgs_read_ind_register(hwmgr->device, CGS_IND_REG__SMC,
+			ixSMU_EFUSE_0 + (67 * 4));
+	efuse &= 0xFF000000;
+	efuse = efuse >> 24;
+
+	if (hwmgr->chip_id == CHIP_POLARIS10) {
+		if (hwmgr->is_kicker) {
+			min = 1200;
+			max = 2500;
+		} else {
+			min = 1000;
+			max = 2300;
+		}
+	} else if (hwmgr->chip_id == CHIP_POLARIS11) {
+		if (hwmgr->is_kicker) {
+			min = 900;
+			max = 2100;
+		} else {
+			min = 1100;
+			max = 2100;
+		}
+	} else {
+		min = 1100;
+		max = 2100;
+	}
+
+	ro = efuse * (max - min) / 255 + min;
+>>>>>>> master:drivers/gpu/drm/amd/powerplay/smumgr/polaris10_smumgr.c
 
 	/* Populate Sclk_CKS_masterEn0_7 and Sclk_voltageOffset */
 	for (i = 0; i < sclk_table->count; i++) {
@@ -2160,6 +2190,12 @@ static int polaris10_thermal_avfs_enable(struct pp_hwmgr *hwmgr)
 	 */
 	if (data->apply_avfs_cks_off_voltage)
 		smum_send_msg_to_smc(hwmgr, PPSMC_MSG_ApplyAvfsCksOffVoltage, NULL);
+
+	/* Apply avfs cks-off voltages to avoid the overshoot
+	 * when switching to the highest sclk frequency
+	 */
+	if (data->apply_avfs_cks_off_voltage)
+		smum_send_msg_to_smc(hwmgr, PPSMC_MSG_ApplyAvfsCksOffVoltage);
 
 	return 0;
 }

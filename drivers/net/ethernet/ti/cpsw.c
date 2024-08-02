@@ -1197,7 +1197,136 @@ static int cpsw_set_pauseparam(struct net_device *ndev,
 static int cpsw_set_channels(struct net_device *ndev,
 			     struct ethtool_channels *chs)
 {
+<<<<<<< HEAD
 	return cpsw_set_channels_common(ndev, chs, cpsw_rx_handler);
+=======
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	struct cpsw_slave *slave;
+	int i, ret;
+
+	ret = cpsw_check_ch_settings(cpsw, chs);
+	if (ret < 0)
+		return ret;
+
+	cpsw_suspend_data_pass(ndev);
+	ret = cpsw_update_channels(priv, chs);
+	if (ret)
+		goto err;
+
+	for (i = cpsw->data.slaves, slave = cpsw->slaves; i; i--, slave++) {
+		if (!(slave->ndev && netif_running(slave->ndev)))
+			continue;
+
+		/* Inform stack about new count of queues */
+		ret = netif_set_real_num_tx_queues(slave->ndev,
+						   cpsw->tx_ch_num);
+		if (ret) {
+			dev_err(priv->dev, "cannot set real number of tx queues\n");
+			goto err;
+		}
+
+		ret = netif_set_real_num_rx_queues(slave->ndev,
+						   cpsw->rx_ch_num);
+		if (ret) {
+			dev_err(priv->dev, "cannot set real number of rx queues\n");
+			goto err;
+		}
+	}
+
+	if (cpsw->usage_count)
+		cpsw_split_res(ndev);
+
+	ret = cpsw_resume_data_pass(ndev);
+	if (!ret)
+		return 0;
+err:
+	dev_err(priv->dev, "cannot update channels number, closing device\n");
+	dev_close(ndev);
+	return ret;
+}
+
+static int cpsw_get_eee(struct net_device *ndev, struct ethtool_eee *edata)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int slave_no = cpsw_slave_index(cpsw, priv);
+
+	if (cpsw->slaves[slave_no].phy)
+		return phy_ethtool_get_eee(cpsw->slaves[slave_no].phy, edata);
+	else
+		return -EOPNOTSUPP;
+}
+
+static int cpsw_set_eee(struct net_device *ndev, struct ethtool_eee *edata)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int slave_no = cpsw_slave_index(cpsw, priv);
+
+	if (cpsw->slaves[slave_no].phy)
+		return phy_ethtool_set_eee(cpsw->slaves[slave_no].phy, edata);
+	else
+		return -EOPNOTSUPP;
+}
+
+static int cpsw_nway_reset(struct net_device *ndev)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int slave_no = cpsw_slave_index(cpsw, priv);
+
+	if (cpsw->slaves[slave_no].phy)
+		return genphy_restart_aneg(cpsw->slaves[slave_no].phy);
+	else
+		return -EOPNOTSUPP;
+}
+
+static void cpsw_get_ringparam(struct net_device *ndev,
+			       struct ethtool_ringparam *ering)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+
+	/* not supported */
+	ering->tx_max_pending = descs_pool_size - CPSW_MAX_QUEUES;
+	ering->tx_pending = cpdma_get_num_tx_descs(cpsw->dma);
+	ering->rx_max_pending = descs_pool_size - CPSW_MAX_QUEUES;
+	ering->rx_pending = cpdma_get_num_rx_descs(cpsw->dma);
+}
+
+static int cpsw_set_ringparam(struct net_device *ndev,
+			      struct ethtool_ringparam *ering)
+{
+	struct cpsw_priv *priv = netdev_priv(ndev);
+	struct cpsw_common *cpsw = priv->cpsw;
+	int ret;
+
+	/* ignore ering->tx_pending - only rx_pending adjustment is supported */
+
+	if (ering->rx_mini_pending || ering->rx_jumbo_pending ||
+	    ering->rx_pending < CPSW_MAX_QUEUES ||
+	    ering->rx_pending > (descs_pool_size - CPSW_MAX_QUEUES))
+		return -EINVAL;
+
+	if (ering->rx_pending == cpdma_get_num_rx_descs(cpsw->dma))
+		return 0;
+
+	cpsw_suspend_data_pass(ndev);
+
+	cpdma_set_num_rx_descs(cpsw->dma, ering->rx_pending);
+
+	if (cpsw->usage_count)
+		cpdma_chan_split_pool(cpsw->dma);
+
+	ret = cpsw_resume_data_pass(ndev);
+	if (!ret)
+		return 0;
+
+	dev_err(&ndev->dev, "cannot set ring params, closing device\n");
+	dev_close(ndev);
+	return ret;
+>>>>>>> master
 }
 
 static const struct ethtool_ops cpsw_ethtool_ops = {

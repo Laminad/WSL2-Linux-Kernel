@@ -779,7 +779,14 @@ static void ht16k33_remove(struct i2c_client *client)
 	struct ht16k33_priv *priv = i2c_get_clientdata(client);
 	struct ht16k33_fbdev *fbdev = &priv->fbdev;
 
+<<<<<<< HEAD
 	cancel_delayed_work_sync(&priv->work);
+=======
+	cancel_delayed_work_sync(&fbdev->work);
+	unregister_framebuffer(fbdev->info);
+	framebuffer_release(fbdev->info);
+	free_page((unsigned long) fbdev->buffer);
+>>>>>>> master
 
 	switch (priv->type) {
 	case DISP_MATRIX:

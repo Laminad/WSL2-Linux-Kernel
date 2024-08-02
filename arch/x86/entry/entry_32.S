@@ -682,11 +682,14 @@ SYM_CODE_START(__switch_to_asm)
 	pushl	%ebx
 	pushl	%edi
 	pushl	%esi
+<<<<<<< HEAD
 	/*
 	 * Flags are saved to prevent AC leakage. This could go
 	 * away if objtool would have 32bit support to verify
 	 * the STAC/CLAC correctness.
 	 */
+=======
+>>>>>>> master
 	pushfl
 
 	/* switch stack */
@@ -710,6 +713,7 @@ SYM_CODE_START(__switch_to_asm)
 	/* Restore flags or the incoming task to restore AC state. */
 	popfl
 	/* restore callee-saved registers */
+	popfl
 	popl	%esi
 	popl	%edi
 	popl	%ebx
@@ -1032,7 +1036,302 @@ SYM_FUNC_END(entry_INT80_32)
 #endif
 .endm
 
+<<<<<<< HEAD
 SYM_CODE_START_LOCAL_NOALIGN(handle_exception)
+=======
+/*
+ * Build the entry stubs with some assembler magic.
+ * We pack 1 stub into every 8-byte block.
+ */
+	.align 8
+ENTRY(irq_entries_start)
+    vector=FIRST_EXTERNAL_VECTOR
+    .rept (FIRST_SYSTEM_VECTOR - FIRST_EXTERNAL_VECTOR)
+	pushl	$(~vector+0x80)			/* Note: always in signed byte range */
+    vector=vector+1
+	jmp	common_interrupt
+	.align	8
+    .endr
+END(irq_entries_start)
+
+#ifdef CONFIG_X86_LOCAL_APIC
+	.align 8
+ENTRY(spurious_entries_start)
+    vector=FIRST_SYSTEM_VECTOR
+    .rept (NR_VECTORS - FIRST_SYSTEM_VECTOR)
+	pushl	$(~vector+0x80)			/* Note: always in signed byte range */
+    vector=vector+1
+	jmp	common_spurious
+	.align	8
+    .endr
+END(spurious_entries_start)
+
+common_spurious:
+	ASM_CLAC
+	addl	$-0x80, (%esp)			/* Adjust vector into the [-256, -1] range */
+	SAVE_ALL switch_stacks=1
+	ENCODE_FRAME_POINTER
+	TRACE_IRQS_OFF
+	movl	%esp, %eax
+	call	smp_spurious_interrupt
+	jmp	ret_from_intr
+ENDPROC(common_spurious)
+#endif
+
+/*
+ * the CPU automatically disables interrupts when executing an IRQ vector,
+ * so IRQ-flags tracing has to follow that:
+ */
+	.p2align CONFIG_X86_L1_CACHE_SHIFT
+common_interrupt:
+	ASM_CLAC
+	addl	$-0x80, (%esp)			/* Adjust vector into the [-256, -1] range */
+
+	SAVE_ALL switch_stacks=1
+	ENCODE_FRAME_POINTER
+	TRACE_IRQS_OFF
+	movl	%esp, %eax
+	call	do_IRQ
+	jmp	ret_from_intr
+ENDPROC(common_interrupt)
+
+#define BUILD_INTERRUPT3(name, nr, fn)			\
+ENTRY(name)						\
+	ASM_CLAC;					\
+	pushl	$~(nr);					\
+	SAVE_ALL switch_stacks=1;			\
+	ENCODE_FRAME_POINTER;				\
+	TRACE_IRQS_OFF					\
+	movl	%esp, %eax;				\
+	call	fn;					\
+	jmp	ret_from_intr;				\
+ENDPROC(name)
+
+#define BUILD_INTERRUPT(name, nr)		\
+	BUILD_INTERRUPT3(name, nr, smp_##name);	\
+
+/* The include is where all of the SMP etc. interrupts come from */
+#include <asm/entry_arch.h>
+
+ENTRY(coprocessor_error)
+	ASM_CLAC
+	pushl	$0
+	pushl	$do_coprocessor_error
+	jmp	common_exception
+END(coprocessor_error)
+
+ENTRY(simd_coprocessor_error)
+	ASM_CLAC
+	pushl	$0
+#ifdef CONFIG_X86_INVD_BUG
+	/* AMD 486 bug: invd from userspace calls exception 19 instead of #GP */
+	ALTERNATIVE "pushl	$do_general_protection",	\
+		    "pushl	$do_simd_coprocessor_error",	\
+		    X86_FEATURE_XMM
+#else
+	pushl	$do_simd_coprocessor_error
+#endif
+	jmp	common_exception
+END(simd_coprocessor_error)
+
+ENTRY(device_not_available)
+	ASM_CLAC
+	pushl	$-1				# mark this as an int
+	pushl	$do_device_not_available
+	jmp	common_exception
+END(device_not_available)
+
+#ifdef CONFIG_PARAVIRT
+ENTRY(native_iret)
+	iret
+	_ASM_EXTABLE(native_iret, iret_exc)
+END(native_iret)
+#endif
+
+ENTRY(overflow)
+	ASM_CLAC
+	pushl	$0
+	pushl	$do_overflow
+	jmp	common_exception
+END(overflow)
+
+ENTRY(bounds)
+	ASM_CLAC
+	pushl	$0
+	pushl	$do_bounds
+	jmp	common_exception
+END(bounds)
+
+ENTRY(invalid_op)
+	ASM_CLAC
+	pushl	$0
+	pushl	$do_invalid_op
+	jmp	common_exception
+END(invalid_op)
+
+ENTRY(coprocessor_segment_overrun)
+	ASM_CLAC
+	pushl	$0
+	pushl	$do_coprocessor_segment_overrun
+	jmp	common_exception
+END(coprocessor_segment_overrun)
+
+ENTRY(invalid_TSS)
+	ASM_CLAC
+	pushl	$do_invalid_TSS
+	jmp	common_exception
+END(invalid_TSS)
+
+ENTRY(segment_not_present)
+	ASM_CLAC
+	pushl	$do_segment_not_present
+	jmp	common_exception
+END(segment_not_present)
+
+ENTRY(stack_segment)
+	ASM_CLAC
+	pushl	$do_stack_segment
+	jmp	common_exception
+END(stack_segment)
+
+ENTRY(alignment_check)
+	ASM_CLAC
+	pushl	$do_alignment_check
+	jmp	common_exception
+END(alignment_check)
+
+ENTRY(divide_error)
+	ASM_CLAC
+	pushl	$0				# no error code
+	pushl	$do_divide_error
+	jmp	common_exception
+END(divide_error)
+
+#ifdef CONFIG_X86_MCE
+ENTRY(machine_check)
+	ASM_CLAC
+	pushl	$0
+	pushl	machine_check_vector
+	jmp	common_exception
+END(machine_check)
+#endif
+
+ENTRY(spurious_interrupt_bug)
+	ASM_CLAC
+	pushl	$0
+	pushl	$do_spurious_interrupt_bug
+	jmp	common_exception
+END(spurious_interrupt_bug)
+
+#ifdef CONFIG_XEN
+ENTRY(xen_hypervisor_callback)
+	pushl	$-1				/* orig_ax = -1 => not a system call */
+	SAVE_ALL
+	ENCODE_FRAME_POINTER
+	TRACE_IRQS_OFF
+
+	/*
+	 * Check to see if we got the event in the critical
+	 * region in xen_iret_direct, after we've reenabled
+	 * events and checked for pending events.  This simulates
+	 * iret instruction's behaviour where it delivers a
+	 * pending interrupt when enabling interrupts:
+	 */
+	movl	PT_EIP(%esp), %eax
+	cmpl	$xen_iret_start_crit, %eax
+	jb	1f
+	cmpl	$xen_iret_end_crit, %eax
+	jae	1f
+
+	jmp	xen_iret_crit_fixup
+
+ENTRY(xen_do_upcall)
+1:	mov	%esp, %eax
+	call	xen_evtchn_do_upcall
+#ifndef CONFIG_PREEMPT
+	call	xen_maybe_preempt_hcall
+#endif
+	jmp	ret_from_intr
+ENDPROC(xen_hypervisor_callback)
+
+/*
+ * Hypervisor uses this for application faults while it executes.
+ * We get here for two reasons:
+ *  1. Fault while reloading DS, ES, FS or GS
+ *  2. Fault while executing IRET
+ * Category 1 we fix up by reattempting the load, and zeroing the segment
+ * register if the load fails.
+ * Category 2 we fix up by jumping to do_iret_error. We cannot use the
+ * normal Linux return path in this case because if we use the IRET hypercall
+ * to pop the stack frame we end up in an infinite loop of failsafe callbacks.
+ * We distinguish between categories by maintaining a status value in EAX.
+ */
+ENTRY(xen_failsafe_callback)
+	pushl	%eax
+	movl	$1, %eax
+1:	mov	4(%esp), %ds
+2:	mov	8(%esp), %es
+3:	mov	12(%esp), %fs
+4:	mov	16(%esp), %gs
+	/* EAX == 0 => Category 1 (Bad segment)
+	   EAX != 0 => Category 2 (Bad IRET) */
+	testl	%eax, %eax
+	popl	%eax
+	lea	16(%esp), %esp
+	jz	5f
+	jmp	iret_exc
+5:	pushl	$-1				/* orig_ax = -1 => not a system call */
+	SAVE_ALL
+	ENCODE_FRAME_POINTER
+	jmp	ret_from_exception
+
+.section .fixup, "ax"
+6:	xorl	%eax, %eax
+	movl	%eax, 4(%esp)
+	jmp	1b
+7:	xorl	%eax, %eax
+	movl	%eax, 8(%esp)
+	jmp	2b
+8:	xorl	%eax, %eax
+	movl	%eax, 12(%esp)
+	jmp	3b
+9:	xorl	%eax, %eax
+	movl	%eax, 16(%esp)
+	jmp	4b
+.previous
+	_ASM_EXTABLE(1b, 6b)
+	_ASM_EXTABLE(2b, 7b)
+	_ASM_EXTABLE(3b, 8b)
+	_ASM_EXTABLE(4b, 9b)
+ENDPROC(xen_failsafe_callback)
+
+BUILD_INTERRUPT3(xen_hvm_callback_vector, HYPERVISOR_CALLBACK_VECTOR,
+		 xen_evtchn_do_upcall)
+
+#endif /* CONFIG_XEN */
+
+#if IS_ENABLED(CONFIG_HYPERV)
+
+BUILD_INTERRUPT3(hyperv_callback_vector, HYPERVISOR_CALLBACK_VECTOR,
+		 hyperv_vector_handler)
+
+BUILD_INTERRUPT3(hyperv_reenlightenment_vector, HYPERV_REENLIGHTENMENT_VECTOR,
+		 hyperv_reenlightenment_intr)
+
+BUILD_INTERRUPT3(hv_stimer0_callback_vector, HYPERV_STIMER0_VECTOR,
+		 hv_stimer0_vector_handler)
+
+#endif /* CONFIG_HYPERV */
+
+ENTRY(page_fault)
+	ASM_CLAC
+	pushl	$do_page_fault
+	ALIGN
+	jmp common_exception
+END(page_fault)
+
+common_exception:
+>>>>>>> master
 	/* the function address is in %gs's slot on the stack */
 	SAVE_ALL switch_stacks=1 skip_gs=1 unwind_espfix=1
 	ENCODE_FRAME_POINTER

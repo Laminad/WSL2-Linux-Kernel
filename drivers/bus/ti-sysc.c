@@ -3296,6 +3296,7 @@ static int sysc_probe(struct platform_device *pdev)
 	error = sysc_init_dts_quirks(ddata);
 	if (error)
 		return error;
+<<<<<<< HEAD
 
 	error = sysc_map_and_check_registers(ddata);
 	if (error)
@@ -3328,11 +3329,36 @@ static int sysc_probe(struct platform_device *pdev)
 		ddata->reserved = true;
 	else if (error)
 		return error;
+=======
+>>>>>>> master
 
 	error = sysc_get_clocks(ddata);
 	if (error)
 		return error;
 
+<<<<<<< HEAD
+=======
+	error = sysc_map_and_check_registers(ddata);
+	if (error)
+		return error;
+
+	error = sysc_init_sysc_mask(ddata);
+	if (error)
+		return error;
+
+	error = sysc_init_idlemodes(ddata);
+	if (error)
+		return error;
+
+	error = sysc_init_syss_mask(ddata);
+	if (error)
+		return error;
+
+	error = sysc_init_pdata(ddata);
+	if (error)
+		return error;
+
+>>>>>>> master
 	error = sysc_init_resets(ddata);
 	if (error)
 		goto unprepare;

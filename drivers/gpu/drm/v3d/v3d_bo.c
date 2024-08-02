@@ -158,11 +158,21 @@ v3d_prime_import_sg_table(struct drm_device *dev,
 	if (IS_ERR(obj))
 		return obj;
 
+<<<<<<< HEAD
 	ret = v3d_bo_create_finish(obj);
 	if (ret) {
 		drm_gem_shmem_free(&to_v3d_bo(obj)->base);
 		return ERR_PTR(ret);
 	}
+=======
+	bo->resv = attach->dmabuf->resv;
+
+	bo->sgt = sgt;
+	obj->import_attach = attach;
+	v3d_bo_get_pages(bo);
+
+	v3d_mmu_insert_ptes(bo);
+>>>>>>> master
 
 	return obj;
 }

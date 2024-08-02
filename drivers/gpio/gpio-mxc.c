@@ -19,7 +19,10 @@
 #include <linux/platform_device.h>
 #include <linux/pm_runtime.h>
 #include <linux/slab.h>
+<<<<<<< HEAD
 #include <linux/spinlock.h>
+=======
+>>>>>>> master
 #include <linux/syscore_ops.h>
 #include <linux/gpio/driver.h>
 #include <linux/of.h>
@@ -452,9 +455,24 @@ static int mxc_gpio_probe(struct platform_device *pdev)
 		return port->irq;
 
 	/* the controller clock is optional */
+<<<<<<< HEAD
 	port->clk = devm_clk_get_optional_enabled(&pdev->dev, NULL);
 	if (IS_ERR(port->clk))
 		return PTR_ERR(port->clk);
+=======
+	port->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(port->clk)) {
+		if (PTR_ERR(port->clk) == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
+		port->clk = NULL;
+	}
+
+	err = clk_prepare_enable(port->clk);
+	if (err) {
+		dev_err(&pdev->dev, "Unable to enable clock.\n");
+		return err;
+	}
+>>>>>>> master
 
 	if (of_device_is_compatible(np, "fsl,imx7d-gpio"))
 		port->power_off = true;
@@ -559,6 +577,7 @@ static void mxc_gpio_restore_regs(struct mxc_gpio_port *port)
 	writel(port->gpio_saved_reg.dr, port->base + GPIO_DR);
 }
 
+<<<<<<< HEAD
 static bool mxc_gpio_generic_config(struct mxc_gpio_port *port,
 		unsigned int offset, unsigned long conf)
 {
@@ -611,10 +630,22 @@ static int mxc_gpio_runtime_suspend(struct device *dev)
 	mxc_gpio_save_regs(port);
 	clk_disable_unprepare(port->clk);
 	mxc_update_irq_chained_handler(port, false);
+=======
+static int mxc_gpio_syscore_suspend(void)
+{
+	struct mxc_gpio_port *port;
+
+	/* walk through all ports */
+	list_for_each_entry(port, &mxc_gpio_ports, node) {
+		mxc_gpio_save_regs(port);
+		clk_disable_unprepare(port->clk);
+	}
+>>>>>>> master
 
 	return 0;
 }
 
+<<<<<<< HEAD
 static int mxc_gpio_runtime_resume(struct device *dev)
 {
 	struct mxc_gpio_port *port = dev_get_drvdata(dev);
@@ -694,6 +725,24 @@ static void mxc_gpio_syscore_resume(void)
 	}
 }
 
+=======
+static void mxc_gpio_syscore_resume(void)
+{
+	struct mxc_gpio_port *port;
+	int ret;
+
+	/* walk through all ports */
+	list_for_each_entry(port, &mxc_gpio_ports, node) {
+		ret = clk_prepare_enable(port->clk);
+		if (ret) {
+			pr_err("mxc: failed to enable gpio clock %d\n", ret);
+			return;
+		}
+		mxc_gpio_restore_regs(port);
+	}
+}
+
+>>>>>>> master
 static struct syscore_ops mxc_gpio_syscore_ops = {
 	.suspend = mxc_gpio_syscore_suspend,
 	.resume = mxc_gpio_syscore_resume,
@@ -704,7 +753,10 @@ static struct platform_driver mxc_gpio_driver = {
 		.name	= "gpio-mxc",
 		.of_match_table = mxc_gpio_dt_ids,
 		.suppress_bind_attrs = true,
+<<<<<<< HEAD
 		.pm = pm_ptr(&mxc_gpio_dev_pm_ops),
+=======
+>>>>>>> master
 	},
 	.probe		= mxc_gpio_probe,
 };

@@ -390,7 +390,11 @@ int kallsyms_lookup_size_offset(unsigned long addr, unsigned long *symbolsize,
 		get_symbol_pos(addr, symbolsize, offset);
 		return 1;
 	}
+<<<<<<< HEAD
 	return !!module_address_lookup(addr, symbolsize, offset, NULL, NULL, namebuf) ||
+=======
+	return !!module_address_lookup(addr, symbolsize, offset, NULL, namebuf) ||
+>>>>>>> master
 	       !!__bpf_address_lookup(addr, symbolsize, offset, namebuf);
 }
 

@@ -31,7 +31,11 @@
 #include "coda_int.h"
 
 struct coda_vm_ops {
+<<<<<<< HEAD
 	refcount_t refcnt;
+=======
+	atomic_t refcnt;
+>>>>>>> master
 	struct file *coda_file;
 	const struct vm_operations_struct *host_vm_ops;
 	struct vm_operations_struct vm_ops;
@@ -95,6 +99,7 @@ finish_write:
 	return ret;
 }
 
+<<<<<<< HEAD
 static ssize_t
 coda_file_splice_read(struct file *coda_file, loff_t *ppos,
 		      struct pipe_inode_info *pipe,
@@ -121,13 +126,19 @@ finish_read:
 	return ret;
 }
 
+=======
+>>>>>>> master
 static void
 coda_vm_open(struct vm_area_struct *vma)
 {
 	struct coda_vm_ops *cvm_ops =
 		container_of(vma->vm_ops, struct coda_vm_ops, vm_ops);
 
+<<<<<<< HEAD
 	refcount_inc(&cvm_ops->refcnt);
+=======
+	atomic_inc(&cvm_ops->refcnt);
+>>>>>>> master
 
 	if (cvm_ops->host_vm_ops && cvm_ops->host_vm_ops->open)
 		cvm_ops->host_vm_ops->open(vma);
@@ -142,7 +153,11 @@ coda_vm_close(struct vm_area_struct *vma)
 	if (cvm_ops->host_vm_ops && cvm_ops->host_vm_ops->close)
 		cvm_ops->host_vm_ops->close(vma);
 
+<<<<<<< HEAD
 	if (refcount_dec_and_test(&cvm_ops->refcnt)) {
+=======
+	if (atomic_dec_and_test(&cvm_ops->refcnt)) {
+>>>>>>> master
 		vma->vm_ops = cvm_ops->host_vm_ops;
 		fput(cvm_ops->coda_file);
 		kfree(cvm_ops);
@@ -157,10 +172,21 @@ coda_file_mmap(struct file *coda_file, struct vm_area_struct *vma)
 	struct file *host_file = cfi->cfi_container;
 	struct inode *host_inode = file_inode(host_file);
 	struct coda_inode_info *cii;
+<<<<<<< HEAD
 	struct coda_vm_ops *cvm_ops;
 	loff_t ppos;
 	size_t count;
 	int ret;
+=======
+	struct file *host_file;
+	struct inode *coda_inode, *host_inode;
+	struct coda_vm_ops *cvm_ops;
+	int ret;
+
+	cfi = CODA_FTOC(coda_file);
+	BUG_ON(!cfi || cfi->cfi_magic != CODA_MAGIC);
+	host_file = cfi->cfi_container;
+>>>>>>> master
 
 	if (!host_file->f_op->mmap)
 		return -ENODEV;
@@ -168,6 +194,7 @@ coda_file_mmap(struct file *coda_file, struct vm_area_struct *vma)
 	if (WARN_ON(coda_file != vma->vm_file))
 		return -EIO;
 
+<<<<<<< HEAD
 	count = vma->vm_end - vma->vm_start;
 	ppos = vma->vm_pgoff * PAGE_SIZE;
 
@@ -180,6 +207,14 @@ coda_file_mmap(struct file *coda_file, struct vm_area_struct *vma)
 	cvm_ops = kmalloc(sizeof(struct coda_vm_ops), GFP_KERNEL);
 	if (!cvm_ops)
 		return -ENOMEM;
+=======
+	cvm_ops = kmalloc(sizeof(struct coda_vm_ops), GFP_KERNEL);
+	if (!cvm_ops)
+		return -ENOMEM;
+
+	coda_inode = file_inode(coda_file);
+	host_inode = file_inode(host_file);
+>>>>>>> master
 
 	cii = ITOC(coda_inode);
 	spin_lock(&cii->c_lock);
@@ -204,10 +239,17 @@ coda_file_mmap(struct file *coda_file, struct vm_area_struct *vma)
 	ret = call_mmap(vma->vm_file, vma);
 
 	if (ret) {
+<<<<<<< HEAD
 		/* if call_mmap fails, our caller will put host_file so we
 		 * should drop the reference to the coda_file that we got.
 		 */
 		fput(coda_file);
+=======
+		/* if call_mmap fails, our caller will put coda_file so we
+		 * should drop the reference to the host_file that we got.
+		 */
+		fput(host_file);
+>>>>>>> master
 		kfree(cvm_ops);
 	} else {
 		/* here we add redirects for the open/close vm_operations */
@@ -218,7 +260,11 @@ coda_file_mmap(struct file *coda_file, struct vm_area_struct *vma)
 		cvm_ops->vm_ops.open = coda_vm_open;
 		cvm_ops->vm_ops.close = coda_vm_close;
 		cvm_ops->coda_file = coda_file;
+<<<<<<< HEAD
 		refcount_set(&cvm_ops->refcnt, 1);
+=======
+		atomic_set(&cvm_ops->refcnt, 1);
+>>>>>>> master
 
 		vma->vm_ops = &cvm_ops->vm_ops;
 	}

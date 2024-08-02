@@ -847,9 +847,19 @@ static int ad799x_probe(struct i2c_client *client)
 	indio_dev->channels = st->chip_config->channel;
 	indio_dev->num_channels = chip_info->num_channels;
 
+<<<<<<< HEAD
 	ret = ad799x_update_config(st, st->chip_config->default_config | extra_config);
 	if (ret)
 		goto error_disable_vref;
+=======
+	ret = ad799x_write_config(st, st->chip_config->default_config);
+	if (ret < 0)
+		goto error_disable_vref;
+	ret = ad799x_read_config(st);
+	if (ret < 0)
+		goto error_disable_vref;
+	st->config = ret;
+>>>>>>> master
 
 	ret = iio_triggered_buffer_setup(indio_dev, NULL,
 		&ad799x_trigger_handler, NULL);

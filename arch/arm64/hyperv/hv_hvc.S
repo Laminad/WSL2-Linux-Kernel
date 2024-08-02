@@ -19,7 +19,10 @@
  */
 
 #include <linux/linkage.h>
+<<<<<<< HEAD
 #include <asm/assembler.h>
+=======
+>>>>>>> master
 
 	.text
 /*
@@ -33,15 +36,23 @@
  * registers, the register values depends on the hypercall.  Note
  * that this version cannot return any values in registers.
  */
+<<<<<<< HEAD
 SYM_FUNC_START(hv_do_hvc)
 	hvc #1
 	ret
 SYM_FUNC_END(hv_do_hvc)
+=======
+ENTRY(hv_do_hvc)
+	hvc #1
+	ret
+ENDPROC(hv_do_hvc)
+>>>>>>> master
 
 /*
  * This variant of HVC invocation is for hv_get_vpreg and
  * hv_get_vpreg_128. The input parameters are passed in registers
  * along with a pointer in x4 to where the output result should
+<<<<<<< HEAD
  * be stored. The output is returned in x15 and x16. x19 is used as
  * scratch space to avoid buildng a stack frame, as Hyper-V does
  * not preserve registers x0-x17.
@@ -59,3 +70,16 @@ SYM_FUNC_START(hv_do_hvc_fast_get)
 	ldr x19, [sp], #16
 	ret
 SYM_FUNC_END(hv_do_hvc_fast_get)
+=======
+ * be stored. The output is returned in x15 and x16.  x18 is used as
+ * scratch space to avoid buildng a stack frame, as Hyper-V does
+ * not preserve registers x0-x17.
+ */
+ENTRY(hv_do_hvc_fast_get)
+	mov x18, x4
+	hvc #1
+	str x15,[x18]
+	str x16,[x18,#8]
+	ret
+ENDPROC(hv_do_hvc_fast_get)
+>>>>>>> master

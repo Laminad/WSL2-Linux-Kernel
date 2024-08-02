@@ -325,7 +325,12 @@ static void dpu_encoder_phys_vid_vblank_irq(void *arg)
 		flush_register = hw_ctl->ops.get_flush_register(hw_ctl);
 
 	if (!(flush_register & hw_ctl->ops.get_pending_flush(hw_ctl)))
+<<<<<<< HEAD
 		atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0);
+=======
+		new_cnt = atomic_add_unless(&phys_enc->pending_kickoff_cnt,
+				-1, 0);
+>>>>>>> master
 	spin_unlock_irqrestore(phys_enc->enc_spinlock, lock_flags);
 
 	/* Signal any waiting atomic commit thread */

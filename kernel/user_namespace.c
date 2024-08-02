@@ -1041,7 +1041,11 @@ static ssize_t map_write(struct file *file, const char __user *buf,
 
 	ret = -EPERM;
 	/* Validate the user is allowed to use user id's mapped to. */
+<<<<<<< HEAD
 	if (!new_idmap_permitted(file, map_ns, cap_setid, &new_map))
+=======
+	if (!new_idmap_permitted(file, ns, cap_setid, &new_map))
+>>>>>>> master
 		goto out;
 
 	ret = -EPERM;

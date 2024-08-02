@@ -917,7 +917,10 @@ int conf_write(const char *name)
 	char tmpname[PATH_MAX + 1], oldname[PATH_MAX + 1];
 	char *env;
 	int i;
+<<<<<<< HEAD
 	bool need_newline = false;
+=======
+>>>>>>> master
 
 	if (!name)
 		name = conf_get_configname();
@@ -963,18 +966,27 @@ int conf_write(const char *name)
 				     "#\n"
 				     "# %s\n"
 				     "#\n", str);
+<<<<<<< HEAD
 			need_newline = false;
+=======
+>>>>>>> master
 		} else if (!(sym->flags & SYMBOL_CHOICE) &&
 			   !(sym->flags & SYMBOL_WRITTEN)) {
 			sym_calc_value(sym);
 			if (!(sym->flags & SYMBOL_WRITE))
 				goto next;
+<<<<<<< HEAD
 			if (need_newline) {
 				fprintf(out, "\n");
 				need_newline = false;
 			}
 			sym->flags |= SYMBOL_WRITTEN;
 			print_symbol_for_dotconfig(out, sym);
+=======
+			sym->flags |= SYMBOL_WRITTEN;
+
+			conf_write_symbol(out, sym, &kconfig_printer_cb, NULL);
+>>>>>>> master
 		}
 
 next:
@@ -1202,11 +1214,17 @@ int conf_write_autoconf(int overwrite)
 	if (!overwrite && is_present(autoconf_name))
 		return 0;
 
+<<<<<<< HEAD
 	ret = conf_write_autoconf_cmd(autoconf_name);
 	if (ret)
 		return -1;
 
 	if (conf_touch_deps())
+=======
+	conf_write_dep("include/config/auto.conf.cmd");
+
+	if (conf_split_config())
+>>>>>>> master
 		return 1;
 
 	for_all_symbols(i, sym)

@@ -303,7 +303,10 @@ int rmnet_vnd_newlink(u8 id, struct net_device *rmnet_dev,
 
 {
 	struct rmnet_priv *priv = netdev_priv(rmnet_dev);
+<<<<<<< HEAD
 	u32 headroom;
+=======
+>>>>>>> master
 	int rc;
 
 	if (rmnet_get_endpoint(port, id)) {
@@ -317,6 +320,7 @@ int rmnet_vnd_newlink(u8 id, struct net_device *rmnet_dev,
 
 	priv->real_dev = real_dev;
 
+<<<<<<< HEAD
 	headroom = rmnet_vnd_headroom(port);
 
 	if (rmnet_vnd_change_mtu(rmnet_dev, real_dev->mtu - headroom)) {
@@ -324,6 +328,8 @@ int rmnet_vnd_newlink(u8 id, struct net_device *rmnet_dev,
 		return -EINVAL;
 	}
 
+=======
+>>>>>>> master
 	rc = register_netdevice(rmnet_dev);
 	if (!rc) {
 		ep->egress_dev = rmnet_dev;

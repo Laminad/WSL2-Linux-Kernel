@@ -1623,6 +1623,7 @@ ieee80211_get_sband(struct ieee80211_sub_if_data *sdata)
 
 	WARN_ON(ieee80211_vif_is_mld(&sdata->vif));
 
+<<<<<<< HEAD
 	rcu_read_lock();
 	chanctx_conf = rcu_dereference(sdata->vif.bss_conf.chanctx_conf);
 
@@ -1647,6 +1648,9 @@ ieee80211_get_link_sband(struct ieee80211_link_data *link)
 	rcu_read_lock();
 	chanctx_conf = rcu_dereference(link->conf->chanctx_conf);
 	if (!chanctx_conf) {
+=======
+	if (WARN_ON_ONCE(!chanctx_conf)) {
+>>>>>>> master
 		rcu_read_unlock();
 		return NULL;
 	}
@@ -2598,6 +2602,7 @@ void ieee80211_tdls_cancel_channel_switch(struct wiphy *wiphy,
 					  struct net_device *dev,
 					  const u8 *addr);
 void ieee80211_teardown_tdls_peers(struct ieee80211_sub_if_data *sdata);
+<<<<<<< HEAD
 void ieee80211_tdls_handle_disconnect(struct ieee80211_sub_if_data *sdata,
 				      const u8 *peer, u16 reason);
 void
@@ -2609,6 +2614,12 @@ const char *ieee80211_get_reason_code_string(u16 reason_code);
 u16 ieee80211_encode_usf(int val);
 u8 *ieee80211_get_bssid(struct ieee80211_hdr *hdr, size_t len,
 			enum nl80211_iftype type);
+=======
+void ieee80211_tdls_chsw_work(struct work_struct *wk);
+void ieee80211_tdls_handle_disconnect(struct ieee80211_sub_if_data *sdata,
+				      const u8 *peer, u16 reason);
+const char *ieee80211_get_reason_code_string(u16 reason_code);
+>>>>>>> master
 
 extern const struct ethtool_ops ieee80211_ethtool_ops;
 

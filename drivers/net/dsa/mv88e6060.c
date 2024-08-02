@@ -70,11 +70,17 @@ static int mv88e6060_switch_reset(struct mv88e6060_priv *priv)
 	usleep_range(2000, 4000);
 
 	/* Reset the switch. */
+<<<<<<< HEAD
 	ret = reg_write(priv, REG_GLOBAL, GLOBAL_ATU_CONTROL,
 			GLOBAL_ATU_CONTROL_SWRESET |
 			GLOBAL_ATU_CONTROL_LEARNDIS);
 	if (ret)
 		return ret;
+=======
+	REG_WRITE(REG_GLOBAL, GLOBAL_ATU_CONTROL,
+		  GLOBAL_ATU_CONTROL_SWRESET |
+		  GLOBAL_ATU_CONTROL_LEARNDIS);
+>>>>>>> master
 
 	/* Wait up to one second for reset to complete. */
 	timeout = jiffies + 1 * HZ;
@@ -109,8 +115,15 @@ static int mv88e6060_setup_global(struct mv88e6060_priv *priv)
 
 	/* Disable automatic address learning.
 	 */
+<<<<<<< HEAD
 	return reg_write(priv, REG_GLOBAL, GLOBAL_ATU_CONTROL,
 			 GLOBAL_ATU_CONTROL_LEARNDIS);
+=======
+	REG_WRITE(REG_GLOBAL, GLOBAL_ATU_CONTROL,
+		  GLOBAL_ATU_CONTROL_LEARNDIS);
+
+	return 0;
+>>>>>>> master
 }
 
 static int mv88e6060_setup_port(struct mv88e6060_priv *priv, int p)

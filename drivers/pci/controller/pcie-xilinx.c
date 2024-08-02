@@ -298,12 +298,37 @@ static int xilinx_allocate_msi_domains(struct xilinx_pcie *pcie)
 	return 0;
 }
 
+<<<<<<< HEAD
 static void xilinx_free_msi_domains(struct xilinx_pcie *pcie)
+=======
+/* IRQ Domain operations */
+static const struct irq_domain_ops msi_domain_ops = {
+	.map = xilinx_pcie_msi_map,
+};
+
+/**
+ * xilinx_pcie_enable_msi - Enable MSI support
+ * @port: PCIe port information
+ */
+static int xilinx_pcie_enable_msi(struct xilinx_pcie_port *port)
+>>>>>>> master
 {
 	struct irq_domain *parent = pcie->msi_domain->parent;
 
+<<<<<<< HEAD
 	irq_domain_remove(pcie->msi_domain);
 	irq_domain_remove(parent);
+=======
+	port->msi_pages = __get_free_pages(GFP_KERNEL, 0);
+	if (!port->msi_pages)
+		return -ENOMEM;
+
+	msg_addr = virt_to_phys((void *)port->msi_pages);
+	pcie_write(port, 0x0, XILINX_PCIE_REG_MSIBASE1);
+	pcie_write(port, msg_addr, XILINX_PCIE_REG_MSIBASE2);
+
+	return 0;
+>>>>>>> master
 }
 
 /* INTx Functions */
@@ -479,12 +504,18 @@ static int xilinx_pcie_init_irq_domain(struct xilinx_pcie *pcie)
 	if (IS_ENABLED(CONFIG_PCI_MSI)) {
 		phys_addr_t pa = ALIGN_DOWN(virt_to_phys(pcie), SZ_4K);
 
+<<<<<<< HEAD
 		ret = xilinx_allocate_msi_domains(pcie);
 		if (ret)
 			return ret;
 
 		pcie_write(pcie, upper_32_bits(pa), XILINX_PCIE_REG_MSIBASE1);
 		pcie_write(pcie, lower_32_bits(pa), XILINX_PCIE_REG_MSIBASE2);
+=======
+		ret = xilinx_pcie_enable_msi(port);
+		if (ret)
+			return ret;
+>>>>>>> master
 	}
 
 	return 0;

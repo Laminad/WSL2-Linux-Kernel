@@ -442,7 +442,11 @@ static int smk_ptrace_rule_check(struct task_struct *tracer,
 
 	rcu_read_lock();
 	tracercred = __task_cred(tracer);
+<<<<<<< HEAD
 	tsp = smack_cred(tracercred);
+=======
+	tsp = tracercred->security;
+>>>>>>> master
 	tracer_known = smk_of_task(tsp);
 
 	if ((mode & PTRACE_MODE_ATTACH) &&
@@ -1907,7 +1911,11 @@ static int smack_file_send_sigiotask(struct task_struct *tsk,
 {
 	struct smack_known **blob;
 	struct smack_known *skp;
+<<<<<<< HEAD
 	struct smack_known *tkp = smk_of_task(smack_cred(tsk->cred));
+=======
+	struct smack_known *tkp = smk_of_task(tsk->cred->security);
+>>>>>>> master
 	const struct cred *tcred;
 	struct file *file;
 	int rc;
@@ -4122,9 +4130,16 @@ static int smack_socket_sock_rcv_skb(struct sock *sk, struct sk_buff *skb)
 			if (smk_ipv6_localhost(&sadd))
 				break;
 			skp = smack_ipv6host_label(&sadd);
+<<<<<<< HEAD
 			if (skp == NULL)
 				skp = smack_net_ambient;
 		}
+=======
+		if (skp == NULL)
+			skp = smack_net_ambient;
+		if (skb == NULL)
+			break;
+>>>>>>> master
 #ifdef CONFIG_AUDIT
 		smk_ad_init_net(&ad, __func__, LSM_AUDIT_DATA_NET, &net);
 		ad.a.u.net->family = family;
@@ -4442,6 +4457,7 @@ static int smack_key_permission(key_ref_t key_ref,
 	/*
 	 * Validate requested permissions
 	 */
+<<<<<<< HEAD
 	switch (need_perm) {
 	case KEY_NEED_READ:
 	case KEY_NEED_SEARCH:
@@ -4462,6 +4478,10 @@ static int smack_key_permission(key_ref_t key_ref,
 	default:
 		return -EINVAL;
 	}
+=======
+	if (perm & ~KEY_NEED_ALL)
+		return -EINVAL;
+>>>>>>> master
 
 	keyp = key_ref_to_ptr(key_ref);
 	if (keyp == NULL)
@@ -4486,6 +4506,13 @@ static int smack_key_permission(key_ref_t key_ref,
 	ad.a.u.key_struct.key = keyp->serial;
 	ad.a.u.key_struct.key_desc = keyp->description;
 #endif
+<<<<<<< HEAD
+=======
+	if (perm & (KEY_NEED_READ | KEY_NEED_SEARCH | KEY_NEED_VIEW))
+		request |= MAY_READ;
+	if (perm & (KEY_NEED_WRITE | KEY_NEED_LINK | KEY_NEED_SETATTR))
+		request |= MAY_WRITE;
+>>>>>>> master
 	rc = smk_access(tkp, keyp->security, request, &ad);
 	rc = smk_bu_note("key access", tkp, keyp->security, request, rc);
 	return rc;

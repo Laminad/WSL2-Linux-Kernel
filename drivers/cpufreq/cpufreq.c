@@ -1209,8 +1209,45 @@ static int cpufreq_notifier_max(struct notifier_block *nb, unsigned long freq,
 {
 	struct cpufreq_policy *policy = container_of(nb, struct cpufreq_policy, nb_max);
 
+<<<<<<< HEAD
 	schedule_work(&policy->update);
 	return 0;
+=======
+	if (!zalloc_cpumask_var(&policy->related_cpus, GFP_KERNEL))
+		goto err_free_cpumask;
+
+	if (!zalloc_cpumask_var(&policy->real_cpus, GFP_KERNEL))
+		goto err_free_rcpumask;
+
+	ret = kobject_init_and_add(&policy->kobj, &ktype_cpufreq,
+				   cpufreq_global_kobject, "policy%u", cpu);
+	if (ret) {
+		pr_err("%s: failed to init policy->kobj: %d\n", __func__, ret);
+		kobject_put(&policy->kobj);
+		goto err_free_real_cpus;
+	}
+
+	INIT_LIST_HEAD(&policy->policy_list);
+	init_rwsem(&policy->rwsem);
+	spin_lock_init(&policy->transition_lock);
+	init_waitqueue_head(&policy->transition_wait);
+	init_completion(&policy->kobj_unregister);
+	INIT_WORK(&policy->update, handle_update);
+
+	policy->cpu = cpu;
+	return policy;
+
+err_free_real_cpus:
+	free_cpumask_var(policy->real_cpus);
+err_free_rcpumask:
+	free_cpumask_var(policy->related_cpus);
+err_free_cpumask:
+	free_cpumask_var(policy->cpus);
+err_free_policy:
+	kfree(policy);
+
+	return NULL;
+>>>>>>> master
 }
 
 static void cpufreq_policy_put_kobj(struct cpufreq_policy *policy)
@@ -1863,9 +1900,32 @@ __weak unsigned int cpufreq_get_hw_max_freq(unsigned int cpu)
 	struct cpufreq_policy *policy = cpufreq_cpu_get(cpu);
 	unsigned int ret_freq = 0;
 
+<<<<<<< HEAD
 	if (policy) {
 		ret_freq = policy->cpuinfo.max_freq;
 		cpufreq_cpu_put(policy);
+=======
+	if (unlikely(policy_is_inactive(policy)) || !cpufreq_driver->get)
+		return ret_freq;
+
+	ret_freq = cpufreq_driver->get(policy->cpu);
+
+	/*
+	 * If fast frequency switching is used with the given policy, the check
+	 * against policy->cur is pointless, so skip it in that case too.
+	 */
+	if (policy->fast_switch_enabled)
+		return ret_freq;
+
+	if (ret_freq && policy->cur &&
+		!(cpufreq_driver->flags & CPUFREQ_CONST_LOOPS)) {
+		/* verify no discrepancy between actual and
+					saved value exists */
+		if (unlikely(ret_freq != policy->cur)) {
+			cpufreq_out_of_sync(policy, ret_freq);
+			schedule_work(&policy->update);
+		}
+>>>>>>> master
 	}
 
 	return ret_freq;
@@ -1893,8 +1953,12 @@ unsigned int cpufreq_get(unsigned int cpu)
 
 	if (policy) {
 		down_read(&policy->rwsem);
+<<<<<<< HEAD
 		if (cpufreq_driver->get)
 			ret_freq = __cpufreq_get(policy);
+=======
+		ret_freq = __cpufreq_get(policy);
+>>>>>>> master
 		up_read(&policy->rwsem);
 
 		cpufreq_cpu_put(policy);
@@ -2994,6 +3058,12 @@ void cpufreq_unregister_driver(struct cpufreq_driver *driver)
 }
 EXPORT_SYMBOL_GPL(cpufreq_unregister_driver);
 
+<<<<<<< HEAD
+=======
+struct kobject *cpufreq_global_kobject;
+EXPORT_SYMBOL(cpufreq_global_kobject);
+
+>>>>>>> master
 static int __init cpufreq_core_init(void)
 {
 	struct cpufreq_governor *gov = cpufreq_default_governor();
@@ -3009,9 +3079,12 @@ static int __init cpufreq_core_init(void)
 	}
 	BUG_ON(!cpufreq_global_kobject);
 
+<<<<<<< HEAD
 	if (!strlen(default_governor))
 		strncpy(default_governor, gov->name, CPUFREQ_NAME_LEN);
 
+=======
+>>>>>>> master
 	return 0;
 }
 module_param(off, int, 0444);

@@ -542,8 +542,27 @@ int kvm_vcpu_ioctl_get_cpuid2(struct kvm_vcpu *vcpu,
 /* Mask kvm_cpu_caps for @leaf with the raw CPUID capabilities of this CPU. */
 static __always_inline void __kvm_cpu_cap_mask(unsigned int leaf)
 {
+<<<<<<< HEAD
 	const struct cpuid_reg cpuid = x86_feature_cpuid(leaf * 32);
 	struct kvm_cpuid_entry2 entry;
+=======
+	int r;
+	unsigned f_nx = is_efer_nx() ? F(NX) : 0;
+#ifdef CONFIG_X86_64
+	unsigned f_gbpages = (kvm_x86_ops->get_lpage_level() == PT_PDPE_LEVEL)
+				? F(GBPAGES) : 0;
+	unsigned f_lm = F(LM);
+#else
+	unsigned f_gbpages = 0;
+	unsigned f_lm = 0;
+#endif
+	unsigned f_rdtscp = kvm_x86_ops->rdtscp_supported() ? F(RDTSCP) : 0;
+	unsigned f_invpcid = kvm_x86_ops->invpcid_supported() ? F(INVPCID) : 0;
+	unsigned f_mpx = kvm_mpx_supported() ? F(MPX) : 0;
+	unsigned f_xsaves = kvm_x86_ops->xsaves_supported() ? F(XSAVES) : 0;
+	unsigned f_umip = kvm_x86_ops->umip_emulated() ? F(UMIP) : 0;
+	unsigned f_la57 = 0;
+>>>>>>> master
 
 	reverse_cpuid_check(leaf);
 
@@ -710,8 +729,15 @@ void kvm_set_cpu_caps(void)
 		0 /* Reserved */ | f_lm | F(3DNOWEXT) | F(3DNOW)
 	);
 
+<<<<<<< HEAD
 	if (!tdp_enabled && IS_ENABLED(CONFIG_X86_64))
 		kvm_cpu_cap_set(X86_FEATURE_GBPAGES);
+=======
+	/* cpuid 0x80000008.ebx */
+	const u32 kvm_cpuid_8000_0008_ebx_x86_features =
+		F(AMD_IBPB) | F(AMD_IBRS) | F(AMD_SSBD) | F(VIRT_SSBD) |
+		F(AMD_SSB_NO) | F(AMD_STIBP);
+>>>>>>> master
 
 	kvm_cpu_cap_init_kvm_defined(CPUID_8000_0007_EDX,
 		SF(CONSTANT_TSC)
@@ -819,6 +845,7 @@ static struct kvm_cpuid_entry2 *get_next_cpuid(struct kvm_cpuid_array *array)
 	if (array->nent >= array->maxnent)
 		return NULL;
 
+<<<<<<< HEAD
 	return &array->entries[array->nent++];
 }
 
@@ -904,6 +931,13 @@ static inline int __do_cpuid_func(struct kvm_cpuid_array *array, u32 function)
 {
 	struct kvm_cpuid_entry2 *entry;
 	int r, i, max_idx;
+=======
+	/* cpuid 7.0.edx*/
+	const u32 kvm_cpuid_7_0_edx_x86_features =
+		F(AVX512_4VNNIW) | F(AVX512_4FMAPS) | F(SPEC_CTRL) |
+		F(SPEC_CTRL_SSBD) | F(ARCH_CAPABILITIES) | F(INTEL_STIBP) |
+		F(MD_CLEAR);
+>>>>>>> master
 
 	/* all calls to cpuid_count() should be made on the same cpu */
 	get_cpu();
@@ -960,6 +994,7 @@ static inline int __do_cpuid_func(struct kvm_cpuid_array *array, u32 function)
 		entry->ecx = 0;
 		entry->edx = 0;
 		break;
+<<<<<<< HEAD
 	/* function 7 has additional index. */
 	case 7:
 		max_idx = entry->eax = min(entry->eax, 2u);
@@ -975,6 +1010,41 @@ static inline int __do_cpuid_func(struct kvm_cpuid_array *array, u32 function)
 
 			cpuid_entry_override(entry, CPUID_7_1_EAX);
 			cpuid_entry_override(entry, CPUID_7_1_EDX);
+=======
+	case 7: {
+		entry->flags |= KVM_CPUID_FLAG_SIGNIFCANT_INDEX;
+		/* Mask ebx against host capability word 9 */
+		if (index == 0) {
+			entry->ebx &= kvm_cpuid_7_0_ebx_x86_features;
+			cpuid_mask(&entry->ebx, CPUID_7_0_EBX);
+			// TSC_ADJUST is emulated
+			entry->ebx |= F(TSC_ADJUST);
+			entry->ecx &= kvm_cpuid_7_0_ecx_x86_features;
+			f_la57 = entry->ecx & F(LA57);
+			cpuid_mask(&entry->ecx, CPUID_7_ECX);
+			/* Set LA57 based on hardware capability. */
+			entry->ecx |= f_la57;
+			entry->ecx |= f_umip;
+			/* PKU is not yet implemented for shadow paging. */
+			if (!tdp_enabled || !boot_cpu_has(X86_FEATURE_OSPKE))
+				entry->ecx &= ~F(PKU);
+
+			entry->edx &= kvm_cpuid_7_0_edx_x86_features;
+			cpuid_mask(&entry->edx, CPUID_7_EDX);
+			if (boot_cpu_has(X86_FEATURE_IBPB) &&
+			    boot_cpu_has(X86_FEATURE_IBRS))
+				entry->edx |= F(SPEC_CTRL);
+			if (boot_cpu_has(X86_FEATURE_STIBP))
+				entry->edx |= F(INTEL_STIBP);
+			if (boot_cpu_has(X86_FEATURE_SSBD))
+				entry->edx |= F(SPEC_CTRL_SSBD);
+			/*
+			 * We emulate ARCH_CAPABILITIES in software even
+			 * if the host doesn't support it.
+			 */
+			entry->edx |= F(ARCH_CAPABILITIES);
+		} else {
+>>>>>>> master
 			entry->ebx = 0;
 			entry->ecx = 0;
 		}

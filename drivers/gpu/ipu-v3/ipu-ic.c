@@ -192,8 +192,13 @@ static int init_csc(struct ipu_ic *ic,
 		((c[1][1] & 0x1ff) << 9) | (c[2][2] & 0x1ff);
 	writel(param, base++);
 
+<<<<<<< HEAD
 	param = ((a[0] & 0x1fe0) >> 5) | (csc->params.scale << 8) |
 		(csc->params.sat << 10);
+=======
+	param = ((a[0] & 0x1fe0) >> 5) | (params->scale << 8) |
+		(params->sat << 10);
+>>>>>>> master
 	writel(param, base++);
 
 	param = ((a[1] & 0x1f) << 27) | ((c[0][1] & 0x1ff) << 18) |

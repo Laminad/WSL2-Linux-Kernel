@@ -810,8 +810,13 @@ static int sgiseeq_probe(struct platform_device *pdev)
 	return 0;
 
 err_out_free_attrs:
+<<<<<<< HEAD
 	dma_free_noncoherent(&pdev->dev, sizeof(*sp->srings), sp->srings,
 		       sp->srings_dma, DMA_BIDIRECTIONAL);
+=======
+	dma_free_attrs(&pdev->dev, sizeof(*sp->srings), sp->srings,
+		       sp->srings_dma, DMA_ATTR_NON_CONSISTENT);
+>>>>>>> master
 err_out_free_dev:
 	free_netdev(dev);
 

@@ -87,6 +87,7 @@ int mlx5e_port_linkspeed(struct mlx5_core_dev *mdev, u32 *speed)
 	ext = mlx5_ptys_ext_supported(mdev);
 	err = mlx5_port_query_eth_proto(mdev, 1, ext, &eproto);
 	if (err)
+<<<<<<< HEAD
 		goto out;
 	if (ext && !eproto.admin) {
 		force_legacy = true;
@@ -95,6 +96,12 @@ int mlx5e_port_linkspeed(struct mlx5_core_dev *mdev, u32 *speed)
 			goto out;
 	}
 	*speed = mlx5_port_ptys2speed(mdev, eproto.oper, force_legacy);
+=======
+		return err;
+
+	eth_proto_oper = MLX5_GET(ptys_reg, out, eth_proto_oper);
+	*speed = mlx5e_port_ptys2speed(eth_proto_oper);
+>>>>>>> master
 	if (!(*speed))
 		err = -EINVAL;
 

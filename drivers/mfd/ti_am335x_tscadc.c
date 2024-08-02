@@ -284,7 +284,12 @@ static	int ti_tscadc_probe(struct platform_device *pdev)
 	}
 
 	err = mfd_add_devices(&pdev->dev, PLATFORM_DEVID_AUTO,
+<<<<<<< HEAD
 			      tscadc->cells, cell_idx, NULL, 0, NULL);
+=======
+			      tscadc->cells, tscadc->used_cells, NULL,
+			      0, NULL);
+>>>>>>> master
 	if (err < 0)
 		goto err_disable_clk;
 

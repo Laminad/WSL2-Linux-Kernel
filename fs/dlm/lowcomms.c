@@ -1671,6 +1671,7 @@ static void process_send_sockets(struct work_struct *work)
 
 static void work_stop(void)
 {
+<<<<<<< HEAD
 	if (io_workqueue) {
 		destroy_workqueue(io_workqueue);
 		io_workqueue = NULL;
@@ -1680,6 +1681,12 @@ static void work_stop(void)
 		destroy_workqueue(process_workqueue);
 		process_workqueue = NULL;
 	}
+=======
+	if (recv_workqueue)
+		destroy_workqueue(recv_workqueue);
+	if (send_workqueue)
+		destroy_workqueue(send_workqueue);
+>>>>>>> master
 }
 
 static int work_start(void)
@@ -1711,6 +1718,7 @@ void dlm_lowcomms_shutdown(void)
 	struct connection *con;
 	int i, idx;
 
+<<<<<<< HEAD
 	/* stop lowcomms_listen_data_ready calls */
 	lock_sock(listen_con.sock->sk);
 	listen_con.sock->sk->sk_data_ready = listen_sock.sk_data_ready;
@@ -1731,6 +1739,31 @@ void dlm_lowcomms_shutdown(void)
 			if (con->othercon)
 				clean_one_writequeue(con->othercon);
 			allow_connection_io(con);
+=======
+	if (recv_workqueue)
+		flush_workqueue(recv_workqueue);
+	if (send_workqueue)
+		flush_workqueue(send_workqueue);
+	do {
+		ok = 1;
+		foreach_conn(stop_conn);
+		if (recv_workqueue)
+			flush_workqueue(recv_workqueue);
+		if (send_workqueue)
+			flush_workqueue(send_workqueue);
+		for (i = 0; i < CONN_HASH_SIZE && ok; i++) {
+			hlist_for_each_entry_safe(con, n,
+						  &connection_hash[i], list) {
+				ok &= test_bit(CF_READ_PENDING, &con->flags);
+				ok &= test_bit(CF_WRITE_PENDING, &con->flags);
+				if (con->othercon) {
+					ok &= test_bit(CF_READ_PENDING,
+						       &con->othercon->flags);
+					ok &= test_bit(CF_WRITE_PENDING,
+						       &con->othercon->flags);
+				}
+			}
+>>>>>>> master
 		}
 	}
 	srcu_read_unlock(&connections_srcu, idx);

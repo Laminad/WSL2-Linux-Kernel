@@ -18,9 +18,12 @@ etc.
    devices
    sysctl/index
 
+<<<<<<< HEAD
    abi
    features
 
+=======
+>>>>>>> master
 This section describes CPU vulnerabilities and their mitigations.
 
 .. toctree::

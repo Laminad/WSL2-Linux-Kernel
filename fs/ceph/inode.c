@@ -664,10 +664,13 @@ void ceph_free_inode(struct inode *inode)
 	struct ceph_inode_info *ci = ceph_inode(inode);
 
 	kfree(ci->i_symlink);
+<<<<<<< HEAD
 #ifdef CONFIG_FS_ENCRYPTION
 	kfree(ci->fscrypt_auth);
 #endif
 	fscrypt_free_inode(inode);
+=======
+>>>>>>> master
 	kmem_cache_free(ceph_inode_cachep, ci);
 }
 
@@ -680,11 +683,15 @@ void ceph_evict_inode(struct inode *inode)
 
 	dout("evict_inode %p ino %llx.%llx\n", inode, ceph_vinop(inode));
 
+<<<<<<< HEAD
 	percpu_counter_dec(&mdsc->metric.total_inodes);
 
 	truncate_inode_pages_final(&inode->i_data);
 	if (inode->i_state & I_PINNING_FSCACHE_WB)
 		ceph_fscache_unuse_cookie(inode, true);
+=======
+	truncate_inode_pages_final(&inode->i_data);
+>>>>>>> master
 	clear_inode(inode);
 
 	ceph_fscache_unregister_inode_cookie(ci);
@@ -724,7 +731,25 @@ void ceph_evict_inode(struct inode *inode)
 		ceph_buffer_put(ci->i_xattrs.prealloc_blob);
 
 	ceph_put_string(rcu_dereference_raw(ci->i_layout.pool_ns));
+<<<<<<< HEAD
 	ceph_put_string(rcu_dereference_raw(ci->i_cached_layout.pool_ns));
+=======
+}
+
+void ceph_destroy_inode(struct inode *inode)
+{
+	call_rcu(&inode->i_rcu, ceph_i_callback);
+}
+
+int ceph_drop_inode(struct inode *inode)
+{
+	/*
+	 * Positve dentry and corresponding inode are always accompanied
+	 * in MDS reply. So no need to keep inode in the cache after
+	 * dropping all its aliases.
+	 */
+	return 1;
+>>>>>>> master
 }
 
 static inline blkcnt_t calc_inode_blocks(u64 size)
@@ -1012,6 +1037,18 @@ int ceph_fill_inode(struct inode *inode, struct page *locked_page,
 	issued |= __ceph_caps_dirty(ci);
 	new_issued = ~issued & info_caps;
 
+<<<<<<< HEAD
+=======
+	/* update inode */
+	inode->i_rdev = le32_to_cpu(info->rdev);
+	/* directories have fl_stripe_unit set to zero */
+	if (le32_to_cpu(info->layout.fl_stripe_unit))
+		inode->i_blkbits =
+			fls(le32_to_cpu(info->layout.fl_stripe_unit)) - 1;
+	else
+		inode->i_blkbits = CEPH_BLOCK_SHIFT;
+
+>>>>>>> master
 	__ceph_update_quota(ci, iinfo->max_bytes, iinfo->max_files);
 
 #ifdef CONFIG_FS_ENCRYPTION
@@ -1453,10 +1490,21 @@ static int splice_dentry(struct dentry **pdn, struct inode *in)
 	if (IS_ERR(realdn)) {
 		pr_err("splice_dentry error %ld %p inode %p ino %llx.%llx\n",
 		       PTR_ERR(realdn), dn, in, ceph_vinop(in));
+<<<<<<< HEAD
 		return PTR_ERR(realdn);
 	}
 
 	if (realdn) {
+=======
+		dn = realdn;
+		/*
+		 * Caller should release 'dn' in the case of error.
+		 * If 'req->r_dentry' is passed to this function,
+		 * caller should leave 'req->r_dentry' untouched.
+		 */
+		goto out;
+	} else if (realdn) {
+>>>>>>> master
 		dout("dn %p (%d) spliced with %p (%d) "
 		     "inode %p ino %llx.%llx\n",
 		     dn, d_count(dn),

@@ -221,6 +221,28 @@ int main(int argc, char ** argv)
 	kernel = mmap(NULL, sz, PROT_READ, MAP_SHARED, fd, 0);
 	if (kernel == MAP_FAILED)
 		die("Unable to mmap '%s': %m", argv[2]);
+<<<<<<< HEAD
+=======
+	/* Number of 16-byte paragraphs, including space for a 4-byte CRC */
+	sys_size = (sz + 15 + 4) / 16;
+#ifdef CONFIG_EFI_STUB
+	/*
+	 * COFF requires minimum 32-byte alignment of sections, and
+	 * adding a signature is problematic without that alignment.
+	 */
+	sys_size = (sys_size + 1) & ~1;
+#endif
+
+	/* Patch the setup code with the appropriate size parameters */
+	buf[0x1f1] = setup_sectors-1;
+	put_unaligned_le32(sys_size, &buf[0x1f4]);
+
+	update_pecoff_text(setup_sectors * 512, i + (sys_size * 16));
+	init_sz = get_unaligned_le32(&buf[0x260]);
+	update_pecoff_bss(i + (sys_size * 16), init_sz);
+
+	efi_stub_entry_update();
+>>>>>>> master
 
 	crc = partial_crc32(buf, i, crc);
 	if (fwrite(buf, 1, i, dest) != i)

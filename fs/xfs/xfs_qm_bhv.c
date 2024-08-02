@@ -39,8 +39,13 @@ xfs_fill_statvfs_from_dquot(
 	if (limit && statp->f_files > limit) {
 		statp->f_files = limit;
 		statp->f_ffree =
+<<<<<<< HEAD
 			(statp->f_files > dqp->q_ino.reserved) ?
 			 (statp->f_files - dqp->q_ino.reserved) : 0;
+=======
+			(statp->f_files > dqp->q_res_icount) ?
+			 (statp->f_files - dqp->q_res_icount) : 0;
+>>>>>>> master
 	}
 }
 

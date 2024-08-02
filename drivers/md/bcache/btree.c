@@ -642,7 +642,11 @@ retry:
 	 * and BTREE_NODE_journal_flush bit cleared by btree_flush_write().
 	 */
 	if (btree_node_journal_flush(b)) {
+<<<<<<< HEAD
 		pr_debug("bnode %p is flushing by journal, retry\n", b);
+=======
+		pr_debug("bnode %p is flushing by journal, retry", b);
+>>>>>>> master
 		mutex_unlock(&b->write_lock);
 		udelay(1);
 		goto retry;
@@ -1089,7 +1093,11 @@ retry:
 	 */
 	if (btree_node_journal_flush(b)) {
 		mutex_unlock(&b->write_lock);
+<<<<<<< HEAD
 		pr_debug("bnode %p journal_flush set, retry\n", b);
+=======
+		pr_debug("bnode %p journal_flush set, retry", b);
+>>>>>>> master
 		udelay(1);
 		goto retry;
 	}

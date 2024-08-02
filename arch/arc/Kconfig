@@ -375,6 +375,7 @@ config ARC_HAS_ACCL_REGS
 	  (also referred to as r58:r59). These can also be used by gcc as GPR so
 	  kernel needs to save/restore per process
 
+<<<<<<< HEAD
 config ARC_DSP_HANDLED
 	def_bool n
 
@@ -423,6 +424,8 @@ config ARC_DSP_AGU_USERSPACE
 	  and AGU registers to run DSP-enabled userspace applications
 endchoice
 
+=======
+>>>>>>> master
 config ARC_IRQ_NO_AUTOSAVE
 	bool "Disable hardware autosave regfile on interrupts"
 	default n
@@ -431,6 +434,7 @@ config ARC_IRQ_NO_AUTOSAVE
 	  This is programmable and can be optionally disabled in which case
 	  software INTERRUPT_PROLOGUE/EPILGUE do the needed work
 
+<<<<<<< HEAD
 config ARC_LPB_DISABLE
 	bool "Disable loop buffer (LPB)"
 	help
@@ -438,6 +442,9 @@ config ARC_LPB_DISABLE
 	  be optionally disabled.
 
 endif # ISA_ARCV2
+=======
+endif	# ISA_ARCV2
+>>>>>>> master
 
 endmenu   # "ARC CPU Configuration"
 
@@ -541,6 +548,7 @@ config ARC_DW2_UNWIND
 	  If you don't debug the kernel, you can say N, but we may not be able
 	  to solve problems without frame unwind information
 
+<<<<<<< HEAD
 config ARC_DBG_JUMP_LABEL
 	bool "Paranoid checks in Static Keys (jump labels) code"
 	depends on JUMP_LABEL
@@ -548,6 +556,12 @@ config ARC_DBG_JUMP_LABEL
 	help
 	  Enable paranoid checks and self-test of both ARC-specific and generic
 	  part of static keys (jump labels) related code.
+=======
+config ARC_DBG_TLB_PARANOIA
+	bool "Paranoia Checks in Low Level TLB Handlers"
+	default n
+
+>>>>>>> master
 endif
 
 config ARC_BUILTIN_DTB_NAME

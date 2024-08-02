@@ -18,6 +18,10 @@
 struct st33zp24_i2c_phy {
 	struct i2c_client *client;
 	u8 buf[ST33ZP24_BUFSIZE + 1];
+<<<<<<< HEAD
+=======
+	int io_lpcpd;
+>>>>>>> master
 };
 
 /*

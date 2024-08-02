@@ -85,12 +85,21 @@ static u16 nvmet_get_smart_log_nsid(struct nvmet_req *req,
 	if (!req->ns->bdev)
 		return NVME_SC_SUCCESS;
 
+<<<<<<< HEAD
 	host_reads = part_stat_read(req->ns->bdev, ios[READ]);
 	data_units_read =
 		DIV_ROUND_UP(part_stat_read(req->ns->bdev, sectors[READ]), 1000);
 	host_writes = part_stat_read(req->ns->bdev, ios[WRITE]);
 	data_units_written =
 		DIV_ROUND_UP(part_stat_read(req->ns->bdev, sectors[WRITE]), 1000);
+=======
+	host_reads = part_stat_read(ns->bdev->bd_part, ios[READ]);
+	data_units_read = DIV_ROUND_UP(part_stat_read(ns->bdev->bd_part,
+		sectors[READ]), 1000);
+	host_writes = part_stat_read(ns->bdev->bd_part, ios[WRITE]);
+	data_units_written = DIV_ROUND_UP(part_stat_read(ns->bdev->bd_part,
+		sectors[WRITE]), 1000);
+>>>>>>> master
 
 	put_unaligned_le64(host_reads, &slog->host_reads[0]);
 	put_unaligned_le64(data_units_read, &slog->data_units_read[0]);
@@ -114,12 +123,22 @@ static u16 nvmet_get_smart_log_all(struct nvmet_req *req,
 		/* we don't have the right data for file backed ns */
 		if (!ns->bdev)
 			continue;
+<<<<<<< HEAD
 		host_reads += part_stat_read(ns->bdev, ios[READ]);
 		data_units_read += DIV_ROUND_UP(
 			part_stat_read(ns->bdev, sectors[READ]), 1000);
 		host_writes += part_stat_read(ns->bdev, ios[WRITE]);
 		data_units_written += DIV_ROUND_UP(
 			part_stat_read(ns->bdev, sectors[WRITE]), 1000);
+=======
+		host_reads += part_stat_read(ns->bdev->bd_part, ios[READ]);
+		data_units_read += DIV_ROUND_UP(
+			part_stat_read(ns->bdev->bd_part, sectors[READ]), 1000);
+		host_writes += part_stat_read(ns->bdev->bd_part, ios[WRITE]);
+		data_units_written += DIV_ROUND_UP(
+			part_stat_read(ns->bdev->bd_part, sectors[WRITE]), 1000);
+
+>>>>>>> master
 	}
 
 	put_unaligned_le64(host_reads, &slog->host_reads[0]);

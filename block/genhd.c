@@ -394,6 +394,78 @@ int disk_scan_partitions(struct gendisk *disk, blk_mode_t mode)
 int __must_check device_add_disk(struct device *parent, struct gendisk *disk,
 				 const struct attribute_group **groups)
 
+<<<<<<< HEAD
+=======
+	if (MAJOR(devt) == BLOCK_EXT_MAJOR) {
+		spin_lock_bh(&ext_devt_lock);
+		idr_remove(&ext_devt_idr, blk_mangle_minor(MINOR(devt)));
+		spin_unlock_bh(&ext_devt_lock);
+	}
+}
+
+/**
+ *	We invalidate devt by assigning NULL pointer for devt in idr.
+ */
+void blk_invalidate_devt(dev_t devt)
+{
+	if (MAJOR(devt) == BLOCK_EXT_MAJOR) {
+		spin_lock_bh(&ext_devt_lock);
+		idr_replace(&ext_devt_idr, NULL, blk_mangle_minor(MINOR(devt)));
+		spin_unlock_bh(&ext_devt_lock);
+	}
+}
+
+static char *bdevt_str(dev_t devt, char *buf)
+{
+	if (MAJOR(devt) <= 0xff && MINOR(devt) <= 0xff) {
+		char tbuf[BDEVT_SIZE];
+		snprintf(tbuf, BDEVT_SIZE, "%02x%02x", MAJOR(devt), MINOR(devt));
+		snprintf(buf, BDEVT_SIZE, "%-9s", tbuf);
+	} else
+		snprintf(buf, BDEVT_SIZE, "%03x:%05x", MAJOR(devt), MINOR(devt));
+
+	return buf;
+}
+
+/*
+ * Register device numbers dev..(dev+range-1)
+ * range must be nonzero
+ * The hash chain is sorted on range, so that subranges can override.
+ */
+void blk_register_region(dev_t devt, unsigned long range, struct module *module,
+			 struct kobject *(*probe)(dev_t, int *, void *),
+			 int (*lock)(dev_t, void *), void *data)
+{
+	kobj_map(bdev_map, devt, range, module, probe, lock, data);
+}
+
+EXPORT_SYMBOL(blk_register_region);
+
+void blk_unregister_region(dev_t devt, unsigned long range)
+{
+	kobj_unmap(bdev_map, devt, range);
+}
+
+EXPORT_SYMBOL(blk_unregister_region);
+
+static struct kobject *exact_match(dev_t devt, int *partno, void *data)
+{
+	struct gendisk *p = data;
+
+	return &disk_to_dev(p)->kobj;
+}
+
+static int exact_lock(dev_t devt, void *data)
+{
+	struct gendisk *p = data;
+
+	if (!get_disk_and_module(p))
+		return -1;
+	return 0;
+}
+
+static void register_disk(struct device *parent, struct gendisk *disk)
+>>>>>>> master
 {
 	struct device *ddev = disk_to_dev(disk);
 	int ret;
@@ -675,7 +747,19 @@ void del_gendisk(struct gendisk *disk)
 		bdi_unregister(disk->bdi);
 	}
 
+<<<<<<< HEAD
 	blk_unregister_queue(disk);
+=======
+	if (!(disk->flags & GENHD_FL_HIDDEN))
+		blk_unregister_region(disk_devt(disk), disk->minors);
+	/*
+	 * Remove gendisk pointer from idr so that it cannot be looked up
+	 * while RCU period before freeing gendisk is running to prevent
+	 * use-after-free issues. Note that the device number stays
+	 * "in-use" until we really free the gendisk.
+	 */
+	blk_invalidate_devt(disk_devt(disk));
+>>>>>>> master
 
 	kobject_put(disk->part0->bd_holder_dir);
 	kobject_put(disk->slave_dir);

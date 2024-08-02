@@ -42,6 +42,7 @@ int can_rx_offload_add_manual(struct net_device *dev,
 int can_rx_offload_irq_offload_timestamp(struct can_rx_offload *offload,
 					 u64 reg);
 int can_rx_offload_irq_offload_fifo(struct can_rx_offload *offload);
+<<<<<<< HEAD
 int can_rx_offload_queue_timestamp(struct can_rx_offload *offload,
 				   struct sk_buff *skb, u32 timestamp);
 unsigned int can_rx_offload_get_echo_skb_queue_timestamp(struct can_rx_offload *offload,
@@ -54,6 +55,15 @@ unsigned int can_rx_offload_get_echo_skb_queue_tail(struct can_rx_offload *offlo
 						    unsigned int *frame_len_ptr);
 void can_rx_offload_irq_finish(struct can_rx_offload *offload);
 void can_rx_offload_threaded_irq_finish(struct can_rx_offload *offload);
+=======
+int can_rx_offload_queue_sorted(struct can_rx_offload *offload,
+				struct sk_buff *skb, u32 timestamp);
+unsigned int can_rx_offload_get_echo_skb(struct can_rx_offload *offload,
+					 unsigned int idx, u32 timestamp);
+int can_rx_offload_queue_tail(struct can_rx_offload *offload,
+			      struct sk_buff *skb);
+void can_rx_offload_reset(struct can_rx_offload *offload);
+>>>>>>> master
 void can_rx_offload_del(struct can_rx_offload *offload);
 void can_rx_offload_enable(struct can_rx_offload *offload);
 

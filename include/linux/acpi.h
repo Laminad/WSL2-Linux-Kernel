@@ -383,8 +383,12 @@ void acpi_penalize_sci_irq(int irq, int trigger, int polarity);
 #else
 static inline void acpi_penalize_sci_irq(int irq, int trigger,
 					int polarity)
+<<<<<<< HEAD
 {
 }
+=======
+{}
+>>>>>>> master
 #endif
 void acpi_pci_irq_disable (struct pci_dev *dev);
 

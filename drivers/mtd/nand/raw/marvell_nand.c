@@ -726,7 +726,10 @@ static int marvell_nfc_poll_status(struct marvell_nfc *nfc, u32 mask,
 static int marvell_nfc_wait_op(struct nand_chip *chip, unsigned int timeout_ms)
 {
 	struct marvell_nfc *nfc = to_marvell_nfc(chip->controller);
+<<<<<<< HEAD
 	struct mtd_info *mtd = nand_to_mtd(chip);
+=======
+>>>>>>> master
 	u32 pending;
 	int ret;
 
@@ -741,18 +744,29 @@ static int marvell_nfc_wait_op(struct nand_chip *chip, unsigned int timeout_ms)
 	} else {
 		init_completion(&nfc->complete);
 
+<<<<<<< HEAD
 		marvell_nfc_enable_int(nfc, NDCR_RDYM);
 		ret = wait_for_completion_timeout(&nfc->complete,
 						  msecs_to_jiffies(timeout_ms));
 		marvell_nfc_disable_int(nfc, NDCR_RDYM);
 	}
+=======
+	marvell_nfc_enable_int(nfc, NDCR_RDYM);
+	ret = wait_for_completion_timeout(&nfc->complete,
+					  msecs_to_jiffies(timeout_ms));
+	marvell_nfc_disable_int(nfc, NDCR_RDYM);
+>>>>>>> master
 	pending = marvell_nfc_clear_int(nfc, NDSR_RDY(0) | NDSR_RDY(1));
 
 	/*
 	 * In case the interrupt was not served in the required time frame,
 	 * check if the ISR was not served or if something went actually wrong.
 	 */
+<<<<<<< HEAD
 	if (!ret && !pending) {
+=======
+	if (ret && !pending) {
+>>>>>>> master
 		dev_err(nfc->dev, "Timeout waiting for RB signal\n");
 		return -ETIMEDOUT;
 	}

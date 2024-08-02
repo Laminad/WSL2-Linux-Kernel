@@ -601,7 +601,11 @@ static int crypto_gcm_create_common(struct crypto_template *tmpl,
 	err = -EINVAL;
 	if (strcmp(ghash->base.cra_name, "ghash") != 0 ||
 	    ghash->digestsize != 16)
+<<<<<<< HEAD
 		goto err_free_inst;
+=======
+		goto err_drop_ghash;
+>>>>>>> master
 
 	err = crypto_grab_skcipher(&ctx->ctr, aead_crypto_instance(inst),
 				   ctr_name, 0, mask);
@@ -614,12 +618,20 @@ static int crypto_gcm_create_common(struct crypto_template *tmpl,
 	if (strncmp(ctr->base.cra_name, "ctr(", 4) != 0 ||
 	    crypto_skcipher_alg_ivsize(ctr) != 16 ||
 	    ctr->base.cra_blocksize != 1)
+<<<<<<< HEAD
 		goto err_free_inst;
+=======
+		goto out_put_ctr;
+>>>>>>> master
 
 	err = -ENAMETOOLONG;
 	if (snprintf(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
 		     "gcm(%s", ctr->base.cra_name + 4) >= CRYPTO_MAX_ALG_NAME)
+<<<<<<< HEAD
 		goto err_free_inst;
+=======
+		goto out_put_ctr;
+>>>>>>> master
 
 	if (snprintf(inst->alg.base.cra_driver_name, CRYPTO_MAX_ALG_NAME,
 		     "gcm_base(%s,%s)", ctr->base.cra_driver_name,
@@ -627,6 +639,11 @@ static int crypto_gcm_create_common(struct crypto_template *tmpl,
 	    CRYPTO_MAX_ALG_NAME)
 		goto err_free_inst;
 
+<<<<<<< HEAD
+=======
+	inst->alg.base.cra_flags = (ghash->base.cra_flags |
+				    ctr->base.cra_flags) & CRYPTO_ALG_ASYNC;
+>>>>>>> master
 	inst->alg.base.cra_priority = (ghash->base.cra_priority +
 				       ctr->base.cra_priority) / 2;
 	inst->alg.base.cra_blocksize = 1;

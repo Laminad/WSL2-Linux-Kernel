@@ -184,10 +184,15 @@ parse_symbol() {
 	if [[ $aarray_support == true && "${cache[$module,$address]+isset}" == "isset" ]]; then
 		local code=${cache[$module,$address]}
 	else
+<<<<<<< HEAD
 		local code=$(${ADDR2LINE} -i -e "$objfile" "$address" 2>/dev/null)
 		if [[ $aarray_support == true ]]; then
 			cache[$module,$address]=$code
 		fi
+=======
+		local code=$(${CROSS_COMPILE}addr2line -i -e "$objfile" "$address")
+		cache[$module,$address]=$code
+>>>>>>> master
 	fi
 
 	# addr2line doesn't return a proper error code if it fails, so
@@ -197,8 +202,13 @@ parse_symbol() {
 		return
 	fi
 
+<<<<<<< HEAD
 	# Strip out the base of the path on each line
 	code=$(while read -r line; do echo "${line#$basepath/}"; done <<< "$code")
+=======
+	# Strip out the base of the path
+	code=${code#$basepath/}
+>>>>>>> master
 
 	# In the case of inlines, move everything to same line
 	code=${code//$'\n'/' '}

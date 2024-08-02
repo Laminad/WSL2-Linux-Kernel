@@ -196,8 +196,12 @@ int configfs_symlink(struct mnt_idmap *idmap, struct inode *dir,
 	if (dentry->d_inode || d_unhashed(dentry))
 		ret = -EEXIST;
 	else
+<<<<<<< HEAD
 		ret = inode_permission(&nop_mnt_idmap, dir,
 				       MAY_WRITE | MAY_EXEC);
+=======
+		ret = inode_permission(dir, MAY_WRITE | MAY_EXEC);
+>>>>>>> master
 	if (!ret)
 		ret = type->ct_item_ops->allow_link(parent_item, target_item);
 	if (!ret) {

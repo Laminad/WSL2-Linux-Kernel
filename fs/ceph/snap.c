@@ -527,7 +527,10 @@ static void ceph_queue_cap_snap(struct ceph_inode_info *ci,
 {
 	struct inode *inode = &ci->netfs.inode;
 	struct ceph_snap_context *old_snapc, *new_snapc;
+<<<<<<< HEAD
 	struct ceph_cap_snap *capsnap = *pcapsnap;
+=======
+>>>>>>> master
 	struct ceph_buffer *old_blob = NULL;
 	int used, dirty;
 
@@ -630,18 +633,31 @@ static void ceph_queue_cap_snap(struct ceph_inode_info *ci,
 	old_snapc = NULL;
 
 update_snapc:
+<<<<<<< HEAD
 	if (ci->i_wrbuffer_ref_head == 0 &&
 	    ci->i_wr_ref == 0 &&
 	    ci->i_dirty_caps == 0 &&
 	    ci->i_flushing_caps == 0) {
 		ci->i_head_snapc = NULL;
 	} else {
+=======
+       if (ci->i_wrbuffer_ref_head == 0 &&
+           ci->i_wr_ref == 0 &&
+           ci->i_dirty_caps == 0 &&
+           ci->i_flushing_caps == 0) {
+               ci->i_head_snapc = NULL;
+       } else {
+>>>>>>> master
 		ci->i_head_snapc = ceph_get_snap_context(new_snapc);
 		dout(" new snapc is %p\n", new_snapc);
 	}
 	spin_unlock(&ci->i_ceph_lock);
 
 	ceph_buffer_put(old_blob);
+<<<<<<< HEAD
+=======
+	kfree(capsnap);
+>>>>>>> master
 	ceph_put_snap_context(old_snapc);
 }
 
@@ -699,10 +715,15 @@ int __ceph_finish_cap_snap(struct ceph_inode_info *ci,
 	     capsnap->size);
 
 	spin_lock(&mdsc->snap_flush_lock);
+<<<<<<< HEAD
 	if (list_empty(&ci->i_snap_flush_item)) {
 		ihold(inode);
 		list_add_tail(&ci->i_snap_flush_item, &mdsc->snap_flush_list);
 	}
+=======
+	if (list_empty(&ci->i_snap_flush_item))
+		list_add_tail(&ci->i_snap_flush_item, &mdsc->snap_flush_list);
+>>>>>>> master
 	spin_unlock(&mdsc->snap_flush_lock);
 	return 1;  /* caller may want to ceph_flush_snaps */
 }

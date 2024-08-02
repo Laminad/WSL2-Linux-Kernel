@@ -189,6 +189,7 @@ struct c_can_priv {
 	struct napi_struct napi;
 	struct net_device *dev;
 	struct device *device;
+<<<<<<< HEAD
 	unsigned int msg_obj_num;
 	unsigned int msg_obj_rx_num;
 	unsigned int msg_obj_tx_num;
@@ -197,6 +198,9 @@ struct c_can_priv {
 	unsigned int msg_obj_tx_first;
 	unsigned int msg_obj_tx_last;
 	u32 msg_obj_rx_mask;
+=======
+	atomic_t tx_active;
+>>>>>>> master
 	atomic_t sie_pending;
 	unsigned long tx_dir;
 	int last_status;

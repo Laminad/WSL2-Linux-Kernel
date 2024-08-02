@@ -1233,7 +1233,11 @@ int tcf_action_dump(struct sk_buff *skb, struct tc_action *actions[],
 
 	for (i = 0; i < TCA_ACT_MAX_PRIO && actions[i]; i++) {
 		a = actions[i];
+<<<<<<< HEAD
 		nest = nla_nest_start_noflag(skb, i + 1);
+=======
+		nest = nla_nest_start(skb, i + 1);
+>>>>>>> master
 		if (nest == NULL)
 			goto nla_put_failure;
 		err = terse ? tcf_action_dump_terse(skb, a, false) :
@@ -1997,7 +2001,11 @@ static int tcf_action_add(struct net *net, struct nlattr *nla,
 			  struct netlink_ext_ack *extack)
 {
 	size_t attr_size = 0;
+<<<<<<< HEAD
 	int loop, ret, i;
+=======
+	int loop, ret;
+>>>>>>> master
 	struct tc_action *actions[TCA_ACT_MAX_PRIO] = {};
 	int init_res[TCA_ACT_MAX_PRIO] = {};
 
@@ -2008,6 +2016,16 @@ static int tcf_action_add(struct net *net, struct nlattr *nla,
 			break;
 	}
 
+<<<<<<< HEAD
+=======
+	for (loop = 0; loop < 10; loop++) {
+		ret = tcf_action_init(net, NULL, nla, NULL, NULL, ovr, 0,
+				      actions, &attr_size, true, extack);
+		if (ret != -EAGAIN)
+			break;
+	}
+
+>>>>>>> master
 	if (ret < 0)
 		return ret;
 	ret = tcf_add_notify(net, n, actions, portid, attr_size, extack);
@@ -2060,8 +2078,13 @@ static int tc_ctl_action(struct sk_buff *skb, struct nlmsghdr *n,
 		 * is zero) then just set this
 		 */
 		if (n->nlmsg_flags & NLM_F_REPLACE)
+<<<<<<< HEAD
 			flags = TCA_ACT_FLAGS_REPLACE;
 		ret = tcf_action_add(net, tca[TCA_ACT_TAB], n, portid, flags,
+=======
+			ovr = 1;
+		ret = tcf_action_add(net, tca[TCA_ACT_TAB], n, portid, ovr,
+>>>>>>> master
 				     extack);
 		break;
 	case RTM_DELACTION:

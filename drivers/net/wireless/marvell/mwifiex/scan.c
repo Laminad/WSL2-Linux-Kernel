@@ -1252,7 +1252,11 @@ int mwifiex_update_bss_desc_with_ie(struct mwifiex_adapter *adapter,
 			break;
 
 		case WLAN_EID_FH_PARAMS:
+<<<<<<< HEAD
 			if (total_ie_len < sizeof(*fh_param_set))
+=======
+			if (element_len + 2 < sizeof(*fh_param_set))
+>>>>>>> master
 				return -EINVAL;
 			fh_param_set =
 				(struct ieee_types_fh_param_set *) current_ptr;
@@ -1262,7 +1266,11 @@ int mwifiex_update_bss_desc_with_ie(struct mwifiex_adapter *adapter,
 			break;
 
 		case WLAN_EID_DS_PARAMS:
+<<<<<<< HEAD
 			if (total_ie_len < sizeof(*ds_param_set))
+=======
+			if (element_len + 2 < sizeof(*ds_param_set))
+>>>>>>> master
 				return -EINVAL;
 			ds_param_set =
 				(struct ieee_types_ds_param_set *) current_ptr;
@@ -1275,7 +1283,11 @@ int mwifiex_update_bss_desc_with_ie(struct mwifiex_adapter *adapter,
 			break;
 
 		case WLAN_EID_CF_PARAMS:
+<<<<<<< HEAD
 			if (total_ie_len < sizeof(*cf_param_set))
+=======
+			if (element_len + 2 < sizeof(*cf_param_set))
+>>>>>>> master
 				return -EINVAL;
 			cf_param_set =
 				(struct ieee_types_cf_param_set *) current_ptr;
@@ -1285,7 +1297,11 @@ int mwifiex_update_bss_desc_with_ie(struct mwifiex_adapter *adapter,
 			break;
 
 		case WLAN_EID_IBSS_PARAMS:
+<<<<<<< HEAD
 			if (total_ie_len < sizeof(*ibss_param_set))
+=======
+			if (element_len + 2 < sizeof(*ibss_param_set))
+>>>>>>> master
 				return -EINVAL;
 			ibss_param_set =
 				(struct ieee_types_ibss_param_set *)

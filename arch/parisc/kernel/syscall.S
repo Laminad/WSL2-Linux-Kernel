@@ -50,6 +50,7 @@ registers).
 #define KILL_INSN	break	0,0
 
 	.level          PA_ASM_LEVEL
+<<<<<<< HEAD
 
 	.macro	lws_pagefault_disable reg1,reg2
 	mfctl	%cr30, \reg2
@@ -76,6 +77,8 @@ registers).
 	.word	SPINLOCK_BREAK_INSN
 #endif
 	.endm
+=======
+>>>>>>> master
 
 	.text
 

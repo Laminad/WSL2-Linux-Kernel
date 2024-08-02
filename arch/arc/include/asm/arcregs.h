@@ -177,7 +177,11 @@ struct bcr_isa_arcv2 {
 #endif
 };
 
+<<<<<<< HEAD
 struct bcr_uarch_build {
+=======
+struct bcr_uarch_build_arcv2 {
+>>>>>>> master
 #ifdef CONFIG_CPU_BIG_ENDIAN
 	unsigned int pad:8, prod:8, maj:8, min:8;
 #else
@@ -185,6 +189,7 @@ struct bcr_uarch_build {
 #endif
 };
 
+<<<<<<< HEAD
 struct bcr_mmu_3 {
 #ifdef CONFIG_CPU_BIG_ENDIAN
 	unsigned int ver:8, ways:4, sets:4, res:3, sasid:1, pg_sz:4,
@@ -238,6 +243,8 @@ struct bcr_volatile {
 #endif
 };
 
+=======
+>>>>>>> master
 struct bcr_mpy {
 #ifdef CONFIG_CPU_BIG_ENDIAN
 	unsigned int pad:8, x1616:8, dsp:4, cycles:2, type:2, ver:8;

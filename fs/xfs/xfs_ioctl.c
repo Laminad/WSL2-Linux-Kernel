@@ -1507,6 +1507,33 @@ xfs_ioc_getbmap(
 out_free_buf:
 	kmem_free(buf);
 	return error;
+<<<<<<< HEAD
+=======
+}
+
+struct getfsmap_info {
+	struct xfs_mount	*mp;
+	struct fsmap_head __user *data;
+	unsigned int		idx;
+	__u32			last_flags;
+};
+
+STATIC int
+xfs_getfsmap_format(struct xfs_fsmap *xfm, void *priv)
+{
+	struct getfsmap_info	*info = priv;
+	struct fsmap		fm;
+
+	trace_xfs_getfsmap_mapping(info->mp, xfm);
+
+	info->last_flags = xfm->fmr_flags;
+	xfs_fsmap_from_internal(&fm, xfm);
+	if (copy_to_user(&info->data->fmh_recs[info->idx++], &fm,
+			sizeof(struct fsmap)))
+		return -EFAULT;
+
+	return 0;
+>>>>>>> master
 }
 
 STATIC int

@@ -11,7 +11,11 @@
 #define CLOCK_STATUS_MASK      0xffff0000
 #define CLOCK_CONFIG_MASK      0x0000ffff
 
+<<<<<<< HEAD
 #define READY_TIMEOUT_MS	4000
+=======
+#define CALLBACK_TIMEOUT 500
+>>>>>>> master
 
 static int get_clock(struct snd_tscm *tscm, u32 *data)
 {

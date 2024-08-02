@@ -1948,6 +1948,7 @@ unsigned int meson_venci_get_field(struct meson_drm *priv)
 
 void meson_venc_enable_vsync(struct meson_drm *priv)
 {
+<<<<<<< HEAD
 	switch (priv->venc.current_mode) {
 	case MESON_VENC_MODE_MIPI_DSI:
 		writel_relaxed(VENC_INTCTRL_ENCP_LNRST_INT_EN,
@@ -1957,6 +1958,9 @@ void meson_venc_enable_vsync(struct meson_drm *priv)
 		writel_relaxed(VENC_INTCTRL_ENCI_LNRST_INT_EN,
 			       priv->io_base + _REG(VENC_INTCTRL));
 	}
+=======
+	writel_relaxed(2, priv->io_base + _REG(VENC_INTCTRL));
+>>>>>>> master
 	regmap_update_bits(priv->hhi, HHI_GCLK_MPEG2, BIT(25), BIT(25));
 }
 

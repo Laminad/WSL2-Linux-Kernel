@@ -420,7 +420,18 @@ int __filemap_fdatawrite_range(struct address_space *mapping, loff_t start,
 		.range_end = end,
 	};
 
+<<<<<<< HEAD
 	return filemap_fdatawrite_wbc(mapping, &wbc);
+=======
+	if (!mapping_cap_writeback_dirty(mapping) ||
+	    !mapping_tagged(mapping, PAGECACHE_TAG_DIRTY))
+		return 0;
+
+	wbc_attach_fdatawrite_inode(&wbc, mapping->host);
+	ret = do_writepages(mapping, &wbc);
+	wbc_detach_inode(&wbc);
+	return ret;
+>>>>>>> master
 }
 
 static inline int __filemap_fdatawrite(struct address_space *mapping,

@@ -1679,8 +1679,13 @@ void __init alternative_instructions(void)
  * instructions. And on the local CPU you need to be protected against NMI or
  * MCE handlers seeing an inconsistent instruction while you patch.
  */
+<<<<<<< HEAD
 void __init_or_module text_poke_early(void *addr, const void *opcode,
 				      size_t len)
+=======
+void *__init_or_module text_poke_early(void *addr, const void *opcode,
+				       size_t len)
+>>>>>>> master
 {
 	unsigned long flags;
 
@@ -1695,14 +1700,20 @@ void __init_or_module text_poke_early(void *addr, const void *opcode,
 	} else {
 		local_irq_save(flags);
 		memcpy(addr, opcode, len);
+<<<<<<< HEAD
 		sync_core();
 		local_irq_restore(flags);
+=======
+		local_irq_restore(flags);
+		sync_core();
+>>>>>>> master
 
 		/*
 		 * Could also do a CLFLUSH here to speed up CPU recovery; but
 		 * that causes hangs on some VIA CPUs.
 		 */
 	}
+<<<<<<< HEAD
 }
 
 typedef struct {
@@ -1889,6 +1900,8 @@ static void *__text_poke(text_poke_f func, void *addr, const void *src, size_t l
 
 	local_irq_restore(flags);
 	pte_unmap_unlock(ptep, ptl);
+=======
+>>>>>>> master
 	return addr;
 }
 

@@ -1305,7 +1305,11 @@ static int sunxi_pinctrl_build_state(struct platform_device *pdev)
 	 * special functions per pin, plus one entry for the sentinel.
 	 * We'll reallocate that later anyway.
 	 */
+<<<<<<< HEAD
 	pctl->functions = kcalloc(7 * pctl->ngroups + 4,
+=======
+	pctl->functions = kcalloc(pctl->ngroups,
+>>>>>>> master
 				  sizeof(*pctl->functions),
 				  GFP_KERNEL);
 	if (!pctl->functions)

@@ -1966,7 +1966,11 @@ static int fec_get_mac(struct net_device *ndev)
 		eth_hw_addr_random(ndev);
 		dev_info(&fep->pdev->dev, "Using random MAC address: %pM\n",
 			 ndev->dev_addr);
+<<<<<<< HEAD
 		return 0;
+=======
+		return;
+>>>>>>> master
 	}
 
 	/* Adjust MAC if using macaddr */
@@ -2288,7 +2292,12 @@ failed_clk_ref:
 		mutex_unlock(&fep->ptp_clk_mutex);
 	}
 failed_clk_ptp:
+<<<<<<< HEAD
 	clk_disable_unprepare(fep->clk_enet_out);
+=======
+	if (fep->clk_enet_out)
+		clk_disable_unprepare(fep->clk_enet_out);
+>>>>>>> master
 
 	return ret;
 }
@@ -4525,6 +4534,12 @@ failed_reset:
 	pm_runtime_disable(&pdev->dev);
 	if (fep->reg_phy)
 		regulator_disable(fep->reg_phy);
+<<<<<<< HEAD
+=======
+failed_reset:
+	pm_runtime_put_noidle(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
+>>>>>>> master
 failed_regulator:
 	clk_disable_unprepare(fep->clk_ahb);
 failed_clk_ahb:

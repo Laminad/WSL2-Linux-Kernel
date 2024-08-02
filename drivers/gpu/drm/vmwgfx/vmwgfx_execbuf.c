@@ -2247,9 +2247,16 @@ static int vmw_cmd_dx_set_shader(struct vmw_private *dev_priv,
 
 	cmd = container_of(header, typeof(*cmd), header);
 
+<<<<<<< HEAD
 	if (!vmw_shadertype_is_valid(dev_priv->sm_type, cmd->body.type)) {
 		VMW_DEBUG_USER("Illegal shader type %u.\n",
 			       (unsigned int) cmd->body.type);
+=======
+	if (cmd->body.type >= SVGA3D_SHADERTYPE_DX10_MAX ||
+	    cmd->body.type < SVGA3D_SHADERTYPE_MIN) {
+		DRM_ERROR("Illegal shader type %u.\n",
+			  (unsigned) cmd->body.type);
+>>>>>>> master
 		return -EINVAL;
 	}
 
@@ -2476,7 +2483,11 @@ static int vmw_cmd_dx_view_define(struct vmw_private *dev_priv,
 
 	cmd = container_of(header, typeof(*cmd), header);
 	if (unlikely(cmd->sid == SVGA3D_INVALID_ID)) {
+<<<<<<< HEAD
 		VMW_DEBUG_USER("Invalid surface id.\n");
+=======
+		DRM_ERROR("Invalid surface id.\n");
+>>>>>>> master
 		return -EINVAL;
 	}
 	ret = vmw_cmd_res_check(dev_priv, sw_context, vmw_res_surface,

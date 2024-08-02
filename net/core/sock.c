@@ -1451,7 +1451,11 @@ set_sndbuf:
 		break;
 		}
 	case SO_INCOMING_CPU:
+<<<<<<< HEAD
 		reuseport_update_incoming_cpu(sk, val);
+=======
+		WRITE_ONCE(sk->sk_incoming_cpu, val);
+>>>>>>> master
 		break;
 
 	case SO_CNX_ADVICE:
@@ -3581,13 +3585,38 @@ int sock_gettstamp(struct socket *sock, void __user *userstamp,
 	struct timespec64 ts;
 
 	sock_enable_timestamp(sk, SOCK_TIMESTAMP);
+<<<<<<< HEAD
 	ts = ktime_to_timespec64(sock_read_timestamp(sk));
+=======
+	tv = ktime_to_timeval(sock_read_timestamp(sk));
+	if (tv.tv_sec == -1)
+		return -ENOENT;
+	if (tv.tv_sec == 0) {
+		ktime_t kt = ktime_get_real();
+		sock_write_timestamp(sk, kt);
+		tv = ktime_to_timeval(kt);
+	}
+	return copy_to_user(userstamp, &tv, sizeof(tv)) ? -EFAULT : 0;
+}
+EXPORT_SYMBOL(sock_get_timestamp);
+
+int sock_get_timestampns(struct sock *sk, struct timespec __user *userstamp)
+{
+	struct timespec ts;
+
+	sock_enable_timestamp(sk, SOCK_TIMESTAMP);
+	ts = ktime_to_timespec(sock_read_timestamp(sk));
+>>>>>>> master
 	if (ts.tv_sec == -1)
 		return -ENOENT;
 	if (ts.tv_sec == 0) {
 		ktime_t kt = ktime_get_real();
 		sock_write_timestamp(sk, kt);
+<<<<<<< HEAD
 		ts = ktime_to_timespec64(kt);
+=======
+		ts = ktime_to_timespec(sk->sk_stamp);
+>>>>>>> master
 	}
 
 	if (timeval)
@@ -4141,6 +4170,7 @@ bool sk_busy_loop_end(void *p, unsigned long start_time)
 {
 	struct sock *sk = p;
 
+<<<<<<< HEAD
 	if (!skb_queue_empty_lockless(&sk->sk_receive_queue))
 		return true;
 
@@ -4149,6 +4179,10 @@ bool sk_busy_loop_end(void *p, unsigned long start_time)
 		return true;
 
 	return sk_busy_loop_timeout(sk, start_time);
+=======
+	return !skb_queue_empty_lockless(&sk->sk_receive_queue) ||
+	       sk_busy_loop_timeout(sk, start_time);
+>>>>>>> master
 }
 EXPORT_SYMBOL(sk_busy_loop_end);
 #endif /* CONFIG_NET_RX_BUSY_POLL */

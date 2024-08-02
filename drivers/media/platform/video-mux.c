@@ -432,6 +432,15 @@ static int video_mux_probe(struct platform_device *pdev)
 				  GFP_KERNEL);
 	if (!vmux->pads)
 		return -ENOMEM;
+<<<<<<< HEAD
+=======
+
+	vmux->format_mbus = devm_kcalloc(dev, num_pads,
+					 sizeof(*vmux->format_mbus),
+					 GFP_KERNEL);
+	if (!vmux->format_mbus)
+		return -ENOMEM;
+>>>>>>> master
 
 	for (i = 0; i < num_pads; i++)
 		vmux->pads[i].flags = (i < num_pads - 1) ? MEDIA_PAD_FL_SINK

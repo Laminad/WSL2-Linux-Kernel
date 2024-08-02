@@ -163,6 +163,7 @@ struct ieee80211_mesh_fast_tx_key {
 };
 
 /**
+<<<<<<< HEAD
  * struct ieee80211_mesh_fast_tx - cached mesh fast tx entry
  * @rhash: rhashtable pointer
  * @key: the lookup key for this cache entry
@@ -185,6 +186,25 @@ struct ieee80211_mesh_fast_tx {
 	struct mesh_path *mpath, *mppath;
 	struct hlist_node walk_list;
 	unsigned long timestamp;
+=======
+ * struct mesh_table
+ *
+ * @known_gates: list of known mesh gates and their mpaths by the station. The
+ * gate's mpath may or may not be resolved and active.
+ * @gates_lock: protects updates to known_gates
+ * @rhead: the rhashtable containing struct mesh_paths, keyed by dest addr
+ * @walk_head: linked list containging all mesh_path objects
+ * @walk_lock: lock protecting walk_head
+ * @entries: number of entries in the table
+ */
+struct mesh_table {
+	struct hlist_head known_gates;
+	spinlock_t gates_lock;
+	struct rhashtable rhead;
+	struct hlist_head walk_head;
+	spinlock_t walk_lock;
+	atomic_t entries;		/* Up to MAX_MESH_NEIGHBOURS */
+>>>>>>> master
 };
 
 /* Recent multicast cache */

@@ -35,6 +35,7 @@ struct cros_feature_to_name {
 	const char *desc;
 };
 
+<<<<<<< HEAD
 /**
  * struct cros_feature_to_cells - CrOS feature id to mfd cells association.
  * @id: The feature identifier.
@@ -46,6 +47,26 @@ struct cros_feature_to_cells {
 	const struct mfd_cell *mfd_cells;
 	unsigned int num_cells;
 };
+=======
+static void cros_ec_class_release(struct device *dev)
+{
+	kfree(to_cros_ec_dev(dev));
+}
+
+static void cros_ec_sensors_register(struct cros_ec_dev *ec)
+{
+	/*
+	 * Issue a command to get the number of sensor reported.
+	 * Build an array of sensors driver and register them all.
+	 */
+	int ret, i, id, sensor_num;
+	struct mfd_cell *sensor_cells;
+	struct cros_ec_sensor_platform *sensor_platforms;
+	int sensor_type[MOTIONSENSE_TYPE_MAX];
+	struct ec_params_motion_sense *params;
+	struct ec_response_motion_sense *resp;
+	struct cros_ec_command *msg;
+>>>>>>> master
 
 static const struct cros_feature_to_name cros_mcu_devices[] = {
 	{
@@ -139,8 +160,11 @@ static int ec_device_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct cros_ec_platform *ec_platform = dev_get_platdata(dev);
 	struct cros_ec_dev *ec = kzalloc(sizeof(*ec), GFP_KERNEL);
+<<<<<<< HEAD
 	struct ec_response_pchg_count pchg_count;
 	int i;
+=======
+>>>>>>> master
 
 	if (!ec)
 		return retval;
@@ -292,7 +316,17 @@ static int ec_device_remove(struct platform_device *pdev)
 {
 	struct cros_ec_dev *ec = dev_get_drvdata(&pdev->dev);
 
+<<<<<<< HEAD
 	mfd_remove_devices(ec->dev);
+=======
+	/* Let the EC take over the lightbar again. */
+	lb_manual_suspend_ctrl(ec, 0);
+
+	cros_ec_debugfs_remove(ec);
+
+	mfd_remove_devices(ec->dev);
+	cdev_del(&ec->cdev);
+>>>>>>> master
 	device_unregister(&ec->class_dev);
 	return 0;
 }

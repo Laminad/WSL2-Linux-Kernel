@@ -1,3 +1,4 @@
+<<<<<<< HEAD:Documentation/arch/x86/index.rst
 .. SPDX-License-Identifier: GPL-2.0
 
 ==========================
@@ -43,3 +44,14 @@ x86-specific Documentation
    features
    elf_auxvec
    xstate
+=======
+==========================
+x86 architecture specifics
+==========================
+
+.. toctree::
+   :maxdepth: 1
+
+   mds
+   tsx_async_abort
+>>>>>>> master:Documentation/x86/index.rst

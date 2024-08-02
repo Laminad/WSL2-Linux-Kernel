@@ -798,8 +798,11 @@ enum ib_uverbs_wr_opcode {
 	IB_UVERBS_WR_RDMA_READ_WITH_INV = 11,
 	IB_UVERBS_WR_MASKED_ATOMIC_CMP_AND_SWP = 12,
 	IB_UVERBS_WR_MASKED_ATOMIC_FETCH_AND_ADD = 13,
+<<<<<<< HEAD
 	IB_UVERBS_WR_FLUSH = 14,
 	IB_UVERBS_WR_ATOMIC_WRITE = 15,
+=======
+>>>>>>> master
 	/* Review enum ib_wr_opcode before modifying this */
 };
 

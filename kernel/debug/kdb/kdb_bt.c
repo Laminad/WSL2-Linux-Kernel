@@ -200,7 +200,31 @@ kdb_bt(int argc, const char **argv)
 				kdb_bt_cpu(cpu);
 				touch_nmi_watchdog();
 			}
+<<<<<<< HEAD
 		}
+=======
+			sprintf(buf, "btt 0x%px\n", KDB_TSK(cpu));
+			kdb_parse(buf);
+			return 0;
+		}
+		kdb_printf("btc: cpu status: ");
+		kdb_parse("cpu\n");
+		for_each_online_cpu(cpu) {
+			void *kdb_tsk = KDB_TSK(cpu);
+
+			/* If a CPU failed to round up we could be here */
+			if (!kdb_tsk) {
+				kdb_printf("WARNING: no task for cpu %ld\n",
+					   cpu);
+				continue;
+			}
+
+			sprintf(buf, "btt 0x%px\n", kdb_tsk);
+			kdb_parse(buf);
+			touch_nmi_watchdog();
+		}
+		kdb_set_current_task(save_current_task);
+>>>>>>> master
 		return 0;
 	} else {
 		if (argc) {

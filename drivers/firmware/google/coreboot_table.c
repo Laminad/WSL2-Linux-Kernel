@@ -93,9 +93,26 @@ static int coreboot_table_populate(struct device *dev, void *ptr)
 	for (i = 0; i < header->table_entries; i++) {
 		entry = ptr_entry;
 
+<<<<<<< HEAD
 		if (entry->size < sizeof(*entry)) {
 			dev_warn(dev, "coreboot table entry too small!\n");
 			return -EINVAL;
+=======
+	if (strncmp(header.signature, "LBIO", sizeof(header.signature))) {
+		pr_warn("coreboot_table: coreboot table missing or corrupt!\n");
+		ret = -ENODEV;
+		goto out;
+	}
+
+	ptr_entry = (void *)ptr_header + header.header_bytes;
+	for (i = 0; i < header.table_entries; i++) {
+		memcpy_fromio(&entry, ptr_entry, sizeof(entry));
+
+		device = kzalloc(sizeof(struct device) + entry.size, GFP_KERNEL);
+		if (!device) {
+			ret = -ENOMEM;
+			break;
+>>>>>>> master
 		}
 
 		device = kzalloc(sizeof(device->dev) + entry->size, GFP_KERNEL);
@@ -123,7 +140,23 @@ static int coreboot_table_populate(struct device *dev, void *ptr)
 			return ret;
 		}
 
+<<<<<<< HEAD
 		ptr_entry += entry->size;
+=======
+		ptr_entry += entry.size;
+	}
+out:
+	iounmap(ptr);
+	return ret;
+}
+EXPORT_SYMBOL(coreboot_table_init);
+
+int coreboot_table_exit(void)
+{
+	if (ptr_header) {
+		bus_unregister(&coreboot_bus_type);
+		ptr_header = NULL;
+>>>>>>> master
 	}
 
 	return 0;

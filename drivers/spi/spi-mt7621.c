@@ -329,6 +329,10 @@ static int mt7621_spi_probe(struct platform_device *pdev)
 	struct mt7621_spi *rs;
 	void __iomem *base;
 	struct clk *clk;
+<<<<<<< HEAD:drivers/spi/spi-mt7621.c
+=======
+	struct mt7621_spi_ops *ops;
+>>>>>>> master:drivers/staging/mt7621-spi/spi-mt7621.c
 	int ret;
 
 	match = of_match_device(mt7621_spi_match, &pdev->dev);

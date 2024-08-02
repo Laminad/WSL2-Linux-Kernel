@@ -240,7 +240,11 @@ int udf_truncate_extents(struct inode *inode)
 					udf_get_lb_pblock(sb, &eloc, 0));
 			/* Error reading indirect block? */
 			if (!epos.bh)
+<<<<<<< HEAD
 				return -EIO;
+=======
+				return;
+>>>>>>> master
 			if (elen)
 				indirect_ext_len =
 					(elen + sb->s_blocksize - 1) >>

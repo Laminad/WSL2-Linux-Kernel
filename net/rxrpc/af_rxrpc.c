@@ -194,8 +194,12 @@ static int rxrpc_bind(struct socket *sock, struct sockaddr *saddr, int len)
 
 service_in_use:
 	write_unlock(&local->services_lock);
+<<<<<<< HEAD
 	rxrpc_unuse_local(local, rxrpc_local_unuse_bind);
 	rxrpc_put_local(local, rxrpc_local_put_bind);
+=======
+	rxrpc_unuse_local(local);
+>>>>>>> master
 	ret = -EADDRINUSE;
 error_unlock:
 	release_sock(&rx->sk);
@@ -567,7 +571,11 @@ static int rxrpc_sendmsg(struct socket *sock, struct msghdr *m, size_t len)
 
 		rx->local = local;
 		rx->sk.sk_state = RXRPC_CLIENT_BOUND;
+<<<<<<< HEAD
 		fallthrough;
+=======
+		/* Fall through */
+>>>>>>> master
 
 	case RXRPC_CLIENT_BOUND:
 		if (!m->msg_name &&
@@ -903,8 +911,12 @@ static int rxrpc_release_sock(struct sock *sk)
 	flush_workqueue(rxrpc_workqueue);
 	rxrpc_purge_queue(&sk->sk_receive_queue);
 
+<<<<<<< HEAD
 	rxrpc_unuse_local(rx->local, rxrpc_local_unuse_release_sock);
 	rxrpc_put_local(rx->local, rxrpc_local_put_release_sock);
+=======
+	rxrpc_unuse_local(rx->local);
+>>>>>>> master
 	rx->local = NULL;
 	key_put(rx->key);
 	rx->key = NULL;

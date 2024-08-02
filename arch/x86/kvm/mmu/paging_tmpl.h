@@ -553,7 +553,17 @@ FNAME(prefetch_gpte)(struct kvm_vcpu *vcpu, struct kvm_mmu_page *sp,
 	if (is_error_pfn(pfn))
 		return false;
 
+<<<<<<< HEAD:arch/x86/kvm/mmu/paging_tmpl.h
 	mmu_set_spte(vcpu, slot, spte, pte_access, gfn, pfn, NULL);
+=======
+	/*
+	 * we call mmu_set_spte() with host_writable = true because
+	 * pte_prefetch_gfn_to_pfn always gets a writable pfn.
+	 */
+	mmu_set_spte(vcpu, spte, pte_access, 0, PT_PAGE_TABLE_LEVEL, gfn, pfn,
+		     true, true);
+
+>>>>>>> master:arch/x86/kvm/paging_tmpl.h
 	kvm_release_pfn_clean(pfn);
 	return true;
 }
@@ -624,14 +634,26 @@ static void FNAME(pte_prefetch)(struct kvm_vcpu *vcpu, struct guest_walker *gw,
  * If the guest tries to write a write-protected page, we need to
  * emulate this operation, return 1 to indicate this case.
  */
+<<<<<<< HEAD:arch/x86/kvm/mmu/paging_tmpl.h
 static int FNAME(fetch)(struct kvm_vcpu *vcpu, struct kvm_page_fault *fault,
 			 struct guest_walker *gw)
+=======
+static int FNAME(fetch)(struct kvm_vcpu *vcpu, gva_t addr,
+			 struct guest_walker *gw,
+			 int write_fault, int hlevel,
+			 kvm_pfn_t pfn, bool map_writable, bool prefault,
+			 bool lpage_disallowed)
+>>>>>>> master:arch/x86/kvm/paging_tmpl.h
 {
 	struct kvm_mmu_page *sp = NULL;
 	struct kvm_shadow_walk_iterator it;
 	unsigned int direct_access, access;
 	int top_level, ret;
+<<<<<<< HEAD:arch/x86/kvm/mmu/paging_tmpl.h
 	gfn_t base_gfn = fault->gfn;
+=======
+	gfn_t gfn, base_gfn;
+>>>>>>> master:arch/x86/kvm/paging_tmpl.h
 
 	WARN_ON_ONCE(gw->gfn != base_gfn);
 	direct_access = gw->pte_access;
@@ -711,6 +733,7 @@ static int FNAME(fetch)(struct kvm_vcpu *vcpu, struct kvm_page_fault *fault,
 	}
 
 	/*
+<<<<<<< HEAD:arch/x86/kvm/mmu/paging_tmpl.h
 	 * Adjust the hugepage size _after_ resolving indirect shadow pages.
 	 * KVM doesn't support mapping hugepages into the guest for gfns that
 	 * are being shadowed by KVM, i.e. allocating a new shadow page may
@@ -754,6 +777,46 @@ static int FNAME(fetch)(struct kvm_vcpu *vcpu, struct kvm_page_fault *fault,
 		return ret;
 
 	FNAME(pte_prefetch)(vcpu, gw, it.sptep);
+=======
+	 * FNAME(page_fault) might have clobbered the bottom bits of
+	 * gw->gfn, restore them from the virtual address.
+	 */
+	gfn = gw->gfn | ((addr & PT_LVL_OFFSET_MASK(gw->level)) >> PAGE_SHIFT);
+	base_gfn = gfn;
+
+	trace_kvm_mmu_spte_requested(addr, gw->level, pfn);
+
+	for (; shadow_walk_okay(&it); shadow_walk_next(&it)) {
+		clear_sp_write_flooding_count(it.sptep);
+
+		/*
+		 * We cannot overwrite existing page tables with an NX
+		 * large page, as the leaf could be executable.
+		 */
+		disallowed_hugepage_adjust(it, gfn, &pfn, &hlevel);
+
+		base_gfn = gfn & ~(KVM_PAGES_PER_HPAGE(it.level) - 1);
+		if (it.level == hlevel)
+			break;
+
+		validate_direct_spte(vcpu, it.sptep, direct_access);
+
+		drop_large_spte(vcpu, it.sptep);
+
+		if (!is_shadow_present_pte(*it.sptep)) {
+			sp = kvm_mmu_get_page(vcpu, base_gfn, addr,
+					      it.level - 1, true, direct_access);
+			link_shadow_page(vcpu, it.sptep, sp);
+			if (lpage_disallowed)
+				account_huge_nx_page(vcpu->kvm, sp);
+		}
+	}
+
+	ret = mmu_set_spte(vcpu, it.sptep, gw->pte_access, write_fault,
+			   it.level, base_gfn, pfn, prefault, map_writable);
+	FNAME(pte_prefetch)(vcpu, gw, it.sptep);
+	++vcpu->stat.pf_fixed;
+>>>>>>> master:arch/x86/kvm/paging_tmpl.h
 	return ret;
 
 out_gpte_changed:
@@ -778,6 +841,16 @@ static int FNAME(page_fault)(struct kvm_vcpu *vcpu, struct kvm_page_fault *fault
 {
 	struct guest_walker walker;
 	int r;
+<<<<<<< HEAD:arch/x86/kvm/mmu/paging_tmpl.h
+=======
+	kvm_pfn_t pfn;
+	int level = PT_PAGE_TABLE_LEVEL;
+	unsigned long mmu_seq;
+	bool map_writable, is_self_change_mapping;
+	bool lpage_disallowed = (error_code & PFERR_FETCH_MASK) &&
+				is_nx_huge_page_enabled();
+	bool force_pt_level = lpage_disallowed;
+>>>>>>> master:arch/x86/kvm/paging_tmpl.h
 
 	WARN_ON_ONCE(fault->is_tdp);
 
@@ -836,19 +909,36 @@ static int FNAME(page_fault)(struct kvm_vcpu *vcpu, struct kvm_page_fault *fault
 	}
 
 	r = RET_PF_RETRY;
+<<<<<<< HEAD:arch/x86/kvm/mmu/paging_tmpl.h
 	write_lock(&vcpu->kvm->mmu_lock);
 
 	if (is_page_fault_stale(vcpu, fault))
+=======
+	spin_lock(&vcpu->kvm->mmu_lock);
+	if (mmu_notifier_retry(vcpu->kvm, mmu_seq))
+>>>>>>> master:arch/x86/kvm/paging_tmpl.h
 		goto out_unlock;
 
 	r = make_mmu_pages_available(vcpu);
 	if (r)
 		goto out_unlock;
+<<<<<<< HEAD:arch/x86/kvm/mmu/paging_tmpl.h
 	r = FNAME(fetch)(vcpu, fault, &walker);
 
 out_unlock:
 	write_unlock(&vcpu->kvm->mmu_lock);
 	kvm_release_pfn_clean(fault->pfn);
+=======
+	if (!force_pt_level)
+		transparent_hugepage_adjust(vcpu, walker.gfn, &pfn, &level);
+	r = FNAME(fetch)(vcpu, addr, &walker, write_fault,
+			 level, pfn, map_writable, prefault, lpage_disallowed);
+	kvm_mmu_audit(vcpu, AUDIT_POST_PAGE_FAULT);
+
+out_unlock:
+	spin_unlock(&vcpu->kvm->mmu_lock);
+	kvm_release_pfn_clean(pfn);
+>>>>>>> master:arch/x86/kvm/paging_tmpl.h
 	return r;
 }
 

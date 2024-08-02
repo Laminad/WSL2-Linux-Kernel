@@ -338,6 +338,7 @@ STORE(__cached_dev)
 	sysfs_strtoul_clamp(writeback_rate_p_term_inverse,
 			    dc->writeback_rate_p_term_inverse,
 			    1, UINT_MAX);
+<<<<<<< HEAD
 	sysfs_strtoul_clamp(writeback_rate_fp_term_low,
 			    dc->writeback_rate_fp_term_low,
 			    1, dc->writeback_rate_fp_term_mid - 1);
@@ -348,6 +349,8 @@ STORE(__cached_dev)
 	sysfs_strtoul_clamp(writeback_rate_fp_term_high,
 			    dc->writeback_rate_fp_term_high,
 			    dc->writeback_rate_fp_term_mid + 1, UINT_MAX);
+=======
+>>>>>>> master
 	sysfs_strtoul_clamp(writeback_rate_minimum,
 			    dc->writeback_rate_minimum,
 			    1, UINT_MAX);
@@ -363,6 +366,10 @@ STORE(__cached_dev)
 	sysfs_strtoul_clamp(sequential_cutoff,
 			    dc->sequential_cutoff,
 			    0, UINT_MAX);
+<<<<<<< HEAD
+=======
+	d_strtoi_h(readahead);
+>>>>>>> master
 
 	if (attr == &sysfs_clear_stats)
 		bch_cache_accounting_clear(&dc->accounting);
@@ -519,9 +526,12 @@ static struct attribute *bch_cached_dev_attrs[] = {
 	&sysfs_writeback_rate_update_seconds,
 	&sysfs_writeback_rate_i_term_inverse,
 	&sysfs_writeback_rate_p_term_inverse,
+<<<<<<< HEAD
 	&sysfs_writeback_rate_fp_term_low,
 	&sysfs_writeback_rate_fp_term_mid,
 	&sysfs_writeback_rate_fp_term_high,
+=======
+>>>>>>> master
 	&sysfs_writeback_rate_minimum,
 	&sysfs_writeback_rate_debug,
 	&sysfs_io_errors,

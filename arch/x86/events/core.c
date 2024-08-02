@@ -1585,7 +1585,11 @@ void x86_pmu_stop(struct perf_event *event, int flags)
 	struct hw_perf_event *hwc = &event->hw;
 
 	if (test_bit(hwc->idx, cpuc->active_mask)) {
+<<<<<<< HEAD
 		static_call(x86_pmu_disable)(event);
+=======
+		x86_pmu.disable(event);
+>>>>>>> master
 		__clear_bit(hwc->idx, cpuc->active_mask);
 		cpuc->events[hwc->idx] = NULL;
 		WARN_ON_ONCE(hwc->state & PERF_HES_STOPPED);
@@ -2321,6 +2325,7 @@ static struct cpu_hw_events *allocate_fake_cpuc(struct pmu *event_pmu)
 		return ERR_PTR(-ENOMEM);
 	cpuc->is_fake = 1;
 
+<<<<<<< HEAD
 	if (is_hybrid()) {
 		struct x86_hybrid_pmu *h_pmu;
 
@@ -2332,6 +2337,8 @@ static struct cpu_hw_events *allocate_fake_cpuc(struct pmu *event_pmu)
 		cpu = raw_smp_processor_id();
 	cpuc->pmu = event_pmu;
 
+=======
+>>>>>>> master
 	if (intel_cpuc_prepare(cpuc, cpu))
 		goto error;
 
@@ -2644,15 +2651,20 @@ static int x86_pmu_check_period(struct perf_event *event, u64 value)
 		return -EINVAL;
 
 	if (value && x86_pmu.limit_period) {
+<<<<<<< HEAD
 		s64 left = value;
 		x86_pmu.limit_period(event, &left);
 		if (left > value)
+=======
+		if (x86_pmu.limit_period(event, value) > value)
+>>>>>>> master
 			return -EINVAL;
 	}
 
 	return 0;
 }
 
+<<<<<<< HEAD
 static int x86_pmu_aux_output_match(struct perf_event *event)
 {
 	if (!(pmu.capabilities & PERF_PMU_CAP_AUX_OUTPUT))
@@ -2673,6 +2685,8 @@ static bool x86_pmu_filter(struct pmu *pmu, int cpu)
 	return ret;
 }
 
+=======
+>>>>>>> master
 static struct pmu pmu = {
 	.pmu_enable		= x86_pmu_enable,
 	.pmu_disable		= x86_pmu_disable,
@@ -2696,12 +2710,17 @@ static struct pmu pmu = {
 
 	.event_idx		= x86_pmu_event_idx,
 	.sched_task		= x86_pmu_sched_task,
+<<<<<<< HEAD
 	.swap_task_ctx		= x86_pmu_swap_task_ctx,
 	.check_period		= x86_pmu_check_period,
 
 	.aux_output_match	= x86_pmu_aux_output_match,
 
 	.filter			= x86_pmu_filter,
+=======
+	.task_ctx_size          = sizeof(struct x86_perf_task_context),
+	.check_period		= x86_pmu_check_period,
+>>>>>>> master
 };
 
 void arch_perf_update_userpage(struct perf_event *event,

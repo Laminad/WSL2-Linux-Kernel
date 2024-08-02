@@ -633,11 +633,18 @@ static bool do_amd_gpio_irq_handler(int irq, void *dev_id)
 			if (!(regval & PIN_IRQ_PENDING) ||
 			    !(regval & BIT(INTERRUPT_MASK_OFF)))
 				continue;
+<<<<<<< HEAD
 			generic_handle_domain_irq_safe(gc->irq.domain, irqnr + i);
+=======
+			irq = irq_find_mapping(gc->irq.domain, irqnr + i);
+			if (irq != 0)
+				generic_handle_irq(irq);
+>>>>>>> master
 
 			/* Clear interrupt.
 			 * We must read the pin register again, in case the
 			 * value was changed while executing
+<<<<<<< HEAD
 			 * generic_handle_domain_irq() above.
 			 * If the line is not an irq, disable it in order to
 			 * avoid a system hang caused by an interrupt storm.
@@ -651,6 +658,20 @@ static bool do_amd_gpio_irq_handler(int irq, void *dev_id)
 					irqnr + i);
 			} else {
 				ret = true;
+=======
+			 * generic_handle_irq() above.
+			 * If we didn't find a mapping for the interrupt,
+			 * disable it in order to avoid a system hang caused
+			 * by an interrupt storm.
+			 */
+			raw_spin_lock_irqsave(&gpio_dev->lock, flags);
+			regval = readl(regs + i);
+			if (irq == 0) {
+				regval &= ~BIT(INTERRUPT_ENABLE_OFF);
+				dev_dbg(&gpio_dev->pdev->dev,
+					"Disabling spurious GPIO IRQ %d\n",
+					irqnr + i);
+>>>>>>> master
 			}
 			writel(regval, regs + i);
 			raw_spin_unlock_irqrestore(&gpio_dev->lock, flags);

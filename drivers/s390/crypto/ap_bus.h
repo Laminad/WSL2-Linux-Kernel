@@ -286,8 +286,14 @@ void ap_queue_init_reply(struct ap_queue *aq, struct ap_message *ap_msg);
 struct ap_queue *ap_queue_create(ap_qid_t qid, int device_type);
 void ap_queue_prepare_remove(struct ap_queue *aq);
 void ap_queue_remove(struct ap_queue *aq);
+<<<<<<< HEAD
 void ap_queue_init_state(struct ap_queue *aq);
 void _ap_queue_init_state(struct ap_queue *aq);
+=======
+void ap_queue_suspend(struct ap_device *ap_dev);
+void ap_queue_resume(struct ap_device *ap_dev);
+void ap_queue_reinit_state(struct ap_queue *aq);
+>>>>>>> master
 
 struct ap_card *ap_card_create(int id, int queue_depth, int raw_type,
 			       int comp_type, unsigned int functions, int ml);

@@ -675,9 +675,24 @@ EXPORT_SYMBOL(kvfree);
  */
 void kvfree_sensitive(const void *addr, size_t len)
 {
+<<<<<<< HEAD
 	if (likely(!ZERO_OR_NULL_PTR(addr))) {
 		memzero_explicit((void *)addr, len);
 		kvfree(addr);
+=======
+	int i;
+
+	if (likely(!PageCompound(page)))
+		return atomic_read(&page->_mapcount) >= 0;
+	page = compound_head(page);
+	if (atomic_read(compound_mapcount_ptr(page)) >= 0)
+		return true;
+	if (PageHuge(page))
+		return false;
+	for (i = 0; i < (1 << compound_order(page)); i++) {
+		if (atomic_read(&page[i]._mapcount) >= 0)
+			return true;
+>>>>>>> master
 	}
 }
 EXPORT_SYMBOL(kvfree_sensitive);

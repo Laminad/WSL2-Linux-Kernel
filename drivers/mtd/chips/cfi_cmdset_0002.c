@@ -1690,8 +1690,12 @@ static int __xipram do_write_oneword_once(struct map_info *map,
 		 * We check "time_after" and "!chip_good" before checking
 		 * "chip_good" to avoid the failure due to scheduling.
 		 */
+<<<<<<< HEAD
 		if (time_after(jiffies, timeo) &&
 		    !chip_good(map, chip, adr, &datum)) {
+=======
+		if (time_after(jiffies, timeo) && !chip_good(map, adr, datum)) {
+>>>>>>> master
 			xip_enable(map, chip, adr);
 			printk(KERN_WARNING "MTD %s(): software timeout\n", __func__);
 			xip_disable(map, chip, adr);
@@ -1699,9 +1703,13 @@ static int __xipram do_write_oneword_once(struct map_info *map,
 			break;
 		}
 
+<<<<<<< HEAD
 		if (chip_good(map, chip, adr, &datum)) {
 			if (cfi_check_err_status(map, chip, adr))
 				ret = -EIO;
+=======
+		if (chip_good(map, adr, datum))
+>>>>>>> master
 			break;
 		}
 
@@ -1709,6 +1717,7 @@ static int __xipram do_write_oneword_once(struct map_info *map,
 		UDELAY(map, chip, adr, 1);
 	}
 
+<<<<<<< HEAD
 	return ret;
 }
 
@@ -1774,6 +1783,9 @@ static int __xipram do_write_oneword_retry(struct map_info *map,
 
  retry:
 	ret = do_write_oneword_once(map, chip, adr, datum, mode, cfi);
+=======
+	/* Did we succeed? */
+>>>>>>> master
 	if (ret) {
 		/* reset on all failures. */
 		map_write(map, CMD(0xF0), chip->start);

@@ -557,7 +557,45 @@ void fault_in_user_windows(struct pt_regs *regs)
 
 barf:
 	set_thread_wsaved(window + 1);
+<<<<<<< HEAD
 	force_sig(SIGSEGV);
+=======
+	force_sig(SIGSEGV, current);
+}
+
+asmlinkage long sparc_do_fork(unsigned long clone_flags,
+			      unsigned long stack_start,
+			      struct pt_regs *regs,
+			      unsigned long stack_size)
+{
+	int __user *parent_tid_ptr, *child_tid_ptr;
+	unsigned long orig_i1 = regs->u_regs[UREG_I1];
+	long ret;
+
+#ifdef CONFIG_COMPAT
+	if (test_thread_flag(TIF_32BIT)) {
+		parent_tid_ptr = compat_ptr(regs->u_regs[UREG_I2]);
+		child_tid_ptr = compat_ptr(regs->u_regs[UREG_I4]);
+	} else
+#endif
+	{
+		parent_tid_ptr = (int __user *) regs->u_regs[UREG_I2];
+		child_tid_ptr = (int __user *) regs->u_regs[UREG_I4];
+	}
+
+	ret = do_fork(clone_flags, stack_start, stack_size,
+		      parent_tid_ptr, child_tid_ptr);
+
+	/* If we get an error and potentially restart the system
+	 * call, we're screwed because copy_thread() clobbered
+	 * the parent's %o1.  So detect that case and restore it
+	 * here.
+	 */
+	if ((unsigned long)ret >= -ERESTART_RESTARTBLOCK)
+		regs->u_regs[UREG_I1] = orig_i1;
+
+	return ret;
+>>>>>>> master
 }
 
 /* Copy a Sparc thread.  The fork() return value conventions

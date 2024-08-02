@@ -316,6 +316,7 @@ static void tls_write_space(struct sock *sk)
 	ctx->sk_write_space(sk);
 }
 
+<<<<<<< HEAD
 /**
  * tls_ctx_free() - free TLS ULP context
  * @sk:  socket to with @ctx is attached
@@ -325,6 +326,9 @@ static void tls_write_space(struct sock *sk)
  * to which @ctx was attached has no outstanding references.
  */
 void tls_ctx_free(struct sock *sk, struct tls_context *ctx)
+=======
+void tls_ctx_free(struct tls_context *ctx)
+>>>>>>> master
 {
 	if (!ctx)
 		return;
@@ -357,12 +361,30 @@ static void tls_sk_proto_cleanup(struct sock *sk,
 		TLS_DEC_STATS(sock_net(sk), LINUX_MIB_TLSCURRTXDEVICE);
 	}
 
+<<<<<<< HEAD
 	if (ctx->rx_conf == TLS_SW) {
 		tls_sw_release_resources_rx(sk);
 		TLS_DEC_STATS(sock_net(sk), LINUX_MIB_TLSCURRRXSW);
 	} else if (ctx->rx_conf == TLS_HW) {
 		tls_device_offload_cleanup_rx(sk);
 		TLS_DEC_STATS(sock_net(sk), LINUX_MIB_TLSCURRRXDEVICE);
+=======
+	if (ctx->rx_conf == TLS_SW)
+		tls_sw_free_resources_rx(sk);
+
+#ifdef CONFIG_TLS_DEVICE
+	if (ctx->rx_conf == TLS_HW)
+		tls_device_offload_cleanup_rx(sk);
+
+	if (ctx->tx_conf != TLS_HW && ctx->rx_conf != TLS_HW) {
+#else
+	{
+#endif
+		if (sk->sk_write_space == tls_write_space)
+			sk->sk_write_space = ctx->sk_write_space;
+		tls_ctx_free(ctx);
+		ctx = NULL;
+>>>>>>> master
 	}
 }
 
@@ -813,6 +835,7 @@ struct tls_context *tls_ctx_create(struct sock *sk)
 	if (!ctx)
 		return NULL;
 
+<<<<<<< HEAD
 	mutex_init(&ctx->tx_lock);
 	ctx->sk_proto = READ_ONCE(sk->sk_prot);
 	ctx->sk = sk;
@@ -825,6 +848,12 @@ struct tls_context *tls_ctx_create(struct sock *sk)
 	 * and ctx->sk_proto.
 	 */
 	rcu_assign_pointer(icsk->icsk_ulp_data, ctx);
+=======
+	icsk->icsk_ulp_data = ctx;
+	ctx->setsockopt = sk->sk_prot->setsockopt;
+	ctx->getsockopt = sk->sk_prot->getsockopt;
+	ctx->sk_proto_close = sk->sk_prot->close;
+>>>>>>> master
 	return ctx;
 }
 
@@ -965,6 +994,20 @@ static int tls_init(struct sock *sk)
 		rc = -ENOMEM;
 		goto out;
 	}
+<<<<<<< HEAD
+=======
+
+	/* Build IPv6 TLS whenever the address of tcpv6	_prot changes */
+	if (ip_ver == TLSV6 &&
+	    unlikely(sk->sk_prot != smp_load_acquire(&saved_tcpv6_prot))) {
+		mutex_lock(&tcpv6_prot_mutex);
+		if (likely(sk->sk_prot != saved_tcpv6_prot)) {
+			build_protos(tls_prots[TLSV6], sk->sk_prot);
+			smp_store_release(&saved_tcpv6_prot, sk->sk_prot);
+		}
+		mutex_unlock(&tcpv6_prot_mutex);
+	}
+>>>>>>> master
 
 	ctx->tx_conf = TLS_BASE;
 	ctx->rx_conf = TLS_BASE;

@@ -35,9 +35,14 @@ struct rsnd_adg {
 	struct clk *null_clk;
 	struct clk_onecell_data onecell;
 	struct rsnd_mod mod;
+<<<<<<< HEAD
 	int clkin_rate[CLKINMAX];
 	int clkin_size;
 	int clkout_size;
+=======
+	int clk_rate[CLKMAX];
+	u32 flags;
+>>>>>>> master
 	u32 ckr;
 	u32 brga;
 	u32 brgb;
@@ -128,11 +133,19 @@ static void __rsnd_adg_get_timesel_ratio(struct rsnd_priv *priv,
 	unsigned int val, en;
 	unsigned int min, diff;
 	unsigned int sel_rate[] = {
+<<<<<<< HEAD
 		adg->clkin_rate[CLKA],	/* 0000: CLKA */
 		adg->clkin_rate[CLKB],	/* 0001: CLKB */
 		adg->clkin_rate[CLKC],	/* 0010: CLKC */
 		adg->brg_rate[ADG_HZ_441],	/* 0011: BRGA */
 		adg->brg_rate[ADG_HZ_48],	/* 0100: BRGB */
+=======
+		adg->clk_rate[CLKA],	/* 0000: CLKA */
+		adg->clk_rate[CLKB],	/* 0001: CLKB */
+		adg->clk_rate[CLKC],	/* 0010: CLKC */
+		adg->rbga_rate_for_441khz,	/* 0011: RBGA */
+		adg->rbgb_rate_for_48khz,	/* 0100: RBGB */
+>>>>>>> master
 	};
 
 	min = ~0;
@@ -316,8 +329,13 @@ int rsnd_adg_clk_query(struct rsnd_priv *priv, unsigned int rate)
 	 * find suitable clock from
 	 * AUDIO_CLKA/AUDIO_CLKB/AUDIO_CLKC/AUDIO_CLKI.
 	 */
+<<<<<<< HEAD
 	for_each_rsnd_clkin(clk, adg, i)
 		if (rate == adg->clkin_rate[i])
+=======
+	for_each_rsnd_clk(clk, adg, i) {
+		if (rate == adg->clk_rate[i])
+>>>>>>> master
 			return sel_table[i];
 
 	/*
@@ -370,7 +388,38 @@ int rsnd_adg_ssi_clk_try_start(struct rsnd_mod *ssi_mod, unsigned int rate)
 void rsnd_adg_clk_control(struct rsnd_priv *priv, int enable)
 {
 	struct rsnd_adg *adg = rsnd_priv_to_adg(priv);
+<<<<<<< HEAD
 	struct rsnd_mod *adg_mod = rsnd_mod_get(adg);
+=======
+	struct device *dev = rsnd_priv_to_dev(priv);
+	struct clk *clk;
+	int i, ret;
+
+	for_each_rsnd_clk(clk, adg, i) {
+		ret = 0;
+		if (enable) {
+			ret = clk_prepare_enable(clk);
+
+			/*
+			 * We shouldn't use clk_get_rate() under
+			 * atomic context. Let's keep it when
+			 * rsnd_adg_clk_enable() was called
+			 */
+			adg->clk_rate[i] = clk_get_rate(adg->clk[i]);
+		} else {
+			clk_disable_unprepare(clk);
+		}
+
+		if (ret < 0)
+			dev_warn(dev, "can't use clk %d\n", i);
+	}
+}
+
+static void rsnd_adg_get_clkin(struct rsnd_priv *priv,
+			       struct rsnd_adg *adg)
+{
+	struct device *dev = rsnd_priv_to_dev(priv);
+>>>>>>> master
 	struct clk *clk;
 	int i;
 

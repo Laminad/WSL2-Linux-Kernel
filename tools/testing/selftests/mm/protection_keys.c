@@ -1243,7 +1243,10 @@ void test_pkey_alloc_exhaust(int *ptr, u16 pkey)
 	dprintf3("%s()::%d\n", __func__, __LINE__);
 
 	/*
+<<<<<<< HEAD:tools/testing/selftests/mm/protection_keys.c
 	 * On x86:
+=======
+>>>>>>> master:tools/testing/selftests/x86/protection_keys.c
 	 * There are 16 pkeys supported in hardware.  Three are
 	 * allocated by the time we get here:
 	 *   1. The default key (0)

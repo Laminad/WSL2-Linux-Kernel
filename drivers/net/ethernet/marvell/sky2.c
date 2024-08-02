@@ -4789,6 +4789,7 @@ static const struct dmi_system_id msi_blacklist[] = {
 		},
 	},
 	{
+<<<<<<< HEAD
 		.ident = "ASUS P5W DH Deluxe",
 		.matches = {
 			DMI_MATCH(DMI_SYS_VENDOR, "ASUSTEK COMPUTER INC"),
@@ -4796,6 +4797,8 @@ static const struct dmi_system_id msi_blacklist[] = {
 		},
 	},
 	{
+=======
+>>>>>>> master
 		.ident = "ASUS P6T",
 		.matches = {
 			DMI_MATCH(DMI_BOARD_VENDOR, "ASUSTeK Computer INC."),
@@ -4972,7 +4975,11 @@ static int sky2_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	INIT_WORK(&hw->restart_work, sky2_restart);
 
 	pci_set_drvdata(pdev, hw);
+<<<<<<< HEAD
 	pdev->d3hot_delay = 300;
+=======
+	pdev->d3_delay = 300;
+>>>>>>> master
 
 	return 0;
 

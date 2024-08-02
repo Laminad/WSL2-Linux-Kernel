@@ -962,8 +962,13 @@ static void mlx5_init_overflow_period(struct mlx5_clock *clock)
 	 * multiplied by clock multiplier where the result doesn't exceed
 	 * 64bits.
 	 */
+<<<<<<< HEAD
 	overflow_cycles = div64_u64(~0ULL >> 1, timer->cycles.mult);
 	overflow_cycles = min(overflow_cycles, div_u64(timer->cycles.mask, 3));
+=======
+	overflow_cycles = div64_u64(~0ULL >> 1, clock->cycles.mult);
+	overflow_cycles = min(overflow_cycles, div_u64(clock->cycles.mask, 3));
+>>>>>>> master
 
 	ns = cyclecounter_cyc2ns(&timer->cycles, overflow_cycles,
 				 frac, &frac);

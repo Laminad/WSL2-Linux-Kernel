@@ -966,6 +966,41 @@ void adreno_wait_ring(struct msm_ringbuffer *ring, uint32_t ndwords)
 			ring->id);
 }
 
+<<<<<<< HEAD
+=======
+/* Get legacy powerlevels from qcom,gpu-pwrlevels and populate the opp table */
+static int adreno_get_legacy_pwrlevels(struct device *dev)
+{
+	struct device_node *child, *node;
+	int ret;
+
+	node = of_get_compatible_child(dev->of_node, "qcom,gpu-pwrlevels");
+	if (!node) {
+		dev_err(dev, "Could not find the GPU powerlevels\n");
+		return -ENXIO;
+	}
+
+	for_each_child_of_node(node, child) {
+		unsigned int val;
+
+		ret = of_property_read_u32(child, "qcom,gpu-freq", &val);
+		if (ret)
+			continue;
+
+		/*
+		 * Skip the intentionally bogus clock value found at the bottom
+		 * of most legacy frequency tables
+		 */
+		if (val != 27000000)
+			dev_pm_opp_add(dev, val, 0);
+	}
+
+	of_node_put(node);
+
+	return 0;
+}
+
+>>>>>>> master
 static int adreno_get_pwrlevels(struct device *dev,
 		struct msm_gpu *gpu)
 {

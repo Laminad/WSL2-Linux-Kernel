@@ -254,7 +254,11 @@ static int nf_ct_frag6_queue(struct frag_queue *fq, struct sk_buff *skb,
 	if (err) {
 		if (err == IPFRAG_DUP) {
 			/* No error for duplicates, pretend they got queued. */
+<<<<<<< HEAD
 			kfree_skb_reason(skb, SKB_DROP_REASON_DUP_FRAG);
+=======
+			kfree_skb(skb);
+>>>>>>> master
 			return -EINPROGRESS;
 		}
 		goto insert_error;
@@ -294,7 +298,10 @@ static int nf_ct_frag6_queue(struct frag_queue *fq, struct sk_buff *skb,
 	}
 
 	skb_dst_drop(skb);
+<<<<<<< HEAD
 	skb_orphan(skb);
+=======
+>>>>>>> master
 	return -EINPROGRESS;
 
 insert_error:
@@ -347,14 +354,21 @@ static int nf_ct_frag6_reasm(struct frag_queue *fq, struct sk_buff *skb,
 
 	skb_reset_transport_header(skb);
 
+<<<<<<< HEAD
 	inet_frag_reasm_finish(&fq->q, skb, reasm_data, false);
+=======
+	inet_frag_reasm_finish(&fq->q, skb, reasm_data);
+>>>>>>> master
 
 	skb->ignore_df = 1;
 	skb->dev = dev;
 	ipv6_hdr(skb)->payload_len = htons(payload_len);
 	ipv6_change_dsfield(ipv6_hdr(skb), 0xff, ecn);
 	IP6CB(skb)->frag_max_size = sizeof(struct ipv6hdr) + fq->q.max_size;
+<<<<<<< HEAD
 	IP6CB(skb)->flags |= IP6SKB_FRAGMENTED;
+=======
+>>>>>>> master
 
 	/* Yes, and fold redundant checksum back. 8) */
 	if (skb->ip_summed == CHECKSUM_COMPLETE)
@@ -439,7 +453,10 @@ find_prev_fhdr(struct sk_buff *skb, u8 *prevhdrp, int *prevhoff, int *fhoff)
 int nf_ct_frag6_gather(struct net *net, struct sk_buff *skb, u32 user)
 {
 	u16 savethdr = skb->transport_header;
+<<<<<<< HEAD
 	u8 nexthdr = NEXTHDR_FRAGMENT;
+=======
+>>>>>>> master
 	int fhoff, nhoff, ret;
 	struct frag_hdr *fhdr;
 	struct frag_queue *fq;
@@ -470,6 +487,10 @@ int nf_ct_frag6_gather(struct net *net, struct sk_buff *skb, u32 user)
 	hdr = ipv6_hdr(skb);
 	fhdr = (struct frag_hdr *)skb_transport_header(skb);
 
+<<<<<<< HEAD
+=======
+	skb_orphan(skb);
+>>>>>>> master
 	fq = fq_find(net, fhdr->identification, user, hdr,
 		     skb->dev ? skb->dev->ifindex : 0);
 	if (fq == NULL) {

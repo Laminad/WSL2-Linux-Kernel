@@ -252,6 +252,13 @@ mediatek_gpio_bank_probe(struct device *dev, int bank)
 
 	rg->chip.offset = bank * MTK_BANK_WIDTH;
 
+	rg->irq_chip.name = dev_name(dev);
+	rg->irq_chip.parent_device = dev;
+	rg->irq_chip.irq_unmask = mediatek_gpio_irq_unmask;
+	rg->irq_chip.irq_mask = mediatek_gpio_irq_mask;
+	rg->irq_chip.irq_mask_ack = mediatek_gpio_irq_mask;
+	rg->irq_chip.irq_set_type = mediatek_gpio_irq_type;
+
 	if (mtk->gpio_irq) {
 		struct gpio_irq_chip *girq;
 
@@ -269,6 +276,7 @@ mediatek_gpio_bank_probe(struct device *dev, int bank)
 			return ret;
 		}
 
+<<<<<<< HEAD
 		girq = &rg->chip.irq;
 		gpio_irq_chip_set_chip(girq, &mt7621_irq_chip);
 		/* This will let us handle the parent IRQ in the driver */
@@ -284,6 +292,17 @@ mediatek_gpio_bank_probe(struct device *dev, int bank)
 		dev_err(dev, "Could not register gpio %d, ret=%d\n",
 			rg->chip.ngpio, ret);
 		return ret;
+=======
+		ret = gpiochip_irqchip_add(&rg->chip, &rg->irq_chip,
+					   0, handle_simple_irq, IRQ_TYPE_NONE);
+		if (ret) {
+			dev_err(dev, "failed to add gpiochip_irqchip\n");
+			return ret;
+		}
+
+		gpiochip_set_chained_irqchip(&rg->chip, &rg->irq_chip,
+					     mtk->gpio_irq, NULL);
+>>>>>>> master
 	}
 
 	/* set polarity to low for all gpios */
@@ -318,7 +337,11 @@ mediatek_gpio_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, mtk);
 
 	for (i = 0; i < MTK_BANK_CNT; i++) {
+<<<<<<< HEAD
 		ret = mediatek_gpio_bank_probe(dev, i);
+=======
+		ret = mediatek_gpio_bank_probe(dev, np, i);
+>>>>>>> master
 		if (ret)
 			return ret;
 	}

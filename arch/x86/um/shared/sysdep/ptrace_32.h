@@ -8,6 +8,11 @@
 
 #define MAX_FP_NR HOST_FPX_SIZE
 
+<<<<<<< HEAD
+=======
+static inline void update_debugregs(int seq) {}
+
+>>>>>>> master
 void set_using_sysemu(int value);
 int get_using_sysemu(void);
 extern int sysemu_supported;

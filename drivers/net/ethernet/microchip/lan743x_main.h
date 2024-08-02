@@ -871,8 +871,11 @@ struct lan743x_adapter;
 #define PCI_VENDOR_ID_SMSC		PCI_VENDOR_ID_EFAR
 #define PCI_DEVICE_ID_SMSC_LAN7430	(0x7430)
 #define PCI_DEVICE_ID_SMSC_LAN7431	(0x7431)
+<<<<<<< HEAD
 #define PCI_DEVICE_ID_SMSC_A011		(0xA011)
 #define PCI_DEVICE_ID_SMSC_A041		(0xA041)
+=======
+>>>>>>> master
 
 #define PCI_CONFIG_LENGTH		(0x1000)
 

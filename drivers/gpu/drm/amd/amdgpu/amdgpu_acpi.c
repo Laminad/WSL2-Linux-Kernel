@@ -454,7 +454,12 @@ static int amdgpu_atif_handler(struct amdgpu_device *adev,
 		return NOTIFY_DONE;
 
 	/* Is this actually our event? */
+<<<<<<< HEAD
 	if (!atif->notification_cfg.enabled ||
+=======
+	if (!atif ||
+	    !atif->notification_cfg.enabled ||
+>>>>>>> master
 	    event->type != atif->notification_cfg.command_code) {
 		/* These events will generate keypresses otherwise */
 		if (event->type == ACPI_VIDEO_NOTIFY_PROBE)
@@ -489,7 +494,11 @@ static int amdgpu_atif_handler(struct amdgpu_device *adev,
 
 		if (req.pending & ATIF_DGPU_DISPLAY_EVENT) {
 			if (adev->flags & AMD_IS_PX) {
+<<<<<<< HEAD
 				pm_runtime_get_sync(adev_to_drm(adev)->dev);
+=======
+				pm_runtime_get_sync(adev->ddev->dev);
+>>>>>>> master
 				/* Just fire off a uevent and let userspace tell us what to do */
 				drm_helper_hpd_irq_event(adev_to_drm(adev));
 				pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);

@@ -703,11 +703,18 @@ int __mdiobus_register(struct mii_bus *bus, struct module *owner)
 	/* assert bus level PHY GPIO reset */
 	gpiod = devm_gpiod_get_optional(&bus->dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(gpiod)) {
+<<<<<<< HEAD
 		err = dev_err_probe(&bus->dev, PTR_ERR(gpiod),
 				    "mii_bus %s couldn't get reset GPIO\n",
 				    bus->id);
 		device_del(&bus->dev);
 		return err;
+=======
+		dev_err(&bus->dev, "mii_bus %s couldn't get reset GPIO\n",
+			bus->id);
+		device_del(&bus->dev);
+		return PTR_ERR(gpiod);
+>>>>>>> master
 	} else	if (gpiod) {
 		bus->reset_gpiod = gpiod;
 		fsleep(bus->reset_delay_us);

@@ -308,6 +308,7 @@ static void scmi_device_release(struct device *dev)
 	kfree(to_scmi_dev(dev));
 }
 
+<<<<<<< HEAD
 static void __scmi_device_destroy(struct scmi_device *scmi_dev)
 {
 	pr_debug("(%s) Destroying SCMI device '%s' for protocol 0x%x (%s)\n",
@@ -326,6 +327,10 @@ static void __scmi_device_destroy(struct scmi_device *scmi_dev)
 static struct scmi_device *
 __scmi_device_create(struct device_node *np, struct device *parent,
 		     int protocol, const char *name)
+=======
+struct scmi_device *
+scmi_device_create(struct device_node *np, struct device *parent, int protocol)
+>>>>>>> master
 {
 	int id, retval;
 	struct scmi_device *scmi_dev;
@@ -423,9 +428,16 @@ struct scmi_device *scmi_device_create(struct device_node *np,
 				       struct device *parent, int protocol,
 				       const char *name)
 {
+<<<<<<< HEAD
 	struct list_head *phead;
 	struct scmi_requested_dev *rdev;
 	struct scmi_device *scmi_dev = NULL;
+=======
+	scmi_handle_put(scmi_dev->handle);
+	ida_simple_remove(&scmi_bus_id, scmi_dev->id);
+	device_unregister(&scmi_dev->dev);
+}
+>>>>>>> master
 
 	if (name)
 		return __scmi_device_create(np, parent, protocol, name);

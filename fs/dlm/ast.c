@@ -259,7 +259,11 @@ void dlm_callback_resume(struct dlm_ls *ls)
 		return;
 
 more:
+<<<<<<< HEAD
 	spin_lock(&ls->ls_cb_lock);
+=======
+	mutex_lock(&ls->ls_cb_mutex);
+>>>>>>> master
 	list_for_each_entry_safe(lkb, safe, &ls->ls_cb_delay, lkb_cb_list) {
 		list_del_init(&lkb->lkb_cb_list);
 		queue_work(ls->ls_callback_wq, &lkb->lkb_cb_work);
@@ -272,14 +276,23 @@ more:
 		clear_bit(LSFL_CB_DELAY, &ls->ls_flags);
 	spin_unlock(&ls->ls_cb_lock);
 
+<<<<<<< HEAD
 	sum += count;
 	if (!empty) {
+=======
+	if (count)
+		log_rinfo(ls, "dlm_callback_resume %d", count);
+	if (count == MAX_CB_QUEUE) {
+>>>>>>> master
 		count = 0;
 		cond_resched();
 		goto more;
 	}
+<<<<<<< HEAD
 
 	if (sum)
 		log_rinfo(ls, "%s %d", __func__, sum);
+=======
+>>>>>>> master
 }
 

@@ -1224,7 +1224,155 @@ drm_atomic_get_new_bridge_state(const struct drm_atomic_state *state,
 EXPORT_SYMBOL(drm_atomic_get_new_bridge_state);
 
 /**
+<<<<<<< HEAD
  * drm_atomic_add_encoder_bridges - add bridges attached to an encoder
+=======
+ * drm_atomic_set_crtc_for_connector - set crtc for connector
+ * @conn_state: atomic state object for the connector
+ * @crtc: crtc to use for the connector
+ *
+ * Changing the assigned crtc for a connector requires us to grab the lock and
+ * state for the new crtc, as needed. This function takes care of all these
+ * details besides updating the pointer in the state object itself.
+ *
+ * Returns:
+ * 0 on success or can fail with -EDEADLK or -ENOMEM. When the error is EDEADLK
+ * then the w/w mutex code has detected a deadlock and the entire atomic
+ * sequence must be restarted. All other errors are fatal.
+ */
+int
+drm_atomic_set_crtc_for_connector(struct drm_connector_state *conn_state,
+				  struct drm_crtc *crtc)
+{
+	struct drm_connector *connector = conn_state->connector;
+	struct drm_crtc_state *crtc_state;
+
+	/*
+	 * For compatibility with legacy users, we want to make sure that
+	 * we allow DPMS On<->Off modesets on unregistered connectors, since
+	 * legacy modesetting users will not be expecting these to fail. We do
+	 * not however, want to allow legacy users to assign a connector
+	 * that's been unregistered from sysfs to another CRTC, since doing
+	 * this with a now non-existent connector could potentially leave us
+	 * in an invalid state.
+	 *
+	 * Since the connector can be unregistered at any point during an
+	 * atomic check or commit, this is racy. But that's OK: all we care
+	 * about is ensuring that userspace can't use this connector for new
+	 * configurations after it's been notified that the connector is no
+	 * longer present.
+	 */
+	if (!READ_ONCE(connector->registered) && crtc) {
+		DRM_DEBUG_ATOMIC("[CONNECTOR:%d:%s] is not registered\n",
+				 connector->base.id, connector->name);
+		return -EINVAL;
+	}
+
+	if (conn_state->crtc == crtc)
+		return 0;
+
+	if (conn_state->crtc) {
+		crtc_state = drm_atomic_get_new_crtc_state(conn_state->state,
+							   conn_state->crtc);
+
+		crtc_state->connector_mask &=
+			~drm_connector_mask(conn_state->connector);
+
+		drm_connector_put(conn_state->connector);
+		conn_state->crtc = NULL;
+	}
+
+	if (crtc) {
+		crtc_state = drm_atomic_get_crtc_state(conn_state->state, crtc);
+		if (IS_ERR(crtc_state))
+			return PTR_ERR(crtc_state);
+
+		crtc_state->connector_mask |=
+			drm_connector_mask(conn_state->connector);
+
+		drm_connector_get(conn_state->connector);
+		conn_state->crtc = crtc;
+
+		DRM_DEBUG_ATOMIC("Link [CONNECTOR:%d:%s] state %p to [CRTC:%d:%s]\n",
+				 connector->base.id, connector->name,
+				 conn_state, crtc->base.id, crtc->name);
+	} else {
+		DRM_DEBUG_ATOMIC("Link [CONNECTOR:%d:%s] state %p to [NOCRTC]\n",
+				 connector->base.id, connector->name,
+				 conn_state);
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(drm_atomic_set_crtc_for_connector);
+
+/*
+ * drm_atomic_get_writeback_job - return or allocate a writeback job
+ * @conn_state: Connector state to get the job for
+ *
+ * Writeback jobs have a different lifetime to the atomic state they are
+ * associated with. This convenience function takes care of allocating a job
+ * if there isn't yet one associated with the connector state, otherwise
+ * it just returns the existing job.
+ *
+ * Returns: The writeback job for the given connector state
+ */
+static struct drm_writeback_job *
+drm_atomic_get_writeback_job(struct drm_connector_state *conn_state)
+{
+	WARN_ON(conn_state->connector->connector_type != DRM_MODE_CONNECTOR_WRITEBACK);
+
+	if (!conn_state->writeback_job)
+		conn_state->writeback_job =
+			kzalloc(sizeof(*conn_state->writeback_job), GFP_KERNEL);
+
+	return conn_state->writeback_job;
+}
+
+/**
+ * drm_atomic_set_writeback_fb_for_connector - set writeback framebuffer
+ * @conn_state: atomic state object for the connector
+ * @fb: fb to use for the connector
+ *
+ * This is used to set the framebuffer for a writeback connector, which outputs
+ * to a buffer instead of an actual physical connector.
+ * Changing the assigned framebuffer requires us to grab a reference to the new
+ * fb and drop the reference to the old fb, if there is one. This function
+ * takes care of all these details besides updating the pointer in the
+ * state object itself.
+ *
+ * Note: The only way conn_state can already have an fb set is if the commit
+ * sets the property more than once.
+ *
+ * See also: drm_writeback_connector_init()
+ *
+ * Returns: 0 on success
+ */
+int drm_atomic_set_writeback_fb_for_connector(
+		struct drm_connector_state *conn_state,
+		struct drm_framebuffer *fb)
+{
+	struct drm_writeback_job *job =
+		drm_atomic_get_writeback_job(conn_state);
+	if (!job)
+		return -ENOMEM;
+
+	drm_framebuffer_assign(&job->fb, fb);
+
+	if (fb)
+		DRM_DEBUG_ATOMIC("Set [FB:%d] for connector state %p\n",
+				 fb->base.id, conn_state);
+	else
+		DRM_DEBUG_ATOMIC("Set [NOFB] for connector state %p\n",
+				 conn_state);
+
+	return 0;
+}
+EXPORT_SYMBOL(drm_atomic_set_writeback_fb_for_connector);
+
+/**
+ * drm_atomic_add_affected_connectors - add connectors for crtc
+>>>>>>> master
  * @state: atomic state
  * @encoder: DRM encoder
  *

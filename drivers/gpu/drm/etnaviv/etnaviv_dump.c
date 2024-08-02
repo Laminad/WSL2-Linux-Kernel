@@ -130,7 +130,13 @@ void etnaviv_core_dump(struct etnaviv_gem_submit *submit)
 		return;
 	etnaviv_dump_core = false;
 
+<<<<<<< HEAD
 	mutex_lock(&submit->mmu_context->lock);
+=======
+	mutex_lock(&gpu->mmu->lock);
+
+	mmu_size = etnaviv_iommu_dump_size(gpu->mmu);
+>>>>>>> master
 
 	mmu_size = etnaviv_iommu_dump_size(submit->mmu_context);
 
@@ -162,7 +168,11 @@ void etnaviv_core_dump(struct etnaviv_gem_submit *submit)
 	iter.start = __vmalloc(file_size, GFP_KERNEL | __GFP_NOWARN |
 			__GFP_NORETRY);
 	if (!iter.start) {
+<<<<<<< HEAD
 		mutex_unlock(&submit->mmu_context->lock);
+=======
+		mutex_unlock(&gpu->mmu->lock);
+>>>>>>> master
 		dev_warn(gpu->dev, "failed to allocate devcoredump file\n");
 		return;
 	}
@@ -227,6 +237,8 @@ void etnaviv_core_dump(struct etnaviv_gem_submit *submit)
 		etnaviv_core_dump_header(&iter, ETDUMP_BUF_BO, iter.data +
 					 obj->base.size);
 	}
+
+	mutex_unlock(&gpu->mmu->lock);
 
 	etnaviv_core_dump_header(&iter, ETDUMP_BUF_END, iter.data);
 

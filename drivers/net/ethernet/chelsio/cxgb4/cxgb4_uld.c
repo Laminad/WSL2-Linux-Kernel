@@ -109,9 +109,13 @@ static int alloc_uld_rxqs(struct adapter *adap,
 			  struct sge_uld_rxq_info *rxq_info, bool lro)
 {
 	unsigned int nq = rxq_info->nrxq + rxq_info->nciq;
+	int i, err, msi_idx, que_idx = 0, bmap_idx = 0;
 	struct sge_ofld_rxq *q = rxq_info->uldrxq;
 	unsigned short *ids = rxq_info->rspq_id;
+<<<<<<< HEAD
 	int i, err, msi_idx, que_idx = 0;
+=======
+>>>>>>> master
 	struct sge *s = &adap->sge;
 	unsigned int per_chan;
 
@@ -130,6 +134,7 @@ static int alloc_uld_rxqs(struct adapter *adap,
 		}
 
 		if (msi_idx >= 0) {
+<<<<<<< HEAD
 			msi_idx = cxgb4_get_msix_idx_from_bmap(adap);
 			if (msi_idx < 0) {
 				err = -ENOSPC;
@@ -142,6 +147,14 @@ static int alloc_uld_rxqs(struct adapter *adap,
 				 adap->port[0]->name, rxq_info->name, i);
 
 			q->msix = &adap->msix_info[msi_idx];
+=======
+			bmap_idx = get_msix_idx_from_bmap(adap);
+			if (bmap_idx < 0) {
+				err = -ENOSPC;
+				goto freeout;
+			}
+			msi_idx = adap->msix_info_ulds[bmap_idx].idx;
+>>>>>>> master
 		}
 		err = t4_sge_alloc_rxq(adap, &q->rspq, false,
 				       adap->port[que_idx++ / per_chan],
@@ -666,6 +679,7 @@ static int uld_attach(struct adapter *adap, unsigned int uld)
 	return 0;
 }
 
+<<<<<<< HEAD
 #if IS_ENABLED(CONFIG_CHELSIO_TLS_DEVICE)
 static bool cxgb4_uld_in_use(struct adapter *adap)
 {
@@ -677,15 +691,30 @@ static bool cxgb4_uld_in_use(struct adapter *adap)
 /* cxgb4_set_ktls_feature: request FW to enable/disable ktls settings.
  * @adap: adapter info
  * @enable: 1 to enable / 0 to disable ktls settings.
+=======
+/* cxgb4_register_uld - register an upper-layer driver
+ * @type: the ULD type
+ * @p: the ULD methods
+ *
+ * Registers an upper-layer driver with this driver and notifies the ULD
+ * about any presently available devices that support its type.  Returns
+ * %-EBUSY if a ULD of the same type is already registered.
+>>>>>>> master
  */
 int cxgb4_set_ktls_feature(struct adapter *adap, bool enable)
 {
+<<<<<<< HEAD
 	int ret = 0;
 	u32 params =
 		FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
 		FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_KTLS_HW) |
 		FW_PARAMS_PARAM_Y_V(enable) |
 		FW_PARAMS_PARAM_Z_V(FW_PARAMS_PARAM_DEV_KTLS_HW_USER_ENABLE);
+=======
+	unsigned int adap_idx = 0;
+	struct adapter *adap;
+	int ret = 0;
+>>>>>>> master
 
 	if (enable) {
 		if (!refcount_read(&adap->chcr_ktls.ktls_refcount)) {
@@ -721,8 +750,20 @@ int cxgb4_set_ktls_feature(struct adapter *adap, bool enable)
 				return ret;
 			pr_debug("kTLS is disabled. Restrictions on ULD support removed\n");
 		}
+<<<<<<< HEAD
+=======
+		ret = setup_sge_txq_uld(adap, type, p);
+		if (ret)
+			goto free_irq;
+		adap->uld[type] = *p;
+		ret = uld_attach(adap, type);
+		if (ret)
+			goto free_txq;
+		adap_idx++;
+>>>>>>> master
 	}
 
+<<<<<<< HEAD
 	return ret;
 }
 #endif
@@ -761,6 +802,8 @@ static void cxgb4_uld_alloc_resources(struct adapter *adap,
 	if (ret)
 		goto free_txq;
 	return;
+=======
+>>>>>>> master
 free_txq:
 	release_sge_txq_uld(adap, type);
 free_irq:

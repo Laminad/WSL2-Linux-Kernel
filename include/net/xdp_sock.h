@@ -24,8 +24,17 @@ struct xdp_umem {
 	void *addrs;
 	u64 size;
 	u32 headroom;
+<<<<<<< HEAD
 	u32 chunk_size;
 	u32 chunks;
+=======
+	u32 chunk_size_nohr;
+	struct user_struct *user;
+	unsigned long address;
+	refcount_t users;
+	struct work_struct work;
+	struct page **pgs;
+>>>>>>> master
 	u32 npgs;
 	struct user_struct *user;
 	refcount_t users;

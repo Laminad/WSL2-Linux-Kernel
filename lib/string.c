@@ -708,6 +708,10 @@ EXPORT_SYMBOL(memcmp);
  * while this particular implementation is a simple (tail) call to memcmp, do
  * not rely on anything but whether the return value is zero or non-zero.
  */
+<<<<<<< HEAD
+=======
+#undef bcmp
+>>>>>>> master
 int bcmp(const void *a, const void *b, size_t len)
 {
 	return memcmp(a, b, len);

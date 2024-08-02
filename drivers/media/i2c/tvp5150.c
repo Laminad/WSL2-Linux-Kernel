@@ -827,6 +827,62 @@ static int tvp5150_s_std(struct v4l2_subdev *sd, v4l2_std_id std)
 	return tvp5150_set_std(sd, std);
 }
 
+<<<<<<< HEAD
+=======
+static int tvp5150_reset(struct v4l2_subdev *sd, u32 val)
+{
+	struct tvp5150 *decoder = to_tvp5150(sd);
+
+	/* Initializes TVP5150 to its default values */
+	tvp5150_write_inittab(sd, tvp5150_init_default);
+
+	/* Initializes VDP registers */
+	tvp5150_vdp_init(sd);
+
+	/* Selects decoder input */
+	tvp5150_selmux(sd);
+
+	/* Initializes TVP5150 to stream enabled values */
+	tvp5150_write_inittab(sd, tvp5150_init_enable);
+
+	/* Initialize image preferences */
+	v4l2_ctrl_handler_setup(&decoder->hdl);
+
+	tvp5150_set_std(sd, decoder->norm);
+
+	if (decoder->mbus_type == V4L2_MBUS_PARALLEL)
+		tvp5150_write(sd, TVP5150_DATA_RATE_SEL, 0x40);
+
+	return 0;
+};
+
+static int tvp5150_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct v4l2_subdev *sd = to_sd(ctrl);
+	struct tvp5150 *decoder = to_tvp5150(sd);
+
+	switch (ctrl->id) {
+	case V4L2_CID_BRIGHTNESS:
+		tvp5150_write(sd, TVP5150_BRIGHT_CTL, ctrl->val);
+		return 0;
+	case V4L2_CID_CONTRAST:
+		tvp5150_write(sd, TVP5150_CONTRAST_CTL, ctrl->val);
+		return 0;
+	case V4L2_CID_SATURATION:
+		tvp5150_write(sd, TVP5150_SATURATION_CTL, ctrl->val);
+		return 0;
+	case V4L2_CID_HUE:
+		tvp5150_write(sd, TVP5150_HUE_CTL, ctrl->val);
+		return 0;
+	case V4L2_CID_TEST_PATTERN:
+		decoder->enable = ctrl->val ? false : true;
+		tvp5150_selmux(sd);
+		return 0;
+	}
+	return -EINVAL;
+}
+
+>>>>>>> master
 static v4l2_std_id tvp5150_read_std(struct v4l2_subdev *sd)
 {
 	int val = tvp5150_read(sd, TVP5150_STATUS_REG_5);
@@ -1072,6 +1128,21 @@ static unsigned int tvp5150_get_hmax(struct v4l2_subdev *sd)
 {
 	struct tvp5150 *decoder = to_tvp5150(sd);
 	v4l2_std_id std;
+<<<<<<< HEAD
+=======
+	int hmax;
+
+	if (sel->which != V4L2_SUBDEV_FORMAT_ACTIVE ||
+	    sel->target != V4L2_SEL_TGT_CROP)
+		return -EINVAL;
+
+	dev_dbg_lvl(sd->dev, 1, debug, "%s left=%d, top=%d, width=%d, height=%d\n",
+		__func__, rect.left, rect.top, rect.width, rect.height);
+
+	/* tvp5150 has some special limits */
+	rect.left = clamp(rect.left, 0, TVP5150_MAX_CROP_LEFT);
+	rect.top = clamp(rect.top, 0, TVP5150_MAX_CROP_TOP);
+>>>>>>> master
 
 	/* Calculate height based on current standard */
 	if (decoder->norm == V4L2_STD_ALL)
@@ -1083,11 +1154,24 @@ static unsigned int tvp5150_get_hmax(struct v4l2_subdev *sd)
 		TVP5150_V_MAX_525_60 : TVP5150_V_MAX_OTHERS;
 }
 
+<<<<<<< HEAD
 static void tvp5150_set_hw_selection(struct v4l2_subdev *sd,
 				     struct v4l2_rect *rect)
 {
 	struct tvp5150 *decoder = to_tvp5150(sd);
 	unsigned int hmax = tvp5150_get_hmax(sd);
+=======
+	/*
+	 * alignments:
+	 *  - width = 2 due to UYVY colorspace
+	 *  - height, image = no special alignment
+	 */
+	v4l_bound_align_image(&rect.width,
+			      TVP5150_H_MAX - TVP5150_MAX_CROP_LEFT - rect.left,
+			      TVP5150_H_MAX - rect.left, 1, &rect.height,
+			      hmax - TVP5150_MAX_CROP_TOP - rect.top,
+			      hmax - rect.top, 0, 0);
+>>>>>>> master
 
 	regmap_write(decoder->regmap, TVP5150_VERT_BLANKING_START, rect->top);
 	regmap_write(decoder->regmap, TVP5150_VERT_BLANKING_STOP,

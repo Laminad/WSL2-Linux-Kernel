@@ -1737,7 +1737,11 @@ static void ieee80211_chswitch_work(struct wiphy *wiphy,
 		goto out;
 	}
 
+<<<<<<< HEAD
 	link->u.mgd.csa_waiting_bcn = true;
+=======
+	ifmgd->csa_waiting_bcn = true;
+>>>>>>> master
 
 	ieee80211_sta_reset_beacon_monitor(sdata);
 	ieee80211_sta_reset_conn_monitor(sdata);
@@ -2660,6 +2664,18 @@ ieee80211_sta_wmm_params(struct ieee80211_local *local,
 	}
 
 	/* WMM specification requires all 4 ACIs. */
+<<<<<<< HEAD
+=======
+	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++) {
+		if (params[ac].cw_min == 0) {
+			sdata_info(sdata,
+				   "AP has invalid WMM params (missing AC %d), using defaults\n",
+				   ac);
+			return false;
+		}
+	}
+
+>>>>>>> master
 	for (ac = 0; ac < IEEE80211_NUM_ACS; ac++) {
 		if (params[ac].cw_min == 0) {
 			link_info(link,
@@ -3317,10 +3333,16 @@ struct sk_buff *ieee80211_ap_probereq_get(struct ieee80211_hw *hw,
 		return NULL;
 
 	rcu_read_lock();
+<<<<<<< HEAD
 	ssid = ieee80211_bss_get_elem(cbss, WLAN_EID_SSID);
 	if (WARN_ONCE(!ssid || ssid->datalen > IEEE80211_MAX_SSID_LEN,
 		      "invalid SSID element (len=%d)",
 		      ssid ? ssid->datalen : -1))
+=======
+	ssid = ieee80211_bss_get_ie(cbss, WLAN_EID_SSID);
+	if (WARN_ONCE(!ssid || ssid[1] > IEEE80211_MAX_SSID_LEN,
+		      "invalid SSID element (len=%d)", ssid ? ssid[1] : -1))
+>>>>>>> master
 		ssid_len = 0;
 	else
 		ssid_len = ssid->datalen;
@@ -3829,6 +3851,13 @@ static void ieee80211_rx_mgmt_deauth(struct ieee80211_sub_if_data *sdata,
 		ieee80211_tdls_handle_disconnect(sdata, mgmt->sa, reason_code);
 		return;
 	}
+<<<<<<< HEAD
+=======
+
+	if (ifmgd->associated &&
+	    ether_addr_equal(mgmt->bssid, ifmgd->associated->bssid)) {
+		const u8 *bssid = ifmgd->associated->bssid;
+>>>>>>> master
 
 	if (ifmgd->associated &&
 	    ether_addr_equal(mgmt->bssid, sdata->vif.cfg.ap_addr)) {
@@ -7463,8 +7492,13 @@ int ieee80211_mgd_assoc(struct ieee80211_sub_if_data *sdata,
 	cbss = req->link_id < 0 ? req->bss : req->links[req->link_id].bss;
 
 	rcu_read_lock();
+<<<<<<< HEAD
 	ssid_elem = ieee80211_bss_get_elem(cbss, WLAN_EID_SSID);
 	if (!ssid_elem || ssid_elem->datalen > sizeof(assoc_data->ssid)) {
+=======
+	ssidie = ieee80211_bss_get_ie(req->bss, WLAN_EID_SSID);
+	if (!ssidie || ssidie[1] > sizeof(assoc_data->ssid)) {
+>>>>>>> master
 		rcu_read_unlock();
 		kfree(assoc_data);
 		return -EINVAL;

@@ -69,7 +69,11 @@ static void add_early_randomness(struct hwrng *rng)
 	int bytes_read;
 
 	mutex_lock(&reading_mutex);
+<<<<<<< HEAD
 	bytes_read = rng_get_data(rng, rng_fillbuf, 32, 0);
+=======
+	bytes_read = rng_get_data(rng, rng_buffer, size, 0);
+>>>>>>> master
 	mutex_unlock(&reading_mutex);
 	if (bytes_read > 0) {
 		size_t entropy = bytes_read * 8 * rng->quality / 1024;

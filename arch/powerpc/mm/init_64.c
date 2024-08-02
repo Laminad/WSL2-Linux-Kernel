@@ -228,6 +228,7 @@ static int __meminit __vmemmap_populate(unsigned long start, unsigned long end, 
 		 * fail due to alignment issues when using 16MB hugepages, so
 		 * fall back to system memory if the altmap allocation fail.
 		 */
+<<<<<<< HEAD
 		if (altmap && !altmap_cross_boundary(altmap, start, page_size)) {
 			p = vmemmap_alloc_block_buf(page_size, node, altmap);
 			if (!p)
@@ -239,6 +240,12 @@ static int __meminit __vmemmap_populate(unsigned long start, unsigned long end, 
 			p = vmemmap_alloc_block_buf(page_size, node, NULL);
 			altmap_alloc = false;
 		}
+=======
+		if (altmap)
+			p = altmap_alloc_block_buf(page_size, altmap);
+		if (!p)
+			p = vmemmap_alloc_block_buf(page_size, node);
+>>>>>>> master
 		if (!p)
 			return -ENOMEM;
 
@@ -324,10 +331,18 @@ static void __ref __vmemmap_free(unsigned long start, unsigned long end,
 	unsigned long alt_start = ~0, alt_end = ~0;
 	unsigned long base_pfn;
 
+<<<<<<< HEAD
 	start = ALIGN_DOWN(start, page_size);
 	if (altmap) {
 		alt_start = altmap->base_pfn;
 		alt_end = altmap->base_pfn + altmap->reserve + altmap->free;
+=======
+	start = _ALIGN_DOWN(start, page_size);
+	if (altmap) {
+		alt_start = altmap->base_pfn;
+		alt_end = altmap->base_pfn + altmap->reserve +
+			  altmap->free + altmap->alloc + altmap->align;
+>>>>>>> master
 	}
 
 	pr_debug("vmemmap_free %lx...%lx\n", start, end);

@@ -400,6 +400,7 @@ static int usb_parse_endpoint(struct device *ddev, int cfgno,
 			endpoint->desc.wMaxPacketSize = cpu_to_le16(8);
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Validate the wMaxPacketSize field.
 	 * Some devices have isochronous endpoints in altsetting 0;
@@ -410,6 +411,14 @@ static int usb_parse_endpoint(struct device *ddev, int cfgno,
 	if (maxp == 0 && !(usb_endpoint_xfer_isoc(d) && asnum == 0)) {
 		dev_notice(ddev, "config %d interface %d altsetting %d endpoint 0x%X has invalid wMaxPacketSize 0\n",
 		    cfgno, inum, asnum, d->bEndpointAddress);
+=======
+	/* Validate the wMaxPacketSize field */
+	maxp = usb_endpoint_maxp(&endpoint->desc);
+	if (maxp == 0) {
+		dev_warn(ddev, "config %d interface %d altsetting %d endpoint 0x%X has wMaxPacketSize 0, skipping\n",
+		    cfgno, inum, asnum, d->bEndpointAddress);
+		goto skip_to_next_endpoint_or_interface_descriptor;
+>>>>>>> master
 	}
 
 	/* Find the highest legal maxpacket size for this endpoint */
@@ -993,7 +1002,11 @@ int usb_get_bos_descriptor(struct usb_device *dev)
 	/* Get BOS descriptor */
 	ret = usb_get_descriptor(dev, USB_DT_BOS, 0, bos, USB_DT_BOS_SIZE);
 	if (ret < USB_DT_BOS_SIZE || bos->bLength < USB_DT_BOS_SIZE) {
+<<<<<<< HEAD
 		dev_notice(ddev, "unable to get BOS descriptor or descriptor too short\n");
+=======
+		dev_err(ddev, "unable to get BOS descriptor or descriptor too short\n");
+>>>>>>> master
 		if (ret >= 0)
 			ret = -ENOMSG;
 		kfree(bos);
@@ -1078,7 +1091,10 @@ int usb_get_bos_descriptor(struct usb_device *dev)
 			break;
 		}
 
+<<<<<<< HEAD
 skip_to_next_descriptor:
+=======
+>>>>>>> master
 		total_len -= length;
 		buffer += length;
 	}

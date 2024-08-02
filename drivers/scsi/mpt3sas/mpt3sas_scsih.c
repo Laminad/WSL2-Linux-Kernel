@@ -1750,12 +1750,26 @@ mpt3sas_scsih_scsi_lookup_get(struct MPT3SAS_ADAPTER *ioc, u16 smid)
 	struct scsi_cmnd *scmd = NULL;
 	struct scsiio_tracker *st;
 	Mpi25SCSIIORequest_t *mpi_request;
+<<<<<<< HEAD
 	u16 tag = smid - 1;
+=======
+>>>>>>> master
 
 	if (smid > 0  &&
 	    smid <= ioc->scsiio_depth - INTERNAL_SCSIIO_CMDS_COUNT) {
 		u32 unique_tag =
 		    ioc->io_queue_num[tag] << BLK_MQ_UNIQUE_TAG_BITS | tag;
+
+		mpi_request = mpt3sas_base_get_msg_frame(ioc, smid);
+
+		/*
+		 * If SCSI IO request is outstanding at driver level then
+		 * DevHandle filed must be non-zero. If DevHandle is zero
+		 * then it means that this smid is free at driver level,
+		 * so return NULL.
+		 */
+		if (!mpi_request->DevHandle)
+			return scmd;
 
 		mpi_request = mpt3sas_base_get_msg_frame(ioc, smid);
 
@@ -11298,7 +11312,10 @@ static void scsih_remove(struct pci_dev *pdev)
 				&ioc->ioc_pg1_copy);
 	/* release all the volumes */
 	_scsih_ir_shutdown(ioc);
+<<<<<<< HEAD
 	mpt3sas_destroy_debugfs(ioc);
+=======
+>>>>>>> master
 	sas_remove_host(shost);
 	list_for_each_entry_safe(raid_device, next, &ioc->raid_device_list,
 	    list) {

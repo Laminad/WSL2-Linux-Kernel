@@ -272,8 +272,15 @@ void free_pipe_info(struct pipe_inode_info *);
 
 /* Generic pipe buffer ops functions */
 bool generic_pipe_buf_get(struct pipe_inode_info *, struct pipe_buffer *);
+<<<<<<< HEAD
 bool generic_pipe_buf_try_steal(struct pipe_inode_info *, struct pipe_buffer *);
+=======
+int generic_pipe_buf_confirm(struct pipe_inode_info *, struct pipe_buffer *);
+int generic_pipe_buf_steal(struct pipe_inode_info *, struct pipe_buffer *);
+int generic_pipe_buf_nosteal(struct pipe_inode_info *, struct pipe_buffer *);
+>>>>>>> master
 void generic_pipe_buf_release(struct pipe_inode_info *, struct pipe_buffer *);
+void pipe_buf_mark_unmergeable(struct pipe_buffer *buf);
 
 extern const struct pipe_buf_operations nosteal_pipe_buf_ops;
 

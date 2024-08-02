@@ -345,14 +345,22 @@ static int __init maybe_link(void)
 		char *old = find_link(major, minor, ino, mode, collected);
 		if (old) {
 			clean_path(collected, 0);
+<<<<<<< HEAD
 			return (init_link(old, collected) < 0) ? -1 : 1;
+=======
+			return (ksys_link(old, collected) < 0) ? -1 : 1;
+>>>>>>> master
 		}
 	}
 	return 0;
 }
 
+<<<<<<< HEAD
 static __initdata struct file *wfile;
 static __initdata loff_t wfile_pos;
+=======
+static __initdata int wfd;
+>>>>>>> master
 
 static int __init do_name(void)
 {
@@ -576,8 +584,17 @@ extern unsigned long __initramfs_size;
 
 void __init reserve_initrd_mem(void)
 {
+<<<<<<< HEAD
 	phys_addr_t start;
 	unsigned long size;
+=======
+#ifdef CONFIG_KEXEC_CORE
+	unsigned long crashk_start = (unsigned long)__va(crashk_res.start);
+	unsigned long crashk_end   = (unsigned long)__va(crashk_res.end);
+#endif
+	if (do_retain_initrd || !initrd_start)
+		goto skip;
+>>>>>>> master
 
 	/* Ignore the virtul address computed during device tree parsing */
 	initrd_start = initrd_end = 0;
@@ -698,6 +715,7 @@ static void __init do_populate_rootfs(void *unused, async_cookie_t cookie)
 
 	if (IS_ENABLED(CONFIG_BLK_DEV_RAM))
 		printk(KERN_INFO "Trying to unpack rootfs image as initramfs...\n");
+<<<<<<< HEAD
 	else
 		printk(KERN_INFO "Unpacking initramfs...\n");
 
@@ -709,6 +727,47 @@ static void __init do_populate_rootfs(void *unused, async_cookie_t cookie)
 		printk(KERN_EMERG "Initramfs unpacking failed: %s\n", err);
 #endif
 	}
+=======
+		err = unpack_to_rootfs((char *)initrd_start,
+			initrd_end - initrd_start);
+		if (!err)
+			goto done;
+
+		clean_rootfs();
+		unpack_to_rootfs(__initramfs_start, __initramfs_size);
+
+		printk(KERN_INFO "rootfs image is not initramfs (%s)"
+				"; looks like an initrd\n", err);
+		fd = ksys_open("/initrd.image",
+			      O_WRONLY|O_CREAT, 0700);
+		if (fd >= 0) {
+			ssize_t written = xwrite(fd, (char *)initrd_start,
+						initrd_end - initrd_start);
+
+			if (written != initrd_end - initrd_start)
+				pr_err("/initrd.image: incomplete write (%zd != %ld)\n",
+				       written, initrd_end - initrd_start);
+
+			ksys_close(fd);
+		}
+	done:
+		/* empty statement */;
+#else
+		printk(KERN_INFO "Unpacking initramfs...\n");
+		err = unpack_to_rootfs((char *)initrd_start,
+			initrd_end - initrd_start);
+		if (err)
+			printk(KERN_EMERG "Initramfs unpacking failed: %s\n", err);
+#endif
+	}
+	free_initrd();
+	flush_delayed_fput();
+	/*
+	 * Try loading default modules from initramfs.  This gives
+	 * us a chance to load before device_initcalls.
+	 */
+	load_default_modules();
+>>>>>>> master
 
 done:
 	/*

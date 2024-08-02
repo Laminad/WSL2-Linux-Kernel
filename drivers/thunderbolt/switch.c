@@ -339,7 +339,22 @@ static int nvm_write(void *priv, unsigned int offset, void *val, size_t bytes)
 	 * locally here and handle the special cases when the user asks
 	 * us to authenticate the image.
 	 */
+<<<<<<< HEAD
 	ret = tb_nvm_write_buf(nvm, offset, val, bytes);
+=======
+	if (!sw->nvm->buf) {
+		sw->nvm->buf = vmalloc(NVM_MAX_SIZE);
+		if (!sw->nvm->buf) {
+			ret = -ENOMEM;
+			goto unlock;
+		}
+	}
+
+	sw->nvm->buf_data_size = offset + bytes;
+	memcpy(sw->nvm->buf + offset, val, bytes);
+
+unlock:
+>>>>>>> master
 	mutex_unlock(&sw->tb->lock);
 
 	return ret;
@@ -1892,6 +1907,7 @@ static ssize_t key_store(struct device *dev, struct device_attribute *attr,
 }
 static DEVICE_ATTR(key, 0600, key_show, key_store);
 
+<<<<<<< HEAD
 static ssize_t speed_show(struct device *dev, struct device_attribute *attr,
 			  char *buf)
 {
@@ -1958,6 +1974,31 @@ static ssize_t tx_lanes_show(struct device *dev, struct device_attribute *attr,
 	return sysfs_emit(buf, "%u\n", width);
 }
 static DEVICE_ATTR(tx_lanes, 0444, tx_lanes_show, NULL);
+=======
+static void nvm_authenticate_start(struct tb_switch *sw)
+{
+	struct pci_dev *root_port;
+
+	/*
+	 * During host router NVM upgrade we should not allow root port to
+	 * go into D3cold because some root ports cannot trigger PME
+	 * itself. To be on the safe side keep the root port in D0 during
+	 * the whole upgrade process.
+	 */
+	root_port = pci_find_pcie_root_port(sw->tb->nhi->pdev);
+	if (root_port)
+		pm_runtime_get_noresume(&root_port->dev);
+}
+
+static void nvm_authenticate_complete(struct tb_switch *sw)
+{
+	struct pci_dev *root_port;
+
+	root_port = pci_find_pcie_root_port(sw->tb->nhi->pdev);
+	if (root_port)
+		pm_runtime_put(&root_port->dev);
+}
+>>>>>>> master
 
 static ssize_t nvm_authenticate_show(struct device *dev,
 	struct device_attribute *attr, char *buf)
@@ -1975,6 +2016,7 @@ static ssize_t nvm_authenticate_sysfs(struct device *dev, const char *buf,
 	struct tb_switch *sw = tb_to_switch(dev);
 	int val, ret;
 
+<<<<<<< HEAD
 	pm_runtime_get_sync(&sw->dev);
 
 	if (!mutex_trylock(&sw->tb->lock)) {
@@ -1986,6 +2028,10 @@ static ssize_t nvm_authenticate_sysfs(struct device *dev, const char *buf,
 		ret = -EOPNOTSUPP;
 		goto exit_unlock;
 	}
+=======
+	if (!mutex_trylock(&sw->tb->lock))
+		return restart_syscall();
+>>>>>>> master
 
 	/* If NVMem devices are not yet added */
 	if (!sw->nvm) {
@@ -2024,13 +2070,44 @@ static ssize_t nvm_authenticate_sysfs(struct device *dev, const char *buf,
 					ret = nvm_authenticate(sw, false);
 			}
 		}
+<<<<<<< HEAD
+=======
+
+		pm_runtime_get_sync(&sw->dev);
+		ret = nvm_validate_and_write(sw);
+		if (ret) {
+			pm_runtime_mark_last_busy(&sw->dev);
+			pm_runtime_put_autosuspend(&sw->dev);
+			goto exit_unlock;
+		}
+
+		sw->nvm->authenticating = true;
+
+		if (!tb_route(sw)) {
+			/*
+			 * Keep root port from suspending as long as the
+			 * NVM upgrade process is running.
+			 */
+			nvm_authenticate_start(sw);
+			ret = nvm_authenticate_host(sw);
+			if (ret)
+				nvm_authenticate_complete(sw);
+		} else {
+			ret = nvm_authenticate_device(sw);
+		}
+		pm_runtime_mark_last_busy(&sw->dev);
+		pm_runtime_put_autosuspend(&sw->dev);
+>>>>>>> master
 	}
 
 exit_unlock:
 	mutex_unlock(&sw->tb->lock);
+<<<<<<< HEAD
 exit_rpm:
 	pm_runtime_mark_last_busy(&sw->dev);
 	pm_runtime_put_autosuspend(&sw->dev);
+=======
+>>>>>>> master
 
 	return ret;
 }
@@ -2569,6 +2646,7 @@ int tb_switch_configure(struct tb_switch *sw)
 	return tb_plug_events_active(sw, true);
 }
 
+<<<<<<< HEAD
 /**
  * tb_switch_configuration_valid() - Set the tunneling configuration to be valid
  * @sw: Router to configure
@@ -2579,6 +2657,9 @@ int tb_switch_configure(struct tb_switch *sw)
  * Returns %0 in success and negative errno otherwise.
  */
 int tb_switch_configuration_valid(struct tb_switch *sw)
+=======
+static int tb_switch_set_uuid(struct tb_switch *sw)
+>>>>>>> master
 {
 	if (tb_switch_is_usb4(sw))
 		return usb4_switch_configuration_valid(sw);
@@ -2589,9 +2670,15 @@ static int tb_switch_set_uuid(struct tb_switch *sw)
 {
 	bool uid = false;
 	u32 uuid[4];
+<<<<<<< HEAD
 	int ret;
+=======
+	int cap, ret;
+>>>>>>> master
 
+	ret = 0;
 	if (sw->uuid)
+<<<<<<< HEAD
 		return 0;
 
 	if (tb_switch_is_usb4(sw)) {
@@ -2599,6 +2686,19 @@ static int tb_switch_set_uuid(struct tb_switch *sw)
 		if (ret)
 			return ret;
 		uid = true;
+=======
+		return ret;
+
+	/*
+	 * The newer controllers include fused UUID as part of link
+	 * controller specific registers
+	 */
+	cap = tb_switch_find_vse_cap(sw, TB_VSE_CAP_LINK_CONTROLLER);
+	if (cap > 0) {
+		ret = tb_sw_read(sw, uuid, TB_CFG_SWITCH, cap + 3, 4);
+		if (ret)
+			return ret;
+>>>>>>> master
 	} else {
 		/*
 		 * The newer controllers include fused UUID as part of
@@ -2627,8 +2727,13 @@ static int tb_switch_set_uuid(struct tb_switch *sw)
 
 	sw->uuid = kmemdup(uuid, sizeof(uuid), GFP_KERNEL);
 	if (!sw->uuid)
+<<<<<<< HEAD
 		return -ENOMEM;
 	return 0;
+=======
+		ret = -ENOMEM;
+	return ret;
+>>>>>>> master
 }
 
 static int tb_switch_add_dma_port(struct tb_switch *sw)
@@ -2708,10 +2813,20 @@ static int tb_switch_add_dma_port(struct tb_switch *sw)
 
 	/* Now we can allow root port to suspend again */
 	if (!tb_route(sw))
+<<<<<<< HEAD
 		nvm_authenticate_complete_dma_port(sw);
 
 	if (status) {
 		tb_sw_info(sw, "switch flash authentication failed\n");
+=======
+		nvm_authenticate_complete(sw);
+
+	if (status) {
+		tb_sw_info(sw, "switch flash authentication failed\n");
+		ret = tb_switch_set_uuid(sw);
+		if (ret)
+			return ret;
+>>>>>>> master
 		nvm_set_auth_status(sw, status);
 	}
 
@@ -3047,6 +3162,14 @@ int tb_switch_add(struct tb_switch *sw)
 			dev_err(&sw->dev, "failed to set UUID\n");
 			return ret;
 		}
+<<<<<<< HEAD
+=======
+		tb_sw_info(sw, "uid: %#llx\n", sw->uid);
+
+		ret = tb_switch_set_uuid(sw);
+		if (ret)
+			return ret;
+>>>>>>> master
 
 		for (i = 0; i <= sw->config.max_port_number; i++) {
 			if (sw->ports[i].disabled) {

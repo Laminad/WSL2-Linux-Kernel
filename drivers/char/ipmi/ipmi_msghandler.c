@@ -34,8 +34,13 @@
 #include <linux/workqueue.h>
 #include <linux/uuid.h>
 #include <linux/nospec.h>
+<<<<<<< HEAD
 #include <linux/vmalloc.h>
 #include <linux/delay.h>
+=======
+
+#define PFX "IPMI message handler: "
+>>>>>>> master
 
 #define IPMI_DRIVER_VERSION "39.2"
 
@@ -47,6 +52,28 @@ static void need_waiter(struct ipmi_smi *intf);
 static int handle_one_recv_msg(struct ipmi_smi *intf,
 			       struct ipmi_smi_msg *msg);
 
+<<<<<<< HEAD
+=======
+#ifdef DEBUG
+static void ipmi_debug_msg(const char *title, unsigned char *data,
+			   unsigned int len)
+{
+	int i, pos;
+	char buf[100];
+
+	pos = snprintf(buf, sizeof(buf), "%s: ", title);
+	for (i = 0; i < len; i++)
+		pos += snprintf(buf + pos, sizeof(buf) - pos,
+				" %2.2x", data[i]);
+	pr_debug("%s\n", buf);
+}
+#else
+static void ipmi_debug_msg(const char *title, unsigned char *data,
+			   unsigned int len)
+{ }
+#endif
+
+>>>>>>> master
 static bool initialized;
 static bool drvregistered;
 
@@ -199,8 +226,11 @@ struct ipmi_user {
 	/* Does this interface receive IPMI events? */
 	bool gets_events;
 
+<<<<<<< HEAD
 	atomic_t nr_msgs;
 
+=======
+>>>>>>> master
 	/* Free must run in process context for RCU cleanup. */
 	struct work_struct remove_work;
 };
@@ -630,9 +660,13 @@ static DEFINE_MUTEX(ipmidriver_mutex);
 
 static LIST_HEAD(ipmi_interfaces);
 static DEFINE_MUTEX(ipmi_interfaces_mutex);
+<<<<<<< HEAD
 #define ipmi_interfaces_mutex_held() \
 	lockdep_is_held(&ipmi_interfaces_mutex)
 static struct srcu_struct ipmi_interfaces_srcu;
+=======
+struct srcu_struct ipmi_interfaces_srcu;
+>>>>>>> master
 
 /*
  * List of watchers that want to know when smi's are added and deleted.
@@ -1201,6 +1235,15 @@ static void free_user_work(struct work_struct *work)
 	vfree(user);
 }
 
+static void free_user_work(struct work_struct *work)
+{
+	struct ipmi_user *user = container_of(work, struct ipmi_user,
+					      remove_work);
+
+	cleanup_srcu_struct(&user->release_barrier);
+	kfree(user);
+}
+
 int ipmi_create_user(unsigned int          if_num,
 		     const struct ipmi_user_hndl *handler,
 		     void                  *handler_data,
@@ -1230,7 +1273,11 @@ int ipmi_create_user(unsigned int          if_num,
 	if (rv)
 		return rv;
 
+<<<<<<< HEAD
 	new_user = vzalloc(sizeof(*new_user));
+=======
+	new_user = kmalloc(sizeof(*new_user), GFP_KERNEL);
+>>>>>>> master
 	if (!new_user)
 		return -ENOMEM;
 
@@ -1244,11 +1291,14 @@ int ipmi_create_user(unsigned int          if_num,
 	goto out_kfree;
 
  found:
+<<<<<<< HEAD
 	if (atomic_add_return(1, &intf->nr_users) > max_users) {
 		rv = -EBUSY;
 		goto out_kfree;
 	}
 
+=======
+>>>>>>> master
 	INIT_WORK(&new_user->remove_work, free_user_work);
 
 	rv = init_srcu_struct(&new_user->release_barrier);
@@ -1320,7 +1370,11 @@ static void free_user(struct kref *ref)
 	struct ipmi_user *user = container_of(ref, struct ipmi_user, refcount);
 
 	/* SRCU cleanup must happen in task context. */
+<<<<<<< HEAD
 	queue_work(remove_work_wq, &user->remove_work);
+=======
+	schedule_work(&user->remove_work);
+>>>>>>> master
 }
 
 static void _ipmi_destroy_user(struct ipmi_user *user)
@@ -5486,6 +5540,7 @@ static int ipmi_init_msghandler(void)
 	if (initialized)
 		goto out;
 
+<<<<<<< HEAD
 	rv = init_srcu_struct(&ipmi_interfaces_srcu);
 	if (rv)
 		goto out;
@@ -5496,6 +5551,9 @@ static int ipmi_init_msghandler(void)
 		rv = -ENOMEM;
 		goto out_wq;
 	}
+=======
+	init_srcu_struct(&ipmi_interfaces_srcu);
+>>>>>>> master
 
 	timer_setup(&ipmi_timer, ipmi_timeout, 0);
 	mod_timer(&ipmi_timer, jiffies + IPMI_TIMEOUT_JIFFIES);
@@ -5504,9 +5562,12 @@ static int ipmi_init_msghandler(void)
 
 	initialized = true;
 
+<<<<<<< HEAD
 out_wq:
 	if (rv)
 		cleanup_srcu_struct(&ipmi_interfaces_srcu);
+=======
+>>>>>>> master
 out:
 	mutex_unlock(&ipmi_interfaces_mutex);
 	return rv;
@@ -5530,6 +5591,7 @@ static void __exit cleanup_ipmi(void)
 	int count;
 
 	if (initialized) {
+<<<<<<< HEAD
 		destroy_workqueue(remove_work_wq);
 
 		atomic_notifier_chain_unregister(&panic_notifier_list,
@@ -5558,6 +5620,33 @@ static void __exit cleanup_ipmi(void)
 		if (count != 0)
 			pr_warn("recv message count %d at exit\n", count);
 
+=======
+		atomic_notifier_chain_unregister(&panic_notifier_list,
+						 &panic_block);
+
+		/*
+		 * This can't be called if any interfaces exist, so no worry
+		 * about shutting down the interfaces.
+		 */
+
+		/*
+		 * Tell the timer to stop, then wait for it to stop.  This
+		 * avoids problems with race conditions removing the timer
+		 * here.
+		 */
+		atomic_inc(&stop_operation);
+		del_timer_sync(&ipmi_timer);
+
+		initialized = false;
+
+		/* Check for buffer leaks. */
+		count = atomic_read(&smi_msg_inuse_count);
+		if (count != 0)
+			pr_warn(PFX "SMI message count %d at exit\n", count);
+		count = atomic_read(&recv_msg_inuse_count);
+		if (count != 0)
+			pr_warn(PFX "recv message count %d at exit\n", count);
+>>>>>>> master
 		cleanup_srcu_struct(&ipmi_interfaces_srcu);
 	}
 	if (drvregistered)

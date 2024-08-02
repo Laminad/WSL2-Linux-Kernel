@@ -1230,8 +1230,13 @@ static int pcpu_alloc_area(struct pcpu_chunk *chunk, int alloc_bits,
 	 */
 	end = min_t(int, start + alloc_bits + PCPU_BITMAP_BLOCK_BITS,
 		    pcpu_chunk_map_bits(chunk));
+<<<<<<< HEAD
 	bit_off = pcpu_find_zero_area(chunk->alloc_map, end, start, alloc_bits,
 				      align_mask, &area_off, &area_bits);
+=======
+	bit_off = bitmap_find_next_zero_area(chunk->alloc_map, end, start,
+					     alloc_bits, align_mask);
+>>>>>>> master
 	if (bit_off >= end)
 		return -1;
 
@@ -2258,7 +2263,11 @@ void free_percpu(void __percpu *ptr)
 	void *addr;
 	struct pcpu_chunk *chunk;
 	unsigned long flags;
+<<<<<<< HEAD
 	int size, off;
+=======
+	int off;
+>>>>>>> master
 	bool need_balance = false;
 
 	if (!ptr)

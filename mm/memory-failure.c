@@ -451,6 +451,7 @@ static void __add_to_kill(struct task_struct *tsk, struct page *p,
 		pr_err("Out of memory while machine check handling\n");
 		return;
 	}
+<<<<<<< HEAD
 
 	tk->addr = ksm_addr ? ksm_addr : page_address_in_vma(p, vma);
 	if (is_zone_device_page(p)) {
@@ -459,6 +460,13 @@ static void __add_to_kill(struct task_struct *tsk, struct page *p,
 		tk->size_shift = dev_pagemap_mapping_shift(vma, tk->addr);
 	} else
 		tk->size_shift = page_shift(compound_head(p));
+=======
+	tk->addr = page_address_in_vma(p, vma);
+	if (is_zone_device_page(p))
+		tk->size_shift = dev_pagemap_mapping_shift(p, vma);
+	else
+		tk->size_shift = compound_order(compound_head(p)) + PAGE_SHIFT;
+>>>>>>> master
 
 	/*
 	 * Send SIGKILL if "tk->addr == -EFAULT". Also, as
@@ -471,7 +479,11 @@ static void __add_to_kill(struct task_struct *tsk, struct page *p,
 	 * has a mapping for the page.
 	 */
 	if (tk->addr == -EFAULT) {
+<<<<<<< HEAD
 		pr_info("Unable to find user space address %lx in %s\n",
+=======
+		pr_info("Memory failure: Unable to find user space address %lx in %s\n",
+>>>>>>> master
 			page_to_pfn(p), tsk->comm);
 	} else if (tk->size_shift == 0) {
 		kfree(tk);
@@ -532,7 +544,11 @@ static void kill_procs(struct list_head *to_kill, int forcekill, bool fail,
 			 * signal and then access the memory. Just kill it.
 			 */
 			if (fail || tk->addr == -EFAULT) {
+<<<<<<< HEAD
 				pr_err("%#lx: forcibly killing %s:%d because of failure to unmap corrupted page\n",
+=======
+				pr_err("Memory failure: %#lx: forcibly killing %s:%d because of failure to unmap corrupted page\n",
+>>>>>>> master
 				       pfn, tk->tsk->comm, tk->tsk->pid);
 				do_send_sig_info(SIGKILL, SEND_SIG_PRIV,
 						 tk->tsk, PIDTYPE_PID);
@@ -2192,6 +2208,7 @@ int memory_failure(unsigned long pfn, int flags)
 	if (!sysctl_memory_failure_recovery)
 		panic("Memory failure on page %lx", pfn);
 
+<<<<<<< HEAD
 	mutex_lock(&mf_mutex);
 
 	if (!(flags & MF_SW_SIMULATED))
@@ -2222,6 +2239,23 @@ try_again:
 	if (hugetlb)
 		goto unlock_mutex;
 
+=======
+	p = pfn_to_online_page(pfn);
+	if (!p) {
+		if (pfn_valid(pfn)) {
+			pgmap = get_dev_pagemap(pfn, NULL);
+			if (pgmap)
+				return memory_failure_dev_pagemap(pfn, flags,
+								  pgmap);
+		}
+		pr_err("Memory failure: %#lx: memory outside kernel control\n",
+			pfn);
+		return -ENXIO;
+	}
+
+	if (PageHuge(p))
+		return memory_failure_hugetlb(pfn, flags);
+>>>>>>> master
 	if (TestSetPageHWPoison(p)) {
 		pr_err("%#lx: already hardware poisoned\n", pfn);
 		res = -EHWPOISON;
@@ -2672,10 +2706,60 @@ static int soft_offline_in_use_page(struct page *page)
 		.gfp_mask = GFP_USER | __GFP_MOVABLE | __GFP_RETRY_MAYFAIL,
 	};
 
+<<<<<<< HEAD
 	if (!huge && PageTransHuge(hpage)) {
 		if (try_to_split_thp_page(page)) {
 			pr_info("soft offline: %#lx: thp split failed\n", pfn);
 			return -EBUSY;
+=======
+	/*
+	 * This double-check of PageHWPoison is to avoid the race with
+	 * memory_failure(). See also comment in __soft_offline_page().
+	 */
+	lock_page(hpage);
+	if (PageHWPoison(hpage)) {
+		unlock_page(hpage);
+		put_hwpoison_page(hpage);
+		pr_info("soft offline: %#lx hugepage already poisoned\n", pfn);
+		return -EBUSY;
+	}
+	unlock_page(hpage);
+
+	ret = isolate_huge_page(hpage, &pagelist);
+	/*
+	 * get_any_page() and isolate_huge_page() takes a refcount each,
+	 * so need to drop one here.
+	 */
+	put_hwpoison_page(hpage);
+	if (!ret) {
+		pr_info("soft offline: %#lx hugepage failed to isolate\n", pfn);
+		return -EBUSY;
+	}
+
+	ret = migrate_pages(&pagelist, new_page, NULL, MPOL_MF_MOVE_ALL,
+				MIGRATE_SYNC, MR_MEMORY_FAILURE);
+	if (ret) {
+		pr_info("soft offline: %#lx: hugepage migration failed %d, type %lx (%pGp)\n",
+			pfn, ret, page->flags, &page->flags);
+		if (!list_empty(&pagelist))
+			putback_movable_pages(&pagelist);
+		if (ret > 0)
+			ret = -EIO;
+	} else {
+		/*
+		 * We set PG_hwpoison only when the migration source hugepage
+		 * was successfully dissolved, because otherwise hwpoisoned
+		 * hugepage remains on free hugepage list, then userspace will
+		 * find it as SIGBUS by allocation failure. That's not expected
+		 * in soft-offlining.
+		 */
+		ret = dissolve_free_huge_page(page);
+		if (!ret) {
+			if (set_hwpoison_free_buddy_page(page))
+				num_poisoned_pages_inc();
+			else
+				ret = -EBUSY;
+>>>>>>> master
 		}
 		hpage = page;
 	}
@@ -2729,6 +2813,59 @@ static int soft_offline_in_use_page(struct page *page)
 	return ret;
 }
 
+<<<<<<< HEAD
+=======
+static int soft_offline_in_use_page(struct page *page, int flags)
+{
+	int ret;
+	int mt;
+	struct page *hpage = compound_head(page);
+
+	if (!PageHuge(page) && PageTransHuge(hpage)) {
+		lock_page(page);
+		if (!PageAnon(page) || unlikely(split_huge_page(page))) {
+			unlock_page(page);
+			if (!PageAnon(page))
+				pr_info("soft offline: %#lx: non anonymous thp\n", page_to_pfn(page));
+			else
+				pr_info("soft offline: %#lx: thp split failed\n", page_to_pfn(page));
+			put_hwpoison_page(page);
+			return -EBUSY;
+		}
+		unlock_page(page);
+	}
+
+	/*
+	 * Setting MIGRATE_ISOLATE here ensures that the page will be linked
+	 * to free list immediately (not via pcplist) when released after
+	 * successful page migration. Otherwise we can't guarantee that the
+	 * page is really free after put_page() returns, so
+	 * set_hwpoison_free_buddy_page() highly likely fails.
+	 */
+	mt = get_pageblock_migratetype(page);
+	set_pageblock_migratetype(page, MIGRATE_ISOLATE);
+	if (PageHuge(page))
+		ret = soft_offline_huge_page(page, flags);
+	else
+		ret = __soft_offline_page(page, flags);
+	set_pageblock_migratetype(page, mt);
+	return ret;
+}
+
+static int soft_offline_free_page(struct page *page)
+{
+	int rc = dissolve_free_huge_page(page);
+
+	if (!rc) {
+		if (set_hwpoison_free_buddy_page(page))
+			num_poisoned_pages_inc();
+		else
+			rc = -EBUSY;
+	}
+	return rc;
+}
+
+>>>>>>> master
 /**
  * soft_offline_page - Soft offline a page.
  * @pfn: pfn to soft-offline

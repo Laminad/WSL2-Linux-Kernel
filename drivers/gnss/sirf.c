@@ -145,7 +145,11 @@ static int sirf_write_raw(struct gnss_device *gdev, const unsigned char *buf,
 
 	/* write is only buffered synchronously */
 	ret = serdev_device_write(serdev, buf, count, MAX_SCHEDULE_TIMEOUT);
+<<<<<<< HEAD
 	if (ret < 0 || ret < count)
+=======
+	if (ret < 0)
+>>>>>>> master
 		return ret;
 
 	/* FIXME: determine if interrupted? */
@@ -267,6 +271,7 @@ static int sirf_set_active(struct sirf_data *data, bool active)
 	else
 		timeout = SIRF_HIBERNATE_TIMEOUT;
 
+<<<<<<< HEAD
 	if (!data->wakeup) {
 		ret = sirf_serdev_open(data);
 		if (ret)
@@ -283,6 +288,23 @@ static int sirf_set_active(struct sirf_data *data, bool active)
 
 	if (ret)
 		return ret;
+=======
+	do {
+		sirf_pulse_on_off(data);
+		ret = sirf_wait_for_power_state(data, active, timeout);
+		if (ret < 0) {
+			if (ret == -ETIMEDOUT)
+				continue;
+
+			return ret;
+		}
+
+		break;
+	} while (retries--);
+
+	if (retries < 0)
+		return -ETIMEDOUT;
+>>>>>>> master
 
 	return 0;
 }
@@ -451,6 +473,7 @@ static int sirf_probe(struct serdev_device *serdev)
 			ret = PTR_ERR(data->wakeup);
 			goto err_put_device;
 		}
+<<<<<<< HEAD
 
 		ret = regulator_enable(data->vcc);
 		if (ret)
@@ -458,6 +481,28 @@ static int sirf_probe(struct serdev_device *serdev)
 
 		/* Wait for chip to boot into hibernate mode. */
 		msleep(SIRF_BOOT_DELAY);
+=======
+
+		ret = regulator_enable(data->vcc);
+		if (ret)
+			goto err_put_device;
+
+		/* Wait for chip to boot into hibernate mode. */
+		msleep(SIRF_BOOT_DELAY);
+	}
+
+	if (data->wakeup) {
+		ret = gpiod_to_irq(data->wakeup);
+		if (ret < 0)
+			goto err_disable_vcc;
+		data->irq = ret;
+
+		ret = request_threaded_irq(data->irq, NULL, sirf_wakeup_handler,
+				IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
+				"wakeup", data);
+		if (ret)
+			goto err_disable_vcc;
+>>>>>>> master
 	}
 
 	if (data->wakeup) {

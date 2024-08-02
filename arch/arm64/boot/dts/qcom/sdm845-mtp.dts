@@ -613,6 +613,7 @@
 	status = "okay";
 };
 
+<<<<<<< HEAD
 &sdhc_2 {
 	status = "okay";
 
@@ -623,6 +624,10 @@
 	vqmmc-supply = <&vddpx_2>;
 
 	cd-gpios = <&tlmm 126 GPIO_ACTIVE_LOW>;
+=======
+&tlmm {
+	gpio-reserved-ranges = <0 4>, <81 4>;
+>>>>>>> master
 };
 
 &uart9 {

@@ -115,6 +115,10 @@ extern void __update_cache(pte_t pte);
 #define BITS_PER_PMD	(PAGE_SHIFT + PMD_TABLE_ORDER - BITS_PER_PMD_ENTRY)
 #define PTRS_PER_PMD    (1UL << BITS_PER_PMD)
 #else
+<<<<<<< HEAD
+=======
+#define __PAGETABLE_PMD_FOLDED 1
+>>>>>>> master
 #define BITS_PER_PMD	0
 #endif
 

@@ -1199,7 +1199,19 @@ static int sx150x_probe(struct i2c_client *client)
 
 	/* Add Interrupt support if an irq is specified */
 	if (client->irq > 0) {
+<<<<<<< HEAD
 		struct gpio_irq_chip *girq;
+=======
+		pctl->irq_chip.irq_mask = sx150x_irq_mask;
+		pctl->irq_chip.irq_unmask = sx150x_irq_unmask;
+		pctl->irq_chip.irq_set_type = sx150x_irq_set_type;
+		pctl->irq_chip.irq_bus_lock = sx150x_irq_bus_lock;
+		pctl->irq_chip.irq_bus_sync_unlock = sx150x_irq_bus_sync_unlock;
+		pctl->irq_chip.name = devm_kstrdup(dev, client->name,
+						   GFP_KERNEL);
+		if (!pctl->irq_chip.name)
+			return -ENOMEM;
+>>>>>>> master
 
 		pctl->irq.masked = ~0;
 		pctl->irq.sense = 0;

@@ -963,6 +963,34 @@ xfs_bmap_add_attrfork_local(
 	return -EFSCORRUPTED;
 }
 
+/* Set an inode attr fork off based on the format */
+int
+xfs_bmap_set_attrforkoff(
+	struct xfs_inode	*ip,
+	int			size,
+	int			*version)
+{
+	switch (ip->i_d.di_format) {
+	case XFS_DINODE_FMT_DEV:
+		ip->i_d.di_forkoff = roundup(sizeof(xfs_dev_t), 8) >> 3;
+		break;
+	case XFS_DINODE_FMT_LOCAL:
+	case XFS_DINODE_FMT_EXTENTS:
+	case XFS_DINODE_FMT_BTREE:
+		ip->i_d.di_forkoff = xfs_attr_shortform_bytesfit(ip, size);
+		if (!ip->i_d.di_forkoff)
+			ip->i_d.di_forkoff = xfs_default_attroffset(ip) >> 3;
+		else if ((ip->i_mount->m_flags & XFS_MOUNT_ATTR2) && version)
+			*version = 2;
+		break;
+	default:
+		ASSERT(0);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 /*
  * Set an inode attr fork offset based on the format of the data fork.
  */
@@ -1031,7 +1059,18 @@ xfs_bmap_add_attrfork(
 	if (error)
 		goto trans_cancel;
 
+<<<<<<< HEAD
 	xfs_ifork_init_attr(ip, XFS_DINODE_FMT_EXTENTS, 0);
+=======
+	xfs_trans_ijoin(tp, ip, 0);
+	xfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
+	error = xfs_bmap_set_attrforkoff(ip, size, &version);
+	if (error)
+		goto trans_cancel;
+	ASSERT(ip->i_afp == NULL);
+	ip->i_afp = kmem_zone_zalloc(xfs_ifork_zone, KM_SLEEP);
+	ip->i_afp->if_flags = XFS_IFEXTENTS;
+>>>>>>> master
 	logflags = 0;
 	switch (ip->i_df.if_format) {
 	case XFS_DINODE_FMT_LOCAL:
@@ -1200,7 +1239,107 @@ xfs_iread_extents(
 	if (error)
 		goto out;
 
+<<<<<<< HEAD
 	if (XFS_IS_CORRUPT(mp, ir.loaded != ifp->if_nextents)) {
+=======
+	/*
+	 * Root level must use BMAP_BROOT_PTR_ADDR macro to get ptr out.
+	 */
+	level = be16_to_cpu(block->bb_level);
+	if (unlikely(level == 0)) {
+		XFS_ERROR_REPORT(__func__, XFS_ERRLEVEL_LOW, mp);
+		return -EFSCORRUPTED;
+	}
+	pp = XFS_BMAP_BROOT_PTR_ADDR(mp, block, 1, ifp->if_broot_bytes);
+	bno = be64_to_cpu(*pp);
+
+	/*
+	 * Go down the tree until leaf level is reached, following the first
+	 * pointer (leftmost) at each level.
+	 */
+	while (level-- > 0) {
+		error = xfs_btree_read_bufl(mp, tp, bno, 0, &bp,
+				XFS_BMAP_BTREE_REF, &xfs_bmbt_buf_ops);
+		if (error)
+			goto out;
+		block = XFS_BUF_TO_BLOCK(bp);
+		if (level == 0)
+			break;
+		pp = XFS_BMBT_PTR_ADDR(mp, block, 1, mp->m_bmap_dmxr[1]);
+		bno = be64_to_cpu(*pp);
+		XFS_WANT_CORRUPTED_GOTO(mp,
+			xfs_verify_fsbno(mp, bno), out_brelse);
+		xfs_trans_brelse(tp, bp);
+	}
+
+	/*
+	 * Here with bp and block set to the leftmost leaf node in the tree.
+	 */
+	i = 0;
+	xfs_iext_first(ifp, &icur);
+
+	/*
+	 * Loop over all leaf nodes.  Copy information to the extent records.
+	 */
+	for (;;) {
+		xfs_bmbt_rec_t	*frp;
+		xfs_fsblock_t	nextbno;
+		xfs_extnum_t	num_recs;
+
+		num_recs = xfs_btree_get_numrecs(block);
+		if (unlikely(i + num_recs > nextents)) {
+			xfs_warn(ip->i_mount,
+				"corrupt dinode %Lu, (btree extents).",
+				(unsigned long long) ip->i_ino);
+			xfs_inode_verifier_error(ip, -EFSCORRUPTED,
+					__func__, block, sizeof(*block),
+					__this_address);
+			error = -EFSCORRUPTED;
+			goto out_brelse;
+		}
+		/*
+		 * Read-ahead the next leaf block, if any.
+		 */
+		nextbno = be64_to_cpu(block->bb_u.l.bb_rightsib);
+		if (nextbno != NULLFSBLOCK)
+			xfs_btree_reada_bufl(mp, nextbno, 1,
+					     &xfs_bmbt_buf_ops);
+		/*
+		 * Copy records into the extent records.
+		 */
+		frp = XFS_BMBT_REC_ADDR(mp, block, 1);
+		for (j = 0; j < num_recs; j++, frp++, i++) {
+			xfs_failaddr_t	fa;
+
+			xfs_bmbt_disk_get_all(frp, &new);
+			fa = xfs_bmap_validate_extent(ip, whichfork, &new);
+			if (fa) {
+				error = -EFSCORRUPTED;
+				xfs_inode_verifier_error(ip, error,
+						"xfs_iread_extents(2)",
+						frp, sizeof(*frp), fa);
+				goto out_brelse;
+			}
+			xfs_iext_insert(ip, &icur, &new, state);
+			trace_xfs_read_extent(ip, &icur, state, _THIS_IP_);
+			xfs_iext_next(ifp, &icur);
+		}
+		xfs_trans_brelse(tp, bp);
+		bno = nextbno;
+		/*
+		 * If we've reached the end, stop.
+		 */
+		if (bno == NULLFSBLOCK)
+			break;
+		error = xfs_btree_read_bufl(mp, tp, bno, 0, &bp,
+				XFS_BMAP_BTREE_REF, &xfs_bmbt_buf_ops);
+		if (error)
+			goto out;
+		block = XFS_BUF_TO_BLOCK(bp);
+	}
+
+	if (i != XFS_IFORK_NEXTENTS(ip, whichfork)) {
+>>>>>>> master
 		error = -EFSCORRUPTED;
 		goto out;
 	}
@@ -3897,9 +4036,42 @@ xfs_bmapi_read(
 
 	XFS_STATS_INC(mp, xs_blk_mapr);
 
+<<<<<<< HEAD
 	error = xfs_iread_extents(NULL, ip, whichfork);
 	if (error)
 		return error;
+=======
+	ifp = XFS_IFORK_PTR(ip, whichfork);
+	if (!ifp) {
+		/* No CoW fork?  Return a hole. */
+		if (whichfork == XFS_COW_FORK) {
+			mval->br_startoff = bno;
+			mval->br_startblock = HOLESTARTBLOCK;
+			mval->br_blockcount = len;
+			mval->br_state = XFS_EXT_NORM;
+			*nmap = 1;
+			return 0;
+		}
+
+		/*
+		 * A missing attr ifork implies that the inode says we're in
+		 * extents or btree format but failed to pass the inode fork
+		 * verifier while trying to load it.  Treat that as a file
+		 * corruption too.
+		 */
+#ifdef DEBUG
+		xfs_alert(mp, "%s: inode %llu missing fork %d",
+				__func__, ip->i_ino, whichfork);
+#endif /* DEBUG */
+		return -EFSCORRUPTED;
+	}
+
+	if (!(ifp->if_flags & XFS_IFEXTENTS)) {
+		error = xfs_iread_extents(NULL, ip, whichfork);
+		if (error)
+			return error;
+	}
+>>>>>>> master
 
 	if (!xfs_iext_lookup_extent(ip, ifp, bno, &icur, &got))
 		eof = true;

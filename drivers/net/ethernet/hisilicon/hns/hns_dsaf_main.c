@@ -934,10 +934,15 @@ static void hns_dsaf_tcam_mc_cfg(
 /**
  * hns_dsaf_tcam_uc_cfg_vague - INT
  * @dsaf_dev: dsa fabric device struct pointer
+<<<<<<< HEAD
  * @address: the address
  * @tcam_data: the data
  * @tcam_mask: the mask
  * @tcam_uc: the unicast data
+=======
+ * @address,
+ * @ptbl_tcam_data,
+>>>>>>> master
  */
 static void hns_dsaf_tcam_uc_cfg_vague(struct dsaf_device *dsaf_dev,
 				       u32 address,
@@ -963,10 +968,17 @@ static void hns_dsaf_tcam_uc_cfg_vague(struct dsaf_device *dsaf_dev,
 /**
  * hns_dsaf_tcam_mc_cfg_vague - INT
  * @dsaf_dev: dsa fabric device struct pointer
+<<<<<<< HEAD
  * @address: the address
  * @tcam_data: the data
  * @tcam_mask: the mask
  * @tcam_mc: the multicast data
+=======
+ * @address,
+ * @ptbl_tcam_data,
+ * @ptbl_tcam_mask
+ * @ptbl_tcam_mcast
+>>>>>>> master
  */
 static void hns_dsaf_tcam_mc_cfg_vague(struct dsaf_device *dsaf_dev,
 				       u32 address,
@@ -2768,7 +2780,11 @@ static void set_promisc_tcam_enable(struct dsaf_device *dsaf_dev, u32 port)
 	struct dsaf_drv_mac_single_dest_entry mask_entry;
 	struct dsaf_drv_tbl_tcam_key temp_key, mask_key;
 	struct dsaf_drv_soft_mac_tbl *soft_mac_entry;
+<<<<<<< HEAD
 	u16 entry_index;
+=======
+	u16 entry_index = DSAF_INVALID_ENTRY_IDX;
+>>>>>>> master
 	struct dsaf_drv_tbl_tcam_key mac_key;
 	struct hns_mac_cb *mac_cb;
 	u8 addr[ETH_ALEN] = {0};
@@ -2870,7 +2886,11 @@ static void set_promisc_tcam_disable(struct dsaf_device *dsaf_dev, u32 port)
 	struct dsaf_tbl_tcam_data tbl_tcam_data_uc = {0, 0};
 	struct dsaf_tbl_tcam_data tbl_tcam_mask = {0, 0};
 	struct dsaf_drv_soft_mac_tbl *soft_mac_entry;
+<<<<<<< HEAD
 	u16 entry_index;
+=======
+	u16 entry_index = DSAF_INVALID_ENTRY_IDX;
+>>>>>>> master
 	struct dsaf_drv_tbl_tcam_key mac_key;
 	u8 addr[ETH_ALEN] = {0};
 

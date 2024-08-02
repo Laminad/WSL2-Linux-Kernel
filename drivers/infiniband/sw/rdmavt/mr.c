@@ -55,6 +55,10 @@ int rvt_driver_mr_init(struct rvt_dev_info *rdi)
 		RCU_INIT_POINTER(rdi->lkey_table.table[i], NULL);
 
 	rdi->dparms.props.max_mr = rdi->lkey_table.max;
+<<<<<<< HEAD
+=======
+	rdi->dparms.props.max_fmr = rdi->lkey_table.max;
+>>>>>>> master
 	return 0;
 }
 
@@ -598,7 +602,10 @@ int rvt_map_mr_sg(struct ib_mr *ibmr, struct scatterlist *sg,
 	mr->mr.iova = ibmr->iova;
 	mr->mr.offset = ibmr->iova - (u64)mr->mr.map[0]->segs[0].vaddr;
 	mr->mr.length = (size_t)ibmr->length;
+<<<<<<< HEAD
 	trace_rvt_map_mr_sg(ibmr, sg_nents, sg_offset);
+=======
+>>>>>>> master
 	return ret;
 }
 

@@ -190,6 +190,23 @@ static int amdgpu_cs_pass1(struct amdgpu_cs_parser *p,
 	if (!chunk_array)
 		return -ENOMEM;
 
+<<<<<<< HEAD
+=======
+	p->ctx = amdgpu_ctx_get(fpriv, cs->in.ctx_id);
+	if (!p->ctx) {
+		ret = -EINVAL;
+		goto free_chunk;
+	}
+
+	mutex_lock(&p->ctx->lock);
+
+	/* skip guilty context job */
+	if (atomic_read(&p->ctx->guilty) == 1) {
+		ret = -ECANCELED;
+		goto free_chunk;
+	}
+
+>>>>>>> master
 	/* get chunks */
 	chunk_array_user = u64_to_user_ptr(cs->in.chunks);
 	if (copy_from_user(chunk_array, chunk_array_user,

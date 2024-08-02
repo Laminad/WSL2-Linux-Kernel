@@ -1469,11 +1469,17 @@ static noinline int bpf_jit_insn(struct bpf_jit *jit, struct bpf_prog *fp,
 		/* llgf %w1,map.max_entries(%b2) */
 		EMIT6_DISP_LH(0xe3000000, 0x0016, REG_W1, REG_0, BPF_REG_2,
 			      offsetof(struct bpf_array, map.max_entries));
+<<<<<<< HEAD
 		/* if ((u32)%b3 >= (u32)%w1) goto out; */
 		/* clrj %b3,%w1,0xa,out */
 		patch_1_clrj = jit->prg;
 		EMIT6_PCREL_RIEB(0xec000000, 0x0077, BPF_REG_3, REG_W1, 0xa,
 				 jit->prg);
+=======
+		/* clrj %b3,%w1,0xa,label0: if (u32)%b3 >= (u32)%w1 goto out */
+		EMIT6_PCREL_LABEL(0xec000000, 0x0077, BPF_REG_3,
+				  REG_W1, 0, 0xa);
+>>>>>>> master
 
 		/*
 		 * if (tail_call_cnt++ >= MAX_TAIL_CALL_CNT)
@@ -1503,8 +1509,13 @@ static noinline int bpf_jit_insn(struct bpf_jit *jit, struct bpf_prog *fp,
 		EMIT4(0xb9160000, REG_1, BPF_REG_3);
 		/* sllg %r1,%r1,3: %r1 *= 8 */
 		EMIT6_DISP_LH(0xeb000000, 0x000d, REG_1, REG_1, REG_0, 3);
+<<<<<<< HEAD
 		/* ltg %r1,prog(%b2,%r1) */
 		EMIT6_DISP_LH(0xe3000000, 0x0002, REG_1, BPF_REG_2,
+=======
+		/* lg %r1,prog(%b2,%r1) */
+		EMIT6_DISP_LH(0xe3000000, 0x0004, REG_1, BPF_REG_2,
+>>>>>>> master
 			      REG_1, offsetof(struct bpf_array, ptrs));
 		/* brc 0x8,out */
 		patch_3_brc = jit->prg;

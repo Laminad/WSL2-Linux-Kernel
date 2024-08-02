@@ -1130,7 +1130,11 @@ static int afs_d_revalidate(struct dentry *dentry, unsigned int flags)
 	 */
 	dir_version = dir->status.data_version;
 	de_version = (long)dentry->d_fsdata;
+<<<<<<< HEAD
 	if (de_version == (long)dir_version)
+=======
+	if (de_version == dir_version)
+>>>>>>> master
 		goto out_valid_noupdate;
 
 	invalid_before = dir->invalid_before;
@@ -1191,7 +1195,11 @@ static int afs_d_revalidate(struct dentry *dentry, unsigned int flags)
 	}
 
 out_valid:
+<<<<<<< HEAD
 	dentry->d_fsdata = (void *)(unsigned long)dir_version;
+=======
+	dentry->d_fsdata = (void *)dir_version;
+>>>>>>> master
 out_valid_noupdate:
 	dput(parent);
 	key_put(key);

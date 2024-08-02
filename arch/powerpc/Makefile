@@ -147,10 +147,29 @@ ifdef CONFIG_ARCH_USING_PATCHABLE_FUNCTION_ENTRY
 KBUILD_CPPFLAGS	+= -DCC_USING_PATCHABLE_FUNCTION_ENTRY
 CC_FLAGS_FTRACE := -fpatchable-function-entry=2
 else
+<<<<<<< HEAD
+=======
+CFLAGS-$(CONFIG_GENERIC_CPU) += $(call cc-option,-mtune=power7,$(call cc-option,-mtune=power5))
+CFLAGS-$(CONFIG_GENERIC_CPU) += $(call cc-option,-mcpu=power5,-mcpu=power4)
+endif
+else
+CFLAGS-$(CONFIG_GENERIC_CPU) += -mcpu=powerpc64
+endif
+
+ifdef CONFIG_FUNCTION_TRACER
+>>>>>>> master
 CC_FLAGS_FTRACE := -pg
 ifdef CONFIG_MPROFILE_KERNEL
 CC_FLAGS_FTRACE += -mprofile-kernel
 endif
+<<<<<<< HEAD
+=======
+# Work around gcc code-gen bugs with -pg / -fno-omit-frame-pointer in gcc <= 4.8
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=44199
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52828
+ifneq ($(cc-name),clang)
+CC_FLAGS_FTRACE	+= $(call cc-ifversion, -lt, 0409, -mno-sched-epilog)
+>>>>>>> master
 endif
 endif
 
@@ -208,14 +227,30 @@ KBUILD_CFLAGS += -fno-asynchronous-unwind-tables
 # often slow when they are implemented at all
 KBUILD_CFLAGS		+= $(call cc-option,-mno-string)
 
+<<<<<<< HEAD
 cpu-as-$(CONFIG_ALTIVEC)	+= $(call as-option,-Wa$(comma)-maltivec)
+=======
+ifdef CONFIG_6xx
+KBUILD_CFLAGS		+= -mcpu=powerpc
+endif
+
+cpu-as-$(CONFIG_4xx)		+= -Wa,-m405
+cpu-as-$(CONFIG_ALTIVEC)	+= $(call as-option,-Wa$(comma)-maltivec)
+cpu-as-$(CONFIG_E200)		+= -Wa,-me200
+cpu-as-$(CONFIG_E500)		+= -Wa,-me500
+>>>>>>> master
 
 # When using '-many -mpower4' gas will first try and find a matching power4
 # mnemonic and failing that it will allow any valid mnemonic that GAS knows
 # about. GCC will pass -many to GAS when assembling, clang does not.
+<<<<<<< HEAD
 # LLVM IAS doesn't understand either flag: https://github.com/ClangBuiltLinux/linux/issues/675
 # but LLVM IAS only supports ISA >= 2.06 for Book3S 64 anyway...
 cpu-as-$(CONFIG_PPC_BOOK3S_64)	+= $(call as-option,-Wa$(comma)-mpower4) $(call as-option,-Wa$(comma)-many)
+=======
+cpu-as-$(CONFIG_PPC_BOOK3S_64)	+= -Wa,-mpower4 -Wa,-many
+cpu-as-$(CONFIG_PPC_E500MC)	+= $(call as-option,-Wa$(comma)-me500mc)
+>>>>>>> master
 
 KBUILD_AFLAGS += $(cpu-as-y)
 KBUILD_CFLAGS += $(cpu-as-y)
@@ -383,6 +418,7 @@ archprepare: checkbin
 archheaders:
 	$(Q)$(MAKE) $(build)=arch/powerpc/kernel/syscalls all
 
+<<<<<<< HEAD
 ifdef CONFIG_STACKPROTECTOR
 prepare: stack_protector_prepare
 
@@ -405,3 +441,19 @@ checkbin:
 		echo '*** Please use a different binutils version.' ; \
 		false ; \
 	fi
+=======
+# Check toolchain versions:
+# - gcc-4.6 is the minimum kernel-wide version so nothing required.
+checkbin:
+	@if test "x${CONFIG_CPU_LITTLE_ENDIAN}" = "xy" \
+	    && $(LD) --version | head -1 | grep ' 2\.24$$' >/dev/null ; then \
+		echo -n '*** binutils 2.24 miscompiles weak symbols ' ; \
+		echo 'in some circumstances.' ; \
+		echo -n '*** Please use a different binutils version.' ; \
+		false ; \
+	fi
+
+
+CLEAN_FILES += $(TOUT)
+
+>>>>>>> master

@@ -3133,10 +3133,15 @@ static void bcmgenet_irq_task(struct work_struct *work)
 	spin_unlock_irq(&priv->lock);
 
 	if (status & UMAC_IRQ_PHY_DET_R &&
+<<<<<<< HEAD
 	    priv->dev->phydev->autoneg != AUTONEG_ENABLE) {
 		phy_init_hw(priv->dev->phydev);
 		genphy_config_aneg(priv->dev->phydev);
 	}
+=======
+	    priv->dev->phydev->autoneg != AUTONEG_ENABLE)
+		phy_init_hw(priv->dev->phydev);
+>>>>>>> master
 
 	/* Link UP/DOWN event */
 	if (status & UMAC_IRQ_LINK_EVENT)
@@ -3592,7 +3597,11 @@ static void bcmgenet_timeout(struct net_device *dev, unsigned int txqueue)
 #define MAX_MDF_FILTER	17
 
 static inline void bcmgenet_set_mdf_addr(struct bcmgenet_priv *priv,
+<<<<<<< HEAD
 					 const unsigned char *addr,
+=======
+					 unsigned char *addr,
+>>>>>>> master
 					 int *i)
 {
 	bcmgenet_umac_writel(priv, addr[0] << 8 | addr[1],
@@ -3622,7 +3631,10 @@ static void bcmgenet_set_rx_mode(struct net_device *dev)
 	 * 3. The number of filters needed exceeds the number filters
 	 *    supported by the hardware.
 	*/
+<<<<<<< HEAD
 	spin_lock(&priv->reg_lock);
+=======
+>>>>>>> master
 	reg = bcmgenet_umac_readl(priv, UMAC_CMD);
 	if ((dev->flags & (IFF_PROMISC | IFF_ALLMULTI)) ||
 	    (nfilter > MAX_MDF_FILTER)) {
@@ -3634,7 +3646,10 @@ static void bcmgenet_set_rx_mode(struct net_device *dev)
 	} else {
 		reg &= ~CMD_PROMISC;
 		bcmgenet_umac_writel(priv, reg, UMAC_CMD);
+<<<<<<< HEAD
 		spin_unlock(&priv->reg_lock);
+=======
+>>>>>>> master
 	}
 
 	/* update MDF filter */
@@ -4200,7 +4215,36 @@ static int bcmgenet_remove(struct platform_device *pdev)
 
 static void bcmgenet_shutdown(struct platform_device *pdev)
 {
+<<<<<<< HEAD
 	bcmgenet_remove(pdev);
+=======
+	struct net_device *dev = dev_get_drvdata(d);
+	struct bcmgenet_priv *priv = netdev_priv(dev);
+	int ret = 0;
+
+	if (!netif_running(dev))
+		return 0;
+
+	netif_device_detach(dev);
+
+	bcmgenet_netif_stop(dev);
+
+	if (!device_may_wakeup(d))
+		phy_suspend(dev->phydev);
+
+	/* Prepare the device for Wake-on-LAN and switch to the slow clock */
+	if (device_may_wakeup(d) && priv->wolopts) {
+		ret = bcmgenet_power_down(priv, GENET_POWER_WOL_MAGIC);
+		clk_prepare_enable(priv->clk_wol);
+	} else if (priv->internal_phy) {
+		ret = bcmgenet_power_down(priv, GENET_POWER_PASSIVE);
+	}
+
+	/* Turn off the clocks */
+	clk_disable_unprepare(priv->clk);
+
+	return ret;
+>>>>>>> master
 }
 
 #ifdef CONFIG_PM_SLEEP

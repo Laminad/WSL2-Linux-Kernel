@@ -129,7 +129,13 @@
 		};
 	};
 
+<<<<<<< HEAD:arch/arm/boot/dts/broadcom/bcm47094-linksys-panamera.dts
 	mdio-mux@18003000 {
+=======
+	mdio-bus-mux {
+		#address-cells = <1>;
+		#size-cells = <0>;
+>>>>>>> master:arch/arm/boot/dts/bcm47094-linksys-panamera.dts
 
 		/* BIT(9) = 1 => external mdio */
 		mdio@200 {

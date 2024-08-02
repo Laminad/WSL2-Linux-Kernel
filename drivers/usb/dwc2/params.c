@@ -114,6 +114,13 @@ static void dwc2_set_socfpga_agilex_params(struct dwc2_hsotg *hsotg)
 	p->no_clock_gating = true;
 }
 
+static void dwc2_set_s3c6400_params(struct dwc2_hsotg *hsotg)
+{
+	struct dwc2_core_params *p = &hsotg->params;
+
+	p->power_down = 0;
+}
+
 static void dwc2_set_rk_params(struct dwc2_hsotg *hsotg)
 {
 	struct dwc2_core_params *p = &hsotg->params;
@@ -162,6 +169,7 @@ static void dwc2_set_amlogic_params(struct dwc2_hsotg *hsotg)
 	p->ahbcfg = GAHBCFG_HBSTLEN_INCR8 <<
 		GAHBCFG_HBSTLEN_SHIFT;
 	p->power_down = DWC2_POWER_DOWN_PARAM_NONE;
+<<<<<<< HEAD
 }
 
 static void dwc2_set_amlogic_g12a_params(struct dwc2_hsotg *hsotg)
@@ -191,6 +199,8 @@ static void dwc2_set_amlogic_a1_params(struct dwc2_hsotg *hsotg)
 	p->lpm_clock_gating = false;
 	p->besl = false;
 	p->hird_threshold_en = false;
+=======
+>>>>>>> master
 }
 
 static void dwc2_set_amcc_params(struct dwc2_hsotg *hsotg)

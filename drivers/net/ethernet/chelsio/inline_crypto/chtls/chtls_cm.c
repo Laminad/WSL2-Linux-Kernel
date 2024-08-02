@@ -1466,7 +1466,11 @@ static void make_established(struct sock *sk, u32 snd_isn, unsigned int opt)
 	tp->write_seq = snd_isn;
 	tp->snd_nxt = snd_isn;
 	tp->snd_una = snd_isn;
+<<<<<<< HEAD:drivers/net/ethernet/chelsio/inline_crypto/chtls/chtls_cm.c
 	atomic_set(&inet_sk(sk)->inet_id, get_random_u16());
+=======
+	inet_sk(sk)->inet_id = prandom_u32();
+>>>>>>> master:drivers/crypto/chelsio/chtls/chtls_cm.c
 	assign_rxopt(sk, opt);
 
 	if (tp->rcv_wnd > (RCV_BUFSIZ_M << 10))

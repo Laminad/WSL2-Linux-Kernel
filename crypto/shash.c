@@ -61,7 +61,12 @@ static int shash_setkey_unaligned(struct crypto_shash *tfm, const u8 *key,
 
 static void shash_set_needkey(struct crypto_shash *tfm, struct shash_alg *alg)
 {
+<<<<<<< HEAD
 	if (crypto_shash_alg_needs_key(alg))
+=======
+	if (crypto_shash_alg_has_setkey(alg) &&
+	    !(alg->base.cra_flags & CRYPTO_ALG_OPTIONAL_KEY))
+>>>>>>> master
 		crypto_shash_set_flags(tfm, CRYPTO_TFM_NEED_KEY);
 }
 
@@ -480,6 +485,7 @@ static int crypto_shash_init_tfm(struct crypto_tfm *tfm)
 	hash->descsize = alg->descsize;
 
 	shash_set_needkey(hash, alg);
+<<<<<<< HEAD
 
 	if (alg->exit_tfm)
 		tfm->exit = crypto_shash_exit_tfm;
@@ -497,6 +503,8 @@ static int crypto_shash_init_tfm(struct crypto_tfm *tfm)
 			alg->exit_tfm(hash);
 		return -EINVAL;
 	}
+=======
+>>>>>>> master
 
 	return 0;
 }

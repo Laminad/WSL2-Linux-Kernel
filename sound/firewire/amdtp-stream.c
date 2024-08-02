@@ -855,12 +855,43 @@ static int parse_ir_ctx_header(struct amdtp_stream *s, unsigned int cycle,
 	return 0;
 }
 
+<<<<<<< HEAD
 // In CYCLE_TIMER register of IEEE 1394, 7 bits are used to represent second. On
 // the other hand, in DMA descriptors of 1394 OHCI, 3 bits are used to represent
 // it. Thus, via Linux firewire subsystem, we can get the 3 bits for second.
 static inline u32 compute_ohci_iso_ctx_cycle_count(u32 tstamp)
 {
 	return (((tstamp >> 13) & 0x07) * CYCLES_PER_SECOND) + (tstamp & 0x1fff);
+=======
+static int handle_in_packet_without_header(struct amdtp_stream *s,
+			unsigned int payload_length, unsigned int cycle,
+			unsigned int index)
+{
+	__be32 *buffer;
+	unsigned int payload_quadlets;
+	unsigned int data_blocks;
+	struct snd_pcm_substream *pcm;
+	unsigned int pcm_frames;
+
+	buffer = s->buffer.packets[s->packet_index].buffer;
+	payload_quadlets = payload_length / 4;
+	data_blocks = payload_quadlets / s->data_block_quadlets;
+
+	trace_in_packet_without_header(s, cycle, payload_quadlets, data_blocks,
+				       index);
+
+	pcm_frames = s->process_data_blocks(s, buffer, data_blocks, NULL);
+	s->data_block_counter = (s->data_block_counter + data_blocks) & 0xff;
+
+	if (queue_in_packet(s) < 0)
+		return -EIO;
+
+	pcm = READ_ONCE(s->pcm);
+	if (pcm && pcm_frames > 0)
+		update_pcm_pointers(s, pcm, pcm_frames);
+
+	return 0;
+>>>>>>> master
 }
 
 static inline u32 compute_ohci_cycle_count(__be32 ctx_header_tstamp)

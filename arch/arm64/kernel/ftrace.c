@@ -327,11 +327,72 @@ int ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr)
 	u32 old, new;
 	int ret;
 
+<<<<<<< HEAD
 	ret = ftrace_rec_update_ops(rec);
 	if (ret)
 		return ret;
 
 	if (!ftrace_find_callable_addr(rec, NULL, &addr))
+=======
+	if (offset < -SZ_128M || offset >= SZ_128M) {
+#ifdef CONFIG_ARM64_MODULE_PLTS
+		struct plt_entry trampoline, *dst;
+		struct module *mod;
+
+		/*
+		 * On kernels that support module PLTs, the offset between the
+		 * branch instruction and its target may legally exceed the
+		 * range of an ordinary relative 'bl' opcode. In this case, we
+		 * need to branch via a trampoline in the module.
+		 *
+		 * NOTE: __module_text_address() must be called with preemption
+		 * disabled, but we can rely on ftrace_lock to ensure that 'mod'
+		 * retains its validity throughout the remainder of this code.
+		 */
+		preempt_disable();
+		mod = __module_text_address(pc);
+		preempt_enable();
+
+		if (WARN_ON(!mod))
+			return -EINVAL;
+
+		/*
+		 * There is only one ftrace trampoline per module. For now,
+		 * this is not a problem since on arm64, all dynamic ftrace
+		 * invocations are routed via ftrace_caller(). This will need
+		 * to be revisited if support for multiple ftrace entry points
+		 * is added in the future, but for now, the pr_err() below
+		 * deals with a theoretical issue only.
+		 */
+		dst = mod->arch.ftrace_trampoline;
+		trampoline = get_plt_entry(addr);
+		if (!plt_entries_equal(dst, &trampoline)) {
+			if (!plt_entries_equal(dst, &(struct plt_entry){})) {
+				pr_err("ftrace: far branches to multiple entry points unsupported inside a single module\n");
+				return -EINVAL;
+			}
+
+			/* point the trampoline to our ftrace entry point */
+			module_disable_ro(mod);
+			*dst = trampoline;
+			module_enable_ro(mod, true);
+
+			/*
+			 * Ensure updated trampoline is visible to instruction
+			 * fetch before we patch in the branch. Although the
+			 * architecture doesn't require an IPI in this case,
+			 * Neoverse-N1 erratum #1542419 does require one
+			 * if the TLB maintenance in module_enable_ro() is
+			 * skipped due to rodata_enabled. It doesn't seem worth
+			 * it to make it conditional given that this is
+			 * certainly not a fast-path.
+			 */
+			flush_icache_range((unsigned long)&dst[0],
+					   (unsigned long)&dst[1]);
+		}
+		addr = (unsigned long)dst;
+#else /* CONFIG_ARM64_MODULE_PLTS */
+>>>>>>> master
 		return -EINVAL;
 
 	old = aarch64_insn_gen_nop();
@@ -471,8 +532,12 @@ void prepare_ftrace_return(unsigned long self_addr, unsigned long *parent,
 	 */
 	old = *parent;
 
+<<<<<<< HEAD
 	if (!function_graph_enter(old, self_addr, frame_pointer,
 	    (void *)frame_pointer)) {
+=======
+	if (!function_graph_enter(old, self_addr, frame_pointer, NULL))
+>>>>>>> master
 		*parent = return_hooker;
 	}
 }

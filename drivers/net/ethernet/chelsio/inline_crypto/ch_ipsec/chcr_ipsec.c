@@ -341,6 +341,7 @@ static bool ch_ipsec_offload_ok(struct sk_buff *skb, struct xfrm_state *x)
 
 static void ch_ipsec_advance_esn_state(struct xfrm_state *x)
 {
+<<<<<<< HEAD:drivers/net/ethernet/chelsio/inline_crypto/ch_ipsec/chcr_ipsec.c
 	/* do nothing */
 	if (!x->xso.offload_handle)
 		return;
@@ -353,6 +354,10 @@ static int is_eth_imm(const struct sk_buff *skb,
 	int hdrlen;
 
 	kctx_len = sa_entry->kctx_len;
+=======
+	int hdrlen;
+
+>>>>>>> master:drivers/crypto/chelsio/chcr_ipsec.c
 	hdrlen = sizeof(struct fw_ulptx_wr) +
 		 sizeof(struct chcr_ipsec_req) + kctx_len;
 

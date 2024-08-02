@@ -158,5 +158,15 @@ struct trackpoint_data {
 };
 
 int trackpoint_detect(struct psmouse *psmouse, bool set_properties);
+<<<<<<< HEAD
+=======
+#else
+static inline int trackpoint_detect(struct psmouse *psmouse,
+				    bool set_properties)
+{
+	return -ENOSYS;
+}
+#endif /* CONFIG_MOUSE_PS2_TRACKPOINT */
+>>>>>>> master
 
 #endif /* _TRACKPOINT_H */

@@ -606,10 +606,18 @@ static void esdhc_clock_enable(struct sdhci_host *host, bool enable)
 	 * wait clock stable bit which does not exist.
 	 */
 	timeout = ktime_add_ms(ktime_get(), 20);
+<<<<<<< HEAD
 	while (esdhc->vendor_ver > VENDOR_V_22) {
 		bool timedout = ktime_after(ktime_get(), timeout);
 
 		if (sdhci_readl(host, ESDHC_PRSSTAT) & ESDHC_CLOCK_STABLE)
+=======
+	val = ESDHC_CLOCK_STABLE;
+	while  (1) {
+		bool timedout = ktime_after(ktime_get(), timeout);
+
+		if (sdhci_readl(host, ESDHC_PRSSTAT) & val)
+>>>>>>> master
 			break;
 		if (timedout) {
 			pr_err("%s: Internal clock never stabilised.\n",
@@ -727,7 +735,11 @@ static void esdhc_of_set_clock(struct sdhci_host *host, unsigned int clock)
 	 * wait clock stable bit which does not exist.
 	 */
 	timeout = ktime_add_ms(ktime_get(), 20);
+<<<<<<< HEAD
 	while (esdhc->vendor_ver > VENDOR_V_22) {
+=======
+	while (1) {
+>>>>>>> master
 		bool timedout = ktime_after(ktime_get(), timeout);
 
 		if (sdhci_readl(host, ESDHC_PRSSTAT) & ESDHC_CLOCK_STABLE)
@@ -838,6 +850,7 @@ static void esdhc_reset(struct sdhci_host *host, u8 mask)
 		val |= bus_width;
 		sdhci_writel(host, val, ESDHC_PROCTL);
 
+<<<<<<< HEAD
 		sdhci_writel(host, host->ier, SDHCI_INT_ENABLE);
 		sdhci_writel(host, host->ier, SDHCI_SIGNAL_ENABLE);
 	}
@@ -848,6 +861,12 @@ static void esdhc_reset(struct sdhci_host *host, u8 mask)
 	 */
 	if ((mask & SDHCI_RESET_ALL) &&
 	    (esdhc->spec_ver >= SDHCI_SPEC_300)) {
+=======
+	if (of_find_compatible_node(NULL, NULL, "fsl,p2020-esdhc"))
+		mdelay(5);
+
+	if (mask & SDHCI_RESET_ALL) {
+>>>>>>> master
 		val = sdhci_readl(host, ESDHC_TBCTL);
 		val &= ~ESDHC_TB_EN;
 		sdhci_writel(host, val, ESDHC_TBCTL);
@@ -1469,11 +1488,17 @@ static int sdhci_esdhc_probe(struct platform_device *pdev)
 	if (esdhc->vendor_ver > VENDOR_V_22)
 		host->quirks &= ~SDHCI_QUIRK_NO_BUSY_IRQ;
 
+<<<<<<< HEAD
 	tp = of_find_compatible_node(NULL, NULL, "fsl,p2020-esdhc");
 	if (tp) {
 		of_node_put(tp);
 		host->quirks |= SDHCI_QUIRK_RESET_AFTER_REQUEST;
 		host->quirks |= SDHCI_QUIRK_BROKEN_TIMEOUT_VAL;
+=======
+	if (of_find_compatible_node(NULL, NULL, "fsl,p2020-esdhc")) {
+		host->quirks2 |= SDHCI_QUIRK_RESET_AFTER_REQUEST;
+		host->quirks2 |= SDHCI_QUIRK_BROKEN_TIMEOUT_VAL;
+>>>>>>> master
 	}
 
 	if (of_device_is_compatible(np, "fsl,p5040-esdhc") ||

@@ -320,8 +320,12 @@ config CRYPTO_CRCT10DIF_ARM64_CE
 	help
 	  CRC16 CRC algorithm used for the T10 (SCSI) Data Integrity Field (DIF)
 
+<<<<<<< HEAD
 	  Architecture: arm64 using
 	  - PMULL (Polynomial Multiply Long) instructions
 
 endmenu
 
+=======
+endif
+>>>>>>> master

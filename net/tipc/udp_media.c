@@ -265,8 +265,12 @@ static int tipc_udp_send_msg(struct net *net, struct sk_buff *skb,
 			goto out;
 		}
 
+<<<<<<< HEAD
 		err = tipc_udp_xmit(net, _skb, ub, src, &rcast->addr,
 				    &rcast->dst_cache);
+=======
+		err = tipc_udp_xmit(net, _skb, ub, src, &rcast->addr);
+>>>>>>> master
 		if (err)
 			goto out;
 	}
@@ -704,9 +708,12 @@ static int tipc_udp_enable(struct net *net, struct tipc_bearer *b,
 		goto err;
 	}
 
+<<<<<<< HEAD
 	/* Checking remote ip address */
 	rmcast = tipc_udp_is_mcast_addr(&remote);
 
+=======
+>>>>>>> master
 	/* Autoconfigure own node identity if needed */
 	if (!tipc_own_id(net)) {
 		memcpy(node_id, local.ipv6.in6_u.u6_addr8, 16);

@@ -694,6 +694,18 @@ static void mtk_dsi_poweroff(struct mtk_dsi *dsi)
 	 * after dsi is fully set.
 	 */
 	mtk_dsi_stop(dsi);
+<<<<<<< HEAD
+=======
+
+	if (!mtk_dsi_switch_to_cmd_mode(dsi, VM_DONE_INT_FLAG, 500)) {
+		if (dsi->panel) {
+			if (drm_panel_unprepare(dsi->panel)) {
+				DRM_ERROR("failed to unprepare the panel\n");
+				return;
+			}
+		}
+	}
+>>>>>>> master
 
 	mtk_dsi_switch_to_cmd_mode(dsi, VM_DONE_INT_FLAG, 500);
 	mtk_dsi_reset_engine(dsi);
@@ -746,6 +758,18 @@ static void mtk_output_dsi_disable(struct mtk_dsi *dsi)
 	if (!dsi->enabled)
 		return;
 
+<<<<<<< HEAD
+=======
+	if (dsi->panel) {
+		if (drm_panel_disable(dsi->panel)) {
+			DRM_ERROR("failed to disable the panel\n");
+			return;
+		}
+	}
+
+	mtk_dsi_poweroff(dsi);
+
+>>>>>>> master
 	dsi->enabled = false;
 }
 
@@ -801,7 +825,64 @@ static void mtk_dsi_bridge_atomic_pre_enable(struct drm_bridge *bridge,
 static void mtk_dsi_bridge_atomic_post_disable(struct drm_bridge *bridge,
 					       struct drm_bridge_state *old_bridge_state)
 {
+<<<<<<< HEAD
 	struct mtk_dsi *dsi = bridge_to_dsi(bridge);
+=======
+	int ret;
+
+	ret = drm_encoder_init(drm, &dsi->encoder, &mtk_dsi_encoder_funcs,
+			       DRM_MODE_ENCODER_DSI, NULL);
+	if (ret) {
+		DRM_ERROR("Failed to encoder init to drm\n");
+		return ret;
+	}
+	drm_encoder_helper_add(&dsi->encoder, &mtk_dsi_encoder_helper_funcs);
+
+	/*
+	 * Currently display data paths are statically assigned to a crtc each.
+	 * crtc 0 is OVL0 -> COLOR0 -> AAL -> OD -> RDMA0 -> UFOE -> DSI0
+	 */
+	dsi->encoder.possible_crtcs = 1;
+
+	/* If there's a bridge, attach to it and let it create the connector */
+	ret = drm_bridge_attach(&dsi->encoder, dsi->bridge, NULL);
+	if (ret) {
+		DRM_ERROR("Failed to attach bridge to drm\n");
+
+		/* Otherwise create our own connector and attach to a panel */
+		ret = mtk_dsi_create_connector(drm, dsi);
+		if (ret)
+			goto err_encoder_cleanup;
+	}
+
+	return 0;
+
+err_encoder_cleanup:
+	drm_encoder_cleanup(&dsi->encoder);
+	return ret;
+}
+
+static void mtk_dsi_destroy_conn_enc(struct mtk_dsi *dsi)
+{
+	drm_encoder_cleanup(&dsi->encoder);
+	/* Skip connector cleanup if creation was delegated to the bridge */
+	if (dsi->conn.dev)
+		drm_connector_cleanup(&dsi->conn);
+	if (dsi->panel)
+		drm_panel_detach(dsi->panel);
+}
+
+static void mtk_dsi_ddp_start(struct mtk_ddp_comp *comp)
+{
+	struct mtk_dsi *dsi = container_of(comp, struct mtk_dsi, ddp_comp);
+
+	mtk_dsi_poweron(dsi);
+}
+
+static void mtk_dsi_ddp_stop(struct mtk_ddp_comp *comp)
+{
+	struct mtk_dsi *dsi = container_of(comp, struct mtk_dsi, ddp_comp);
+>>>>>>> master
 
 	mtk_dsi_poweroff(dsi);
 }

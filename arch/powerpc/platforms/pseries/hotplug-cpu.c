@@ -752,6 +752,191 @@ static int dlpar_cpu_remove_by_index(u32 drc_index)
 	return rc;
 }
 
+<<<<<<< HEAD
+=======
+static int find_dlpar_cpus_to_remove(u32 *cpu_drcs, int cpus_to_remove)
+{
+	struct device_node *dn;
+	int cpus_found = 0;
+	int rc;
+
+	/* We want to find cpus_to_remove + 1 CPUs to ensure we do not
+	 * remove the last CPU.
+	 */
+	for_each_node_by_type(dn, "cpu") {
+		cpus_found++;
+
+		if (cpus_found > cpus_to_remove) {
+			of_node_put(dn);
+			break;
+		}
+
+		/* Note that cpus_found is always 1 ahead of the index
+		 * into the cpu_drcs array, so we use cpus_found - 1
+		 */
+		rc = of_property_read_u32(dn, "ibm,my-drc-index",
+					  &cpu_drcs[cpus_found - 1]);
+		if (rc) {
+			pr_warn("Error occurred getting drc-index for %s\n",
+				dn->name);
+			of_node_put(dn);
+			return -1;
+		}
+	}
+
+	if (cpus_found < cpus_to_remove) {
+		pr_warn("Failed to find enough CPUs (%d of %d) to remove\n",
+			cpus_found, cpus_to_remove);
+	} else if (cpus_found == cpus_to_remove) {
+		pr_warn("Cannot remove all CPUs\n");
+	}
+
+	return cpus_found;
+}
+
+static int dlpar_cpu_remove_by_count(u32 cpus_to_remove)
+{
+	u32 *cpu_drcs;
+	int cpus_found;
+	int cpus_removed = 0;
+	int i, rc;
+
+	pr_debug("Attempting to hot-remove %d CPUs\n", cpus_to_remove);
+
+	cpu_drcs = kcalloc(cpus_to_remove, sizeof(*cpu_drcs), GFP_KERNEL);
+	if (!cpu_drcs)
+		return -EINVAL;
+
+	cpus_found = find_dlpar_cpus_to_remove(cpu_drcs, cpus_to_remove);
+	if (cpus_found <= cpus_to_remove) {
+		kfree(cpu_drcs);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < cpus_to_remove; i++) {
+		rc = dlpar_cpu_remove_by_index(cpu_drcs[i]);
+		if (rc)
+			break;
+
+		cpus_removed++;
+	}
+
+	if (cpus_removed != cpus_to_remove) {
+		pr_warn("CPU hot-remove failed, adding back removed CPUs\n");
+
+		for (i = 0; i < cpus_removed; i++)
+			dlpar_cpu_add(cpu_drcs[i]);
+
+		rc = -EINVAL;
+	} else {
+		rc = 0;
+	}
+
+	kfree(cpu_drcs);
+	return rc;
+}
+
+static int find_dlpar_cpus_to_add(u32 *cpu_drcs, u32 cpus_to_add)
+{
+	struct device_node *parent;
+	int cpus_found = 0;
+	int index, rc;
+
+	parent = of_find_node_by_path("/cpus");
+	if (!parent) {
+		pr_warn("Could not find CPU root node in device tree\n");
+		kfree(cpu_drcs);
+		return -1;
+	}
+
+	/* Search the ibm,drc-indexes array for possible CPU drcs to
+	 * add. Note that the format of the ibm,drc-indexes array is
+	 * the number of entries in the array followed by the array
+	 * of drc values so we start looking at index = 1.
+	 */
+	index = 1;
+	while (cpus_found < cpus_to_add) {
+		u32 drc;
+
+		rc = of_property_read_u32_index(parent, "ibm,drc-indexes",
+						index++, &drc);
+		if (rc)
+			break;
+
+		if (dlpar_cpu_exists(parent, drc))
+			continue;
+
+		cpu_drcs[cpus_found++] = drc;
+	}
+
+	of_node_put(parent);
+	return cpus_found;
+}
+
+static int dlpar_cpu_add_by_count(u32 cpus_to_add)
+{
+	u32 *cpu_drcs;
+	int cpus_added = 0;
+	int cpus_found;
+	int i, rc;
+
+	pr_debug("Attempting to hot-add %d CPUs\n", cpus_to_add);
+
+	cpu_drcs = kcalloc(cpus_to_add, sizeof(*cpu_drcs), GFP_KERNEL);
+	if (!cpu_drcs)
+		return -EINVAL;
+
+	cpus_found = find_dlpar_cpus_to_add(cpu_drcs, cpus_to_add);
+	if (cpus_found < cpus_to_add) {
+		pr_warn("Failed to find enough CPUs (%d of %d) to add\n",
+			cpus_found, cpus_to_add);
+		kfree(cpu_drcs);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < cpus_to_add; i++) {
+		rc = dlpar_cpu_add(cpu_drcs[i]);
+		if (rc)
+			break;
+
+		cpus_added++;
+	}
+
+	if (cpus_added < cpus_to_add) {
+		pr_warn("CPU hot-add failed, removing any added CPUs\n");
+
+		for (i = 0; i < cpus_added; i++)
+			dlpar_cpu_remove_by_index(cpu_drcs[i]);
+
+		rc = -EINVAL;
+	} else {
+		rc = 0;
+	}
+
+	kfree(cpu_drcs);
+	return rc;
+}
+
+int dlpar_cpu_readd(int cpu)
+{
+	struct device_node *dn;
+	struct device *dev;
+	u32 drc_index;
+	int rc;
+
+	dev = get_cpu_device(cpu);
+	dn = dev->of_node;
+
+	rc = of_property_read_u32(dn, "ibm,my-drc-index", &drc_index);
+
+	rc = dlpar_cpu_remove_by_index(drc_index);
+	if (!rc)
+		rc = dlpar_cpu_add(drc_index);
+
+	return rc;
+}
+
+>>>>>>> master
 int dlpar_cpu(struct pseries_hp_errorlog *hp_elog)
 {
 	u32 drc_index;

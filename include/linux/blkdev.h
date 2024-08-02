@@ -421,7 +421,12 @@ struct request_queue {
 	unsigned long		queue_flags;
 	/*
 	 * Number of contexts that have called blk_set_pm_only(). If this
+<<<<<<< HEAD
 	 * counter is above zero then only RQF_PM requests are processed.
+=======
+	 * counter is above zero then only RQF_PM and RQF_PREEMPT requests are
+	 * processed.
+>>>>>>> master
 	 */
 	atomic_t		pm_only;
 
@@ -538,6 +543,7 @@ struct request_queue {
 	bool			mq_sysfs_init_done;
 };
 
+<<<<<<< HEAD
 /* Keep blk_queue_flag_name[] in sync with the definitions below */
 #define QUEUE_FLAG_STOPPED	0	/* queue is stopped */
 #define QUEUE_FLAG_DYING	1	/* queue being torn down */
@@ -568,6 +574,37 @@ struct request_queue {
 #define QUEUE_FLAG_NOWAIT       29	/* device supports NOWAIT */
 #define QUEUE_FLAG_SQ_SCHED     30	/* single queue style io dispatch */
 #define QUEUE_FLAG_SKIP_TAGSET_QUIESCE	31 /* quiesce_tagset skip the queue*/
+=======
+#define QUEUE_FLAG_QUEUED	0	/* uses generic tag queueing */
+#define QUEUE_FLAG_STOPPED	1	/* queue is stopped */
+#define QUEUE_FLAG_DYING	2	/* queue being torn down */
+#define QUEUE_FLAG_BYPASS	3	/* act as dumb FIFO queue */
+#define QUEUE_FLAG_BIDI		4	/* queue supports bidi requests */
+#define QUEUE_FLAG_NOMERGES     5	/* disable merge attempts */
+#define QUEUE_FLAG_SAME_COMP	6	/* complete on same CPU-group */
+#define QUEUE_FLAG_FAIL_IO	7	/* fake timeout */
+#define QUEUE_FLAG_NONROT	9	/* non-rotational device (SSD) */
+#define QUEUE_FLAG_VIRT        QUEUE_FLAG_NONROT /* paravirt device */
+#define QUEUE_FLAG_IO_STAT     10	/* do IO stats */
+#define QUEUE_FLAG_DISCARD     11	/* supports DISCARD */
+#define QUEUE_FLAG_NOXMERGES   12	/* No extended merges */
+#define QUEUE_FLAG_ADD_RANDOM  13	/* Contributes to random pool */
+#define QUEUE_FLAG_SECERASE    14	/* supports secure erase */
+#define QUEUE_FLAG_SAME_FORCE  15	/* force complete on same CPU */
+#define QUEUE_FLAG_DEAD        16	/* queue tear-down finished */
+#define QUEUE_FLAG_INIT_DONE   17	/* queue is initialized */
+#define QUEUE_FLAG_NO_SG_MERGE 18	/* don't attempt to merge SG segments*/
+#define QUEUE_FLAG_POLL	       19	/* IO polling enabled if set */
+#define QUEUE_FLAG_WC	       20	/* Write back caching */
+#define QUEUE_FLAG_FUA	       21	/* device supports FUA writes */
+#define QUEUE_FLAG_FLUSH_NQ    22	/* flush not queueuable */
+#define QUEUE_FLAG_DAX         23	/* device supports DAX */
+#define QUEUE_FLAG_STATS       24	/* track rq completion times */
+#define QUEUE_FLAG_POLL_STATS  25	/* collecting stats for hybrid polling */
+#define QUEUE_FLAG_REGISTERED  26	/* queue has been registered to a disk */
+#define QUEUE_FLAG_SCSI_PASSTHROUGH 27	/* queue supports SCSI commands */
+#define QUEUE_FLAG_QUIESCED    28	/* queue has been quiesced */
+>>>>>>> master
 
 #define QUEUE_FLAG_MQ_DEFAULT	((1UL << QUEUE_FLAG_IO_STAT) |		\
 				 (1UL << QUEUE_FLAG_SAME_COMP) |	\
@@ -605,6 +642,7 @@ bool blk_queue_flag_test_and_set(unsigned int flag, struct request_queue *q);
 			     REQ_FAILFAST_DRIVER))
 #define blk_queue_quiesced(q)	test_bit(QUEUE_FLAG_QUIESCED, &(q)->queue_flags)
 #define blk_queue_pm_only(q)	atomic_read(&(q)->pm_only)
+<<<<<<< HEAD
 #define blk_queue_registered(q)	test_bit(QUEUE_FLAG_REGISTERED, &(q)->queue_flags)
 #define blk_queue_sq_sched(q)	test_bit(QUEUE_FLAG_SQ_SCHED, &(q)->queue_flags)
 #define blk_queue_skip_tagset_quiesce(q) \
@@ -612,6 +650,27 @@ bool blk_queue_flag_test_and_set(unsigned int flag, struct request_queue *q);
 
 extern void blk_set_pm_only(struct request_queue *q);
 extern void blk_clear_pm_only(struct request_queue *q);
+=======
+#define blk_queue_fua(q)	test_bit(QUEUE_FLAG_FUA, &(q)->queue_flags)
+
+extern void blk_set_pm_only(struct request_queue *q);
+extern void blk_clear_pm_only(struct request_queue *q);
+
+static inline int queue_in_flight(struct request_queue *q)
+{
+	return q->in_flight[0] + q->in_flight[1];
+}
+
+static inline bool blk_account_rq(struct request *rq)
+{
+	return (rq->rq_flags & RQF_STARTED) && !blk_rq_is_passthrough(rq);
+}
+
+#define blk_rq_cpu_valid(rq)	((rq)->cpu != -1)
+#define blk_bidi_rq(rq)		((rq)->next_rq != NULL)
+/* rq->queuelist of dequeued request must be list_empty() */
+#define blk_queued_rq(rq)	(!list_empty(&(rq)->queuelist))
+>>>>>>> master
 
 #define list_entry_rq(ptr)	list_entry((ptr), struct request, queuelist)
 

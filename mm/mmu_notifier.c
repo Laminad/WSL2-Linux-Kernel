@@ -666,6 +666,7 @@ int __mmu_notifier_register(struct mmu_notifier *subscription,
 	 * As above, users holding the mmap_lock or one of the
 	 * mm_take_all_locks() do not need to use acquire semantics.
 	 */
+<<<<<<< HEAD
 	if (subscriptions)
 		smp_store_release(&mm->notifier_subscriptions, subscriptions);
 
@@ -681,6 +682,11 @@ int __mmu_notifier_register(struct mmu_notifier *subscription,
 		spin_unlock(&mm->notifier_subscriptions->lock);
 	} else
 		mm->notifier_subscriptions->has_itree = true;
+=======
+	spin_lock(&mm->mmu_notifier_mm->lock);
+	hlist_add_head_rcu(&mn->hlist, &mm->mmu_notifier_mm->list);
+	spin_unlock(&mm->mmu_notifier_mm->lock);
+>>>>>>> master
 
 	mm_drop_all_locks(mm);
 	BUG_ON(atomic_read(&mm->mm_users) <= 0);

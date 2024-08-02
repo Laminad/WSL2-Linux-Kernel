@@ -16,7 +16,11 @@ config XFRM_ALGO
 	select XFRM
 	select CRYPTO
 	select CRYPTO_HASH
+<<<<<<< HEAD
 	select CRYPTO_SKCIPHER
+=======
+	select CRYPTO_BLKCIPHER
+>>>>>>> master
 
 if INET
 config XFRM_USER

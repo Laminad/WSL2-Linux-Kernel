@@ -636,11 +636,17 @@ re_probe:
 	if (ret)
 		goto pinctrl_bind_failed;
 
+<<<<<<< HEAD
 	if (dev->bus->dma_configure) {
 		ret = dev->bus->dma_configure(dev);
 		if (ret)
 			goto pinctrl_bind_failed;
 	}
+=======
+	ret = dma_configure(dev);
+	if (ret)
+		goto probe_failed;
+>>>>>>> master
 
 	ret = driver_sysfs_add(dev);
 	if (ret) {
@@ -714,6 +720,7 @@ dev_sysfs_state_synced_failed:
 dev_groups_failed:
 	device_remove(dev);
 probe_failed:
+<<<<<<< HEAD
 	driver_sysfs_remove(dev);
 sysfs_failed:
 	bus_notify(dev, BUS_NOTIFY_DRIVER_NOT_BOUND);
@@ -722,6 +729,45 @@ sysfs_failed:
 pinctrl_bind_failed:
 	device_links_no_driver(dev);
 	device_unbind_cleanup(dev);
+=======
+	if (dev->bus)
+		blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
+					     BUS_NOTIFY_DRIVER_NOT_BOUND, dev);
+pinctrl_bind_failed:
+	device_links_no_driver(dev);
+	devres_release_all(dev);
+	dma_deconfigure(dev);
+	driver_sysfs_remove(dev);
+	dev->driver = NULL;
+	dev_set_drvdata(dev, NULL);
+	if (dev->pm_domain && dev->pm_domain->dismiss)
+		dev->pm_domain->dismiss(dev);
+	pm_runtime_reinit(dev);
+	dev_pm_set_driver_flags(dev, 0);
+
+	switch (ret) {
+	case -EPROBE_DEFER:
+		/* Driver requested deferred probing */
+		dev_dbg(dev, "Driver %s requests probe deferral\n", drv->name);
+		driver_deferred_probe_add_trigger(dev, local_trigger_count);
+		break;
+	case -ENODEV:
+	case -ENXIO:
+		pr_debug("%s: probe of %s rejects match %d\n",
+			 drv->name, dev_name(dev), ret);
+		break;
+	default:
+		/* driver matched but the probe failed */
+		printk(KERN_WARNING
+		       "%s: probe of %s failed with error %d\n",
+		       drv->name, dev_name(dev), ret);
+	}
+	/*
+	 * Ignore errors returned by ->probe so that the next driver can try
+	 * its luck.
+	 */
+	ret = 0;
+>>>>>>> master
 done:
 	return ret;
 }
@@ -1191,6 +1237,7 @@ static int __driver_attach(struct device *dev, void *data)
 		return 0;
 	} /* ret > 0 means positive match */
 
+<<<<<<< HEAD
 	if (driver_allows_async_probing(drv)) {
 		/*
 		 * Instead of probing the device synchronously we will
@@ -1215,6 +1262,16 @@ static int __driver_attach(struct device *dev, void *data)
 	__device_driver_lock(dev, dev->parent);
 	driver_probe_device(drv, dev);
 	__device_driver_unlock(dev, dev->parent);
+=======
+	if (dev->parent && dev->bus->need_parent_lock)
+		device_lock(dev->parent);
+	device_lock(dev);
+	if (!dev->p->dead && !dev->driver)
+		driver_probe_device(drv, dev);
+	device_unlock(dev);
+	if (dev->parent && dev->bus->need_parent_lock)
+		device_unlock(dev->parent);
+>>>>>>> master
 
 	return 0;
 }
@@ -1244,12 +1301,23 @@ static void __device_release_driver(struct device *dev, struct device *parent)
 
 	drv = dev->driver;
 	if (drv) {
+<<<<<<< HEAD
 		pm_runtime_get_sync(dev);
 
 		while (device_links_busy(dev)) {
 			__device_driver_unlock(dev, parent);
 
 			device_links_unbind_consumers(dev);
+=======
+		while (device_links_busy(dev)) {
+			device_unlock(dev);
+			if (parent && dev->bus->need_parent_lock)
+				device_unlock(parent);
+
+			device_links_unbind_consumers(dev);
+			if (parent && dev->bus->need_parent_lock)
+				device_lock(parent);
+>>>>>>> master
 
 			__device_driver_lock(dev, parent);
 			/*
@@ -1276,6 +1344,18 @@ static void __device_release_driver(struct device *dev, struct device *parent)
 
 		device_unbind_cleanup(dev);
 		device_links_driver_cleanup(dev);
+<<<<<<< HEAD
+=======
+
+		devres_release_all(dev);
+		dma_deconfigure(dev);
+		dev->driver = NULL;
+		dev_set_drvdata(dev, NULL);
+		if (dev->pm_domain && dev->pm_domain->dismiss)
+			dev->pm_domain->dismiss(dev);
+		pm_runtime_reinit(dev);
+		dev_pm_set_driver_flags(dev, 0);
+>>>>>>> master
 
 		klist_remove(&dev->p->knode_driver);
 		device_pm_check_callbacks(dev);

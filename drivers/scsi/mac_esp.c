@@ -237,6 +237,169 @@ static void mac_esp_send_pdma_cmd(struct esp *esp, u32 addr, u32 esp_count,
 	} while (esp_count);
 }
 
+<<<<<<< HEAD
+=======
+/*
+ * Programmed IO routines follow.
+ */
+
+static inline unsigned int mac_esp_wait_for_fifo(struct esp *esp)
+{
+	int i = 500000;
+
+	do {
+		unsigned int fbytes = esp_read8(ESP_FFLAGS) & ESP_FF_FBYTES;
+
+		if (fbytes)
+			return fbytes;
+
+		udelay(2);
+	} while (--i);
+
+	printk(KERN_ERR PFX "FIFO is empty (sreg %02x)\n",
+	       esp_read8(ESP_STATUS));
+	return 0;
+}
+
+static inline int mac_esp_wait_for_intr(struct esp *esp)
+{
+	struct mac_esp_priv *mep = MAC_ESP_GET_PRIV(esp);
+	int i = 500000;
+
+	do {
+		esp->sreg = esp_read8(ESP_STATUS);
+		if (esp->sreg & ESP_STAT_INTR)
+			return 0;
+
+		udelay(2);
+	} while (--i);
+
+	printk(KERN_ERR PFX "IRQ timeout (sreg %02x)\n", esp->sreg);
+	mep->error = 1;
+	return 1;
+}
+
+#define MAC_ESP_PIO_LOOP(operands, reg1) \
+	asm volatile ( \
+	     "1:     moveb " operands " \n" \
+	     "       subqw #1,%1        \n" \
+	     "       jbne 1b            \n" \
+	     : "+a" (addr), "+r" (reg1) \
+	     : "a" (fifo))
+
+#define MAC_ESP_PIO_FILL(operands, reg1) \
+	asm volatile ( \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       moveb " operands " \n" \
+	     "       subqw #8,%1        \n" \
+	     "       subqw #8,%1        \n" \
+	     : "+a" (addr), "+r" (reg1) \
+	     : "a" (fifo))
+
+#define MAC_ESP_FIFO_SIZE 16
+
+static void mac_esp_send_pio_cmd(struct esp *esp, u32 addr, u32 esp_count,
+				 u32 dma_count, int write, u8 cmd)
+{
+	struct mac_esp_priv *mep = MAC_ESP_GET_PRIV(esp);
+	u8 __iomem *fifo = esp->regs + ESP_FDATA * 16;
+	u8 phase = esp->sreg & ESP_STAT_PMASK;
+
+	cmd &= ~ESP_CMD_DMA;
+	mep->error = 0;
+
+	if (write) {
+		u8 *dst = (u8 *)addr;
+		u8 mask = ~(phase == ESP_MIP ? ESP_INTR_FDONE : ESP_INTR_BSERV);
+
+		scsi_esp_cmd(esp, cmd);
+
+		while (1) {
+			if (!mac_esp_wait_for_fifo(esp))
+				break;
+
+			*dst++ = esp_read8(ESP_FDATA);
+			--esp_count;
+
+			if (!esp_count)
+				break;
+
+			if (mac_esp_wait_for_intr(esp))
+				break;
+
+			if ((esp->sreg & ESP_STAT_PMASK) != phase)
+				break;
+
+			esp->ireg = esp_read8(ESP_INTRPT);
+			if (esp->ireg & mask) {
+				mep->error = 1;
+				break;
+			}
+
+			if (phase == ESP_MIP)
+				scsi_esp_cmd(esp, ESP_CMD_MOK);
+
+			scsi_esp_cmd(esp, ESP_CMD_TI);
+		}
+	} else {
+		scsi_esp_cmd(esp, ESP_CMD_FLUSH);
+
+		if (esp_count >= MAC_ESP_FIFO_SIZE)
+			MAC_ESP_PIO_FILL("%0@+,%2@", esp_count);
+		else
+			MAC_ESP_PIO_LOOP("%0@+,%2@", esp_count);
+
+		scsi_esp_cmd(esp, cmd);
+
+		while (esp_count) {
+			unsigned int n;
+
+			if (mac_esp_wait_for_intr(esp))
+				break;
+
+			if ((esp->sreg & ESP_STAT_PMASK) != phase)
+				break;
+
+			esp->ireg = esp_read8(ESP_INTRPT);
+			if (esp->ireg & ~ESP_INTR_BSERV) {
+				mep->error = 1;
+				break;
+			}
+
+			n = MAC_ESP_FIFO_SIZE -
+			    (esp_read8(ESP_FFLAGS) & ESP_FF_FBYTES);
+			if (n > esp_count)
+				n = esp_count;
+
+			if (n == MAC_ESP_FIFO_SIZE) {
+				MAC_ESP_PIO_FILL("%0@+,%2@", esp_count);
+			} else {
+				esp_count -= n;
+				MAC_ESP_PIO_LOOP("%0@+,%2@", n);
+			}
+
+			scsi_esp_cmd(esp, ESP_CMD_TI);
+		}
+	}
+
+	esp->send_cmd_residual = esp_count;
+}
+
+>>>>>>> master
 static int mac_esp_irq_pending(struct esp *esp)
 {
 	if (esp_read8(ESP_STATUS) & ESP_STAT_INTR)

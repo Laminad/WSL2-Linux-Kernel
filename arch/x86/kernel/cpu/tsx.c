@@ -2,7 +2,11 @@
 /*
  * Intel Transactional Synchronization Extensions (TSX) control.
  *
+<<<<<<< HEAD
  * Copyright (C) 2019-2021 Intel Corporation
+=======
+ * Copyright (C) 2019 Intel Corporation
+>>>>>>> master
  *
  * Author:
  *	Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
@@ -11,6 +15,7 @@
 #include <linux/cpufeature.h>
 
 #include <asm/cmdline.h>
+<<<<<<< HEAD
 #include <asm/cpu.h>
 
 #include "cpu.h"
@@ -21,6 +26,14 @@
 enum tsx_ctrl_states tsx_ctrl_state __ro_after_init = TSX_CTRL_NOT_SUPPORTED;
 
 static void tsx_disable(void)
+=======
+
+#include "cpu.h"
+
+enum tsx_ctrl_states tsx_ctrl_state __ro_after_init = TSX_CTRL_NOT_SUPPORTED;
+
+void tsx_disable(void)
+>>>>>>> master
 {
 	u64 tsx;
 
@@ -40,7 +53,11 @@ static void tsx_disable(void)
 	wrmsrl(MSR_IA32_TSX_CTRL, tsx);
 }
 
+<<<<<<< HEAD
 static void tsx_enable(void)
+=======
+void tsx_enable(void)
+>>>>>>> master
 {
 	u64 tsx;
 
@@ -59,6 +76,7 @@ static void tsx_enable(void)
 	wrmsrl(MSR_IA32_TSX_CTRL, tsx);
 }
 
+<<<<<<< HEAD
 static enum tsx_ctrl_states x86_get_tsx_auto_mode(void)
 {
 	if (boot_cpu_has_bug(X86_BUG_TAA))
@@ -174,6 +192,11 @@ void __init tsx_init(void)
 		setup_clear_cpu_cap(X86_FEATURE_HLE);
 		return;
 	}
+=======
+static bool __init tsx_ctrl_is_supported(void)
+{
+	u64 ia32_cap = x86_read_arch_cap_msr();
+>>>>>>> master
 
 	/*
 	 * TSX is controlled via MSR_IA32_TSX_CTRL.  However, support for this
@@ -186,12 +209,33 @@ void __init tsx_init(void)
 	 * tsx= cmdline requests will do nothing on CPUs without
 	 * MSR_IA32_TSX_CTRL support.
 	 */
+<<<<<<< HEAD
 	if (x86_read_arch_cap_msr() & ARCH_CAP_TSX_CTRL_MSR) {
 		setup_force_cpu_cap(X86_FEATURE_MSR_TSX_CTRL);
 	} else {
 		tsx_ctrl_state = TSX_CTRL_NOT_SUPPORTED;
 		return;
 	}
+=======
+	return !!(ia32_cap & ARCH_CAP_TSX_CTRL_MSR);
+}
+
+static enum tsx_ctrl_states x86_get_tsx_auto_mode(void)
+{
+	if (boot_cpu_has_bug(X86_BUG_TAA))
+		return TSX_CTRL_DISABLE;
+
+	return TSX_CTRL_ENABLE;
+}
+
+void __init tsx_init(void)
+{
+	char arg[5] = {};
+	int ret;
+
+	if (!tsx_ctrl_is_supported())
+		return;
+>>>>>>> master
 
 	ret = cmdline_find_option(boot_command_line, "tsx", arg, sizeof(arg));
 	if (ret >= 0) {
@@ -203,7 +247,11 @@ void __init tsx_init(void)
 			tsx_ctrl_state = x86_get_tsx_auto_mode();
 		} else {
 			tsx_ctrl_state = TSX_CTRL_DISABLE;
+<<<<<<< HEAD
 			pr_err("invalid option, defaulting to off\n");
+=======
+			pr_err("tsx: invalid option, defaulting to off\n");
+>>>>>>> master
 		}
 	} else {
 		/* tsx= not provided */
@@ -219,12 +267,20 @@ void __init tsx_init(void)
 		tsx_disable();
 
 		/*
+<<<<<<< HEAD
 		 * tsx_disable() will change the state of the RTM and HLE CPUID
 		 * bits. Clear them here since they are now expected to be not
 		 * set.
 		 */
 		setup_clear_cpu_cap(X86_FEATURE_RTM);
 		setup_clear_cpu_cap(X86_FEATURE_HLE);
+=======
+		 * tsx_disable() will change the state of the
+		 * RTM CPUID bit.  Clear it here since it is now
+		 * expected to be not set.
+		 */
+		setup_clear_cpu_cap(X86_FEATURE_RTM);
+>>>>>>> master
 	} else if (tsx_ctrl_state == TSX_CTRL_ENABLE) {
 
 		/*
@@ -236,6 +292,7 @@ void __init tsx_init(void)
 		tsx_enable();
 
 		/*
+<<<<<<< HEAD
 		 * tsx_enable() will change the state of the RTM and HLE CPUID
 		 * bits. Force them here since they are now expected to be set.
 		 */
@@ -256,3 +313,12 @@ void tsx_ap_init(void)
 		/* See comment over that function for more details. */
 		tsx_clear_cpuid();
 }
+=======
+		 * tsx_enable() will change the state of the
+		 * RTM CPUID bit.  Force it here since it is now
+		 * expected to be set.
+		 */
+		setup_force_cpu_cap(X86_FEATURE_RTM);
+	}
+}
+>>>>>>> master

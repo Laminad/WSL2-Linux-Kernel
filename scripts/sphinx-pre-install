@@ -420,10 +420,13 @@ sub give_redhat_hints()
 	#
 	# Checks valid for RHEL/CentOS version 7.x.
 	#
+<<<<<<< HEAD
 	my $old = 0;
 	my $rel;
 	$rel = $1 if ($system_release =~ /release\s+(\d+)/);
 
+=======
+>>>>>>> master
 	if (!($system_release =~ /Fedora/)) {
 		$map{"virtualenv"} = "python-virtualenv";
 

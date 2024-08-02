@@ -110,7 +110,11 @@ static void perf_top__resize(struct perf_top *top)
 
 static int perf_top__parse_source(struct perf_top *top, struct hist_entry *he)
 {
+<<<<<<< HEAD
 	struct evsel *evsel;
+=======
+	struct perf_evsel *evsel;
+>>>>>>> master
 	struct symbol *sym;
 	struct annotation *notes;
 	struct map *map;
@@ -240,7 +244,11 @@ static void perf_top__record_precise_ip(struct perf_top *top,
 static void perf_top__show_details(struct perf_top *top)
 {
 	struct hist_entry *he = top->sym_filter_entry;
+<<<<<<< HEAD
 	struct evsel *evsel;
+=======
+	struct perf_evsel *evsel;
+>>>>>>> master
 	struct annotation *notes;
 	struct symbol *symbol;
 	int more;

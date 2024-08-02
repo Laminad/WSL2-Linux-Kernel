@@ -1911,10 +1911,36 @@ static int ksys_umount(char __user *name, int flags)
 
 	if (!(flags & UMOUNT_NOFOLLOW))
 		lookup_flags |= LOOKUP_FOLLOW;
+<<<<<<< HEAD
 	ret = user_path_at(AT_FDCWD, name, lookup_flags, &path);
 	if (ret)
 		return ret;
 	return path_umount(&path, flags);
+=======
+
+	retval = user_path_mountpoint_at(AT_FDCWD, name, lookup_flags, &path);
+	if (retval)
+		goto out;
+	mnt = real_mount(path.mnt);
+	retval = -EINVAL;
+	if (path.dentry != path.mnt->mnt_root)
+		goto dput_and_out;
+	if (!check_mnt(mnt))
+		goto dput_and_out;
+	if (mnt->mnt.mnt_flags & MNT_LOCKED) /* Check optimistically */
+		goto dput_and_out;
+	retval = -EPERM;
+	if (flags & MNT_FORCE && !capable(CAP_SYS_ADMIN))
+		goto dput_and_out;
+
+	retval = do_umount(mnt, flags);
+dput_and_out:
+	/* we mustn't call path_put() as that would clear mnt_expiry_mark */
+	dput(path.dentry);
+	mntput_no_expire(mnt);
+out:
+	return retval;
+>>>>>>> master
 }
 
 SYSCALL_DEFINE2(umount, char __user *, name, int, flags)

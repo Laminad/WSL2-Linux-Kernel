@@ -53,12 +53,15 @@
 #  define __NR_bpf 351
 # elif defined(__arc__)
 #  define __NR_bpf 280
+<<<<<<< HEAD
 # elif defined(__mips__) && defined(_ABIO32)
 #  define __NR_bpf 4355
 # elif defined(__mips__) && defined(_ABIN32)
 #  define __NR_bpf 6319
 # elif defined(__mips__) && defined(_ABI64)
 #  define __NR_bpf 5315
+=======
+>>>>>>> master
 # else
 #  error __NR_bpf not defined. libbpf does not support your arch.
 # endif
@@ -75,9 +78,145 @@ static inline int sys_bpf(enum bpf_cmd cmd, union bpf_attr *attr,
 	return syscall(__NR_bpf, cmd, attr, size);
 }
 
+<<<<<<< HEAD
 static inline int sys_bpf_fd(enum bpf_cmd cmd, union bpf_attr *attr,
 			     unsigned int size)
 {
+=======
+static inline int sys_bpf_prog_load(union bpf_attr *attr, unsigned int size)
+{
+	int fd;
+
+	do {
+		fd = sys_bpf(BPF_PROG_LOAD, attr, size);
+	} while (fd < 0 && errno == EAGAIN);
+
+	return fd;
+}
+
+int bpf_create_map_xattr(const struct bpf_create_map_attr *create_attr)
+{
+	__u32 name_len = create_attr->name ? strlen(create_attr->name) : 0;
+	union bpf_attr attr;
+	int ret;
+
+	memset(&attr, '\0', sizeof(attr));
+
+	attr.map_type = create_attr->map_type;
+	attr.key_size = create_attr->key_size;
+	attr.value_size = create_attr->value_size;
+	attr.max_entries = create_attr->max_entries;
+	attr.map_flags = create_attr->map_flags;
+	memcpy(attr.map_name, create_attr->name,
+	       min(name_len, BPF_OBJ_NAME_LEN - 1));
+	attr.numa_node = create_attr->numa_node;
+	attr.btf_fd = create_attr->btf_fd;
+	attr.btf_key_type_id = create_attr->btf_key_type_id;
+	attr.btf_value_type_id = create_attr->btf_value_type_id;
+	attr.map_ifindex = create_attr->map_ifindex;
+	attr.inner_map_fd = create_attr->inner_map_fd;
+
+	ret = sys_bpf(BPF_MAP_CREATE, &attr, sizeof(attr));
+	if (ret < 0 && errno == EINVAL && create_attr->name) {
+		/* Retry the same syscall, but without the name.
+		 * Pre v4.14 kernels don't support map names.
+		 */
+		memset(attr.map_name, 0, sizeof(attr.map_name));
+		return sys_bpf(BPF_MAP_CREATE, &attr, sizeof(attr));
+	}
+	return ret;
+}
+
+int bpf_create_map_node(enum bpf_map_type map_type, const char *name,
+			int key_size, int value_size, int max_entries,
+			__u32 map_flags, int node)
+{
+	struct bpf_create_map_attr map_attr = {};
+
+	map_attr.name = name;
+	map_attr.map_type = map_type;
+	map_attr.map_flags = map_flags;
+	map_attr.key_size = key_size;
+	map_attr.value_size = value_size;
+	map_attr.max_entries = max_entries;
+	if (node >= 0) {
+		map_attr.numa_node = node;
+		map_attr.map_flags |= BPF_F_NUMA_NODE;
+	}
+
+	return bpf_create_map_xattr(&map_attr);
+}
+
+int bpf_create_map(enum bpf_map_type map_type, int key_size,
+		   int value_size, int max_entries, __u32 map_flags)
+{
+	struct bpf_create_map_attr map_attr = {};
+
+	map_attr.map_type = map_type;
+	map_attr.map_flags = map_flags;
+	map_attr.key_size = key_size;
+	map_attr.value_size = value_size;
+	map_attr.max_entries = max_entries;
+
+	return bpf_create_map_xattr(&map_attr);
+}
+
+int bpf_create_map_name(enum bpf_map_type map_type, const char *name,
+			int key_size, int value_size, int max_entries,
+			__u32 map_flags)
+{
+	struct bpf_create_map_attr map_attr = {};
+
+	map_attr.name = name;
+	map_attr.map_type = map_type;
+	map_attr.map_flags = map_flags;
+	map_attr.key_size = key_size;
+	map_attr.value_size = value_size;
+	map_attr.max_entries = max_entries;
+
+	return bpf_create_map_xattr(&map_attr);
+}
+
+int bpf_create_map_in_map_node(enum bpf_map_type map_type, const char *name,
+			       int key_size, int inner_map_fd, int max_entries,
+			       __u32 map_flags, int node)
+{
+	__u32 name_len = name ? strlen(name) : 0;
+	union bpf_attr attr;
+
+	memset(&attr, '\0', sizeof(attr));
+
+	attr.map_type = map_type;
+	attr.key_size = key_size;
+	attr.value_size = 4;
+	attr.inner_map_fd = inner_map_fd;
+	attr.max_entries = max_entries;
+	attr.map_flags = map_flags;
+	memcpy(attr.map_name, name, min(name_len, BPF_OBJ_NAME_LEN - 1));
+
+	if (node >= 0) {
+		attr.map_flags |= BPF_F_NUMA_NODE;
+		attr.numa_node = node;
+	}
+
+	return sys_bpf(BPF_MAP_CREATE, &attr, sizeof(attr));
+}
+
+int bpf_create_map_in_map(enum bpf_map_type map_type, const char *name,
+			  int key_size, int inner_map_fd, int max_entries,
+			  __u32 map_flags)
+{
+	return bpf_create_map_in_map_node(map_type, name, key_size,
+					  inner_map_fd, max_entries, map_flags,
+					  -1);
+}
+
+int bpf_load_program_xattr(const struct bpf_load_program_attr *load_attr,
+			   char *log_buf, size_t log_buf_sz)
+{
+	union bpf_attr attr;
+	__u32 name_len;
+>>>>>>> master
 	int fd;
 
 	fd = sys_bpf(cmd, attr, size);
@@ -92,6 +231,7 @@ int sys_bpf_prog_load(union bpf_attr *attr, unsigned int size, int attempts)
 		fd = sys_bpf_fd(BPF_PROG_LOAD, attr, size);
 	} while (fd < 0 && errno == EAGAIN && --attempts > 0);
 
+<<<<<<< HEAD
 	return fd;
 }
 
@@ -332,6 +472,19 @@ int bpf_prog_load(enum bpf_prog_type prog_type,
 				errno = E2BIG;
 				goto done;
 			}
+=======
+	fd = sys_bpf_prog_load(&attr, sizeof(attr));
+	if (fd >= 0 || !log_buf || !log_buf_sz)
+		return fd;
+
+	/* Try again with log */
+	attr.log_buf = ptr_to_u64(log_buf);
+	attr.log_size = log_buf_sz;
+	attr.log_level = 1;
+	log_buf[0] = 0;
+	return sys_bpf_prog_load(&attr, sizeof(attr));
+}
+>>>>>>> master
 
 			attr.func_info = ptr_to_u64(finfo);
 			attr.func_info_rec_size = func_info_rec_size;
@@ -367,6 +520,7 @@ int bpf_prog_load(enum bpf_prog_type prog_type,
 		attr.log_size = log_size;
 		attr.log_level = 1;
 
+<<<<<<< HEAD
 		fd = sys_bpf_prog_load(&attr, attr_sz, attempts);
 		OPTS_SET(opts, log_true_size, attr.log_true_size);
 	}
@@ -375,6 +529,21 @@ done:
 	free(finfo);
 	free(linfo);
 	return libbpf_err_errno(fd);
+=======
+	bzero(&attr, sizeof(attr));
+	attr.prog_type = type;
+	attr.insn_cnt = (__u32)insns_cnt;
+	attr.insns = ptr_to_u64(insns);
+	attr.license = ptr_to_u64(license);
+	attr.log_buf = ptr_to_u64(log_buf);
+	attr.log_size = log_buf_sz;
+	attr.log_level = log_level;
+	log_buf[0] = 0;
+	attr.kern_version = kern_version;
+	attr.prog_flags = strict_alignment ? BPF_F_STRICT_ALIGNMENT : 0;
+
+	return sys_bpf_prog_load(&attr, sizeof(attr));
+>>>>>>> master
 }
 
 int bpf_map_update_elem(int fd, const void *key, const void *value,

@@ -70,6 +70,7 @@ static int mt76_get_of_epprom_from_mtd(struct mt76_dev *dev, void *eep, int offs
 	offset += be32_to_cpup(list);
 	ret = mtd_read(mtd, offset, len, &retlen, eep);
 	put_mtd_device(mtd);
+<<<<<<< HEAD
 	if (mtd_is_bitflip(ret))
 		ret = 0;
 	if (ret) {
@@ -77,12 +78,17 @@ static int mt76_get_of_epprom_from_mtd(struct mt76_dev *dev, void *eep, int offs
 			part, ret);
 		goto out_put_node;
 	}
+=======
+	if (ret)
+		goto out_put_node;
+>>>>>>> master
 
 	if (retlen < len) {
 		ret = -EINVAL;
 		goto out_put_node;
 	}
 
+<<<<<<< HEAD
 	if (of_property_read_bool(dev->dev->of_node, "big-endian")) {
 		u8 *data = (u8 *)eep;
 		int i;
@@ -98,6 +104,8 @@ static int mt76_get_of_epprom_from_mtd(struct mt76_dev *dev, void *eep, int offs
 	dev->test_mtd.offset = offset;
 #endif
 
+=======
+>>>>>>> master
 out_put_node:
 	of_node_put(np);
 	return ret;

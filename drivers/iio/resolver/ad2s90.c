@@ -100,7 +100,25 @@ static int ad2s90_probe(struct spi_device *spi)
 	indio_dev->num_channels = 1;
 	indio_dev->name = spi_get_device_id(spi)->name;
 
+<<<<<<< HEAD:drivers/iio/resolver/ad2s90.c
 	return devm_iio_device_register(indio_dev->dev.parent, indio_dev);
+=======
+	ret = devm_iio_device_register(indio_dev->dev.parent, indio_dev);
+	if (ret)
+		return ret;
+
+	/* need 600ns between CS and the first falling edge of SCLK */
+	spi->max_speed_hz = 830000;
+	spi->mode = SPI_MODE_3;
+	ret = spi_setup(spi);
+
+	if (ret < 0) {
+		dev_err(&spi->dev, "spi_setup failed!\n");
+		return ret;
+	}
+
+	return 0;
+>>>>>>> master:drivers/staging/iio/resolver/ad2s90.c
 }
 
 static const struct of_device_id ad2s90_of_match[] = {

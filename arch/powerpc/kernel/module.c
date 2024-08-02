@@ -64,13 +64,21 @@ int module_finalize(const Elf_Ehdr *hdr,
 				  (void *)sect->sh_addr + sect->sh_size);
 #endif /* CONFIG_PPC64 */
 
+<<<<<<< HEAD
 #ifdef CONFIG_PPC64_ELF_ABI_V1
+=======
+#ifdef PPC64_ELF_ABI_v1
+>>>>>>> master
 	sect = find_section(hdr, sechdrs, ".opd");
 	if (sect != NULL) {
 		me->arch.start_opd = sect->sh_addr;
 		me->arch.end_opd = sect->sh_addr + sect->sh_size;
 	}
+<<<<<<< HEAD
 #endif /* CONFIG_PPC64_ELF_ABI_V1 */
+=======
+#endif /* PPC64_ELF_ABI_v1 */
+>>>>>>> master
 
 #ifdef CONFIG_PPC_BARRIER_NOSPEC
 	sect = find_section(hdr, sechdrs, "__spec_barrier_fixup");

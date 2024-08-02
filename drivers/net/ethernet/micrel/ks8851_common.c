@@ -421,7 +421,10 @@ static void ks8851_flush_tx_work(struct ks8851_net *ks)
 static int ks8851_net_open(struct net_device *dev)
 {
 	struct ks8851_net *ks = netdev_priv(dev);
+<<<<<<< HEAD:drivers/net/ethernet/micrel/ks8851_common.c
 	unsigned long flags;
+=======
+>>>>>>> master:drivers/net/ethernet/micrel/ks8851.c
 	int ret;
 
 	ret = request_threaded_irq(dev->irq, NULL, ks8851_irq,
@@ -486,7 +489,11 @@ static int ks8851_net_open(struct net_device *dev)
 
 	netif_dbg(ks, ifup, ks->netdev, "network device up\n");
 
+<<<<<<< HEAD:drivers/net/ethernet/micrel/ks8851_common.c
 	ks8851_unlock(ks, &flags);
+=======
+	mutex_unlock(&ks->lock);
+>>>>>>> master:drivers/net/ethernet/micrel/ks8851.c
 	mii_check_link(&ks->mii);
 	return 0;
 }
@@ -1184,8 +1191,14 @@ int ks8851_probe_common(struct net_device *netdev, struct device *dev,
 	dev_set_drvdata(dev, ks);
 
 	netif_carrier_off(ks->netdev);
+<<<<<<< HEAD:drivers/net/ethernet/micrel/ks8851_common.c
 	netdev->if_port = IF_PORT_100BASET;
 	netdev->netdev_ops = &ks8851_netdev_ops;
+=======
+	ndev->if_port = IF_PORT_100BASET;
+	ndev->netdev_ops = &ks8851_netdev_ops;
+	ndev->irq = spi->irq;
+>>>>>>> master:drivers/net/ethernet/micrel/ks8851.c
 
 	/* issue a global soft reset to reset the device. */
 	ks8851_soft_reset(ks, GRR_GSR);
@@ -1204,7 +1217,11 @@ int ks8851_probe_common(struct net_device *netdev, struct device *dev,
 	ks8851_read_selftest(ks);
 	ks8851_init_mac(ks, dev->of_node);
 
+<<<<<<< HEAD:drivers/net/ethernet/micrel/ks8851_common.c
 	ret = register_netdev(netdev);
+=======
+	ret = register_netdev(ndev);
+>>>>>>> master:drivers/net/ethernet/micrel/ks8851.c
 	if (ret) {
 		dev_err(dev, "failed to register network device\n");
 		goto err_id;
@@ -1216,11 +1233,18 @@ int ks8851_probe_common(struct net_device *netdev, struct device *dev,
 
 	return 0;
 
+<<<<<<< HEAD:drivers/net/ethernet/micrel/ks8851_common.c
 err_id:
 	ks8851_unregister_mdiobus(ks);
 err_mdio:
 	if (ks->gpio)
 		gpiod_set_value_cansleep(ks->gpio, 1);
+=======
+err_netdev:
+err_id:
+	if (gpio_is_valid(gpio))
+		gpio_set_value(gpio, 0);
+>>>>>>> master:drivers/net/ethernet/micrel/ks8851.c
 	regulator_disable(ks->vdd_reg);
 err_reg:
 	regulator_disable(ks->vdd_io);
@@ -1239,8 +1263,13 @@ void ks8851_remove_common(struct device *dev)
 		dev_info(dev, "remove\n");
 
 	unregister_netdev(priv->netdev);
+<<<<<<< HEAD:drivers/net/ethernet/micrel/ks8851_common.c
 	if (priv->gpio)
 		gpiod_set_value_cansleep(priv->gpio, 1);
+=======
+	if (gpio_is_valid(priv->gpio))
+		gpio_set_value(priv->gpio, 0);
+>>>>>>> master:drivers/net/ethernet/micrel/ks8851.c
 	regulator_disable(priv->vdd_reg);
 	regulator_disable(priv->vdd_io);
 }

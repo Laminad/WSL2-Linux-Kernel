@@ -37,6 +37,39 @@
 static void ast_post_chip_2300(struct drm_device *dev);
 static void ast_post_chip_2500(struct drm_device *dev);
 
+<<<<<<< HEAD
+=======
+void ast_enable_vga(struct drm_device *dev)
+{
+	struct ast_private *ast = dev->dev_private;
+
+	ast_io_write8(ast, AST_IO_VGA_ENABLE_PORT, 0x01);
+	ast_io_write8(ast, AST_IO_MISC_PORT_WRITE, 0x01);
+}
+
+void ast_enable_mmio(struct drm_device *dev)
+{
+	struct ast_private *ast = dev->dev_private;
+
+	ast_set_index_reg(ast, AST_IO_CRTC_PORT, 0xa1, 0x06);
+}
+
+
+bool ast_is_vga_enabled(struct drm_device *dev)
+{
+	struct ast_private *ast = dev->dev_private;
+	u8 ch;
+
+	if (ast->chip == AST1180) {
+		/* TODO 1180 */
+	} else {
+		ch = ast_io_read8(ast, AST_IO_VGA_ENABLE_PORT);
+		return !!(ch & 0x01);
+	}
+	return false;
+}
+
+>>>>>>> master
 static const u8 extreginfo[] = { 0x0f, 0x04, 0x1c, 0xff };
 static const u8 extreginfo_ast2300[] = { 0x0f, 0x04, 0x1f, 0xff };
 

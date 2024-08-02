@@ -644,6 +644,52 @@ static void ak4458_reset(struct ak4458_priv *ak4458, bool active)
 	}
 }
 
+<<<<<<< HEAD
+=======
+static void ak4458_power_on(struct ak4458_priv *ak4458)
+{
+	if (ak4458->reset_gpiod) {
+		gpiod_set_value_cansleep(ak4458->reset_gpiod, 1);
+		usleep_range(1000, 2000);
+	}
+}
+
+static int ak4458_init(struct snd_soc_component *component)
+{
+	struct ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
+	int ret;
+
+	/* External Mute ON */
+	if (ak4458->mute_gpiod)
+		gpiod_set_value_cansleep(ak4458->mute_gpiod, 1);
+
+	ak4458_power_on(ak4458);
+
+	ret = snd_soc_component_update_bits(component, AK4458_00_CONTROL1,
+			    0x80, 0x80);   /* ACKS bit = 1; 10000000 */
+	if (ret < 0)
+		return ret;
+
+	return ak4458_rstn_control(component, 1);
+}
+
+static int ak4458_probe(struct snd_soc_component *component)
+{
+	struct ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
+
+	ak4458->fs = 48000;
+
+	return ak4458_init(component);
+}
+
+static void ak4458_remove(struct snd_soc_component *component)
+{
+	struct ak4458_priv *ak4458 = snd_soc_component_get_drvdata(component);
+
+	ak4458_power_off(ak4458);
+}
+
+>>>>>>> master
 #ifdef CONFIG_PM
 static int __maybe_unused ak4458_runtime_suspend(struct device *dev)
 {

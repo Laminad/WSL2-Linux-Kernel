@@ -100,6 +100,7 @@ struct btrfs_transaction {
 	wait_queue_head_t pending_wait;
 };
 
+<<<<<<< HEAD
 enum {
 	ENUM_BIT(__TRANS_FREEZABLE),
 	ENUM_BIT(__TRANS_START),
@@ -109,6 +110,16 @@ enum {
 	ENUM_BIT(__TRANS_DUMMY),
 	ENUM_BIT(__TRANS_JOIN_NOSTART),
 };
+=======
+#define __TRANS_FREEZABLE	(1U << 0)
+
+#define __TRANS_START		(1U << 9)
+#define __TRANS_ATTACH		(1U << 10)
+#define __TRANS_JOIN		(1U << 11)
+#define __TRANS_JOIN_NOLOCK	(1U << 12)
+#define __TRANS_DUMMY		(1U << 13)
+#define __TRANS_JOIN_NOSTART	(1U << 14)
+>>>>>>> master
 
 #define TRANS_START		(__TRANS_START | __TRANS_FREEZABLE)
 #define TRANS_ATTACH		(__TRANS_ATTACH)
@@ -238,7 +249,11 @@ struct btrfs_trans_handle *btrfs_start_transaction_fallback_global_rsv(
 					struct btrfs_root *root,
 					unsigned int num_items);
 struct btrfs_trans_handle *btrfs_join_transaction(struct btrfs_root *root);
+<<<<<<< HEAD
 struct btrfs_trans_handle *btrfs_join_transaction_spacecache(struct btrfs_root *root);
+=======
+struct btrfs_trans_handle *btrfs_join_transaction_nolock(struct btrfs_root *root);
+>>>>>>> master
 struct btrfs_trans_handle *btrfs_join_transaction_nostart(struct btrfs_root *root);
 struct btrfs_trans_handle *btrfs_attach_transaction(struct btrfs_root *root);
 struct btrfs_trans_handle *btrfs_attach_transaction_barrier(

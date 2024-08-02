@@ -926,8 +926,20 @@ static int perf_sample__fprintf_brstack(struct perf_sample *sample,
 		return 0;
 
 	for (i = 0; i < br->nr; i++) {
+<<<<<<< HEAD
 		from = entries[i].from;
 		to   = entries[i].to;
+=======
+		from = br->entries[i].from;
+		to   = br->entries[i].to;
+
+		if (PRINT_FIELD(DSO)) {
+			memset(&alf, 0, sizeof(alf));
+			memset(&alt, 0, sizeof(alt));
+			thread__find_map_fb(thread, sample->cpumode, from, &alf);
+			thread__find_map_fb(thread, sample->cpumode, to, &alt);
+		}
+>>>>>>> master
 
 		printed += fprintf(fp, " 0x%"PRIx64, from);
 		if (PRINT_FIELD(DSO)) {
@@ -1011,12 +1023,21 @@ static int perf_sample__fprintf_brstackoff(struct perf_sample *sample,
 		to   = entries[i].to;
 
 		if (thread__find_map_fb(thread, sample->cpumode, from, &alf) &&
+<<<<<<< HEAD
 		    !map__dso(alf.map)->adjust_symbols)
 			from = map__dso_map_ip(alf.map, from);
 
 		if (thread__find_map_fb(thread, sample->cpumode, to, &alt) &&
 		    !map__dso(alt.map)->adjust_symbols)
 			to = map__dso_map_ip(alt.map, to);
+=======
+		    !alf.map->dso->adjust_symbols)
+			from = map__map_ip(alf.map, from);
+
+		if (thread__find_map_fb(thread, sample->cpumode, to, &alt) &&
+		    !alt.map->dso->adjust_symbols)
+			to = map__map_ip(alt.map, to);
+>>>>>>> master
 
 		printed += fprintf(fp, " 0x%"PRIx64, from);
 		if (PRINT_FIELD(DSO))
@@ -1297,7 +1318,11 @@ static int perf_sample__fprintf_brstackinsn(struct perf_sample *sample,
 				break;
 			} else {
 				ilen = 0;
+<<<<<<< HEAD
 				printed += fprintf(fp, "\t%016" PRIx64 "\t%s", ip,
+=======
+				printed += fprintf(fp, "\t%016" PRIx64 "\t%s\n", ip,
+>>>>>>> master
 						   dump_insn(&x, ip, buffer + off, len - off, &ilen));
 				if (PRINT_FIELD(BRSTACKINSNLEN))
 					printed += fprintf(fp, "\tilen: %d", ilen);
@@ -1309,7 +1334,11 @@ static int perf_sample__fprintf_brstackinsn(struct perf_sample *sample,
 				insn++;
 			}
 		}
+<<<<<<< HEAD
 		if (off != end - start)
+=======
+		if (off != (unsigned)len)
+>>>>>>> master
 			printed += fprintf(fp, "\tmismatch of LBR data and executable\n");
 	}
 
@@ -1356,7 +1385,11 @@ static int perf_sample__fprintf_brstackinsn(struct perf_sample *sample,
 	}
 	for (off = 0; off <= end - start; off += ilen) {
 		ilen = 0;
+<<<<<<< HEAD
 		printed += fprintf(fp, "\t%016" PRIx64 "\t%s", start + off,
+=======
+		printed += fprintf(fp, "\t%016" PRIx64 "\t%s\n", start + off,
+>>>>>>> master
 				   dump_insn(&x, start + off, buffer + off, len - off, &ilen));
 		if (PRINT_FIELD(BRSTACKINSNLEN))
 			printed += fprintf(fp, "\tilen: %d", ilen);
@@ -2071,7 +2104,11 @@ static void perf_sample__fprint_metric(struct perf_script *script,
 			 },
 		.force_header = false,
 	};
+<<<<<<< HEAD
 	struct evsel *ev2;
+=======
+	struct perf_evsel *ev2;
+>>>>>>> master
 	u64 val;
 
 	if (!evsel->stats)
@@ -2175,7 +2212,11 @@ static void process_event(struct perf_script *script,
 		perf_sample__fprintf_bts(sample, evsel, thread, al, addr_al, machine, fp);
 		return;
 	}
+<<<<<<< HEAD
 #ifdef HAVE_LIBTRACEEVENT
+=======
+
+>>>>>>> master
 	if (PRINT_FIELD(TRACE) && sample->raw_data) {
 		event_format__fprintf(evsel->tp_format, sample->cpu,
 				      sample->raw_data, sample->raw_size, fp);
@@ -2797,6 +2838,8 @@ static int __cmd_script(struct perf_script *script)
 	int ret;
 
 	signal(SIGINT, sig_handler);
+
+	perf_stat__init_shadow_stats();
 
 	/* override event processing functions */
 	if (script->show_task_events) {

@@ -1270,6 +1270,7 @@ static int ieee80211_start_ap(struct wiphy *wiphy, struct net_device *dev,
 		      BSS_CHANGED_BEACON_ENABLED |
 		      BSS_CHANGED_BEACON |
 		      BSS_CHANGED_P2P_PS |
+<<<<<<< HEAD
 		      BSS_CHANGED_TXPOWER |
 		      BSS_CHANGED_TWT;
 	int i, err;
@@ -1277,6 +1278,11 @@ static int ieee80211_start_ap(struct wiphy *wiphy, struct net_device *dev,
 	unsigned int link_id = params->beacon.link_id;
 	struct ieee80211_link_data *link;
 	struct ieee80211_bss_conf *link_conf;
+=======
+		      BSS_CHANGED_TXPOWER;
+	int err;
+	int prev_beacon_int;
+>>>>>>> master
 
 	link = sdata_dereference(sdata->link[link_id], sdata);
 	if (!link)
@@ -1331,6 +1337,7 @@ static int ieee80211_start_ap(struct wiphy *wiphy, struct net_device *dev,
 			      IEEE80211_HE_OPERATION_RTS_THRESHOLD_MASK);
 		changed |= BSS_CHANGED_HE_OBSS_PD;
 
+<<<<<<< HEAD
 		if (params->beacon.he_bss_color.enabled)
 			changed |= BSS_CHANGED_HE_BSS_COLOR;
 	}
@@ -1386,6 +1393,10 @@ static int ieee80211_start_ap(struct wiphy *wiphy, struct net_device *dev,
 		if (err)
 			return err;
 	}
+=======
+	prev_beacon_int = sdata->vif.bss_conf.beacon_int;
+	sdata->vif.bss_conf.beacon_int = params->beacon_interval;
+>>>>>>> master
 
 	mutex_lock(&local->mtx);
 	err = ieee80211_link_use_channel(link, &params->chandef,
@@ -1394,7 +1405,11 @@ static int ieee80211_start_ap(struct wiphy *wiphy, struct net_device *dev,
 		ieee80211_link_copy_chanctx_to_vlans(link, false);
 	mutex_unlock(&local->mtx);
 	if (err) {
+<<<<<<< HEAD
 		link_conf->beacon_int = prev_beacon_int;
+=======
+		sdata->vif.bss_conf.beacon_int = prev_beacon_int;
+>>>>>>> master
 		return err;
 	}
 
@@ -2060,6 +2075,7 @@ static int ieee80211_add_station(struct wiphy *wiphy, struct net_device *dev,
 	    !sdata->u.mgd.associated)
 		return -EINVAL;
 
+<<<<<<< HEAD
 	/*
 	 * If we have a link ID, it can be a non-MLO station on an AP MLD,
 	 * but we need to have a link_mac in that case as well, so use the
@@ -2073,6 +2089,9 @@ static int ieee80211_add_station(struct wiphy *wiphy, struct net_device *dev,
 	else
 		sta = sta_info_alloc(sdata, mac, GFP_KERNEL);
 
+=======
+	sta = sta_info_alloc(sdata, mac, GFP_KERNEL);
+>>>>>>> master
 	if (!sta)
 		return -ENOMEM;
 

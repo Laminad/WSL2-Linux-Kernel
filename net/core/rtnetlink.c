@@ -4038,7 +4038,11 @@ struct sk_buff *rtmsg_ifinfo_build_skb(int type, struct net_device *dev,
 		portid = 0;
 
 	err = rtnl_fill_ifinfo(skb, dev, dev_net(dev),
+<<<<<<< HEAD
 			       type, portid, seq, change, 0, 0, event,
+=======
+			       type, 0, 0, change, 0, 0, event,
+>>>>>>> master
 			       new_nsid, new_ifindex, -1, flags);
 	if (err < 0) {
 		/* -EMSGSIZE implies BUG in if_nlmsg_size() */
@@ -4257,7 +4261,11 @@ static int rtnl_fdb_add(struct sk_buff *skb, struct nlmsghdr *nlh,
 	}
 
 	if (dev->type != ARPHRD_ETHER) {
+<<<<<<< HEAD
 		NL_SET_ERR_MSG(extack, "FDB add only supported for Ethernet devices");
+=======
+		NL_SET_ERR_MSG(extack, "FDB delete only supported for Ethernet devices");
+>>>>>>> master
 		return -EINVAL;
 	}
 
@@ -4385,9 +4393,17 @@ static int rtnl_fdb_del(struct sk_buff *skb, struct nlmsghdr *nlh,
 	}
 
 	if (dev->type != ARPHRD_ETHER) {
+<<<<<<< HEAD
 		NL_SET_ERR_MSG(extack, "FDB delete only supported for Ethernet devices");
 		return -EINVAL;
 	}
+=======
+		NL_SET_ERR_MSG(extack, "FDB add only supported for Ethernet devices");
+		return -EINVAL;
+	}
+
+	addr = nla_data(tb[NDA_LLADDR]);
+>>>>>>> master
 
 	err = fdb_vid_parse(tb[NDA_VLAN], &vid, extack);
 	if (err)

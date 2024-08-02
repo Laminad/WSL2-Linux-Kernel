@@ -251,6 +251,11 @@ static int pwm_backlight_parse_dt(struct device *dev,
 			     &data->post_pwm_on_delay);
 	of_property_read_u32(node, "pwm-off-delay-ms", &data->pwm_off_delay);
 
+<<<<<<< HEAD
+=======
+	data->enable_gpio = -EINVAL;
+
+>>>>>>> master
 	/*
 	 * Determine the number of brightness levels, if this property is not
 	 * set a default table of brightness levels will be used.
@@ -445,7 +450,24 @@ static int pwm_backlight_initial_power_state(const struct pwm_bl_data *pb)
 	 * assume that another driver will enable the backlight at the
 	 * appropriate time. Therefore, if it is disabled, keep it so.
 	 */
+<<<<<<< HEAD
 	return active ? FB_BLANK_UNBLANK: FB_BLANK_POWERDOWN;
+=======
+
+	/* if the enable GPIO is disabled, do not enable the backlight */
+	if (pb->enable_gpio && gpiod_get_value_cansleep(pb->enable_gpio) == 0)
+		return FB_BLANK_POWERDOWN;
+
+	/* The regulator is disabled, do not enable the backlight */
+	if (!regulator_is_enabled(pb->power_supply))
+		return FB_BLANK_POWERDOWN;
+
+	/* The PWM is disabled, keep it like this */
+	if (!pwm_is_enabled(pb->pwm))
+		return FB_BLANK_POWERDOWN;
+
+	return FB_BLANK_UNBLANK;
+>>>>>>> master
 }
 
 static int pwm_backlight_probe(struct platform_device *pdev)

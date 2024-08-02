@@ -185,14 +185,35 @@ static int serial_8250_men_mcb_probe(struct mcb_device *mdev,
 	struct uart_8250_port uart;
 	struct serial_8250_men_mcb_data *data;
 	struct resource *mem;
+<<<<<<< HEAD
 	int i;
 	int res;
+=======
+	int num_ports;
+	int i;
+	void __iomem *membase;
+>>>>>>> master
 
 	mem = mcb_get_resource(mdev, IORESOURCE_MEM);
 	if (mem == NULL)
 		return -ENXIO;
 
+<<<<<<< HEAD
 	data = devm_kzalloc(&mdev->dev,
+=======
+	num_ports = get_num_ports(mdev, membase);
+
+	dev_dbg(&mdev->dev, "found a 16z%03u with %u ports\n",
+		mdev->id, num_ports);
+
+	if (num_ports <= 0 || num_ports > 4) {
+		dev_err(&mdev->dev, "unexpected number of ports: %u\n",
+			num_ports);
+		return -ENODEV;
+	}
+
+	data = devm_kcalloc(&mdev->dev, num_ports,
+>>>>>>> master
 			    sizeof(struct serial_8250_men_mcb_data),
 			    GFP_KERNEL);
 	if (!data)
@@ -237,7 +258,11 @@ static int serial_8250_men_mcb_probe(struct mcb_device *mdev,
 
 static void serial_8250_men_mcb_remove(struct mcb_device *mdev)
 {
+<<<<<<< HEAD
 	int i;
+=======
+	int num_ports, i;
+>>>>>>> master
 	struct serial_8250_men_mcb_data *data = mcb_get_drvdata(mdev);
 
 	if (!data)

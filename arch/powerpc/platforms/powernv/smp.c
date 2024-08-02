@@ -150,6 +150,7 @@ static int pnv_smp_cpu_disable(void)
 }
 
 static void pnv_flush_interrupts(void)
+<<<<<<< HEAD
 {
 	if (cpu_has_feature(CPU_FTR_ARCH_300)) {
 		if (xive_enabled())
@@ -163,6 +164,21 @@ static void pnv_flush_interrupts(void)
 
 static void pnv_cpu_offline_self(void)
 {
+=======
+{
+	if (cpu_has_feature(CPU_FTR_ARCH_300)) {
+		if (xive_enabled())
+			xive_flush_interrupt();
+		else
+			icp_opal_flush_interrupt();
+	} else {
+		icp_native_flush_interrupt();
+	}
+}
+
+static void pnv_smp_cpu_kill_self(void)
+{
+>>>>>>> master
 	unsigned long srr1, unexpected_mask, wmask;
 	unsigned int cpu;
 	u64 lpcr_val;

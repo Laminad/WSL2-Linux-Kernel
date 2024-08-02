@@ -225,6 +225,7 @@ static enum rq_end_io_ret flush_end_io(struct request *flush_rq,
 	/* release the tag's ownership to the req cloned from */
 	spin_lock_irqsave(&fq->mq_flush_lock, flags);
 
+<<<<<<< HEAD
 	if (!req_ref_put_and_test(flush_rq)) {
 		fq->rq_status = error;
 		spin_unlock_irqrestore(&fq->mq_flush_lock, flags);
@@ -248,6 +249,28 @@ static enum rq_end_io_ret flush_end_io(struct request *flush_rq,
 	} else {
 		blk_mq_put_driver_tag(flush_rq);
 		flush_rq->internal_tag = BLK_MQ_NO_TAG;
+=======
+		/* release the tag's ownership to the req cloned from */
+		spin_lock_irqsave(&fq->mq_flush_lock, flags);
+
+		if (!refcount_dec_and_test(&flush_rq->ref)) {
+			fq->rq_status = error;
+			spin_unlock_irqrestore(&fq->mq_flush_lock, flags);
+			return;
+		}
+
+		if (fq->rq_status != BLK_STS_OK)
+			error = fq->rq_status;
+
+		hctx = blk_mq_map_queue(q, flush_rq->mq_ctx->cpu);
+		if (!q->elevator) {
+			blk_mq_tag_set_rq(hctx, flush_rq->tag, fq->orig_rq);
+			flush_rq->tag = -1;
+		} else {
+			blk_mq_put_driver_tag_hctx(hctx, flush_rq);
+			flush_rq->internal_tag = -1;
+		}
+>>>>>>> master
 	}
 
 	running = &fq->flush_queue[fq->flush_running_idx];
@@ -385,7 +408,10 @@ static enum rq_end_io_ret mq_flush_data_end_io(struct request *rq,
 	spin_unlock_irqrestore(&fq->mq_flush_lock, flags);
 
 	blk_mq_sched_restart(hctx);
+<<<<<<< HEAD
 	return RQ_END_IO_NONE;
+=======
+>>>>>>> master
 }
 
 static void blk_rq_init_flush(struct request *rq)
@@ -483,8 +509,13 @@ int blkdev_issue_flush(struct block_device *bdev)
 }
 EXPORT_SYMBOL(blkdev_issue_flush);
 
+<<<<<<< HEAD
 struct blk_flush_queue *blk_alloc_flush_queue(int node, int cmd_size,
 					      gfp_t flags)
+=======
+struct blk_flush_queue *blk_alloc_flush_queue(struct request_queue *q,
+		int node, int cmd_size, gfp_t flags)
+>>>>>>> master
 {
 	struct blk_flush_queue *fq;
 	int rq_sz = sizeof(struct request);

@@ -210,7 +210,11 @@ static inline long __trace_sched_switch_state(bool preempt,
 	 * it for left shift operation to get the correct task->state
 	 * mapping.
 	 */
+<<<<<<< HEAD
 	state = __task_state_index(prev_state, p->exit_state);
+=======
+	state = task_state_index(p);
+>>>>>>> master
 
 	return state ? (1 << (state - 1)) : state;
 }

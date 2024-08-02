@@ -133,6 +133,7 @@ static __always_inline int __put_user_fn(void *x, void __user *ptr, unsigned lon
 	return rc;
 }
 
+<<<<<<< HEAD
 int __noreturn __get_user_bad(void);
 
 #define __get_user_asm(to, from, size)					\
@@ -158,6 +159,8 @@ int __noreturn __get_user_bad(void);
 	__rc;								\
 })
 
+=======
+>>>>>>> master
 static __always_inline int __get_user_fn(void *x, const void __user *ptr, unsigned long size)
 {
 	int rc;

@@ -1580,20 +1580,29 @@ void pnfs_roc_release(struct nfs4_layoutreturn_args *args,
 
 	switch (ret) {
 	case -NFS4ERR_NOMATCHING_LAYOUT:
+<<<<<<< HEAD
 		spin_lock(&inode->i_lock);
 		if (pnfs_layout_is_valid(lo) &&
 		    nfs4_stateid_match_other(&args->stateid, &lo->plh_stateid))
 			pnfs_set_plh_return_info(lo, args->range.iomode, 0);
 		pnfs_clear_layoutreturn_waitbit(lo);
 		spin_unlock(&inode->i_lock);
+=======
+>>>>>>> master
 		break;
 	case 0:
 		if (res->lrs_present)
 			res_stateid = &res->stateid;
+<<<<<<< HEAD
 		fallthrough;
 	default:
 		pnfs_layoutreturn_free_lsegs(lo, &args->stateid, &args->range,
 					     res_stateid);
+=======
+		/* Fallthrough */
+	default:
+		arg_stateid = &args->stateid;
+>>>>>>> master
 	}
 	trace_nfs4_layoutreturn_on_close(args->inode, &args->stateid, ret);
 	if (ld_private && ld_private->ops && ld_private->ops->free)
@@ -2033,8 +2042,13 @@ lookup_again:
 	if (test_bit(NFS_LAYOUT_DRAIN, &lo->plh_flags) &&
 	    atomic_read(&lo->plh_outstanding) != 0) {
 		spin_unlock(&ino->i_lock);
+<<<<<<< HEAD
 		lseg = ERR_PTR(wait_on_bit(&lo->plh_flags, NFS_LAYOUT_DRAIN,
 					   TASK_KILLABLE));
+=======
+		lseg = ERR_PTR(wait_var_event_killable(&lo->plh_outstanding,
+					!atomic_read(&lo->plh_outstanding)));
+>>>>>>> master
 		if (IS_ERR(lseg))
 			goto out_put_layout_hdr;
 		pnfs_put_layout_hdr(lo);

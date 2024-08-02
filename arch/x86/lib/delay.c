@@ -160,7 +160,25 @@ static void delay_halt(u64 __cycles)
 	start = rdtsc_ordered();
 
 	for (;;) {
+<<<<<<< HEAD
 		delay_halt_fn(start, cycles);
+=======
+		delay = min_t(u64, MWAITX_MAX_LOOPS, loops);
+
+		/*
+		 * Use cpu_tss_rw as a cacheline-aligned, seldomly
+		 * accessed per-cpu variable as the monitor target.
+		 */
+		__monitorx(raw_cpu_ptr(&cpu_tss_rw), 0, 0);
+
+		/*
+		 * AMD, like Intel's MWAIT version, supports the EAX hint and
+		 * EAX=0xf0 means, do not enter any deep C-state and we use it
+		 * here in delay() to minimize wakeup latency.
+		 */
+		__mwaitx(MWAITX_DISABLE_CSTATES, delay, MWAITX_ECX_TIMER_ENABLE);
+
+>>>>>>> master
 		end = rdtsc_ordered();
 
 		if (cycles <= end - start)

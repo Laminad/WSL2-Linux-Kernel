@@ -169,6 +169,7 @@ static void kgdboc_unregister_kbd(void)
 #define kgdboc_restore_input()
 #endif /* ! CONFIG_KDB_KEYBOARD */
 
+<<<<<<< HEAD
 #if IS_BUILTIN(CONFIG_KGDB_SERIAL_CONSOLE)
 static void cleanup_earlycon(void)
 {
@@ -179,6 +180,8 @@ static void cleanup_earlycon(void)
 static inline void cleanup_earlycon(void) { }
 #endif /* !IS_BUILTIN(CONFIG_KGDB_SERIAL_CONSOLE) */
 
+=======
+>>>>>>> master
 static void cleanup_kgdboc(void)
 {
 	cleanup_earlycon();
@@ -206,7 +209,11 @@ static int configure_kgdboc(void)
 		goto noconfig;
 	}
 
+<<<<<<< HEAD
 	kgdboc_io_ops.cons = NULL;
+=======
+	kgdboc_io_ops.is_console = 0;
+>>>>>>> master
 	kgdb_tty_driver = NULL;
 
 	kgdboc_use_kms = 0;
@@ -357,7 +364,10 @@ static int param_set_kgdboc_var(const char *kmessage,
 				const struct kernel_param *kp)
 {
 	size_t len = strlen(kmessage);
+<<<<<<< HEAD
 	int ret = 0;
+=======
+>>>>>>> master
 
 	if (len >= MAX_CONFIG_LEN) {
 		pr_err("config string too long\n");
@@ -438,21 +448,37 @@ static struct kgdb_io kgdboc_io_ops = {
 	.post_exception		= kgdboc_post_exp_handler,
 };
 
+<<<<<<< HEAD
 #if IS_BUILTIN(CONFIG_KGDB_SERIAL_CONSOLE)
+=======
+#ifdef CONFIG_KGDB_SERIAL_CONSOLE
+>>>>>>> master
 static int kgdboc_option_setup(char *opt)
 {
 	if (!opt) {
 		pr_err("config string not provided\n");
+<<<<<<< HEAD
 		return 1;
+=======
+		return -EINVAL;
+>>>>>>> master
 	}
 
 	if (strlen(opt) >= MAX_CONFIG_LEN) {
 		pr_err("config string too long\n");
+<<<<<<< HEAD
 		return 1;
 	}
 	strcpy(config, opt);
 
 	return 1;
+=======
+		return -ENOSPC;
+	}
+	strcpy(config, opt);
+
+	return 0;
+>>>>>>> master
 }
 
 __setup("kgdboc=", kgdboc_option_setup);

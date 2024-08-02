@@ -321,6 +321,154 @@ static void reload_early_microcode(unsigned int cpu)
 	}
 }
 
+<<<<<<< HEAD
+=======
+static void collect_cpu_info_local(void *arg)
+{
+	struct cpu_info_ctx *ctx = arg;
+
+	ctx->err = microcode_ops->collect_cpu_info(smp_processor_id(),
+						   ctx->cpu_sig);
+}
+
+static int collect_cpu_info_on_target(int cpu, struct cpu_signature *cpu_sig)
+{
+	struct cpu_info_ctx ctx = { .cpu_sig = cpu_sig, .err = 0 };
+	int ret;
+
+	ret = smp_call_function_single(cpu, collect_cpu_info_local, &ctx, 1);
+	if (!ret)
+		ret = ctx.err;
+
+	return ret;
+}
+
+static int collect_cpu_info(int cpu)
+{
+	struct ucode_cpu_info *uci = ucode_cpu_info + cpu;
+	int ret;
+
+	memset(uci, 0, sizeof(*uci));
+
+	ret = collect_cpu_info_on_target(cpu, &uci->cpu_sig);
+	if (!ret)
+		uci->valid = 1;
+
+	return ret;
+}
+
+static void apply_microcode_local(void *arg)
+{
+	enum ucode_state *err = arg;
+
+	*err = microcode_ops->apply_microcode(smp_processor_id());
+}
+
+static int apply_microcode_on_target(int cpu)
+{
+	enum ucode_state err;
+	int ret;
+
+	ret = smp_call_function_single(cpu, apply_microcode_local, &err, 1);
+	if (!ret) {
+		if (err == UCODE_ERROR)
+			ret = 1;
+	}
+	return ret;
+}
+
+#ifdef CONFIG_MICROCODE_OLD_INTERFACE
+static int do_microcode_update(const void __user *buf, size_t size)
+{
+	int error = 0;
+	int cpu;
+
+	for_each_online_cpu(cpu) {
+		struct ucode_cpu_info *uci = ucode_cpu_info + cpu;
+		enum ucode_state ustate;
+
+		if (!uci->valid)
+			continue;
+
+		ustate = microcode_ops->request_microcode_user(cpu, buf, size);
+		if (ustate == UCODE_ERROR) {
+			error = -1;
+			break;
+		} else if (ustate == UCODE_NEW) {
+			apply_microcode_on_target(cpu);
+		}
+	}
+
+	return error;
+}
+
+static int microcode_open(struct inode *inode, struct file *file)
+{
+	return capable(CAP_SYS_RAWIO) ? nonseekable_open(inode, file) : -EPERM;
+}
+
+static ssize_t microcode_write(struct file *file, const char __user *buf,
+			       size_t len, loff_t *ppos)
+{
+	ssize_t ret = -EINVAL;
+
+	if ((len >> PAGE_SHIFT) > totalram_pages) {
+		pr_err("too much data (max %ld pages)\n", totalram_pages);
+		return ret;
+	}
+
+	get_online_cpus();
+	mutex_lock(&microcode_mutex);
+
+	if (do_microcode_update(buf, len) == 0)
+		ret = (ssize_t)len;
+
+	if (ret > 0)
+		perf_check_microcode();
+
+	mutex_unlock(&microcode_mutex);
+	put_online_cpus();
+
+	return ret;
+}
+
+static const struct file_operations microcode_fops = {
+	.owner			= THIS_MODULE,
+	.write			= microcode_write,
+	.open			= microcode_open,
+	.llseek		= no_llseek,
+};
+
+static struct miscdevice microcode_dev = {
+	.minor			= MICROCODE_MINOR,
+	.name			= "microcode",
+	.nodename		= "cpu/microcode",
+	.fops			= &microcode_fops,
+};
+
+static int __init microcode_dev_init(void)
+{
+	int error;
+
+	error = misc_register(&microcode_dev);
+	if (error) {
+		pr_err("can't misc_register on minor=%d\n", MICROCODE_MINOR);
+		return error;
+	}
+
+	return 0;
+}
+
+static void __exit microcode_dev_exit(void)
+{
+	misc_deregister(&microcode_dev);
+}
+#else
+#define microcode_dev_init()	0
+#define microcode_dev_exit()	do { } while (0)
+#endif
+
+>>>>>>> master
 /* fake device for request_firmware */
 static struct platform_device	*microcode_pdev;
 
@@ -571,6 +719,7 @@ static struct syscore_ops mc_syscore_ops = {
 };
 
 static int mc_cpu_starting(unsigned int cpu)
+<<<<<<< HEAD
 {
 	enum ucode_state err = microcode_ops->apply_microcode(cpu);
 
@@ -581,6 +730,16 @@ static int mc_cpu_starting(unsigned int cpu)
 
 static int mc_cpu_online(unsigned int cpu)
 {
+=======
+{
+	microcode_update_cpu(cpu);
+	pr_debug("CPU%d added\n", cpu);
+	return 0;
+}
+
+static int mc_cpu_online(unsigned int cpu)
+{
+>>>>>>> master
 	struct device *dev = get_cpu_device(cpu);
 
 	if (sysfs_create_group(&dev->kobj, &mc_attr_group))

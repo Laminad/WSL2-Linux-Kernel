@@ -181,6 +181,10 @@ struct poll_iocb {
 	struct file		*file;
 	struct wait_queue_head	*head;
 	__poll_t		events;
+<<<<<<< HEAD
+=======
+	bool			done;
+>>>>>>> master
 	bool			cancelled;
 	bool			work_scheduled;
 	bool			work_need_resched;
@@ -1066,11 +1070,14 @@ static inline struct aio_kiocb *aio_get_req(struct kioctx *ctx)
 	if (unlikely(!req))
 		return NULL;
 
+<<<<<<< HEAD
 	if (unlikely(!get_reqs_available(ctx))) {
 		kmem_cache_free(kiocb_cachep, req);
 		return NULL;
 	}
 
+=======
+>>>>>>> master
 	percpu_ref_get(&ctx->reqs);
 	req->ki_ctx = ctx;
 	INIT_LIST_HEAD(&req->ki_list);
@@ -1109,8 +1116,11 @@ out:
 
 static inline void iocb_destroy(struct aio_kiocb *iocb)
 {
+<<<<<<< HEAD
 	if (iocb->ki_eventfd)
 		eventfd_ctx_put(iocb->ki_eventfd);
+=======
+>>>>>>> master
 	if (iocb->ki_filp)
 		fput(iocb->ki_filp);
 	percpu_ref_put(&iocb->ki_ctx->reqs);
@@ -1463,7 +1473,11 @@ static void aio_complete_rw(struct kiocb *kiocb, long res)
 	}
 
 	iocb->ki_res.res = res;
+<<<<<<< HEAD
 	iocb->ki_res.res2 = 0;
+=======
+	iocb->ki_res.res2 = res2;
+>>>>>>> master
 	iocb_put(iocb);
 }
 
@@ -1501,9 +1515,14 @@ static int aio_prep_rw(struct kiocb *req, const struct iocb *iocb)
 	return 0;
 }
 
+<<<<<<< HEAD
 static ssize_t aio_setup_rw(int rw, const struct iocb *iocb,
 		struct iovec **iovec, bool vectored, bool compat,
 		struct iov_iter *iter)
+=======
+static int aio_setup_rw(int rw, const struct iocb *iocb, struct iovec **iovec,
+		bool vectored, bool compat, struct iov_iter *iter)
+>>>>>>> master
 {
 	void __user *buf = (void __user *)(uintptr_t)iocb->aio_buf;
 	size_t len = iocb->aio_nbytes;
@@ -1533,11 +1552,19 @@ static inline void aio_rw_done(struct kiocb *req, ssize_t ret)
 		ret = -EINTR;
 		fallthrough;
 	default:
+<<<<<<< HEAD
 		req->ki_complete(req, ret);
 	}
 }
 
 static int aio_read(struct kiocb *req, const struct iocb *iocb,
+=======
+		req->ki_complete(req, ret, 0);
+	}
+}
+
+static ssize_t aio_read(struct kiocb *req, const struct iocb *iocb,
+>>>>>>> master
 			bool vectored, bool compat)
 {
 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
@@ -1551,11 +1578,20 @@ static int aio_read(struct kiocb *req, const struct iocb *iocb,
 	file = req->ki_filp;
 	if (unlikely(!(file->f_mode & FMODE_READ)))
 		return -EBADF;
+<<<<<<< HEAD
 	if (unlikely(!file->f_op->read_iter))
 		return -EINVAL;
 
 	ret = aio_setup_rw(ITER_DEST, iocb, &iovec, vectored, compat, &iter);
 	if (ret < 0)
+=======
+	ret = -EINVAL;
+	if (unlikely(!file->f_op->read_iter))
+		return -EINVAL;
+
+	ret = aio_setup_rw(READ, iocb, &iovec, vectored, compat, &iter);
+	if (ret)
+>>>>>>> master
 		return ret;
 	ret = rw_verify_area(READ, file, &req->ki_pos, iov_iter_count(&iter));
 	if (!ret)
@@ -1564,7 +1600,11 @@ static int aio_read(struct kiocb *req, const struct iocb *iocb,
 	return ret;
 }
 
+<<<<<<< HEAD
 static int aio_write(struct kiocb *req, const struct iocb *iocb,
+=======
+static ssize_t aio_write(struct kiocb *req, const struct iocb *iocb,
+>>>>>>> master
 			 bool vectored, bool compat)
 {
 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
@@ -1582,8 +1622,13 @@ static int aio_write(struct kiocb *req, const struct iocb *iocb,
 	if (unlikely(!file->f_op->write_iter))
 		return -EINVAL;
 
+<<<<<<< HEAD
 	ret = aio_setup_rw(ITER_SOURCE, iocb, &iovec, vectored, compat, &iter);
 	if (ret < 0)
+=======
+	ret = aio_setup_rw(WRITE, iocb, &iovec, vectored, compat, &iter);
+	if (ret)
+>>>>>>> master
 		return ret;
 	ret = rw_verify_area(WRITE, file, &req->ki_pos, iov_iter_count(&iter));
 	if (!ret) {
@@ -1599,11 +1644,16 @@ static int aio_write(struct kiocb *req, const struct iocb *iocb,
 static void aio_fsync_work(struct work_struct *work)
 {
 	struct aio_kiocb *iocb = container_of(work, struct aio_kiocb, fsync.work);
+<<<<<<< HEAD
 	const struct cred *old_cred = override_creds(iocb->fsync.creds);
 
 	iocb->ki_res.res = vfs_fsync(iocb->fsync.file, iocb->fsync.datasync);
 	revert_creds(old_cred);
 	put_cred(iocb->fsync.creds);
+=======
+
+	iocb->ki_res.res = vfs_fsync(iocb->fsync.file, iocb->fsync.datasync);
+>>>>>>> master
 	iocb_put(iocb);
 }
 
@@ -1616,10 +1666,13 @@ static int aio_fsync(struct fsync_iocb *req, const struct iocb *iocb,
 
 	if (unlikely(!req->file->f_op->fsync))
 		return -EINVAL;
+<<<<<<< HEAD
 
 	req->creds = prepare_creds();
 	if (!req->creds)
 		return -ENOMEM;
+=======
+>>>>>>> master
 
 	req->datasync = datasync;
 	INIT_WORK(&req->work, aio_fsync_work);
@@ -1627,6 +1680,7 @@ static int aio_fsync(struct fsync_iocb *req, const struct iocb *iocb,
 	return 0;
 }
 
+<<<<<<< HEAD
 static void aio_poll_put_work(struct work_struct *work)
 {
 	struct poll_iocb *req = container_of(work, struct poll_iocb, work);
@@ -1680,6 +1734,8 @@ static void poll_iocb_unlock_wq(struct poll_iocb *req)
 	rcu_read_unlock();
 }
 
+=======
+>>>>>>> master
 static void aio_poll_complete_work(struct work_struct *work)
 {
 	struct poll_iocb *req = container_of(work, struct poll_iocb, work);
@@ -1720,6 +1776,10 @@ static void aio_poll_complete_work(struct work_struct *work)
 	} /* else, POLLFREE has freed the waitqueue, so we must complete */
 	list_del_init(&iocb->ki_list);
 	iocb->ki_res.res = mangle_poll(mask);
+<<<<<<< HEAD
+=======
+	req->done = true;
+>>>>>>> master
 	spin_unlock_irq(&ctx->ctx_lock);
 
 	iocb_put(iocb);
@@ -1755,6 +1815,7 @@ static int aio_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
 	if (mask && !(mask & req->events))
 		return 0;
 
+<<<<<<< HEAD
 	/*
 	 * Complete the request inline if possible.  This requires that three
 	 * conditions be met:
@@ -1821,6 +1882,24 @@ static int aio_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
 			 */
 			smp_store_release(&req->head, NULL);
 		}
+=======
+	list_del_init(&req->wait.entry);
+
+	if (mask && spin_trylock_irqsave(&iocb->ki_ctx->ctx_lock, flags)) {
+		/*
+		 * Try to complete the iocb inline if we can. Use
+		 * irqsave/irqrestore because not all filesystems (e.g. fuse)
+		 * call this function with IRQs disabled and because IRQs
+		 * have to be disabled before ctx_lock is obtained.
+		 */
+		list_del(&iocb->ki_list);
+		iocb->ki_res.res = mangle_poll(mask);
+		req->done = true;
+		spin_unlock_irqrestore(&iocb->ki_ctx->ctx_lock, flags);
+		iocb_put(iocb);
+	} else {
+		schedule_work(&req->work);
+>>>>>>> master
 	}
 	return 1;
 }
@@ -1850,7 +1929,11 @@ aio_poll_queue_proc(struct file *file, struct wait_queue_head *head,
 	add_wait_queue(head, &pt->iocb->poll.wait);
 }
 
+<<<<<<< HEAD
 static int aio_poll(struct aio_kiocb *aiocb, const struct iocb *iocb)
+=======
+static ssize_t aio_poll(struct aio_kiocb *aiocb, const struct iocb *iocb)
+>>>>>>> master
 {
 	struct kioctx *ctx = aiocb->ki_ctx;
 	struct poll_iocb *req = &aiocb->poll;
@@ -1869,9 +1952,14 @@ static int aio_poll(struct aio_kiocb *aiocb, const struct iocb *iocb)
 	req->events = demangle_poll(iocb->aio_buf) | EPOLLERR | EPOLLHUP;
 
 	req->head = NULL;
+<<<<<<< HEAD
 	req->cancelled = false;
 	req->work_scheduled = false;
 	req->work_need_resched = false;
+=======
+	req->done = false;
+	req->cancelled = false;
+>>>>>>> master
 
 	apt.pt._qproc = aio_poll_queue_proc;
 	apt.pt._key = req->events;
@@ -1885,6 +1973,7 @@ static int aio_poll(struct aio_kiocb *aiocb, const struct iocb *iocb)
 
 	mask = vfs_poll(req->file, &apt.pt) & req->events;
 	spin_lock_irq(&ctx->ctx_lock);
+<<<<<<< HEAD
 	if (likely(apt.queued)) {
 		bool on_queue = poll_iocb_lock_wq(req);
 
@@ -1894,11 +1983,18 @@ static int aio_poll(struct aio_kiocb *aiocb, const struct iocb *iocb)
 			 * completion work, or completed the request inline.
 			 */
 			if (apt.error) /* unsupported case: multiple queues */
+=======
+	if (likely(req->head)) {
+		spin_lock(&req->head->lock);
+		if (unlikely(list_empty(&req->wait.entry))) {
+			if (apt.error)
+>>>>>>> master
 				cancel = true;
 			apt.error = 0;
 			mask = 0;
 		}
 		if (mask || apt.error) {
+<<<<<<< HEAD
 			/* Steal to complete synchronously. */
 			list_del_init(&req->wait.entry);
 		} else if (cancel) {
@@ -1914,6 +2010,16 @@ static int aio_poll(struct aio_kiocb *aiocb, const struct iocb *iocb)
 		}
 		if (on_queue)
 			poll_iocb_unlock_wq(req);
+=======
+			list_del_init(&req->wait.entry);
+		} else if (cancel) {
+			WRITE_ONCE(req->cancelled, true);
+		} else if (!req->done) { /* actually waiting for an event */
+			list_add_tail(&aiocb->ki_list, &ctx->active_reqs);
+			aiocb->ki_cancel = aio_poll_cancel;
+		}
+		spin_unlock(&req->head->lock);
+>>>>>>> master
 	}
 	if (mask) { /* no async, we'd stolen it */
 		aiocb->ki_res.res = mangle_poll(mask);
@@ -1923,6 +2029,7 @@ static int aio_poll(struct aio_kiocb *aiocb, const struct iocb *iocb)
 	if (mask)
 		iocb_put(aiocb);
 	return apt.error;
+<<<<<<< HEAD
 }
 
 static int __io_submit_one(struct kioctx *ctx, const struct iocb *iocb,
@@ -1977,39 +2084,110 @@ static int __io_submit_one(struct kioctx *ctx, const struct iocb *iocb,
 		pr_debug("invalid aio operation %d\n", iocb->aio_lio_opcode);
 		return -EINVAL;
 	}
+=======
+>>>>>>> master
 }
 
-static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
-			 bool compat)
+static int __io_submit_one(struct kioctx *ctx, const struct iocb *iocb,
+			   struct iocb __user *user_iocb, bool compat)
 {
 	struct aio_kiocb *req;
+<<<<<<< HEAD
 	struct iocb iocb;
 	int err;
-
-	if (unlikely(copy_from_user(&iocb, user_iocb, sizeof(iocb))))
-		return -EFAULT;
+=======
+	ssize_t ret;
+>>>>>>> master
 
 	/* enforce forwards compatibility on users */
-	if (unlikely(iocb.aio_reserved2)) {
+	if (unlikely(iocb->aio_reserved2)) {
 		pr_debug("EINVAL: reserve field set\n");
 		return -EINVAL;
 	}
 
 	/* prevent overflows */
 	if (unlikely(
-	    (iocb.aio_buf != (unsigned long)iocb.aio_buf) ||
-	    (iocb.aio_nbytes != (size_t)iocb.aio_nbytes) ||
-	    ((ssize_t)iocb.aio_nbytes < 0)
+	    (iocb->aio_buf != (unsigned long)iocb->aio_buf) ||
+	    (iocb->aio_nbytes != (size_t)iocb->aio_nbytes) ||
+	    ((ssize_t)iocb->aio_nbytes < 0)
 	   )) {
 		pr_debug("EINVAL: overflow check\n");
 		return -EINVAL;
 	}
 
-	req = aio_get_req(ctx);
-	if (unlikely(!req))
+	if (!get_reqs_available(ctx))
 		return -EAGAIN;
 
+<<<<<<< HEAD
 	err = __io_submit_one(ctx, &iocb, user_iocb, req, compat);
+
+	/* Done with the synchronous reference */
+	iocb_put(req);
+=======
+	ret = -EAGAIN;
+	req = aio_get_req(ctx);
+	if (unlikely(!req))
+		goto out_put_reqs_available;
+
+	req->ki_filp = fget(iocb->aio_fildes);
+	ret = -EBADF;
+	if (unlikely(!req->ki_filp))
+		goto out_put_req;
+
+	if (iocb->aio_flags & IOCB_FLAG_RESFD) {
+		/*
+		 * If the IOCB_FLAG_RESFD flag of aio_flags is set, get an
+		 * instance of the file* now. The file descriptor must be
+		 * an eventfd() fd, and will be signaled for each completed
+		 * event using the eventfd_signal() function.
+		 */
+		req->ki_eventfd = eventfd_ctx_fdget((int) iocb->aio_resfd);
+		if (IS_ERR(req->ki_eventfd)) {
+			ret = PTR_ERR(req->ki_eventfd);
+			req->ki_eventfd = NULL;
+			goto out_put_req;
+		}
+	}
+
+	ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
+	if (unlikely(ret)) {
+		pr_debug("EFAULT: aio_key\n");
+		goto out_put_req;
+	}
+
+	req->ki_res.obj = (u64)(unsigned long)user_iocb;
+	req->ki_res.data = iocb->aio_data;
+	req->ki_res.res = 0;
+	req->ki_res.res2 = 0;
+
+	switch (iocb->aio_lio_opcode) {
+	case IOCB_CMD_PREAD:
+		ret = aio_read(&req->rw, iocb, false, compat);
+		break;
+	case IOCB_CMD_PWRITE:
+		ret = aio_write(&req->rw, iocb, false, compat);
+		break;
+	case IOCB_CMD_PREADV:
+		ret = aio_read(&req->rw, iocb, true, compat);
+		break;
+	case IOCB_CMD_PWRITEV:
+		ret = aio_write(&req->rw, iocb, true, compat);
+		break;
+	case IOCB_CMD_FSYNC:
+		ret = aio_fsync(&req->fsync, iocb, false);
+		break;
+	case IOCB_CMD_FDSYNC:
+		ret = aio_fsync(&req->fsync, iocb, true);
+		break;
+	case IOCB_CMD_POLL:
+		ret = aio_poll(req, iocb);
+		break;
+	default:
+		pr_debug("invalid aio operation %d\n", iocb->aio_lio_opcode);
+		ret = -EINVAL;
+		break;
+	}
+>>>>>>> master
 
 	/* Done with the synchronous reference */
 	iocb_put(req);
@@ -2019,11 +2197,35 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 	 * arranged for that to be done asynchronously.  Anything non-zero
 	 * means that we need to destroy req ourselves.
 	 */
+<<<<<<< HEAD
 	if (unlikely(err)) {
 		iocb_destroy(req);
 		put_reqs_available(ctx, 1);
 	}
 	return err;
+=======
+	if (!ret)
+		return 0;
+
+out_put_req:
+	if (req->ki_eventfd)
+		eventfd_ctx_put(req->ki_eventfd);
+	iocb_destroy(req);
+out_put_reqs_available:
+	put_reqs_available(ctx, 1);
+	return ret;
+>>>>>>> master
+}
+
+static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+			 bool compat)
+{
+	struct iocb iocb;
+
+	if (unlikely(copy_from_user(&iocb, user_iocb, sizeof(iocb))))
+		return -EFAULT;
+
+	return __io_submit_one(ctx, &iocb, user_iocb, compat);
 }
 
 /* sys_io_submit:

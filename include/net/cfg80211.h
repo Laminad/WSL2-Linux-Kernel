@@ -9040,6 +9040,7 @@ int cfg80211_external_auth_request(struct net_device *netdev,
 				   gfp_t gfp);
 
 /**
+<<<<<<< HEAD
  * cfg80211_pmsr_report - report peer measurement result data
  * @wdev: the wireless device reporting the measurement
  * @req: the original measurement request
@@ -9065,6 +9066,8 @@ void cfg80211_pmsr_complete(struct wireless_dev *wdev,
 			    gfp_t gfp);
 
 /**
+=======
+>>>>>>> master
  * cfg80211_iftype_allowed - check whether the interface can be allowed
  * @wiphy: the wiphy
  * @iftype: interface type
@@ -9079,6 +9082,7 @@ bool cfg80211_iftype_allowed(struct wiphy *wiphy, enum nl80211_iftype iftype,
 			     bool is_4addr, u8 check_swif);
 
 
+<<<<<<< HEAD
 /**
  * cfg80211_assoc_comeback - notification of association that was
  * temporarly rejected with a comeback
@@ -9091,6 +9095,8 @@ bool cfg80211_iftype_allowed(struct wiphy *wiphy, enum nl80211_iftype iftype,
 void cfg80211_assoc_comeback(struct net_device *netdev,
 			     const u8 *ap_addr, u32 timeout);
 
+=======
+>>>>>>> master
 /* Logging, debugging and troubleshooting/diagnostic helpers. */
 
 /* wiphy_printk helpers, similar to dev_printk */

@@ -20,6 +20,7 @@ extern void __fstate_restore(struct task_struct *restore_from);
 
 static inline void __fstate_clean(struct pt_regs *regs)
 {
+<<<<<<< HEAD
 	regs->status = (regs->status & ~SR_FS) | SR_FS_CLEAN;
 }
 
@@ -27,6 +28,9 @@ static inline void fstate_off(struct task_struct *task,
 			      struct pt_regs *regs)
 {
 	regs->status = (regs->status & ~SR_FS) | SR_FS_OFF;
+=======
+	regs->sstatus = (regs->sstatus & ~SR_FS) | SR_FS_CLEAN;
+>>>>>>> master
 }
 
 static inline void fstate_save(struct task_struct *task,

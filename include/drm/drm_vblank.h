@@ -255,6 +255,7 @@ void drm_calc_timestamping_constants(struct drm_crtc *crtc,
 wait_queue_head_t *drm_crtc_vblank_waitqueue(struct drm_crtc *crtc);
 void drm_crtc_set_max_vblank_count(struct drm_crtc *crtc,
 				   u32 max_vblank_count);
+<<<<<<< HEAD
 
 /*
  * Helpers for struct drm_crtc_funcs
@@ -278,4 +279,6 @@ bool drm_crtc_vblank_helper_get_vblank_timestamp(struct drm_crtc *crtc,
 						 ktime_t *vblank_time,
 						 bool in_vblank_irq);
 
+=======
+>>>>>>> master
 #endif

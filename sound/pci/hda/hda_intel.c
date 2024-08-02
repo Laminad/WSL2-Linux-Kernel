@@ -285,9 +285,17 @@ enum {
 
 #define AZX_DCAPS_INTEL_SKYLAKE \
 	(AZX_DCAPS_INTEL_PCH_BASE | AZX_DCAPS_PM_RUNTIME |\
+<<<<<<< HEAD
 	 AZX_DCAPS_SEPARATE_STREAM_TAG | AZX_DCAPS_I915_COMPONENT)
 
 #define AZX_DCAPS_INTEL_BROXTON		AZX_DCAPS_INTEL_SKYLAKE
+=======
+	 AZX_DCAPS_SYNC_WRITE |\
+	 AZX_DCAPS_SEPARATE_STREAM_TAG | AZX_DCAPS_I915_COMPONENT |\
+	 AZX_DCAPS_I915_POWERWELL)
+
+#define AZX_DCAPS_INTEL_BROXTON			AZX_DCAPS_INTEL_SKYLAKE
+>>>>>>> master
 
 /* quirks for ATI SB / AMD Hudson */
 #define AZX_DCAPS_PRESET_ATI_SB \
@@ -305,9 +313,14 @@ enum {
 
 /* quirks for AMD SB */
 #define AZX_DCAPS_PRESET_AMD_SB \
+<<<<<<< HEAD
 	(AZX_DCAPS_NO_TCSEL | AZX_DCAPS_AMD_WORKAROUND |\
 	 AZX_DCAPS_SNOOP_TYPE(ATI) | AZX_DCAPS_PM_RUNTIME |\
 	 AZX_DCAPS_RETRY_PROBE)
+=======
+	(AZX_DCAPS_NO_TCSEL | AZX_DCAPS_SYNC_WRITE | AZX_DCAPS_AMD_WORKAROUND |\
+	 AZX_DCAPS_SNOOP_TYPE(ATI) | AZX_DCAPS_PM_RUNTIME)
+>>>>>>> master
 
 /* quirks for Nvidia */
 #define AZX_DCAPS_PRESET_NVIDIA \
@@ -330,7 +343,20 @@ enum {
 #define needs_eld_notify_link(chip)	false
 #endif
 
+<<<<<<< HEAD
 static const char * const driver_short_names[] = {
+=======
+#define CONTROLLER_IN_GPU(pci) (((pci)->device == 0x0a0c) || \
+					((pci)->device == 0x0c0c) || \
+					((pci)->device == 0x0d0c) || \
+					((pci)->device == 0x160c))
+
+#define IS_BXT(pci) ((pci)->vendor == 0x8086 && (pci)->device == 0x5a98)
+#define IS_CFL(pci) ((pci)->vendor == 0x8086 && (pci)->device == 0xa348)
+#define IS_CNL(pci) ((pci)->vendor == 0x8086 && (pci)->device == 0x9dc8)
+
+static char *driver_short_names[] = {
+>>>>>>> master
 	[AZX_DRIVER_ICH] = "HDA Intel",
 	[AZX_DRIVER_PCH] = "HDA Intel PCH",
 	[AZX_DRIVER_SCH] = "HDA Intel MID",
@@ -353,6 +379,64 @@ static const char * const driver_short_names[] = {
 	[AZX_DRIVER_GENERIC] = "HD-Audio Generic",
 };
 
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_X86
+static void __mark_pages_wc(struct azx *chip, struct snd_dma_buffer *dmab, bool on)
+{
+	int pages;
+
+	if (azx_snoop(chip))
+		return;
+	if (!dmab || !dmab->area || !dmab->bytes)
+		return;
+
+#ifdef CONFIG_SND_DMA_SGBUF
+	if (dmab->dev.type == SNDRV_DMA_TYPE_DEV_SG) {
+		struct snd_sg_buf *sgbuf = dmab->private_data;
+		if (!chip->uc_buffer)
+			return; /* deal with only CORB/RIRB buffers */
+		if (on)
+			set_pages_array_wc(sgbuf->page_table, sgbuf->pages);
+		else
+			set_pages_array_wb(sgbuf->page_table, sgbuf->pages);
+		return;
+	}
+#endif
+
+	pages = (dmab->bytes + PAGE_SIZE - 1) >> PAGE_SHIFT;
+	if (on)
+		set_memory_wc((unsigned long)dmab->area, pages);
+	else
+		set_memory_wb((unsigned long)dmab->area, pages);
+}
+
+static inline void mark_pages_wc(struct azx *chip, struct snd_dma_buffer *buf,
+				 bool on)
+{
+	__mark_pages_wc(chip, buf, on);
+}
+static inline void mark_runtime_wc(struct azx *chip, struct azx_dev *azx_dev,
+				   struct snd_pcm_substream *substream, bool on)
+{
+	if (azx_dev->wc_marked != on) {
+		__mark_pages_wc(chip, snd_pcm_get_dma_buf(substream), on);
+		azx_dev->wc_marked = on;
+	}
+}
+#else
+/* NOP for other archs */
+static inline void mark_pages_wc(struct azx *chip, struct snd_dma_buffer *buf,
+				 bool on)
+{
+}
+static inline void mark_runtime_wc(struct azx *chip, struct azx_dev *azx_dev,
+				   struct snd_pcm_substream *substream, bool on)
+{
+}
+#endif
+
+>>>>>>> master
 static int azx_acquire_irq(struct azx *chip, int do_disconnect);
 static void set_default_power_save(struct azx *chip);
 
@@ -842,6 +926,50 @@ static unsigned int azx_via_get_position(struct azx *chip,
 
 /* get the current DMA position with FIFO size correction */
 static unsigned int azx_get_pos_fifo(struct azx *chip, struct azx_dev *azx_dev)
+<<<<<<< HEAD
+=======
+{
+	struct snd_pcm_substream *substream = azx_dev->core.substream;
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	unsigned int pos, delay;
+
+	pos = snd_hdac_stream_get_pos_lpib(azx_stream(azx_dev));
+	if (!runtime)
+		return pos;
+
+	runtime->delay = AMD_FIFO_SIZE;
+	delay = frames_to_bytes(runtime, AMD_FIFO_SIZE);
+	if (azx_dev->insufficient) {
+		if (pos < delay) {
+			delay = pos;
+			runtime->delay = bytes_to_frames(runtime, pos);
+		} else {
+			azx_dev->insufficient = 0;
+		}
+	}
+
+	/* correct the DMA position for capture stream */
+	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
+		if (pos < delay)
+			pos += azx_dev->core.bufsize;
+		pos -= delay;
+	}
+
+	return pos;
+}
+
+static int azx_get_delay_from_fifo(struct azx *chip, struct azx_dev *azx_dev,
+				   unsigned int pos)
+{
+	struct snd_pcm_substream *substream = azx_dev->core.substream;
+
+	/* just read back the calculated value in the above */
+	return substream->runtime->delay;
+}
+
+static unsigned int azx_skl_get_dpib_pos(struct azx *chip,
+					 struct azx_dev *azx_dev)
+>>>>>>> master
 {
 	struct snd_pcm_substream *substream = azx_dev->core.substream;
 	struct snd_pcm_runtime *runtime = substream->runtime;
@@ -1574,7 +1702,11 @@ static void assign_position_fix(struct azx *chip, int fix)
 		[POS_FIX_POSBUF] = azx_get_pos_posbuf,
 		[POS_FIX_VIACOMBO] = azx_via_get_position,
 		[POS_FIX_COMBO] = azx_get_pos_lpib,
+<<<<<<< HEAD
 		[POS_FIX_SKL] = azx_get_pos_posbuf,
+=======
+		[POS_FIX_SKL] = azx_get_pos_skl,
+>>>>>>> master
 		[POS_FIX_FIFO] = azx_get_pos_fifo,
 	};
 
@@ -1816,8 +1948,19 @@ static int azx_create(struct snd_card *card, struct pci_dev *pci,
 	else
 		chip->bdl_pos_adj = bdl_pos_adj[dev];
 
+<<<<<<< HEAD
 	err = azx_bus_init(chip, model[dev]);
 	if (err < 0)
+=======
+	/* Workaround for a communication error on CFL (bko#199007) and CNL */
+	if (IS_CFL(pci) || IS_CNL(pci))
+		chip->polling_mode = 1;
+
+	err = azx_bus_init(chip, model[dev], &pci_hda_io_ops);
+	if (err < 0) {
+		kfree(hda);
+		pci_disable_device(pci);
+>>>>>>> master
 		return err;
 
 	/* use the non-cached pages in non-snoop mode */
@@ -2068,6 +2211,7 @@ static int disable_msi_reset_irq(struct azx *chip)
 	return 0;
 }
 
+<<<<<<< HEAD
 /* Denylist for skipping the whole probe:
  * some HD-audio PCI entries are exposed without any codecs, and such devices
  * should be ignored from the beginning.
@@ -2077,6 +2221,77 @@ static const struct pci_device_id driver_denylist[] = {
 	{ PCI_DEVICE_SUB(0x1022, 0x1487, 0x1462, 0xcb59) }, /* MSI TRX40 Creator */
 	{ PCI_DEVICE_SUB(0x1022, 0x1487, 0x1462, 0xcb60) }, /* MSI TRX40 */
 	{}
+=======
+/* DMA page allocation helpers.  */
+static int dma_alloc_pages(struct hdac_bus *bus,
+			   int type,
+			   size_t size,
+			   struct snd_dma_buffer *buf)
+{
+	struct azx *chip = bus_to_azx(bus);
+	int err;
+
+	err = snd_dma_alloc_pages(type,
+				  bus->dev,
+				  size, buf);
+	if (err < 0)
+		return err;
+	mark_pages_wc(chip, buf, true);
+	return 0;
+}
+
+static void dma_free_pages(struct hdac_bus *bus, struct snd_dma_buffer *buf)
+{
+	struct azx *chip = bus_to_azx(bus);
+
+	mark_pages_wc(chip, buf, false);
+	snd_dma_free_pages(buf);
+}
+
+static int substream_alloc_pages(struct azx *chip,
+				 struct snd_pcm_substream *substream,
+				 size_t size)
+{
+	struct azx_dev *azx_dev = get_azx_dev(substream);
+	int ret;
+
+	mark_runtime_wc(chip, azx_dev, substream, false);
+	ret = snd_pcm_lib_malloc_pages(substream, size);
+	if (ret < 0)
+		return ret;
+	mark_runtime_wc(chip, azx_dev, substream, true);
+	return 0;
+}
+
+static int substream_free_pages(struct azx *chip,
+				struct snd_pcm_substream *substream)
+{
+	struct azx_dev *azx_dev = get_azx_dev(substream);
+	mark_runtime_wc(chip, azx_dev, substream, false);
+	return snd_pcm_lib_free_pages(substream);
+}
+
+static void pcm_mmap_prepare(struct snd_pcm_substream *substream,
+			     struct vm_area_struct *area)
+{
+#ifdef CONFIG_X86
+	struct azx_pcm *apcm = snd_pcm_substream_chip(substream);
+	struct azx *chip = apcm->chip;
+	if (chip->uc_buffer)
+		area->vm_page_prot = pgprot_writecombine(area->vm_page_prot);
+#endif
+}
+
+static const struct hdac_io_ops pci_hda_io_ops = {
+	.reg_writel = pci_azx_writel,
+	.reg_readl = pci_azx_readl,
+	.reg_writew = pci_azx_writew,
+	.reg_readw = pci_azx_readw,
+	.reg_writeb = pci_azx_writeb,
+	.reg_readb = pci_azx_readb,
+	.dma_alloc_pages = dma_alloc_pages,
+	.dma_free_pages = dma_free_pages,
+>>>>>>> master
 };
 
 static const struct hda_controller_ops pci_hda_ops = {
@@ -2201,6 +2416,8 @@ static const struct snd_pci_quirk power_save_denylist[] = {
 	/* https://bugzilla.redhat.com/show_bug.cgi?id=1525104 */
 	SND_PCI_QUIRK(0x1028, 0x0497, "Dell Precision T3600", 0),
 	/* https://bugzilla.redhat.com/show_bug.cgi?id=1525104 */
+	SND_PCI_QUIRK(0x1028, 0x0497, "Dell Precision T3600", 0),
+	/* https://bugzilla.redhat.com/show_bug.cgi?id=1525104 */
 	/* Note the P55A-UD3 and Z87-D3HP share the subsys id for the HDA dev */
 	SND_PCI_QUIRK(0x1458, 0xa002, "Gigabyte P55A-UD3 / Z87-D3HP", 0),
 	/* https://bugzilla.redhat.com/show_bug.cgi?id=1525104 */
@@ -2213,15 +2430,21 @@ static const struct snd_pci_quirk power_save_denylist[] = {
 	SND_PCI_QUIRK(0x8086, 0x2068, "Intel NUC7i3BNB", 0),
 	/* https://bugzilla.kernel.org/show_bug.cgi?id=198611 */
 	SND_PCI_QUIRK(0x17aa, 0x2227, "Lenovo X1 Carbon 3rd Gen", 0),
+<<<<<<< HEAD
 	SND_PCI_QUIRK(0x17aa, 0x316e, "Lenovo ThinkCentre M70q", 0),
+=======
+>>>>>>> master
 	/* https://bugzilla.redhat.com/show_bug.cgi?id=1689623 */
 	SND_PCI_QUIRK(0x17aa, 0x367b, "Lenovo IdeaCentre B550", 0),
 	/* https://bugzilla.redhat.com/show_bug.cgi?id=1572975 */
 	SND_PCI_QUIRK(0x17aa, 0x36a7, "Lenovo C50 All in one", 0),
 	/* https://bugs.launchpad.net/bugs/1821663 */
 	SND_PCI_QUIRK(0x1631, 0xe017, "Packard Bell NEC IMEDIA 5204", 0),
+<<<<<<< HEAD
 	/* KONTRON SinglePC may cause a stall at runtime resume */
 	SND_PCI_QUIRK(0x1734, 0x1232, "KONTRON SinglePC", 0),
+=======
+>>>>>>> master
 	{}
 };
 #endif /* CONFIG_PM */
@@ -2259,11 +2482,14 @@ static int azx_probe_continue(struct azx *chip)
 	int dev = chip->dev_index;
 	int err;
 
+<<<<<<< HEAD
 	if (chip->disabled || hda->init_failed)
 		return -EIO;
 	if (hda->probe_retry)
 		goto probe_retry;
 
+=======
+>>>>>>> master
 	to_hda_bus(bus)->bus_probing = 1;
 	hda->probe_continued = 1;
 
@@ -2371,8 +2597,12 @@ out_free:
 		display_power(chip, false);
 	complete_all(&hda->probe_wait);
 	to_hda_bus(bus)->bus_probing = 0;
+<<<<<<< HEAD
 	hda->probe_retry = 0;
 	return 0;
+=======
+	return err;
+>>>>>>> master
 }
 
 static void azx_remove(struct pci_dev *pci)
@@ -2560,6 +2790,7 @@ static const struct pci_device_id azx_ids[] = {
 	{ PCI_VDEVICE(AMD, 0x780d),
 	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_ATI_SB },
 	/* AMD, X370 & co */
+<<<<<<< HEAD
 	{ PCI_VDEVICE(AMD, 0x1457),
 	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_AMD_SB },
 	/* AMD, X570 & co */
@@ -2571,6 +2802,19 @@ static const struct pci_device_id azx_ids[] = {
 			 AZX_DCAPS_PM_RUNTIME },
 	/* AMD Raven */
 	{ PCI_VDEVICE(AMD, 0x15e3),
+=======
+	{ PCI_DEVICE(0x1022, 0x1457),
+	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_AMD_SB },
+	/* AMD, X570 & co */
+	{ PCI_DEVICE(0x1022, 0x1487),
+	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_AMD_SB },
+	/* AMD Stoney */
+	{ PCI_DEVICE(0x1022, 0x157a),
+	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_ATI_SB |
+			 AZX_DCAPS_PM_RUNTIME },
+	/* AMD Raven */
+	{ PCI_DEVICE(0x1022, 0x15e3),
+>>>>>>> master
 	  .driver_data = AZX_DRIVER_GENERIC | AZX_DCAPS_PRESET_AMD_SB },
 	/* ATI HDMI */
 	{ PCI_VDEVICE(ATI, 0x0002),

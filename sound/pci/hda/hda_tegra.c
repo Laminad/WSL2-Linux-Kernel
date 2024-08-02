@@ -128,13 +128,27 @@ static void hda_tegra_init(struct hda_tegra *hda)
 static int __maybe_unused hda_tegra_suspend(struct device *dev)
 {
 	struct snd_card *card = dev_get_drvdata(dev);
+<<<<<<< HEAD
 	int rc;
+=======
+	struct azx *chip = card->private_data;
+	struct hda_tegra *hda = container_of(chip, struct hda_tegra, chip);
+	struct hdac_bus *bus = azx_bus(chip);
+>>>>>>> master
 
 	rc = pm_runtime_force_suspend(dev);
 	if (rc < 0)
 		return rc;
 	snd_power_change_state(card, SNDRV_CTL_POWER_D3hot);
 
+<<<<<<< HEAD
+=======
+	azx_stop_chip(chip);
+	synchronize_irq(bus->irq);
+	azx_enter_link_reset(chip);
+	hda_tegra_disable_clocks(hda);
+
+>>>>>>> master
 	return 0;
 }
 

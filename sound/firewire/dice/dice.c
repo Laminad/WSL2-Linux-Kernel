@@ -19,9 +19,12 @@ MODULE_LICENSE("GPL");
 #define OUI_MAUDIO		0x000d6c
 #define OUI_MYTEK		0x001ee8
 #define OUI_SSL			0x0050c2	// Actually ID reserved by IEEE.
+<<<<<<< HEAD
 #define OUI_PRESONUS		0x000a92
 #define OUI_HARMAN		0x000fd7
 #define OUI_AVID		0x00a07e
+=======
+>>>>>>> master
 
 #define DICE_CATEGORY_ID	0x04
 #define WEISS_CATEGORY_ID	0x00
@@ -217,6 +220,63 @@ static int dice_probe(struct fw_unit *unit, const struct ieee1394_device_id *ent
 	if (err < 0)
 		goto error;
 
+<<<<<<< HEAD
+=======
+	/*
+	 * After registered, dice instance can be released corresponding to
+	 * releasing the sound card instance.
+	 */
+	dice->card->private_free = dice_card_free;
+	dice->card->private_data = dice;
+	dice->registered = true;
+
+	return;
+error:
+	snd_dice_stream_destroy_duplex(dice);
+	snd_dice_transaction_destroy(dice);
+	snd_dice_stream_destroy_duplex(dice);
+	snd_card_free(dice->card);
+	dev_info(&dice->unit->device,
+		 "Sound card registration failed: %d\n", err);
+}
+
+static int dice_probe(struct fw_unit *unit,
+		      const struct ieee1394_device_id *entry)
+{
+	struct snd_dice *dice;
+	int err;
+
+	if (!entry->driver_data && entry->vendor_id != OUI_SSL) {
+		err = check_dice_category(unit);
+		if (err < 0)
+			return -ENODEV;
+	}
+
+	/* Allocate this independent of sound card instance. */
+	dice = kzalloc(sizeof(struct snd_dice), GFP_KERNEL);
+	if (dice == NULL)
+		return -ENOMEM;
+
+	dice->unit = fw_unit_get(unit);
+	dev_set_drvdata(&unit->device, dice);
+
+	if (!entry->driver_data) {
+		dice->detect_formats = snd_dice_stream_detect_current_formats;
+	} else {
+		dice->detect_formats =
+				(snd_dice_detect_formats_t)entry->driver_data;
+	}
+
+	spin_lock_init(&dice->lock);
+	mutex_init(&dice->mutex);
+	init_completion(&dice->clock_accepted);
+	init_waitqueue_head(&dice->hwdep_wait);
+
+	/* Allocate and register this sound card later. */
+	INIT_DEFERRABLE_WORK(&dice->dwork, do_registration);
+	snd_fw_schedule_registration(unit, &dice->dwork);
+
+>>>>>>> master
 	return 0;
 error:
 	snd_card_free(card);
@@ -366,6 +426,7 @@ static const struct ieee1394_device_id dice_id_table[] = {
 		.vendor_id	= OUI_SSL,
 		.model_id	= 0x000070,
 	},
+<<<<<<< HEAD
 	// Presonus FireStudio.
 	{
 		.match_flags	= IEEE1394_MATCH_VENDOR_ID |
@@ -455,6 +516,8 @@ static const struct ieee1394_device_id dice_id_table[] = {
 		.model_id	= 0x000004,
 		.driver_data	= (kernel_ulong_t)snd_dice_detect_weiss_formats,
 	},
+=======
+>>>>>>> master
 	{
 		.match_flags = IEEE1394_MATCH_VERSION,
 		.version     = DICE_INTERFACE,

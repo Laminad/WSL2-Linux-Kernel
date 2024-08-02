@@ -167,6 +167,7 @@ int of_dma_configure_id(struct device *dev, struct device_node *np,
 	 * Limit coherent and dma mask based on size and default mask
 	 * set by the driver.
 	 */
+<<<<<<< HEAD
 	end = dma_start + size - 1;
 	mask = DMA_BIT_MASK(ilog2(end) + 1);
 	dev->coherent_dma_mask &= mask;
@@ -176,6 +177,14 @@ int of_dma_configure_id(struct device *dev, struct device_node *np,
 		dev->bus_dma_limit = end;
 		dev->dma_range_map = map;
 	}
+=======
+	mask = DMA_BIT_MASK(ilog2(dma_addr + size - 1) + 1);
+	dev->coherent_dma_mask &= mask;
+	*dev->dma_mask &= mask;
+	/* ...but only set bus mask if we found valid dma-ranges earlier */
+	if (!ret)
+		dev->bus_dma_mask = mask;
+>>>>>>> master
 
 	coherent = of_dma_is_coherent(np);
 	dev_dbg(dev, "device is%sdma coherent\n",
@@ -214,6 +223,71 @@ const void *of_device_get_match_data(const struct device *dev)
 }
 EXPORT_SYMBOL(of_device_get_match_data);
 
+<<<<<<< HEAD
+=======
+static ssize_t of_device_get_modalias(struct device *dev, char *str, ssize_t len)
+{
+	const char *compat;
+	char *c;
+	struct property *p;
+	ssize_t csize;
+	ssize_t tsize;
+
+	if ((!dev) || (!dev->of_node))
+		return -ENODEV;
+
+	/* Name & Type */
+	/* %p eats all alphanum characters, so %c must be used here */
+	csize = snprintf(str, len, "of:N%pOFn%c%s", dev->of_node, 'T',
+			 dev->of_node->type);
+	tsize = csize;
+	len -= csize;
+	if (str)
+		str += csize;
+
+	of_property_for_each_string(dev->of_node, "compatible", p, compat) {
+		csize = strlen(compat) + 1;
+		tsize += csize;
+		if (csize > len)
+			continue;
+
+		csize = snprintf(str, len, "C%s", compat);
+		for (c = str; c; ) {
+			c = strchr(c, ' ');
+			if (c)
+				*c++ = '_';
+		}
+		len -= csize;
+		str += csize;
+	}
+
+	return tsize;
+}
+
+int of_device_request_module(struct device *dev)
+{
+	char *str;
+	ssize_t size;
+	int ret;
+
+	size = of_device_get_modalias(dev, NULL, 0);
+	if (size < 0)
+		return size;
+
+	str = kmalloc(size + 1, GFP_KERNEL);
+	if (!str)
+		return -ENOMEM;
+
+	of_device_get_modalias(dev, str, size);
+	str[size] = '\0';
+	ret = request_module(str);
+	kfree(str);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(of_device_request_module);
+
+>>>>>>> master
 /**
  * of_device_modalias - Fill buffer with newline terminated modalias string
  * @dev:	Calling device

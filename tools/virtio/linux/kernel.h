@@ -31,6 +31,10 @@
 #define READ                    0
 #define WRITE                   1
 
+<<<<<<< HEAD
+=======
+typedef unsigned long long phys_addr_t;
+>>>>>>> master
 typedef unsigned long long dma_addr_t;
 typedef size_t __kernel_size_t;
 typedef unsigned int __wsum;

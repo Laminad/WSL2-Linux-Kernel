@@ -199,7 +199,11 @@ static int xprt_rdma_bc_send_request(struct rpc_rqst *rqst)
 static void
 xprt_rdma_bc_close(struct rpc_xprt *xprt)
 {
+<<<<<<< HEAD
 	xprt_disconnect_done(xprt);
+=======
+	dprintk("svcrdma: %s: xprt %p\n", __func__, xprt);
+>>>>>>> master
 	xprt->cwnd = RPC_CWNDSHIFT;
 }
 

@@ -1215,6 +1215,7 @@ static int mlx5_ib_query_device(struct ib_device *ibdev,
 	return 0;
 }
 
+<<<<<<< HEAD
 static void translate_active_width(struct ib_device *ibdev, u16 active_width,
 				   u8 *ib_width)
 {
@@ -1233,6 +1234,32 @@ static void translate_active_width(struct ib_device *ibdev, u16 active_width,
 	else {
 		mlx5_ib_dbg(dev, "Invalid active_width %d, setting width to default value: 4x\n",
 			    active_width);
+=======
+enum mlx5_ib_width {
+	MLX5_IB_WIDTH_1X	= 1 << 0,
+	MLX5_IB_WIDTH_2X	= 1 << 1,
+	MLX5_IB_WIDTH_4X	= 1 << 2,
+	MLX5_IB_WIDTH_8X	= 1 << 3,
+	MLX5_IB_WIDTH_12X	= 1 << 4
+};
+
+static void translate_active_width(struct ib_device *ibdev, u8 active_width,
+				  u8 *ib_width)
+{
+	struct mlx5_ib_dev *dev = to_mdev(ibdev);
+
+	if (active_width & MLX5_IB_WIDTH_1X)
+		*ib_width = IB_WIDTH_1X;
+	else if (active_width & MLX5_IB_WIDTH_4X)
+		*ib_width = IB_WIDTH_4X;
+	else if (active_width & MLX5_IB_WIDTH_8X)
+		*ib_width = IB_WIDTH_8X;
+	else if (active_width & MLX5_IB_WIDTH_12X)
+		*ib_width = IB_WIDTH_12X;
+	else {
+		mlx5_ib_dbg(dev, "Invalid active_width %d, setting width to default value: 4x\n",
+			    (int)active_width);
+>>>>>>> master
 		*ib_width = IB_WIDTH_4X;
 	}
 
@@ -1348,6 +1375,13 @@ static int mlx5_query_hca_port(struct ib_device *ibdev, u32 port,
 		goto out;
 
 	translate_active_width(ibdev, ib_link_width_oper, &props->active_width);
+<<<<<<< HEAD
+=======
+
+	err = mlx5_query_port_ib_proto_oper(mdev, &props->active_speed, port);
+	if (err)
+		goto out;
+>>>>>>> master
 
 	mlx5_query_port_max_mtu(mdev, &max_mtu, port);
 
@@ -2102,7 +2136,11 @@ static int mlx5_ib_mmap_clock_info_page(struct mlx5_ib_dev *dev,
 
 	if (vma->vm_flags & (VM_WRITE | VM_EXEC))
 		return -EPERM;
+<<<<<<< HEAD
 	vm_flags_clear(vma, VM_MAYWRITE);
+=======
+	vma->vm_flags &= ~VM_MAYWRITE;
+>>>>>>> master
 
 	if (!dev->mdev->clock_info)
 		return -EOPNOTSUPP;
@@ -2326,7 +2364,11 @@ static int mlx5_ib_mmap(struct ib_ucontext *ibcontext, struct vm_area_struct *vm
 
 		if (vma->vm_flags & VM_WRITE)
 			return -EPERM;
+<<<<<<< HEAD
 		vm_flags_clear(vma, VM_MAYWRITE);
+=======
+		vma->vm_flags &= ~VM_MAYWRITE;
+>>>>>>> master
 
 		/* Don't expose to user-space information it shouldn't have */
 		if (PAGE_SIZE > 4096)
@@ -4428,7 +4470,22 @@ static void mlx5r_remove(struct auxiliary_device *adev)
 {
 	struct mlx5_ib_dev *dev;
 
+<<<<<<< HEAD
 	dev = auxiliary_get_drvdata(adev);
+=======
+	if (mlx5_core_is_mp_slave(mdev)) {
+		mpi = context;
+		mutex_lock(&mlx5_ib_multiport_mutex);
+		if (mpi->ibdev)
+			mlx5_ib_unbind_slave_port(mpi->ibdev, mpi);
+		list_del(&mpi->list);
+		mutex_unlock(&mlx5_ib_multiport_mutex);
+		kfree(mpi);
+		return;
+	}
+
+	dev = context;
+>>>>>>> master
 	__mlx5_ib_remove(dev, dev->profile, MLX5_IB_STAGE_MAX);
 }
 

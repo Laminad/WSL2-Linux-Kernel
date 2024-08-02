@@ -172,12 +172,31 @@ __bpf_kfunc static void dctcp_update_alpha(struct sock *sk, u32 flags)
 }
 
 static void dctcp_react_to_loss(struct sock *sk)
+<<<<<<< HEAD
 {
 	struct dctcp *ca = inet_csk_ca(sk);
 	struct tcp_sock *tp = tcp_sk(sk);
 
 	ca->loss_cwnd = tcp_snd_cwnd(tp);
 	tp->snd_ssthresh = max(tcp_snd_cwnd(tp) >> 1U, 2U);
+=======
+{
+	struct dctcp *ca = inet_csk_ca(sk);
+	struct tcp_sock *tp = tcp_sk(sk);
+
+	ca->loss_cwnd = tp->snd_cwnd;
+	tp->snd_ssthresh = max(tp->snd_cwnd >> 1U, 2U);
+}
+
+static void dctcp_state(struct sock *sk, u8 new_state)
+{
+	if (new_state == TCP_CA_Recovery &&
+	    new_state != inet_csk(sk)->icsk_ca_state)
+		dctcp_react_to_loss(sk);
+	/* We handle RTO in dctcp_cwnd_event to ensure that we perform only
+	 * one loss-adjustment per RTT.
+	 */
+>>>>>>> master
 }
 
 __bpf_kfunc static void dctcp_state(struct sock *sk, u8 new_state)
@@ -205,6 +224,9 @@ __bpf_kfunc static void dctcp_cwnd_event(struct sock *sk, enum tcp_ca_event ev)
 		break;
 	case CA_EVENT_TX_START:
 		tcp_plb_check_rehash(sk, &ca->plb); /* Maybe rehash when inflight is 0 */
+		break;
+	case CA_EVENT_LOSS:
+		dctcp_react_to_loss(sk);
 		break;
 	default:
 		/* Don't care for the rest. */

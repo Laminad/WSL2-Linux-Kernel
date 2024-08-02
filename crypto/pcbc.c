@@ -160,14 +160,74 @@ static int crypto_pcbc_create(struct crypto_template *tmpl, struct rtattr **tb)
 	if (IS_ERR(inst))
 		return PTR_ERR(inst);
 
+<<<<<<< HEAD
+=======
+	if (((algt->type ^ CRYPTO_ALG_TYPE_SKCIPHER) & algt->mask) &
+	    ~CRYPTO_ALG_INTERNAL)
+		return -EINVAL;
+
+	inst = kzalloc(sizeof(*inst) + sizeof(*spawn), GFP_KERNEL);
+	if (!inst)
+		return -ENOMEM;
+
+	alg = crypto_get_attr_alg(tb, CRYPTO_ALG_TYPE_CIPHER |
+				      (algt->type & CRYPTO_ALG_INTERNAL),
+				  CRYPTO_ALG_TYPE_MASK |
+				  (algt->mask & CRYPTO_ALG_INTERNAL));
+	err = PTR_ERR(alg);
+	if (IS_ERR(alg))
+		goto err_free_inst;
+
+	spawn = skcipher_instance_ctx(inst);
+	err = crypto_init_spawn(spawn, alg, skcipher_crypto_instance(inst),
+				CRYPTO_ALG_TYPE_MASK);
+	if (err)
+		goto err_put_alg;
+
+	err = crypto_inst_setname(skcipher_crypto_instance(inst), "pcbc", alg);
+	if (err)
+		goto err_drop_spawn;
+
+	inst->alg.base.cra_flags = alg->cra_flags & CRYPTO_ALG_INTERNAL;
+	inst->alg.base.cra_priority = alg->cra_priority;
+	inst->alg.base.cra_blocksize = alg->cra_blocksize;
+	inst->alg.base.cra_alignmask = alg->cra_alignmask;
+
+	inst->alg.ivsize = alg->cra_blocksize;
+	inst->alg.min_keysize = alg->cra_cipher.cia_min_keysize;
+	inst->alg.max_keysize = alg->cra_cipher.cia_max_keysize;
+
+	inst->alg.base.cra_ctxsize = sizeof(struct crypto_pcbc_ctx);
+
+	inst->alg.init = crypto_pcbc_init_tfm;
+	inst->alg.exit = crypto_pcbc_exit_tfm;
+
+	inst->alg.setkey = crypto_pcbc_setkey;
+>>>>>>> master
 	inst->alg.encrypt = crypto_pcbc_encrypt;
 	inst->alg.decrypt = crypto_pcbc_decrypt;
 
 	err = skcipher_register_instance(tmpl, inst);
 	if (err)
+<<<<<<< HEAD
 		inst->free(inst);
+=======
+		goto err_drop_spawn;
+	crypto_mod_put(alg);
+>>>>>>> master
 
 	return err;
+<<<<<<< HEAD
+=======
+
+err_drop_spawn:
+	crypto_drop_spawn(spawn);
+err_put_alg:
+	crypto_mod_put(alg);
+err_free_inst:
+	kfree(inst);
+	goto out;
+>>>>>>> master
 }
 
 static struct crypto_template crypto_pcbc_tmpl = {

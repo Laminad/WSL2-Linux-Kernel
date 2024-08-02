@@ -52,11 +52,14 @@ TARGETS += move_mount_set_group
 TARGETS += mqueue
 TARGETS += nci
 TARGETS += net
+<<<<<<< HEAD
 TARGETS += net/af_unix
 TARGETS += net/forwarding
 TARGETS += net/hsr
 TARGETS += net/mptcp
 TARGETS += net/openvswitch
+=======
+>>>>>>> master
 TARGETS += netfilter
 TARGETS += nsfs
 TARGETS += perf_events

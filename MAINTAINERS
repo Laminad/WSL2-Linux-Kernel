@@ -9738,7 +9738,14 @@ F:	arch/x86/include/asm/hyperv-tlfs.h
 F:	arch/x86/include/asm/mshyperv.h
 F:	arch/x86/include/asm/trace/hyperv.h
 F:	arch/x86/kernel/cpu/mshyperv.c
+<<<<<<< HEAD
 F:	drivers/clocksource/hyperv_timer.c
+=======
+F:	arch/x86/hyperv
+F:	arch/arm64/include/asm/hyperv-tlfs.h
+F:	arch/arm64/include/asm/mshyperv.h
+F:	arch/arm64/hyperv
+>>>>>>> master
 F:	drivers/hid/hid-hyperv.c
 F:	drivers/hv/
 F:	drivers/input/serio/hyperv-keyboard.c
@@ -9756,7 +9763,11 @@ F:	include/clocksource/hyperv_timer.h
 F:	include/linux/hyperv.h
 F:	include/net/mana
 F:	include/uapi/linux/hyperv.h
+<<<<<<< HEAD
 F:	net/vmw_vsock/hyperv_transport.c
+=======
+F:	include/asm-generic/mshyperv.h
+>>>>>>> master
 F:	tools/hv/
 
 HYPERBUS SUPPORT
@@ -10456,6 +10467,7 @@ INTEL ATOMISP2 DUMMY / POWER-MANAGEMENT DRIVER
 M:	Hans de Goede <hdegoede@redhat.com>
 L:	platform-driver-x86@vger.kernel.org
 S:	Maintained
+<<<<<<< HEAD
 F:	drivers/platform/x86/intel/atomisp2/pm.c
 
 INTEL ATOMISP2 LED DRIVER
@@ -10477,6 +10489,9 @@ M:	Zha Qipeng <qipeng.zha@intel.com>
 S:	Maintained
 F:	drivers/mfd/intel_pmc_bxt.c
 F:	include/linux/mfd/intel_pmc_bxt.h
+=======
+F:	drivers/platform/x86/intel_atomisp2_pm.c
+>>>>>>> master
 
 INTEL C600 SERIES SAS CONTROLLER DRIVER
 M:	Artur Paszkiewicz <artur.paszkiewicz@intel.com>

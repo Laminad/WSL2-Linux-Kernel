@@ -1624,6 +1624,7 @@ nfs_lookup_revalidate_done(struct inode *dir, struct dentry *dentry,
 {
 	switch (error) {
 	case 1:
+<<<<<<< HEAD
 		break;
 	case 0:
 		/*
@@ -1637,6 +1638,31 @@ nfs_lookup_revalidate_done(struct inode *dir, struct dentry *dentry,
 		break;
 	}
 	trace_nfs_lookup_revalidate_exit(dir, dentry, 0, error);
+=======
+		dfprintk(LOOKUPCACHE, "NFS: %s(%pd2) is valid\n",
+			__func__, dentry);
+		return 1;
+	case 0:
+		nfs_mark_for_revalidate(dir);
+		if (inode && S_ISDIR(inode->i_mode)) {
+			/* Purge readdir caches. */
+			nfs_zap_caches(inode);
+			/*
+			 * We can't d_drop the root of a disconnected tree:
+			 * its d_hash is on the s_anon list and d_drop() would hide
+			 * it from shrink_dcache_for_unmount(), leading to busy
+			 * inodes on unmount and further oopses.
+			 */
+			if (IS_ROOT(dentry))
+				return 1;
+		}
+		dfprintk(LOOKUPCACHE, "NFS: %s(%pd2) is invalid\n",
+				__func__, dentry);
+		return 0;
+	}
+	dfprintk(LOOKUPCACHE, "NFS: %s(%pd2) lookup returned error %d\n",
+				__func__, dentry, error);
+>>>>>>> master
 	return error;
 }
 
@@ -1661,6 +1687,7 @@ nfs_lookup_revalidate_delegated(struct inode *dir, struct dentry *dentry,
 	return nfs_lookup_revalidate_done(dir, dentry, inode, 1);
 }
 
+<<<<<<< HEAD
 static int nfs_lookup_revalidate_dentry(struct inode *dir,
 					struct dentry *dentry,
 					struct inode *inode, unsigned int flags)
@@ -1696,19 +1723,52 @@ static int nfs_lookup_revalidate_dentry(struct inode *dir,
 	/* Request help from readdirplus */
 	nfs_lookup_advise_force_readdirplus(dir, flags);
 
+=======
+static int
+nfs_lookup_revalidate_dentry(struct inode *dir, struct dentry *dentry,
+			     struct inode *inode)
+{
+	struct nfs_fh *fhandle;
+	struct nfs_fattr *fattr;
+	struct nfs4_label *label;
+	int ret;
+
+	ret = -ENOMEM;
+	fhandle = nfs_alloc_fhandle();
+	fattr = nfs_alloc_fattr();
+	label = nfs4_label_alloc(NFS_SERVER(inode), GFP_KERNEL);
+	if (fhandle == NULL || fattr == NULL || IS_ERR(label))
+		goto out;
+
+	ret = NFS_PROTO(dir)->lookup(dir, &dentry->d_name, fhandle, fattr, label);
+	if (ret < 0) {
+		if (ret == -ESTALE || ret == -ENOENT)
+			ret = 0;
+		goto out;
+	}
+>>>>>>> master
 	ret = 0;
 	if (nfs_compare_fh(NFS_FH(inode), fhandle))
 		goto out;
 	if (nfs_refresh_inode(inode, fattr) < 0)
 		goto out;
 
+<<<<<<< HEAD
 	nfs_setsecurity(inode, fattr);
 	nfs_set_verifier(dentry, dir_verifier);
 
+=======
+	nfs_setsecurity(inode, fattr, label);
+	nfs_set_verifier(dentry, nfs_save_change_attribute(dir));
+
+	/* set a readdirplus hint that we had a cache miss */
+	nfs_force_use_readdirplus(dir);
+>>>>>>> master
 	ret = 1;
 out:
 	nfs_free_fattr(fattr);
 	nfs_free_fhandle(fhandle);
+<<<<<<< HEAD
 
 	/*
 	 * If the lookup failed despite the dentry change attribute being
@@ -1716,6 +1776,9 @@ out:
 	 */
 	if (!ret && nfs_dentry_verify_change(dir, dentry))
 		nfs_mark_dir_for_revalidate(dir);
+=======
+	nfs4_label_free(label);
+>>>>>>> master
 	return nfs_lookup_revalidate_done(dir, dentry, inode, ret);
 }
 
@@ -1749,11 +1812,15 @@ nfs_do_lookup_revalidate(struct inode *dir, struct dentry *dentry,
 		goto out_bad;
 	}
 
+<<<<<<< HEAD
 	if ((flags & LOOKUP_RENAME_TARGET) && d_count(dentry) < 2 &&
 	    nfs_server_capable(dir, NFS_CAP_CASE_INSENSITIVE))
 		goto out_bad;
 
 	if (nfs_verifier_is_delegated(dentry))
+=======
+	if (NFS_PROTO(dir)->have_delegation(inode, FMODE_READ))
+>>>>>>> master
 		return nfs_lookup_revalidate_delegated(dir, dentry, inode);
 
 	/* Force a full look up iff the parent directory has changed */
@@ -1762,7 +1829,11 @@ nfs_do_lookup_revalidate(struct inode *dir, struct dentry *dentry,
 		error = nfs_lookup_verify_inode(inode, flags);
 		if (error) {
 			if (error == -ESTALE)
+<<<<<<< HEAD
 				nfs_mark_dir_for_revalidate(dir);
+=======
+				nfs_zap_caches(dir);
+>>>>>>> master
 			goto out_bad;
 		}
 		goto out_valid;
@@ -1774,7 +1845,14 @@ nfs_do_lookup_revalidate(struct inode *dir, struct dentry *dentry,
 	if (NFS_STALE(inode))
 		goto out_bad;
 
+<<<<<<< HEAD
 	return nfs_lookup_revalidate_dentry(dir, dentry, inode, flags);
+=======
+	trace_nfs_lookup_revalidate_enter(dir, dentry, flags);
+	error = nfs_lookup_revalidate_dentry(dir, dentry, inode);
+	trace_nfs_lookup_revalidate_exit(dir, dentry, flags, error);
+	return error;
+>>>>>>> master
 out_valid:
 	return nfs_lookup_revalidate_done(dir, dentry, inode, 1);
 out_bad:
@@ -1792,8 +1870,11 @@ __nfs_lookup_revalidate(struct dentry *dentry, unsigned int flags,
 	int ret;
 
 	if (flags & LOOKUP_RCU) {
+<<<<<<< HEAD
 		if (dentry->d_fsdata == NFS_FSDATA_BLOCKED)
 			return -ECHILD;
+=======
+>>>>>>> master
 		parent = READ_ONCE(dentry->d_parent);
 		dir = d_inode_rcu(parent);
 		if (!dir)
@@ -1802,10 +1883,13 @@ __nfs_lookup_revalidate(struct dentry *dentry, unsigned int flags,
 		if (parent != READ_ONCE(dentry->d_parent))
 			return -ECHILD;
 	} else {
+<<<<<<< HEAD
 		/* Wait for unlink to complete - see unblock_revalidate() */
 		wait_var_event(&dentry->d_fsdata,
 			       smp_load_acquire(&dentry->d_fsdata)
 			       != NFS_FSDATA_BLOCKED);
+=======
+>>>>>>> master
 		parent = dget_parent(dentry);
 		ret = reval(d_inode(parent), dentry, flags);
 		dput(parent);
@@ -1816,6 +1900,7 @@ __nfs_lookup_revalidate(struct dentry *dentry, unsigned int flags,
 static int nfs_lookup_revalidate(struct dentry *dentry, unsigned int flags)
 {
 	return __nfs_lookup_revalidate(dentry, flags, nfs_do_lookup_revalidate);
+<<<<<<< HEAD
 }
 
 static void block_revalidate(struct dentry *dentry)
@@ -1839,6 +1924,8 @@ static void unblock_revalidate(struct dentry *dentry)
 	/* store_release ensures wait_var_event() sees the update */
 	smp_store_release(&dentry->d_fsdata, NULL);
 	wake_up_var(&dentry->d_fsdata);
+=======
+>>>>>>> master
 }
 
 /*
@@ -2231,7 +2318,11 @@ nfs4_do_lookup_revalidate(struct inode *dir, struct dentry *dentry,
 	if (inode == NULL)
 		goto full_reval;
 
+<<<<<<< HEAD
 	if (nfs_verifier_is_delegated(dentry))
+=======
+	if (NFS_PROTO(dir)->have_delegation(inode, FMODE_READ))
+>>>>>>> master
 		return nfs_lookup_revalidate_delegated(dir, dentry, inode);
 
 	/* NFS only supports OPEN on regular files */
@@ -2251,7 +2342,11 @@ nfs4_do_lookup_revalidate(struct inode *dir, struct dentry *dentry,
 reval_dentry:
 	if (flags & LOOKUP_RCU)
 		return -ECHILD;
+<<<<<<< HEAD
 	return nfs_lookup_revalidate_dentry(dir, dentry, inode, flags);
+=======
+	return nfs_lookup_revalidate_dentry(dir, dentry, inode);;
+>>>>>>> master
 
 full_reval:
 	return nfs_do_lookup_revalidate(dir, dentry, flags);

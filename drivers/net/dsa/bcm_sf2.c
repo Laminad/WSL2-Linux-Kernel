@@ -159,7 +159,11 @@ static void bcm_sf2_imp_setup(struct dsa_switch *ds, int port)
 {
 	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
 	unsigned int i;
+<<<<<<< HEAD
 	u32 reg;
+=======
+	u32 reg, offset;
+>>>>>>> master
 
 	/* Enable the port memories */
 	reg = core_readl(priv, CORE_MEM_PSM_VDD_CTRL);
@@ -185,6 +189,19 @@ static void bcm_sf2_imp_setup(struct dsa_switch *ds, int port)
 	b53_brcm_hdr_setup(ds, port);
 
 	if (port == 8) {
+<<<<<<< HEAD
+=======
+		if (priv->type == BCM7445_DEVICE_ID)
+			offset = CORE_STS_OVERRIDE_IMP;
+		else
+			offset = CORE_STS_OVERRIDE_IMP2;
+
+		/* Force link status for IMP port */
+		reg = core_readl(priv, offset);
+		reg |= (MII_SW_OR | LINK_STS);
+		core_writel(priv, reg, offset);
+
+>>>>>>> master
 		/* Enable Broadcast, Multicast, Unicast forwarding to IMP port */
 		reg = core_readl(priv, CORE_IMP_CTL);
 		reg |= (RX_BCST_EN | RX_MCST_EN | RX_UCST_EN);
@@ -195,8 +212,11 @@ static void bcm_sf2_imp_setup(struct dsa_switch *ds, int port)
 		reg &= ~(RX_DIS | TX_DIS);
 		core_writel(priv, reg, CORE_G_PCTL_PORT(port));
 	}
+<<<<<<< HEAD
 
 	priv->port_sts[port].enabled = true;
+=======
+>>>>>>> master
 }
 
 static void bcm_sf2_gphy_enable_set(struct dsa_switch *ds, bool enable)
@@ -1015,7 +1035,11 @@ static int bcm_sf2_sw_set_wol(struct dsa_switch *ds, int port,
 {
 	struct net_device *p = dsa_port_to_master(dsa_to_port(ds, port));
 	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+<<<<<<< HEAD
 	s8 cpu_port = dsa_to_port(ds, port)->cpu_dp->index;
+=======
+	s8 cpu_port = ds->ports[port].cpu_dp->index;
+>>>>>>> master
 	struct ethtool_wolinfo pwol =  { };
 
 	if (p->ethtool_ops->get_wol)

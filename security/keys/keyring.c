@@ -684,9 +684,12 @@ static bool search_nested_keyrings(struct key *keyring,
 	BUG_ON((ctx->flags & STATE_CHECKS) == 0 ||
 	       (ctx->flags & STATE_CHECKS) == STATE_CHECKS);
 
+<<<<<<< HEAD
 	if (ctx->index_key.description)
 		key_set_index_key(&ctx->index_key);
 
+=======
+>>>>>>> master
 	/* Check to see if this top-level keyring is what we are looking for
 	 * and whether it is valid or not.
 	 */

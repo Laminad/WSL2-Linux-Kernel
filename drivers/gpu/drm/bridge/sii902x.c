@@ -367,12 +367,18 @@ static void sii902x_bridge_mode_set(struct drm_bridge *bridge,
 	u16 pixel_clock_10kHz = adj->clock / 10;
 	int ret;
 
+<<<<<<< HEAD
 	if (sii902x->sink_is_hdmi)
 		output_mode = SII902X_SYS_CTRL_OUTPUT_HDMI;
 
 	buf[0] = pixel_clock_10kHz & 0xff;
 	buf[1] = pixel_clock_10kHz >> 8;
 	buf[2] = drm_mode_vrefresh(adj);
+=======
+	buf[0] = pixel_clock_10kHz & 0xff;
+	buf[1] = pixel_clock_10kHz >> 8;
+	buf[2] = adj->vrefresh;
+>>>>>>> master
 	buf[3] = 0x00;
 	buf[4] = adj->hdisplay;
 	buf[5] = adj->hdisplay >> 8;

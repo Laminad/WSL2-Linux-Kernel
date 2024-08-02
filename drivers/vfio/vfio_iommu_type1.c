@@ -65,12 +65,17 @@ struct vfio_iommu {
 	struct list_head	iova_list;
 	struct mutex		lock;
 	struct rb_root		dma_list;
+<<<<<<< HEAD
 	struct list_head	device_list;
 	struct mutex		device_list_lock;
 	unsigned int		dma_avail;
 	unsigned int		vaddr_invalid_count;
 	uint64_t		pgsize_bitmap;
 	uint64_t		num_non_pinned_groups;
+=======
+	struct blocking_notifier_head notifier;
+	unsigned int		dma_avail;
+>>>>>>> master
 	bool			v2;
 	bool			nesting;
 	bool			dirty_page_tracking;
@@ -1290,6 +1295,21 @@ static int vfio_dma_do_unmap(struct vfio_iommu *iommu,
 	bool invalidate_vaddr = unmap->flags & VFIO_DMA_UNMAP_FLAG_VADDR;
 	struct rb_node *n, *first_n;
 
+<<<<<<< HEAD
+=======
+	mask = ((uint64_t)1 << __ffs(vfio_pgsize_bitmap(iommu))) - 1;
+
+	if (unmap->iova & mask)
+		return -EINVAL;
+	if (!unmap->size || unmap->size & mask)
+		return -EINVAL;
+	if (unmap->iova + unmap->size - 1 < unmap->iova ||
+	    unmap->size > SIZE_MAX)
+		return -EINVAL;
+
+	WARN_ON(mask & PAGE_MASK);
+again:
+>>>>>>> master
 	mutex_lock(&iommu->lock);
 
 	/* Cannot update vaddr if mdev is present. */
@@ -1621,11 +1641,14 @@ static int vfio_dma_do_map(struct vfio_iommu *iommu,
 		goto out_unlock;
 	}
 
+<<<<<<< HEAD
 	if (!vfio_iommu_iova_dma_valid(iommu, iova, iova + size - 1)) {
 		ret = -EINVAL;
 		goto out_unlock;
 	}
 
+=======
+>>>>>>> master
 	dma = kzalloc(sizeof(*dma), GFP_KERNEL);
 	if (!dma) {
 		ret = -ENOMEM;

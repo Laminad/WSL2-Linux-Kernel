@@ -797,7 +797,10 @@ static __poll_t tipc_poll(struct file *file, struct socket *sock,
 	__poll_t revents = 0;
 
 	sock_poll_wait(file, sock, wait);
+<<<<<<< HEAD
 	trace_tipc_sk_poll(sk, NULL, TIPC_DUMP_ALL, " ");
+=======
+>>>>>>> master
 
 	if (sk->sk_shutdown & RCV_SHUTDOWN)
 		revents |= EPOLLRDHUP | EPOLLIN | EPOLLRDNORM;
@@ -1018,8 +1021,15 @@ static int tipc_send_group_anycast(struct socket *sock, struct msghdr *m,
 	bool cong;
 
 	INIT_LIST_HEAD(&dsts);
+<<<<<<< HEAD
 	ua->sa.type = msg_nametype(hdr);
 	ua->scope = msg_lookup_scope(hdr);
+=======
+
+	type = msg_nametype(hdr);
+	inst = dest->addr.name.name.instance;
+	scope = msg_lookup_scope(hdr);
+>>>>>>> master
 
 	while (++lookups < 4) {
 		exclude = tipc_group_exclude(tsk->group);
@@ -1444,9 +1454,15 @@ static int __tipc_sendmsg(struct socket *sock, struct msghdr *m, size_t dlen)
 		return -EINVAL;
 	}
 
+<<<<<<< HEAD
 	if (!ua) {
 		ua = (struct tipc_uaddr *)&tsk->peer;
 		if (!syn && ua->family != AF_TIPC)
+=======
+	if (unlikely(!dest)) {
+		dest = &tsk->peer;
+		if (!syn && dest->family != AF_TIPC)
+>>>>>>> master
 			return -EDESTADDRREQ;
 		atype = ua->addrtype;
 	}
@@ -1737,14 +1753,25 @@ static void tipc_sk_set_orig_addr(struct msghdr *m, struct sk_buff *skb)
 static int tipc_sk_anc_data_recv(struct msghdr *m, struct sk_buff *skb,
 				 struct tipc_sock *tsk)
 {
+<<<<<<< HEAD
 	struct tipc_msg *hdr;
 	u32 data[3] = {0,};
 	bool has_addr;
 	int dlen, rc;
+=======
+	struct tipc_msg *msg;
+	u32 anc_data[3];
+	u32 err;
+	u32 dest_type;
+	int has_name;
+	int res;
+>>>>>>> master
 
 	if (likely(m->msg_controllen == 0))
 		return 0;
+	msg = buf_msg(skb);
 
+<<<<<<< HEAD
 	hdr = buf_msg(skb);
 	dlen = msg_data_sz(hdr);
 
@@ -1761,6 +1788,25 @@ static int tipc_sk_anc_data_recv(struct msghdr *m, struct sk_buff *skb,
 		rc = put_cmsg(m, SOL_TIPC, TIPC_RETDATA, dlen, msg_data(hdr));
 		if (rc)
 			return rc;
+=======
+	/* Optionally capture errored message object(s) */
+	err = msg ? msg_errcode(msg) : 0;
+	if (unlikely(err)) {
+		anc_data[0] = err;
+		anc_data[1] = msg_data_sz(msg);
+		res = put_cmsg(m, SOL_TIPC, TIPC_ERRINFO, 8, anc_data);
+		if (res)
+			return res;
+		if (anc_data[1]) {
+			if (skb_linearize(skb))
+				return -ENOMEM;
+			msg = buf_msg(skb);
+			res = put_cmsg(m, SOL_TIPC, TIPC_RETDATA, anc_data[1],
+				       msg_data(msg));
+			if (res)
+				return res;
+		}
+>>>>>>> master
 	}
 
 	/* Capture TIPC_SERVICE_ADDR/RANGE destination address, if any */
@@ -2226,8 +2272,51 @@ static bool tipc_sk_filter_connect(struct tipc_sock *tsk, struct sk_buff *skb,
 			msg_set_dest_droppable(hdr, 1);
 			return false;
 		}
+<<<<<<< HEAD
 		/* Ignore connectionless message if not from listening socket */
 		if (oport != pport || onode != pnode)
+=======
+
+		if (unlikely(msg_errcode(hdr))) {
+			tipc_set_sk_state(sk, TIPC_DISCONNECTING);
+			sk->sk_err = ECONNREFUSED;
+			sk->sk_state_change(sk);
+			return true;
+		}
+
+		if (unlikely(!msg_isdata(hdr))) {
+			tipc_set_sk_state(sk, TIPC_DISCONNECTING);
+			sk->sk_err = EINVAL;
+			sk->sk_state_change(sk);
+			return true;
+		}
+
+		tipc_sk_finish_conn(tsk, msg_origport(hdr), msg_orignode(hdr));
+		msg_set_importance(&tsk->phdr, msg_importance(hdr));
+
+		/* If 'ACK+' message, add to socket receive queue */
+		if (msg_data_sz(hdr))
+			return true;
+
+		/* If empty 'ACK-' message, wake up sleeping connect() */
+		sk->sk_state_change(sk);
+
+		/* 'ACK-' message is neither accepted nor rejected: */
+		msg_set_dest_droppable(hdr, 1);
+		return false;
+
+	case TIPC_OPEN:
+	case TIPC_DISCONNECTING:
+		break;
+	case TIPC_LISTEN:
+		/* Accept only SYN message */
+		if (!msg_connected(hdr) && !(msg_errcode(hdr)))
+			return true;
+		break;
+	case TIPC_ESTABLISHED:
+		/* Accept only connection-based messages sent by peer */
+		if (unlikely(!tsk_peer_msg(tsk, hdr)))
+>>>>>>> master
 			return false;
 
 		/* Rejected SYN */

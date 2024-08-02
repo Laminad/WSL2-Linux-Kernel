@@ -280,6 +280,18 @@ struct ptp_clock *ptp_clock_register(struct ptp_clock_info *info,
 	if (err)
 		goto no_pin_groups;
 
+<<<<<<< HEAD
+=======
+	/* Create a new device in our class. */
+	ptp->dev = device_create_with_groups(ptp_class, parent, ptp->devid,
+					     ptp, ptp->pin_attr_groups,
+					     "ptp%d", ptp->index);
+	if (IS_ERR(ptp->dev)) {
+		err = PTR_ERR(ptp->dev);
+		goto no_device;
+	}
+
+>>>>>>> master
 	/* Register a new PPS source. */
 	if (info->pps) {
 		struct pps_source_info pps;
@@ -288,8 +300,13 @@ struct ptp_clock *ptp_clock_register(struct ptp_clock_info *info,
 		pps.mode = PTP_PPS_MODE;
 		pps.owner = info->owner;
 		ptp->pps_source = pps_register_source(&pps, PTP_PPS_DEFAULTS);
+<<<<<<< HEAD
 		if (IS_ERR(ptp->pps_source)) {
 			err = PTR_ERR(ptp->pps_source);
+=======
+		if (!ptp->pps_source) {
+			err = -EINVAL;
+>>>>>>> master
 			pr_err("failed to register pps source\n");
 			goto no_pps;
 		}

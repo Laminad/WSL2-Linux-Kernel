@@ -5570,12 +5570,18 @@ int dlm_user_request(struct dlm_ls *ls, struct dlm_user_args *ua,
 			goto out_put;
 		}
 	}
+<<<<<<< HEAD
 	error = set_lock_args(mode, &ua->lksb, flags, namelen, fake_astfn, ua,
 			      fake_bastfn, &args);
+=======
+	error = set_lock_args(mode, &ua->lksb, flags, namelen, timeout_cs,
+			      fake_astfn, ua, fake_bastfn, &args);
+>>>>>>> master
 	if (error) {
 		kfree(ua->lksb.sb_lvbptr);
 		ua->lksb.sb_lvbptr = NULL;
 		kfree(ua);
+<<<<<<< HEAD
 		goto out_put;
 	}
 
@@ -5583,6 +5589,16 @@ int dlm_user_request(struct dlm_ls *ls, struct dlm_user_args *ua,
 	   When DLM_DFL_USER_BIT is set, the dlm knows that this is a userspace
 	   lock and that lkb_astparam is the dlm_user_args structure. */
 	set_bit(DLM_DFL_USER_BIT, &lkb->lkb_dflags);
+=======
+		__put_lkb(ls, lkb);
+		goto out;
+	}
+
+	/* After ua is attached to lkb it will be freed by dlm_free_lkb().
+	   When DLM_IFL_USER is set, the dlm knows that this is a userspace
+	   lock and that lkb_astparam is the dlm_user_args structure. */
+	lkb->lkb_flags |= DLM_IFL_USER;
+>>>>>>> master
 	error = request_lock(ls, lkb, name, namelen, &args);
 
 	switch (error) {

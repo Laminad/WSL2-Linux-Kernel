@@ -172,9 +172,15 @@ struct kretprobe_instance {
 	struct llist_node llist;
 	struct kretprobe_holder *rph;
 	kprobe_opcode_t *ret_addr;
+<<<<<<< HEAD
 	void *fp;
 #endif
 	char data[];
+=======
+	struct task_struct *task;
+	void *fp;
+	char data[0];
+>>>>>>> master
 };
 
 struct kretprobe_blackpoint {

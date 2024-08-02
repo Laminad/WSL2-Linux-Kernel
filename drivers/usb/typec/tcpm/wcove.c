@@ -618,8 +618,15 @@ static int wcove_typec_probe(struct platform_device *pdev)
 	wcove->regmap = pmic->regmap;
 
 	irq = platform_get_irq(pdev, 0);
+<<<<<<< HEAD:drivers/usb/typec/tcpm/wcove.c
 	if (irq < 0)
 		return irq;
+=======
+	if (irq < 0) {
+		dev_err(&pdev->dev, "Failed to get IRQ: %d\n", irq);
+		return irq;
+	}
+>>>>>>> master:drivers/usb/typec/typec_wcove.c
 
 	irq = regmap_irq_get_virq(pmic->irq_chip_data_chgr, irq);
 	if (irq < 0)

@@ -645,12 +645,19 @@
         "PublicDescription": "Instructions per FP Arithmetic Scalar Double-Precision instruction (lower number means higher occurrence rate). May undercount due to FMA double counting."
     },
     {
+<<<<<<< HEAD
         "BriefDescription": "Instructions per FP Arithmetic Scalar Single-Precision instruction (lower number means higher occurrence rate)",
         "MetricExpr": "INST_RETIRED.ANY / FP_ARITH_INST_RETIRED.SCALAR_SINGLE",
         "MetricGroup": "Flops;FpScalar;InsType",
         "MetricName": "tma_info_inst_mix_iparith_scalar_sp",
         "MetricThreshold": "tma_info_inst_mix_iparith_scalar_sp < 10",
         "PublicDescription": "Instructions per FP Arithmetic Scalar Single-Precision instruction (lower number means higher occurrence rate). May undercount due to FMA double counting."
+=======
+        "BriefDescription": "Actual Average Latency for L1 data-cache miss demand loads",
+        "MetricExpr": "L1D_PEND_MISS.PENDING / ( MEM_LOAD_RETIRED.L1_MISS + MEM_LOAD_RETIRED.FB_HIT )",
+        "MetricGroup": "Memory_Bound;Memory_Lat",
+        "MetricName": "Load_Miss_Real_Latency"
+>>>>>>> master
     },
     {
         "BriefDescription": "Instructions per Branch (lower number means higher occurrence rate)",

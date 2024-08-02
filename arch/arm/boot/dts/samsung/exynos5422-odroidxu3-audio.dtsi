@@ -24,10 +24,38 @@
 			"Headphone Jack", "MICBIAS",
 			"IN12", "Headphone Jack",
 			"Speakers", "SPKL",
+<<<<<<< HEAD:arch/arm/boot/dts/samsung/exynos5422-odroidxu3-audio.dtsi
 			"Speakers", "SPKR",
 			"I2S Playback", "Mixer DAI TX",
 			"HiFi Playback", "Mixer DAI TX",
 			"Mixer DAI RX", "HiFi Capture";
+=======
+			"Speakers", "SPKR";
+
+		assigned-clocks = <&clock CLK_MOUT_EPLL>,
+				<&clock CLK_MOUT_MAU_EPLL>,
+				<&clock CLK_MOUT_USER_MAU_EPLL>,
+				<&clock_audss EXYNOS_MOUT_AUDSS>,
+				<&clock_audss EXYNOS_MOUT_I2S>,
+				<&clock_audss EXYNOS_DOUT_SRP>,
+				<&clock_audss EXYNOS_DOUT_AUD_BUS>,
+				<&clock_audss EXYNOS_DOUT_I2S>;
+
+		assigned-clock-parents = <&clock CLK_FOUT_EPLL>,
+				<&clock CLK_MOUT_EPLL>,
+				<&clock CLK_MOUT_MAU_EPLL>,
+				<&clock CLK_MAU_EPLL>,
+				<&clock_audss EXYNOS_MOUT_AUDSS>;
+
+		assigned-clock-rates = <0>,
+				<0>,
+				<0>,
+				<0>,
+				<0>,
+				<196608001>,
+				<(196608002 / 2)>,
+				<196608000>;
+>>>>>>> master:arch/arm/boot/dts/exynos5422-odroidxu3-audio.dtsi
 
 		cpu {
 			sound-dai = <&i2s0 0>, <&i2s0 1>;
@@ -53,6 +81,7 @@
 
 &i2s0 {
 	status = "okay";
+<<<<<<< HEAD:arch/arm/boot/dts/samsung/exynos5422-odroidxu3-audio.dtsi
 	assigned-clocks = <&clock CLK_MOUT_EPLL>,
 			<&clock CLK_MOUT_MAU_EPLL>,
 			<&clock CLK_MOUT_USER_MAU_EPLL>,
@@ -80,4 +109,8 @@
 			<(196608002 / 2)>,
 			<196608000>;
 
+=======
+	assigned-clocks = <&i2s0 CLK_I2S_RCLK_SRC>;
+	assigned-clock-parents = <&clock_audss EXYNOS_SCLK_I2S>;
+>>>>>>> master:arch/arm/boot/dts/exynos5422-odroidxu3-audio.dtsi
 };

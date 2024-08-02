@@ -122,6 +122,12 @@ if major >= 3:
             "__bpf_kfunc",
         ]
 
+<<<<<<< HEAD
+=======
+# The name of the math extension changed on Sphinx 1.4
+if (major == 1 and minor > 3) or (major > 1):
+    extensions.append("sphinx.ext.imgmath")
+>>>>>>> master
 else:
     extensions.append('cdomain')
 

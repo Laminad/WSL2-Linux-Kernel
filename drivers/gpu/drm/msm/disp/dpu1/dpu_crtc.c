@@ -1225,7 +1225,37 @@ static int dpu_crtc_atomic_check(struct drm_crtc *crtc,
 		if (!pstate->visible)
 			continue;
 
+<<<<<<< HEAD
 		dpu_pstate->needs_dirtyfb = needs_dirtyfb;
+=======
+		pstates[cnt].dpu_pstate = to_dpu_plane_state(pstate);
+		pstates[cnt].drm_pstate = pstate;
+		pstates[cnt].stage = pstate->normalized_zpos;
+		pstates[cnt].pipe_id = dpu_plane_pipe(plane);
+
+		if (pipe_staged[pstates[cnt].pipe_id]) {
+			multirect_plane[multirect_count].r0 =
+				pipe_staged[pstates[cnt].pipe_id];
+			multirect_plane[multirect_count].r1 = pstate;
+			multirect_count++;
+
+			pipe_staged[pstates[cnt].pipe_id] = NULL;
+		} else {
+			pipe_staged[pstates[cnt].pipe_id] = pstate;
+		}
+
+		cnt++;
+
+		dst = drm_plane_state_dest(pstate);
+		if (!drm_rect_intersect(&clip, &dst)) {
+			DPU_ERROR("invalid vertical/horizontal destination\n");
+			DPU_ERROR("display: " DRM_RECT_FMT " plane: "
+				  DRM_RECT_FMT "\n", DRM_RECT_ARG(&crtc_rect),
+				  DRM_RECT_ARG(&dst));
+			rc = -E2BIG;
+			goto end;
+		}
+>>>>>>> master
 	}
 
 	atomic_inc(&_dpu_crtc_get_kms(crtc)->bandwidth_ref);
@@ -1495,9 +1525,12 @@ struct drm_crtc *dpu_crtc_init(struct drm_device *dev, struct drm_plane *plane,
 				NULL);
 
 	drm_crtc_helper_add(crtc, &dpu_crtc_helper_funcs);
+<<<<<<< HEAD
 
 	if (dpu_kms->catalog->dspp_count)
 		drm_crtc_enable_color_mgmt(crtc, 0, true, 0);
+=======
+>>>>>>> master
 
 	/* save user friendly CRTC name for later */
 	snprintf(dpu_crtc->name, DPU_CRTC_NAME_SIZE, "crtc%u", crtc->base.id);

@@ -11,7 +11,10 @@
 #include <linux/of.h>
 #include <linux/of_dma.h>
 #include <linux/of_irq.h>
+<<<<<<< HEAD
 #include <linux/platform_device.h>
+=======
+>>>>>>> master
 #include <linux/pm_runtime.h>
 #include <linux/slab.h>
 
@@ -736,6 +739,7 @@ static int __maybe_unused tegra_adma_runtime_suspend(struct device *dev)
 	int i;
 
 	tdma->global_cmd = tdma_read(tdma, ADMA_GLOBAL_CMD);
+<<<<<<< HEAD
 	if (!tdma->global_cmd)
 		goto clk_disable;
 
@@ -757,6 +761,10 @@ static int __maybe_unused tegra_adma_runtime_suspend(struct device *dev)
 clk_disable:
 	clk_disable_unprepare(tdma->ahub_clk);
 
+=======
+	clk_disable_unprepare(tdma->ahub_clk);
+
+>>>>>>> master
 	return 0;
 }
 
@@ -866,6 +874,19 @@ static int tegra_adma_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "Error: Missing ahub controller clock\n");
 		return PTR_ERR(tdma->ahub_clk);
 	}
+<<<<<<< HEAD
+=======
+
+	pm_runtime_enable(&pdev->dev);
+
+	ret = pm_runtime_get_sync(&pdev->dev);
+	if (ret < 0)
+		goto rpm_disable;
+
+	ret = tegra_adma_init(tdma);
+	if (ret)
+		goto rpm_put;
+>>>>>>> master
 
 	INIT_LIST_HEAD(&tdma->dma_dev.channels);
 	for (i = 0; i < tdma->nr_channels; i++) {
@@ -942,9 +963,12 @@ rpm_put:
 	pm_runtime_put_sync(&pdev->dev);
 rpm_disable:
 	pm_runtime_disable(&pdev->dev);
+<<<<<<< HEAD
 irq_dispose:
 	while (--i >= 0)
 		irq_dispose_mapping(tdma->channels[i].irq);
+=======
+>>>>>>> master
 
 	return ret;
 }

@@ -60,7 +60,11 @@ needed for exploiting MDS requires:
    data
 
 The existence of such a construct in the kernel cannot be excluded with
+<<<<<<< HEAD:Documentation/arch/x86/mds.rst
 100% certainty, but the complexity involved makes it extremely unlikely.
+=======
+100% certainty, but the complexity involved makes it extremly unlikely.
+>>>>>>> master:Documentation/x86/mds.rst
 
 There is one exception, which is untrusted BPF. The functionality of
 untrusted BPF is limited, but it needs to be thoroughly investigated
@@ -95,9 +99,12 @@ The kernel provides a function to invoke the buffer clearing:
 
     mds_clear_cpu_buffers()
 
+<<<<<<< HEAD:Documentation/arch/x86/mds.rst
 Also macro CLEAR_CPU_BUFFERS can be used in ASM late in exit-to-user path.
 Other than CFLAGS.ZF, this macro doesn't clobber any registers.
 
+=======
+>>>>>>> master:Documentation/x86/mds.rst
 The mitigation is invoked on kernel/userspace, hypervisor/guest and C-state
 (idle) transitions.
 
@@ -141,6 +148,7 @@ Mitigation points
 
    When transitioning from kernel to user space the CPU buffers are flushed
    on affected CPUs when the mitigation is not disabled on the kernel
+<<<<<<< HEAD:Documentation/arch/x86/mds.rst
    command line. The mitigation is enabled through the feature flag
    X86_FEATURE_CLEAR_CPU_BUF.
 
@@ -165,6 +173,19 @@ Mitigation points
       restored and most interesting data is already scrubbed. Whats left
       is only the data that NMI touches, and that may or may not be of
       any interest.
+=======
+   command line. The migitation is enabled through the static key
+   mds_user_clear.
+
+   The mitigation is invoked in prepare_exit_to_usermode() which covers
+   all but one of the kernel to user space transitions.  The exception
+   is when we return from a Non Maskable Interrupt (NMI), which is
+   handled directly in do_nmi().
+
+   (The reason that NMI is special is that prepare_exit_to_usermode() can
+    enable IRQs.  In NMI context, NMIs are blocked, and we don't want to
+    enable IRQs with NMIs blocked.)
+>>>>>>> master:Documentation/x86/mds.rst
 
 
 2. C-State transition

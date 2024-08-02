@@ -82,6 +82,15 @@ void rpmh_tx_done(const struct tcs_request *msg)
 						    msg);
 	struct completion *compl = rpm_msg->completion;
 	bool free = rpm_msg->needs_free;
+<<<<<<< HEAD
+=======
+
+	rpm_msg->err = r;
+
+	if (r)
+		dev_err(rpm_msg->dev, "RPMH TX fail in msg addr=%#x, err=%d\n",
+			rpm_msg->msg.cmds[0].addr, r);
+>>>>>>> master
 
 	if (!compl)
 		goto exit;

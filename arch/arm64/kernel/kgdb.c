@@ -236,6 +236,9 @@ int kgdb_arch_handle_exception(int exception_vector, int signo,
 
 static int kgdb_brk_fn(struct pt_regs *regs, unsigned long esr)
 {
+	if (user_mode(regs))
+		return DBG_HOOK_ERROR;
+
 	kgdb_handle_exception(1, SIGTRAP, 0, regs);
 	return DBG_HOOK_HANDLED;
 }
@@ -243,6 +246,9 @@ NOKPROBE_SYMBOL(kgdb_brk_fn)
 
 static int kgdb_compiled_brk_fn(struct pt_regs *regs, unsigned long esr)
 {
+	if (user_mode(regs))
+		return DBG_HOOK_ERROR;
+
 	compiled_break = 1;
 	kgdb_handle_exception(1, SIGTRAP, 0, regs);
 
@@ -252,10 +258,14 @@ NOKPROBE_SYMBOL(kgdb_compiled_brk_fn);
 
 static int kgdb_step_brk_fn(struct pt_regs *regs, unsigned long esr)
 {
-	if (!kgdb_single_step)
+	if (user_mode(regs) || !kgdb_single_step)
 		return DBG_HOOK_ERROR;
 
+<<<<<<< HEAD
 	kgdb_handle_exception(0, SIGTRAP, 0, regs);
+=======
+	kgdb_handle_exception(1, SIGTRAP, 0, regs);
+>>>>>>> master
 	return DBG_HOOK_HANDLED;
 }
 NOKPROBE_SYMBOL(kgdb_step_brk_fn);

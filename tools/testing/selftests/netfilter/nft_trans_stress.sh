@@ -9,6 +9,7 @@
 # Kselftest framework requirement - SKIP code is 4.
 ksft_skip=4
 
+<<<<<<< HEAD
 testns=testns-$(mktemp -u "XXXXXXXX")
 tmp=""
 
@@ -38,6 +39,10 @@ check_result()
 
 	eret=0
 }
+=======
+testns=testns1
+tables="foo bar baz quux"
+>>>>>>> master
 
 nft --version > /dev/null 2>&1
 if [ $? -ne 0 ];then
@@ -51,7 +56,10 @@ if [ $? -ne 0 ];then
 	exit $ksft_skip
 fi
 
+<<<<<<< HEAD
 trap cleanup EXIT
+=======
+>>>>>>> master
 tmp=$(mktemp)
 
 for table in $tables; do
@@ -87,6 +95,7 @@ done)
 
 sleep 1
 
+<<<<<<< HEAD
 ip netns exec "$testns" nft -f "$tmp"
 for i in $(seq 1 10) ; do ip netns exec "$testns" nft -f "$tmp" & done
 
@@ -149,3 +158,22 @@ done
 check_result $lret "add/delete with nftrace enabled"
 
 exit $global_ret
+=======
+for i in $(seq 1 10) ; do ip netns exec "$testns" nft -f "$tmp" & done
+
+for table in $tables;do
+	randsleep=$((RANDOM%10))
+	sleep $randsleep
+	ip netns exec "$testns" nft delete table inet $table 2>/dev/null
+done
+
+randsleep=$((RANDOM%10))
+sleep $randsleep
+
+pkill -9 ping
+
+wait
+
+rm -f "$tmp"
+ip netns del "$testns"
+>>>>>>> master

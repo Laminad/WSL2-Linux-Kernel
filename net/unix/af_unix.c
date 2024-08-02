@@ -1191,8 +1191,15 @@ retry:
 		goto retry;
 	}
 
+<<<<<<< HEAD
 	__unix_set_addr_hash(net, sk, addr, new_hash);
 	unix_table_double_unlock(net, old_hash, new_hash);
+=======
+	__unix_remove_socket(sk);
+	smp_store_release(&u->addr, addr);
+	__unix_insert_socket(&unix_socket_table[addr->hash], sk);
+	spin_unlock(&unix_table_lock);
+>>>>>>> master
 	err = 0;
 
 out:	mutex_unlock(&u->bindlock);
@@ -1331,6 +1338,50 @@ static int unix_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	else
 		err = unix_bind_abstract(sk, sunaddr, addr_len);
 
+<<<<<<< HEAD
+=======
+	err = -ENOMEM;
+	addr = kmalloc(sizeof(*addr)+addr_len, GFP_KERNEL);
+	if (!addr)
+		goto out_up;
+
+	memcpy(addr->name, sunaddr, addr_len);
+	addr->len = addr_len;
+	addr->hash = hash ^ sk->sk_type;
+	refcount_set(&addr->refcnt, 1);
+
+	if (sun_path[0]) {
+		addr->hash = UNIX_HASH_SIZE;
+		hash = d_backing_inode(path.dentry)->i_ino & (UNIX_HASH_SIZE - 1);
+		spin_lock(&unix_table_lock);
+		u->path = path;
+		list = &unix_socket_table[hash];
+	} else {
+		spin_lock(&unix_table_lock);
+		err = -EADDRINUSE;
+		if (__unix_find_socket_byname(net, sunaddr, addr_len,
+					      sk->sk_type, hash)) {
+			unix_release_addr(addr);
+			goto out_unlock;
+		}
+
+		list = &unix_socket_table[addr->hash];
+	}
+
+	err = 0;
+	__unix_remove_socket(sk);
+	smp_store_release(&u->addr, addr);
+	__unix_insert_socket(list, sk);
+
+out_unlock:
+	spin_unlock(&unix_table_lock);
+out_up:
+	mutex_unlock(&u->bindlock);
+out_put:
+	if (err)
+		path_put(&path);
+out:
+>>>>>>> master
 	return err;
 }
 
@@ -1613,9 +1664,15 @@ restart:
 	 *
 	 * The contents of *(otheru->addr) and otheru->path
 	 * are seen fully set up here, since we have found
+<<<<<<< HEAD
 	 * otheru in hash under its lock.  Insertion into the
 	 * hash chain we'd found it in had been done in an
 	 * earlier critical area protected by the chain's lock,
+=======
+	 * otheru in hash under unix_table_lock.  Insertion
+	 * into the hash chain we'd found it in had been done
+	 * in an earlier critical area protected by unix_table_lock,
+>>>>>>> master
 	 * the same one where we'd set *(otheru->addr) contents,
 	 * as well as otheru->path and otheru->addr itself.
 	 *
@@ -3143,8 +3200,12 @@ static __poll_t unix_dgram_poll(struct file *file, struct socket *sock,
 	state = READ_ONCE(sk->sk_state);
 
 	/* exceptional events? */
+<<<<<<< HEAD
 	if (READ_ONCE(sk->sk_err) ||
 	    !skb_queue_empty_lockless(&sk->sk_error_queue))
+=======
+	if (sk->sk_err || !skb_queue_empty_lockless(&sk->sk_error_queue))
+>>>>>>> master
 		mask |= EPOLLERR |
 			(sock_flag(sk, SOCK_SELECT_ERR_QUEUE) ? EPOLLPRI : 0);
 
@@ -3155,8 +3216,11 @@ static __poll_t unix_dgram_poll(struct file *file, struct socket *sock,
 
 	/* readable? */
 	if (!skb_queue_empty_lockless(&sk->sk_receive_queue))
+<<<<<<< HEAD
 		mask |= EPOLLIN | EPOLLRDNORM;
 	if (sk_is_readable(sk))
+=======
+>>>>>>> master
 		mask |= EPOLLIN | EPOLLRDNORM;
 
 	/* Connection-based need to check for termination and startup */
@@ -3298,7 +3362,11 @@ static int unix_seq_show(struct seq_file *seq, void *v)
 			(s->sk_state == TCP_ESTABLISHED ? SS_CONNECTING : SS_DISCONNECTING),
 			sock_i_ino(s));
 
+<<<<<<< HEAD
 		if (u->addr) {	// under a hash table lock here
+=======
+		if (u->addr) {	// under unix_table_lock here
+>>>>>>> master
 			int i, len;
 			seq_putc(seq, ' ');
 

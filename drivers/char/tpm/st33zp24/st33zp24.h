@@ -7,9 +7,12 @@
 #ifndef __LOCAL_ST33ZP24_H__
 #define __LOCAL_ST33ZP24_H__
 
+<<<<<<< HEAD
 #define TPM_ST33_I2C		"st33zp24-i2c"
 #define TPM_ST33_SPI		"st33zp24-spi"
 
+=======
+>>>>>>> master
 #define TPM_WRITE_DIRECTION	0x80
 #define ST33ZP24_BUFSIZE	2048
 

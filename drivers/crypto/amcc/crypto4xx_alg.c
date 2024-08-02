@@ -103,6 +103,19 @@ int crypto4xx_decrypt_noiv_block(struct skcipher_request *req)
 int crypto4xx_decrypt_iv_stream(struct skcipher_request *req)
 {
 	return crypto4xx_crypt(req, AES_IV_SIZE, true, false);
+<<<<<<< HEAD
+=======
+}
+
+int crypto4xx_encrypt_iv_block(struct skcipher_request *req)
+{
+	return crypto4xx_crypt(req, AES_IV_SIZE, false, true);
+}
+
+int crypto4xx_decrypt_iv_block(struct skcipher_request *req)
+{
+	return crypto4xx_crypt(req, AES_IV_SIZE, true, true);
+>>>>>>> master
 }
 
 int crypto4xx_encrypt_iv_block(struct skcipher_request *req)

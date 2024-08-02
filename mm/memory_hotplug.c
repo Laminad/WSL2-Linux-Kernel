@@ -34,12 +34,16 @@
 #include <linux/memblock.h>
 #include <linux/compaction.h>
 #include <linux/rmap.h>
+<<<<<<< HEAD
 #include <linux/module.h>
+=======
+>>>>>>> master
 
 #include <asm/tlbflush.h>
 
 #include "internal.h"
 #include "shuffle.h"
+<<<<<<< HEAD
 
 enum {
 	MEMMAP_ON_MEMORY_DISABLE = 0,
@@ -194,6 +198,9 @@ MODULE_PARM_DESC(auto_movable_numa_aware,
 		"Consider numa node stats in addition to global stats in "
 		"\"auto-movable\" online policy. Default: true");
 #endif /* CONFIG_NUMA */
+=======
+#include "page_reporting.h"
+>>>>>>> master
 
 /*
  * online_page_callback contains pointer to current page onlining function.
@@ -581,12 +588,33 @@ void __remove_pages(unsigned long pfn, unsigned long nr_pages,
 		return;
 	}
 
+<<<<<<< HEAD
 	for (; pfn < end_pfn; pfn += cur_nr_pages) {
 		cond_resched();
 		/* Select all remaining pages up to the next section boundary */
 		cur_nr_pages = min(end_pfn - pfn,
 				   SECTION_ALIGN_UP(pfn + 1) - pfn);
 		sparse_remove_section(pfn, cur_nr_pages, altmap);
+=======
+	clear_zone_contiguous(zone);
+
+	/*
+	 * We can only remove entire sections
+	 */
+	BUG_ON(phys_start_pfn & ~PAGE_SECTION_MASK);
+	BUG_ON(nr_pages % PAGES_PER_SECTION);
+
+	sections_to_remove = nr_pages / PAGES_PER_SECTION;
+	for (i = 0; i < sections_to_remove; i++) {
+		unsigned long pfn = phys_start_pfn + i*PAGES_PER_SECTION;
+
+		cond_resched();
+		ret = __remove_section(zone, __pfn_to_section(pfn), map_offset,
+				altmap);
+		map_offset = 0;
+		if (ret)
+			break;
+>>>>>>> master
 	}
 }
 
@@ -1074,6 +1102,7 @@ void adjust_present_page_count(struct page *page, struct memory_group *group,
 	 * We only support onlining/offlining/adding/removing of complete
 	 * memory blocks; therefore, either all is either early or hotplugged.
 	 */
+<<<<<<< HEAD
 	if (early_section(__pfn_to_section(page_to_pfn(page))))
 		zone->present_early_pages += nr_pages;
 	zone->present_pages += nr_pages;
@@ -1154,6 +1183,11 @@ int __ref online_pages(unsigned long pfn, unsigned long nr_pages,
 			 !IS_ALIGNED(pfn + nr_pages, PAGES_PER_SECTION)))
 		return -EINVAL;
 
+=======
+	mem = find_memory_block(__pfn_to_section(pfn));
+	nid = mem->nid;
+	put_device(&mem->dev);
+>>>>>>> master
 
 	/* associate pfn range with the zone */
 	move_pfn_range_to_zone(zone, pfn, nr_pages, NULL, MIGRATE_ISOLATE);
@@ -1195,6 +1229,7 @@ int __ref online_pages(unsigned long pfn, unsigned long nr_pages,
 	/* Basic onlining is complete, allow allocation of onlined pages. */
 	undo_isolate_page_range(pfn, pfn + nr_pages, MIGRATE_MOVABLE);
 
+<<<<<<< HEAD
 	/*
 	 * Freshly onlined pages aren't shuffled (e.g., all pages are placed to
 	 * the tail of the freelist when undoing isolation). Shuffle the whole
@@ -1202,6 +1237,17 @@ int __ref online_pages(unsigned long pfn, unsigned long nr_pages,
 	 * across the whole freelist - to create an initial shuffle.
 	 */
 	shuffle_zone(zone);
+=======
+	shuffle_zone(zone);
+
+	if (onlined_pages) {
+		node_states_set_node(nid, &arg);
+		if (need_zonelists_rebuild)
+			build_all_zonelists(NULL);
+		else
+			zone_pcp_update(zone);
+	}
+>>>>>>> master
 
 	/* reinitialise watermarks and update pcp limits */
 	init_per_zone_wmark_min();
@@ -1643,6 +1689,132 @@ bool mhp_range_allowed(u64 start, u64 size, bool need_mapping)
 
 #ifdef CONFIG_MEMORY_HOTREMOVE
 /*
+<<<<<<< HEAD
+=======
+ * A free page on the buddy free lists (not the per-cpu lists) has PageBuddy
+ * set and the size of the free page is given by page_order(). Using this,
+ * the function determines if the pageblock contains only free pages.
+ * Due to buddy contraints, a free page at least the size of a pageblock will
+ * be located at the start of the pageblock
+ */
+static inline int pageblock_free(struct page *page)
+{
+	return PageBuddy(page) && page_order(page) >= pageblock_order;
+}
+
+/* Return the pfn of the start of the next active pageblock after a given pfn */
+static unsigned long next_active_pageblock(unsigned long pfn)
+{
+	struct page *page = pfn_to_page(pfn);
+
+	/* Ensure the starting page is pageblock-aligned */
+	BUG_ON(pfn & (pageblock_nr_pages - 1));
+
+	/* If the entire pageblock is free, move to the end of free page */
+	if (pageblock_free(page)) {
+		int order;
+		/* be careful. we don't have locks, page_order can be changed.*/
+		order = page_order(page);
+		if ((order < MAX_ORDER) && (order >= pageblock_order))
+			return pfn + (1 << order);
+	}
+
+	return pfn + pageblock_nr_pages;
+}
+
+static bool is_pageblock_removable_nolock(unsigned long pfn)
+{
+	struct page *page = pfn_to_page(pfn);
+	struct zone *zone;
+
+	/*
+	 * We have to be careful here because we are iterating over memory
+	 * sections which are not zone aware so we might end up outside of
+	 * the zone but still within the section.
+	 * We have to take care about the node as well. If the node is offline
+	 * its NODE_DATA will be NULL - see page_zone.
+	 */
+	if (!node_online(page_to_nid(page)))
+		return false;
+
+	zone = page_zone(page);
+	pfn = page_to_pfn(page);
+	if (!zone_spans_pfn(zone, pfn))
+		return false;
+
+	return !has_unmovable_pages(zone, page, 0, MIGRATE_MOVABLE, true);
+}
+
+/* Checks if this range of memory is likely to be hot-removable. */
+bool is_mem_section_removable(unsigned long start_pfn, unsigned long nr_pages)
+{
+	unsigned long end_pfn, pfn;
+
+	end_pfn = min(start_pfn + nr_pages,
+			zone_end_pfn(page_zone(pfn_to_page(start_pfn))));
+
+	/* Check the starting page of each pageblock within the range */
+	for (pfn = start_pfn; pfn < end_pfn; pfn = next_active_pageblock(pfn)) {
+		if (!is_pageblock_removable_nolock(pfn))
+			return false;
+		cond_resched();
+	}
+
+	/* All pageblocks in the memory block are likely to be hot-removable */
+	return true;
+}
+
+/*
+ * Confirm all pages in a range [start, end) belong to the same zone.
+ * When true, return its valid [start, end).
+ */
+int test_pages_in_a_zone(unsigned long start_pfn, unsigned long end_pfn,
+			 unsigned long *valid_start, unsigned long *valid_end)
+{
+	unsigned long pfn, sec_end_pfn;
+	unsigned long start, end;
+	struct zone *zone = NULL;
+	struct page *page;
+	int i;
+	for (pfn = start_pfn, sec_end_pfn = SECTION_ALIGN_UP(start_pfn + 1);
+	     pfn < end_pfn;
+	     pfn = sec_end_pfn, sec_end_pfn += PAGES_PER_SECTION) {
+		/* Make sure the memory section is present first */
+		if (!present_section_nr(pfn_to_section_nr(pfn)))
+			continue;
+		for (; pfn < sec_end_pfn && pfn < end_pfn;
+		     pfn += MAX_ORDER_NR_PAGES) {
+			i = 0;
+			/* This is just a CONFIG_HOLES_IN_ZONE check.*/
+			while ((i < MAX_ORDER_NR_PAGES) &&
+				!pfn_valid_within(pfn + i))
+				i++;
+			if (i == MAX_ORDER_NR_PAGES || pfn + i >= end_pfn)
+				continue;
+			/* Check if we got outside of the zone */
+			if (zone && !zone_spans_pfn(zone, pfn + i))
+				return 0;
+			page = pfn_to_page(pfn + i);
+			if (zone && page_zone(page) != zone)
+				return 0;
+			if (!zone)
+				start = pfn + i;
+			zone = page_zone(page);
+			end = pfn + MAX_ORDER_NR_PAGES;
+		}
+	}
+
+	if (zone) {
+		*valid_start = start;
+		*valid_end = min(end, end_pfn);
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+/*
+>>>>>>> master
  * Scan pfn range [start,end) to find movable/migratable pages (LRU pages,
  * non-lru movable pages and hugepages). Will skip over most unmovable
  * pages (esp., pages that can be skipped when offlining), but bail out on
@@ -1661,6 +1833,29 @@ static int scan_movable_pages(unsigned long start, unsigned long end,
 	for (pfn = start; pfn < end; pfn++) {
 		struct page *page, *head;
 		unsigned long skip;
+<<<<<<< HEAD
+=======
+
+		if (!pfn_valid(pfn))
+			continue;
+		page = pfn_to_page(pfn);
+		if (PageLRU(page))
+			return pfn;
+		if (__PageMovable(page))
+			return pfn;
+
+		if (!PageHuge(page))
+			continue;
+		head = compound_head(page);
+		if (hugepage_migration_supported(page_hstate(head)) &&
+		    page_huge_active(head))
+			return pfn;
+		skip = (1 << compound_order(head)) - (page - head);
+		pfn += skip - 1;
+	}
+	return 0;
+}
+>>>>>>> master
 
 		if (!pfn_valid(pfn))
 			continue;
@@ -1737,6 +1932,21 @@ static void do_migrate_range(unsigned long start_pfn, unsigned long end_pfn)
 				folio_isolate_lru(folio);
 			if (folio_mapped(folio))
 				try_to_unmap(folio, TTU_IGNORE_MLOCK);
+			continue;
+		}
+
+		/*
+		 * HWPoison pages have elevated reference counts so the migration would
+		 * fail on them. It also doesn't make any sense to migrate them in the
+		 * first place. Still try to unmap such a page in case it is still mapped
+		 * (e.g. current hwpoison implementation doesn't unmap KSM pages but keep
+		 * the unmap as the catch all safety net).
+		 */
+		if (PageHWPoison(page)) {
+			if (WARN_ON(PageLRU(page)))
+				isolate_lru_page(page);
+			if (page_mapped(page))
+				try_to_unmap(page, TTU_IGNORE_MLOCK | TTU_IGNORE_ACCESS);
 			continue;
 		}
 
@@ -2018,7 +2228,13 @@ int __ref offline_pages(unsigned long start_pfn, unsigned long nr_pages,
 	if (!populated_zone(zone)) {
 		zone_pcp_reset(zone);
 		build_all_zonelists(NULL);
+<<<<<<< HEAD
 	}
+=======
+		page_reporting_reset_zone(zone);
+	} else
+		zone_pcp_update(zone);
+>>>>>>> master
 
 	node_states_clear_node(node, &arg);
 	if (arg.status_change_nid >= 0) {

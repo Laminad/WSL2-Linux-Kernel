@@ -202,6 +202,7 @@ void bt_accept_enqueue(struct sock *parent, struct sock *sk, bool bh)
 	list_add_tail(&bt_sk(sk)->accept_q, &bt_sk(parent)->accept_q);
 	bt_sk(sk)->parent = parent;
 
+<<<<<<< HEAD
 	/* Copy credentials from parent since for incoming connections the
 	 * socket is allocated by the kernel.
 	 */
@@ -215,12 +216,18 @@ void bt_accept_enqueue(struct sock *parent, struct sock *sk, bool bh)
 	put_pid(old_pid);
 	put_cred(old_cred);
 
+=======
+>>>>>>> master
 	if (bh)
 		bh_unlock_sock(sk);
 	else
 		release_sock(sk);
 
+<<<<<<< HEAD
 	sk_acceptq_added(parent);
+=======
+	parent->sk_ack_backlog++;
+>>>>>>> master
 }
 EXPORT_SYMBOL(bt_accept_enqueue);
 

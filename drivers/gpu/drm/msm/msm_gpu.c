@@ -372,7 +372,29 @@ static void recover_worker(struct kthread_work *work)
 		if (submit->aspace)
 			submit->aspace->faults++;
 
+<<<<<<< HEAD
 		get_comm_cmdline(submit, &comm, &cmd);
+=======
+		task = get_pid_task(submit->pid, PIDTYPE_PID);
+		if (task) {
+			comm = kstrdup(task->comm, GFP_KERNEL);
+
+			/*
+			 * So slightly annoying, in other paths like
+			 * mmap'ing gem buffers, mmap_sem is acquired
+			 * before struct_mutex, which means we can't
+			 * hold struct_mutex across the call to
+			 * get_cmdline().  But submits are retired
+			 * from the same in-order workqueue, so we can
+			 * safely drop the lock here without worrying
+			 * about the submit going away.
+			 */
+			mutex_unlock(&dev->struct_mutex);
+			cmd = kstrdup_quotable_cmdline(task, GFP_KERNEL);
+			put_task_struct(task);
+			mutex_lock(&dev->struct_mutex);
+		}
+>>>>>>> master
 
 		if (comm && cmd) {
 			DRM_DEV_ERROR(dev->dev, "%s: offending task: %s (%s)\n",

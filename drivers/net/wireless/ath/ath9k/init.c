@@ -691,7 +691,13 @@ static int ath9k_of_init(struct ath_softc *sc)
 		ah->ah_flags |= AH_NO_EEP_SWAP;
 	}
 
+<<<<<<< HEAD
 	of_get_mac_address(np, common->macaddr);
+=======
+	mac = of_get_mac_address(np);
+	if (mac)
+		ether_addr_copy(common->macaddr, mac);
+>>>>>>> master
 
 	return 0;
 }

@@ -509,6 +509,10 @@ void snd_card_disconnect(struct snd_card *card)
 	card->shutdown = 1;
 
 	/* replace file->f_op with special dummy operations */
+<<<<<<< HEAD
+=======
+	spin_lock(&card->files_lock);
+>>>>>>> master
 	list_for_each_entry(mfile, &card->files_list, list) {
 		/* it's critical part, use endless loop */
 		/* we have no room to fail */
@@ -523,6 +527,7 @@ void snd_card_disconnect(struct snd_card *card)
 	}
 	spin_unlock(&card->files_lock);	
 
+<<<<<<< HEAD
 #ifdef CONFIG_PM
 	/* wake up sleepers here before other callbacks for avoiding potential
 	 * deadlocks with other locks (e.g. in kctls);
@@ -531,6 +536,8 @@ void snd_card_disconnect(struct snd_card *card)
 	wake_up_all(&card->power_sleep);
 #endif
 
+=======
+>>>>>>> master
 	/* notify all connected devices about disconnection */
 	/* at this point, they cannot respond to any calls except release() */
 

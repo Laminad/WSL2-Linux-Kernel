@@ -666,8 +666,17 @@ static umode_t region_visible(struct kobject *kobj, struct attribute *a, int n)
 	if (!is_memory(dev) && a == &dev_attr_badblocks.attr)
 		return 0;
 
+<<<<<<< HEAD
 	if (a == &dev_attr_resource.attr && !is_memory(dev))
 		return 0;
+=======
+	if (a == &dev_attr_resource.attr) {
+		if (is_memory(dev))
+			return 0400;
+		else
+			return 0;
+	}
+>>>>>>> master
 
 	if (a == &dev_attr_deep_flush.attr) {
 		int has_flush = nvdimm_has_flush(nd_region);
@@ -1219,7 +1228,52 @@ int nvdimm_has_cache(struct nd_region *nd_region)
 }
 EXPORT_SYMBOL_GPL(nvdimm_has_cache);
 
+<<<<<<< HEAD
 bool is_nvdimm_sync(struct nd_region *nd_region)
+=======
+struct conflict_context {
+	struct nd_region *nd_region;
+	resource_size_t start, size;
+};
+
+static int region_conflict(struct device *dev, void *data)
+{
+	struct nd_region *nd_region;
+	struct conflict_context *ctx = data;
+	resource_size_t res_end, region_end, region_start;
+
+	if (!is_memory(dev))
+		return 0;
+
+	nd_region = to_nd_region(dev);
+	if (nd_region == ctx->nd_region)
+		return 0;
+
+	res_end = ctx->start + ctx->size;
+	region_start = nd_region->ndr_start;
+	region_end = region_start + nd_region->ndr_size;
+	if (ctx->start >= region_start && ctx->start < region_end)
+		return -EBUSY;
+	if (res_end > region_start && res_end <= region_end)
+		return -EBUSY;
+	return 0;
+}
+
+int nd_region_conflict(struct nd_region *nd_region, resource_size_t start,
+		resource_size_t size)
+{
+	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(&nd_region->dev);
+	struct conflict_context ctx = {
+		.nd_region = nd_region,
+		.start = start,
+		.size = size,
+	};
+
+	return device_for_each_child(&nvdimm_bus->dev, &ctx, region_conflict);
+}
+
+void __exit nd_region_devs_exit(void)
+>>>>>>> master
 {
 	if (is_nd_volatile(&nd_region->dev))
 		return true;

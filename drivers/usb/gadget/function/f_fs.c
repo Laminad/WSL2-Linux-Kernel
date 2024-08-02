@@ -1089,9 +1089,14 @@ static ssize_t ffs_epfile_io(struct file *file, struct ffs_io_data *io_data)
 			 * condition with req->complete callback.
 			 */
 			usb_ep_dequeue(ep->ep, req);
+<<<<<<< HEAD
 			spin_unlock_irq(&epfile->ffs->eps_lock);
 			wait_for_completion(&io_data->done);
 			interrupted = io_data->status < 0;
+=======
+			wait_for_completion(&done);
+			interrupted = ep->status < 0;
+>>>>>>> master
 		}
 
 		if (interrupted)
@@ -1159,24 +1164,41 @@ ffs_epfile_open(struct inode *inode, struct file *file)
 	file->private_data = epfile;
 	ffs_data_opened(epfile->ffs);
 
+<<<<<<< HEAD
 	return stream_open(inode, file);
+=======
+	return 0;
+>>>>>>> master
 }
 
 static int ffs_aio_cancel(struct kiocb *kiocb)
 {
 	struct ffs_io_data *io_data = kiocb->private;
 	struct ffs_epfile *epfile = kiocb->ki_filp->private_data;
+<<<<<<< HEAD
 	unsigned long flags;
+=======
+>>>>>>> master
 	int value;
 
 	spin_lock_irqsave(&epfile->ffs->eps_lock, flags);
 
+<<<<<<< HEAD
 	if (io_data && io_data->ep && io_data->req)
+=======
+	spin_lock_irq(&epfile->ffs->eps_lock);
+
+	if (likely(io_data && io_data->ep && io_data->req))
+>>>>>>> master
 		value = usb_ep_dequeue(io_data->ep, io_data->req);
 	else
 		value = -EINVAL;
 
+<<<<<<< HEAD
 	spin_unlock_irqrestore(&epfile->ffs->eps_lock, flags);
+=======
+	spin_unlock_irq(&epfile->ffs->eps_lock);
+>>>>>>> master
 
 	return value;
 }
@@ -1188,7 +1210,11 @@ static ssize_t ffs_epfile_write_iter(struct kiocb *kiocb, struct iov_iter *from)
 
 	if (!is_sync_kiocb(kiocb)) {
 		p = kzalloc(sizeof(io_data), GFP_KERNEL);
+<<<<<<< HEAD
 		if (!p)
+=======
+		if (unlikely(!p))
+>>>>>>> master
 			return -ENOMEM;
 		p->aio = true;
 	} else {
@@ -1223,7 +1249,11 @@ static ssize_t ffs_epfile_read_iter(struct kiocb *kiocb, struct iov_iter *to)
 
 	if (!is_sync_kiocb(kiocb)) {
 		p = kzalloc(sizeof(io_data), GFP_KERNEL);
+<<<<<<< HEAD
 		if (!p)
+=======
+		if (unlikely(!p))
+>>>>>>> master
 			return -ENOMEM;
 		p->aio = true;
 	} else {

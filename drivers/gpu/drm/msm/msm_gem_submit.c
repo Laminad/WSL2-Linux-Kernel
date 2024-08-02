@@ -744,6 +744,10 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 	struct msm_file_private *ctx = file->driver_priv;
 	struct msm_gem_submit *submit = NULL;
 	struct msm_gpu *gpu = priv->gpu;
+<<<<<<< HEAD
+=======
+	struct sync_file *sync_file = NULL;
+>>>>>>> master
 	struct msm_gpu_submitqueue *queue;
 	struct msm_ringbuffer *ring;
 	struct msm_submit_post_dep *post_deps = NULL;
@@ -783,7 +787,36 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 	if (!queue)
 		return -ENOENT;
 
+<<<<<<< HEAD
 	ring = gpu->rb[queue->ring_nr];
+=======
+	ring = gpu->rb[queue->prio];
+
+	if (args->flags & MSM_SUBMIT_FENCE_FD_IN) {
+		struct dma_fence *in_fence;
+
+		in_fence = sync_file_get_fence(args->fence_fd);
+
+		if (!in_fence)
+			return -EINVAL;
+
+		/*
+		 * Wait if the fence is from a foreign context, or if the fence
+		 * array contains any fence from a foreign context.
+		 */
+		ret = 0;
+		if (!dma_fence_match_context(in_fence, ring->fctx->context))
+			ret = dma_fence_wait(in_fence, true);
+
+		dma_fence_put(in_fence);
+		if (ret)
+			return ret;
+	}
+
+	ret = mutex_lock_interruptible(&dev->struct_mutex);
+	if (ret)
+		return ret;
+>>>>>>> master
 
 	if (args->flags & MSM_SUBMIT_FENCE_FD_OUT) {
 		out_fence_fd = get_unused_fd_flags(O_CLOEXEC);
@@ -992,9 +1025,15 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 
 
 out:
+<<<<<<< HEAD
 	submit_cleanup(submit, !!ret);
 	if (has_ww_ticket)
 		ww_acquire_fini(&submit->ticket);
+=======
+	submit_cleanup(submit);
+	if (ret)
+		msm_gem_submit_free(submit);
+>>>>>>> master
 out_unlock:
 	mutex_unlock(&queue->lock);
 out_post_unlock:

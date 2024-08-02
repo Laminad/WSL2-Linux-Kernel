@@ -1104,7 +1104,11 @@ ieee80211_crypto_aes_gmac_decrypt(struct ieee80211_rx_data *rx)
 		    crypto_memneq(mic, mmie->mic, sizeof(mmie->mic))) {
 			key->u.aes_gmac.icverrors++;
 			kfree(mic);
+<<<<<<< HEAD
 			return RX_DROP_U_MIC_FAIL;
+=======
+			return RX_DROP_UNUSABLE;
+>>>>>>> master
 		}
 		kfree(mic);
 	}

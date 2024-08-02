@@ -1062,7 +1062,10 @@ static int safexcel_skcipher_send(struct crypto_async_request *async, int ring,
 		ret = safexcel_send_req(async, ring, sreq, req->src,
 					req->dst, req->cryptlen, 0, 0, input_iv,
 					commands, results);
+<<<<<<< HEAD
 	}
+=======
+>>>>>>> master
 
 	sreq->rdescs = *results;
 	return ret;

@@ -356,7 +356,11 @@ static void uart_shutdown(struct tty_struct *tty, struct uart_state *state)
 {
 	struct uart_port *uport = uart_port_check(state);
 	struct tty_port *port = &state->port;
+<<<<<<< HEAD
 	unsigned long flags;
+=======
+	unsigned long flags = 0;
+>>>>>>> master
 	char *xmit_buf = NULL;
 
 	/*
@@ -404,7 +408,12 @@ static void uart_shutdown(struct tty_struct *tty, struct uart_state *state)
 	state->xmit.buf = NULL;
 	uart_port_unlock(uport, flags);
 
+<<<<<<< HEAD
 	free_page((unsigned long)xmit_buf);
+=======
+	if (xmit_buf)
+		free_page((unsigned long)xmit_buf);
+>>>>>>> master
 }
 
 /**
@@ -607,6 +616,10 @@ static ssize_t uart_write(struct tty_struct *tty, const u8 *buf, size_t count)
 	 */
 	if (WARN_ON(!state))
 		return -EL3HLT;
+<<<<<<< HEAD
+=======
+	}
+>>>>>>> master
 
 	port = uart_port_lock(state, flags);
 	circ = &state->xmit;
@@ -2008,9 +2021,15 @@ static int uart_port_activate(struct tty_port *port, struct tty_struct *tty)
 	/*
 	 * Start up the serial port.
 	 */
+<<<<<<< HEAD
 	ret = uart_startup(tty, state, false);
 	if (ret > 0)
 		tty_port_set_active(port, true);
+=======
+	ret = uart_startup(tty, state, 0);
+	if (ret > 0)
+		tty_port_set_active(port, 1);
+>>>>>>> master
 
 	return ret;
 }

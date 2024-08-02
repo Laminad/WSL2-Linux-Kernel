@@ -179,16 +179,28 @@ static inline pte_t pte_mkold(pte_t pte)
 }
 
 static inline pte_t pte_wrprotect(pte_t pte)
+<<<<<<< HEAD
 {
+=======
+{ 
+>>>>>>> master
 	if (likely(pte_get_bits(pte, _PAGE_RW)))
 		pte_clear_bits(pte, _PAGE_RW);
 	else
 		return pte;
+<<<<<<< HEAD
 	return(pte_mknewprot(pte));
 }
 
 static inline pte_t pte_mkread(pte_t pte)
 {
+=======
+	return(pte_mknewprot(pte)); 
+}
+
+static inline pte_t pte_mkread(pte_t pte)
+{ 
+>>>>>>> master
 	if (unlikely(pte_get_bits(pte, _PAGE_USER)))
 		return pte;
 	pte_set_bits(pte, _PAGE_USER);

@@ -447,9 +447,14 @@ static int __nf_register_net_hook(struct net *net, int pf,
 	if (nf_ingress_hook(reg, pf))
 		net_inc_ingress_queue();
 #endif
+<<<<<<< HEAD
 #ifdef CONFIG_NETFILTER_EGRESS
 	if (nf_egress_hook(reg, pf))
 		net_inc_egress_queue();
+=======
+#ifdef CONFIG_JUMP_LABEL
+	static_key_slow_inc(&nf_hooks_needed[pf][reg->hooknum]);
+>>>>>>> master
 #endif
 	nf_static_key_inc(reg, pf);
 
@@ -508,9 +513,14 @@ static void __nf_unregister_net_hook(struct net *net, int pf,
 		if (nf_ingress_hook(reg, pf))
 			net_dec_ingress_queue();
 #endif
+<<<<<<< HEAD
 #ifdef CONFIG_NETFILTER_EGRESS
 		if (nf_egress_hook(reg, pf))
 			net_dec_egress_queue();
+=======
+#ifdef CONFIG_JUMP_LABEL
+		static_key_slow_dec(&nf_hooks_needed[pf][reg->hooknum]);
+>>>>>>> master
 #endif
 		nf_static_key_dec(reg, pf);
 	} else {

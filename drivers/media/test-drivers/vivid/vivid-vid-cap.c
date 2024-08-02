@@ -440,6 +440,8 @@ void vivid_update_format_cap(struct vivid_dev *dev, bool keep_controls)
 		tpg_s_rgb_range(&dev->tpg, v4l2_ctrl_g_ctrl(dev->rgb_range_cap));
 		break;
 	}
+	vfree(dev->bitmap_cap);
+	dev->bitmap_cap = NULL;
 	vivid_update_quality(dev);
 	tpg_reset_source(&dev->tpg, dev->src_rect.width, dev->src_rect.height, dev->field_cap);
 	dev->crop_cap = dev->src_rect;
@@ -1026,6 +1028,14 @@ int vivid_vid_cap_s_selection(struct file *file, void *fh, struct v4l2_selection
 			s->r.height /= factor;
 		}
 		v4l2_rect_map_inside(&s->r, &dev->fmt_cap_rect);
+<<<<<<< HEAD:drivers/media/test-drivers/vivid/vivid-vid-cap.c
+=======
+		if (dev->bitmap_cap && (compose->width != s->r.width ||
+					compose->height != s->r.height)) {
+			vfree(dev->bitmap_cap);
+			dev->bitmap_cap = NULL;
+		}
+>>>>>>> master:drivers/media/platform/vivid/vivid-vid-cap.c
 		*compose = s->r;
 		break;
 	default:
@@ -1590,9 +1600,13 @@ set_phys_addr:
 
 	for (i = 0; i < MAX_OUTPUTS && dev->cec_tx_adap[i]; i++)
 		cec_s_phys_addr(dev->cec_tx_adap[i],
+<<<<<<< HEAD:drivers/media/test-drivers/vivid/vivid-vid-cap.c
 				dev->display_present[i] ?
 				v4l2_phys_addr_for_input(phys_addr, i + 1) :
 				CEC_PHYS_ADDR_INVALID,
+=======
+				v4l2_phys_addr_for_input(phys_addr, i + 1),
+>>>>>>> master:drivers/media/platform/vivid/vivid-vid-cap.c
 				false);
 	return 0;
 }

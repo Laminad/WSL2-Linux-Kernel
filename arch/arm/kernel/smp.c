@@ -38,6 +38,11 @@
 #include <asm/idmap.h>
 #include <asm/topology.h>
 #include <asm/mmu_context.h>
+<<<<<<< HEAD
+=======
+#include <asm/pgtable.h>
+#include <asm/pgalloc.h>
+>>>>>>> master
 #include <asm/procinfo.h>
 #include <asm/processor.h>
 #include <asm/sections.h>
@@ -65,12 +70,19 @@ enum ipi_msg_type {
 	IPI_CPU_STOP,
 	IPI_IRQ_WORK,
 	IPI_COMPLETION,
+<<<<<<< HEAD
 	NR_IPI,
+=======
+>>>>>>> master
 	/*
 	 * CPU_BACKTRACE is special and not included in NR_IPI
 	 * or tracable with trace_ipi_*
 	 */
+<<<<<<< HEAD
 	IPI_CPU_BACKTRACE = NR_IPI,
+=======
+	IPI_CPU_BACKTRACE,
+>>>>>>> master
 	/*
 	 * SGI8-15 can be reserved by secure firmware, and thus may
 	 * not be usable by the kernel. Please keep the above limited
@@ -412,8 +424,11 @@ asmlinkage void secondary_start_kernel(struct task_struct *task)
 	struct mm_struct *mm = &init_mm;
 	unsigned int cpu;
 
+<<<<<<< HEAD
 	set_current(task);
 
+=======
+>>>>>>> master
 	secondary_biglittle_init();
 
 	/*
@@ -608,6 +623,12 @@ static void ipi_cpu_stop(unsigned int cpu)
 
 	set_cpu_online(cpu, false);
 
+<<<<<<< HEAD
+=======
+	local_fiq_disable();
+	local_irq_disable();
+
+>>>>>>> master
 	while (1) {
 		cpu_relax();
 		wfe();
@@ -773,6 +794,21 @@ void smp_send_stop(void)
  * CPU1 can't receive the ipi irqs from CPU2, CPU1 will be always online,
  * kdump fails. So split out the panic_smp_self_stop() and add
  * set_cpu_online(smp_processor_id(), false).
+<<<<<<< HEAD
+=======
+ */
+void panic_smp_self_stop(void)
+{
+	pr_debug("CPU %u will stop doing anything useful since another CPU has paniced\n",
+	         smp_processor_id());
+	set_cpu_online(smp_processor_id(), false);
+	while (1)
+		cpu_relax();
+}
+
+/*
+ * not supported here
+>>>>>>> master
  */
 void __noreturn panic_smp_self_stop(void)
 {
@@ -843,7 +879,11 @@ core_initcall(register_cpufreq_notifier);
 
 static void raise_nmi(cpumask_t *mask)
 {
+<<<<<<< HEAD
 	__ipi_send_mask(ipi_desc[IPI_CPU_BACKTRACE], mask);
+=======
+	__smp_cross_call(mask, IPI_CPU_BACKTRACE);
+>>>>>>> master
 }
 
 void arch_trigger_cpumask_backtrace(const cpumask_t *mask, int exclude_cpu)

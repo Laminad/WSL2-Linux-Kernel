@@ -1770,12 +1770,18 @@ static void at_xdmac_tasklet(struct tasklet_struct *t)
 	struct dma_async_tx_descriptor *txd;
 	u32			error_mask;
 
+<<<<<<< HEAD
 	if (at_xdmac_chan_is_cyclic(atchan))
 		return at_xdmac_handle_cyclic(atchan);
+=======
+	dev_dbg(chan2dev(&atchan->chan), "%s: status=0x%08x\n",
+		__func__, atchan->irq_status);
+>>>>>>> master
 
 	error_mask = AT_XDMAC_CIS_RBEIS | AT_XDMAC_CIS_WBEIS |
 		AT_XDMAC_CIS_ROIS;
 
+<<<<<<< HEAD
 	spin_lock_irq(&atchan->lock);
 
 	dev_dbg(chan2dev(&atchan->chan), "%s: status=0x%08x\n",
@@ -1785,6 +1791,46 @@ static void at_xdmac_tasklet(struct tasklet_struct *t)
 	    !(atchan->irq_status & error_mask)) {
 		spin_unlock_irq(&atchan->lock);
 		return;
+=======
+	if (at_xdmac_chan_is_cyclic(atchan)) {
+		at_xdmac_handle_cyclic(atchan);
+	} else if ((atchan->irq_status & AT_XDMAC_CIS_LIS)
+		   || (atchan->irq_status & error_mask)) {
+		struct dma_async_tx_descriptor  *txd;
+
+		if (atchan->irq_status & AT_XDMAC_CIS_RBEIS)
+			dev_err(chan2dev(&atchan->chan), "read bus error!!!");
+		if (atchan->irq_status & AT_XDMAC_CIS_WBEIS)
+			dev_err(chan2dev(&atchan->chan), "write bus error!!!");
+		if (atchan->irq_status & AT_XDMAC_CIS_ROIS)
+			dev_err(chan2dev(&atchan->chan), "request overflow error!!!");
+
+		spin_lock_bh(&atchan->lock);
+		desc = list_first_entry(&atchan->xfers_list,
+					struct at_xdmac_desc,
+					xfer_node);
+		dev_vdbg(chan2dev(&atchan->chan), "%s: desc 0x%p\n", __func__, desc);
+		if (!desc->active_xfer) {
+			dev_err(chan2dev(&atchan->chan), "Xfer not active: exiting");
+			spin_unlock_bh(&atchan->lock);
+			return;
+		}
+
+		txd = &desc->tx_dma_desc;
+
+		at_xdmac_remove_xfer(atchan, desc);
+		spin_unlock_bh(&atchan->lock);
+
+		if (!at_xdmac_chan_is_cyclic(atchan)) {
+			dma_cookie_complete(txd);
+			if (txd->flags & DMA_PREP_INTERRUPT)
+				dmaengine_desc_get_callback_invoke(txd, NULL);
+		}
+
+		dma_run_dependencies(txd);
+
+		at_xdmac_advance_work(atchan);
+>>>>>>> master
 	}
 
 	if (atchan->irq_status & error_mask)

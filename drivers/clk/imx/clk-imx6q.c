@@ -567,8 +567,13 @@ static void __init imx6q_clocks_init(struct device_node *ccm_node)
 	 * it.
 	 */
 	writel(readl(base + 0x160) & ~0x3c00, base + 0x160);
+<<<<<<< HEAD
 	hws[IMX6QDL_CLK_LVDS1_GATE] = imx_clk_hw_gate_exclusive("lvds1_gate", "lvds1_sel", base + 0x160, 10, BIT(12));
 	hws[IMX6QDL_CLK_LVDS2_GATE] = imx_clk_hw_gate_exclusive("lvds2_gate", "lvds2_sel", base + 0x160, 11, BIT(13));
+=======
+	clk[IMX6QDL_CLK_LVDS1_GATE] = imx_clk_gate_exclusive("lvds1_gate", "lvds1_sel", base + 0x160, 10, BIT(12));
+	clk[IMX6QDL_CLK_LVDS2_GATE] = imx_clk_gate_exclusive("lvds2_gate", "lvds2_sel", base + 0x160, 11, BIT(13));
+>>>>>>> master
 
 	hws[IMX6QDL_CLK_LVDS1_IN] = imx_clk_hw_gate_exclusive("lvds1_in", "anaclk1", base + 0x160, 12, BIT(10));
 	hws[IMX6QDL_CLK_LVDS2_IN] = imx_clk_hw_gate_exclusive("lvds2_in", "anaclk2", base + 0x160, 13, BIT(11));

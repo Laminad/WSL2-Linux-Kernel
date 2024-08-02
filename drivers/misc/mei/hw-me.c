@@ -1516,6 +1516,7 @@ static bool mei_me_fw_type_sps_4(const struct pci_dev *pdev)
 #define MEI_CFG_FW_SPS_4                          \
 	.quirk_probe = mei_me_fw_type_sps_4
 
+<<<<<<< HEAD
 /**
  * mei_me_fw_type_sps_ign() - check for sps or ign sku
  *
@@ -1555,6 +1556,8 @@ static bool mei_me_fw_type_sps_ign(const struct pci_dev *pdev)
 #define MEI_CFG_FW_SPS_IGN                      \
 	.quirk_probe = mei_me_fw_type_sps_ign
 
+=======
+>>>>>>> master
 #define MEI_CFG_FW_VER_SUPP                     \
 	.fw_ver_supported = 1
 
@@ -1619,6 +1622,7 @@ static const struct mei_cfg mei_me_pch_cpt_pbg_cfg = {
 static const struct mei_cfg mei_me_pch8_cfg = {
 	MEI_CFG_PCH8_HFS,
 	MEI_CFG_FW_VER_SUPP,
+<<<<<<< HEAD
 };
 
 /* PCH8 Lynx Point and newer devices - iTouch */
@@ -1626,12 +1630,15 @@ static const struct mei_cfg mei_me_pch8_itouch_cfg = {
 	MEI_CFG_KIND_ITOUCH,
 	MEI_CFG_PCH8_HFS,
 	MEI_CFG_FW_VER_SUPP,
+=======
+>>>>>>> master
 };
 
 /* PCH8 Lynx Point with quirk for SPS Firmware exclusion */
 static const struct mei_cfg mei_me_pch8_sps_4_cfg = {
 	MEI_CFG_PCH8_HFS,
 	MEI_CFG_FW_VER_SUPP,
+<<<<<<< HEAD
 	MEI_CFG_FW_SPS_4,
 };
 
@@ -1640,6 +1647,9 @@ static const struct mei_cfg mei_me_pch12_sps_4_cfg = {
 	MEI_CFG_PCH8_HFS,
 	MEI_CFG_FW_VER_SUPP,
 	MEI_CFG_FW_SPS_4,
+=======
+	MEI_CFG_FW_SPS,
+>>>>>>> master
 };
 
 /* Cannon Lake and newer devices */
@@ -1760,11 +1770,16 @@ struct mei_device *mei_me_dev_init(struct device *parent,
 
 	mei_device_init(dev, parent, slow_fw, &mei_me_hw_ops);
 	hw->cfg = cfg;
+<<<<<<< HEAD
 
 	dev->fw_f_fw_ver_supported = cfg->fw_ver_supported;
 
 	dev->kind = cfg->kind;
 
+=======
+	dev->fw_f_fw_ver_supported = cfg->fw_ver_supported;
+
+>>>>>>> master
 	return dev;
 }
 EXPORT_SYMBOL_GPL(mei_me_dev_init);

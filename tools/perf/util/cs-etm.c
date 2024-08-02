@@ -873,6 +873,7 @@ static void cs_etm__free(struct perf_session *session)
 	zfree(&aux);
 }
 
+<<<<<<< HEAD
 static bool cs_etm__evsel_is_auxtrace(struct perf_session *session,
 				      struct evsel *evsel)
 {
@@ -922,6 +923,15 @@ static u8 cs_etm__cpu_mode(struct cs_etm_queue *etmq, u64 address,
 	struct machine *machine = cs_etm__get_machine(etmq, el);
 
 	if (address >= machine__kernel_start(machine)) {
+=======
+static u8 cs_etm__cpu_mode(struct cs_etm_queue *etmq, u64 address)
+{
+	struct machine *machine;
+
+	machine = etmq->etm->machine;
+
+	if (address >= etmq->etm->kernel_start) {
+>>>>>>> master
 		if (machine__is_host(machine))
 			return PERF_RECORD_MISC_KERNEL;
 		else
@@ -929,6 +939,7 @@ static u8 cs_etm__cpu_mode(struct cs_etm_queue *etmq, u64 address,
 	} else {
 		if (machine__is_host(machine))
 			return PERF_RECORD_MISC_USER;
+<<<<<<< HEAD
 		else {
 			/*
 			 * Can't really happen at the moment because
@@ -943,6 +954,17 @@ static u8 cs_etm__cpu_mode(struct cs_etm_queue *etmq, u64 address,
 static u32 cs_etm__mem_access(struct cs_etm_queue *etmq, u8 trace_chan_id,
 			      u64 address, size_t size, u8 *buffer,
 			      const ocsd_mem_space_acc_t mem_space)
+=======
+		else if (perf_guest)
+			return PERF_RECORD_MISC_GUEST_USER;
+		else
+			return PERF_RECORD_MISC_HYPERVISOR;
+	}
+}
+
+static u32 cs_etm__mem_access(struct cs_etm_queue *etmq, u64 address,
+			      size_t size, u8 *buffer)
+>>>>>>> master
 {
 	u8  cpumode;
 	u64 offset;
@@ -955,10 +977,15 @@ static u32 cs_etm__mem_access(struct cs_etm_queue *etmq, u8 trace_chan_id,
 	if (!etmq)
 		return 0;
 
+<<<<<<< HEAD
 	addr_location__init(&al);
 	tidq = cs_etm__etmq_get_traceid_queue(etmq, trace_chan_id);
 	if (!tidq)
 		goto out;
+=======
+	machine = etmq->etm->machine;
+	cpumode = cs_etm__cpu_mode(etmq, address);
+>>>>>>> master
 
 	/*
 	 * We've already tracked EL along side the PID in cs_etm__set_thread()
@@ -1456,7 +1483,11 @@ static int cs_etm__synth_instruction_sample(struct cs_etm_queue *etmq,
 	struct perf_sample sample = {.ip = 0,};
 
 	event->sample.header.type = PERF_RECORD_SAMPLE;
+<<<<<<< HEAD
 	event->sample.header.misc = cs_etm__cpu_mode(etmq, addr, tidq->el);
+=======
+	event->sample.header.misc = cs_etm__cpu_mode(etmq, addr);
+>>>>>>> master
 	event->sample.header.size = sizeof(struct perf_event_header);
 
 	/* Set time field based on etm auxtrace config. */
@@ -1468,8 +1499,14 @@ static int cs_etm__synth_instruction_sample(struct cs_etm_queue *etmq,
 	sample.id = etmq->etm->instructions_id;
 	sample.stream_id = etmq->etm->instructions_id;
 	sample.period = period;
+<<<<<<< HEAD
 	sample.cpu = tidq->packet->cpu;
 	sample.flags = tidq->prev_packet->flags;
+=======
+	sample.cpu = etmq->packet->cpu;
+	sample.flags = 0;
+	sample.insn_len = 1;
+>>>>>>> master
 	sample.cpumode = event->sample.header.misc;
 
 	cs_etm__copy_insn(etmq, tidq->trace_chan_id, tidq->packet, &sample);
@@ -1512,6 +1549,7 @@ static int cs_etm__synth_branch_sample(struct cs_etm_queue *etmq,
 	} dummy_bs;
 	u64 ip;
 
+<<<<<<< HEAD
 	ip = cs_etm__last_executed_instr(tidq->prev_packet);
 
 	event->sample.header.type = PERF_RECORD_SAMPLE;
@@ -1535,6 +1573,24 @@ static int cs_etm__synth_branch_sample(struct cs_etm_queue *etmq,
 
 	cs_etm__copy_insn(etmq, tidq->trace_chan_id, tidq->prev_packet,
 			  &sample);
+=======
+	ip = cs_etm__last_executed_instr(etmq->prev_packet);
+
+	event->sample.header.type = PERF_RECORD_SAMPLE;
+	event->sample.header.misc = cs_etm__cpu_mode(etmq, ip);
+	event->sample.header.size = sizeof(struct perf_event_header);
+
+	sample.ip = ip;
+	sample.pid = etmq->pid;
+	sample.tid = etmq->tid;
+	sample.addr = cs_etm__first_executed_instr(etmq->packet);
+	sample.id = etmq->etm->branches_id;
+	sample.stream_id = etmq->etm->branches_id;
+	sample.period = 1;
+	sample.cpu = etmq->packet->cpu;
+	sample.flags = 0;
+	sample.cpumode = event->sample.header.misc;
+>>>>>>> master
 
 	/*
 	 * perf report cannot handle events without a branch stack
@@ -1875,6 +1931,7 @@ static int cs_etm__flush(struct cs_etm_queue *etmq,
 	}
 
 swap_packet:
+<<<<<<< HEAD
 	cs_etm__packet_swap(etm, tidq);
 
 	/* Reset last branches after flush the trace */
@@ -1906,6 +1963,9 @@ static int cs_etm__end_block(struct cs_etm_queue *etmq,
 		/* Prepare last branches for instruction sample */
 		cs_etm__copy_last_branch_rb(etmq, tidq);
 
+=======
+	if (etm->sample_branches || etm->synth_opts.last_branch) {
+>>>>>>> master
 		/*
 		 * Use the address of the end of the last reported execution
 		 * range.

@@ -1,4 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
+<<<<<<< HEAD
+=======
+#include "symbol.h"
+#include <assert.h>
+#include <errno.h>
+>>>>>>> master
 #include <inttypes.h>
 #include <limits.h>
 #include <stdio.h>
@@ -599,7 +605,399 @@ bool map__contains_symbol(const struct map *map, const struct symbol *sym)
 {
 	u64 ip = map__unmap_ip(map, sym->start);
 
+<<<<<<< HEAD
 	return ip >= map__start(map) && ip < map__end(map);
+=======
+void map_groups__init(struct map_groups *mg, struct machine *machine)
+{
+	maps__init(&mg->maps);
+	mg->machine = machine;
+	refcount_set(&mg->refcnt, 1);
+}
+
+static void __maps__purge(struct maps *maps)
+{
+	struct rb_root *root = &maps->entries;
+	struct rb_node *next = rb_first(root);
+
+	while (next) {
+		struct map *pos = rb_entry(next, struct map, rb_node);
+
+		next = rb_next(&pos->rb_node);
+		rb_erase_init(&pos->rb_node, root);
+		map__put(pos);
+	}
+}
+
+static void maps__exit(struct maps *maps)
+{
+	down_write(&maps->lock);
+	__maps__purge(maps);
+	up_write(&maps->lock);
+}
+
+void map_groups__exit(struct map_groups *mg)
+{
+	maps__exit(&mg->maps);
+}
+
+bool map_groups__empty(struct map_groups *mg)
+{
+	return !maps__first(&mg->maps);
+}
+
+struct map_groups *map_groups__new(struct machine *machine)
+{
+	struct map_groups *mg = malloc(sizeof(*mg));
+
+	if (mg != NULL)
+		map_groups__init(mg, machine);
+
+	return mg;
+}
+
+void map_groups__delete(struct map_groups *mg)
+{
+	map_groups__exit(mg);
+	free(mg);
+}
+
+void map_groups__put(struct map_groups *mg)
+{
+	if (mg && refcount_dec_and_test(&mg->refcnt))
+		map_groups__delete(mg);
+}
+
+struct symbol *map_groups__find_symbol(struct map_groups *mg,
+				       u64 addr, struct map **mapp)
+{
+	struct map *map = map_groups__find(mg, addr);
+
+	/* Ensure map is loaded before using map->map_ip */
+	if (map != NULL && map__load(map) >= 0) {
+		if (mapp != NULL)
+			*mapp = map;
+		return map__find_symbol(map, map->map_ip(map, addr));
+	}
+
+	return NULL;
+}
+
+static bool map__contains_symbol(struct map *map, struct symbol *sym)
+{
+	u64 ip = map->unmap_ip(map, sym->start);
+
+	return ip >= map->start && ip < map->end;
+}
+
+struct symbol *maps__find_symbol_by_name(struct maps *maps, const char *name,
+					 struct map **mapp)
+{
+	struct symbol *sym;
+	struct rb_node *nd;
+
+	down_read(&maps->lock);
+
+	for (nd = rb_first(&maps->entries); nd; nd = rb_next(nd)) {
+		struct map *pos = rb_entry(nd, struct map, rb_node);
+
+		sym = map__find_symbol_by_name(pos, name);
+
+		if (sym == NULL)
+			continue;
+		if (!map__contains_symbol(pos, sym)) {
+			sym = NULL;
+			continue;
+		}
+		if (mapp != NULL)
+			*mapp = pos;
+		goto out;
+	}
+
+	sym = NULL;
+out:
+	up_read(&maps->lock);
+	return sym;
+}
+
+struct symbol *map_groups__find_symbol_by_name(struct map_groups *mg,
+					       const char *name,
+					       struct map **mapp)
+{
+	return maps__find_symbol_by_name(&mg->maps, name, mapp);
+}
+
+int map_groups__find_ams(struct addr_map_symbol *ams)
+{
+	if (ams->addr < ams->map->start || ams->addr >= ams->map->end) {
+		if (ams->map->groups == NULL)
+			return -1;
+		ams->map = map_groups__find(ams->map->groups, ams->addr);
+		if (ams->map == NULL)
+			return -1;
+	}
+
+	ams->al_addr = ams->map->map_ip(ams->map, ams->addr);
+	ams->sym = map__find_symbol(ams->map, ams->al_addr);
+
+	return ams->sym ? 0 : -1;
+}
+
+static size_t maps__fprintf(struct maps *maps, FILE *fp)
+{
+	size_t printed = 0;
+	struct rb_node *nd;
+
+	down_read(&maps->lock);
+
+	for (nd = rb_first(&maps->entries); nd; nd = rb_next(nd)) {
+		struct map *pos = rb_entry(nd, struct map, rb_node);
+		printed += fprintf(fp, "Map:");
+		printed += map__fprintf(pos, fp);
+		if (verbose > 2) {
+			printed += dso__fprintf(pos->dso, fp);
+			printed += fprintf(fp, "--\n");
+		}
+	}
+
+	up_read(&maps->lock);
+
+	return printed;
+}
+
+size_t map_groups__fprintf(struct map_groups *mg, FILE *fp)
+{
+	return maps__fprintf(&mg->maps, fp);
+}
+
+static void __map_groups__insert(struct map_groups *mg, struct map *map)
+{
+	__maps__insert(&mg->maps, map);
+	map->groups = mg;
+}
+
+static int maps__fixup_overlappings(struct maps *maps, struct map *map, FILE *fp)
+{
+	struct rb_root *root;
+	struct rb_node *next, *first;
+	int err = 0;
+
+	down_write(&maps->lock);
+
+	root = &maps->entries;
+
+	/*
+	 * Find first map where end > map->start.
+	 * Same as find_vma() in kernel.
+	 */
+	next = root->rb_node;
+	first = NULL;
+	while (next) {
+		struct map *pos = rb_entry(next, struct map, rb_node);
+
+		if (pos->end > map->start) {
+			first = next;
+			if (pos->start <= map->start)
+				break;
+			next = next->rb_left;
+		} else
+			next = next->rb_right;
+	}
+
+	next = first;
+	while (next) {
+		struct map *pos = rb_entry(next, struct map, rb_node);
+		next = rb_next(&pos->rb_node);
+
+		/*
+		 * Stop if current map starts after map->end.
+		 * Maps are ordered by start: next will not overlap for sure.
+		 */
+		if (pos->start >= map->end)
+			break;
+
+		if (verbose >= 2) {
+
+			if (use_browser) {
+				pr_warning("overlapping maps in %s "
+					   "(disable tui for more info)\n",
+					   map->dso->name);
+			} else {
+				fputs("overlapping maps:\n", fp);
+				map__fprintf(map, fp);
+				map__fprintf(pos, fp);
+			}
+		}
+
+		rb_erase_init(&pos->rb_node, root);
+		/*
+		 * Now check if we need to create new maps for areas not
+		 * overlapped by the new map:
+		 */
+		if (map->start > pos->start) {
+			struct map *before = map__clone(pos);
+
+			if (before == NULL) {
+				err = -ENOMEM;
+				goto put_map;
+			}
+
+			before->end = map->start;
+			__map_groups__insert(pos->groups, before);
+			if (verbose >= 2 && !use_browser)
+				map__fprintf(before, fp);
+			map__put(before);
+		}
+
+		if (map->end < pos->end) {
+			struct map *after = map__clone(pos);
+
+			if (after == NULL) {
+				err = -ENOMEM;
+				goto put_map;
+			}
+
+			after->start = map->end;
+			after->pgoff += map->end - pos->start;
+			assert(pos->map_ip(pos, map->end) == after->map_ip(after, map->end));
+			__map_groups__insert(pos->groups, after);
+			if (verbose >= 2 && !use_browser)
+				map__fprintf(after, fp);
+			map__put(after);
+		}
+put_map:
+		map__put(pos);
+
+		if (err)
+			goto out;
+	}
+
+	err = 0;
+out:
+	up_write(&maps->lock);
+	return err;
+}
+
+int map_groups__fixup_overlappings(struct map_groups *mg, struct map *map,
+				   FILE *fp)
+{
+	return maps__fixup_overlappings(&mg->maps, map, fp);
+}
+
+/*
+ * XXX This should not really _copy_ te maps, but refcount them.
+ */
+int map_groups__clone(struct thread *thread, struct map_groups *parent)
+{
+	struct map_groups *mg = thread->mg;
+	int err = -ENOMEM;
+	struct map *map;
+	struct maps *maps = &parent->maps;
+
+	down_read(&maps->lock);
+
+	for (map = maps__first(maps); map; map = map__next(map)) {
+		struct map *new = map__clone(map);
+		if (new == NULL)
+			goto out_unlock;
+
+		err = unwind__prepare_access(thread, new, NULL);
+		if (err)
+			goto out_unlock;
+
+		map_groups__insert(mg, new);
+		map__put(new);
+	}
+
+	err = 0;
+out_unlock:
+	up_read(&maps->lock);
+	return err;
+}
+
+static void __maps__insert(struct maps *maps, struct map *map)
+{
+	struct rb_node **p = &maps->entries.rb_node;
+	struct rb_node *parent = NULL;
+	const u64 ip = map->start;
+	struct map *m;
+
+	while (*p != NULL) {
+		parent = *p;
+		m = rb_entry(parent, struct map, rb_node);
+		if (ip < m->start)
+			p = &(*p)->rb_left;
+		else
+			p = &(*p)->rb_right;
+	}
+
+	rb_link_node(&map->rb_node, parent, p);
+	rb_insert_color(&map->rb_node, &maps->entries);
+	map__get(map);
+}
+
+void maps__insert(struct maps *maps, struct map *map)
+{
+	down_write(&maps->lock);
+	__maps__insert(maps, map);
+	up_write(&maps->lock);
+}
+
+static void __maps__remove(struct maps *maps, struct map *map)
+{
+	rb_erase_init(&map->rb_node, &maps->entries);
+	map__put(map);
+}
+
+void maps__remove(struct maps *maps, struct map *map)
+{
+	down_write(&maps->lock);
+	__maps__remove(maps, map);
+	up_write(&maps->lock);
+}
+
+struct map *maps__find(struct maps *maps, u64 ip)
+{
+	struct rb_node **p, *parent = NULL;
+	struct map *m;
+
+	down_read(&maps->lock);
+
+	p = &maps->entries.rb_node;
+	while (*p != NULL) {
+		parent = *p;
+		m = rb_entry(parent, struct map, rb_node);
+		if (ip < m->start)
+			p = &(*p)->rb_left;
+		else if (ip >= m->end)
+			p = &(*p)->rb_right;
+		else
+			goto out;
+	}
+
+	m = NULL;
+out:
+	up_read(&maps->lock);
+	return m;
+}
+
+struct map *maps__first(struct maps *maps)
+{
+	struct rb_node *first = rb_first(&maps->entries);
+
+	if (first)
+		return rb_entry(first, struct map, rb_node);
+	return NULL;
+}
+
+struct map *map__next(struct map *map)
+{
+	struct rb_node *next = rb_next(&map->rb_node);
+
+	if (next)
+		return rb_entry(next, struct map, rb_node);
+	return NULL;
+>>>>>>> master
 }
 
 struct kmap *__map__kmap(struct map *map)

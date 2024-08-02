@@ -315,11 +315,18 @@ static bool ip_can_use_hint(const struct sk_buff *skb, const struct iphdr *iph,
 int tcp_v4_early_demux(struct sk_buff *skb);
 int udp_v4_early_demux(struct sk_buff *skb);
 static int ip_rcv_finish_core(struct net *net, struct sock *sk,
+<<<<<<< HEAD
 			      struct sk_buff *skb, struct net_device *dev,
 			      const struct sk_buff *hint)
 {
 	const struct iphdr *iph = ip_hdr(skb);
 	int err, drop_reason;
+=======
+			      struct sk_buff *skb, struct net_device *dev)
+{
+	const struct iphdr *iph = ip_hdr(skb);
+	int (*edemux)(struct sk_buff *skb);
+>>>>>>> master
 	struct rtable *rt;
 
 	drop_reason = SKB_DROP_REASON_NOT_SPECIFIED;
@@ -444,7 +451,11 @@ static int ip_rcv_finish(struct net *net, struct sock *sk, struct sk_buff *skb)
 	if (!skb)
 		return NET_RX_SUCCESS;
 
+<<<<<<< HEAD
 	ret = ip_rcv_finish_core(net, sk, skb, dev, NULL);
+=======
+	ret = ip_rcv_finish_core(net, sk, skb, dev);
+>>>>>>> master
 	if (ret != NET_RX_DROP)
 		ret = dst_input(skb);
 	return ret;
@@ -610,7 +621,11 @@ static void ip_list_rcv_finish(struct net *net, struct sock *sk,
 		skb = l3mdev_ip_rcv(skb);
 		if (!skb)
 			continue;
+<<<<<<< HEAD
 		if (ip_rcv_finish_core(net, sk, skb, dev, hint) == NET_RX_DROP)
+=======
+		if (ip_rcv_finish_core(net, sk, skb, dev) == NET_RX_DROP)
+>>>>>>> master
 			continue;
 
 		dst = skb_dst(skb);

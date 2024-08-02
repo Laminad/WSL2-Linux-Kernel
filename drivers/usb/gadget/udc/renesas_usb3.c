@@ -22,6 +22,10 @@
 #include <linux/sizes.h>
 #include <linux/slab.h>
 #include <linux/string.h>
+<<<<<<< HEAD
+=======
+#include <linux/sys_soc.h>
+>>>>>>> master
 #include <linux/uaccess.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
@@ -369,8 +373,11 @@ struct renesas_usb3 {
 	bool extcon_usb;		/* check vbus and set EXTCON_USB */
 	bool forced_b_device;
 	bool start_to_connect;
+<<<<<<< HEAD
 	bool role_sw_by_connector;
 	bool is_rzv2m;
+=======
+>>>>>>> master
 };
 
 #define gadget_to_renesas_usb3(_gadget)	\

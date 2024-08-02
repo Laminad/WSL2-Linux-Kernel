@@ -298,7 +298,11 @@ static int qed_vf_pf_acquire(struct qed_hwfn *p_hwfn)
 		memset(p_iov->pf2vf_reply, 0, sizeof(union pfvf_tlvs));
 
 		/* send acquire request */
+<<<<<<< HEAD
 		rc = qed_send_msg2pf(p_hwfn, &resp->hdr.status);
+=======
+		rc = qed_send_msg2pf(p_hwfn, &resp->hdr.status, sizeof(*resp));
+>>>>>>> master
 
 		/* Re-try acquire in case of vf-pf hw channel timeout */
 		if (retry_cnt && rc == -EBUSY) {

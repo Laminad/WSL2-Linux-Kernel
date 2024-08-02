@@ -902,7 +902,11 @@ static unsigned int ssp_get_clk_div(struct driver_data *drv_data, int rate)
 
 	/*
 	 * Calculate the divisor for the SCR (Serial Clock Rate), avoiding
+<<<<<<< HEAD
 	 * that the SSP transmission rate can be greater than the device rate.
+=======
+	 * that the SSP transmission rate can be greater than the device rate
+>>>>>>> master
 	 */
 	if (ssp->type == PXA25x_SSP || ssp->type == CE4100_SSP)
 		return (DIV_ROUND_UP(ssp_clk, 2 * rate) - 1) & 0xff;
@@ -1533,10 +1537,15 @@ static int pxa2xx_spi_probe(struct platform_device *pdev)
 			dev_warn(dev, "no DMA channels available, using PIO\n");
 			platform_info->enable_dma = false;
 		} else {
+<<<<<<< HEAD
 			controller->can_dma = pxa2xx_spi_can_dma;
 			controller->max_dma_len = MAX_DMA_LEN;
 			controller->max_transfer_size =
 				pxa2xx_spi_max_dma_transfer_size;
+=======
+			master->can_dma = pxa2xx_spi_can_dma;
+			master->max_dma_len = MAX_DMA_LEN;
+>>>>>>> master
 		}
 	}
 

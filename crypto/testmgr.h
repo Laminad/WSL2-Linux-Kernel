@@ -14663,6 +14663,7 @@ static const struct cipher_testvec sm4_tv_template[] = {
 	}
 };
 
+<<<<<<< HEAD
 static const struct cipher_testvec sm4_cbc_tv_template[] = {
 	{ /* A.2.2.1 SM4-CBC Example 1 */
 		.key	= "\x01\x23\x45\x67\x89\xAB\xCD\xEF"
@@ -16007,6 +16008,8 @@ static const struct hash_testvec sm4_xcbc128_tv_template[] = {
 	}
 };
 
+=======
+>>>>>>> master
 /* Cast6 test vectors from RFC 2612 */
 static const struct cipher_testvec cast6_tv_template[] = {
 	{
@@ -17217,6 +17220,12 @@ static const struct cipher_testvec aes_cfb_tv_template[] = {
 			  "\x75\xa3\x85\x74\x1a\xb9\xce\xf8"
 			  "\x20\x31\x62\x3d\x55\xb1\xe4\x71",
 		.len	= 64,
+<<<<<<< HEAD
+=======
+		.also_non_np = 1,
+		.np	= 2,
+		.tap	= { 31, 33 },
+>>>>>>> master
 	}, { /* > 16 bytes, not a multiple of 16 bytes */
 		.key	= "\x2b\x7e\x15\x16\x28\xae\xd2\xa6"
 			  "\xab\xf7\x15\x88\x09\xcf\x4f\x3c",
@@ -17242,7 +17251,11 @@ static const struct cipher_testvec aes_cfb_tv_template[] = {
 	},
 };
 
+<<<<<<< HEAD
 static const struct aead_testvec hmac_md5_ecb_cipher_null_tv_template[] = {
+=======
+static const struct aead_testvec hmac_md5_ecb_cipher_null_enc_tv_template[] = {
+>>>>>>> master
 	{ /* Input data from RFC 2410 Case 1 */
 #ifdef __LITTLE_ENDIAN
 		.key    = "\x08\x00"		/* rta length */

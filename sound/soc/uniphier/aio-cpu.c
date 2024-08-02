@@ -394,6 +394,7 @@ static int uniphier_aio_ld11_probe(struct snd_soc_dai *dai)
 {
 	int ret;
 
+<<<<<<< HEAD
 	ret = uniphier_aio_dai_probe(dai);
 	if (ret < 0)
 		return ret;
@@ -411,6 +412,13 @@ static int uniphier_aio_ld11_probe(struct snd_soc_dai *dai)
 	ret = snd_soc_dai_set_pll(dai, AUD_PLL_F2, 0, 0, 33868800);
 	if (ret < 0)
 		return ret;
+=======
+	aio->chip->num_wup_aios--;
+	if (!aio->chip->num_wup_aios) {
+		reset_control_assert(aio->chip->rst);
+		clk_disable_unprepare(aio->chip->clk);
+	}
+>>>>>>> master
 
 	return 0;
 }

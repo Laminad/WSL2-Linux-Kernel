@@ -191,8 +191,11 @@ restore_regs:
 
 ;####### Return from Intr #######
 
+<<<<<<< HEAD
 .Lisr_ret:
 
+=======
+>>>>>>> master
 debug_marker_l1:
 	; bbit1.nt r0, STATUS_DE_BIT, .Lintr_ret_to_delay_slot
 	btst	r0, STATUS_DE_BIT		; Z flag set if bit clear

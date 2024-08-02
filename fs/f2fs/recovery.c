@@ -676,11 +676,19 @@ retry_dn:
 	f2fs_bug_on(sbi, ni.ino != ino_of_node(page));
 
 	if (ofs_of_node(dn.node_page) != ofs_of_node(page)) {
+<<<<<<< HEAD
 		f2fs_warn(sbi, "Inconsistent ofs_of_node, ino:%lu, ofs:%u, %u",
 			  inode->i_ino, ofs_of_node(dn.node_page),
 			  ofs_of_node(page));
 		err = -EFSCORRUPTED;
 		f2fs_handle_error(sbi, ERROR_INCONSISTENT_FOOTER);
+=======
+		f2fs_msg(sbi->sb, KERN_WARNING,
+			"Inconsistent ofs_of_node, ino:%lu, ofs:%u, %u",
+			inode->i_ino, ofs_of_node(dn.node_page),
+			ofs_of_node(page));
+		err = -EFSCORRUPTED;
+>>>>>>> master
 		goto err;
 	}
 
@@ -891,11 +899,19 @@ int f2fs_recover_fsync_data(struct f2fs_sb_info *sbi, bool check_only)
 	err = recover_data(sbi, &inode_list, &tmp_inode_list, &dir_list);
 	if (!err)
 		f2fs_bug_on(sbi, !list_empty(&inode_list));
+<<<<<<< HEAD
 	else
 		f2fs_bug_on(sbi, sbi->sb->s_flags & SB_ACTIVE);
 skip:
 	fix_curseg_write_pointer = !check_only || list_empty(&inode_list);
 
+=======
+	else {
+		/* restore s_flags to let iput() trash data */
+		sbi->sb->s_flags = s_flags;
+	}
+skip:
+>>>>>>> master
 	destroy_fsync_dnodes(&inode_list, err);
 	destroy_fsync_dnodes(&tmp_inode_list, err);
 
@@ -906,7 +922,10 @@ skip:
 	if (err) {
 		truncate_inode_pages_final(NODE_MAPPING(sbi));
 		truncate_inode_pages_final(META_MAPPING(sbi));
+	} else {
+		clear_sbi_flag(sbi, SBI_POR_DOING);
 	}
+<<<<<<< HEAD
 
 	/*
 	 * If fsync data succeeds or there is no fsync data to recover,
@@ -925,6 +944,9 @@ skip:
 		clear_sbi_flag(sbi, SBI_POR_DOING);
 
 	f2fs_up_write(&sbi->cp_global_sem);
+=======
+	mutex_unlock(&sbi->cp_mutex);
+>>>>>>> master
 
 	/* let's drop all the directory inodes for clean checkpoint */
 	destroy_fsync_dnodes(&dir_list, err);
@@ -936,7 +958,10 @@ skip:
 			struct cp_control cpc = {
 				.reason = CP_RECOVERY,
 			};
+<<<<<<< HEAD
 			stat_inc_cp_call_count(sbi, TOTAL_CALL);
+=======
+>>>>>>> master
 			err = f2fs_write_checkpoint(sbi, &cpc);
 		}
 	}

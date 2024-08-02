@@ -75,7 +75,16 @@ static int brd_insert_page(struct brd_device *brd, sector_t sector, gfp_t gfp)
 	if (page)
 		return 0;
 
+<<<<<<< HEAD
 	page = alloc_page(gfp | __GFP_ZERO | __GFP_HIGHMEM);
+=======
+	/*
+	 * Must use NOIO because we don't want to recurse back into the
+	 * block or filesystem layers from page reclaim.
+	 */
+	gfp_flags = GFP_NOIO | __GFP_ZERO | __GFP_HIGHMEM;
+	page = alloc_page(gfp_flags);
+>>>>>>> master
 	if (!page)
 		return -ENOMEM;
 
@@ -354,6 +363,7 @@ static int brd_alloc(int i)
 	 *  otherwise fdisk will align on 1M. Regardless this call
 	 *  is harmless)
 	 */
+<<<<<<< HEAD
 	blk_queue_physical_block_size(disk->queue, PAGE_SIZE);
 
 	/* Tell the block layer that this is not a rotational device */
@@ -363,12 +373,69 @@ static int brd_alloc(int i)
 	err = add_disk(disk);
 	if (err)
 		goto out_cleanup_disk;
+=======
+	blk_queue_physical_block_size(brd->brd_queue, PAGE_SIZE);
+	disk = brd->brd_disk = alloc_disk(max_part);
+	if (!disk)
+		goto out_free_queue;
+	disk->major		= RAMDISK_MAJOR;
+	disk->first_minor	= i * max_part;
+	disk->fops		= &brd_fops;
+	disk->private_data	= brd;
+	disk->flags		= GENHD_FL_EXT_DEVT;
+	sprintf(disk->disk_name, "ram%d", i);
+	set_capacity(disk, rd_size * 2);
+	brd->brd_queue->backing_dev_info->capabilities |= BDI_CAP_SYNCHRONOUS_IO;
+
+	/* Tell the block layer that this is not a rotational device */
+	blk_queue_flag_set(QUEUE_FLAG_NONROT, brd->brd_queue);
+	blk_queue_flag_clear(QUEUE_FLAG_ADD_RANDOM, brd->brd_queue);
+>>>>>>> master
 
 	return 0;
 
 out_cleanup_disk:
 	put_disk(disk);
 out_free_dev:
+<<<<<<< HEAD
+=======
+	kfree(brd);
+out:
+	return NULL;
+}
+
+static void brd_free(struct brd_device *brd)
+{
+	put_disk(brd->brd_disk);
+	blk_cleanup_queue(brd->brd_queue);
+	brd_free_pages(brd);
+	kfree(brd);
+}
+
+static struct brd_device *brd_init_one(int i, bool *new)
+{
+	struct brd_device *brd;
+
+	*new = false;
+	list_for_each_entry(brd, &brd_devices, brd_list) {
+		if (brd->brd_number == i)
+			goto out;
+	}
+
+	brd = brd_alloc(i);
+	if (brd) {
+		brd->brd_disk->queue = brd->brd_queue;
+		add_disk(brd->brd_disk);
+		list_add_tail(&brd->brd_list, &brd_devices);
+	}
+	*new = true;
+out:
+	return brd;
+}
+
+static void brd_del_one(struct brd_device *brd)
+{
+>>>>>>> master
 	list_del(&brd->brd_list);
 	kfree(brd);
 	return err;
@@ -447,6 +514,23 @@ static int __init brd_init(void)
 		goto out_free;
 	}
 
+<<<<<<< HEAD
+=======
+	/* point of no return */
+
+	list_for_each_entry(brd, &brd_devices, brd_list) {
+		/*
+		 * associate with queue just before adding disk for
+		 * avoiding to mess up failure path
+		 */
+		brd->brd_disk->queue = brd->brd_queue;
+		add_disk(brd->brd_disk);
+	}
+
+	blk_register_region(MKDEV(RAMDISK_MAJOR, 0), 1UL << MINORBITS,
+				  THIS_MODULE, brd_probe, NULL, NULL);
+
+>>>>>>> master
 	pr_info("brd: module loaded\n");
 	return 0;
 

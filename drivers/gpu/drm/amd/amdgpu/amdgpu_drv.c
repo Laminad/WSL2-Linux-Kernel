@@ -2124,6 +2124,14 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
 		}
 	}
 #endif
+<<<<<<< HEAD
+=======
+
+	/* Get rid of things like offb */
+	ret = amdgpu_kick_out_firmware_fb(pdev);
+	if (ret)
+		return ret;
+>>>>>>> master
 
 	adev = devm_drm_dev_alloc(&pdev->dev, &amdgpu_kms_driver, typeof(*adev), ddev);
 	if (IS_ERR(adev))

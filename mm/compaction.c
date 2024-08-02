@@ -24,6 +24,7 @@
 #include <linux/page_owner.h>
 #include <linux/psi.h>
 #include "internal.h"
+#include "page_reporting.h"
 
 #ifdef CONFIG_COMPACTION
 /*
@@ -648,7 +649,13 @@ static unsigned long isolate_freepages_block(struct compact_control *cc,
 		}
 
 		/* Found a free page, will break it into order-0 pages */
+<<<<<<< HEAD
 		order = buddy_order(page);
+=======
+		order = page_order(page);
+		page_reporting_free_area_release(cc->zone, order,
+						MIGRATE_MOVABLE);
+>>>>>>> master
 		isolated = __isolate_free_page(page, order);
 		if (!isolated)
 			break;
@@ -2398,6 +2405,16 @@ compact_zone(struct compact_control *cc, struct capture_control *capc)
 	cc->nr_freepages = 0;
 	INIT_LIST_HEAD(&cc->freepages);
 	INIT_LIST_HEAD(&cc->migratepages);
+<<<<<<< HEAD
+=======
+
+	cc->migratetype = gfpflags_to_migratetype(cc->gfp_mask);
+	ret = compaction_suitable(zone, cc->order, cc->alloc_flags,
+							cc->classzone_idx);
+	/* Compaction is likely to fail */
+	if (ret == COMPACT_SUCCESS || ret == COMPACT_SKIPPED)
+		return ret;
+>>>>>>> master
 
 	cc->migratetype = gfp_migratetype(cc->gfp_mask);
 
@@ -2635,10 +2652,13 @@ static enum compact_result compact_zone_order(struct zone *zone, int order,
 		.ignore_skip_hint = (prio == MIN_COMPACT_PRIORITY),
 		.ignore_block_suitable = (prio == MIN_COMPACT_PRIORITY)
 	};
+<<<<<<< HEAD
 	struct capture_control capc = {
 		.cc = &cc,
 		.page = NULL,
 	};
+=======
+>>>>>>> master
 
 	/*
 	 * Make sure the structs are really initialized before we expose the
@@ -2939,8 +2959,12 @@ static void kcompactd_do_work(pg_data_t *pgdat)
 	struct zone *zone;
 	struct compact_control cc = {
 		.order = pgdat->kcompactd_max_order,
+<<<<<<< HEAD
 		.search_order = pgdat->kcompactd_max_order,
 		.highest_zoneidx = pgdat->kcompactd_highest_zoneidx,
+=======
+		.classzone_idx = pgdat->kcompactd_classzone_idx,
+>>>>>>> master
 		.mode = MIGRATE_SYNC_LIGHT,
 		.ignore_skip_hint = false,
 		.gfp_mask = GFP_KERNEL,
@@ -2964,14 +2988,21 @@ static void kcompactd_do_work(pg_data_t *pgdat)
 				      min_wmark_pages(zone), zoneid, 0))
 			continue;
 
+<<<<<<< HEAD
 		if (!compaction_suitable(zone, cc.order, zoneid))
 			continue;
 
+=======
+>>>>>>> master
 		if (kthread_should_stop())
 			return;
 
 		cc.zone = zone;
+<<<<<<< HEAD
 		status = compact_zone(&cc, NULL);
+=======
+		status = compact_zone(zone, &cc);
+>>>>>>> master
 
 		if (status == COMPACT_SUCCESS) {
 			compaction_defer_reset(zone, cc.order, false);

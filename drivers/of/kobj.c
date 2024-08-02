@@ -134,6 +134,11 @@ int __of_attach_node_sysfs(struct device_node *np)
 	if (!name)
 		return -ENOMEM;
 
+<<<<<<< HEAD
+=======
+	of_node_get(np);
+
+>>>>>>> master
 	rc = kobject_add(&np->kobj, parent, "%s", name);
 	kfree(name);
 	if (rc)

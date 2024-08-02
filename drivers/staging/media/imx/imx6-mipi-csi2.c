@@ -252,7 +252,11 @@ static int __maybe_unused csi2_dphy_wait_ulp(struct csi2_dev *csi2)
 }
 
 /* Waits for low-power LP-11 state on data and clock lanes. */
+<<<<<<< HEAD
 static void csi2_dphy_wait_stopstate(struct csi2_dev *csi2, unsigned int lanes)
+=======
+static void csi2_dphy_wait_stopstate(struct csi2_dev *csi2)
+>>>>>>> master
 {
 	u32 mask, reg;
 	int ret;
@@ -364,11 +368,15 @@ static int csi2_start(struct csi2_dev *csi2)
 	csi2_enable(csi2, true);
 
 	/* Step 5 */
+<<<<<<< HEAD
 	ret = v4l2_subdev_call(csi2->src_sd, video, pre_streamon,
 			       V4L2_SUBDEV_PRE_STREAMON_FL_MANUAL_LP);
 	if (ret && ret != -ENOIOCTLCMD)
 		goto err_assert_reset;
 	csi2_dphy_wait_stopstate(csi2, lanes);
+=======
+	csi2_dphy_wait_stopstate(csi2);
+>>>>>>> master
 
 	/* Step 6 */
 	ret = v4l2_subdev_call(csi2->src_sd, video, s_stream, 1);

@@ -1387,6 +1387,46 @@ END_FTR_SECTION_IFSET(CPU_FTR_HVMODE)
 	addi	r3,r1,STACK_INT_FRAME_REGS
 	bl	CFUNC(unrecoverable_exception)
 	b	.
+<<<<<<< HEAD
+=======
+2:
+	/*
+	 * Check if we have successfully handled/recovered from error, if not
+	 * then stay on emergency stack and panic.
+	 */
+	ld	r3,RESULT(r1)	/* Load result */
+	cmpdi	r3,0		/* see if we handled MCE successfully */
+
+	beq	1b		/* if !handled then panic */
+	/*
+	 * Return from MC interrupt.
+	 * Queue up the MCE event so that we can log it later, while
+	 * returning from kernel or opal call.
+	 */
+	bl	machine_check_queue_event
+	MACHINE_CHECK_HANDLER_WINDUP
+	RFI_TO_USER_OR_KERNEL
+9:
+	/* Deliver the machine check to host kernel in V mode. */
+BEGIN_FTR_SECTION
+	ld	r10,ORIG_GPR3(r1)
+	mtspr	SPRN_CFAR,r10
+END_FTR_SECTION_IFSET(CPU_FTR_CFAR)
+	MACHINE_CHECK_HANDLER_WINDUP
+	b	machine_check_pSeries
+
+EXC_COMMON_BEGIN(unrecover_mce)
+	/* Invoke machine_check_exception to print MCE event and panic. */
+	addi	r3,r1,STACK_FRAME_OVERHEAD
+	bl	machine_check_exception
+	/*
+	 * We will not reach here. Even if we did, there is no way out. Call
+	 * unrecoverable_exception and die.
+	 */
+1:	addi	r3,r1,STACK_FRAME_OVERHEAD
+	bl	unrecoverable_exception
+	b	1b
+>>>>>>> master
 
 
 /**
@@ -3126,6 +3166,7 @@ CLOSE_FIXED_SECTION(virt_trampolines);
 
 USE_TEXT_SECTION()
 
+<<<<<<< HEAD
 /* MSR[RI] should be clear because this uses SRR[01] */
 _GLOBAL(enable_machine_check)
 	mflr	r0
@@ -3138,6 +3179,227 @@ _GLOBAL(enable_machine_check)
 	mtspr	SPRN_SRR1,r3
 	RFI_TO_KERNEL
 1:	mtlr	r0
+=======
+/*
+ * Hash table stuff
+ */
+	.balign	IFETCH_ALIGN_BYTES
+do_hash_page:
+#ifdef CONFIG_PPC_BOOK3S_64
+	lis	r0,(DSISR_BAD_FAULT_64S | DSISR_DABRMATCH | DSISR_KEYFAULT)@h
+	ori	r0,r0,DSISR_BAD_FAULT_64S@l
+	and.	r0,r4,r0		/* weird error? */
+	bne-	handle_page_fault	/* if not, try to insert a HPTE */
+	CURRENT_THREAD_INFO(r11, r1)
+	lwz	r0,TI_PREEMPT(r11)	/* If we're in an "NMI" */
+	andis.	r0,r0,NMI_MASK@h	/* (i.e. an irq when soft-disabled) */
+	bne	77f			/* then don't call hash_page now */
+
+	/*
+	 * r3 contains the faulting address
+	 * r4 msr
+	 * r5 contains the trap number
+	 * r6 contains dsisr
+	 *
+	 * at return r3 = 0 for success, 1 for page fault, negative for error
+	 */
+        mr 	r4,r12
+	ld      r6,_DSISR(r1)
+	bl	__hash_page		/* build HPTE if possible */
+        cmpdi	r3,0			/* see if __hash_page succeeded */
+
+	/* Success */
+	beq	fast_exc_return_irq	/* Return from exception on success */
+
+	/* Error */
+	blt-	13f
+
+	/* Reload DSISR into r4 for the DABR check below */
+	ld      r4,_DSISR(r1)
+#endif /* CONFIG_PPC_BOOK3S_64 */
+
+/* Here we have a page fault that hash_page can't handle. */
+handle_page_fault:
+11:	andis.  r0,r4,DSISR_DABRMATCH@h
+	bne-    handle_dabr_fault
+	ld	r4,_DAR(r1)
+	ld	r5,_DSISR(r1)
+	addi	r3,r1,STACK_FRAME_OVERHEAD
+	bl	do_page_fault
+	cmpdi	r3,0
+	beq+	ret_from_except_lite
+	bl	save_nvgprs
+	mr	r5,r3
+	addi	r3,r1,STACK_FRAME_OVERHEAD
+	lwz	r4,_DAR(r1)
+	bl	bad_page_fault
+	b	ret_from_except
+
+/* We have a data breakpoint exception - handle it */
+handle_dabr_fault:
+	bl	save_nvgprs
+	ld      r4,_DAR(r1)
+	ld      r5,_DSISR(r1)
+	addi    r3,r1,STACK_FRAME_OVERHEAD
+	bl      do_break
+	/*
+	 * do_break() may have changed the NV GPRS while handling a breakpoint.
+	 * If so, we need to restore them with their updated values. Don't use
+	 * ret_from_except_lite here.
+	 */
+	b       ret_from_except
+
+
+#ifdef CONFIG_PPC_BOOK3S_64
+/* We have a page fault that hash_page could handle but HV refused
+ * the PTE insertion
+ */
+13:	bl	save_nvgprs
+	mr	r5,r3
+	addi	r3,r1,STACK_FRAME_OVERHEAD
+	ld	r4,_DAR(r1)
+	bl	low_hash_fault
+	b	ret_from_except
+#endif
+
+/*
+ * We come here as a result of a DSI at a point where we don't want
+ * to call hash_page, such as when we are accessing memory (possibly
+ * user memory) inside a PMU interrupt that occurred while interrupts
+ * were soft-disabled.  We want to invoke the exception handler for
+ * the access, or panic if there isn't a handler.
+ */
+77:	bl	save_nvgprs
+	mr	r4,r3
+	addi	r3,r1,STACK_FRAME_OVERHEAD
+	li	r5,SIGSEGV
+	bl	bad_page_fault
+	b	ret_from_except
+
+/*
+ * Here we have detected that the kernel stack pointer is bad.
+ * R9 contains the saved CR, r13 points to the paca,
+ * r10 contains the (bad) kernel stack pointer,
+ * r11 and r12 contain the saved SRR0 and SRR1.
+ * We switch to using an emergency stack, save the registers there,
+ * and call kernel_bad_stack(), which panics.
+ */
+bad_stack:
+	ld	r1,PACAEMERGSP(r13)
+	subi	r1,r1,64+INT_FRAME_SIZE
+	std	r9,_CCR(r1)
+	std	r10,GPR1(r1)
+	std	r11,_NIP(r1)
+	std	r12,_MSR(r1)
+	mfspr	r11,SPRN_DAR
+	mfspr	r12,SPRN_DSISR
+	std	r11,_DAR(r1)
+	std	r12,_DSISR(r1)
+	mflr	r10
+	mfctr	r11
+	mfxer	r12
+	std	r10,_LINK(r1)
+	std	r11,_CTR(r1)
+	std	r12,_XER(r1)
+	SAVE_GPR(0,r1)
+	SAVE_GPR(2,r1)
+	ld	r10,EX_R3(r3)
+	std	r10,GPR3(r1)
+	SAVE_GPR(4,r1)
+	SAVE_4GPRS(5,r1)
+	ld	r9,EX_R9(r3)
+	ld	r10,EX_R10(r3)
+	SAVE_2GPRS(9,r1)
+	ld	r9,EX_R11(r3)
+	ld	r10,EX_R12(r3)
+	ld	r11,EX_R13(r3)
+	std	r9,GPR11(r1)
+	std	r10,GPR12(r1)
+	std	r11,GPR13(r1)
+BEGIN_FTR_SECTION
+	ld	r10,EX_CFAR(r3)
+	std	r10,ORIG_GPR3(r1)
+END_FTR_SECTION_IFSET(CPU_FTR_CFAR)
+	SAVE_8GPRS(14,r1)
+	SAVE_10GPRS(22,r1)
+	lhz	r12,PACA_TRAP_SAVE(r13)
+	std	r12,_TRAP(r1)
+	addi	r11,r1,INT_FRAME_SIZE
+	std	r11,0(r1)
+	li	r12,0
+	std	r12,0(r11)
+	ld	r2,PACATOC(r13)
+	ld	r11,exception_marker@toc(r2)
+	std	r12,RESULT(r1)
+	std	r11,STACK_FRAME_OVERHEAD-16(r1)
+1:	addi	r3,r1,STACK_FRAME_OVERHEAD
+	bl	kernel_bad_stack
+	b	1b
+_ASM_NOKPROBE_SYMBOL(bad_stack);
+
+/*
+ * When doorbell is triggered from system reset wakeup, the message is
+ * not cleared, so it would fire again when EE is enabled.
+ *
+ * When coming from local_irq_enable, there may be the same problem if
+ * we were hard disabled.
+ *
+ * Execute msgclr to clear pending exceptions before handling it.
+ */
+h_doorbell_common_msgclr:
+	LOAD_REG_IMMEDIATE(r3, PPC_DBELL_MSGTYPE << (63-36))
+	PPC_MSGCLR(3)
+	b 	h_doorbell_common
+
+doorbell_super_common_msgclr:
+	LOAD_REG_IMMEDIATE(r3, PPC_DBELL_MSGTYPE << (63-36))
+	PPC_MSGCLRP(3)
+	b 	doorbell_super_common
+
+/*
+ * Called from arch_local_irq_enable when an interrupt needs
+ * to be resent. r3 contains 0x500, 0x900, 0xa00 or 0xe80 to indicate
+ * which kind of interrupt. MSR:EE is already off. We generate a
+ * stackframe like if a real interrupt had happened.
+ *
+ * Note: While MSR:EE is off, we need to make sure that _MSR
+ * in the generated frame has EE set to 1 or the exception
+ * handler will not properly re-enable them.
+ *
+ * Note that we don't specify LR as the NIP (return address) for
+ * the interrupt because that would unbalance the return branch
+ * predictor.
+ */
+_GLOBAL(__replay_interrupt)
+	/* We are going to jump to the exception common code which
+	 * will retrieve various register values from the PACA which
+	 * we don't give a damn about, so we don't bother storing them.
+	 */
+	mfmsr	r12
+	LOAD_REG_ADDR(r11, replay_interrupt_return)
+	mfcr	r9
+	ori	r12,r12,MSR_EE
+	cmpwi	r3,0x900
+	beq	decrementer_common
+	cmpwi	r3,0x500
+BEGIN_FTR_SECTION
+	beq	h_virt_irq_common
+FTR_SECTION_ELSE
+	beq	hardware_interrupt_common
+ALT_FTR_SECTION_END_IFSET(CPU_FTR_HVMODE | CPU_FTR_ARCH_300)
+	cmpwi	r3,0xf00
+	beq	performance_monitor_common
+BEGIN_FTR_SECTION
+	cmpwi	r3,0xa00
+	beq	h_doorbell_common_msgclr
+	cmpwi	r3,0xe60
+	beq	hmi_exception_common
+FTR_SECTION_ELSE
+	cmpwi	r3,0xa00
+	beq	doorbell_super_common_msgclr
+ALT_FTR_SECTION_END_IFSET(CPU_FTR_HVMODE)
+replay_interrupt_return:
+>>>>>>> master
 	blr
 
 /* MSR[RI] should be clear because this uses SRR[01] */

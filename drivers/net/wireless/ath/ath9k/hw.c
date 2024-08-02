@@ -284,15 +284,25 @@ static bool ath9k_hw_read_revisions(struct ath_hw *ah)
 		return true;
 	}
 
+<<<<<<< HEAD
 	srev = REG_READ(ah, AR_SREV(ah));
 
 	if (srev == -1) {
+=======
+	srev = REG_READ(ah, AR_SREV);
+
+	if (srev == -EIO) {
+>>>>>>> master
 		ath_err(ath9k_hw_common(ah),
 			"Failed to read SREV register");
 		return false;
 	}
 
+<<<<<<< HEAD
 	val = srev & AR_SREV_ID(ah);
+=======
+	val = srev & AR_SREV_ID;
+>>>>>>> master
 
 	if (val == 0xFF) {
 		val = srev;

@@ -27,11 +27,27 @@
 
 #include "setup.h"
 
+<<<<<<< HEAD
 static void machine_check_ue_event(struct machine_check_event *evt);
+=======
+/* Queue for delayed MCE events. */
+static DEFINE_PER_CPU(int, mce_queue_count);
+static DEFINE_PER_CPU(struct machine_check_event[MAX_MC_EVT], mce_event_queue);
+
+/* Queue for delayed MCE UE events. */
+static DEFINE_PER_CPU(int, mce_ue_count);
+static DEFINE_PER_CPU(struct machine_check_event[MAX_MC_EVT],
+					mce_ue_event_queue);
+
+static void machine_check_process_queued_event(struct irq_work *work);
+static void machine_check_ue_irq_work(struct irq_work *work);
+void machine_check_ue_event(struct machine_check_event *evt);
+>>>>>>> master
 static void machine_process_ue_event(struct work_struct *work);
 
 static DECLARE_WORK(mce_ue_event_work, machine_process_ue_event);
 
+<<<<<<< HEAD
 static BLOCKING_NOTIFIER_HEAD(mce_notifier_list);
 
 int mce_register_notifier(struct notifier_block *nb)
@@ -45,6 +61,13 @@ int mce_unregister_notifier(struct notifier_block *nb)
 	return blocking_notifier_chain_unregister(&mce_notifier_list, nb);
 }
 EXPORT_SYMBOL_GPL(mce_unregister_notifier);
+=======
+static struct irq_work mce_ue_event_irq_work = {
+	.func = machine_check_ue_irq_work,
+};
+
+DECLARE_WORK(mce_ue_event_work, machine_process_ue_event);
+>>>>>>> master
 
 static void mce_set_error_info(struct machine_check_event *mce,
 			       struct mce_error_info *mce_err)
@@ -220,7 +243,11 @@ void release_mce_event(void)
 	get_mce_event(NULL, true);
 }
 
+<<<<<<< HEAD
 static void machine_check_ue_work(void)
+=======
+static void machine_check_ue_irq_work(struct irq_work *work)
+>>>>>>> master
 {
 	schedule_work(&mce_ue_event_work);
 }
@@ -238,8 +265,15 @@ static void machine_check_ue_event(struct machine_check_event *evt)
 		local_paca->mce_info->mce_ue_count--;
 		return;
 	}
+<<<<<<< HEAD
 	memcpy(&local_paca->mce_info->mce_ue_event_queue[index],
 	       evt, sizeof(*evt));
+=======
+	memcpy(this_cpu_ptr(&mce_ue_event_queue[index]), evt, sizeof(*evt));
+
+	/* Queue work to process this event later. */
+	irq_work_queue(&mce_ue_event_irq_work);
+>>>>>>> master
 }
 
 /*

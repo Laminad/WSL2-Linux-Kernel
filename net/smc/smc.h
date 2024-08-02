@@ -142,12 +142,15 @@ enum smc_urg_state {
 	SMC_URG_VALID	= 1,			/* data present */
 	SMC_URG_NOTYET	= 2,			/* data pending */
 	SMC_URG_READ	= 3,			/* data was already read */
+<<<<<<< HEAD
 };
 
 struct smc_mark_woken {
 	bool woken;
 	void *key;
 	wait_queue_entry_t wait_entry;
+=======
+>>>>>>> master
 };
 
 struct smc_connection {
@@ -276,10 +279,13 @@ struct smc_sock {				/* smc sock container */
 						 * started, waiting for unsent
 						 * data to be sent
 						 */
+<<<<<<< HEAD
 	u8			connect_nonblock : 1;
 						/* non-blocking connect in
 						 * flight
 						 */
+=======
+>>>>>>> master
 	struct mutex            clcsock_release_lock;
 						/* protects clcsock of a listen
 						 * socket

@@ -24,9 +24,12 @@
 #include <linux/ip.h>
 #include <linux/rcupdate.h>
 #include <linux/refcount.h>
+<<<<<<< HEAD
 #include <linux/timer.h>
 #include <linux/types.h>
 #include <linux/wait.h>
+=======
+>>>>>>> master
 #include <linux/workqueue.h>
 
 #include <net/dst.h>
@@ -167,6 +170,44 @@ struct qeth_vnicc_info {
 	bool rx_bcast_enabled;
 };
 
+<<<<<<< HEAD
+=======
+static inline int qeth_is_adp_supported(struct qeth_ipa_info *ipa,
+		enum qeth_ipa_setadp_cmd func)
+{
+	return (ipa->supported_funcs & func);
+}
+
+static inline int qeth_is_ipa_supported(struct qeth_ipa_info *ipa,
+		enum qeth_ipa_funcs func)
+{
+	return (ipa->supported_funcs & func);
+}
+
+static inline int qeth_is_ipa_enabled(struct qeth_ipa_info *ipa,
+		enum qeth_ipa_funcs func)
+{
+	return (ipa->supported_funcs & ipa->enabled_funcs & func);
+}
+
+#define qeth_adp_supported(c, f) \
+	qeth_is_adp_supported(&c->options.adp, f)
+#define qeth_is_supported(c, f) \
+	qeth_is_ipa_supported(&c->options.ipa4, f)
+#define qeth_is_enabled(c, f) \
+	qeth_is_ipa_enabled(&c->options.ipa4, f)
+#define qeth_is_supported6(c, f) \
+	qeth_is_ipa_supported(&c->options.ipa6, f)
+#define qeth_is_enabled6(c, f) \
+	qeth_is_ipa_enabled(&c->options.ipa6, f)
+#define qeth_is_ipafunc_supported(c, prot, f) \
+	 ((prot == QETH_PROT_IPV6) ? \
+		qeth_is_supported6(c, f) : qeth_is_supported(c, f))
+#define qeth_is_ipafunc_enabled(c, prot, f) \
+	 ((prot == QETH_PROT_IPV6) ? \
+		qeth_is_enabled6(c, f) : qeth_is_enabled(c, f))
+
+>>>>>>> master
 #define QETH_IDX_FUNC_LEVEL_OSD		 0x0101
 #define QETH_IDX_FUNC_LEVEL_IQD		 0x4108
 
@@ -914,6 +955,11 @@ static inline bool qeth_iqd_is_mcast_queue(struct qeth_card *card,
 {
 	return qeth_iqd_translate_txq(card->dev, queue->queue_no) ==
 	       QETH_IQD_MCAST_TXQ;
+}
+
+static inline bool qeth_netdev_is_registered(struct net_device *dev)
+{
+	return dev->netdev_ops != NULL;
 }
 
 static inline void qeth_scrub_qdio_buffer(struct qdio_buffer *buf,

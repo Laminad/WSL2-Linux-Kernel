@@ -49,6 +49,10 @@ trace_libc_inet_pton_backtrace() {
 		;;
 	*)
 		eventattr='max-stack=3'
+<<<<<<< HEAD
+=======
+		echo "getaddrinfo\+0x[[:xdigit:]]+[[:space:]]\($libc\)$" >> $expected
+>>>>>>> master
 		echo ".*(\+0x[[:xdigit:]]+|\[unknown\])[[:space:]]\(.*/bin/ping.*\)$" >> $expected
 		;;
 	esac

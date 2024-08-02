@@ -943,7 +943,48 @@ out_trans_cancel:
 	goto out_unlock;
 }
 
+<<<<<<< HEAD
 /* Caller must first wait for the completion of any pending DIOs if required. */
+=======
+static int
+xfs_adjust_extent_unmap_boundaries(
+	struct xfs_inode	*ip,
+	xfs_fileoff_t		*startoffset_fsb,
+	xfs_fileoff_t		*endoffset_fsb)
+{
+	struct xfs_mount	*mp = ip->i_mount;
+	struct xfs_bmbt_irec	imap;
+	int			nimap, error;
+	xfs_extlen_t		mod = 0;
+
+	nimap = 1;
+	error = xfs_bmapi_read(ip, *startoffset_fsb, 1, &imap, &nimap, 0);
+	if (error)
+		return error;
+
+	if (nimap && imap.br_startblock != HOLESTARTBLOCK) {
+		ASSERT(imap.br_startblock != DELAYSTARTBLOCK);
+		div_u64_rem(imap.br_startblock, mp->m_sb.sb_rextsize, &mod);
+		if (mod)
+			*startoffset_fsb += mp->m_sb.sb_rextsize - mod;
+	}
+
+	nimap = 1;
+	error = xfs_bmapi_read(ip, *endoffset_fsb - 1, 1, &imap, &nimap, 0);
+	if (error)
+		return error;
+
+	if (nimap && imap.br_startblock != HOLESTARTBLOCK) {
+		ASSERT(imap.br_startblock != DELAYSTARTBLOCK);
+		mod++;
+		if (mod && mod != mp->m_sb.sb_rextsize)
+			*endoffset_fsb -= mod;
+	}
+
+	return 0;
+}
+
+>>>>>>> master
 int
 xfs_flush_unmap_range(
 	struct xfs_inode	*ip,
@@ -1688,7 +1729,11 @@ xfs_swap_extents(
 	if (xfs_inode_has_cow_data(tip)) {
 		error = xfs_reflink_cancel_cow_range(tip, 0, NULLFILEOFF, true);
 		if (error)
+<<<<<<< HEAD
 			goto out_unlock;
+=======
+			return error;
+>>>>>>> master
 	}
 
 	/*

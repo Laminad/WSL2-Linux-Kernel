@@ -733,10 +733,15 @@ int mlx5e_rx_flow_steer(struct net_device *dev, const struct sk_buff *skb,
 	struct mlx5e_priv *priv = netdev_priv(dev);
 	struct mlx5e_arfs_tables *arfs;
 	struct arfs_rule *arfs_rule;
+<<<<<<< HEAD
 	struct arfs_table *arfs_t;
 	struct flow_keys fk;
 
 	arfs =  mlx5e_fs_get_arfs(priv->fs);
+=======
+	struct flow_keys fk;
+
+>>>>>>> master
 	if (!skb_flow_dissect_flow_keys(skb, &fk, 0))
 		return -EPROTONOSUPPORT;
 
@@ -752,11 +757,14 @@ int mlx5e_rx_flow_steer(struct net_device *dev, const struct sk_buff *skb,
 		return -EPROTONOSUPPORT;
 
 	spin_lock_bh(&arfs->arfs_lock);
+<<<<<<< HEAD
 	if (!test_bit(MLX5E_ARFS_STATE_ENABLED, &arfs->state)) {
 		spin_unlock_bh(&arfs->arfs_lock);
 		return -EPERM;
 	}
 
+=======
+>>>>>>> master
 	arfs_rule = arfs_find_rule(arfs_t, &fk);
 	if (arfs_rule) {
 		if (arfs_rule->rxq == rxq_index || work_busy(&arfs_rule->arfs_work)) {

@@ -225,7 +225,12 @@ static struct clk_hw *_ti_omap4_clkctrl_xlate(struct of_phandle_args *clkspec,
 					      void *data)
 {
 	struct omap_clkctrl_provider *provider = data;
+<<<<<<< HEAD
 	struct omap_clkctrl_clk *entry = NULL, *iter;
+=======
+	struct omap_clkctrl_clk *entry;
+	bool found = false;
+>>>>>>> master
 
 	if (clkspec->args_count != 2)
 		return ERR_PTR(-EINVAL);
@@ -233,15 +238,22 @@ static struct clk_hw *_ti_omap4_clkctrl_xlate(struct of_phandle_args *clkspec,
 	pr_debug("%s: looking for %x:%x\n", __func__,
 		 clkspec->args[0], clkspec->args[1]);
 
+<<<<<<< HEAD
 	list_for_each_entry(iter, &provider->clocks, node) {
 		if (iter->reg_offset == clkspec->args[0] &&
 		    iter->bit_offset == clkspec->args[1]) {
 			entry = iter;
+=======
+	list_for_each_entry(entry, &provider->clocks, node) {
+		if (entry->reg_offset == clkspec->args[0] &&
+		    entry->bit_offset == clkspec->args[1]) {
+			found = true;
+>>>>>>> master
 			break;
 		}
 	}
 
-	if (!entry)
+	if (!found)
 		return ERR_PTR(-EINVAL);
 
 	return entry->clk;

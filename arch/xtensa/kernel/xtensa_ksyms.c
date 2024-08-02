@@ -28,3 +28,38 @@ unsigned int __sync_fetch_and_or_4(volatile void *p, unsigned int v)
 	BUG();
 }
 EXPORT_SYMBOL(__sync_fetch_and_or_4);
+<<<<<<< HEAD
+=======
+
+/*
+ * Networking support
+ */
+EXPORT_SYMBOL(csum_partial);
+EXPORT_SYMBOL(csum_partial_copy_generic);
+
+/*
+ * Architecture-specific symbols
+ */
+EXPORT_SYMBOL(__xtensa_copy_user);
+EXPORT_SYMBOL(__invalidate_icache_range);
+
+/*
+ * Kernel hacking ...
+ */
+
+#if defined(CONFIG_VGA_CONSOLE) || defined(CONFIG_DUMMY_CONSOLE)
+// FIXME EXPORT_SYMBOL(screen_info);
+#endif
+
+extern long common_exception_return;
+EXPORT_SYMBOL(common_exception_return);
+
+#ifdef CONFIG_FUNCTION_TRACER
+EXPORT_SYMBOL(_mcount);
+#endif
+
+EXPORT_SYMBOL(__invalidate_dcache_range);
+#if XCHAL_DCACHE_IS_WRITEBACK
+EXPORT_SYMBOL(__flush_dcache_range);
+#endif
+>>>>>>> master

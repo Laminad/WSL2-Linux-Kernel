@@ -1237,6 +1237,7 @@ static int ep_poll_callback(wait_queue_entry_t *wait, unsigned mode, int sync, v
 	 * semantics). All the events that happen during that period of time are
 	 * chained in ep->ovflist and requeued later on.
 	 */
+<<<<<<< HEAD
 	if (READ_ONCE(ep->ovflist) != EP_UNACTIVE_PTR) {
 		if (chain_epi_lockless(epi))
 			ep_pm_stay_awake_rcu(epi);
@@ -1244,6 +1245,28 @@ static int ep_poll_callback(wait_queue_entry_t *wait, unsigned mode, int sync, v
 		/* In the usual case, add event to ready list. */
 		if (list_add_tail_lockless(&epi->rdllink, &ep->rdllist))
 			ep_pm_stay_awake_rcu(epi);
+=======
+	if (ep->ovflist != EP_UNACTIVE_PTR) {
+		if (epi->next == EP_UNACTIVE_PTR) {
+			epi->next = ep->ovflist;
+			ep->ovflist = epi;
+			if (epi->ws) {
+				/*
+				 * Activate ep->ws since epi->ws may get
+				 * deactivated at any time.
+				 */
+				__pm_stay_awake(ep->ws);
+			}
+
+		}
+		goto out_unlock;
+	}
+
+	/* If this file is already in the ready list we exit soon */
+	if (!ep_is_linked(epi)) {
+		list_add_tail(&epi->rdllink, &ep->rdllist);
+		ep_pm_stay_awake_rcu(epi);
+>>>>>>> master
 	}
 
 	/*

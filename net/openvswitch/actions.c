@@ -158,9 +158,23 @@ static int clone_execute(struct datapath *dp, struct sk_buff *skb,
 			 const struct nlattr *actions, int len,
 			 bool last, bool clone_flow_key);
 
+<<<<<<< HEAD
 static int do_execute_actions(struct datapath *dp, struct sk_buff *skb,
 			      struct sw_flow_key *key,
 			      const struct nlattr *attr, int len);
+=======
+static void update_ethertype(struct sk_buff *skb, struct ethhdr *hdr,
+			     __be16 ethertype)
+{
+	if (skb->ip_summed == CHECKSUM_COMPLETE) {
+		__be16 diff[] = { ~(hdr->h_proto), ethertype };
+
+		skb->csum = csum_partial((char *)diff, sizeof(diff), skb->csum);
+	}
+
+	hdr->h_proto = ethertype;
+}
+>>>>>>> master
 
 static int push_mpls(struct sk_buff *skb, struct sw_flow_key *key,
 		     __be32 mpls_lse, __be16 mpls_ethertype, __u16 mac_len)
@@ -211,7 +225,15 @@ static int set_mpls(struct sk_buff *skb, struct sw_flow_key *flow_key,
 	if (err)
 		return err;
 
+<<<<<<< HEAD
 	flow_key->mpls.lse[0] = lse;
+=======
+		skb->csum = csum_partial((char *)diff, sizeof(diff), skb->csum);
+	}
+
+	stack->label_stack_entry = lse;
+	flow_key->mpls.top_lse = lse;
+>>>>>>> master
 	return 0;
 }
 

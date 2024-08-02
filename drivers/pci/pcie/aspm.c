@@ -191,6 +191,38 @@ static void pcie_clkpm_cap_init(struct pcie_link_state *link, int blacklist)
 	link->clkpm_disable = blacklist ? 1 : 0;
 }
 
+static bool pcie_retrain_link(struct pcie_link_state *link)
+{
+	struct pci_dev *parent = link->pdev;
+	unsigned long start_jiffies;
+	u16 reg16;
+
+	pcie_capability_read_word(parent, PCI_EXP_LNKCTL, &reg16);
+	reg16 |= PCI_EXP_LNKCTL_RL;
+	pcie_capability_write_word(parent, PCI_EXP_LNKCTL, reg16);
+	if (parent->clear_retrain_link) {
+		/*
+		 * Due to an erratum in some devices the Retrain Link bit
+		 * needs to be cleared again manually to allow the link
+		 * training to succeed.
+		 */
+		reg16 &= ~PCI_EXP_LNKCTL_RL;
+		pcie_capability_write_word(parent, PCI_EXP_LNKCTL, reg16);
+	}
+
+	/* Wait for link training end. Break out after waiting for timeout */
+	start_jiffies = jiffies;
+	for (;;) {
+		pcie_capability_read_word(parent, PCI_EXP_LNKSTA, &reg16);
+		if (!(reg16 & PCI_EXP_LNKSTA_LT))
+			break;
+		if (time_after(jiffies, start_jiffies + LINK_RETRAIN_TIMEOUT))
+			break;
+		msleep(1);
+	}
+	return !(reg16 & PCI_EXP_LNKSTA_LT);
+}
+
 /*
  * pcie_aspm_configure_common_clock: check if the 2 ends of a link
  *   could use common clock. If they are, configure them to use the
@@ -199,7 +231,11 @@ static void pcie_clkpm_cap_init(struct pcie_link_state *link, int blacklist)
 static void pcie_aspm_configure_common_clock(struct pcie_link_state *link)
 {
 	int same_clock = 1;
+<<<<<<< HEAD
 	u16 reg16, ccc, parent_old_ccc, child_old_ccc[8];
+=======
+	u16 reg16, parent_reg, child_reg[8];
+>>>>>>> master
 	struct pci_dev *child, *parent = link->pdev;
 	struct pci_bus *linkbus = parent->subordinate;
 	/*
@@ -251,6 +287,7 @@ static void pcie_aspm_configure_common_clock(struct pcie_link_state *link)
 	pcie_capability_clear_and_set_word(parent, PCI_EXP_LNKCTL,
 					   PCI_EXP_LNKCTL_CCC, ccc);
 
+<<<<<<< HEAD
 	if (pcie_retrain_link(link->pdev, true)) {
 
 		/* Training failed. Restore common clock configurations */
@@ -262,6 +299,17 @@ static void pcie_aspm_configure_common_clock(struct pcie_link_state *link)
 		pcie_capability_clear_and_set_word(parent, PCI_EXP_LNKCTL,
 						   PCI_EXP_LNKCTL_CCC, parent_old_ccc);
 	}
+=======
+	if (pcie_retrain_link(link))
+		return;
+
+	/* Training failed. Restore common clock configurations */
+	pci_err(parent, "ASPM: Could not configure common clock\n");
+	list_for_each_entry(child, &linkbus->devices, bus_list)
+		pcie_capability_write_word(child, PCI_EXP_LNKCTL,
+					   child_reg[PCI_FUNC(child->devfn)]);
+	pcie_capability_write_word(parent, PCI_EXP_LNKCTL, parent_reg);
+>>>>>>> master
 }
 
 /* Convert L0s latency encoding to ns */
@@ -971,6 +1019,15 @@ void pcie_aspm_exit_link_state(struct pci_dev *pdev)
 
 	down_read(&pci_bus_sem);
 	mutex_lock(&aspm_lock);
+<<<<<<< HEAD
+=======
+	/*
+	 * All PCIe functions are in one slot, remove one function will remove
+	 * the whole slot, so just wait until we are the last function left.
+	 */
+	if (!list_empty(&parent->subordinate->devices))
+		goto out;
+>>>>>>> master
 
 	link = parent->link_state;
 	root = link->root;

@@ -158,6 +158,7 @@ static inline u8 *echo_buf_addr(struct n_tty_data *ldata, size_t i)
 }
 
 /* If we are not echoing the data, perhaps this is a secret so erase it */
+<<<<<<< HEAD
 static void zero_buffer(const struct tty_struct *tty, u8 *buffer, size_t size)
 {
 	if (L_ICANON(tty) && !L_ECHO(tty))
@@ -166,23 +167,53 @@ static void zero_buffer(const struct tty_struct *tty, u8 *buffer, size_t size)
 
 static void tty_copy(const struct tty_struct *tty, void *to, size_t tail,
 		     size_t n)
+=======
+static void zero_buffer(struct tty_struct *tty, u8 *buffer, int size)
+{
+	bool icanon = !!L_ICANON(tty);
+	bool no_echo = !L_ECHO(tty);
+
+	if (icanon && no_echo)
+		memset(buffer, 0x00, size);
+}
+
+static int tty_copy_to_user(struct tty_struct *tty, void __user *to,
+			    size_t tail, size_t n)
+>>>>>>> master
 {
 	struct n_tty_data *ldata = tty->disc_data;
 	size_t size = N_TTY_BUF_SIZE - tail;
 	void *from = read_buf_addr(ldata, tail);
+<<<<<<< HEAD
 
 	if (n > size) {
 		tty_audit_add_data(tty, from, size);
 		memcpy(to, from, size);
 		zero_buffer(tty, from, size);
+=======
+	int uncopied;
+
+	if (n > size) {
+		tty_audit_add_data(tty, from, size);
+		uncopied = copy_to_user(to, from, size);
+		zero_buffer(tty, from, size - uncopied);
+		if (uncopied)
+			return uncopied;
+>>>>>>> master
 		to += size;
 		n -= size;
 		from = ldata->read_buf;
 	}
 
 	tty_audit_add_data(tty, from, n);
+<<<<<<< HEAD
 	memcpy(to, from, n);
 	zero_buffer(tty, from, n);
+=======
+	uncopied = copy_to_user(to, from, n);
+	zero_buffer(tty, from, n - uncopied);
+	return uncopied;
+>>>>>>> master
 }
 
 /**
@@ -1978,8 +2009,14 @@ static bool copy_from_read_buf(const struct tty_struct *tty, u8 **kbp,
 	n = min(head - ldata->read_tail, N_TTY_BUF_SIZE - tail);
 	n = min(*nr, n);
 	if (n) {
+<<<<<<< HEAD
 		u8 *from = read_buf_addr(ldata, tail);
 		memcpy(*kbp, from, n);
+=======
+		unsigned char *from = read_buf_addr(ldata, tail);
+		retval = copy_to_user(*b, from, n);
+		n -= retval;
+>>>>>>> master
 		is_eof = n == 1 && *from == EOF_CHAR(tty);
 		tty_audit_add_data(tty, from, n);
 		zero_buffer(tty, from, n);

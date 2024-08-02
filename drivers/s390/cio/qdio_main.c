@@ -565,6 +565,7 @@ static int get_outbound_buffer_frontier(struct qdio_q *q, unsigned int start,
 		*error = QDIO_ERROR_SLSB_PENDING;
 		fallthrough;
 	case SLSB_P_OUTPUT_EMPTY:
+	case SLSB_P_OUTPUT_PENDING:
 		/* the adapter got it */
 		DBF_DEV_EVENT(DBF_INFO, q->irq_ptr,
 			"out empty:%1d %02x", q->nr, count);
@@ -1283,17 +1284,32 @@ static int handle_outbound(struct qdio_q *q, unsigned int bufnr, unsigned int co
 	if (queue_type(q) == QDIO_IQDIO_QFMT) {
 		unsigned long phys_aob = aob ? virt_to_phys(aob) : 0;
 
+<<<<<<< HEAD
 		WARN_ON_ONCE(!IS_ALIGNED(phys_aob, 256));
 		rc = qdio_kick_outbound_q(q, count, phys_aob);
 	} else if (qdio_need_siga_sync(q->irq_ptr)) {
 		rc = qdio_sync_output_queue(q);
+=======
+		/* One SIGA-W per buffer required for unicast HSI */
+		WARN_ON_ONCE(count > 1 && !multicast_outbound(q));
+
+		phys_aob = qdio_aob_for_buffer(&q->u.out, bufnr);
+
+		rc = qdio_kick_outbound_q(q, phys_aob);
+	} else if (need_siga_sync(q)) {
+		rc = qdio_siga_sync_q(q);
+>>>>>>> master
 	} else if (count < QDIO_MAX_BUFFERS_PER_Q &&
 		   get_buf_state(q, prev_buf(bufnr), &state, 0) > 0 &&
 		   state == SLSB_CU_OUTPUT_PRIMED) {
 		/* The previous buffer is not processed yet, tack on. */
 		qperf_inc(q, fast_requeue);
 	} else {
+<<<<<<< HEAD
 		rc = qdio_kick_outbound_q(q, count, 0);
+=======
+		rc = qdio_kick_outbound_q(q, 0);
+>>>>>>> master
 	}
 
 	return rc;

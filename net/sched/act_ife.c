@@ -503,8 +503,12 @@ static int tcf_ife_init(struct net *net, struct nlattr *nla,
 		return -EINVAL;
 	}
 
+<<<<<<< HEAD
 	err = nla_parse_nested_deprecated(tb, TCA_IFE_MAX, nla, ife_policy,
 					  NULL);
+=======
+	err = nla_parse_nested(tb, TCA_IFE_MAX, nla, ife_policy, NULL);
+>>>>>>> master
 	if (err < 0)
 		return err;
 
@@ -524,6 +528,7 @@ static int tcf_ife_init(struct net *net, struct nlattr *nla,
 	if (!p)
 		return -ENOMEM;
 
+<<<<<<< HEAD
 	if (tb[TCA_IFE_METALST]) {
 		err = nla_parse_nested_deprecated(tb2, IFE_META_MAX,
 						  tb[TCA_IFE_METALST], NULL,
@@ -539,6 +544,8 @@ static int tcf_ife_init(struct net *net, struct nlattr *nla,
 		}
 	}
 
+=======
+>>>>>>> master
 	index = parm->index;
 	err = tcf_idr_check_alloc(tn, &index, a, bind);
 	if (err < 0) {
@@ -553,7 +560,11 @@ static int tcf_ife_init(struct net *net, struct nlattr *nla,
 
 	if (!exists) {
 		ret = tcf_idr_create(tn, index, est, a, &act_ife_ops,
+<<<<<<< HEAD
 				     bind, true, flags);
+=======
+				     bind, true);
+>>>>>>> master
 		if (ret) {
 			tcf_idr_cleanup(tn, index);
 			kfree(p);

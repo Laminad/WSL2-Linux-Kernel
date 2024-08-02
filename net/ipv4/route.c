@@ -920,7 +920,12 @@ void ip_rt_send_redirect(struct sk_buff *skb)
 		icmp_send(skb, ICMP_REDIRECT, ICMP_REDIR_HOST, gw);
 		peer->rate_last = jiffies;
 		++peer->n_redirects;
+<<<<<<< HEAD
 		if (IS_ENABLED(CONFIG_IP_ROUTE_VERBOSE) && log_martians &&
+=======
+#ifdef CONFIG_IP_ROUTE_VERBOSE
+		if (log_martians &&
+>>>>>>> master
 		    peer->n_redirects == ip_rt_redirect_number)
 			net_warn_ratelimited("host %pI4/if%d ignores redirects for %pI4 to %pI4\n",
 					     &ip_hdr(skb)->saddr, inet_iif(skb),
@@ -1225,6 +1230,34 @@ static void ipv4_send_dest_unreach(struct sk_buff *skb)
 		rcu_read_lock();
 		dev = skb->dev ? skb->dev : skb_rtable(skb)->dst.dev;
 		res = __ip_options_compile(dev_net(dev), &opt, skb, NULL);
+		rcu_read_unlock();
+
+		if (res)
+			return;
+	}
+	__icmp_send(skb, ICMP_DEST_UNREACH, ICMP_HOST_UNREACH, 0, &opt);
+}
+
+static void ipv4_send_dest_unreach(struct sk_buff *skb)
+{
+	struct ip_options opt;
+	int res;
+
+	/* Recompile ip options since IPCB may not be valid anymore.
+	 * Also check we have a reasonable ipv4 header.
+	 */
+	if (!pskb_network_may_pull(skb, sizeof(struct iphdr)) ||
+	    ip_hdr(skb)->version != 4 || ip_hdr(skb)->ihl < 5)
+		return;
+
+	memset(&opt, 0, sizeof(opt));
+	if (ip_hdr(skb)->ihl > 5) {
+		if (!pskb_network_may_pull(skb, ip_hdr(skb)->ihl * 4))
+			return;
+		opt.optlen = ip_hdr(skb)->ihl * 4 - sizeof(struct iphdr);
+
+		rcu_read_lock();
+		res = __ip_options_compile(dev_net(skb->dev), &opt, skb, NULL);
 		rcu_read_unlock();
 
 		if (res)
@@ -2347,6 +2380,7 @@ brd_input:
 	RT_CACHE_STAT_INC(in_brd);
 
 local_input:
+<<<<<<< HEAD
 	if (IN_DEV_ORCONF(in_dev, NOPOLICY))
 		IPCB(skb)->flags |= IPSKB_NOPOLICY;
 
@@ -2355,6 +2389,11 @@ local_input:
 		struct fib_nh_common *nhc = FIB_RES_NHC(*res);
 
 		rth = rcu_dereference(nhc->nhc_rth_input);
+=======
+	do_cache &= res->fi && !itag;
+	if (do_cache) {
+		rth = rcu_dereference(FIB_RES_NH(*res).nh_rth_input);
+>>>>>>> master
 		if (rt_cache_valid(rth)) {
 			skb_dst_set_noref(skb, &rth->dst);
 			err = 0;

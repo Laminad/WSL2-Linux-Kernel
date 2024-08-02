@@ -9,7 +9,10 @@
 #include <linux/export.h>
 #include <linux/ftrace.h>
 #include <linux/kprobes.h>
+<<<<<<< HEAD
 #include <linux/stacktrace.h>
+=======
+>>>>>>> master
 
 #include <asm/stack_pointer.h>
 

@@ -24,6 +24,15 @@
 
 static const char sni_82596_string[] = "snirm_82596";
 
+<<<<<<< HEAD
+=======
+#define LIB82596_DMA_ATTR	0
+
+#define DMA_WBACK(priv, addr, len)     do { } while (0)
+#define DMA_INV(priv, addr, len)       do { } while (0)
+#define DMA_WBACK_INV(priv, addr, len) do { } while (0)
+
+>>>>>>> master
 #define SYSBUS      0x00004400
 
 /* big endian CPU, 82596 little endian */
@@ -159,8 +168,13 @@ static int sni_82596_driver_remove(struct platform_device *pdev)
 	struct i596_private *lp = netdev_priv(dev);
 
 	unregister_netdev(dev);
+<<<<<<< HEAD
 	dma_free_coherent(&pdev->dev, sizeof(struct i596_private), lp->dma,
 			  lp->dma_addr);
+=======
+	dma_free_attrs(dev->dev.parent, sizeof(struct i596_private), lp->dma,
+		       lp->dma_addr, LIB82596_DMA_ATTR);
+>>>>>>> master
 	iounmap(lp->ca);
 	iounmap(lp->mpu_port);
 	free_netdev (dev);

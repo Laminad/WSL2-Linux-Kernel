@@ -29,9 +29,15 @@ struct private_data {
 
 	cpumask_var_t cpus;
 	struct device *cpu_dev;
+<<<<<<< HEAD
 	struct cpufreq_frequency_table *freq_table;
 	bool have_static_opps;
 	int opp_token;
+=======
+	struct thermal_cooling_device *cdev;
+	const char *reg_name;
+	bool have_static_opps;
+>>>>>>> master
 };
 
 static LIST_HEAD(priv_list);
@@ -126,7 +132,87 @@ static int cpufreq_init(struct cpufreq_policy *policy)
 	if (!transition_latency)
 		transition_latency = CPUFREQ_ETERNAL;
 
+<<<<<<< HEAD
 	cpumask_copy(policy->cpus, priv->cpus);
+=======
+		/*
+		 * operating-points-v2 not supported, fallback to old method of
+		 * finding shared-OPPs for backward compatibility if the
+		 * platform hasn't set sharing CPUs.
+		 */
+		if (dev_pm_opp_get_sharing_cpus(cpu_dev, policy->cpus))
+			fallback = true;
+	}
+
+	/*
+	 * OPP layer will be taking care of regulators now, but it needs to know
+	 * the name of the regulator first.
+	 */
+	name = find_supply_name(cpu_dev);
+	if (name) {
+		opp_table = dev_pm_opp_set_regulators(cpu_dev, &name, 1);
+		if (IS_ERR(opp_table)) {
+			ret = PTR_ERR(opp_table);
+			dev_err(cpu_dev, "Failed to set regulator for cpu%d: %d\n",
+				policy->cpu, ret);
+			goto out_put_clk;
+		}
+	}
+
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (!priv) {
+		ret = -ENOMEM;
+		goto out_put_regulator;
+	}
+
+	priv->reg_name = name;
+	priv->opp_table = opp_table;
+
+	/*
+	 * Initialize OPP tables for all policy->cpus. They will be shared by
+	 * all CPUs which have marked their CPUs shared with OPP bindings.
+	 *
+	 * For platforms not using operating-points-v2 bindings, we do this
+	 * before updating policy->cpus. Otherwise, we will end up creating
+	 * duplicate OPPs for policy->cpus.
+	 *
+	 * OPPs might be populated at runtime, don't check for error here
+	 */
+	if (!dev_pm_opp_of_cpumask_add_table(policy->cpus))
+		priv->have_static_opps = true;
+
+	/*
+	 * But we need OPP table to function so if it is not there let's
+	 * give platform code chance to provide it for us.
+	 */
+	ret = dev_pm_opp_get_opp_count(cpu_dev);
+	if (ret <= 0) {
+		dev_dbg(cpu_dev, "OPP table is not ready, deferring probe\n");
+		ret = -EPROBE_DEFER;
+		goto out_free_opp;
+	}
+
+	if (fallback) {
+		cpumask_setall(policy->cpus);
+
+		/*
+		 * OPP tables are initialized only for policy->cpu, do it for
+		 * others as well.
+		 */
+		ret = dev_pm_opp_set_sharing_cpus(cpu_dev, policy->cpus);
+		if (ret)
+			dev_err(cpu_dev, "%s: failed to mark OPPs as shared: %d\n",
+				__func__, ret);
+	}
+
+	ret = dev_pm_opp_init_cpufreq_table(cpu_dev, &freq_table);
+	if (ret) {
+		dev_err(cpu_dev, "failed to init cpufreq table: %d\n", ret);
+		goto out_free_opp;
+	}
+
+	priv->cpu_dev = cpu_dev;
+>>>>>>> master
 	policy->driver_data = priv;
 	policy->clk = cpu_clk;
 	policy->freq_table = priv->freq_table;
@@ -145,7 +231,20 @@ static int cpufreq_init(struct cpufreq_policy *policy)
 
 	return 0;
 
+<<<<<<< HEAD
 out_clk_put:
+=======
+out_free_cpufreq_table:
+	dev_pm_opp_free_cpufreq_table(cpu_dev, &freq_table);
+out_free_opp:
+	if (priv->have_static_opps)
+		dev_pm_opp_of_cpumask_remove_table(policy->cpus);
+	kfree(priv);
+out_put_regulator:
+	if (name)
+		dev_pm_opp_put_regulators(opp_table);
+out_put_clk:
+>>>>>>> master
 	clk_put(cpu_clk);
 
 	return ret;
@@ -153,7 +252,22 @@ out_clk_put:
 
 static int cpufreq_online(struct cpufreq_policy *policy)
 {
+<<<<<<< HEAD
 	/* We did light-weight tear down earlier, nothing to do here */
+=======
+	struct private_data *priv = policy->driver_data;
+
+	cpufreq_cooling_unregister(priv->cdev);
+	dev_pm_opp_free_cpufreq_table(priv->cpu_dev, &policy->freq_table);
+	if (priv->have_static_opps)
+		dev_pm_opp_of_cpumask_remove_table(policy->related_cpus);
+	if (priv->reg_name)
+		dev_pm_opp_put_regulators(priv->opp_table);
+
+	clk_put(policy->clk);
+	kfree(priv);
+
+>>>>>>> master
 	return 0;
 }
 

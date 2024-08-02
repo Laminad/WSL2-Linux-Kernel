@@ -157,6 +157,10 @@ static void __giveup_fpu(struct task_struct *tsk)
 	save_fpu(tsk);
 	msr = tsk->thread.regs->msr;
 	msr &= ~(MSR_FP|MSR_FE0|MSR_FE1);
+<<<<<<< HEAD
+=======
+#ifdef CONFIG_VSX
+>>>>>>> master
 	if (cpu_has_feature(CPU_FTR_VSX))
 		msr &= ~MSR_VSX;
 	regs_set_return_msr(tsk->thread.regs, msr);
@@ -228,6 +232,19 @@ void enable_kernel_fp(void)
 	}
 }
 EXPORT_SYMBOL(enable_kernel_fp);
+<<<<<<< HEAD
+=======
+
+static int restore_fp(struct task_struct *tsk)
+{
+	if (tsk->thread.load_fp) {
+		load_fp_state(&current->thread.fp_state);
+		current->thread.load_fp++;
+		return 1;
+	}
+	return 0;
+}
+>>>>>>> master
 #else
 static inline void __giveup_fpu(struct task_struct *tsk) { }
 #endif /* CONFIG_PPC_FPU */
@@ -296,6 +313,24 @@ void flush_altivec_to_thread(struct task_struct *tsk)
 	}
 }
 EXPORT_SYMBOL_GPL(flush_altivec_to_thread);
+<<<<<<< HEAD
+=======
+
+static int restore_altivec(struct task_struct *tsk)
+{
+	if (cpu_has_feature(CPU_FTR_ALTIVEC) && (tsk->thread.load_vec)) {
+		load_vr_state(&tsk->thread.vr_state);
+		tsk->thread.used_vr = 1;
+		tsk->thread.load_vec++;
+
+		return 1;
+	}
+	return 0;
+}
+#else
+#define loadvec(thr) 0
+static inline int restore_altivec(struct task_struct *tsk) { return 0; }
+>>>>>>> master
 #endif /* CONFIG_ALTIVEC */
 
 #ifdef CONFIG_VSX
@@ -517,7 +552,14 @@ static void do_restore_vsx(void) { }
 void notrace restore_math(struct pt_regs *regs)
 {
 	unsigned long msr;
+<<<<<<< HEAD
 	unsigned long new_msr = 0;
+=======
+
+	if (!MSR_TM_ACTIVE(regs->msr) &&
+		!current->thread.load_fp && !loadvec(current->thread))
+		return;
+>>>>>>> master
 
 	msr = regs->msr;
 

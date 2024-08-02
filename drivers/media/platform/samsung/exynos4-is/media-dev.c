@@ -528,7 +528,11 @@ static int fimc_md_register_sensor_entities(struct fimc_md *fmd)
 		if (!port)
 			continue;
 
+<<<<<<< HEAD:drivers/media/platform/samsung/exynos4-is/media-dev.c
 		ret = fimc_md_parse_port_node(fmd, port);
+=======
+		ret = fimc_md_parse_port_node(fmd, port, index);
+>>>>>>> master:drivers/media/platform/exynos4-is/media-dev.c
 		of_node_put(port);
 		if (ret < 0) {
 			of_node_put(node);

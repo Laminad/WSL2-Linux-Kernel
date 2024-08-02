@@ -1832,6 +1832,7 @@ lpfc_vport_symbolic_node_name(struct lpfc_vport *vport, char *symbol,
 	if (strlcat(symbol, tmp, size) >= size)
 		goto buffer_done;
 
+<<<<<<< HEAD
 	scnprintf(tmp, sizeof(tmp), " DV%s", lpfc_release_version);
 	if (strlcat(symbol, tmp, size) >= size)
 		goto buffer_done;
@@ -1847,6 +1848,30 @@ lpfc_vport_symbolic_node_name(struct lpfc_vport *vport, char *symbol,
 buffer_done:
 	return strnlen(symbol, size);
 
+=======
+	n = scnprintf(symbol, size, "Emulex %s", vport->phba->ModelName);
+	if (size < n)
+		return n;
+
+	n += scnprintf(symbol + n, size - n, " FV%s", fwrev);
+	if (size < n)
+		return n;
+
+	n += scnprintf(symbol + n, size - n, " DV%s.",
+		      lpfc_release_version);
+	if (size < n)
+		return n;
+
+	n += scnprintf(symbol + n, size - n, " HN:%s.",
+		      init_utsname()->nodename);
+	if (size < n)
+		return n;
+
+	/* Note :- OS name is "Linux" */
+	n += scnprintf(symbol + n, size - n, " OS:%s\n",
+		      init_utsname()->sysname);
+	return n;
+>>>>>>> master
 }
 
 static uint32_t
@@ -2612,8 +2637,47 @@ lpfc_fdmi_set_attr_fc4types(void *attr, uint16_t attrtype, uint32_t typemask)
 static int
 lpfc_fdmi_hba_attr_wwnn(struct lpfc_vport *vport, void *attr)
 {
+<<<<<<< HEAD
 	return lpfc_fdmi_set_attr_wwn(attr, RHBA_NODENAME,
 			&vport->fc_sparam.nodeName);
+=======
+	struct lpfc_fdmi_attr_entry *ae;
+	uint32_t size;
+
+	ae = (struct lpfc_fdmi_attr_entry *)&ad->AttrValue;
+	memset(ae, 0, sizeof(struct lpfc_name));
+
+	memcpy(&ae->un.AttrWWN, &vport->fc_sparam.nodeName,
+	       sizeof(struct lpfc_name));
+	size = FOURBYTES + sizeof(struct lpfc_name);
+	ad->AttrLen = cpu_to_be16(size);
+	ad->AttrType = cpu_to_be16(RHBA_NODENAME);
+	return size;
+}
+static int
+lpfc_fdmi_hba_attr_manufacturer(struct lpfc_vport *vport,
+				struct lpfc_fdmi_attr_def *ad)
+{
+	struct lpfc_fdmi_attr_entry *ae;
+	uint32_t len, size;
+
+	ae = (struct lpfc_fdmi_attr_entry *)&ad->AttrValue;
+	memset(ae, 0, 256);
+
+	/* This string MUST be consistent with other FC platforms
+	 * supported by Broadcom.
+	 */
+	strncpy(ae->un.AttrString,
+		"Emulex Corporation",
+		       sizeof(ae->un.AttrString));
+	len = strnlen(ae->un.AttrString,
+			  sizeof(ae->un.AttrString));
+	len += (len & 3) ? (4 - (len & 3)) : 4;
+	size = FOURBYTES + len;
+	ad->AttrLen = cpu_to_be16(size);
+	ad->AttrType = cpu_to_be16(RHBA_MANUFACTURER);
+	return size;
+>>>>>>> master
 }
 
 static int
@@ -2772,9 +2836,33 @@ lpfc_fdmi_hba_attr_vendor_id(struct lpfc_vport *vport, void *attr)
 	return lpfc_fdmi_set_attr_string(attr, RHBA_VENDOR_ID, "EMULEX");
 }
 
+<<<<<<< HEAD
 /*
  * Routines for all individual PORT attributes
  */
+=======
+/* Routines for all individual PORT attributes */
+static int
+lpfc_fdmi_port_attr_fc4type(struct lpfc_vport *vport,
+			    struct lpfc_fdmi_attr_def *ad)
+{
+	struct lpfc_fdmi_attr_entry *ae;
+	uint32_t size;
+
+	ae = (struct lpfc_fdmi_attr_entry *)&ad->AttrValue;
+	memset(ae, 0, 32);
+
+	ae->un.AttrTypes[3] = 0x02; /* Type 0x1 - ELS */
+	ae->un.AttrTypes[2] = 0x01; /* Type 0x8 - FCP */
+	if (vport->nvmei_support || vport->phba->nvmet_support)
+		ae->un.AttrTypes[6] = 0x01; /* Type 0x28 - NVME */
+	ae->un.AttrTypes[7] = 0x01; /* Type 0x20 - CT */
+	size = FOURBYTES + 32;
+	ad->AttrLen = cpu_to_be16(size);
+	ad->AttrType = cpu_to_be16(RPRT_SUPPORTED_FC4_TYPES);
+	return size;
+}
+>>>>>>> master
 
 static int
 lpfc_fdmi_port_attr_fc4type(struct lpfc_vport *vport, void *attr)
@@ -3023,6 +3111,7 @@ lpfc_fdmi_port_attr_active_fc4type(struct lpfc_vport *vport, void *attr)
 
 	fc4types = (ATTR_FC4_CT | ATTR_FC4_FCP);
 
+<<<<<<< HEAD
 	/* Check to see if NVME is configured or not */
 	if (vport == phba->pport &&
 	    phba->cfg_enable_fc4_type & LPFC_ENABLE_NVME)
@@ -3030,6 +3119,17 @@ lpfc_fdmi_port_attr_active_fc4type(struct lpfc_vport *vport, void *attr)
 
 	return lpfc_fdmi_set_attr_fc4types(attr, RPRT_ACTIVE_FC4_TYPES,
 			fc4types);
+=======
+	ae->un.AttrTypes[3] = 0x02; /* Type 0x1 - ELS */
+	ae->un.AttrTypes[2] = 0x01; /* Type 0x8 - FCP */
+	if (vport->phba->cfg_enable_fc4_type & LPFC_ENABLE_NVME)
+		ae->un.AttrTypes[6] = 0x1; /* Type 0x28 - NVME */
+	ae->un.AttrTypes[7] = 0x01; /* Type 0x20 - CT */
+	size = FOURBYTES + 32;
+	ad->AttrLen = cpu_to_be16(size);
+	ad->AttrType = cpu_to_be16(RPRT_ACTIVE_FC4_TYPES);
+	return size;
+>>>>>>> master
 }
 
 static int

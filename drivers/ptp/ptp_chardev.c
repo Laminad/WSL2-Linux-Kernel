@@ -343,10 +343,14 @@ long ptp_ioctl(struct posix_clock *pc, unsigned int cmd, unsigned long arg)
 			pct->sec = ts.tv_sec;
 			pct->nsec = ts.tv_nsec;
 			pct++;
+<<<<<<< HEAD
 			if (ops->gettimex64)
 				err = ops->gettimex64(ops, &ts, NULL);
 			else
 				err = ops->gettime64(ops, &ts);
+=======
+			err = ptp->info->gettime64(ptp->info, &ts);
+>>>>>>> master
 			if (err)
 				goto out;
 			pct->sec = ts.tv_sec;
@@ -428,7 +432,10 @@ long ptp_ioctl(struct posix_clock *pc, unsigned int cmd, unsigned long arg)
 	}
 
 out:
+<<<<<<< HEAD
 	kfree(extoff);
+=======
+>>>>>>> master
 	kfree(sysoff);
 	return err;
 }

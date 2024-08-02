@@ -462,6 +462,7 @@ static int read_unit_address_configuration(struct dasd_device *device,
 	spin_unlock_irqrestore(&lcu->lock, flags);
 
 	rc = dasd_sleep_on(cqr);
+<<<<<<< HEAD
 	if (!rc)
 		goto out;
 
@@ -470,6 +471,9 @@ static int read_unit_address_configuration(struct dasd_device *device,
 		rc = -EOPNOTSUPP;
 	} else {
 		/* IO failed but should be retried */
+=======
+	if (rc && !suborder_not_supported(cqr)) {
+>>>>>>> master
 		spin_lock_irqsave(&lcu->lock, flags);
 		lcu->flags |= NEED_UAC_UPDATE;
 		spin_unlock_irqrestore(&lcu->lock, flags);

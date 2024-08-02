@@ -32,6 +32,7 @@
 static void memfd_tag_pins(struct xa_state *xas)
 {
 	struct page *page;
+<<<<<<< HEAD
 	int latency = 0;
 	int cache_count;
 
@@ -61,6 +62,35 @@ static void memfd_tag_pins(struct xa_state *xas)
 		xas_lock_irq(xas);
 	}
 	xas_unlock_irq(xas);
+=======
+	unsigned int tagged = 0;
+
+	lru_add_drain();
+	start = 0;
+
+	xa_lock_irq(&mapping->i_pages);
+	radix_tree_for_each_slot(slot, &mapping->i_pages, &iter, start) {
+		page = radix_tree_deref_slot(slot);
+		if (!page || radix_tree_exception(page)) {
+			if (radix_tree_deref_retry(page)) {
+				slot = radix_tree_iter_retry(&iter);
+				continue;
+			}
+		} else if (page_count(page) - page_mapcount(page) > 1) {
+			radix_tree_tag_set(&mapping->i_pages, iter.index,
+					   MEMFD_TAG_PINNED);
+		}
+
+		if (++tagged % 1024)
+			continue;
+
+		slot = radix_tree_iter_resume(slot, &iter);
+		xa_unlock_irq(&mapping->i_pages);
+		cond_resched();
+		xa_lock_irq(&mapping->i_pages);
+	}
+	xa_unlock_irq(&mapping->i_pages);
+>>>>>>> master
 }
 
 /*

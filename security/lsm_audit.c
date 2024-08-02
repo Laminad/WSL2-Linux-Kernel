@@ -309,8 +309,13 @@ static void dump_common_audit_data(struct audit_buffer *ab,
 	}
 	case LSM_AUDIT_DATA_NET:
 		if (a->u.net->sk) {
+<<<<<<< HEAD
 			const struct sock *sk = a->u.net->sk;
 			const struct unix_sock *u;
+=======
+			struct sock *sk = a->u.net->sk;
+			struct unix_sock *u;
+>>>>>>> master
 			struct unix_address *addr;
 			int len = 0;
 			char *p = NULL;

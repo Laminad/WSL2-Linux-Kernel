@@ -187,12 +187,18 @@ static int verify_newsa_info(struct xfrm_usersa_info *p,
 		break;
 #else
 		err = -EAFNOSUPPORT;
+<<<<<<< HEAD
 		NL_SET_ERR_MSG(extack, "IPv6 support disabled");
+=======
+>>>>>>> master
 		goto out;
 #endif
 
 	default:
+<<<<<<< HEAD
 		NL_SET_ERR_MSG(extack, "Invalid address family");
+=======
+>>>>>>> master
 		goto out;
 	}
 
@@ -201,8 +207,12 @@ static int verify_newsa_info(struct xfrm_usersa_info *p,
 		break;
 
 	case AF_INET:
+<<<<<<< HEAD
 		if (p->sel.prefixlen_d > 32 || p->sel.prefixlen_s > 32) {
 			NL_SET_ERR_MSG(extack, "Invalid prefix length in selector (must be <= 32 for IPv4)");
+=======
+		if (p->sel.prefixlen_d > 32 || p->sel.prefixlen_s > 32)
+>>>>>>> master
 			goto out;
 		}
 
@@ -1733,8 +1743,12 @@ static int verify_newpolicy_info(struct xfrm_userpolicy_info *p,
 	ret = verify_policy_dir(p->dir, extack);
 	if (ret)
 		return ret;
+<<<<<<< HEAD
 	if (p->index && (xfrm_policy_id2dir(p->index) != p->dir)) {
 		NL_SET_ERR_MSG(extack, "Policy index doesn't match direction");
+=======
+	if (p->index && (xfrm_policy_id2dir(p->index) != p->dir))
+>>>>>>> master
 		return -EINVAL;
 	}
 
@@ -1805,6 +1819,7 @@ static int validate_tmpl(int nr, struct xfrm_user_tmpl *ut, u16 family,
 		switch (ut[i].mode) {
 		case XFRM_MODE_TUNNEL:
 		case XFRM_MODE_BEET:
+<<<<<<< HEAD
 			if (ut[i].optional && dir == XFRM_POLICY_OUT) {
 				NL_SET_ERR_MSG(extack, "Mode in optional template not allowed in outbound policy");
 				return -EINVAL;
@@ -1819,6 +1834,15 @@ static int validate_tmpl(int nr, struct xfrm_user_tmpl *ut, u16 family,
 		}
 		if (ut[i].mode >= XFRM_MODE_MAX) {
 			NL_SET_ERR_MSG(extack, "Mode in template must be < XFRM_MODE_MAX (" __stringify(XFRM_MODE_MAX) ")");
+=======
+			break;
+		default:
+			if (ut[i].family != prev_family)
+				return -EINVAL;
+			break;
+		}
+		if (ut[i].mode >= XFRM_MODE_MAX)
+>>>>>>> master
 			return -EINVAL;
 		}
 
@@ -1836,10 +1860,15 @@ static int validate_tmpl(int nr, struct xfrm_user_tmpl *ut, u16 family,
 			return -EINVAL;
 		}
 
+<<<<<<< HEAD
 		if (!xfrm_id_proto_valid(ut[i].id.proto)) {
 			NL_SET_ERR_MSG(extack, "Invalid XFRM protocol in template");
 			return -EINVAL;
 		}
+=======
+		if (!xfrm_id_proto_valid(ut[i].id.proto))
+			return -EINVAL;
+>>>>>>> master
 	}
 
 	return 0;

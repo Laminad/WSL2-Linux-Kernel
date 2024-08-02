@@ -11,6 +11,7 @@
 
 #include "stratix10-clk.h"
 
+<<<<<<< HEAD
 static const struct clk_parent_data pll_mux[] = {
 	{ .fw_name = "osc1",
 	  .name = "osc1" },
@@ -32,6 +33,19 @@ static const struct clk_parent_data cntr_mux[] = {
 	{ .fw_name = "f2s-free-clk",
 	  .name = "f2s-free-clk", },
 };
+=======
+static const char * const pll_mux[] = { "osc1", "cb-intosc-hs-div2-clk",
+					"f2s-free-clk",};
+static const char * const cntr_mux[] = { "main_pll", "periph_pll",
+					 "osc1", "cb-intosc-hs-div2-clk",
+					 "f2s-free-clk"};
+static const char * const boot_mux[] = { "osc1", "cb-intosc-hs-div2-clk",};
+
+static const char * const noc_free_mux[] = {"main_noc_base_clk",
+					    "peri_noc_base_clk",
+					    "osc1", "cb-intosc-hs-div2-clk",
+					    "f2s-free-clk"};
+>>>>>>> master
 
 static const struct clk_parent_data boot_mux[] = {
 	{ .fw_name = "osc1",
@@ -40,6 +54,7 @@ static const struct clk_parent_data boot_mux[] = {
 	  .name = "cb-intosc-hs-div2-clk" },
 };
 
+<<<<<<< HEAD
 static const struct clk_parent_data noc_free_mux[] = {
 	{ .fw_name = "main_noc_base_clk",
 	  .name = "main_noc_base_clk", },
@@ -177,6 +192,16 @@ static const struct clk_parent_data emac_ptp_mux[] = {
 	{ .fw_name = "boot_clk",
 	  .name = "boot_clk", },
 };
+=======
+static const char * const s2f_usr0_mux[] = {"f2s-free-clk", "boot_clk"};
+static const char * const emac_mux[] = {"emaca_free_clk", "emacb_free_clk"};
+static const char * const noc_mux[] = {"noc_free_clk", "boot_clk"};
+
+static const char * const mpu_free_mux[] = {"main_mpu_base_clk",
+					    "peri_mpu_base_clk",
+					    "osc1", "cb-intosc-hs-div2-clk",
+					    "f2s-free-clk"};
+>>>>>>> master
 
 /* clocks in AO (always on) controller */
 static const struct stratix10_pll_clock s10_pll_clks[] = {

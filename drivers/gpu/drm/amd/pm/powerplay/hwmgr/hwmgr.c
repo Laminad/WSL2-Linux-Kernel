@@ -364,8 +364,11 @@ int hwmgr_handle_task(struct pp_hwmgr *hwmgr, enum amd_pp_task task_id,
 
 	switch (task_id) {
 	case AMD_PP_TASK_DISPLAY_CONFIG_CHANGE:
+<<<<<<< HEAD:drivers/gpu/drm/amd/pm/powerplay/hwmgr/hwmgr.c
 		if (!hwmgr->not_vf)
 			return ret;
+=======
+>>>>>>> master:drivers/gpu/drm/amd/powerplay/hwmgr/hwmgr.c
 		ret = phm_pre_display_configuration_changed(hwmgr);
 		if (ret)
 			return ret;

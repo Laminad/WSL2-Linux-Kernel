@@ -376,11 +376,17 @@ void hclgevf_update_link_status(struct hclgevf_dev *hdev, int link_state)
 	if (test_and_set_bit(HCLGEVF_STATE_LINK_UPDATING, &hdev->state))
 		return;
 
+<<<<<<< HEAD
 	client = handle->client;
 	rclient = hdev->roce_client;
 
 	link_state =
 		test_bit(HCLGEVF_STATE_DOWN, &hdev->state) ? 0 : link_state;
+=======
+	link_state =
+		test_bit(HCLGEVF_STATE_DOWN, &hdev->state) ? 0 : link_state;
+
+>>>>>>> master
 	if (link_state != hdev->hw.mac.link) {
 		hdev->hw.mac.link = link_state;
 		client->ops->link_status_change(handle, !!link_state);
@@ -1582,18 +1588,40 @@ static void hclgevf_reset(struct hclgevf_dev *hdev)
 	if (hclgevf_reset_prepare(hdev))
 		goto err_reset;
 
+	rtnl_unlock();
+
 	/* check if VF could successfully fetch the hardware reset completion
 	 * status from the hardware
 	 */
 	if (hclgevf_reset_wait(hdev)) {
 		/* can't do much in this situation, will disable VF */
 		dev_err(&hdev->pdev->dev,
+<<<<<<< HEAD
 			"failed to fetch H/W reset completion status\n");
 		goto err_reset;
 	}
 
 	if (hclgevf_reset_rebuild(hdev))
 		goto err_reset;
+=======
+			"VF failed(=%d) to fetch H/W reset completion status\n",
+			ret);
+
+		dev_warn(&hdev->pdev->dev, "VF reset failed, disabling VF!\n");
+		rtnl_lock();
+		hclgevf_notify_client(hdev, HNAE3_UNINIT_CLIENT);
+
+		rtnl_unlock();
+		return ret;
+	}
+
+	rtnl_lock();
+
+	/* now, re-initialize the nic client and ae device*/
+	ret = hclgevf_reset_stack(hdev);
+	if (ret)
+		dev_err(&hdev->pdev->dev, "failed to reset VF stack\n");
+>>>>>>> master
 
 	return;
 
@@ -2207,6 +2235,18 @@ static void hclgevf_ae_stop(struct hnae3_handle *handle)
 	struct hclgevf_dev *hdev = hclgevf_ae_get_hdev(handle);
 
 	set_bit(HCLGEVF_STATE_DOWN, &hdev->state);
+<<<<<<< HEAD
+=======
+
+	for (i = 0; i < hdev->num_tqps; i++) {
+		/* Ring disable */
+		queue_id = hclgevf_get_queue_id(handle->kinfo.tqp[i]);
+		if (queue_id < 0) {
+			dev_warn(&hdev->pdev->dev,
+				 "Get invalid queue id, ignore it\n");
+			continue;
+		}
+>>>>>>> master
 
 	if (hdev->reset_type != HNAE3_VF_RESET)
 		hclgevf_reset_tqp(handle);

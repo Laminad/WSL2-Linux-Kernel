@@ -328,6 +328,23 @@ static int dsi_clk_init(struct msm_dsi_host *msm_host)
 		goto exit;
 	}
 
+<<<<<<< HEAD
+=======
+	msm_host->byte_clk_src = clk_get_parent(msm_host->byte_clk);
+	if (IS_ERR(msm_host->byte_clk_src)) {
+		ret = PTR_ERR(msm_host->byte_clk_src);
+		pr_err("%s: can't find byte_clk clock. ret=%d\n", __func__, ret);
+		goto exit;
+	}
+
+	msm_host->pixel_clk_src = clk_get_parent(msm_host->pixel_clk);
+	if (IS_ERR(msm_host->pixel_clk_src)) {
+		ret = PTR_ERR(msm_host->pixel_clk_src);
+		pr_err("%s: can't find pixel_clk clock. ret=%d\n", __func__, ret);
+		goto exit;
+	}
+
+>>>>>>> master
 	if (cfg_hnd->ops->clk_init_ver)
 		ret = cfg_hnd->ops->clk_init_ver(msm_host);
 exit:

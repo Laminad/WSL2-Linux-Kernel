@@ -1067,7 +1067,11 @@ sis900_open(struct net_device *net_dev)
 	sis900_set_mode(sis_priv, HW_SPEED_10_MBPS, FDX_CAPABLE_HALF_SELECTED);
 
 	/* Enable all known interrupts by setting the interrupt mask. */
+<<<<<<< HEAD
 	sw32(imr, RxSOVR | RxORN | RxERR | RxOK | TxURN | TxERR | TxDESC);
+=======
+	sw32(imr, RxSOVR | RxORN | RxERR | RxOK | TxURN | TxERR | TxIDLE | TxDESC);
+>>>>>>> master
 	sw32(cr, RxENA | sr32(cr));
 	sw32(ier, IE);
 
@@ -1591,7 +1595,11 @@ static void sis900_tx_timeout(struct net_device *net_dev, unsigned int txqueue)
 	sw32(txdp, sis_priv->tx_ring_dma);
 
 	/* Enable all known interrupts by setting the interrupt mask. */
+<<<<<<< HEAD
 	sw32(imr, RxSOVR | RxORN | RxERR | RxOK | TxURN | TxERR | TxDESC);
+=======
+	sw32(imr, RxSOVR | RxORN | RxERR | RxOK | TxURN | TxERR | TxIDLE | TxDESC);
+>>>>>>> master
 }
 
 /**
@@ -1688,8 +1696,13 @@ static irqreturn_t sis900_interrupt(int irq, void *dev_instance)
 	do {
 		status = sr32(isr);
 
+<<<<<<< HEAD
 		if ((status & (HIBERR|TxURN|TxERR|TxDESC|RxORN|RxERR|RxOK)) == 0)
 			/* nothing interesting happened */
+=======
+		if ((status & (HIBERR|TxURN|TxERR|TxIDLE|TxDESC|RxORN|RxERR|RxOK)) == 0)
+			/* nothing intresting happened */
+>>>>>>> master
 			break;
 		handled = 1;
 
@@ -1698,7 +1711,11 @@ static irqreturn_t sis900_interrupt(int irq, void *dev_instance)
 			/* Rx interrupt */
 			sis900_rx(net_dev);
 
+<<<<<<< HEAD
 		if (status & (TxURN | TxERR | TxDESC))
+=======
+		if (status & (TxURN | TxERR | TxIDLE | TxDESC))
+>>>>>>> master
 			/* Tx interrupt */
 			sis900_finish_xmit(net_dev);
 
@@ -1913,7 +1930,11 @@ static void sis900_finish_xmit (struct net_device *net_dev)
 		if (tx_status & OWN) {
 			/* The packet is not transmitted yet (owned by hardware) !
 			 * Note: this is an almost impossible condition
+<<<<<<< HEAD
 			 * on TxDESC interrupt ('descriptor interrupt') */
+=======
+			 * in case of TxDESC ('descriptor interrupt') */
+>>>>>>> master
 			break;
 		}
 
@@ -2547,7 +2568,11 @@ static int __maybe_unused sis900_resume(struct device *dev)
 	sis900_set_mode(sis_priv, HW_SPEED_10_MBPS, FDX_CAPABLE_HALF_SELECTED);
 
 	/* Enable all known interrupts by setting the interrupt mask. */
+<<<<<<< HEAD
 	sw32(imr, RxSOVR | RxORN | RxERR | RxOK | TxURN | TxERR | TxDESC);
+=======
+	sw32(imr, RxSOVR | RxORN | RxERR | RxOK | TxURN | TxERR | TxIDLE | TxDESC);
+>>>>>>> master
 	sw32(cr, RxENA | sr32(cr));
 	sw32(ier, IE);
 

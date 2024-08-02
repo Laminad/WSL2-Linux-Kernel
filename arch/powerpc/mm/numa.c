@@ -1398,7 +1398,13 @@ static long vphn_get_associativity(unsigned long cpu,
 		goto out;
 
 	case H_FUNCTION:
+<<<<<<< HEAD
 		pr_err_ratelimited("VPHN unsupported. Disabling polling...\n");
+=======
+		printk_once(KERN_INFO
+			"VPHN is not supported. Disabling polling...\n");
+		stop_topology_update();
+>>>>>>> master
 		break;
 	case H_HARDWARE:
 		pr_err_ratelimited("hcall_vphn() experienced a hardware fault "
@@ -1464,8 +1470,200 @@ out:
 	return cpu_to_core_id(cpu);
 }
 
+<<<<<<< HEAD
 static int topology_update_init(void)
 {
+=======
+int arch_update_cpu_topology(void)
+{
+	return numa_update_cpu_topology(true);
+}
+
+static void topology_work_fn(struct work_struct *work)
+{
+	rebuild_sched_domains();
+}
+static DECLARE_WORK(topology_work, topology_work_fn);
+
+static void topology_schedule_update(void)
+{
+	schedule_work(&topology_work);
+}
+
+static void topology_timer_fn(struct timer_list *unused)
+{
+	if (prrn_enabled && cpumask_weight(&cpu_associativity_changes_mask))
+		topology_schedule_update();
+	else if (vphn_enabled) {
+		if (update_cpu_associativity_changes_mask() > 0)
+			topology_schedule_update();
+		reset_topology_timer();
+	}
+}
+static struct timer_list topology_timer;
+
+static void reset_topology_timer(void)
+{
+	if (vphn_enabled)
+		mod_timer(&topology_timer, jiffies + topology_timer_secs * HZ);
+}
+
+#ifdef CONFIG_SMP
+
+static int dt_update_callback(struct notifier_block *nb,
+				unsigned long action, void *data)
+{
+	struct of_reconfig_data *update = data;
+	int rc = NOTIFY_DONE;
+
+	switch (action) {
+	case OF_RECONFIG_UPDATE_PROPERTY:
+		if (!of_prop_cmp(update->dn->type, "cpu") &&
+		    !of_prop_cmp(update->prop->name, "ibm,associativity")) {
+			u32 core_id;
+			of_property_read_u32(update->dn, "reg", &core_id);
+			rc = dlpar_cpu_readd(core_id);
+			rc = NOTIFY_OK;
+		}
+		break;
+	}
+
+	return rc;
+}
+
+static struct notifier_block dt_update_nb = {
+	.notifier_call = dt_update_callback,
+};
+
+#endif
+
+/*
+ * Start polling for associativity changes.
+ */
+int start_topology_update(void)
+{
+	int rc = 0;
+
+	if (!topology_updates_enabled)
+		return 0;
+
+	if (firmware_has_feature(FW_FEATURE_PRRN)) {
+		if (!prrn_enabled) {
+			prrn_enabled = 1;
+#ifdef CONFIG_SMP
+			rc = of_reconfig_notifier_register(&dt_update_nb);
+#endif
+		}
+	}
+	if (firmware_has_feature(FW_FEATURE_VPHN) &&
+		   lppaca_shared_proc(get_lppaca())) {
+		if (!vphn_enabled) {
+			vphn_enabled = 1;
+			setup_cpu_associativity_change_counters();
+			timer_setup(&topology_timer, topology_timer_fn,
+				    TIMER_DEFERRABLE);
+			reset_topology_timer();
+		}
+	}
+
+	return rc;
+}
+
+/*
+ * Disable polling for VPHN associativity changes.
+ */
+int stop_topology_update(void)
+{
+	int rc = 0;
+
+	if (!topology_updates_enabled)
+		return 0;
+
+	if (prrn_enabled) {
+		prrn_enabled = 0;
+#ifdef CONFIG_SMP
+		rc = of_reconfig_notifier_unregister(&dt_update_nb);
+#endif
+	}
+	if (vphn_enabled) {
+		vphn_enabled = 0;
+		rc = del_timer_sync(&topology_timer);
+	}
+
+	return rc;
+}
+
+int prrn_is_enabled(void)
+{
+	return prrn_enabled;
+}
+
+void __init shared_proc_topology_init(void)
+{
+	if (lppaca_shared_proc(get_lppaca())) {
+		bitmap_fill(cpumask_bits(&cpu_associativity_changes_mask),
+			    nr_cpumask_bits);
+		numa_update_cpu_topology(false);
+	}
+}
+
+static int topology_read(struct seq_file *file, void *v)
+{
+	if (vphn_enabled || prrn_enabled)
+		seq_puts(file, "on\n");
+	else
+		seq_puts(file, "off\n");
+
+	return 0;
+}
+
+static int topology_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, topology_read, NULL);
+}
+
+static ssize_t topology_write(struct file *file, const char __user *buf,
+			      size_t count, loff_t *off)
+{
+	char kbuf[4]; /* "on" or "off" plus null. */
+	int read_len;
+
+	read_len = count < 3 ? count : 3;
+	if (copy_from_user(kbuf, buf, read_len))
+		return -EINVAL;
+
+	kbuf[read_len] = '\0';
+
+	if (!strncmp(kbuf, "on", 2)) {
+		topology_updates_enabled = true;
+		start_topology_update();
+	} else if (!strncmp(kbuf, "off", 3)) {
+		stop_topology_update();
+		topology_updates_enabled = false;
+	} else
+		return -EINVAL;
+
+	return count;
+}
+
+static const struct file_operations topology_ops = {
+	.read = seq_read,
+	.write = topology_write,
+	.open = topology_open,
+	.release = single_release
+};
+
+static int topology_update_init(void)
+{
+	start_topology_update();
+
+	if (vphn_enabled)
+		topology_schedule_update();
+
+	if (!proc_create("powerpc/topology_updates", 0644, NULL, &topology_ops))
+		return -ENOMEM;
+
+>>>>>>> master
 	topology_inited = 1;
 	return 0;
 }

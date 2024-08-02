@@ -19,7 +19,10 @@
 #include <linux/moduleloader.h>
 #include <linux/completion.h>
 #include <linux/memory.h>
+<<<<<<< HEAD
 #include <linux/rcupdate.h>
+=======
+>>>>>>> master
 #include <asm/cacheflush.h>
 #include "core.h"
 #include "patch.h"
@@ -1071,11 +1074,226 @@ int klp_enable_patch(struct klp_patch *patch)
 	if (!patch || !patch->mod || !patch->objs)
 		return -EINVAL;
 
+<<<<<<< HEAD
 	klp_for_each_object_static(patch, obj) {
 		if (!obj->funcs)
 			return -EINVAL;
 	}
 
+=======
+	if (strlen(func->old_name) >= KSYM_NAME_LEN)
+		return -EINVAL;
+
+	INIT_LIST_HEAD(&func->stack_node);
+	func->patched = false;
+	func->transition = false;
+
+	/* The format for the sysfs directory is <function,sympos> where sympos
+	 * is the nth occurrence of this symbol in kallsyms for the patched
+	 * object. If the user selects 0 for old_sympos, then 1 will be used
+	 * since a unique symbol will be the first occurrence.
+	 */
+	return kobject_init_and_add(&func->kobj, &klp_ktype_func,
+				    &obj->kobj, "%s,%lu", func->old_name,
+				    func->old_sympos ? func->old_sympos : 1);
+}
+
+/* Arches may override this to finish any remaining arch-specific tasks */
+void __weak arch_klp_init_object_loaded(struct klp_patch *patch,
+					struct klp_object *obj)
+{
+}
+
+/* parts of the initialization that is done only when the object is loaded */
+static int klp_init_object_loaded(struct klp_patch *patch,
+				  struct klp_object *obj)
+{
+	struct klp_func *func;
+	int ret;
+
+	mutex_lock(&text_mutex);
+
+	module_disable_ro(patch->mod);
+	ret = klp_write_object_relocations(patch->mod, obj);
+	if (ret) {
+		module_enable_ro(patch->mod, true);
+		mutex_unlock(&text_mutex);
+		return ret;
+	}
+
+	arch_klp_init_object_loaded(patch, obj);
+	module_enable_ro(patch->mod, true);
+
+	mutex_unlock(&text_mutex);
+
+	klp_for_each_func(obj, func) {
+		ret = klp_find_object_symbol(obj->name, func->old_name,
+					     func->old_sympos,
+					     &func->old_addr);
+		if (ret)
+			return ret;
+
+		ret = kallsyms_lookup_size_offset(func->old_addr,
+						  &func->old_size, NULL);
+		if (!ret) {
+			pr_err("kallsyms size lookup failed for '%s'\n",
+			       func->old_name);
+			return -ENOENT;
+		}
+
+		ret = kallsyms_lookup_size_offset((unsigned long)func->new_func,
+						  &func->new_size, NULL);
+		if (!ret) {
+			pr_err("kallsyms size lookup failed for '%s' replacement\n",
+			       func->old_name);
+			return -ENOENT;
+		}
+	}
+
+	return 0;
+}
+
+static int klp_init_object(struct klp_patch *patch, struct klp_object *obj)
+{
+	struct klp_func *func;
+	int ret;
+	const char *name;
+
+	if (!obj->funcs)
+		return -EINVAL;
+
+	if (klp_is_module(obj) && strlen(obj->name) >= MODULE_NAME_LEN)
+		return -EINVAL;
+
+	obj->patched = false;
+	obj->mod = NULL;
+
+	klp_find_object_module(obj);
+
+	name = klp_is_module(obj) ? obj->name : "vmlinux";
+	ret = kobject_init_and_add(&obj->kobj, &klp_ktype_object,
+				   &patch->kobj, "%s", name);
+	if (ret)
+		return ret;
+
+	klp_for_each_func(obj, func) {
+		ret = klp_init_func(obj, func);
+		if (ret)
+			goto free;
+	}
+
+	if (klp_is_object_loaded(obj)) {
+		ret = klp_init_object_loaded(patch, obj);
+		if (ret)
+			goto free;
+	}
+
+	return 0;
+
+free:
+	klp_free_funcs_limited(obj, func);
+	kobject_put(&obj->kobj);
+	return ret;
+}
+
+static int klp_init_patch(struct klp_patch *patch)
+{
+	struct klp_object *obj;
+	int ret;
+
+	if (!patch->objs)
+		return -EINVAL;
+
+	mutex_lock(&klp_mutex);
+
+	patch->enabled = false;
+	init_completion(&patch->finish);
+
+	ret = kobject_init_and_add(&patch->kobj, &klp_ktype_patch,
+				   klp_root_kobj, "%s", patch->mod->name);
+	if (ret) {
+		mutex_unlock(&klp_mutex);
+		return ret;
+	}
+
+	klp_for_each_object(patch, obj) {
+		ret = klp_init_object(patch, obj);
+		if (ret)
+			goto free;
+	}
+
+	list_add_tail(&patch->list, &klp_patches);
+
+	mutex_unlock(&klp_mutex);
+
+	return 0;
+
+free:
+	klp_free_objects_limited(patch, obj);
+
+	mutex_unlock(&klp_mutex);
+
+	kobject_put(&patch->kobj);
+	wait_for_completion(&patch->finish);
+
+	return ret;
+}
+
+/**
+ * klp_unregister_patch() - unregisters a patch
+ * @patch:	Disabled patch to be unregistered
+ *
+ * Frees the data structures and removes the sysfs interface.
+ *
+ * Return: 0 on success, otherwise error
+ */
+int klp_unregister_patch(struct klp_patch *patch)
+{
+	int ret;
+
+	mutex_lock(&klp_mutex);
+
+	if (!klp_is_patch_registered(patch)) {
+		ret = -EINVAL;
+		goto err;
+	}
+
+	if (patch->enabled) {
+		ret = -EBUSY;
+		goto err;
+	}
+
+	klp_free_patch(patch);
+
+	mutex_unlock(&klp_mutex);
+
+	kobject_put(&patch->kobj);
+	wait_for_completion(&patch->finish);
+
+	return 0;
+err:
+	mutex_unlock(&klp_mutex);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(klp_unregister_patch);
+
+/**
+ * klp_register_patch() - registers a patch
+ * @patch:	Patch to be registered
+ *
+ * Initializes the data structure associated with the patch and
+ * creates the sysfs interface.
+ *
+ * There is no need to take the reference on the patch module here. It is done
+ * later when the patch is enabled.
+ *
+ * Return: 0 on success, otherwise error
+ */
+int klp_register_patch(struct klp_patch *patch)
+{
+	if (!patch || !patch->mod)
+		return -EINVAL;
+>>>>>>> master
 
 	if (!is_livepatch_module(patch->mod)) {
 		pr_err("module %s is not marked as a livepatch module\n",

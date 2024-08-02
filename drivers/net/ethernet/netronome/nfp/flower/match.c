@@ -31,6 +31,7 @@ nfp_flower_compile_tci(struct nfp_flower_meta_tci *ext,
 
 		flow_rule_match_vlan(rule, &match);
 		/* Populate the tci field. */
+<<<<<<< HEAD
 		key_tci = NFP_FLOWER_MASK_VLAN_PRESENT;
 		key_tci |= FIELD_PREP(NFP_FLOWER_MASK_VLAN_PRIO,
 				      match.key->vlan_priority) |
@@ -45,6 +46,14 @@ nfp_flower_compile_tci(struct nfp_flower_meta_tci *ext,
 
 		ext->tci |= cpu_to_be16((key_tci & msk_tci));
 		msk->tci |= cpu_to_be16(msk_tci);
+=======
+		tmp_tci = NFP_FLOWER_MASK_VLAN_PRESENT;
+		tmp_tci |= FIELD_PREP(NFP_FLOWER_MASK_VLAN_PRIO,
+				      flow_vlan->vlan_priority) |
+			   FIELD_PREP(NFP_FLOWER_MASK_VLAN_VID,
+				      flow_vlan->vlan_id);
+		frame->tci = cpu_to_be16(tmp_tci);
+>>>>>>> master
 	}
 }
 

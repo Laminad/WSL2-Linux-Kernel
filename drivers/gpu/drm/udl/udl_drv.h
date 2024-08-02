@@ -63,11 +63,16 @@ static inline struct udl_connector *to_udl_connector(struct drm_connector *conne
 struct udl_device {
 	struct drm_device drm;
 	struct device *dev;
+<<<<<<< HEAD
 	struct device *dmadev;
 
 	struct drm_plane primary_plane;
 	struct drm_crtc crtc;
 	struct drm_encoder encoder;
+=======
+	struct usb_device *udev;
+	struct drm_crtc *crtc;
+>>>>>>> master
 
 	struct mutex gem_lock;
 
@@ -77,6 +82,17 @@ struct udl_device {
 };
 
 #define to_udl(x) container_of(x, struct udl_device, drm)
+<<<<<<< HEAD
+=======
+
+struct udl_gem_object {
+	struct drm_gem_object base;
+	struct page **pages;
+	void *vmapping;
+	struct sg_table *sg;
+	unsigned int flags;
+};
+>>>>>>> master
 
 static inline struct usb_device *udl_to_usb_device(struct udl_device *udl)
 {
@@ -94,6 +110,18 @@ void udl_sync_pending_urbs(struct drm_device *dev);
 void udl_urb_completion(struct urb *urb);
 
 int udl_init(struct udl_device *udl);
+<<<<<<< HEAD
+=======
+void udl_fini(struct drm_device *dev);
+
+int udl_fbdev_init(struct drm_device *dev);
+void udl_fbdev_cleanup(struct drm_device *dev);
+void udl_fbdev_unplug(struct drm_device *dev);
+struct drm_framebuffer *
+udl_fb_user_fb_create(struct drm_device *dev,
+		      struct drm_file *file,
+		      const struct drm_mode_fb_cmd2 *mode_cmd);
+>>>>>>> master
 
 int udl_render_hline(struct drm_device *dev, int log_bpp, struct urb **urb_ptr,
 		     const char *front, char **urb_buf_ptr,

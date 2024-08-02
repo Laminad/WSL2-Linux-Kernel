@@ -110,7 +110,10 @@ struct msc_iter {
  * @mbuf_priv		MSU buffer's private data, if @mbuf
  * @win_list:		list of windows in multiblock mode
  * @single_sgt:		single mode buffer
+<<<<<<< HEAD
  * @cur_win:		current window
+=======
+>>>>>>> master
  * @nr_pages:		total number of pages allocated for this buffer
  * @single_sz:		amount of data in single mode
  * @single_wrap:	single mode wrap occurred
@@ -137,8 +140,11 @@ struct msc {
 	struct work_struct	work;
 	struct list_head	win_list;
 	struct sg_table		single_sgt;
+<<<<<<< HEAD
 	struct msc_window	*cur_win;
 	struct msc_window	*switch_on_unlock;
+=======
+>>>>>>> master
 	unsigned long		nr_pages;
 	unsigned long		single_sz;
 	unsigned int		single_wrap : 1;

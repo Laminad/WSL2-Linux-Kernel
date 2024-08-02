@@ -59,8 +59,13 @@
 #include "scsi_logging.h"
 
 /* make sure inq_product_rev string corresponds to this version */
+<<<<<<< HEAD
 #define SDEBUG_VERSION "0191"	/* format to fit INQUIRY revision field */
 static const char *sdebug_version_date = "20210520";
+=======
+#define SDEBUG_VERSION "0188"	/* format to fit INQUIRY revision field */
+static const char *sdebug_version_date = "20190125";
+>>>>>>> master
 
 #define MY_NAME "scsi_debug"
 
@@ -873,8 +878,12 @@ static inline bool scsi_debug_lbp(void)
 		(sdebug_lbpu || sdebug_lbpws || sdebug_lbpws10);
 }
 
+<<<<<<< HEAD
 static void *lba2fake_store(struct sdeb_store_info *sip,
 			    unsigned long long lba)
+=======
+static void *lba2fake_store(unsigned long long lba)
+>>>>>>> master
 {
 	struct sdeb_store_info *lsip = sip;
 
@@ -3044,6 +3053,7 @@ static int do_device_access(struct sdeb_store_info *sip, struct scsi_cmnd *scp,
 	return ret;
 }
 
+<<<<<<< HEAD
 /* Returns number of bytes copied or -1 if error. */
 static int do_dout_fetch(struct scsi_cmnd *scp, u32 num, u8 *doutp)
 {
@@ -3059,6 +3069,10 @@ static int do_dout_fetch(struct scsi_cmnd *scp, u32 num, u8 *doutp)
 
 /* If sip->storep+lba compares equal to arr(num), then copy top half of
  * arr into sip->storep+lba and return true. If comparison fails then
+=======
+/* If lba2fake_store(lba,num) compares equal to arr(num), then copy top half of
+ * arr into lba2fake_store(lba,num) and return true. If comparison fails then
+>>>>>>> master
  * return false. */
 static bool comp_write_worker(struct sdeb_store_info *sip, u64 lba, u32 num,
 			      const u8 *arr, bool compare_only)
@@ -3192,6 +3206,7 @@ static int prot_verify_read(struct scsi_cmnd *scp, sector_t start_sec,
 		if (sdt->app_tag == cpu_to_be16(0xffff))
 			continue;
 
+<<<<<<< HEAD
 		/*
 		 * Because scsi_debug acts as both initiator and
 		 * target we proceed to verify the PI even if
@@ -3206,6 +3221,12 @@ static int prot_verify_read(struct scsi_cmnd *scp, sector_t start_sec,
 				dif_errors++;
 				break;
 			}
+=======
+		ret = dif_verify(sdt, lba2fake_store(sector), sector, ei_lba);
+		if (ret) {
+			dif_errors++;
+			return ret;
+>>>>>>> master
 		}
 	}
 
@@ -3877,6 +3898,7 @@ err_out:
 static int resp_write_same(struct scsi_cmnd *scp, u64 lba, u32 num,
 			   u32 ei_lba, bool unmap, bool ndob)
 {
+<<<<<<< HEAD
 	struct scsi_device *sdp = scp->device;
 	struct sdebug_dev_info *devip = (struct sdebug_dev_info *)sdp->hostdata;
 	unsigned long long i;
@@ -3887,6 +3909,14 @@ static int resp_write_same(struct scsi_cmnd *scp, u64 lba, u32 num,
 						scp->device->hostdata, true);
 	u8 *fs1p;
 	u8 *fsp;
+=======
+	int ret;
+	unsigned long iflags;
+	unsigned long long i;
+	u32 lb_size = sdebug_sector_size;
+	u64 block, lbaa;
+	u8 *fs1p;
+>>>>>>> master
 
 	sdeb_write_lock(sip);
 
@@ -3895,6 +3925,7 @@ static int resp_write_same(struct scsi_cmnd *scp, u64 lba, u32 num,
 		sdeb_write_unlock(sip);
 		return ret;
 	}
+<<<<<<< HEAD
 
 	if (unmap && scsi_debug_lbp()) {
 		unmap_region(sip, lba, num);
@@ -3905,6 +3936,12 @@ static int resp_write_same(struct scsi_cmnd *scp, u64 lba, u32 num,
 	/* if ndob then zero 1 logical block, else fetch 1 logical block */
 	fsp = sip->storep;
 	fs1p = fsp + (block * lb_size);
+=======
+	lbaa = lba;
+	block = do_div(lbaa, sdebug_store_sectors);
+	/* if ndob then zero 1 logical block, else fetch 1 logical block */
+	fs1p = fake_storep + (block * lb_size);
+>>>>>>> master
 	if (ndob) {
 		memset(fs1p, 0, lb_size);
 		ret = 0;
@@ -3923,7 +3960,11 @@ static int resp_write_same(struct scsi_cmnd *scp, u64 lba, u32 num,
 	for (i = 1 ; i < num ; i++) {
 		lbaa = lba + i;
 		block = do_div(lbaa, sdebug_store_sectors);
+<<<<<<< HEAD
 		memmove(fsp + (block * lb_size), fs1p, lb_size);
+=======
+		memmove(fake_storep + (block * lb_size), fs1p, lb_size);
+>>>>>>> master
 	}
 	if (scsi_debug_lbp())
 		map_region(sip, lba, num);

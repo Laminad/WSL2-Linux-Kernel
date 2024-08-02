@@ -750,12 +750,17 @@ static loff_t ext2_max_size(int bits)
 	res += 1LL << (bits-2);
 	res += 1LL << (2*(bits-2));
 	res += 1LL << (3*(bits-2));
+<<<<<<< HEAD
 	/* Compute how many metadata blocks are needed */
 	meta_blocks = 1;
 	meta_blocks += 1 + ppb;
 	meta_blocks += 1 + ppb + ppb * ppb;
 	/* Does block tree limit file size? */
 	if (res + meta_blocks <= upper_limit)
+=======
+	/* Does block tree limit file size? */
+	if (res < upper_limit)
+>>>>>>> master
 		goto check_lfs;
 
 	res = upper_limit;

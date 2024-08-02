@@ -46,6 +46,7 @@ static void fail(const char *fmt, unsigned long a, unsigned long b)
 
 int main(void)
 {
+<<<<<<< HEAD
 	const int PAGE_SIZE = sysconf(_SC_PAGESIZE);
 	/*
 	 * va_max must be enough bigger than vm.mmap_min_addr, which is
@@ -53,6 +54,14 @@ int main(void)
 	 */
 	const unsigned long va_max = 1UL << 20;
 	unsigned long va;
+=======
+	const unsigned int PAGE_SIZE = sysconf(_SC_PAGESIZE);
+#ifdef __arm__
+	unsigned long va = 2 * PAGE_SIZE;
+#else
+	unsigned long va = 0;
+#endif
+>>>>>>> master
 	void *p;
 	int fd;
 	unsigned long a, b;
@@ -61,6 +70,7 @@ int main(void)
 	if (fd == -1)
 		return 1;
 
+<<<<<<< HEAD
 	for (va = 0; va < va_max; va += PAGE_SIZE) {
 		p = mmap((void *)va, PAGE_SIZE, PROT_NONE, MAP_PRIVATE|MAP_FILE|MAP_FIXED, fd, 0);
 		if (p == (void *)va)
@@ -68,6 +78,12 @@ int main(void)
 	}
 	if (va == va_max) {
 		fprintf(stderr, "error: mmap doesn't like you\n");
+=======
+	p = mmap((void *)va, PAGE_SIZE, PROT_NONE, MAP_PRIVATE|MAP_FILE|MAP_FIXED, fd, 0);
+	if (p == MAP_FAILED) {
+		if (errno == EPERM)
+			return 2;
+>>>>>>> master
 		return 1;
 	}
 

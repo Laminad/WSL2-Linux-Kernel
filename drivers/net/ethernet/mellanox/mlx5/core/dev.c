@@ -458,6 +458,7 @@ static int add_drivers(struct mlx5_core_dev *dev)
 	struct mlx5_priv *priv = &dev->priv;
 	int i, ret = 0;
 
+<<<<<<< HEAD
 	for (i = 0; i < ARRAY_SIZE(mlx5_adev_devices); i++) {
 		bool is_supported = false;
 
@@ -486,6 +487,13 @@ static int add_drivers(struct mlx5_core_dev *dev)
 		}
 	}
 	return ret;
+=======
+	mutex_lock(&mlx5_intf_mutex);
+	list_for_each_entry_reverse(intf, &intf_list, list)
+		mlx5_remove_device(intf, priv);
+	list_del(&priv->dev_list);
+	mutex_unlock(&mlx5_intf_mutex);
+>>>>>>> master
 }
 
 static void delete_drivers(struct mlx5_core_dev *dev)
@@ -505,9 +513,63 @@ static void delete_drivers(struct mlx5_core_dev *dev)
 		if (mlx5_adev_devices[i].is_enabled) {
 			bool enabled;
 
+<<<<<<< HEAD
 			enabled = mlx5_adev_devices[i].is_enabled(dev);
 			if (!enabled)
 				goto del_adev;
+=======
+	mutex_lock(&mlx5_intf_mutex);
+	list_for_each_entry(priv, &mlx5_dev_list, dev_list)
+		mlx5_remove_device(intf, priv);
+	list_del(&intf->list);
+	mutex_unlock(&mlx5_intf_mutex);
+}
+EXPORT_SYMBOL(mlx5_unregister_interface);
+
+/* Must be called with intf_mutex held */
+static bool mlx5_has_added_dev_by_protocol(struct mlx5_core_dev *mdev, int protocol)
+{
+	struct mlx5_device_context *dev_ctx;
+	struct mlx5_interface *intf;
+	bool found = false;
+
+	list_for_each_entry(intf, &intf_list, list) {
+		if (intf->protocol == protocol) {
+			dev_ctx = mlx5_get_device(intf, &mdev->priv);
+			if (dev_ctx && test_bit(MLX5_INTERFACE_ADDED, &dev_ctx->state))
+				found = true;
+			break;
+		}
+	}
+
+	return found;
+}
+
+void mlx5_reload_interface(struct mlx5_core_dev *mdev, int protocol)
+{
+	mutex_lock(&mlx5_intf_mutex);
+	if (mlx5_has_added_dev_by_protocol(mdev, protocol)) {
+		mlx5_remove_dev_by_protocol(mdev, protocol);
+		mlx5_add_dev_by_protocol(mdev, protocol);
+	}
+	mutex_unlock(&mlx5_intf_mutex);
+}
+
+void *mlx5_get_protocol_dev(struct mlx5_core_dev *mdev, int protocol)
+{
+	struct mlx5_priv *priv = &mdev->priv;
+	struct mlx5_device_context *dev_ctx;
+	unsigned long flags;
+	void *result = NULL;
+
+	spin_lock_irqsave(&priv->ctx_lock, flags);
+
+	list_for_each_entry(dev_ctx, &mdev->priv.ctx_list, list)
+		if ((dev_ctx->intf->protocol == protocol) &&
+		    dev_ctx->intf->get_dev) {
+			result = dev_ctx->intf->get_dev(dev_ctx->context);
+			break;
+>>>>>>> master
 		}
 
 		if (mlx5_adev_devices[i].is_supported && !delete_all)

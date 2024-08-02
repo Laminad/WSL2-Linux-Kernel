@@ -83,6 +83,7 @@ static int hyperv_init_ghcb(void)
 
 static int hv_cpu_init(unsigned int cpu)
 {
+<<<<<<< HEAD
 	union hv_vp_assist_msr_contents msr = { 0 };
 	struct hv_vp_assist_page **hvp;
 	int ret;
@@ -90,6 +91,25 @@ static int hv_cpu_init(unsigned int cpu)
 	ret = hv_common_cpu_init(cpu);
 	if (ret)
 		return ret;
+=======
+	u64 msr_vp_index;
+	struct hv_vp_assist_page **hvp = &hv_vp_assist_page[smp_processor_id()];
+	void **input_arg;
+	struct page *pg;
+
+	input_arg = (void **)this_cpu_ptr(hyperv_pcpu_input_arg);
+	pg = alloc_page(GFP_KERNEL);
+	if (unlikely(!pg))
+		return -ENOMEM;
+	*input_arg = page_address(pg);
+
+	hv_get_vp_index(msr_vp_index);
+
+	hv_vp_index[smp_processor_id()] = msr_vp_index;
+
+	if (msr_vp_index > hv_max_vp_index)
+		hv_max_vp_index = msr_vp_index;
+>>>>>>> master
 
 	if (!hv_vp_assist_page)
 		return 0;
@@ -658,6 +678,13 @@ void hyperv_cleanup(void)
 	/* Reset our OS id */
 	wrmsrl(HV_X64_MSR_GUEST_OS_ID, 0);
 	hv_ivm_msr_write(HV_X64_MSR_GUEST_OS_ID, 0);
+
+	/*
+	 * Reset hypercall page reference before reset the page,
+	 * let hypercall operations fail safely rather than
+	 * panic the kernel for using invalid hypercall page
+	 */
+	hv_hypercall_pg = NULL;
 
 	/*
 	 * Reset hypercall page reference before reset the page,

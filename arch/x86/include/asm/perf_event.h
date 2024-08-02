@@ -463,7 +463,10 @@ struct pebs_xmm {
 #define IBSCTL_LVT_OFFSET_MASK		0x0F
 
 /* IBS fetch bits/masks */
+<<<<<<< HEAD
 #define IBS_FETCH_L3MISSONLY	(1ULL<<59)
+=======
+>>>>>>> master
 #define IBS_FETCH_RAND_EN	(1ULL<<57)
 #define IBS_FETCH_VAL		(1ULL<<49)
 #define IBS_FETCH_ENABLE	(1ULL<<48)

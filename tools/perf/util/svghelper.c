@@ -331,7 +331,11 @@ static char *cpu_model(void)
 	file = fopen("/proc/cpuinfo", "r");
 	if (file) {
 		while (fgets(buf, 255, file)) {
+<<<<<<< HEAD
 			if (strcasestr(buf, "model name")) {
+=======
+			if (strstr(buf, "model name")) {
+>>>>>>> master
 				strlcpy(cpu_m, &buf[13], 255);
 				break;
 			}

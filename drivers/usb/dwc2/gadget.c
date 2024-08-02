@@ -736,11 +736,14 @@ static unsigned int dwc2_gadget_get_chain_limit(struct dwc2_hsotg_ep *hs_ep)
 					   MAX_DMA_DESC_NUM_HS_ISOC;
 	else
 		maxsize = DEV_DMA_NBYTES_LIMIT * MAX_DMA_DESC_NUM_GENERIC;
+<<<<<<< HEAD
 
 	/* Interrupt OUT EP with mps not multiple of 4 */
 	if (hs_ep->index)
 		if (usb_endpoint_xfer_int(ep_desc) && !dir_in && (mps % 4))
 			maxsize = mps * MAX_DMA_DESC_NUM_GENERIC;
+=======
+>>>>>>> master
 
 	return maxsize;
 }

@@ -1130,8 +1130,57 @@ extern bool efi_runtime_disabled(void);
 static inline bool efi_runtime_disabled(void) { return true; }
 #endif
 
+<<<<<<< HEAD
 extern void efi_call_virt_check_flags(unsigned long flags, const void *caller);
 extern unsigned long efi_call_virt_save_flags(void);
+=======
+void efi_printk(efi_system_table_t *sys_table_arg, char *str);
+
+void efi_free(efi_system_table_t *sys_table_arg, unsigned long size,
+	      unsigned long addr);
+
+char *efi_convert_cmdline(efi_system_table_t *sys_table_arg,
+			  efi_loaded_image_t *image, int *cmd_line_len);
+
+efi_status_t efi_get_memory_map(efi_system_table_t *sys_table_arg,
+				struct efi_boot_memmap *map);
+
+efi_status_t efi_low_alloc(efi_system_table_t *sys_table_arg,
+			   unsigned long size, unsigned long align,
+			   unsigned long *addr);
+
+efi_status_t efi_high_alloc(efi_system_table_t *sys_table_arg,
+			    unsigned long size, unsigned long align,
+			    unsigned long *addr, unsigned long max);
+
+efi_status_t efi_relocate_kernel(efi_system_table_t *sys_table_arg,
+				 unsigned long *image_addr,
+				 unsigned long image_size,
+				 unsigned long alloc_size,
+				 unsigned long preferred_addr,
+				 unsigned long alignment);
+
+efi_status_t handle_cmdline_files(efi_system_table_t *sys_table_arg,
+				  efi_loaded_image_t *image,
+				  char *cmd_line, char *option_string,
+				  unsigned long max_addr,
+				  unsigned long *load_addr,
+				  unsigned long *load_size);
+
+efi_status_t efi_parse_options(char const *cmdline);
+
+efi_status_t efi_setup_gop(efi_system_table_t *sys_table_arg,
+			   struct screen_info *si, efi_guid_t *proto,
+			   unsigned long size);
+
+#ifdef CONFIG_EFI
+extern bool efi_runtime_disabled(void);
+#else
+static inline bool efi_runtime_disabled(void) { return true; }
+#endif
+
+extern void efi_call_virt_check_flags(unsigned long flags, const char *call);
+>>>>>>> master
 
 enum efi_secureboot_mode {
 	efi_secureboot_mode_unset,

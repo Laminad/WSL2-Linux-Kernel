@@ -505,7 +505,11 @@ static int __parse_flow_nlattrs(const struct nlattr *attr,
 		}
 
 		if (!nz || !is_all_zero(nla_data(nla), nla_len(nla))) {
+<<<<<<< HEAD
 			attrs |= 1ULL << type;
+=======
+			attrs |= 1 << type;
+>>>>>>> master
 			a[type] = nla;
 		}
 	}

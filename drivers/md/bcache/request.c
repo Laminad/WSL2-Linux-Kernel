@@ -379,6 +379,7 @@ static bool check_should_bypass(struct cached_dev *dc, struct bio *bio)
 		goto skip;
 
 	/*
+<<<<<<< HEAD
 	 * If the bio is for read-ahead or background IO, bypass it or
 	 * not depends on the following situations,
 	 * - If the IO is for meta data, always cache it and no bypass
@@ -393,6 +394,15 @@ static bool check_should_bypass(struct cached_dev *dc, struct bio *bio)
 		    (dc->cache_readahead_policy != BCH_CACHE_READA_ALL))
 			goto skip;
 	}
+=======
+	 * Flag for bypass if the IO is for read-ahead or background,
+	 * unless the read-ahead request is for metadata
+	 * (eg, for gfs2 or xfs).
+	 */
+	if (bio->bi_opf & (REQ_RAHEAD|REQ_BACKGROUND) &&
+	    !(bio->bi_opf & (REQ_META|REQ_PRIO)))
+		goto skip;
+>>>>>>> master
 
 	if (bio->bi_iter.bi_sector & (c->cache->sb.block_size - 1) ||
 	    bio_sectors(bio) & (c->cache->sb.block_size - 1)) {
@@ -891,10 +901,20 @@ static int cached_dev_cache_miss(struct btree *b, struct search *s,
 		goto out_submit;
 	}
 
+<<<<<<< HEAD
 	/* Limitation for valid replace key size and cache_bio bvecs number */
 	size_limit = min_t(unsigned int, BIO_MAX_VECS * PAGE_SECTORS,
 			   (1 << KEY_SIZE_BITS) - 1);
 	s->insert_bio_sectors = min3(size_limit, sectors, bio_sectors(bio));
+=======
+	if (!(bio->bi_opf & REQ_RAHEAD) &&
+	    !(bio->bi_opf & (REQ_META|REQ_PRIO)) &&
+	    s->iop.c->gc_stats.in_use < CUTOFF_CACHE_READA)
+		reada = min_t(sector_t, dc->readahead >> 9,
+			      get_capacity(bio->bi_disk) - bio_end_sector(bio));
+
+	s->insert_bio_sectors = min(sectors, bio_sectors(bio) + reada);
+>>>>>>> master
 
 	s->iop.replace_key = KEY(s->iop.inode,
 				 bio->bi_iter.bi_sector + s->insert_bio_sectors,
@@ -1235,9 +1255,39 @@ static int cached_dev_ioctl(struct bcache_device *d, blk_mode_t mode,
 
 	if (dc->io_disable)
 		return -EIO;
+<<<<<<< HEAD
 	if (!dc->bdev->bd_disk->fops->ioctl)
 		return -ENOTTY;
 	return dc->bdev->bd_disk->fops->ioctl(dc->bdev, mode, cmd, arg);
+=======
+
+	return __blkdev_driver_ioctl(dc->bdev, mode, cmd, arg);
+}
+
+static int cached_dev_congested(void *data, int bits)
+{
+	struct bcache_device *d = data;
+	struct cached_dev *dc = container_of(d, struct cached_dev, disk);
+	struct request_queue *q = bdev_get_queue(dc->bdev);
+	int ret = 0;
+
+	if (bdi_congested(q->backing_dev_info, bits))
+		return 1;
+
+	if (cached_dev_get(dc)) {
+		unsigned int i;
+		struct cache *ca;
+
+		for_each_cache(ca, d->c, i) {
+			q = bdev_get_queue(ca->bdev);
+			ret |= bdi_congested(q->backing_dev_info, bits);
+		}
+
+		cached_dev_put(dc);
+	}
+
+	return ret;
+>>>>>>> master
 }
 
 void bch_cached_dev_request_init(struct cached_dev *dc)

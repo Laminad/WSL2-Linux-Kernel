@@ -49,7 +49,11 @@ static void cache_requested_key(struct key *key)
 
 /**
  * complete_request_key - Complete the construction of a key.
+<<<<<<< HEAD
  * @authkey: The authorisation key.
+=======
+ * @auth_key: The authorisation key.
+>>>>>>> master
  * @error: The success or failute of the construction.
  *
  * Complete the attempt to construct a key.  The key will be negated
@@ -121,7 +125,11 @@ static int call_sbin_request_key(struct key *authkey, void *aux)
 	struct request_key_auth *rka = get_request_key_auth(authkey);
 	const struct cred *cred = current_cred();
 	key_serial_t prkey, sskey;
+<<<<<<< HEAD
 	struct key *key = rka->target_key, *keyring, *session, *user_session;
+=======
+	struct key *key = rka->target_key, *keyring, *session;
+>>>>>>> master
 	char *argv[9], *envp[3], uid_str[12], gid_str[12];
 	char key_str[12], keyring_str[3][12];
 	char desc[20];
@@ -211,8 +219,11 @@ error_link:
 	key_put(keyring);
 
 error_alloc:
+<<<<<<< HEAD
 	key_put(user_session);
 error_us:
+=======
+>>>>>>> master
 	complete_request_key(authkey, ret);
 	kleave(" = %d", ret);
 	return ret;
@@ -249,7 +260,11 @@ static int construct_key(struct key *key, const void *callout_info,
 	/* check that the actor called complete_request_key() prior to
 	 * returning an error */
 	WARN_ON(ret < 0 &&
+<<<<<<< HEAD
 		!test_bit(KEY_FLAG_INVALIDATED, &authkey->flags));
+=======
+		!test_bit(KEY_FLAG_REVOKED, &authkey->flags));
+>>>>>>> master
 
 	key_put(authkey);
 	kleave(" = %d", ret);

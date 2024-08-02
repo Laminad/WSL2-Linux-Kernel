@@ -196,7 +196,11 @@ static struct kvm_vcpu *get_vcpu_by_vpidx(struct kvm *kvm, u32 vpidx)
 		return NULL;
 
 	vcpu = kvm_get_vcpu(kvm, vpidx);
+<<<<<<< HEAD
 	if (vcpu && kvm_hv_get_vpindex(vcpu) == vpidx)
+=======
+	if (vcpu && vcpu_to_hv_vcpu(vcpu)->vp_index == vpidx)
+>>>>>>> master
 		return vcpu;
 	kvm_for_each_vcpu(i, vcpu, kvm)
 		if (kvm_hv_get_vpindex(vcpu) == vpidx)
@@ -910,17 +914,22 @@ void kvm_hv_vcpu_uninit(struct kvm_vcpu *vcpu)
 
 bool kvm_hv_assist_page_enabled(struct kvm_vcpu *vcpu)
 {
+<<<<<<< HEAD
 	struct kvm_vcpu_hv *hv_vcpu = to_hv_vcpu(vcpu);
 
 	if (!hv_vcpu)
 		return false;
 
 	if (!(hv_vcpu->hv_vapic & HV_X64_MSR_VP_ASSIST_PAGE_ENABLE))
+=======
+	if (!(vcpu->arch.hyperv.hv_vapic & HV_X64_MSR_VP_ASSIST_PAGE_ENABLE))
+>>>>>>> master
 		return false;
 	return vcpu->arch.pv_eoi.msr_val & KVM_MSR_ENABLED;
 }
 EXPORT_SYMBOL_GPL(kvm_hv_assist_page_enabled);
 
+<<<<<<< HEAD
 int kvm_hv_get_assist_page(struct kvm_vcpu *vcpu)
 {
 	struct kvm_vcpu_hv *hv_vcpu = to_hv_vcpu(vcpu);
@@ -930,6 +939,15 @@ int kvm_hv_get_assist_page(struct kvm_vcpu *vcpu)
 
 	return kvm_read_guest_cached(vcpu->kvm, &vcpu->arch.pv_eoi.data,
 				     &hv_vcpu->vp_assist_page, sizeof(struct hv_vp_assist_page));
+=======
+bool kvm_hv_get_assist_page(struct kvm_vcpu *vcpu,
+			    struct hv_vp_assist_page *assist_page)
+{
+	if (!kvm_hv_assist_page_enabled(vcpu))
+		return false;
+	return !kvm_read_guest_cached(vcpu->kvm, &vcpu->arch.pv_eoi.data,
+				      assist_page, sizeof(*assist_page));
+>>>>>>> master
 }
 EXPORT_SYMBOL_GPL(kvm_hv_get_assist_page);
 
@@ -1467,6 +1485,7 @@ static u64 current_task_runtime_100ns(void)
 
 static int kvm_hv_set_msr(struct kvm_vcpu *vcpu, u32 msr, u64 data, bool host)
 {
+<<<<<<< HEAD
 	struct kvm_vcpu_hv *hv_vcpu = to_hv_vcpu(vcpu);
 
 	if (unlikely(!host && !hv_check_msr_access(hv_vcpu, msr)))
@@ -1475,6 +1494,14 @@ static int kvm_hv_set_msr(struct kvm_vcpu *vcpu, u32 msr, u64 data, bool host)
 	switch (msr) {
 	case HV_X64_MSR_VP_INDEX: {
 		struct kvm_hv *hv = to_kvm_hv(vcpu->kvm);
+=======
+	struct kvm_vcpu_hv *hv_vcpu = &vcpu->arch.hyperv;
+
+	switch (msr) {
+	case HV_X64_MSR_VP_INDEX: {
+		struct kvm_hv *hv = &vcpu->kvm->arch.hyperv;
+		int vcpu_idx = kvm_vcpu_get_idx(vcpu);
+>>>>>>> master
 		u32 new_vp_index = (u32)data;
 
 		if (!host || new_vp_index >= KVM_MAX_VCPUS)
@@ -1489,9 +1516,15 @@ static int kvm_hv_set_msr(struct kvm_vcpu *vcpu, u32 msr, u64 data, bool host)
 		 * VP index is changing, adjust num_mismatched_vp_indexes if
 		 * it now matches or no longer matches vcpu_idx.
 		 */
+<<<<<<< HEAD
 		if (hv_vcpu->vp_index == vcpu->vcpu_idx)
 			atomic_inc(&hv->num_mismatched_vp_indexes);
 		else if (new_vp_index == vcpu->vcpu_idx)
+=======
+		if (hv_vcpu->vp_index == vcpu_idx)
+			atomic_inc(&hv->num_mismatched_vp_indexes);
+		else if (new_vp_index == vcpu_idx)
+>>>>>>> master
 			atomic_dec(&hv->num_mismatched_vp_indexes);
 
 		hv_vcpu->vp_index = new_vp_index;
@@ -1503,7 +1536,11 @@ static int kvm_hv_set_msr(struct kvm_vcpu *vcpu, u32 msr, u64 data, bool host)
 
 		if (!(data & HV_X64_MSR_VP_ASSIST_PAGE_ENABLE)) {
 			hv_vcpu->hv_vapic = data;
+<<<<<<< HEAD
 			if (kvm_lapic_set_pv_eoi(vcpu, 0, 0))
+=======
+			if (kvm_lapic_enable_pv_eoi(vcpu, 0, 0))
+>>>>>>> master
 				return 1;
 			break;
 		}
@@ -1521,7 +1558,11 @@ static int kvm_hv_set_msr(struct kvm_vcpu *vcpu, u32 msr, u64 data, bool host)
 			return 1;
 		hv_vcpu->hv_vapic = data;
 		kvm_vcpu_mark_page_dirty(vcpu, gfn);
+<<<<<<< HEAD
 		if (kvm_lapic_set_pv_eoi(vcpu,
+=======
+		if (kvm_lapic_enable_pv_eoi(vcpu,
+>>>>>>> master
 					    gfn_to_gpa(gfn) | KVM_MSR_ENABLED,
 					    sizeof(struct hv_vp_assist_page)))
 			return 1;
@@ -1637,10 +1678,14 @@ static int kvm_hv_get_msr(struct kvm_vcpu *vcpu, u32 msr, u64 *pdata,
 			  bool host)
 {
 	u64 data = 0;
+<<<<<<< HEAD
 	struct kvm_vcpu_hv *hv_vcpu = to_hv_vcpu(vcpu);
 
 	if (unlikely(!host && !hv_check_msr_access(hv_vcpu, msr)))
 		return 1;
+=======
+	struct kvm_vcpu_hv *hv_vcpu = &vcpu->arch.hyperv;
+>>>>>>> master
 
 	switch (msr) {
 	case HV_X64_MSR_VP_INDEX:

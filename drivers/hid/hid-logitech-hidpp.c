@@ -968,7 +968,11 @@ static int hidpp_root_get_protocol_version(struct hidpp_device *hidpp)
 	ret = hidpp_send_rap_command_sync(hidpp,
 			REPORT_ID_HIDPP_SHORT,
 			HIDPP_PAGE_ROOT_IDX,
+<<<<<<< HEAD
 			CMD_ROOT_GET_PROTOCOL_VERSION | LINUX_KERNEL_SW_ID,
+=======
+			CMD_ROOT_GET_PROTOCOL_VERSION,
+>>>>>>> master
 			ping_data, sizeof(ping_data), &response);
 
 	if (ret == HIDPP_ERROR_INVALID_SUBID) {
@@ -994,6 +998,12 @@ static int hidpp_root_get_protocol_version(struct hidpp_device *hidpp)
 			__func__, response.rap.params[2], ping_byte);
 		return -EPROTO;
 	}
+<<<<<<< HEAD
+=======
+
+	hidpp->protocol_major = response.rap.params[0];
+	hidpp->protocol_minor = response.rap.params[1];
+>>>>>>> master
 
 	hidpp->protocol_major = response.rap.params[0];
 	hidpp->protocol_minor = response.rap.params[1];
@@ -2824,17 +2834,25 @@ static int hidpp_ff_init(struct hidpp_device *hidpp,
 	struct hid_device *hid = hidpp->hid_dev;
 	struct hid_input *hidinput;
 	struct input_dev *dev;
+<<<<<<< HEAD
 	struct usb_device_descriptor *udesc;
 	u16 bcdDevice;
+=======
+	const struct usb_device_descriptor *udesc = &(hid_to_usb_dev(hid)->descriptor);
+	const u16 bcdDevice = le16_to_cpu(udesc->bcdDevice);
+>>>>>>> master
 	struct ff_device *ff;
 	int error, j, num_slots = data->num_effects;
 	u8 version;
 
+<<<<<<< HEAD
 	if (!hid_is_usb(hid)) {
 		hid_err(hid, "device is not USB\n");
 		return -ENODEV;
 	}
 
+=======
+>>>>>>> master
 	if (list_empty(&hid->inputs)) {
 		hid_err(hid, "no inputs found\n");
 		return -ENODEV;

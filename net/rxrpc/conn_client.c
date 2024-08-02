@@ -285,6 +285,29 @@ int rxrpc_look_up_bundle(struct rxrpc_call *call, gfp_t gfp)
 	if (!candidate)
 		return -ENOMEM;
 
+<<<<<<< HEAD
+=======
+	/* Add the call to the new connection's waiting list in case we're
+	 * going to have to wait for the connection to come live.  It's our
+	 * connection, so we want first dibs on the channel slots.  We would
+	 * normally have to take channel_lock but we do this before anyone else
+	 * can see the connection.
+	 */
+	list_add(&call->chan_wait_link, &candidate->waiting_calls);
+
+	if (cp->exclusive) {
+		call->conn = candidate;
+		call->security_ix = candidate->security_ix;
+		call->service_id = candidate->service_id;
+		_leave(" = 0 [exclusive %d]", candidate->debug_id);
+		return 0;
+	}
+
+	/* Publish the new connection for userspace to find.  We need to redo
+	 * the search before doing this lest we race with someone else adding a
+	 * conflicting instance.
+	 */
+>>>>>>> master
 	_debug("search 2");
 	spin_lock(&local->client_bundles_lock);
 	pp = &local->client_bundles.rb_node;
@@ -315,6 +338,7 @@ int rxrpc_look_up_bundle(struct rxrpc_call *call, gfp_t gfp)
 	_leave(" = B=%u [new]", call->bundle->debug_id);
 	return 0;
 
+<<<<<<< HEAD
 found_bundle_free:
 	rxrpc_free_bundle(candidate);
 found_bundle:
@@ -322,6 +346,29 @@ found_bundle:
 	rxrpc_activate_bundle(bundle);
 	spin_unlock(&local->client_bundles_lock);
 	_leave(" = B=%u [found]", call->bundle->debug_id);
+=======
+	/* We come here if we found a suitable connection already in existence.
+	 * Discard any candidate we may have allocated, and try to get a
+	 * channel on this one.
+	 */
+found_extant_conn:
+	_debug("found conn");
+	spin_unlock(&local->client_conns_lock);
+
+	if (candidate) {
+		trace_rxrpc_client(candidate, -1, rxrpc_client_duplicate);
+		rxrpc_put_connection(candidate);
+		candidate = NULL;
+	}
+
+	spin_lock(&conn->channel_lock);
+	call->conn = conn;
+	call->security_ix = conn->security_ix;
+	call->service_id = conn->service_id;
+	list_add_tail(&call->chan_wait_link, &conn->waiting_calls);
+	spin_unlock(&conn->channel_lock);
+	_leave(" = 0 [extant %d]", conn->debug_id);
+>>>>>>> master
 	return 0;
 }
 
@@ -509,8 +556,48 @@ void rxrpc_connect_client_calls(struct rxrpc_local *local)
 		list_move_tail(&call->wait_link, &bundle->waiting_calls);
 		spin_unlock(&local->client_call_lock);
 
+<<<<<<< HEAD
 		if (rxrpc_bundle_has_space(bundle))
 			rxrpc_activate_channels(bundle);
+=======
+	ret = rxrpc_get_client_conn(rx, call, cp, srx, gfp);
+	if (ret < 0)
+		goto out;
+
+	rxrpc_animate_client_conn(rxnet, call->conn);
+	rxrpc_activate_channels(call->conn);
+
+	ret = rxrpc_wait_for_channel(call, gfp);
+	if (ret < 0) {
+		trace_rxrpc_client(call->conn, ret, rxrpc_client_chan_wait_failed);
+		rxrpc_disconnect_client_call(call);
+		goto out;
+	}
+
+	spin_lock_bh(&call->conn->params.peer->lock);
+	hlist_add_head_rcu(&call->error_link,
+			   &call->conn->params.peer->error_targets);
+	spin_unlock_bh(&call->conn->params.peer->lock);
+
+out:
+	_leave(" = %d", ret);
+	return ret;
+}
+
+/*
+ * Note that a connection is about to be exposed to the world.  Once it is
+ * exposed, we maintain an extra ref on it that stops it from being summarily
+ * discarded before it's (a) had a chance to deal with retransmission and (b)
+ * had a chance at re-use (the per-connection security negotiation is
+ * expensive).
+ */
+static void rxrpc_expose_client_conn(struct rxrpc_connection *conn,
+				     unsigned int channel)
+{
+	if (!test_and_set_bit(RXRPC_CONN_EXPOSED, &conn->flags)) {
+		trace_rxrpc_client(conn, channel, rxrpc_client_exposed);
+		rxrpc_get_connection(conn);
+>>>>>>> master
 	}
 }
 
@@ -560,6 +647,7 @@ static void rxrpc_set_client_reap_timer(struct rxrpc_local *local)
  */
 void rxrpc_disconnect_client_call(struct rxrpc_bundle *bundle, struct rxrpc_call *call)
 {
+<<<<<<< HEAD
 	struct rxrpc_connection *conn;
 	struct rxrpc_channel *chan = NULL;
 	struct rxrpc_local *local = bundle->local;
@@ -568,6 +656,23 @@ void rxrpc_disconnect_client_call(struct rxrpc_bundle *bundle, struct rxrpc_call
 	u32 cid;
 
 	_enter("c=%x", call->debug_id);
+=======
+	struct rxrpc_connection *conn = call->conn;
+	struct rxrpc_channel *chan = NULL;
+	struct rxrpc_net *rxnet = conn->params.local->rxnet;
+	unsigned int channel = -1;
+	u32 cid;
+
+	spin_lock(&conn->channel_lock);
+>>>>>>> master
+
+	cid = call->cid;
+	if (cid) {
+		channel = cid & RXRPC_CHANNELMASK;
+		chan = &conn->channels[channel];
+	}
+	trace_rxrpc_client(conn, channel, rxrpc_client_chan_disconnect);
+	call->conn = NULL;
 
 	/* Calls that have never actually been assigned a channel can simply be
 	 * discarded.
@@ -581,6 +686,7 @@ void rxrpc_disconnect_client_call(struct rxrpc_bundle *bundle, struct rxrpc_call
 		return;
 	}
 
+<<<<<<< HEAD
 	cid = call->cid;
 	channel = cid & RXRPC_CHANNELMASK;
 	chan = &conn->channels[channel];
@@ -590,6 +696,12 @@ void rxrpc_disconnect_client_call(struct rxrpc_bundle *bundle, struct rxrpc_call
 		return;
 
 	may_reuse = rxrpc_may_reuse_conn(conn);
+=======
+	if (rcu_access_pointer(chan->call) != call) {
+		spin_unlock(&conn->channel_lock);
+		BUG();
+	}
+>>>>>>> master
 
 	/* If a client call was exposed to the world, we save the result for
 	 * retransmission.

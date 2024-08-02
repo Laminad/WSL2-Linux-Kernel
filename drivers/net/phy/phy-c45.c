@@ -440,6 +440,7 @@ int genphy_c45_read_link(struct phy_device *phydev)
 
 		/* The link state is latched low so that momentary link
 		 * drops can be detected. Do not double-read the status
+<<<<<<< HEAD
 		 * in polling mode to detect such short link drops except
 		 * the link was already down.
 		 */
@@ -449,6 +450,14 @@ int genphy_c45_read_link(struct phy_device *phydev)
 				return val;
 			else if (val & MDIO_STAT1_LSTATUS)
 				continue;
+=======
+		 * in polling mode to detect such short link drops.
+		 */
+		if (!phy_polling_mode(phydev)) {
+			val = phy_read_mmd(phydev, devad, MDIO_STAT1);
+			if (val < 0)
+				return val;
+>>>>>>> master
 		}
 
 		val = phy_read_mmd(phydev, devad, MDIO_STAT1);

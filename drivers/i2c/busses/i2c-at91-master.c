@@ -743,6 +743,127 @@ static const struct i2c_algorithm at91_twi_algorithm = {
 	.functionality	= at91_twi_func,
 };
 
+<<<<<<< HEAD:drivers/i2c/busses/i2c-at91-master.c
+=======
+static struct at91_twi_pdata at91rm9200_config = {
+	.clk_max_div = 5,
+	.clk_offset = 3,
+	.has_unre_flag = true,
+	.has_alt_cmd = false,
+	.has_hold_field = false,
+};
+
+static struct at91_twi_pdata at91sam9261_config = {
+	.clk_max_div = 5,
+	.clk_offset = 4,
+	.has_unre_flag = false,
+	.has_alt_cmd = false,
+	.has_hold_field = false,
+};
+
+static struct at91_twi_pdata at91sam9260_config = {
+	.clk_max_div = 7,
+	.clk_offset = 4,
+	.has_unre_flag = false,
+	.has_alt_cmd = false,
+	.has_hold_field = false,
+};
+
+static struct at91_twi_pdata at91sam9g20_config = {
+	.clk_max_div = 7,
+	.clk_offset = 4,
+	.has_unre_flag = false,
+	.has_alt_cmd = false,
+	.has_hold_field = false,
+};
+
+static struct at91_twi_pdata at91sam9g10_config = {
+	.clk_max_div = 7,
+	.clk_offset = 4,
+	.has_unre_flag = false,
+	.has_alt_cmd = false,
+	.has_hold_field = false,
+};
+
+static const struct platform_device_id at91_twi_devtypes[] = {
+	{
+		.name = "i2c-at91rm9200",
+		.driver_data = (unsigned long) &at91rm9200_config,
+	}, {
+		.name = "i2c-at91sam9261",
+		.driver_data = (unsigned long) &at91sam9261_config,
+	}, {
+		.name = "i2c-at91sam9260",
+		.driver_data = (unsigned long) &at91sam9260_config,
+	}, {
+		.name = "i2c-at91sam9g20",
+		.driver_data = (unsigned long) &at91sam9g20_config,
+	}, {
+		.name = "i2c-at91sam9g10",
+		.driver_data = (unsigned long) &at91sam9g10_config,
+	}, {
+		/* sentinel */
+	}
+};
+
+#if defined(CONFIG_OF)
+static struct at91_twi_pdata at91sam9x5_config = {
+	.clk_max_div = 7,
+	.clk_offset = 4,
+	.has_unre_flag = false,
+	.has_alt_cmd = false,
+	.has_hold_field = false,
+};
+
+static struct at91_twi_pdata sama5d4_config = {
+	.clk_max_div = 7,
+	.clk_offset = 4,
+	.has_unre_flag = false,
+	.has_alt_cmd = false,
+	.has_hold_field = true,
+};
+
+static struct at91_twi_pdata sama5d2_config = {
+	.clk_max_div = 7,
+	.clk_offset = 3,
+	.has_unre_flag = true,
+	.has_alt_cmd = true,
+	.has_hold_field = true,
+};
+
+static const struct of_device_id atmel_twi_dt_ids[] = {
+	{
+		.compatible = "atmel,at91rm9200-i2c",
+		.data = &at91rm9200_config,
+	} , {
+		.compatible = "atmel,at91sam9260-i2c",
+		.data = &at91sam9260_config,
+	} , {
+		.compatible = "atmel,at91sam9261-i2c",
+		.data = &at91sam9261_config,
+	} , {
+		.compatible = "atmel,at91sam9g20-i2c",
+		.data = &at91sam9g20_config,
+	} , {
+		.compatible = "atmel,at91sam9g10-i2c",
+		.data = &at91sam9g10_config,
+	}, {
+		.compatible = "atmel,at91sam9x5-i2c",
+		.data = &at91sam9x5_config,
+	}, {
+		.compatible = "atmel,sama5d4-i2c",
+		.data = &sama5d4_config,
+	}, {
+		.compatible = "atmel,sama5d2-i2c",
+		.data = &sama5d2_config,
+	}, {
+		/* sentinel */
+	}
+};
+MODULE_DEVICE_TABLE(of, atmel_twi_dt_ids);
+#endif
+
+>>>>>>> master:drivers/i2c/busses/i2c-at91.c
 static int at91_twi_configure_dma(struct at91_twi_dev *dev, u32 phy_addr)
 {
 	int ret = 0;

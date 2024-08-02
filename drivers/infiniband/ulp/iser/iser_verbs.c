@@ -900,7 +900,11 @@ u8 iser_check_task_pi_status(struct iscsi_iser_task *iser_task,
 		ret = ib_check_mr_status(desc->rsc.sig_mr,
 					 IB_MR_CHECK_SIG_STATUS, &mr_status);
 		if (ret) {
+<<<<<<< HEAD
 			iser_err("ib_check_mr_status failed, ret %d\n", ret);
+=======
+			pr_err("ib_check_mr_status failed, ret %d\n", ret);
+>>>>>>> master
 			/* Not a lot we can do, return ambiguous guard error */
 			*sector = 0;
 			return 0x1;

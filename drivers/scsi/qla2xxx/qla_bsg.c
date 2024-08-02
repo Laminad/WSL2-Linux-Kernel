@@ -278,8 +278,12 @@ qla2x00_process_els(struct bsg_job *bsg_job)
 	const char *type;
 	int req_sg_cnt, rsp_sg_cnt;
 	int rval =  (DID_ERROR << 16);
+<<<<<<< HEAD
 	uint32_t els_cmd = 0;
 	int qla_port_allocated = 0;
+=======
+	uint16_t nextlid = 0;
+>>>>>>> master
 
 	if (bsg_request->msgcode == FC_BSG_RPT_ELS) {
 		rport = fc_bsg_to_rport(bsg_job);
@@ -3005,6 +3009,7 @@ qla24xx_bsg_request(struct bsg_job *bsg_job)
 		vha = shost_priv(host);
 	}
 
+<<<<<<< HEAD
 	/* Disable port will bring down the chip, allow enable command */
 	if (bsg_request->rqst_data.h_vendor.vendor_cmd[0] == QL_VND_MANAGE_HOST_PORT ||
 	    bsg_request->rqst_data.h_vendor.vendor_cmd[0] == QL_VND_GET_HOST_STATS)
@@ -3016,6 +3021,8 @@ qla24xx_bsg_request(struct bsg_job *bsg_job)
 		return -EPERM;
 	}
 
+=======
+>>>>>>> master
 	if (qla2x00_chip_is_down(vha)) {
 		ql_dbg(ql_dbg_user, vha, 0x709f,
 		    "BSG: ISP abort active/needed -- cmd=%d.\n",

@@ -851,11 +851,17 @@ out_remove_admin_tag_set:
 	if (new)
 		nvme_remove_admin_tag_set(&ctrl->ctrl);
 out_free_async_qe:
+<<<<<<< HEAD
 	if (ctrl->async_event_sqe.data) {
 		nvme_rdma_free_qe(ctrl->device->dev, &ctrl->async_event_sqe,
 			sizeof(struct nvme_command), DMA_TO_DEVICE);
 		ctrl->async_event_sqe.data = NULL;
 	}
+=======
+	nvme_rdma_free_qe(ctrl->device->dev, &ctrl->async_event_sqe,
+		sizeof(struct nvme_command), DMA_TO_DEVICE);
+	ctrl->async_event_sqe.data = NULL;
+>>>>>>> master
 out_free_queue:
 	nvme_rdma_free_queue(&ctrl->queues[0]);
 	return error;
@@ -933,12 +939,20 @@ static void nvme_rdma_teardown_admin_queue(struct nvme_rdma_ctrl *ctrl,
 	nvme_quiesce_admin_queue(&ctrl->ctrl);
 	blk_sync_queue(ctrl->ctrl.admin_q);
 	nvme_rdma_stop_queue(&ctrl->queues[0]);
+<<<<<<< HEAD
 	nvme_cancel_admin_tagset(&ctrl->ctrl);
 	if (remove) {
 		nvme_unquiesce_admin_queue(&ctrl->ctrl);
 		nvme_remove_admin_tag_set(&ctrl->ctrl);
 	}
 	nvme_rdma_destroy_admin_queue(ctrl);
+=======
+	if (ctrl->ctrl.admin_tagset)
+		blk_mq_tagset_busy_iter(ctrl->ctrl.admin_tagset,
+			nvme_cancel_request, &ctrl->ctrl);
+	blk_mq_unquiesce_queue(ctrl->ctrl.admin_q);
+	nvme_rdma_destroy_admin_queue(ctrl, remove);
+>>>>>>> master
 }
 
 static void nvme_rdma_teardown_io_queues(struct nvme_rdma_ctrl *ctrl,
@@ -948,12 +962,21 @@ static void nvme_rdma_teardown_io_queues(struct nvme_rdma_ctrl *ctrl,
 		nvme_quiesce_io_queues(&ctrl->ctrl);
 		nvme_sync_io_queues(&ctrl->ctrl);
 		nvme_rdma_stop_io_queues(ctrl);
+<<<<<<< HEAD
 		nvme_cancel_tagset(&ctrl->ctrl);
 		if (remove) {
 			nvme_unquiesce_io_queues(&ctrl->ctrl);
 			nvme_remove_io_tag_set(&ctrl->ctrl);
 		}
 		nvme_rdma_free_io_queues(ctrl);
+=======
+		if (ctrl->ctrl.tagset)
+			blk_mq_tagset_busy_iter(ctrl->ctrl.tagset,
+				nvme_cancel_request, &ctrl->ctrl);
+		if (remove)
+			nvme_start_queues(&ctrl->ctrl);
+		nvme_rdma_destroy_io_queues(ctrl, remove);
+>>>>>>> master
 	}
 }
 
@@ -1935,6 +1958,7 @@ static void nvme_rdma_complete_timed_out(struct request *rq)
 {
 	struct nvme_rdma_request *req = blk_mq_rq_to_pdu(rq);
 	struct nvme_rdma_queue *queue = req->queue;
+<<<<<<< HEAD
 
 	nvme_rdma_stop_queue(queue);
 	nvmf_complete_timed_out_request(rq);
@@ -1972,6 +1996,28 @@ static enum blk_eh_timer_return nvme_rdma_timeout(struct request *rq)
 	 * handle completing this request.
 	 */
 	nvme_rdma_error_recovery(ctrl);
+=======
+	struct nvme_rdma_ctrl *ctrl = queue->ctrl;
+
+	dev_warn(ctrl->ctrl.device, "I/O %d QID %d timeout\n",
+		 rq->tag, nvme_rdma_queue_idx(queue));
+
+	if (ctrl->ctrl.state != NVME_CTRL_LIVE) {
+		/*
+		 * Teardown immediately if controller times out while starting
+		 * or we are already started error recovery. all outstanding
+		 * requests are completed on shutdown, so we return BLK_EH_DONE.
+		 */
+		flush_work(&ctrl->err_work);
+		nvme_rdma_teardown_io_queues(ctrl, false);
+		nvme_rdma_teardown_admin_queue(ctrl, false);
+		return BLK_EH_DONE;
+	}
+
+	dev_warn(ctrl->ctrl.device, "starting error recovery\n");
+	nvme_rdma_error_recovery(ctrl);
+
+>>>>>>> master
 	return BLK_EH_RESET_TIMER;
 }
 

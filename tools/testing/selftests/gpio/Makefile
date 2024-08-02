@@ -5,4 +5,5 @@ TEST_FILES := gpio-mockup-sysfs.sh
 TEST_GEN_PROGS_EXTENDED := gpio-mockup-cdev gpio-chip-info gpio-line-name
 CFLAGS += -O2 -g -Wall $(KHDR_INCLUDES)
 
+KSFT_KHDR_INSTALL := 1
 include ../lib.mk

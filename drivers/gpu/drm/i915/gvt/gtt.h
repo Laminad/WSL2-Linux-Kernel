@@ -34,10 +34,14 @@
 #ifndef _GVT_GTT_H_
 #define _GVT_GTT_H_
 
+<<<<<<< HEAD
 #include <linux/kernel.h>
 #include <linux/kref.h>
 #include <linux/mutex.h>
 #include <linux/radix-tree.h>
+=======
+#define I915_GTT_PAGE_SHIFT         12
+>>>>>>> master
 
 #include "gt/intel_gtt.h"
 

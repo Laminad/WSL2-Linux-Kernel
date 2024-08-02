@@ -97,6 +97,7 @@ TEST_FILES += in_netns.sh lib.sh net_helper.sh setup_loopback.sh setup_veth.sh
 include ../lib.mk
 
 $(OUTPUT)/reuseport_bpf_numa: LDLIBS += -lnuma
+<<<<<<< HEAD
 $(OUTPUT)/tcp_mmap: LDLIBS += -lpthread -lcrypto
 $(OUTPUT)/tcp_inq: LDLIBS += -lpthread
 $(OUTPUT)/bind_bhash: LDLIBS += -lpthread
@@ -147,3 +148,7 @@ $(BPFOBJ): $(wildcard $(BPFDIR)/*.[ch] $(BPFDIR)/Makefile)		       \
 		    DESTDIR=$(SCRATCH_DIR) prefix= all install_headers
 
 EXTRA_CLEAN := $(SCRATCH_DIR)
+=======
+$(OUTPUT)/tcp_mmap: LDFLAGS += -lpthread
+$(OUTPUT)/tcp_inq: LDFLAGS += -lpthread
+>>>>>>> master

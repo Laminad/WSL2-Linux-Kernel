@@ -1290,8 +1290,12 @@ static int pi433_probe(struct spi_device *spi)
 	/* create cdev */
 	device->cdev = cdev_alloc();
 	if (!device->cdev) {
+<<<<<<< HEAD
 		dev_dbg(device->dev, "allocation of cdev failed\n");
 		retval = -ENOMEM;
+=======
+		dev_dbg(device->dev, "allocation of cdev failed");
+>>>>>>> master
 		goto cdev_failed;
 	}
 	device->cdev->owner = THIS_MODULE;

@@ -833,7 +833,11 @@ int rdma_addr_find_l2_eth_by_grh(const union ib_gid *sgid,
 	init_completion(&ctx.comp);
 	ret = rdma_resolve_ip((struct sockaddr *)&sgid_addr,
 			      (struct sockaddr *)&dgid_addr, &dev_addr, 1000,
+<<<<<<< HEAD
 			      resolve_cb, true, &ctx);
+=======
+			      resolve_cb, &ctx);
+>>>>>>> master
 	if (ret)
 		return ret;
 

@@ -2128,11 +2128,19 @@ static vm_fault_t insert_pfn(struct vm_area_struct *vma, unsigned long addr,
 			 * allocation and mapping invalidation so just skip the
 			 * update.
 			 */
+<<<<<<< HEAD
 			if (pte_pfn(entry) != pfn_t_to_pfn(pfn)) {
 				WARN_ON_ONCE(!is_zero_pfn(pte_pfn(entry)));
 				goto out_unlock;
 			}
 			entry = pte_mkyoung(entry);
+=======
+			if (pte_pfn(*pte) != pfn_t_to_pfn(pfn)) {
+				WARN_ON_ONCE(!is_zero_pfn(pte_pfn(*pte)));
+				goto out_unlock;
+			}
+			entry = pte_mkyoung(*pte);
+>>>>>>> master
 			entry = maybe_mkwrite(pte_mkdirty(entry), vma);
 			if (ptep_set_access_flags(vma, addr, pte, entry, 1))
 				update_mmu_cache(vma, addr, pte);
@@ -4211,7 +4219,11 @@ static vm_fault_t __do_fault(struct vm_fault *vmf)
 	 *				unlock_page(A)
 	 * lock_page(B)
 	 *				lock_page(B)
+<<<<<<< HEAD
 	 * pte_alloc_one
+=======
+	 * pte_alloc_pne
+>>>>>>> master
 	 *   shrink_page_list
 	 *     wait_on_page_writeback(A)
 	 *				SetPageWriteback(B)
@@ -4219,9 +4231,17 @@ static vm_fault_t __do_fault(struct vm_fault *vmf)
 	 *				# flush A, B to clear the writeback
 	 */
 	if (pmd_none(*vmf->pmd) && !vmf->prealloc_pte) {
+<<<<<<< HEAD
 		vmf->prealloc_pte = pte_alloc_one(vma->vm_mm);
 		if (!vmf->prealloc_pte)
 			return VM_FAULT_OOM;
+=======
+		vmf->prealloc_pte = pte_alloc_one(vmf->vma->vm_mm,
+						  vmf->address);
+		if (!vmf->prealloc_pte)
+			return VM_FAULT_OOM;
+		smp_wmb(); /* See comment in __pte_alloc() */
+>>>>>>> master
 	}
 
 	ret = vma->vm_ops->fault(vmf);
@@ -4690,9 +4710,15 @@ static vm_fault_t do_shared_fault(struct vm_fault *vmf)
 /*
  * We enter with non-exclusive mmap_lock (to exclude vma changes,
  * but allow concurrent faults).
+<<<<<<< HEAD
  * The mmap_lock may have been released depending on flags and our
  * return value.  See filemap_fault() and __folio_lock_or_retry().
  * If mmap_lock is released, vma may become invalid (for example
+=======
+ * The mmap_sem may have been released depending on flags and our
+ * return value.  See filemap_fault() and __lock_page_or_retry().
+ * If mmap_sem is released, vma may become invalid (for example
+>>>>>>> master
  * by other thread calling munmap()).
  */
 static vm_fault_t do_fault(struct vm_fault *vmf)
@@ -4705,11 +4731,25 @@ static vm_fault_t do_fault(struct vm_fault *vmf)
 	 * The VMA was not fully populated on mmap() or missing VM_DONTEXPAND
 	 */
 	if (!vma->vm_ops->fault) {
+<<<<<<< HEAD
 		vmf->pte = pte_offset_map_lock(vmf->vma->vm_mm, vmf->pmd,
 					       vmf->address, &vmf->ptl);
 		if (unlikely(!vmf->pte))
 			ret = VM_FAULT_SIGBUS;
 		else {
+=======
+		/*
+		 * If we find a migration pmd entry or a none pmd entry, which
+		 * should never happen, return SIGBUS
+		 */
+		if (unlikely(!pmd_present(*vmf->pmd)))
+			ret = VM_FAULT_SIGBUS;
+		else {
+			vmf->pte = pte_offset_map_lock(vmf->vma->vm_mm,
+						       vmf->pmd,
+						       vmf->address,
+						       &vmf->ptl);
+>>>>>>> master
 			/*
 			 * Make sure this is not a temporary clearing of pte
 			 * by holding ptl and checking again. A R/M/W update
@@ -4717,7 +4757,11 @@ static vm_fault_t do_fault(struct vm_fault *vmf)
 			 * we don't have concurrent modification by hardware
 			 * followed by an update.
 			 */
+<<<<<<< HEAD
 			if (unlikely(pte_none(ptep_get(vmf->pte))))
+=======
+			if (unlikely(pte_none(*vmf->pte)))
+>>>>>>> master
 				ret = VM_FAULT_SIGBUS;
 			else
 				ret = VM_FAULT_NOPAGE;
@@ -5766,6 +5810,7 @@ int __access_remote_vm(struct mm_struct *mm, unsigned long addr, void *buf,
 	void *old_buf = buf;
 	int write = gup_flags & FOLL_WRITE;
 
+<<<<<<< HEAD
 	if (mmap_read_lock_killable(mm))
 		return 0;
 
@@ -5774,6 +5819,9 @@ int __access_remote_vm(struct mm_struct *mm, unsigned long addr, void *buf,
 
 	/* Avoid triggering the temporary warning in __get_user_pages */
 	if (!vma_lookup(mm, addr) && !expand_stack(mm, addr))
+=======
+	if (down_read_killable(&mm->mmap_sem))
+>>>>>>> master
 		return 0;
 
 	/* ignore errors, just check how much was successfully transferred */

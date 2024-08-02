@@ -712,10 +712,17 @@ static const struct ath10k_hw_params ath10k_hw_params_list[] = {
 		.rx_desc_ops = &wcn3990_rx_desc_ops,
 		.hw_ops = &wcn3990_ops,
 		.decap_align_bytes = 1,
+<<<<<<< HEAD
 		.num_peers = TARGET_HL_TLV_NUM_PEERS,
 		.n_cipher_suites = 11,
 		.ast_skid_limit = TARGET_HL_TLV_AST_SKID_LIMIT,
 		.num_wds_entries = TARGET_HL_TLV_NUM_WDS_ENTRIES,
+=======
+		.num_peers = TARGET_HL_10_TLV_NUM_PEERS,
+		.n_cipher_suites = 11,
+		.ast_skid_limit = TARGET_HL_10_TLV_AST_SKID_LIMIT,
+		.num_wds_entries = TARGET_HL_10_TLV_NUM_WDS_ENTRIES,
+>>>>>>> master
 		.target_64bit = true,
 		.rx_ring_fill_level = HTT_RX_RING_FILL_LEVEL_DUAL_MAC,
 		.shadow_reg_support = true,

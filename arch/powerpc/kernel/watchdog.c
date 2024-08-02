@@ -438,7 +438,11 @@ static enum hrtimer_restart watchdog_timer_fn(struct hrtimer *hrtimer)
 {
 	int cpu = smp_processor_id();
 
+<<<<<<< HEAD
 	if (!(watchdog_enabled & WATCHDOG_HARDLOCKUP_ENABLED))
+=======
+	if (!(watchdog_enabled & NMI_WATCHDOG_ENABLED))
+>>>>>>> master
 		return HRTIMER_NORESTART;
 
 	if (!cpumask_test_cpu(cpu, &watchdog_cpumask))
@@ -479,7 +483,11 @@ static void start_watchdog(void *arg)
 		return;
 	}
 
+<<<<<<< HEAD
 	if (!(watchdog_enabled & WATCHDOG_HARDLOCKUP_ENABLED))
+=======
+	if (!(watchdog_enabled & NMI_WATCHDOG_ENABLED))
+>>>>>>> master
 		return;
 
 	if (!cpumask_test_cpu(cpu, &watchdog_cpumask))
@@ -521,7 +529,11 @@ static void stop_watchdog(void *arg)
 	cpumask_clear_cpu(cpu, &wd_cpus_enabled);
 	wd_smp_unlock(&flags);
 
+<<<<<<< HEAD
 	wd_smp_clear_cpu_pending(cpu);
+=======
+	wd_smp_clear_cpu_pending(cpu, get_tb());
+>>>>>>> master
 }
 
 static int stop_watchdog_on_cpu(unsigned int cpu)

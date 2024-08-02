@@ -495,6 +495,7 @@ static int ingenic_clk_determine_rate(struct clk_hw *hw,
 				      struct clk_rate_request *req)
 {
 	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
+<<<<<<< HEAD
 	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
 	unsigned int div = 1;
 
@@ -518,6 +519,20 @@ static inline int ingenic_clk_check_stable(struct ingenic_cgu *cgu,
 	return readl_poll_timeout(cgu->base + clk_info->div.reg, reg,
 				  !(reg & BIT(clk_info->div.busy_bit)),
 				  0, 100 * USEC_PER_MSEC);
+=======
+	struct ingenic_cgu *cgu = ingenic_clk->cgu;
+	const struct ingenic_cgu_clk_info *clk_info;
+	unsigned int div = 1;
+
+	clk_info = &cgu->clock_info[ingenic_clk->idx];
+
+	if (clk_info->type & CGU_CLK_DIV)
+		div = ingenic_clk_calc_div(clk_info, *parent_rate, req_rate);
+	else if (clk_info->type & CGU_CLK_FIXDIV)
+		div = clk_info->fixdiv.div;
+
+	return DIV_ROUND_UP(*parent_rate, div);
+>>>>>>> master
 }
 
 static int
@@ -533,7 +548,11 @@ ingenic_clk_set_rate(struct clk_hw *hw, unsigned long req_rate,
 	int ret = 0;
 
 	if (clk_info->type & CGU_CLK_DIV) {
+<<<<<<< HEAD
 		div = ingenic_clk_calc_div(hw, clk_info, parent_rate, req_rate);
+=======
+		div = ingenic_clk_calc_div(clk_info, parent_rate, req_rate);
+>>>>>>> master
 		rate = DIV_ROUND_UP(parent_rate, div);
 
 		if (rate != req_rate)

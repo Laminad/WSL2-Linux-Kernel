@@ -173,8 +173,11 @@
 #define V_ACT			GENMASK(31, 16)
 
 #define DP0_SYNCVAL		0x0654
+<<<<<<< HEAD
 #define VS_WIDTH		GENMASK(30, 16)
 #define HS_WIDTH		GENMASK(14, 0)
+=======
+>>>>>>> master
 #define SYNCVAL_HS_POL_ACTIVE_LOW	(1 << 15)
 #define SYNCVAL_VS_POL_ACTIVE_LOW	(1 << 31)
 #define DP0_MISC		0x0658
@@ -645,7 +648,13 @@ static int tc_stream_clock_calc(struct tc_data *tc)
 static int tc_set_syspllparam(struct tc_data *tc)
 {
 	unsigned long rate;
+<<<<<<< HEAD
 	u32 pllparam = SYSCLK_SEL_LSCLK | LSCLK_DIV_2;
+=======
+	u32 value;
+	int ret;
+	u32 dp_phy_ctrl;
+>>>>>>> master
 
 	rate = clk_get_rate(tc->refclk);
 	switch (rate) {
@@ -675,9 +684,19 @@ static int tc_aux_link_setup(struct tc_data *tc)
 	u32 dp0_auxcfg1;
 
 	/* Setup DP-PHY / PLL */
+<<<<<<< HEAD
 	ret = tc_set_syspllparam(tc);
 	if (ret)
 		goto err;
+=======
+	value |= SYSCLK_SEL_LSCLK | LSCLK_DIV_2;
+	tc_write(SYS_PLLPARAM, value);
+
+	dp_phy_ctrl = BGREN | PWR_SW_EN | PHY_A0_EN;
+	if (tc->link.base.num_lanes == 2)
+		dp_phy_ctrl |= PHY_2LANE;
+	tc_write(DP_PHY_CTRL, dp_phy_ctrl);
+>>>>>>> master
 
 	ret = regmap_write(tc->regmap, DP_PHY_CTRL,
 			   BGREN | PWR_SW_EN | PHY_A0_EN);
@@ -926,8 +945,14 @@ static int tc_set_edp_video_mode(struct tc_data *tc,
 	if (ret)
 		return ret;
 
+<<<<<<< HEAD
 	dp0_syncval = FIELD_PREP(VS_WIDTH, vsync_len) |
 		      FIELD_PREP(HS_WIDTH, hsync_len);
+=======
+	tc_write(DP0_SYNCVAL, (vsync_len << 16) | (hsync_len << 0) |
+		 ((mode->flags & DRM_MODE_FLAG_NHSYNC) ? SYNCVAL_HS_POL_ACTIVE_LOW : 0) |
+		 ((mode->flags & DRM_MODE_FLAG_NVSYNC) ? SYNCVAL_VS_POL_ACTIVE_LOW : 0));
+>>>>>>> master
 
 	if (mode->flags & DRM_MODE_FLAG_NVSYNC)
 		dp0_syncval |= SYNCVAL_VS_POL_ACTIVE_LOW;
@@ -988,15 +1013,24 @@ static int tc_main_link_enable(struct tc_data *tc)
 
 	dev_dbg(tc->dev, "link enable\n");
 
+<<<<<<< HEAD
 	ret = regmap_read(tc->regmap, DP0CTL, &value);
 	if (ret)
 		return ret;
+=======
+	tc_write(DP0_SRCCTRL, tc_srcctrl(tc));
+	/* SSCG and BW27 on DP1 must be set to the same as on DP0 */
+	tc_write(DP1_SRCCTRL,
+		 (tc->link.spread ? DP0_SRCCTRL_SSCG : 0) |
+		 ((tc->link.base.rate != 162000) ? DP0_SRCCTRL_BW27 : 0));
+>>>>>>> master
 
 	if (WARN_ON(value & DP_EN)) {
 		ret = regmap_write(tc->regmap, DP0CTL, 0);
 		if (ret)
 			return ret;
 	}
+<<<<<<< HEAD
 
 	ret = regmap_write(tc->regmap, DP0_SRCCTRL, tc_srcctrl(tc));
 	if (ret)
@@ -1020,6 +1054,17 @@ static int tc_main_link_enable(struct tc_data *tc)
 	ret = regmap_write(tc->regmap, DP_PHY_CTRL, dp_phy_ctrl);
 	if (ret)
 		return ret;
+=======
+	value |= SYSCLK_SEL_LSCLK | LSCLK_DIV_2;
+	tc_write(SYS_PLLPARAM, value);
+
+	/* Setup Main Link */
+	dp_phy_ctrl = BGREN | PWR_SW_EN | PHY_A0_EN | PHY_M0_EN;
+	if (tc->link.base.num_lanes == 2)
+		dp_phy_ctrl |= PHY_2LANE;
+	tc_write(DP_PHY_CTRL, dp_phy_ctrl);
+	msleep(100);
+>>>>>>> master
 
 	/* PLL setup */
 	ret = tc_pllupdate(tc, DP0_PLLCTRL);
@@ -1513,6 +1558,7 @@ static int tc_dpi_atomic_check(struct drm_bridge *bridge,
 			       struct drm_crtc_state *crtc_state,
 			       struct drm_connector_state *conn_state)
 {
+<<<<<<< HEAD
 	/* DSI->DPI interface clock limitation: upto 100 MHz */
 	if (crtc_state->adjusted_mode.clock > 100000)
 		return -EINVAL;
@@ -1539,7 +1585,21 @@ tc_dpi_mode_valid(struct drm_bridge *bridge,
 {
 	/* DPI interface clock limitation: upto 100 MHz */
 	if (mode->clock > 100000)
+=======
+	struct tc_data *tc = connector_to_tc(connector);
+	u32 req, avail;
+	u32 bits_per_pixel = 24;
+
+	/* DPI interface clock limitation: upto 154 MHz */
+	if (mode->clock > 154000)
+>>>>>>> master
 		return MODE_CLOCK_HIGH;
+
+	req = mode->clock * bits_per_pixel / 8;
+	avail = tc->link.base.num_lanes * tc->link.base.rate;
+
+	if (req > avail)
+		return MODE_BAD;
 
 	return MODE_OK;
 }
@@ -1588,7 +1648,18 @@ static int tc_connector_get_modes(struct drm_connector *connector)
 	struct tc_data *tc = connector_to_tc(connector);
 	int num_modes;
 	struct edid *edid;
+<<<<<<< HEAD
 	int ret;
+=======
+	unsigned int count;
+	int ret;
+
+	ret = tc_get_display_props(tc);
+	if (ret < 0) {
+		dev_err(tc->dev, "failed to read display props: %d\n", ret);
+		return 0;
+	}
+>>>>>>> master
 
 	ret = tc_get_display_props(tc);
 	if (ret < 0) {
@@ -1710,8 +1781,13 @@ static int tc_edp_bridge_attach(struct drm_bridge *bridge,
 					 &bus_format, 1);
 	tc->connector.display_info.bus_flags =
 		DRM_BUS_FLAG_DE_HIGH |
+<<<<<<< HEAD
 		DRM_BUS_FLAG_PIXDATA_DRIVE_NEGEDGE |
 		DRM_BUS_FLAG_SYNC_DRIVE_NEGEDGE;
+=======
+		DRM_BUS_FLAG_PIXDATA_NEGEDGE |
+		DRM_BUS_FLAG_SYNC_NEGEDGE;
+>>>>>>> master
 	drm_connector_attach_encoder(&tc->connector, tc->bridge.encoder);
 
 	return 0;

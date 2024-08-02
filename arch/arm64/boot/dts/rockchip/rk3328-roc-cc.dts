@@ -157,6 +157,7 @@
 	snps,reset-gpio = <&gpio1 RK_PC2 GPIO_ACTIVE_LOW>;
 	snps,reset-active-low;
 	snps,reset-delays-us = <0 10000 50000>;
+<<<<<<< HEAD
 	snps,rxpbl = <0x4>;
 	snps,txpbl = <0x4>;
 	tx_delay = <0x24>;
@@ -173,6 +174,10 @@
 };
 
 &hdmi_sound {
+=======
+	tx_delay = <0x24>;
+	rx_delay = <0x18>;
+>>>>>>> master
 	status = "okay";
 };
 

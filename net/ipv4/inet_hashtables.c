@@ -327,12 +327,20 @@ static inline int compute_score(struct sock *sk, struct net *net,
 		if (sk->sk_rcv_saddr != daddr)
 			return -1;
 
+<<<<<<< HEAD
 		if (!inet_sk_bound_dev_eq(net, sk->sk_bound_dev_if, dif, sdif))
 			return -1;
 		score =  sk->sk_bound_dev_if ? 2 : 1;
 
 		if (sk->sk_family == PF_INET)
 			score++;
+=======
+			if (!dev_match)
+				return -1;
+			if (sk->sk_bound_dev_if)
+				score += 4;
+		}
+>>>>>>> master
 		if (READ_ONCE(sk->sk_incoming_cpu) == raw_smp_processor_id())
 			score++;
 	}

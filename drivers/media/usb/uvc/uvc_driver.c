@@ -774,10 +774,14 @@ static struct uvc_entity *uvc_alloc_entity(u16 type, u16 id,
 	unsigned int i;
 
 	extra_size = roundup(extra_size, sizeof(*entity->pads));
+<<<<<<< HEAD
 	if (num_pads)
 		num_inputs = type & UVC_TERM_OUTPUT ? num_pads : num_pads - 1;
 	else
 		num_inputs = 0;
+=======
+	num_inputs = (type & UVC_TERM_OUTPUT) ? num_pads : num_pads - 1;
+>>>>>>> master
 	size = sizeof(*entity) + extra_size + sizeof(*entity->pads) * num_pads
 	     + num_inputs;
 	entity = kzalloc(size, GFP_KERNEL);
@@ -978,9 +982,16 @@ static int uvc_parse_standard_control(struct uvc_device *dev,
 		 */
 		type = get_unaligned_le16(&buffer[4]);
 		if ((type & 0x7f00) == 0 || (type & 0x8000) != 0) {
+<<<<<<< HEAD
 			uvc_dbg(dev, DESCR,
 				"device %d videocontrol interface %d INPUT_TERMINAL %d has invalid type 0x%04x, skipping\n",
 				udev->devnum, alts->desc.bInterfaceNumber,
+=======
+			uvc_trace(UVC_TRACE_DESCR, "device %d videocontrol "
+				"interface %d INPUT_TERMINAL %d has invalid "
+				"type 0x%04x, skipping\n", udev->devnum,
+				alts->desc.bInterfaceNumber,
+>>>>>>> master
 				buffer[3], type);
 			return 0;
 		}

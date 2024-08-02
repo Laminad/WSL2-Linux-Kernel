@@ -152,7 +152,11 @@ void flush_thread(void)
  * QEMU idle the host too.
  */
 
+<<<<<<< HEAD
 int running_on_qemu __ro_after_init;
+=======
+int running_on_qemu __read_mostly;
+>>>>>>> master
 EXPORT_SYMBOL(running_on_qemu);
 
 /*

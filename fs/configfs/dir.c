@@ -53,7 +53,11 @@ static void configfs_d_iput(struct dentry * dentry,
 		/*
 		 * Set sd->s_dentry to null only when this dentry is the one
 		 * that is going to be killed.  Otherwise configfs_d_iput may
+<<<<<<< HEAD
 		 * run just after configfs_lookup and set sd->s_dentry to
+=======
+		 * run just after configfs_attach_attr and set sd->s_dentry to
+>>>>>>> master
 		 * NULL even it's still in use.
 		 */
 		if (sd->s_dentry == dentry)
@@ -365,6 +369,7 @@ int configfs_create_link(struct configfs_dirent *target, struct dentry *parent,
 	int err = 0;
 	umode_t mode = S_IFLNK | S_IRWXUGO;
 	struct configfs_dirent *p = parent->d_fsdata;
+<<<<<<< HEAD
 	struct inode *inode;
 
 	err = configfs_make_dirent(p, dentry, target, mode, CONFIGFS_ITEM_LINK,
@@ -386,6 +391,24 @@ out_remove:
 	configfs_put(dentry->d_fsdata);
 	configfs_remove_dirent(dentry);
 	return PTR_ERR(inode);
+=======
+
+	err = configfs_make_dirent(p, dentry, sl, mode,
+				   CONFIGFS_ITEM_LINK, p->s_frag);
+	if (!err) {
+		err = configfs_create(dentry, mode, init_symlink);
+		if (err) {
+			struct configfs_dirent *sd = dentry->d_fsdata;
+			if (sd) {
+				spin_lock(&configfs_dirent_lock);
+				list_del_init(&sd->s_sibling);
+				spin_unlock(&configfs_dirent_lock);
+				configfs_put(sd);
+			}
+		}
+	}
+	return err;
+>>>>>>> master
 }
 
 static void remove_dir(struct dentry * d)
@@ -1504,7 +1527,10 @@ static int configfs_rmdir(struct inode *dir, struct dentry *dentry)
 		spin_lock(&configfs_dirent_lock);
 		configfs_detach_rollback(dentry);
 		spin_unlock(&configfs_dirent_lock);
+<<<<<<< HEAD
 		config_item_put(parent_item);
+=======
+>>>>>>> master
 		return -EINTR;
 	}
 	frag->frag_dead = true;

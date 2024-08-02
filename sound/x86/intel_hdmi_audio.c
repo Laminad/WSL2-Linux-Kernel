@@ -1814,7 +1814,10 @@ static int __hdmi_lpe_audio_probe(struct platform_device *pdev)
 	pm_runtime_use_autosuspend(&pdev->dev);
 	pm_runtime_enable(&pdev->dev);
 	pm_runtime_mark_last_busy(&pdev->dev);
+<<<<<<< HEAD
 	pm_runtime_idle(&pdev->dev);
+=======
+>>>>>>> master
 
 	dev_dbg(&pdev->dev, "%s: handle pending notification\n", __func__);
 	for_each_port(card_ctx, port) {

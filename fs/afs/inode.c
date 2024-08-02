@@ -697,13 +697,56 @@ bool afs_pagecache_valid(struct afs_vnode *vnode)
  */
 int afs_validate(struct afs_vnode *vnode, struct key *key)
 {
+<<<<<<< HEAD
+=======
+	time64_t now = ktime_get_real_seconds();
+	bool valid;
+>>>>>>> master
 	int ret;
 
 	_enter("{v={%llx:%llu} fl=%lx},%x",
 	       vnode->fid.vid, vnode->fid.vnode, vnode->flags,
 	       key_serial(key));
 
+<<<<<<< HEAD
 	if (afs_pagecache_valid(vnode))
+=======
+	/* Quickly check the callback state.  Ideally, we'd use read_seqbegin
+	 * here, but we have no way to pass the net namespace to the RCU
+	 * cleanup for the server record.
+	 */
+	read_seqlock_excl(&vnode->cb_lock);
+
+	if (test_bit(AFS_VNODE_CB_PROMISED, &vnode->flags)) {
+		if (vnode->cb_s_break != vnode->cb_interest->server->cb_s_break ||
+		    vnode->cb_v_break != vnode->volume->cb_v_break) {
+			vnode->cb_s_break = vnode->cb_interest->server->cb_s_break;
+			vnode->cb_v_break = vnode->volume->cb_v_break;
+			valid = false;
+		} else if (vnode->status.type == AFS_FTYPE_DIR &&
+			   (!test_bit(AFS_VNODE_DIR_VALID, &vnode->flags) ||
+			    vnode->cb_expires_at - 10 <= now)) {
+			valid = false;
+		} else if (test_bit(AFS_VNODE_ZAP_DATA, &vnode->flags) ||
+			   vnode->cb_expires_at - 10 <= now) {
+			valid = false;
+		} else {
+			valid = true;
+		}
+	} else if (test_bit(AFS_VNODE_DELETED, &vnode->flags)) {
+		valid = true;
+	} else {
+		vnode->cb_v_break = vnode->volume->cb_v_break;
+		valid = false;
+	}
+
+	read_sequnlock_excl(&vnode->cb_lock);
+
+	if (test_bit(AFS_VNODE_DELETED, &vnode->flags))
+		clear_nlink(&vnode->vfs_inode);
+
+	if (valid)
+>>>>>>> master
 		goto valid;
 
 	down_write(&vnode->validate_lock);
@@ -838,8 +881,11 @@ void afs_evict_inode(struct inode *inode)
 
 	afs_prune_wb_keys(vnode);
 	afs_put_permits(rcu_access_pointer(vnode->permit_cache));
+<<<<<<< HEAD
 	key_put(vnode->silly_key);
 	vnode->silly_key = NULL;
+=======
+>>>>>>> master
 	key_put(vnode->lock_key);
 	vnode->lock_key = NULL;
 	_leave("");

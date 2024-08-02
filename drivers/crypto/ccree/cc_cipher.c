@@ -864,6 +864,7 @@ static void cc_cipher_complete(struct device *dev, void *cc_req, int err)
 	struct crypto_skcipher *sk_tfm = crypto_skcipher_reqtfm(req);
 	unsigned int ivsize = crypto_skcipher_ivsize(sk_tfm);
 
+<<<<<<< HEAD
 	if (err != -EINPROGRESS) {
 		/* Not a BACKLOG notification */
 		cc_unmap_cipher_request(dev, req_ctx, ivsize, src, dst);
@@ -871,6 +872,41 @@ static void cc_cipher_complete(struct device *dev, void *cc_req, int err)
 		kfree_sensitive(req_ctx->iv);
 	}
 
+=======
+	cc_unmap_cipher_request(dev, req_ctx, ivsize, src, dst);
+
+	switch (ctx_p->cipher_mode) {
+	case DRV_CIPHER_CBC:
+		/*
+		 * The crypto API expects us to set the req->iv to the last
+		 * ciphertext block. For encrypt, simply copy from the result.
+		 * For decrypt, we must copy from a saved buffer since this
+		 * could be an in-place decryption operation and the src is
+		 * lost by this point.
+		 */
+		if (req_ctx->gen_ctx.op_type == DRV_CRYPTO_DIRECTION_DECRYPT)  {
+			memcpy(req->iv, req_ctx->backup_info, ivsize);
+			kzfree(req_ctx->backup_info);
+		} else if (!err) {
+			len = req->cryptlen - ivsize;
+			scatterwalk_map_and_copy(req->iv, req->dst, len,
+						 ivsize, 0);
+		}
+		break;
+
+	case DRV_CIPHER_CTR:
+		/* Compute the counter of the last block */
+		len = ALIGN(req->cryptlen, AES_BLOCK_SIZE) / AES_BLOCK_SIZE;
+		cc_update_ctr((u8 *)req->iv, len);
+		break;
+
+	default:
+		break;
+	}
+
+	kzfree(req_ctx->iv);
+
+>>>>>>> master
 	skcipher_request_complete(req, err);
 }
 
@@ -1002,6 +1038,24 @@ static int cc_cipher_decrypt(struct skcipher_request *req)
 
 	memset(req_ctx, 0, sizeof(*req_ctx));
 
+<<<<<<< HEAD
+=======
+	if ((ctx_p->cipher_mode == DRV_CIPHER_CBC) &&
+	    (req->cryptlen >= ivsize)) {
+
+		/* Allocate and save the last IV sized bytes of the source,
+		 * which will be lost in case of in-place decryption.
+		 */
+		req_ctx->backup_info = kzalloc(ivsize, flags);
+		if (!req_ctx->backup_info)
+			return -ENOMEM;
+
+		len = req->cryptlen - ivsize;
+		scatterwalk_map_and_copy(req_ctx->backup_info, req->src, len,
+					 ivsize, 0);
+	}
+
+>>>>>>> master
 	return cc_cipher_process(req, DRV_CRYPTO_DIRECTION_DECRYPT);
 }
 

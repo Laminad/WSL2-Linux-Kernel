@@ -1457,6 +1457,7 @@ ENTRY(efi_enter_kernel)
 		adr	r1, 0f			@ clean the region of code we
 		bl	cache_clean_flush	@ may run with the MMU off
 
+<<<<<<< HEAD
 #ifdef CONFIG_ARM_VIRT_EXT
 		@
 		@ The EFI spec does not support booting on ARM in HYP mode,
@@ -1513,6 +1514,26 @@ ENTRY(efi_enter_kernel)
 		mov	r0, r8			@ DT start
 		add	r1, r8, r2		@ DT end
 		bl	cache_clean_flush
+=======
+		@ Preserve return value of efi_entry() in r4
+		mov	r4, r0
+
+		@ our cache maintenance code relies on CP15 barrier instructions
+		@ but since we arrived here with the MMU and caches configured
+		@ by UEFI, we must check that the CP15BEN bit is set in SCTLR.
+		@ Note that this bit is RAO/WI on v6 and earlier, so the ISB in
+		@ the enable path will be executed on v7+ only.
+		mrc	p15, 0, r1, c1, c0, 0	@ read SCTLR
+		tst	r1, #(1 << 5)		@ CP15BEN bit set?
+		bne	0f
+		orr	r1, r1, #(1 << 5)	@ CP15 barrier instructions
+		mcr	p15, 0, r1, c1, c0, 0	@ write SCTLR
+ ARM(		.inst	0xf57ff06f		@ v7+ isb	)
+ THUMB(		isb						)
+
+0:		bl	cache_clean_flush
+		bl	cache_off
+>>>>>>> master
 
 		adr	r0, 0f			@ switch to our stack
 		ldr	sp, [r0]

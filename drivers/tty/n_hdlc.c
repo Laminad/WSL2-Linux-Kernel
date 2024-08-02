@@ -451,7 +451,27 @@ static ssize_t n_hdlc_tty_read(struct tty_struct *tty, struct file *file,
 		set_current_state(TASK_INTERRUPTIBLE);
 
 		rbuf = n_hdlc_buf_get(&n_hdlc->rx_buf_list);
+<<<<<<< HEAD
 		if (rbuf)
+=======
+		if (rbuf) {
+			if (rbuf->count > nr) {
+				/* too large for caller's buffer */
+				ret = -EOVERFLOW;
+			} else {
+				__set_current_state(TASK_RUNNING);
+				if (copy_to_user(buf, rbuf->buf, rbuf->count))
+					ret = -EFAULT;
+				else
+					ret = rbuf->count;
+			}
+
+			if (n_hdlc->rx_free_buf_list.count >
+			    DEFAULT_RX_BUF_COUNT)
+				kfree(rbuf);
+			else
+				n_hdlc_buf_put(&n_hdlc->rx_free_buf_list, rbuf);
+>>>>>>> master
 			break;
 
 		/* no data */
@@ -812,7 +832,19 @@ static int __init n_hdlc_init(void)
 
 	return status;
 
+<<<<<<< HEAD
 }	/* end of init_module() */
+=======
+#ifdef CONFIG_SPARC
+#undef __exitdata
+#define __exitdata
+#endif
+
+static const char hdlc_unregister_ok[] __exitdata =
+	KERN_INFO "N_HDLC: line discipline unregistered\n";
+static const char hdlc_unregister_fail[] __exitdata =
+	KERN_ERR "N_HDLC: can't unregister line discipline (err = %d)\n";
+>>>>>>> master
 
 static void __exit n_hdlc_exit(void)
 {

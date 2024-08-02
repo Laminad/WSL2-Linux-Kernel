@@ -451,6 +451,18 @@ static void sbitmap_queue_update_wake_batch(struct sbitmap_queue *sbq,
 	wake_batch = sbq_calc_wake_batch(sbq, depth);
 	if (sbq->wake_batch != wake_batch)
 		WRITE_ONCE(sbq->wake_batch, wake_batch);
+<<<<<<< HEAD
+=======
+		/*
+		 * Pairs with the memory barrier in sbitmap_queue_wake_up()
+		 * to ensure that the batch size is updated before the wait
+		 * counts.
+		 */
+		smp_mb();
+		for (i = 0; i < SBQ_WAIT_QUEUES; i++)
+			atomic_set(&sbq->ws[i].wait_cnt, 1);
+	}
+>>>>>>> master
 }
 
 void sbitmap_queue_recalculate_wake_batch(struct sbitmap_queue *sbq,

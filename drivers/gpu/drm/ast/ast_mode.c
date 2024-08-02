@@ -620,9 +620,14 @@ static int ast_primary_plane_helper_atomic_check(struct drm_plane *plane,
 			return 0;
 	}
 
+<<<<<<< HEAD
 	new_ast_crtc_state = to_ast_crtc_state(new_crtc_state);
 
 	new_ast_crtc_state->format = new_plane_state->fb->format;
+=======
+	ast_set_offset_reg(crtc);
+	ast_set_start_address_crt1(crtc, (u32)gpu_addr);
+>>>>>>> master
 
 	return 0;
 }
@@ -666,6 +671,7 @@ static void ast_primary_plane_helper_atomic_update(struct drm_plane *plane,
 		ast_handle_damage(ast_plane, shadow_plane_state->data, fb, &damage);
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Some BMCs stop scanning out the video signal after the driver
 	 * reprogrammed the offset. This stalls display output for several
@@ -674,6 +680,21 @@ static void ast_primary_plane_helper_atomic_update(struct drm_plane *plane,
 	 */
 	if (!old_fb || old_fb->pitches[0] != fb->pitches[0])
 		ast_set_offset_reg(ast, fb);
+=======
+	ast_set_index_reg(ast, AST_IO_CRTC_PORT, 0xa1, 0x06);
+
+	ast_set_std_reg(crtc, adjusted_mode, &vbios_mode);
+	ast_set_crtc_reg(crtc, adjusted_mode, &vbios_mode);
+	ast_set_offset_reg(crtc);
+	ast_set_dclk_reg(dev, adjusted_mode, &vbios_mode);
+	ast_set_ext_reg(crtc, adjusted_mode, &vbios_mode);
+	ast_set_sync_reg(dev, adjusted_mode, &vbios_mode);
+	ast_set_dac_reg(crtc, adjusted_mode, &vbios_mode);
+
+	ast_crtc_mode_set_base(crtc, x, y, old_fb);
+
+	return 0;
+>>>>>>> master
 }
 
 static void ast_primary_plane_helper_atomic_enable(struct drm_plane *plane,
@@ -726,10 +747,465 @@ static int ast_primary_plane_init(struct ast_device *ast)
 	unsigned long size = ast->vram_fb_available - cursor_size;
 	int ret;
 
+<<<<<<< HEAD
 	ret = ast_plane_init(dev, ast_primary_plane, vaddr, offset, size,
 			     0x01, &ast_primary_plane_funcs,
 			     ast_primary_plane_formats, ARRAY_SIZE(ast_primary_plane_formats),
 			     NULL, DRM_PLANE_TYPE_PRIMARY);
+=======
+	DRM_DEBUG_KMS("\n");
+	ast_crtc_dpms(crtc, DRM_MODE_DPMS_OFF);
+	if (crtc->primary->fb) {
+		struct ast_framebuffer *ast_fb = to_ast_framebuffer(crtc->primary->fb);
+		struct drm_gem_object *obj = ast_fb->obj;
+		struct ast_bo *bo = gem_to_ast_bo(obj);
+
+		ret = ast_bo_reserve(bo, false);
+		if (ret)
+			return;
+
+		ast_bo_push_sysram(bo);
+		ast_bo_unreserve(bo);
+	}
+	crtc->primary->fb = NULL;
+}
+
+static void ast_crtc_prepare(struct drm_crtc *crtc)
+{
+
+}
+
+static void ast_crtc_commit(struct drm_crtc *crtc)
+{
+	struct ast_private *ast = crtc->dev->dev_private;
+	ast_set_index_reg_mask(ast, AST_IO_SEQ_PORT, 0x1, 0xdf, 0);
+	ast_crtc_load_lut(crtc);
+}
+
+
+static const struct drm_crtc_helper_funcs ast_crtc_helper_funcs = {
+	.dpms = ast_crtc_dpms,
+	.mode_set = ast_crtc_mode_set,
+	.mode_set_base = ast_crtc_mode_set_base,
+	.disable = ast_crtc_disable,
+	.prepare = ast_crtc_prepare,
+	.commit = ast_crtc_commit,
+
+};
+
+static void ast_crtc_reset(struct drm_crtc *crtc)
+{
+
+}
+
+static int ast_crtc_gamma_set(struct drm_crtc *crtc, u16 *red, u16 *green,
+			      u16 *blue, uint32_t size,
+			      struct drm_modeset_acquire_ctx *ctx)
+{
+	ast_crtc_load_lut(crtc);
+
+	return 0;
+}
+
+
+static void ast_crtc_destroy(struct drm_crtc *crtc)
+{
+	drm_crtc_cleanup(crtc);
+	kfree(crtc);
+}
+
+static const struct drm_crtc_funcs ast_crtc_funcs = {
+	.cursor_set = ast_cursor_set,
+	.cursor_move = ast_cursor_move,
+	.reset = ast_crtc_reset,
+	.set_config = drm_crtc_helper_set_config,
+	.gamma_set = ast_crtc_gamma_set,
+	.destroy = ast_crtc_destroy,
+};
+
+static int ast_crtc_init(struct drm_device *dev)
+{
+	struct ast_crtc *crtc;
+
+	crtc = kzalloc(sizeof(struct ast_crtc), GFP_KERNEL);
+	if (!crtc)
+		return -ENOMEM;
+
+	drm_crtc_init(dev, &crtc->base, &ast_crtc_funcs);
+	drm_mode_crtc_set_gamma_size(&crtc->base, 256);
+	drm_crtc_helper_add(&crtc->base, &ast_crtc_helper_funcs);
+	return 0;
+}
+
+static void ast_encoder_destroy(struct drm_encoder *encoder)
+{
+	drm_encoder_cleanup(encoder);
+	kfree(encoder);
+}
+
+
+static struct drm_encoder *ast_best_single_encoder(struct drm_connector *connector)
+{
+	int enc_id = connector->encoder_ids[0];
+	/* pick the encoder ids */
+	if (enc_id)
+		return drm_encoder_find(connector->dev, NULL, enc_id);
+	return NULL;
+}
+
+
+static const struct drm_encoder_funcs ast_enc_funcs = {
+	.destroy = ast_encoder_destroy,
+};
+
+static void ast_encoder_dpms(struct drm_encoder *encoder, int mode)
+{
+
+}
+
+static void ast_encoder_mode_set(struct drm_encoder *encoder,
+			       struct drm_display_mode *mode,
+			       struct drm_display_mode *adjusted_mode)
+{
+}
+
+static void ast_encoder_prepare(struct drm_encoder *encoder)
+{
+
+}
+
+static void ast_encoder_commit(struct drm_encoder *encoder)
+{
+
+}
+
+
+static const struct drm_encoder_helper_funcs ast_enc_helper_funcs = {
+	.dpms = ast_encoder_dpms,
+	.prepare = ast_encoder_prepare,
+	.commit = ast_encoder_commit,
+	.mode_set = ast_encoder_mode_set,
+};
+
+static int ast_encoder_init(struct drm_device *dev)
+{
+	struct ast_encoder *ast_encoder;
+
+	ast_encoder = kzalloc(sizeof(struct ast_encoder), GFP_KERNEL);
+	if (!ast_encoder)
+		return -ENOMEM;
+
+	drm_encoder_init(dev, &ast_encoder->base, &ast_enc_funcs,
+			 DRM_MODE_ENCODER_DAC, NULL);
+	drm_encoder_helper_add(&ast_encoder->base, &ast_enc_helper_funcs);
+
+	ast_encoder->base.possible_crtcs = 1;
+	return 0;
+}
+
+static int ast_get_modes(struct drm_connector *connector)
+{
+	struct ast_connector *ast_connector = to_ast_connector(connector);
+	struct ast_private *ast = connector->dev->dev_private;
+	struct edid *edid;
+	int ret;
+	bool flags = false;
+	if (ast->tx_chip_type == AST_TX_DP501) {
+		ast->dp501_maxclk = 0xff;
+		edid = kmalloc(128, GFP_KERNEL);
+		if (!edid)
+			return -ENOMEM;
+
+		flags = ast_dp501_read_edid(connector->dev, (u8 *)edid);
+		if (flags)
+			ast->dp501_maxclk = ast_get_dp501_max_clk(connector->dev);
+		else
+			kfree(edid);
+	}
+	if (!flags)
+		edid = drm_get_edid(connector, &ast_connector->i2c->adapter);
+	if (edid) {
+		drm_connector_update_edid_property(&ast_connector->base, edid);
+		ret = drm_add_edid_modes(connector, edid);
+		kfree(edid);
+		return ret;
+	} else
+		drm_connector_update_edid_property(&ast_connector->base, NULL);
+	return 0;
+}
+
+static enum drm_mode_status ast_mode_valid(struct drm_connector *connector,
+			  struct drm_display_mode *mode)
+{
+	struct ast_private *ast = connector->dev->dev_private;
+	int flags = MODE_NOMODE;
+	uint32_t jtemp;
+
+	if (ast->support_wide_screen) {
+		if ((mode->hdisplay == 1680) && (mode->vdisplay == 1050))
+			return MODE_OK;
+		if ((mode->hdisplay == 1280) && (mode->vdisplay == 800))
+			return MODE_OK;
+		if ((mode->hdisplay == 1440) && (mode->vdisplay == 900))
+			return MODE_OK;
+		if ((mode->hdisplay == 1360) && (mode->vdisplay == 768))
+			return MODE_OK;
+		if ((mode->hdisplay == 1600) && (mode->vdisplay == 900))
+			return MODE_OK;
+
+		if ((ast->chip == AST2100) || (ast->chip == AST2200) ||
+		    (ast->chip == AST2300) || (ast->chip == AST2400) ||
+		    (ast->chip == AST2500) || (ast->chip == AST1180)) {
+			if ((mode->hdisplay == 1920) && (mode->vdisplay == 1080))
+				return MODE_OK;
+
+			if ((mode->hdisplay == 1920) && (mode->vdisplay == 1200)) {
+				jtemp = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xd1, 0xff);
+				if (jtemp & 0x01)
+					return MODE_NOMODE;
+				else
+					return MODE_OK;
+			}
+		}
+	}
+	switch (mode->hdisplay) {
+	case 640:
+		if (mode->vdisplay == 480) flags = MODE_OK;
+		break;
+	case 800:
+		if (mode->vdisplay == 600) flags = MODE_OK;
+		break;
+	case 1024:
+		if (mode->vdisplay == 768) flags = MODE_OK;
+		break;
+	case 1280:
+		if (mode->vdisplay == 1024) flags = MODE_OK;
+		break;
+	case 1600:
+		if (mode->vdisplay == 1200) flags = MODE_OK;
+		break;
+	default:
+		return flags;
+	}
+
+	return flags;
+}
+
+static void ast_connector_destroy(struct drm_connector *connector)
+{
+	struct ast_connector *ast_connector = to_ast_connector(connector);
+	ast_i2c_destroy(ast_connector->i2c);
+	drm_connector_unregister(connector);
+	drm_connector_cleanup(connector);
+	kfree(connector);
+}
+
+static const struct drm_connector_helper_funcs ast_connector_helper_funcs = {
+	.mode_valid = ast_mode_valid,
+	.get_modes = ast_get_modes,
+	.best_encoder = ast_best_single_encoder,
+};
+
+static const struct drm_connector_funcs ast_connector_funcs = {
+	.dpms = drm_helper_connector_dpms,
+	.fill_modes = drm_helper_probe_single_connector_modes,
+	.destroy = ast_connector_destroy,
+};
+
+static int ast_connector_init(struct drm_device *dev)
+{
+	struct ast_connector *ast_connector;
+	struct drm_connector *connector;
+	struct drm_encoder *encoder;
+
+	ast_connector = kzalloc(sizeof(struct ast_connector), GFP_KERNEL);
+	if (!ast_connector)
+		return -ENOMEM;
+
+	connector = &ast_connector->base;
+	drm_connector_init(dev, connector, &ast_connector_funcs, DRM_MODE_CONNECTOR_VGA);
+
+	drm_connector_helper_add(connector, &ast_connector_helper_funcs);
+
+	connector->interlace_allowed = 0;
+	connector->doublescan_allowed = 0;
+
+	drm_connector_register(connector);
+
+	connector->polled = DRM_CONNECTOR_POLL_CONNECT;
+
+	encoder = list_first_entry(&dev->mode_config.encoder_list, struct drm_encoder, head);
+	drm_connector_attach_encoder(connector, encoder);
+
+	ast_connector->i2c = ast_i2c_create(dev);
+	if (!ast_connector->i2c)
+		DRM_ERROR("failed to add ddc bus for connector\n");
+
+	return 0;
+}
+
+/* allocate cursor cache and pin at start of VRAM */
+static int ast_cursor_init(struct drm_device *dev)
+{
+	struct ast_private *ast = dev->dev_private;
+	int size;
+	int ret;
+	struct drm_gem_object *obj;
+	struct ast_bo *bo;
+	uint64_t gpu_addr;
+
+	size = (AST_HWC_SIZE + AST_HWC_SIGNATURE_SIZE) * AST_DEFAULT_HWC_NUM;
+
+	ret = ast_gem_create(dev, size, true, &obj);
+	if (ret)
+		return ret;
+	bo = gem_to_ast_bo(obj);
+	ret = ast_bo_reserve(bo, false);
+	if (unlikely(ret != 0))
+		goto fail;
+
+	ret = ast_bo_pin(bo, TTM_PL_FLAG_VRAM, &gpu_addr);
+	ast_bo_unreserve(bo);
+	if (ret)
+		goto fail;
+
+	/* kmap the object */
+	ret = ttm_bo_kmap(&bo->bo, 0, bo->bo.num_pages, &ast->cache_kmap);
+	if (ret)
+		goto fail;
+
+	ast->cursor_cache = obj;
+	ast->cursor_cache_gpu_addr = gpu_addr;
+	DRM_DEBUG_KMS("pinned cursor cache at %llx\n", ast->cursor_cache_gpu_addr);
+	return 0;
+fail:
+	return ret;
+}
+
+static void ast_cursor_fini(struct drm_device *dev)
+{
+	struct ast_private *ast = dev->dev_private;
+	ttm_bo_kunmap(&ast->cache_kmap);
+	drm_gem_object_put_unlocked(ast->cursor_cache);
+}
+
+int ast_mode_init(struct drm_device *dev)
+{
+	ast_cursor_init(dev);
+	ast_crtc_init(dev);
+	ast_encoder_init(dev);
+	ast_connector_init(dev);
+	return 0;
+}
+
+void ast_mode_fini(struct drm_device *dev)
+{
+	ast_cursor_fini(dev);
+}
+
+static int get_clock(void *i2c_priv)
+{
+	struct ast_i2c_chan *i2c = i2c_priv;
+	struct ast_private *ast = i2c->dev->dev_private;
+	uint32_t val, val2, count, pass;
+
+	count = 0;
+	pass = 0;
+	val = (ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xb7, 0x10) >> 4) & 0x01;
+	do {
+		val2 = (ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xb7, 0x10) >> 4) & 0x01;
+		if (val == val2) {
+			pass++;
+		} else {
+			pass = 0;
+			val = (ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xb7, 0x10) >> 4) & 0x01;
+		}
+	} while ((pass < 5) && (count++ < 0x10000));
+
+	return val & 1 ? 1 : 0;
+}
+
+static int get_data(void *i2c_priv)
+{
+	struct ast_i2c_chan *i2c = i2c_priv;
+	struct ast_private *ast = i2c->dev->dev_private;
+	uint32_t val, val2, count, pass;
+
+	count = 0;
+	pass = 0;
+	val = (ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xb7, 0x20) >> 5) & 0x01;
+	do {
+		val2 = (ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xb7, 0x20) >> 5) & 0x01;
+		if (val == val2) {
+			pass++;
+		} else {
+			pass = 0;
+			val = (ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xb7, 0x20) >> 5) & 0x01;
+		}
+	} while ((pass < 5) && (count++ < 0x10000));
+
+	return val & 1 ? 1 : 0;
+}
+
+static void set_clock(void *i2c_priv, int clock)
+{
+	struct ast_i2c_chan *i2c = i2c_priv;
+	struct ast_private *ast = i2c->dev->dev_private;
+	int i;
+	u8 ujcrb7, jtemp;
+
+	for (i = 0; i < 0x10000; i++) {
+		ujcrb7 = ((clock & 0x01) ? 0 : 1);
+		ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xb7, 0xf4, ujcrb7);
+		jtemp = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xb7, 0x01);
+		if (ujcrb7 == jtemp)
+			break;
+	}
+}
+
+static void set_data(void *i2c_priv, int data)
+{
+	struct ast_i2c_chan *i2c = i2c_priv;
+	struct ast_private *ast = i2c->dev->dev_private;
+	int i;
+	u8 ujcrb7, jtemp;
+
+	for (i = 0; i < 0x10000; i++) {
+		ujcrb7 = ((data & 0x01) ? 0 : 1) << 2;
+		ast_set_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xb7, 0xf1, ujcrb7);
+		jtemp = ast_get_index_reg_mask(ast, AST_IO_CRTC_PORT, 0xb7, 0x04);
+		if (ujcrb7 == jtemp)
+			break;
+	}
+}
+
+static struct ast_i2c_chan *ast_i2c_create(struct drm_device *dev)
+{
+	struct ast_i2c_chan *i2c;
+	int ret;
+
+	i2c = kzalloc(sizeof(struct ast_i2c_chan), GFP_KERNEL);
+	if (!i2c)
+		return NULL;
+
+	i2c->adapter.owner = THIS_MODULE;
+	i2c->adapter.class = I2C_CLASS_DDC;
+	i2c->adapter.dev.parent = &dev->pdev->dev;
+	i2c->dev = dev;
+	i2c_set_adapdata(&i2c->adapter, i2c);
+	snprintf(i2c->adapter.name, sizeof(i2c->adapter.name),
+		 "AST i2c bit bus");
+	i2c->adapter.algo_data = &i2c->bit;
+
+	i2c->bit.udelay = 20;
+	i2c->bit.timeout = 2;
+	i2c->bit.data = i2c;
+	i2c->bit.setsda = set_data;
+	i2c->bit.setscl = set_clock;
+	i2c->bit.getsda = get_data;
+	i2c->bit.getscl = get_clock;
+	ret = i2c_bit_add_bus(&i2c->adapter);
+>>>>>>> master
 	if (ret) {
 		drm_err(dev, "ast_plane_init() failed: %d\n", ret);
 		return ret;
@@ -835,6 +1311,7 @@ static void ast_set_cursor_location(struct ast_device *ast, u16 x, u16 y,
 	ast_set_index_reg(ast, AST_IO_CRTC_PORT, 0xc7, y1);
 }
 
+<<<<<<< HEAD
 static void ast_set_cursor_enabled(struct ast_device *ast, bool enabled)
 {
 	static const u8 mask = (u8)~(AST_IO_VGACRCB_HWC_16BPP |
@@ -1975,6 +2452,10 @@ int ast_mode_config_init(struct ast_device *ast)
 	drm_mode_config_reset(dev);
 
 	drm_kms_helper_poll_init(dev);
+=======
+	/* dummy write to fire HWC */
+	ast_show_cursor(crtc);
+>>>>>>> master
 
 	return 0;
 }

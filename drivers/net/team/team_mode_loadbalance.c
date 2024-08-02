@@ -329,7 +329,11 @@ static void lb_bpf_func_free(struct team *team)
 	bpf_prog_destroy(fp);
 }
 
+<<<<<<< HEAD
 static void lb_tx_method_get(struct team *team, struct team_gsetter_ctx *ctx)
+=======
+static int lb_tx_method_get(struct team *team, struct team_gsetter_ctx *ctx)
+>>>>>>> master
 {
 	struct lb_priv *lb_priv = get_lb_priv(team);
 	lb_select_tx_port_func_t *func;

@@ -90,10 +90,109 @@ static irqreturn_t pcf8523_irq(int irq, void *dev_id)
 		regmap_write(pcf8523->regmap, PCF8523_REG_CONTROL2, value);
 		rtc_update_irq(pcf8523->rtc, 1, RTC_IRQF | RTC_AF);
 
+<<<<<<< HEAD
 		return IRQ_HANDLED;
 	}
 
 	return IRQ_NONE;
+=======
+static int pcf8523_voltage_low(struct i2c_client *client)
+{
+	u8 value;
+	int err;
+
+	err = pcf8523_read(client, REG_CONTROL3, &value);
+	if (err < 0)
+		return err;
+
+	return !!(value & REG_CONTROL3_BLF);
+}
+
+static int pcf8523_load_capacitance(struct i2c_client *client)
+{
+	u32 load;
+	u8 value;
+	int err;
+
+	err = pcf8523_read(client, REG_CONTROL1, &value);
+	if (err < 0)
+		return err;
+
+	load = 12500;
+	of_property_read_u32(client->dev.of_node, "quartz-load-femtofarads",
+			     &load);
+
+	switch (load) {
+	default:
+		dev_warn(&client->dev, "Unknown quartz-load-femtofarads value: %d. Assuming 12500",
+			 load);
+		/* fall through */
+	case 12500:
+		value |= REG_CONTROL1_CAP_SEL;
+		break;
+	case 7000:
+		value &= ~REG_CONTROL1_CAP_SEL;
+		break;
+	}
+
+	err = pcf8523_write(client, REG_CONTROL1, value);
+
+	return err;
+}
+
+static int pcf8523_set_pm(struct i2c_client *client, u8 pm)
+{
+	u8 value;
+	int err;
+
+	err = pcf8523_read(client, REG_CONTROL3, &value);
+	if (err < 0)
+		return err;
+
+	value = (value & ~REG_CONTROL3_PM_MASK) | pm;
+
+	err = pcf8523_write(client, REG_CONTROL3, value);
+	if (err < 0)
+		return err;
+
+	return 0;
+}
+
+static int pcf8523_stop_rtc(struct i2c_client *client)
+{
+	u8 value;
+	int err;
+
+	err = pcf8523_read(client, REG_CONTROL1, &value);
+	if (err < 0)
+		return err;
+
+	value |= REG_CONTROL1_STOP;
+
+	err = pcf8523_write(client, REG_CONTROL1, value);
+	if (err < 0)
+		return err;
+
+	return 0;
+}
+
+static int pcf8523_start_rtc(struct i2c_client *client)
+{
+	u8 value;
+	int err;
+
+	err = pcf8523_read(client, REG_CONTROL1, &value);
+	if (err < 0)
+		return err;
+
+	value &= ~REG_CONTROL1_STOP;
+
+	err = pcf8523_write(client, REG_CONTROL1, value);
+	if (err < 0)
+		return err;
+
+	return 0;
+>>>>>>> master
 }
 
 static int pcf8523_rtc_read_time(struct device *dev, struct rtc_time *tm)
@@ -102,8 +201,30 @@ static int pcf8523_rtc_read_time(struct device *dev, struct rtc_time *tm)
 	u8 regs[10];
 	int err;
 
+<<<<<<< HEAD
 	err = regmap_bulk_read(pcf8523->regmap, PCF8523_REG_CONTROL1, regs,
 			       sizeof(regs));
+=======
+	err = pcf8523_voltage_low(client);
+	if (err < 0) {
+		return err;
+	} else if (err > 0) {
+		dev_err(dev, "low voltage detected, time is unreliable\n");
+		return -EINVAL;
+	}
+
+	msgs[0].addr = client->addr;
+	msgs[0].flags = 0;
+	msgs[0].len = 1;
+	msgs[0].buf = &start;
+
+	msgs[1].addr = client->addr;
+	msgs[1].flags = I2C_M_RD;
+	msgs[1].len = sizeof(regs);
+	msgs[1].buf = regs;
+
+	err = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
+>>>>>>> master
 	if (err < 0)
 		return err;
 
@@ -307,19 +428,29 @@ static int pcf8523_param_set(struct device *dev, struct rtc_param *param)
 static int pcf8523_rtc_ioctl(struct device *dev, unsigned int cmd,
 			     unsigned long arg)
 {
+<<<<<<< HEAD
 	struct pcf8523 *pcf8523 = dev_get_drvdata(dev);
 	unsigned int flags = 0;
 	u32 value;
+=======
+	struct i2c_client *client = to_i2c_client(dev);
+>>>>>>> master
 	int ret;
 
 	switch (cmd) {
 	case RTC_VL_READ:
+<<<<<<< HEAD
 		ret = regmap_read(pcf8523->regmap, PCF8523_REG_CONTROL3, &value);
 		if (ret < 0)
 			return ret;
 
 		if (value & PCF8523_CONTROL3_BLF)
 			flags |= RTC_VL_BACKUP_LOW;
+=======
+		ret = pcf8523_voltage_low(client);
+		if (ret < 0)
+			return ret;
+>>>>>>> master
 
 		ret = regmap_read(pcf8523->regmap, PCF8523_REG_SECONDS, &value);
 		if (ret < 0)
@@ -404,6 +535,7 @@ static int pcf8523_probe(struct i2c_client *client)
 	if (!pcf8523)
 		return -ENOMEM;
 
+<<<<<<< HEAD
 	pcf8523->regmap = devm_regmap_init_i2c(client, &regmap_config);
 	if (IS_ERR(pcf8523->regmap))
 		return PTR_ERR(pcf8523->regmap);
@@ -421,8 +553,12 @@ static int pcf8523_probe(struct i2c_client *client)
 			 err);
 
 	err = regmap_read(pcf8523->regmap, PCF8523_REG_SECONDS, &value);
+=======
+	err = pcf8523_load_capacitance(client);
+>>>>>>> master
 	if (err < 0)
-		return err;
+		dev_warn(&client->dev, "failed to set xtal load capacitance: %d",
+			 err);
 
 	if (value & PCF8523_SECONDS_OS) {
 		err = regmap_read(pcf8523->regmap, PCF8523_REG_CONTROL3, &value);

@@ -542,16 +542,42 @@ static struct dmz_mblock *dmz_get_mblock_slow(struct dmz_metadata *zmd,
 	struct dmz_dev *dev = zmd->sb[zmd->mblk_primary].dev;
 	struct bio *bio;
 
+<<<<<<< HEAD
 	if (dmz_bdev_is_dying(dev))
+=======
+	if (dmz_bdev_is_dying(zmd->dev))
+>>>>>>> master
 		return ERR_PTR(-EIO);
 
 	/* Get a new block and a BIO to read it */
 	mblk = dmz_alloc_mblock(zmd, mblk_no);
 	if (!mblk)
 		return ERR_PTR(-ENOMEM);
+<<<<<<< HEAD
 
 	bio = bio_alloc(dev->bdev, 1, REQ_OP_READ | REQ_META | REQ_PRIO,
 			GFP_NOIO);
+
+	spin_lock(&zmd->mblk_lock);
+=======
+>>>>>>> master
+
+	/*
+	 * Make sure that another context did not start reading
+	 * the block already.
+	 */
+	m = dmz_get_mblock_fast(zmd, mblk_no);
+	if (m) {
+		spin_unlock(&zmd->mblk_lock);
+		dmz_free_mblock(zmd, mblk);
+<<<<<<< HEAD
+		bio_put(bio);
+		return m;
+	}
+
+=======
+		return ERR_PTR(-ENOMEM);
+	}
 
 	spin_lock(&zmd->mblk_lock);
 
@@ -567,6 +593,7 @@ static struct dmz_mblock *dmz_get_mblock_slow(struct dmz_metadata *zmd,
 		return m;
 	}
 
+>>>>>>> master
 	mblk->ref++;
 	set_bit(DMZ_META_READING, &mblk->state);
 	dmz_insert_mblock(zmd, mblk);
@@ -717,11 +744,22 @@ static int dmz_write_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk,
 	sector_t block = zmd->sb[set].block + mblk->no;
 	struct bio *bio;
 
+<<<<<<< HEAD
 	if (dmz_bdev_is_dying(dev))
 		return -EIO;
 
 	bio = bio_alloc(dev->bdev, 1, REQ_OP_WRITE | REQ_META | REQ_PRIO,
 			GFP_NOIO);
+=======
+	if (dmz_bdev_is_dying(zmd->dev))
+		return -EIO;
+
+	bio = bio_alloc(GFP_NOIO, 1);
+	if (!bio) {
+		set_bit(DMZ_META_ERROR, &mblk->state);
+		return -ENOMEM;
+	}
+>>>>>>> master
 
 	set_bit(DMZ_META_WRITING, &mblk->state);
 
@@ -743,8 +781,17 @@ static int dmz_rdwr_block(struct dmz_dev *dev, enum req_op op,
 	struct bio *bio;
 	int ret;
 
+<<<<<<< HEAD
 	if (WARN_ON(!dev))
 		return -EIO;
+=======
+	if (dmz_bdev_is_dying(zmd->dev))
+		return -EIO;
+
+	bio = bio_alloc(GFP_NOIO, 1);
+	if (!bio)
+		return -ENOMEM;
+>>>>>>> master
 
 	if (dmz_bdev_is_dying(dev))
 		return -EIO;
@@ -907,7 +954,11 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
 	 */
 	dmz_lock_flush(zmd);
 
+<<<<<<< HEAD
 	if (dmz_bdev_is_dying(dev)) {
+=======
+	if (dmz_bdev_is_dying(zmd->dev)) {
+>>>>>>> master
 		ret = -EIO;
 		goto out;
 	}
@@ -1544,11 +1595,46 @@ static int dmz_init_zones(struct dmz_metadata *zmd)
 	 * time, determine where the super block should be: first block of the
 	 * first randomly writable zone.
 	 */
+<<<<<<< HEAD
 	ret = blkdev_report_zones(zoned_dev->bdev, 0, BLK_ALL_ZONES,
 				  dmz_init_zone, zoned_dev);
 	if (ret < 0) {
 		DMDEBUG("(%s): Failed to report zones, error %d",
 			zmd->devname, ret);
+=======
+	zone = zmd->zones;
+	while (sector < dev->capacity) {
+		/* Get zone information */
+		nr_blkz = DMZ_REPORT_NR_ZONES;
+		ret = blkdev_report_zones(dev->bdev, sector, blkz,
+					  &nr_blkz, GFP_KERNEL);
+		if (ret) {
+			dmz_dev_err(dev, "Report zones failed %d", ret);
+			goto out;
+		}
+
+		if (!nr_blkz)
+			break;
+
+		/* Process report */
+		for (i = 0; i < nr_blkz; i++) {
+			ret = dmz_init_zone(zmd, zone, &blkz[i]);
+			if (ret)
+				goto out;
+			sector += dev->zone_nr_sectors;
+			zone++;
+		}
+	}
+
+	/* The entire zone configuration of the disk should now be known */
+	if (sector < dev->capacity) {
+		dmz_dev_err(dev, "Failed to get correct zone information");
+		ret = -ENXIO;
+	}
+out:
+	kfree(blkz);
+	if (ret)
+>>>>>>> master
 		dmz_drop_zones(zmd);
 		return ret;
 	}
@@ -1584,6 +1670,7 @@ static int dmz_update_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
 	unsigned int noio_flag;
 	int ret;
 
+<<<<<<< HEAD
 	if (dev->flags & DMZ_BDEV_REGULAR)
 		return 0;
 
@@ -1604,6 +1691,16 @@ static int dmz_update_zone(struct dmz_metadata *zmd, struct dm_zone *zone)
 		dmz_dev_err(dev, "Get zone %u report failed",
 			    zone->id);
 		dmz_check_bdev(dev);
+=======
+	/* Get zone information from disk */
+	ret = blkdev_report_zones(zmd->dev->bdev, dmz_start_sect(zmd, zone),
+				  &blkz, &nr_blkz, GFP_NOIO);
+	if (!nr_blkz)
+		ret = -EIO;
+	if (ret) {
+		dmz_dev_err(zmd->dev, "Get zone %u report failed",
+			    dmz_id(zmd, zone));
+>>>>>>> master
 		return ret;
 	}
 
@@ -1942,6 +2039,7 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd,
 	struct dm_zone *zone, *maxw_z = NULL;
 	struct list_head *zone_list;
 
+<<<<<<< HEAD
 	/* If we have cache zones select from the cache zone list */
 	if (zmd->nr_cache) {
 		zone_list = &zmd->map_cache_list;
@@ -1950,6 +2048,10 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd,
 			zone_list = &zmd->dev[idx].map_rnd_list;
 	} else
 		zone_list = &zmd->dev[idx].map_rnd_list;
+=======
+	if (list_empty(&zmd->map_rnd_list))
+		return ERR_PTR(-EBUSY);
+>>>>>>> master
 
 	/*
 	 * Find the buffer zone with the heaviest weight or the first (oldest)
@@ -1988,7 +2090,7 @@ static struct dm_zone *dmz_get_rnd_zone_for_reclaim(struct dmz_metadata *zmd,
 			return dzone;
 	}
 
-	return NULL;
+	return ERR_PTR(-EBUSY);
 }
 
 /*
@@ -1999,14 +2101,21 @@ static struct dm_zone *dmz_get_seq_zone_for_reclaim(struct dmz_metadata *zmd,
 {
 	struct dm_zone *zone;
 
+<<<<<<< HEAD
 	list_for_each_entry(zone, &zmd->dev[idx].map_seq_list, link) {
+=======
+	if (list_empty(&zmd->map_seq_list))
+		return ERR_PTR(-EBUSY);
+
+	list_for_each_entry(zone, &zmd->map_seq_list, link) {
+>>>>>>> master
 		if (!zone->bzone)
 			continue;
 		if (dmz_lock_zone_reclaim(zone))
 			return zone;
 	}
 
-	return NULL;
+	return ERR_PTR(-EBUSY);
 }
 
 /*
@@ -2067,7 +2176,11 @@ again:
 		/* Allocate a random zone */
 		dzone = dmz_alloc_zone(zmd, 0, alloc_flags);
 		if (!dzone) {
+<<<<<<< HEAD
 			if (dmz_dev_is_dying(zmd)) {
+=======
+			if (dmz_bdev_is_dying(zmd->dev)) {
+>>>>>>> master
 				dzone = ERR_PTR(-EIO);
 				goto out;
 			}
@@ -2173,7 +2286,11 @@ again:
 	/* Allocate a random zone */
 	bzone = dmz_alloc_zone(zmd, 0, alloc_flags);
 	if (!bzone) {
+<<<<<<< HEAD
 		if (dmz_dev_is_dying(zmd)) {
+=======
+		if (dmz_bdev_is_dying(zmd->dev)) {
+>>>>>>> master
 			bzone = ERR_PTR(-EIO);
 			goto out;
 		}
@@ -2801,7 +2918,11 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
 	while (!list_empty(&zmd->mblk_dirty_list)) {
 		mblk = list_first_entry(&zmd->mblk_dirty_list,
 					struct dmz_mblock, link);
+<<<<<<< HEAD
 		dmz_zmd_warn(zmd, "mblock %llu still in dirty list (ref %u)",
+=======
+		dmz_dev_warn(zmd->dev, "mblock %llu still in dirty list (ref %u)",
+>>>>>>> master
 			     (u64)mblk->no, mblk->ref);
 		list_del_init(&mblk->link);
 		rb_erase(&mblk->node, &zmd->mblk_rbtree);
@@ -2819,7 +2940,11 @@ static void dmz_cleanup_metadata(struct dmz_metadata *zmd)
 	/* Sanity checks: the mblock rbtree should now be empty */
 	root = &zmd->mblk_rbtree;
 	rbtree_postorder_for_each_entry_safe(mblk, next, root, node) {
+<<<<<<< HEAD
 		dmz_zmd_warn(zmd, "mblock %llu ref %u still in rbtree",
+=======
+		dmz_dev_warn(zmd->dev, "mblock %llu ref %u still in rbtree",
+>>>>>>> master
 			     (u64)mblk->no, mblk->ref);
 		mblk->ref = 0;
 		dmz_free_mblock(zmd, mblk);

@@ -42,23 +42,40 @@ struct sock *reuseport_migrate_sock(struct sock *sk,
 				    struct sock *migrating_sk,
 				    struct sk_buff *skb);
 extern int reuseport_attach_prog(struct sock *sk, struct bpf_prog *prog);
+<<<<<<< HEAD
 extern int reuseport_detach_prog(struct sock *sk);
 
 static inline bool reuseport_has_conns(struct sock *sk)
+=======
+
+static inline bool reuseport_has_conns(struct sock *sk, bool set)
+>>>>>>> master
 {
 	struct sock_reuseport *reuse;
 	bool ret = false;
 
 	rcu_read_lock();
 	reuse = rcu_dereference(sk->sk_reuseport_cb);
+<<<<<<< HEAD
 	if (reuse && reuse->has_conns)
 		ret = true;
+=======
+	if (reuse) {
+		if (set)
+			reuse->has_conns = 1;
+		ret = reuse->has_conns;
+	}
+>>>>>>> master
 	rcu_read_unlock();
 
 	return ret;
 }
 
+<<<<<<< HEAD
 void reuseport_has_conns_set(struct sock *sk);
 void reuseport_update_incoming_cpu(struct sock *sk, int val);
+=======
+int reuseport_get_id(struct sock_reuseport *reuse);
+>>>>>>> master
 
 #endif  /* _SOCK_REUSEPORT_H */

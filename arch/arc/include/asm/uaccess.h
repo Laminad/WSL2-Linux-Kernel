@@ -628,6 +628,74 @@ static inline unsigned long __clear_user(void __user *to, unsigned long n)
 	return res;
 }
 
+<<<<<<< HEAD
+=======
+static inline long
+__arc_strncpy_from_user(char *dst, const char __user *src, long count)
+{
+	long res = 0;
+	char val;
+
+	if (count == 0)
+		return 0;
+
+	__asm__ __volatile__(
+	"	mov	lp_count, %5		\n"
+	"	lp	3f			\n"
+	"1:	ldb.ab  %3, [%2, 1]		\n"
+	"	breq.d	%3, 0, 3f               \n"
+	"	stb.ab  %3, [%1, 1]		\n"
+	"	add	%0, %0, 1	# Num of NON NULL bytes copied	\n"
+	"3:								\n"
+	"	.section .fixup, \"ax\"		\n"
+	"	.align 4			\n"
+	"4:	mov %0, %4		# sets @res as -EFAULT	\n"
+	"	j   3b				\n"
+	"	.previous			\n"
+	"	.section __ex_table, \"a\"	\n"
+	"	.align 4			\n"
+	"	.word   1b, 4b			\n"
+	"	.previous			\n"
+	: "+r"(res), "+r"(dst), "+r"(src), "=r"(val)
+	: "g"(-EFAULT), "r"(count)
+	: "lp_count", "memory");
+
+	return res;
+}
+
+static inline long __arc_strnlen_user(const char __user *s, long n)
+{
+	long res, tmp1, cnt;
+	char val;
+
+	__asm__ __volatile__(
+	"	mov %2, %1			\n"
+	"1:	ldb.ab  %3, [%0, 1]		\n"
+	"	breq.d  %3, 0, 2f		\n"
+	"	sub.f   %2, %2, 1		\n"
+	"	bnz 1b				\n"
+	"	sub %2, %2, 1			\n"
+	"2:	sub %0, %1, %2			\n"
+	"3:	;nop				\n"
+	"	.section .fixup, \"ax\"		\n"
+	"	.align 4			\n"
+	"4:	mov %0, 0			\n"
+	"	j   3b				\n"
+	"	.previous			\n"
+	"	.section __ex_table, \"a\"	\n"
+	"	.align 4			\n"
+	"	.word 1b, 4b			\n"
+	"	.previous			\n"
+	: "=r"(res), "=r"(tmp1), "=r"(cnt), "=r"(val)
+	: "0"(s), "1"(n)
+	: "memory");
+
+	return res;
+}
+
+#ifndef CONFIG_CC_OPTIMIZE_FOR_SIZE
+
+>>>>>>> master
 #define INLINE_COPY_TO_USER
 #define INLINE_COPY_FROM_USER
 

@@ -55,6 +55,8 @@
 
 #include "process.h"
 
+#include "process.h"
+
 /*
  * per-CPU TSS segments. Threads are completely 'soft' on Linux,
  * no more per-task TSS's. The TSS size is kept cacheline-aligned
@@ -409,6 +411,7 @@ void arch_setup_new_exec(void)
 	mm_reset_untag_mask(current->mm);
 }
 
+<<<<<<< HEAD
 #ifdef CONFIG_X86_IOPL_IOPERM
 static inline void switch_to_bitmap(unsigned long tifp)
 {
@@ -421,6 +424,32 @@ static inline void switch_to_bitmap(unsigned long tifp)
 	 */
 	if (tifp & _TIF_IO_BITMAP)
 		tss_invalidate_io_bitmap();
+=======
+static inline void switch_to_bitmap(struct thread_struct *prev,
+				    struct thread_struct *next,
+				    unsigned long tifp, unsigned long tifn)
+{
+	struct tss_struct *tss = this_cpu_ptr(&cpu_tss_rw);
+
+	if (tifn & _TIF_IO_BITMAP) {
+		/*
+		 * Copy the relevant range of the IO bitmap.
+		 * Normally this is 128 bytes or less:
+		 */
+		memcpy(tss->io_bitmap, next->io_bitmap_ptr,
+		       max(prev->io_bitmap_max, next->io_bitmap_max));
+		/*
+		 * Make sure that the TSS limit is correct for the CPU
+		 * to notice the IO bitmap.
+		 */
+		refresh_tss_limit();
+	} else if (tifp & _TIF_IO_BITMAP) {
+		/*
+		 * Clear any possible leftover bits:
+		 */
+		memset(tss->io_bitmap, 0xff, prev->io_bitmap_max);
+	}
+>>>>>>> master
 }
 
 static void tss_copy_io_bitmap(struct tss_struct *tss, struct io_bitmap *iobm)
@@ -619,6 +648,7 @@ static __always_inline void __speculation_ctrl_update(unsigned long tifp,
 
 	lockdep_assert_irqs_disabled();
 
+<<<<<<< HEAD
 	/* Handle change of TIF_SSBD depending on the mitigation method. */
 	if (static_cpu_has(X86_FEATURE_VIRT_SSBD)) {
 		if (tif_diff & _TIF_SSBD)
@@ -633,6 +663,30 @@ static __always_inline void __speculation_ctrl_update(unsigned long tifp,
 	}
 
 	/* Only evaluate TIF_SPEC_IB if conditional STIBP is enabled. */
+=======
+	/*
+	 * If TIF_SSBD is different, select the proper mitigation
+	 * method. Note that if SSBD mitigation is disabled or permanentely
+	 * enabled this branch can't be taken because nothing can set
+	 * TIF_SSBD.
+	 */
+	if (tif_diff & _TIF_SSBD) {
+		if (static_cpu_has(X86_FEATURE_VIRT_SSBD)) {
+			amd_set_ssb_virt_state(tifn);
+		} else if (static_cpu_has(X86_FEATURE_LS_CFG_SSBD)) {
+			amd_set_core_ssb_state(tifn);
+		} else if (static_cpu_has(X86_FEATURE_SPEC_CTRL_SSBD) ||
+			   static_cpu_has(X86_FEATURE_AMD_SSBD)) {
+			msr |= ssbd_tif_to_spec_ctrl(tifn);
+			updmsr  = true;
+		}
+	}
+
+	/*
+	 * Only evaluate TIF_SPEC_IB if conditional STIBP is enabled,
+	 * otherwise avoid the MSR write.
+	 */
+>>>>>>> master
 	if (IS_ENABLED(CONFIG_SMP) &&
 	    static_branch_unlikely(&switch_to_cond_stibp)) {
 		updmsr |= !!(tif_diff & _TIF_SPEC_IB);
@@ -640,7 +694,11 @@ static __always_inline void __speculation_ctrl_update(unsigned long tifp,
 	}
 
 	if (updmsr)
+<<<<<<< HEAD
 		update_spec_ctrl_cond(msr);
+=======
+		wrmsrl(MSR_IA32_SPEC_CTRL, msr);
+>>>>>>> master
 }
 
 static unsigned long speculation_ctrl_update_tif(struct task_struct *tsk)
@@ -657,7 +715,11 @@ static unsigned long speculation_ctrl_update_tif(struct task_struct *tsk)
 			clear_tsk_thread_flag(tsk, TIF_SPEC_IB);
 	}
 	/* Return the updated threadinfo flags*/
+<<<<<<< HEAD
 	return read_task_thread_flags(tsk);
+=======
+	return task_thread_info(tsk)->flags;
+>>>>>>> master
 }
 
 void speculation_ctrl_update(unsigned long tif)
@@ -678,6 +740,7 @@ void speculation_ctrl_update_current(void)
 	preempt_enable();
 }
 
+<<<<<<< HEAD
 static inline void cr4_toggle_bits_irqsoff(unsigned long mask)
 {
 	unsigned long newval, cr4 = this_cpu_read(cpu_tlbstate.cr4);
@@ -689,6 +752,8 @@ static inline void cr4_toggle_bits_irqsoff(unsigned long mask)
 	}
 }
 
+=======
+>>>>>>> master
 void __switch_to_xtra(struct task_struct *prev_p, struct task_struct *next_p)
 {
 	unsigned long tifp, tifn;
@@ -696,7 +761,13 @@ void __switch_to_xtra(struct task_struct *prev_p, struct task_struct *next_p)
 	tifn = read_task_thread_flags(next_p);
 	tifp = read_task_thread_flags(prev_p);
 
+<<<<<<< HEAD
 	switch_to_bitmap(tifp);
+=======
+	tifn = READ_ONCE(task_thread_info(next_p)->flags);
+	tifp = READ_ONCE(task_thread_info(prev_p)->flags);
+	switch_to_bitmap(prev, next, tifp, tifn);
+>>>>>>> master
 
 	propagate_user_return_notify(prev_p, next_p);
 

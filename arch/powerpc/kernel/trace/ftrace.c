@@ -421,8 +421,42 @@ int __init ftrace_dyn_arch_init(void)
 void ftrace_graph_func(unsigned long ip, unsigned long parent_ip,
 		       struct ftrace_ops *op, struct ftrace_regs *fregs)
 {
+<<<<<<< HEAD
 	unsigned long sp = fregs->regs.gpr[1];
 	int bit;
+=======
+	unsigned long ip = (unsigned long)(&ftrace_graph_call);
+	unsigned long addr = (unsigned long)(&ftrace_graph_caller);
+	unsigned long stub = (unsigned long)(&ftrace_graph_stub);
+	unsigned int old, new;
+
+	old = ftrace_call_replace(ip, stub, 0);
+	new = ftrace_call_replace(ip, addr, 0);
+
+	return ftrace_modify_code(ip, old, new);
+}
+
+int ftrace_disable_ftrace_graph_caller(void)
+{
+	unsigned long ip = (unsigned long)(&ftrace_graph_call);
+	unsigned long addr = (unsigned long)(&ftrace_graph_caller);
+	unsigned long stub = (unsigned long)(&ftrace_graph_stub);
+	unsigned int old, new;
+
+	old = ftrace_call_replace(ip, addr, 0);
+	new = ftrace_call_replace(ip, stub, 0);
+
+	return ftrace_modify_code(ip, old, new);
+}
+
+/*
+ * Hook the return address and push it in the stack of return addrs
+ * in current thread info. Return the address we want to divert to.
+ */
+unsigned long prepare_ftrace_return(unsigned long parent, unsigned long ip)
+{
+	unsigned long return_hooker;
+>>>>>>> master
 
 	if (unlikely(ftrace_graph_is_dead()))
 		goto out;
@@ -430,6 +464,7 @@ void ftrace_graph_func(unsigned long ip, unsigned long parent_ip,
 	if (unlikely(atomic_read(&current->tracing_graph_pause)))
 		goto out;
 
+<<<<<<< HEAD
 	bit = ftrace_test_recursion_trylock(ip, parent_ip);
 	if (bit < 0)
 		goto out;
@@ -438,6 +473,12 @@ void ftrace_graph_func(unsigned long ip, unsigned long parent_ip,
 		parent_ip = ppc_function_entry(return_to_handler);
 
 	ftrace_test_recursion_unlock(bit);
+=======
+	return_hooker = ppc_function_entry(return_to_handler);
+
+	if (!function_graph_enter(parent, ip, 0, NULL))
+		parent = return_hooker;
+>>>>>>> master
 out:
 	fregs->regs.link = parent_ip;
 }

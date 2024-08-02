@@ -138,14 +138,22 @@ static int mtk_hci_wmt_sync(struct hci_dev *hdev,
 	if (err == -EINTR) {
 		bt_dev_err(hdev, "Execution of wmt command interrupted");
 		clear_bit(BTMTKUART_TX_WAIT_VND_EVT, &bdev->tx_state);
+<<<<<<< HEAD
 		goto err_free_wc;
+=======
+		return err;
+>>>>>>> master
 	}
 
 	if (err) {
 		bt_dev_err(hdev, "Execution of wmt command timed out");
 		clear_bit(BTMTKUART_TX_WAIT_VND_EVT, &bdev->tx_state);
+<<<<<<< HEAD
 		err = -ETIMEDOUT;
 		goto err_free_wc;
+=======
+		return -ETIMEDOUT;
+>>>>>>> master
 	}
 
 	/* Parse and handle the return WMT event */

@@ -897,6 +897,7 @@ static void flush_scrollback(struct vc_data *vc)
 	WARN_CONSOLE_UNLOCKED();
 
 	set_origin(vc);
+<<<<<<< HEAD
 	if (vc->vc_sw->con_flush_scrollback) {
 		vc->vc_sw->con_flush_scrollback(vc);
 	} else if (con_is_visible(vc)) {
@@ -912,6 +913,12 @@ static void flush_scrollback(struct vc_data *vc)
 		vc->vc_sw->con_switch(vc);
 		set_cursor(vc);
 	}
+=======
+	if (vc->vc_sw->con_flush_scrollback)
+		vc->vc_sw->con_flush_scrollback(vc);
+	else
+		vc->vc_sw->con_switch(vc);
+>>>>>>> master
 }
 
 /*
@@ -1035,6 +1042,7 @@ static void visual_deinit(struct vc_data *vc)
 	module_put(vc->vc_sw->owner);
 }
 
+<<<<<<< HEAD
 static void vc_port_destruct(struct tty_port *port)
 {
 	struct vc_data *vc = container_of(port, struct vc_data, port);
@@ -1054,6 +1062,8 @@ static const struct tty_port_operations vc_port_ops = {
 #define VC_MAXCOL (32767)
 #define VC_MAXROW (32767)
 
+=======
+>>>>>>> master
 int vc_allocate(unsigned int currcons)	/* return 0 on success */
 {
 	struct vt_notifier_param param;
@@ -1348,7 +1358,10 @@ struct vc_data *vc_deallocate(unsigned int currcons)
 		atomic_notifier_call_chain(&vt_notifier_list, VT_DEALLOCATE, &param);
 		vcs_remove_sysfs(currcons);
 		visual_deinit(vc);
+<<<<<<< HEAD
 		con_free_unimap(vc);
+=======
+>>>>>>> master
 		put_pid(vc->vt_pid);
 		vc_uniscr_set(vc, NULL);
 		kfree(vc->vc_screenbuf);
@@ -1525,7 +1538,11 @@ static void csi_J(struct vc_data *vc, int vpar)
 			break;
 		case 3: /* include scrollback */
 			flush_scrollback(vc);
+<<<<<<< HEAD
 			fallthrough;
+=======
+			/* fallthrough */
+>>>>>>> master
 		case 2: /* erase whole display */
 			vc_uniscr_clear_lines(vc, 0, vc->vc_rows);
 			count = vc->vc_cols * vc->vc_rows;
@@ -3061,25 +3078,41 @@ static void vt_console_print(struct console *co, const char *b, unsigned count)
 		hide_cursor(vc);
 
 	start = (ushort *)vc->vc_pos;
+<<<<<<< HEAD
 	start_x = vc->state.x;
+=======
+	start_x = vc->vc_x;
+>>>>>>> master
 	cnt = 0;
 	while (count--) {
 		c = *b++;
 		if (c == 10 || c == 13 || c == 8 || vc->vc_need_wrap) {
 			if (cnt && con_is_visible(vc))
+<<<<<<< HEAD
 				vc->vc_sw->con_putcs(vc, start, cnt, vc->state.y, start_x);
+=======
+				vc->vc_sw->con_putcs(vc, start, cnt, vc->vc_y, start_x);
+>>>>>>> master
 			cnt = 0;
 			if (c == 8) {		/* backspace */
 				bs(vc);
 				start = (ushort *)vc->vc_pos;
+<<<<<<< HEAD
 				start_x = vc->state.x;
+=======
+				start_x = vc->vc_x;
+>>>>>>> master
 				continue;
 			}
 			if (c != 13)
 				lf(vc);
 			cr(vc);
 			start = (ushort *)vc->vc_pos;
+<<<<<<< HEAD
 			start_x = vc->state.x;
+=======
+			start_x = vc->vc_x;
+>>>>>>> master
 			if (c == 10 || c == 13)
 				continue;
 		}
@@ -3087,6 +3120,7 @@ static void vt_console_print(struct console *co, const char *b, unsigned count)
 		scr_writew((vc->vc_attr << 8) + c, (unsigned short *)vc->vc_pos);
 		notify_write(vc, c);
 		cnt++;
+<<<<<<< HEAD
 		if (vc->state.x == vc->vc_cols - 1) {
 			vc->vc_need_wrap = 1;
 		} else {
@@ -3096,6 +3130,17 @@ static void vt_console_print(struct console *co, const char *b, unsigned count)
 	}
 	if (cnt && con_is_visible(vc))
 		vc->vc_sw->con_putcs(vc, start, cnt, vc->state.y, start_x);
+=======
+		if (vc->vc_x == vc->vc_cols - 1) {
+			vc->vc_need_wrap = 1;
+		} else {
+			vc->vc_pos += 2;
+			vc->vc_x++;
+		}
+	}
+	if (cnt && con_is_visible(vc))
+		vc->vc_sw->con_putcs(vc, start, cnt, vc->vc_y, start_x);
+>>>>>>> master
 	set_cursor(vc);
 	notify_update(vc);
 

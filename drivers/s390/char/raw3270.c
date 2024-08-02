@@ -985,8 +985,13 @@ EXPORT_SYMBOL(raw3270_deactivate_view);
 /*
  * Add view to device with minor "minor".
  */
+<<<<<<< HEAD
 int raw3270_add_view(struct raw3270_view *view, struct raw3270_fn *fn,
 		     int minor, int subclass)
+=======
+int
+raw3270_add_view(struct raw3270_view *view, struct raw3270_fn *fn, int minor, int subclass)
+>>>>>>> master
 {
 	unsigned long flags;
 	struct raw3270 *rp;

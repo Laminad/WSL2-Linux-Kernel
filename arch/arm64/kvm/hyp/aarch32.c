@@ -44,12 +44,17 @@ static const unsigned short cc_map[16] = {
 /*
  * Check if a trapped instruction should have been executed or not.
  */
+<<<<<<< HEAD:arch/arm64/kvm/hyp/aarch32.c
 bool kvm_condition_valid32(const struct kvm_vcpu *vcpu)
+=======
+bool __hyp_text kvm_condition_valid32(const struct kvm_vcpu *vcpu)
+>>>>>>> master:virt/kvm/arm/hyp/aarch32.c
 {
 	unsigned long cpsr;
 	u32 cpsr_cond;
 	int cond;
 
+<<<<<<< HEAD:arch/arm64/kvm/hyp/aarch32.c
 	/*
 	 * These are the exception classes that could fire with a
 	 * conditional instruction.
@@ -67,6 +72,11 @@ bool kvm_condition_valid32(const struct kvm_vcpu *vcpu)
 	default:
 		return true;
 	}
+=======
+	/* Top two bits non-zero?  Unconditional. */
+	if (kvm_vcpu_get_hsr(vcpu) >> 30)
+		return true;
+>>>>>>> master:virt/kvm/arm/hyp/aarch32.c
 
 	/* Is condition field valid? */
 	cond = kvm_vcpu_get_condition(vcpu);
@@ -107,7 +117,11 @@ bool kvm_condition_valid32(const struct kvm_vcpu *vcpu)
  *
  * IT[7:0] -> CPSR[26:25],CPSR[15:10]
  */
+<<<<<<< HEAD:arch/arm64/kvm/hyp/aarch32.c
 static void kvm_adjust_itstate(struct kvm_vcpu *vcpu)
+=======
+static void __hyp_text kvm_adjust_itstate(struct kvm_vcpu *vcpu)
+>>>>>>> master:virt/kvm/arm/hyp/aarch32.c
 {
 	unsigned long itbits, cond;
 	unsigned long cpsr = *vcpu_cpsr(vcpu);
@@ -137,6 +151,7 @@ static void kvm_adjust_itstate(struct kvm_vcpu *vcpu)
  * kvm_skip_instr - skip a trapped instruction and proceed to the next
  * @vcpu: The vcpu pointer
  */
+<<<<<<< HEAD:arch/arm64/kvm/hyp/aarch32.c
 void kvm_skip_instr32(struct kvm_vcpu *vcpu)
 {
 	u32 pc = *vcpu_pc(vcpu);
@@ -150,5 +165,16 @@ void kvm_skip_instr32(struct kvm_vcpu *vcpu)
 
 	*vcpu_pc(vcpu) = pc;
 
+=======
+void __hyp_text kvm_skip_instr32(struct kvm_vcpu *vcpu, bool is_wide_instr)
+{
+	bool is_thumb;
+
+	is_thumb = !!(*vcpu_cpsr(vcpu) & PSR_AA32_T_BIT);
+	if (is_thumb && !is_wide_instr)
+		*vcpu_pc(vcpu) += 2;
+	else
+		*vcpu_pc(vcpu) += 4;
+>>>>>>> master:virt/kvm/arm/hyp/aarch32.c
 	kvm_adjust_itstate(vcpu);
 }

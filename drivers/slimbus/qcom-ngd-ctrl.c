@@ -1530,7 +1530,10 @@ static int of_qcom_slim_ngd_register(struct device *parent,
 		ngd->pdev = platform_device_alloc(QCOM_SLIM_NGD_DRV_NAME, id);
 		if (!ngd->pdev) {
 			kfree(ngd);
+<<<<<<< HEAD
 			of_node_put(node);
+=======
+>>>>>>> master
 			return -ENOMEM;
 		}
 		ngd->id = id;

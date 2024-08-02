@@ -621,7 +621,10 @@ static inline int brcmf_fws_hanger_poppkt(struct brcmf_fws_hanger *h,
 static void brcmf_fws_psq_flush(struct brcmf_fws_info *fws, struct pktq *q,
 				int ifidx)
 {
+<<<<<<< HEAD
 	struct brcmf_fws_hanger_item *hi;
+=======
+>>>>>>> master
 	bool (*matchfn)(struct sk_buff *, void *) = NULL;
 	struct sk_buff *skb;
 	int prec;
@@ -633,9 +636,12 @@ static void brcmf_fws_psq_flush(struct brcmf_fws_info *fws, struct pktq *q,
 		skb = brcmu_pktq_pdeq_match(q, prec, matchfn, &ifidx);
 		while (skb) {
 			hslot = brcmf_skb_htod_tag_get_field(skb, HSLOT);
+<<<<<<< HEAD
 			hi = &fws->hanger.items[hslot];
 			WARN_ON(skb != hi->pkt);
 			hi->state = BRCMF_FWS_HANGER_ITEM_STATE_FREE;
+=======
+>>>>>>> master
 			brcmf_fws_hanger_poppkt(&fws->hanger, hslot, &skb,
 						true);
 			brcmu_pkt_buf_free_skb(skb);
@@ -2434,17 +2440,25 @@ struct brcmf_fws_info *brcmf_fws_attach(struct brcmf_pub *drvr)
 	return fws;
 
 fail:
-	brcmf_fws_detach(fws);
+	brcmf_fws_detach_pre_delif(fws);
+	brcmf_fws_detach_post_delif(fws);
 	return ERR_PTR(rc);
 }
 
-void brcmf_fws_detach(struct brcmf_fws_info *fws)
+void brcmf_fws_detach_pre_delif(struct brcmf_fws_info *fws)
 {
 	if (!fws)
 		return;
-
-	if (fws->fws_wq)
+	if (fws->fws_wq) {
 		destroy_workqueue(fws->fws_wq);
+		fws->fws_wq = NULL;
+	}
+}
+
+void brcmf_fws_detach_post_delif(struct brcmf_fws_info *fws)
+{
+	if (!fws)
+		return;
 
 	/* cleanup */
 	brcmf_fws_lock(fws);

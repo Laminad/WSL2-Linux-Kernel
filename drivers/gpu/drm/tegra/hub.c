@@ -483,8 +483,11 @@ static int tegra_shared_plane_atomic_check(struct drm_plane *plane,
 static void tegra_shared_plane_atomic_disable(struct drm_plane *plane,
 					      struct drm_atomic_state *state)
 {
+<<<<<<< HEAD
 	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state,
 									   plane);
+=======
+>>>>>>> master
 	struct tegra_plane *p = to_tegra_plane(plane);
 	struct tegra_dc *dc;
 	u32 value;
@@ -496,12 +499,15 @@ static void tegra_shared_plane_atomic_disable(struct drm_plane *plane,
 
 	dc = to_tegra_dc(old_state->crtc);
 
+<<<<<<< HEAD
 	err = host1x_client_resume(&dc->client);
 	if (err < 0) {
 		dev_err(dc->dev, "failed to resume: %d\n", err);
 		return;
 	}
 
+=======
+>>>>>>> master
 	/*
 	 * XXX Legacy helpers seem to sometimes call ->atomic_disable() even
 	 * on planes that are already disabled. Make sure we fallback to the

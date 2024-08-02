@@ -4095,6 +4095,7 @@ static void hci_cmd_work(struct work_struct *work)
 
 		hci_send_cmd_sync(hdev, skb);
 
+<<<<<<< HEAD
 		rcu_read_lock();
 		if (test_bit(HCI_RESET, &hdev->flags) ||
 		    hci_dev_test_flag(hdev, HCI_CMD_DRAIN_WORKQUEUE))
@@ -4103,5 +4104,22 @@ static void hci_cmd_work(struct work_struct *work)
 			queue_delayed_work(hdev->workqueue, &hdev->cmd_timer,
 					   HCI_CMD_TIMEOUT);
 		rcu_read_unlock();
+=======
+		hdev->sent_cmd = skb_clone(skb, GFP_KERNEL);
+		if (hdev->sent_cmd) {
+			if (hci_req_status_pend(hdev))
+				hci_dev_set_flag(hdev, HCI_CMD_PENDING);
+			atomic_dec(&hdev->cmd_cnt);
+			hci_send_frame(hdev, skb);
+			if (test_bit(HCI_RESET, &hdev->flags))
+				cancel_delayed_work(&hdev->cmd_timer);
+			else
+				schedule_delayed_work(&hdev->cmd_timer,
+						      HCI_CMD_TIMEOUT);
+		} else {
+			skb_queue_head(&hdev->cmd_q, skb);
+			queue_work(hdev->workqueue, &hdev->cmd_work);
+		}
+>>>>>>> master
 	}
 }

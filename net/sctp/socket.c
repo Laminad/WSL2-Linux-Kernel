@@ -1011,9 +1011,21 @@ static int sctp_setsockopt_bindx(struct sock *sk, struct sockaddr *addrs,
 	if (unlikely(addrs_size <= 0))
 		return -EINVAL;
 
+<<<<<<< HEAD
+=======
+	kaddrs = memdup_user(addrs, addrs_size);
+	if (unlikely(IS_ERR(kaddrs)))
+		return PTR_ERR(kaddrs);
+
+>>>>>>> master
 	/* Walk through the addrs buffer and count the number of addresses. */
 	while (walk_size < addrs_size) {
+<<<<<<< HEAD
 		if (walk_size + sizeof(sa_family_t) > addrs_size)
+=======
+		if (walk_size + sizeof(sa_family_t) > addrs_size) {
+			kfree(kaddrs);
+>>>>>>> master
 			return -EINVAL;
 
 		sa_addr = addr_buf;
@@ -1022,7 +1034,12 @@ static int sctp_setsockopt_bindx(struct sock *sk, struct sockaddr *addrs,
 		/* If the address family is not supported or if this address
 		 * causes the address buffer to overflow return EINVAL.
 		 */
+<<<<<<< HEAD
 		if (!af || (walk_size + af->sockaddr_len) > addrs_size)
+=======
+		if (!af || (walk_size + af->sockaddr_len) > addrs_size) {
+			kfree(kaddrs);
+>>>>>>> master
 			return -EINVAL;
 		addrcnt++;
 		addr_buf += af->sockaddr_len;
@@ -1086,10 +1103,15 @@ static int sctp_connect_new_asoc(struct sctp_endpoint *ep,
 			return -EACCES;
 	}
 
+<<<<<<< HEAD
 	scope = sctp_scope(daddr);
 	asoc = sctp_association_new(ep, sk, scope, GFP_KERNEL);
 	if (!asoc)
 		return -ENOMEM;
+=======
+out:
+	kfree(kaddrs);
+>>>>>>> master
 
 	err = sctp_assoc_set_bind_addr_from_ep(asoc, scope, GFP_KERNEL);
 	if (err < 0)
@@ -1319,6 +1341,13 @@ static int __sctp_setsockopt_connectx(struct sock *sk, struct sockaddr *kaddrs,
 	if (unlikely(addrs_size < sizeof(sa_family_t)))
 		return -EINVAL;
 
+<<<<<<< HEAD
+=======
+	kaddrs = memdup_user(addrs, addrs_size);
+	if (unlikely(IS_ERR(kaddrs)))
+		return PTR_ERR(kaddrs);
+
+>>>>>>> master
 	/* Allow security module to validate connectx addresses. */
 	err = security_sctp_bind_connect(sk, SCTP_SOCKOPT_CONNECTX,
 					 (struct sockaddr *)kaddrs,
@@ -1332,7 +1361,16 @@ static int __sctp_setsockopt_connectx(struct sock *sk, struct sockaddr *kaddrs,
 	if (sk->sk_socket->file)
 		flags = sk->sk_socket->file->f_flags;
 
+<<<<<<< HEAD
 	return __sctp_connect(sk, kaddrs, addrs_size, flags, assoc_id);
+=======
+	err = __sctp_connect(sk, kaddrs, addrs_size, flags, assoc_id);
+
+out_free:
+	kfree(kaddrs);
+
+	return err;
+>>>>>>> master
 }
 
 /*
@@ -3961,6 +3999,7 @@ static int sctp_setsockopt_pr_supported(struct sock *sk,
 					struct sctp_assoc_value *params,
 					unsigned int optlen)
 {
+<<<<<<< HEAD
 	struct sctp_association *asoc;
 
 	if (optlen != sizeof(*params))
@@ -3972,6 +4011,17 @@ static int sctp_setsockopt_pr_supported(struct sock *sk,
 		return -EINVAL;
 
 	sctp_sk(sk)->ep->prsctp_enable = !!params->assoc_value;
+=======
+	struct sctp_assoc_value params;
+
+	if (optlen != sizeof(params))
+		return -EINVAL;
+
+	if (copy_from_user(&params, optval, optlen))
+		return -EFAULT;
+
+	sctp_sk(sk)->ep->prsctp_enable = !!params.assoc_value;
+>>>>>>> master
 
 	return 0;
 }
@@ -9050,6 +9100,15 @@ struct sk_buff *sctp_skb_recv_datagram(struct sock *sk, int flags, int *err)
 		if (sk->sk_shutdown & RCV_SHUTDOWN)
 			break;
 
+<<<<<<< HEAD
+=======
+		if (sk_can_busy_loop(sk)) {
+			sk_busy_loop(sk, noblock);
+
+			if (!skb_queue_empty_lockless(&sk->sk_receive_queue))
+				continue;
+		}
+>>>>>>> master
 
 		/* User doesn't want to wait.  */
 		error = -EAGAIN;
@@ -9481,7 +9540,11 @@ void sctp_copy_sock(struct sock *newsk, struct sock *sk,
 	newinet->inet_rcv_saddr = inet->inet_rcv_saddr;
 	newinet->inet_dport = htons(asoc->peer.port);
 	newinet->pmtudisc = inet->pmtudisc;
+<<<<<<< HEAD
 	atomic_set(&newinet->inet_id, get_random_u16());
+=======
+	newinet->inet_id = prandom_u32();
+>>>>>>> master
 
 	newinet->uc_ttl = inet->uc_ttl;
 	inet_set_bit(MC_LOOP, newsk);

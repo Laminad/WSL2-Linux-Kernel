@@ -178,7 +178,12 @@ static void init_unwind_hdr(struct unwind_table *table,
  */
 static void *__init unw_hdr_alloc_early(unsigned long sz)
 {
+<<<<<<< HEAD
 	return memblock_alloc_from(sz, sizeof(unsigned int), MAX_DMA_ADDRESS);
+=======
+	return __alloc_bootmem_nopanic(sz, sizeof(unsigned int),
+				       MAX_DMA_ADDRESS);
+>>>>>>> master
 }
 
 static void init_unwind_table(struct unwind_table *table, const char *name,

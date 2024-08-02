@@ -1539,6 +1539,16 @@ static int iscsi_xmit_task(struct iscsi_conn *conn, struct iscsi_task *task,
 		return -ENODATA;
 	}
 
+<<<<<<< HEAD
+=======
+	spin_lock_bh(&conn->session->back_lock);
+	if (conn->task == NULL) {
+		spin_unlock_bh(&conn->session->back_lock);
+		return -ENODATA;
+	}
+	__iscsi_get_task(task);
+	spin_unlock_bh(&conn->session->back_lock);
+>>>>>>> master
 	spin_unlock_bh(&conn->session->frwd_lock);
 	rc = conn->session->tt->xmit_task(task);
 	spin_lock_bh(&conn->session->frwd_lock);

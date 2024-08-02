@@ -821,6 +821,7 @@ err_clk:
 EXPORT_SYMBOL_GPL(pcm3168a_probe);
 
 static void pcm3168a_disable(struct device *dev)
+<<<<<<< HEAD
 {
 	struct pcm3168a_priv *pcm3168a = dev_get_drvdata(dev);
 
@@ -840,6 +841,22 @@ void pcm3168a_remove(struct device *dev)
 	 * The asserted level of GPIO_ACTIVE_LOW is LOW.
 	 */
 	gpiod_set_value_cansleep(pcm3168a->gpio_rst, 1);
+	pm_runtime_disable(dev);
+#ifndef CONFIG_PM
+	pcm3168a_disable(dev);
+#endif
+=======
+{
+	struct pcm3168a_priv *pcm3168a = dev_get_drvdata(dev);
+
+	regulator_bulk_disable(ARRAY_SIZE(pcm3168a->supplies),
+			       pcm3168a->supplies);
+	clk_disable_unprepare(pcm3168a->scki);
+>>>>>>> master
+}
+
+void pcm3168a_remove(struct device *dev)
+{
 	pm_runtime_disable(dev);
 #ifndef CONFIG_PM
 	pcm3168a_disable(dev);

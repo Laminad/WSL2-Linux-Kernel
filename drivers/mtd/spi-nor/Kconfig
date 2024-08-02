@@ -34,6 +34,7 @@ config MTD_SPI_NOR_SWP_DISABLE
 	  This option disables the software write protection on any SPI
 	  flashes at boot-up.
 
+<<<<<<< HEAD
 	  Depending on the flash chip this either clears the block protection
 	  bits or does a "Global Unprotect" command.
 
@@ -42,6 +43,12 @@ config MTD_SPI_NOR_SWP_DISABLE
 
 config MTD_SPI_NOR_SWP_DISABLE_ON_VOLATILE
 	bool "Disable SWP on flashes w/ volatile protection bits"
+=======
+config SPI_ATMEL_QUADSPI
+	tristate "Atmel Quad SPI Controller"
+	depends on ARCH_AT91 || (ARM && COMPILE_TEST && !ARCH_EBSA110)
+	depends on OF && HAS_IOMEM
+>>>>>>> master
 	help
 	  Some SPI flashes have volatile block protection bits, ie. after a
 	  power-up or a reset the flash is software write protected by

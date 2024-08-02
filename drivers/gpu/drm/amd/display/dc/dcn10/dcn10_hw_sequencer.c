@@ -2577,8 +2577,12 @@ static void dcn10_update_dpp(struct dpp *dpp, struct dc_plane_state *plane_state
 			plane_state->format,
 			EXPANSION_MODE_ZERO,
 			plane_state->input_csc_color_matrix,
+<<<<<<< HEAD
 			plane_state->color_space,
 			NULL);
+=======
+			plane_state->color_space);
+>>>>>>> master
 
 	//set scale and bias registers
 	build_prescale_params(&bns_params, plane_state);
@@ -3003,10 +3007,17 @@ void dcn10_post_unlock_program_front_end(
 	for (i = 0; i < dc->res_pool->pipe_count; i++) {
 		struct pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
 
+<<<<<<< HEAD
 		if (!pipe_ctx->top_pipe &&
 			!pipe_ctx->prev_odm_pipe &&
 			pipe_ctx->stream) {
 			struct timing_generator *tg = pipe_ctx->stream_res.tg;
+=======
+		if ((!pipe_ctx->plane_state ||
+		     pipe_ctx->stream_res.tg != old_pipe_ctx->stream_res.tg) &&
+		    old_pipe_ctx->plane_state &&
+		    old_pipe_ctx->stream_res.tg == tg) {
+>>>>>>> master
 
 			if (context->stream_status[i].plane_count == 0)
 				false_optc_underflow_wa(dc, pipe_ctx->stream, tg);

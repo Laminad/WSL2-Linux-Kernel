@@ -178,7 +178,11 @@ static const struct usb_device_id tower_table[] = {
 	{ }					/* Terminating entry */
 };
 
+<<<<<<< HEAD
 MODULE_DEVICE_TABLE(usb, tower_table);
+=======
+MODULE_DEVICE_TABLE (usb, tower_table);
+>>>>>>> master
 
 #define LEGO_USB_TOWER_MINOR_BASE	160
 
@@ -291,11 +295,19 @@ static inline void tower_delete(struct lego_usb_tower *dev)
 	/* free data structures */
 	usb_free_urb(dev->interrupt_in_urb);
 	usb_free_urb(dev->interrupt_out_urb);
+<<<<<<< HEAD
 	kfree(dev->read_buffer);
 	kfree(dev->interrupt_in_buffer);
 	kfree(dev->interrupt_out_buffer);
 	usb_put_dev(dev->udev);
 	kfree(dev);
+=======
+	kfree (dev->read_buffer);
+	kfree (dev->interrupt_in_buffer);
+	kfree (dev->interrupt_out_buffer);
+	usb_put_dev(dev->udev);
+	kfree (dev);
+>>>>>>> master
 }
 
 
@@ -373,6 +385,10 @@ static int tower_open(struct inode *inode, struct file *file)
 	if (retval) {
 		dev_err(&dev->udev->dev,
 			"Couldn't submit interrupt_in_urb %d\n", retval);
+<<<<<<< HEAD
+=======
+		dev->interrupt_in_running = 0;
+>>>>>>> master
 		goto unlock_exit;
 	}
 
@@ -404,6 +420,16 @@ static int tower_release(struct inode *inode, struct file *file)
 
 	mutex_lock(&dev->lock);
 
+<<<<<<< HEAD
+=======
+	if (dev->open_count != 1) {
+		dev_dbg(&dev->udev->dev, "%s: device not opened exactly once\n",
+			__func__);
+		retval = -ENODEV;
+		goto unlock_exit;
+	}
+
+>>>>>>> master
 	if (dev->disconnected) {
 		/* the device was unplugged before the file was released */
 
@@ -430,7 +456,32 @@ exit:
 	return retval;
 }
 
+<<<<<<< HEAD
 /*
+=======
+
+/**
+ *	tower_abort_transfers
+ *      aborts transfers and frees associated data structures
+ */
+static void tower_abort_transfers (struct lego_usb_tower *dev)
+{
+	if (dev == NULL)
+		return;
+
+	/* shutdown transfer */
+	if (dev->interrupt_in_running) {
+		dev->interrupt_in_running = 0;
+		mb();
+		usb_kill_urb(dev->interrupt_in_urb);
+	}
+	if (dev->interrupt_out_busy)
+		usb_kill_urb(dev->interrupt_out_urb);
+}
+
+
+/**
+>>>>>>> master
  *	tower_check_for_read_packet
  *
  *      To get correct semantics for signals and non-blocking I/O
@@ -696,10 +747,20 @@ static void tower_interrupt_in_callback(struct urb *urb)
 	}
 
 resubmit:
+<<<<<<< HEAD
 	retval = usb_submit_urb(dev->interrupt_in_urb, GFP_ATOMIC);
 	if (retval) {
 		dev_err(&dev->udev->dev, "%s: usb_submit_urb failed (%d)\n",
 			__func__, retval);
+=======
+	/* resubmit if we're still running */
+	if (dev->interrupt_in_running) {
+		retval = usb_submit_urb (dev->interrupt_in_urb, GFP_ATOMIC);
+		if (retval)
+			dev_err(&dev->udev->dev,
+				"%s: usb_submit_urb failed (%d)\n",
+				__func__, retval);
+>>>>>>> master
 	}
 exit:
 	dev->interrupt_in_done = 1;
@@ -753,8 +814,20 @@ static int tower_probe(struct usb_interface *interface, const struct usb_device_
 		goto exit;
 
 	mutex_init(&dev->lock);
+<<<<<<< HEAD
 	dev->udev = usb_get_dev(udev);
 	spin_lock_init(&dev->read_buffer_lock);
+=======
+
+	dev->udev = usb_get_dev(udev);
+	dev->open_count = 0;
+	dev->disconnected = 0;
+
+	dev->read_buffer = NULL;
+	dev->read_buffer_length = 0;
+	dev->read_packet_length = 0;
+	spin_lock_init (&dev->read_buffer_lock);
+>>>>>>> master
 	dev->packet_timeout_jiffies = msecs_to_jiffies(packet_timeout);
 	dev->read_last_arrival = jiffies;
 	init_waitqueue_head(&dev->read_wait);
@@ -789,6 +862,7 @@ static int tower_probe(struct usb_interface *interface, const struct usb_device_
 	dev->interrupt_out_interval = interrupt_out_interval ? interrupt_out_interval : dev->interrupt_out_endpoint->bInterval;
 
 	/* get the firmware version and log it */
+<<<<<<< HEAD
 	result = usb_control_msg_recv(udev, 0,
 				      LEGO_USB_TOWER_REQUEST_GET_VERSION,
 				      USB_TYPE_VENDOR | USB_DIR_IN | USB_RECIP_DEVICE,
@@ -798,6 +872,20 @@ static int tower_probe(struct usb_interface *interface, const struct usb_device_
 				      sizeof(get_version_reply),
 				      1000, GFP_KERNEL);
 	if (result) {
+=======
+	result = usb_control_msg (udev,
+				  usb_rcvctrlpipe(udev, 0),
+				  LEGO_USB_TOWER_REQUEST_GET_VERSION,
+				  USB_TYPE_VENDOR | USB_DIR_IN | USB_RECIP_DEVICE,
+				  0,
+				  0,
+				  get_version_reply,
+				  sizeof(*get_version_reply),
+				  1000);
+	if (result != sizeof(*get_version_reply)) {
+		if (result >= 0)
+			result = -EIO;
+>>>>>>> master
 		dev_err(idev, "get version request failed: %d\n", result);
 		retval = result;
 		goto error;
@@ -843,12 +931,24 @@ static void tower_disconnect(struct usb_interface *interface)
 	struct lego_usb_tower *dev;
 	int minor;
 
+<<<<<<< HEAD
 	dev = usb_get_intfdata(interface);
+=======
+	dev = usb_get_intfdata (interface);
+>>>>>>> master
 
 	minor = dev->minor;
 
 	/* give back our minor and prevent further open() */
+<<<<<<< HEAD
 	usb_deregister_dev(interface, &tower_class);
+
+	/* stop I/O */
+	usb_poison_urb(dev->interrupt_in_urb);
+	usb_poison_urb(dev->interrupt_out_urb);
+=======
+	usb_deregister_dev (interface, &tower_class);
+>>>>>>> master
 
 	/* stop I/O */
 	usb_poison_urb(dev->interrupt_in_urb);

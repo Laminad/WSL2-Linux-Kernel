@@ -2057,6 +2057,57 @@ static int kdb_ef(int argc, const char **argv)
 	return 0;
 }
 
+<<<<<<< HEAD
+=======
+#if defined(CONFIG_MODULES)
+/*
+ * kdb_lsmod - This function implements the 'lsmod' command.  Lists
+ *	currently loaded kernel modules.
+ *	Mostly taken from userland lsmod.
+ */
+static int kdb_lsmod(int argc, const char **argv)
+{
+	struct module *mod;
+
+	if (argc != 0)
+		return KDB_ARGCOUNT;
+
+	kdb_printf("Module                  Size  modstruct     Used by\n");
+	list_for_each_entry(mod, kdb_modules, list) {
+		if (mod->state == MODULE_STATE_UNFORMED)
+			continue;
+
+		kdb_printf("%-20s%8u  0x%px ", mod->name,
+			   mod->core_layout.size, (void *)mod);
+#ifdef CONFIG_MODULE_UNLOAD
+		kdb_printf("%4d ", module_refcount(mod));
+#endif
+		if (mod->state == MODULE_STATE_GOING)
+			kdb_printf(" (Unloading)");
+		else if (mod->state == MODULE_STATE_COMING)
+			kdb_printf(" (Loading)");
+		else
+			kdb_printf(" (Live)");
+		kdb_printf(" 0x%px", mod->core_layout.base);
+
+#ifdef CONFIG_MODULE_UNLOAD
+		{
+			struct module_use *use;
+			kdb_printf(" [ ");
+			list_for_each_entry(use, &mod->source_list,
+					    source_list)
+				kdb_printf("%s ", use->target->name);
+			kdb_printf("]\n");
+		}
+#endif
+	}
+
+	return 0;
+}
+
+#endif	/* CONFIG_MODULES */
+
+>>>>>>> master
 /*
  * kdb_env - This function implements the 'env' command.  Display the
  *	current environment variables.
@@ -2636,10 +2687,20 @@ int kdb_register(kdbtab_t *cmd)
 {
 	kdbtab_t *kp;
 
+<<<<<<< HEAD
 	list_for_each_entry(kp, &kdb_cmds_head, list_node) {
 		if (strcmp(kp->name, cmd->name) == 0) {
 			kdb_printf("Duplicate kdb cmd: %s, func %p help %s\n",
 				   cmd->name, cmd->func, cmd->help);
+=======
+	/*
+	 *  Brute force method to determine duplicates
+	 */
+	for_each_kdbcmd(kp, i) {
+		if (kp->cmd_name && (strcmp(kp->cmd_name, cmd) == 0)) {
+			kdb_printf("Duplicate kdb command registered: "
+				"%s, func %px help %s\n", cmd, func, help);
+>>>>>>> master
 			return 1;
 		}
 	}

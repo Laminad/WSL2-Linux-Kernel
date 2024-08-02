@@ -255,9 +255,12 @@ struct vmbus_connection {
 	struct list_head chn_list;
 	struct mutex channel_mutex;
 
+<<<<<<< HEAD
 	/* Array of channels */
 	struct vmbus_channel **channels;
 
+=======
+>>>>>>> master
 	/*
 	 * An offer message is handled first on the work_queue, and then
 	 * is further handled on handle_primary_chan_wq or
@@ -266,6 +269,7 @@ struct vmbus_connection {
 	struct workqueue_struct *work_queue;
 	struct workqueue_struct *handle_primary_chan_wq;
 	struct workqueue_struct *handle_sub_chan_wq;
+<<<<<<< HEAD
 	struct workqueue_struct *rescind_work_queue;
 
 	/*
@@ -299,6 +303,8 @@ struct vmbus_connection {
 	 * drop to zero.
 	 */
 	struct completion ready_for_resume_event;
+=======
+>>>>>>> master
 };
 
 

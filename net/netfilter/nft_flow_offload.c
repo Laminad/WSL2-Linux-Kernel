@@ -232,6 +232,7 @@ static int nft_flow_route(const struct nft_pktinfo *pkt,
 	switch (nft_pf(pkt)) {
 	case NFPROTO_IPV4:
 		fl.u.ip4.daddr = ct->tuplehash[dir].tuple.src.u3.ip;
+<<<<<<< HEAD
 		fl.u.ip4.saddr = ct->tuplehash[!dir].tuple.src.u3.ip;
 		fl.u.ip4.flowi4_oif = nft_in(pkt)->ifindex;
 		fl.u.ip4.flowi4_iif = this_dst->dev->ifindex;
@@ -247,12 +248,20 @@ static int nft_flow_route(const struct nft_pktinfo *pkt,
 		fl.u.ip6.flowlabel = ip6_flowinfo(ipv6_hdr(pkt->skb));
 		fl.u.ip6.flowi6_mark = pkt->skb->mark;
 		fl.u.ip6.flowi6_flags = FLOWI_FLAG_ANYSRC;
+=======
+		fl.u.ip4.flowi4_oif = nft_in(pkt)->ifindex;
+		break;
+	case NFPROTO_IPV6:
+		fl.u.ip6.daddr = ct->tuplehash[dir].tuple.src.u3.in6;
+		fl.u.ip6.flowi6_oif = nft_in(pkt)->ifindex;
+>>>>>>> master
 		break;
 	}
 
 	if (!dst_hold_safe(this_dst))
 		return -ENOENT;
 
+<<<<<<< HEAD
 	nf_route(nft_net(pkt), &other_dst, &fl, false, nft_pf(pkt));
 	if (!other_dst) {
 		dst_release(this_dst);
@@ -267,6 +276,10 @@ static int nft_flow_route(const struct nft_pktinfo *pkt,
 		nft_dev_forward_path(route, ct, dir, ft);
 		nft_dev_forward_path(route, ct, !dir, ft);
 	}
+=======
+	route->tuple[dir].dst		= this_dst;
+	route->tuple[!dir].dst		= other_dst;
+>>>>>>> master
 
 	return 0;
 }
@@ -295,7 +308,10 @@ static void nft_flow_offload_eval(const struct nft_expr *expr,
 	struct nft_flow_offload *priv = nft_expr_priv(expr);
 	struct nf_flowtable *flowtable = &priv->flowtable->data;
 	struct tcphdr _tcph, *tcph = NULL;
+<<<<<<< HEAD
 	struct nf_flow_route route = {};
+=======
+>>>>>>> master
 	enum ip_conntrack_info ctinfo;
 	struct flow_offload *flow;
 	enum ip_conntrack_dir dir;
@@ -311,10 +327,16 @@ static void nft_flow_offload_eval(const struct nft_expr *expr,
 
 	switch (ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple.dst.protonum) {
 	case IPPROTO_TCP:
+<<<<<<< HEAD
 		tcph = skb_header_pointer(pkt->skb, nft_thoff(pkt),
 					  sizeof(_tcph), &_tcph);
 		if (unlikely(!tcph || tcph->fin || tcph->rst ||
 			     !nf_conntrack_tcp_established(ct)))
+=======
+		tcph = skb_header_pointer(pkt->skb, pkt->xt.thoff,
+					  sizeof(_tcph), &_tcph);
+		if (unlikely(!tcph || tcph->fin || tcph->rst))
+>>>>>>> master
 			goto out;
 		break;
 	case IPPROTO_UDP:
@@ -337,7 +359,11 @@ static void nft_flow_offload_eval(const struct nft_expr *expr,
 	}
 
 	if (nf_ct_ext_exist(ct, NF_CT_EXT_HELPER) ||
+<<<<<<< HEAD
 	    ct->status & (IPS_SEQ_ADJUST | IPS_NAT_CLASH))
+=======
+	    ct->status & IPS_SEQ_ADJUST)
+>>>>>>> master
 		goto out;
 
 	if (!nf_ct_is_confirmed(ct))
@@ -354,8 +380,11 @@ static void nft_flow_offload_eval(const struct nft_expr *expr,
 	if (!flow)
 		goto err_flow_alloc;
 
+<<<<<<< HEAD
 	flow_offload_route_init(flow, &route);
 
+=======
+>>>>>>> master
 	if (tcph) {
 		ct->proto.tcp.seen[0].flags |= IP_CT_TCP_FLAG_BE_LIBERAL;
 		ct->proto.tcp.seen[1].flags |= IP_CT_TCP_FLAG_BE_LIBERAL;
@@ -365,6 +394,7 @@ static void nft_flow_offload_eval(const struct nft_expr *expr,
 	if (ret < 0)
 		goto err_flow_add;
 
+	dst_release(route.tuple[!dir].dst);
 	return;
 
 err_flow_add:

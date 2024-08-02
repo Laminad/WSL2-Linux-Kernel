@@ -182,7 +182,11 @@
 		>;
 	};
 
+<<<<<<< HEAD:arch/arm/boot/dts/ti/omap/omap5-cm-t54.dts
 	palmas_sys_nirq_pins: palmas-sys-nirq-pins {
+=======
+	palmas_sys_nirq_pins: pinmux_palmas_sys_nirq_pins {
+>>>>>>> master:arch/arm/boot/dts/omap5-cm-t54.dts
 		pinctrl-single,pins = <
 			/* sys_nirq1 is pulled down as the SoC is inverting it for GIC */
 			OMAP5_IOPAD(0x068, PIN_INPUT_PULLUP | MUX_MODE0)

@@ -55,12 +55,23 @@ static void cache_init(struct cache_head *h, struct cache_detail *detail)
 	h->last_refresh = now;
 }
 
+<<<<<<< HEAD
 static void cache_fresh_unlocked(struct cache_head *head,
 				struct cache_detail *detail);
 
 static struct cache_head *sunrpc_cache_find_rcu(struct cache_detail *detail,
 						struct cache_head *key,
 						int hash)
+=======
+static inline int cache_is_valid(struct cache_head *h);
+static void cache_fresh_locked(struct cache_head *head, time_t expiry,
+				struct cache_detail *detail);
+static void cache_fresh_unlocked(struct cache_head *head,
+				struct cache_detail *detail);
+
+struct cache_head *sunrpc_cache_lookup(struct cache_detail *detail,
+				       struct cache_head *key, int hash)
+>>>>>>> master
 {
 	struct hlist_head *head = &detail->hash_table[hash];
 	struct cache_head *tmp;
@@ -116,6 +127,7 @@ static struct cache_head *sunrpc_cache_add_entry(struct cache_detail *detail,
 	spin_lock(&detail->hash_lock);
 
 	/* check if entry appeared while we slept */
+<<<<<<< HEAD
 	hlist_for_each_entry_rcu(tmp, head, cache_list,
 				 lockdep_is_held(&detail->hash_lock)) {
 		if (!detail->match(tmp, key))
@@ -126,6 +138,23 @@ static struct cache_head *sunrpc_cache_add_entry(struct cache_detail *detail,
 			trace_cache_entry_expired(detail, tmp);
 			freeme = tmp;
 			break;
+=======
+	hlist_for_each_entry(tmp, head, cache_list) {
+		if (detail->match(tmp, key)) {
+			if (cache_is_expired(detail, tmp)) {
+				hlist_del_init(&tmp->cache_list);
+				detail->entries --;
+				if (cache_is_valid(tmp) == -EAGAIN)
+					set_bit(CACHE_NEGATIVE, &tmp->flags);
+				cache_fresh_locked(tmp, 0, detail);
+				freeme = tmp;
+				break;
+			}
+			cache_get(tmp);
+			write_unlock(&detail->hash_lock);
+			cache_put(new, detail);
+			return tmp;
+>>>>>>> master
 		}
 		cache_get(tmp);
 		spin_unlock(&detail->hash_lock);
@@ -138,8 +167,15 @@ static struct cache_head *sunrpc_cache_add_entry(struct cache_detail *detail,
 	cache_get(new);
 	spin_unlock(&detail->hash_lock);
 
+<<<<<<< HEAD
 	if (freeme)
 		sunrpc_end_cache_remove_entry(freeme, detail);
+=======
+	if (freeme) {
+		cache_fresh_unlocked(freeme, detail);
+		cache_put(freeme, detail);
+	}
+>>>>>>> master
 	return new;
 }
 

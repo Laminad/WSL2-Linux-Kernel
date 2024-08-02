@@ -223,10 +223,13 @@ smb2_reconnect(__le16 smb2_command, struct cifs_tcon *tcon,
 	if (tcon == NULL)
 		return 0;
 
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 	/*
 	 * Need to also skip SMB2_IOCTL because it is used for checking nested dfs links in
 	 * cifs_tree_connect().
 	 */
+=======
+>>>>>>> master:fs/cifs/smb2pdu.c
 	if (smb2_command == SMB2_TREE_CONNECT || smb2_command == SMB2_IOCTL)
 		return 0;
 
@@ -1163,11 +1166,16 @@ SMB2_negotiate(const unsigned int xid,
 			goto neg_exit;
 		} else if (rsp->DialectRevision == cpu_to_le16(SMB21_PROT_ID)) {
 			/* ops set to 3.0 by default for default so update */
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 			server->ops = &smb21_operations;
 			server->vals = &smb21_values;
 		} else if (rsp->DialectRevision == cpu_to_le16(SMB311_PROT_ID)) {
 			server->ops = &smb311_operations;
 			server->vals = &smb311_values;
+=======
+			ses->server->ops = &smb21_operations;
+			ses->server->vals = &smb21_values;
+>>>>>>> master:fs/cifs/smb2pdu.c
 		}
 	} else if (le16_to_cpu(rsp->DialectRevision) !=
 				server->vals->protocol_id) {
@@ -1349,20 +1357,33 @@ int smb3_validate_negotiate(const unsigned int xid, struct cifs_tcon *tcon)
 	}
 
 	rc = SMB2_ioctl(xid, tcon, NO_FILE_ID, NO_FILE_ID,
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 		FSCTL_VALIDATE_NEGOTIATE_INFO,
 		(char *)pneg_inbuf, inbuflen, CIFSMaxBufSize,
 		(char **)&pneg_rsp, &rsplen);
+=======
+		FSCTL_VALIDATE_NEGOTIATE_INFO, true /* is_fsctl */,
+		(char *)pneg_inbuf, inbuflen, (char **)&pneg_rsp, &rsplen);
+>>>>>>> master:fs/cifs/smb2pdu.c
 	if (rc == -EOPNOTSUPP) {
 		/*
 		 * Old Windows versions or Netapp SMB server can return
 		 * not supported error. Client should accept it.
 		 */
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 		cifs_tcon_dbg(VFS, "Server does not support validate negotiate\n");
 		rc = 0;
 		goto out_free_inbuf;
 	} else if (rc != 0) {
 		cifs_tcon_dbg(VFS, "validate protocol negotiate failed: %d\n",
 			      rc);
+=======
+		cifs_dbg(VFS, "Server does not support validate negotiate\n");
+		rc = 0;
+		goto out_free_inbuf;
+	} else if (rc != 0) {
+		cifs_dbg(VFS, "validate protocol negotiate failed: %d\n", rc);
+>>>>>>> master:fs/cifs/smb2pdu.c
 		rc = -EIO;
 		goto out_free_inbuf;
 	}
@@ -2075,12 +2096,20 @@ SMB2_tcon(const unsigned int xid, struct cifs_ses *ses, const char *tree,
 	 * unless it is guest or anonymous user. See MS-SMB2 3.2.5.3.1
 	 * (Samba servers don't always set the flag so also check if null user)
 	 */
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 	if ((server->dialect == SMB311_PROT_ID) &&
+=======
+	if ((ses->server->dialect == SMB311_PROT_ID) &&
+>>>>>>> master:fs/cifs/smb2pdu.c
 	    !smb3_encryption_required(tcon) &&
 	    !(ses->session_flags &
 		    (SMB2_SESSION_FLAG_IS_GUEST|SMB2_SESSION_FLAG_IS_NULL)) &&
 	    ((ses->user_name != NULL) || (ses->sectype == Kerberos)))
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 		req->hdr.Flags |= SMB2_FLAGS_SIGNED;
+=======
+		req->sync_hdr.Flags |= SMB2_FLAGS_SIGNED;
+>>>>>>> master:fs/cifs/smb2pdu.c
 
 	memset(&rqst, 0, sizeof(struct smb_rqst));
 	rqst.rq_iov = iov;
@@ -3772,7 +3801,11 @@ void
 SMB2_query_info_free(struct smb_rqst *rqst)
 {
 	if (rqst && rqst->rq_iov)
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 		cifs_buf_release(rqst->rq_iov[0].iov_base); /* request */
+=======
+		cifs_small_buf_release(rqst->rq_iov[0].iov_base); /* request */
+>>>>>>> master:fs/cifs/smb2pdu.c
 }
 
 static int
@@ -4073,6 +4106,7 @@ smb2_echo_callback(struct mid_q_entry *mid)
 {
 	struct TCP_Server_Info *server = mid->callback_data;
 	struct smb2_echo_rsp *rsp = (struct smb2_echo_rsp *)mid->resp_buf;
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 	struct cifs_credits credits = { .value = 0, .instance = 0 };
 
 	if (mid->mid_state == MID_RESPONSE_RECEIVED
@@ -4080,6 +4114,13 @@ smb2_echo_callback(struct mid_q_entry *mid)
 		credits.value = le16_to_cpu(rsp->hdr.CreditRequest);
 		credits.instance = server->reconnect_instance;
 	}
+=======
+	unsigned int credits_received = 0;
+
+	if (mid->mid_state == MID_RESPONSE_RECEIVED
+	    || mid->mid_state == MID_RESPONSE_MALFORMED)
+		credits_received = le16_to_cpu(rsp->sync_hdr.CreditRequest);
+>>>>>>> master:fs/cifs/smb2pdu.c
 
 	release_mid(mid);
 	add_credits(server, &credits, CIFS_ECHO_OP);
@@ -4485,6 +4526,7 @@ smb2_readv_callback(struct mid_q_entry *mid)
 {
 	struct cifs_readdata *rdata = mid->callback_data;
 	struct cifs_tcon *tcon = tlink_tcon(rdata->cfile->tlink);
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 	struct TCP_Server_Info *server = rdata->server;
 	struct smb2_hdr *shdr =
 				(struct smb2_hdr *)rdata->iov[0].iov_base;
@@ -4499,6 +4541,19 @@ smb2_readv_callback(struct mid_q_entry *mid)
 	WARN_ONCE(rdata->server != mid->server,
 		  "rdata server %p != mid server %p",
 		  rdata->server, mid->server);
+=======
+	struct TCP_Server_Info *server = tcon->ses->server;
+	struct smb2_sync_hdr *shdr =
+				(struct smb2_sync_hdr *)rdata->iov[0].iov_base;
+	unsigned int credits_received = 0;
+	struct smb_rqst rqst = { .rq_iov = rdata->iov,
+				 .rq_nvec = 2,
+				 .rq_pages = rdata->pages,
+				 .rq_offset = rdata->page_offset,
+				 .rq_npages = rdata->nr_pages,
+				 .rq_pagesz = rdata->pagesz,
+				 .rq_tailsz = rdata->tailsz };
+>>>>>>> master:fs/cifs/smb2pdu.c
 
 	cifs_dbg(FYI, "%s: mid=%llu state=%d result=%d bytes=%u\n",
 		 __func__, mid->mid, mid->mid_state, rdata->result,
@@ -4534,9 +4589,14 @@ smb2_readv_callback(struct mid_q_entry *mid)
 		cifs_stats_bytes_read(tcon, rdata->got_bytes);
 		break;
 	case MID_RESPONSE_MALFORMED:
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 		credits.value = le16_to_cpu(shdr->CreditRequest);
 		credits.instance = server->reconnect_instance;
 		fallthrough;
+=======
+		credits_received = le16_to_cpu(shdr->CreditRequest);
+		/* fall through */
+>>>>>>> master:fs/cifs/smb2pdu.c
 	default:
 		rdata->result = -EIO;
 	}
@@ -4613,6 +4673,7 @@ smb2_async_readv(struct cifs_readdata *rdata)
 	if (rdata->credits.value > 0) {
 		shdr->CreditCharge = cpu_to_le16(DIV_ROUND_UP(rdata->bytes,
 						SMB2_MAX_BUFFER_SIZE));
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 		credit_request = le16_to_cpu(shdr->CreditCharge) + 8;
 		if (server->credits >= server->max_credits)
 			shdr->CreditRequest = cpu_to_le16(0);
@@ -4625,6 +4686,16 @@ smb2_async_readv(struct cifs_readdata *rdata)
 		if (rc)
 			goto async_readv_out;
 
+=======
+		shdr->CreditRequest =
+			cpu_to_le16(le16_to_cpu(shdr->CreditCharge) + 1);
+		spin_lock(&server->req_lock);
+		server->credits += rdata->credits -
+						le16_to_cpu(shdr->CreditCharge);
+		spin_unlock(&server->req_lock);
+		wake_up(&server->request_q);
+		rdata->credits = le16_to_cpu(shdr->CreditCharge);
+>>>>>>> master:fs/cifs/smb2pdu.c
 		flags |= CIFS_HAS_CREDITS;
 	}
 
@@ -4679,14 +4750,19 @@ SMB2_read(const unsigned int xid, struct cifs_io_parms *io_parms,
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 1;
 
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 	rc = cifs_send_recv(xid, ses, io_parms->server,
 			    &rqst, &resp_buftype, flags, &rsp_iov);
+=======
+	rc = cifs_send_recv(xid, ses, &rqst, &resp_buftype, flags, &rsp_iov);
+>>>>>>> master:fs/cifs/smb2pdu.c
 	rsp = (struct smb2_read_rsp *)rsp_iov.iov_base;
 
 	if (rc) {
 		if (rc != -ENODATA) {
 			cifs_stats_fail_inc(io_parms->tcon, SMB2_READ_HE);
 			cifs_dbg(VFS, "Send error in read = %d\n", rc);
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 			trace_smb3_read_err(xid,
 					    req->PersistentFileId,
 					    io_parms->tcon->tid, ses->Suid,
@@ -4695,6 +4771,13 @@ SMB2_read(const unsigned int xid, struct cifs_io_parms *io_parms,
 		} else
 			trace_smb3_read_done(xid, req->PersistentFileId, io_parms->tcon->tid,
 					     ses->Suid, io_parms->offset, 0);
+=======
+			trace_smb3_read_err(xid, req->PersistentFileId,
+					    io_parms->tcon->tid, ses->Suid,
+					    io_parms->offset, io_parms->length,
+					    rc);
+		}
+>>>>>>> master:fs/cifs/smb2pdu.c
 		free_rsp_buf(resp_buftype, rsp_iov.iov_base);
 		cifs_small_buf_release(req);
 		return rc == -ENODATA ? 0 : rc;
@@ -4740,11 +4823,15 @@ smb2_writev_callback(struct mid_q_entry *mid)
 	struct TCP_Server_Info *server = wdata->server;
 	unsigned int written;
 	struct smb2_write_rsp *rsp = (struct smb2_write_rsp *)mid->resp_buf;
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 	struct cifs_credits credits = { .value = 0, .instance = 0 };
 
 	WARN_ONCE(wdata->server != mid->server,
 		  "wdata server %p != mid server %p",
 		  wdata->server, mid->server);
+=======
+	unsigned int credits_received = 0;
+>>>>>>> master:fs/cifs/smb2pdu.c
 
 	switch (mid->mid_state) {
 	case MID_RESPONSE_RECEIVED:
@@ -4774,9 +4861,14 @@ smb2_writev_callback(struct mid_q_entry *mid)
 		wdata->result = -EAGAIN;
 		break;
 	case MID_RESPONSE_MALFORMED:
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 		credits.value = le16_to_cpu(rsp->hdr.CreditRequest);
 		credits.instance = server->reconnect_instance;
 		fallthrough;
+=======
+		credits_received = le16_to_cpu(rsp->sync_hdr.CreditRequest);
+		/* fall through */
+>>>>>>> master:fs/cifs/smb2pdu.c
 	default:
 		wdata->result = -EIO;
 		break;
@@ -4800,9 +4892,12 @@ smb2_writev_callback(struct mid_q_entry *mid)
 				     wdata->cfile->fid.persistent_fid,
 				     tcon->tid, tcon->ses->Suid, wdata->offset,
 				     wdata->bytes, wdata->result);
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 		if (wdata->result == -ENOSPC)
 			pr_warn_once("Out of space writing to %s\n",
 				     tcon->tree_name);
+=======
+>>>>>>> master:fs/cifs/smb2pdu.c
 	} else
 		trace_smb3_write_done(0 /* no xid */,
 				      wdata->cfile->fid.persistent_fid,
@@ -4936,6 +5031,7 @@ smb2_async_writev(struct cifs_writedata *wdata,
 	if (wdata->credits.value > 0) {
 		shdr->CreditCharge = cpu_to_le16(DIV_ROUND_UP(wdata->bytes,
 						    SMB2_MAX_BUFFER_SIZE));
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 		credit_request = le16_to_cpu(shdr->CreditCharge) + 8;
 		if (server->credits >= server->max_credits)
 			shdr->CreditRequest = cpu_to_le16(0);
@@ -4948,6 +5044,16 @@ smb2_async_writev(struct cifs_writedata *wdata,
 		if (rc)
 			goto async_writev_out;
 
+=======
+		shdr->CreditRequest =
+			cpu_to_le16(le16_to_cpu(shdr->CreditCharge) + 1);
+		spin_lock(&server->req_lock);
+		server->credits += wdata->credits -
+						le16_to_cpu(shdr->CreditCharge);
+		spin_unlock(&server->req_lock);
+		wake_up(&server->request_q);
+		wdata->credits = le16_to_cpu(shdr->CreditCharge);
+>>>>>>> master:fs/cifs/smb2pdu.c
 		flags |= CIFS_HAS_CREDITS;
 	}
 
@@ -5294,6 +5400,7 @@ int SMB2_query_directory_init(const unsigned int xid,
 	return 0;
 }
 
+<<<<<<< HEAD:fs/smb/client/smb2pdu.c
 void SMB2_query_directory_free(struct smb_rqst *rqst)
 {
 	if (rqst && rqst->rq_iov) {
@@ -5332,6 +5439,16 @@ smb2_parse_query_directory(struct cifs_tcon *tcon,
 		cifs_tcon_dbg(VFS, "info level %u isn't supported\n",
 			 srch_inf->info_level);
 		return -EINVAL;
+=======
+	if (rc) {
+		if (rc == -ENODATA &&
+		    rsp->sync_hdr.Status == STATUS_NO_MORE_FILES) {
+			srch_inf->endOfSearch = true;
+			rc = 0;
+		} else
+			cifs_stats_fail_inc(tcon, SMB2_QUERY_DIRECTORY_HE);
+		goto qdir_exit;
+>>>>>>> master:fs/cifs/smb2pdu.c
 	}
 
 	rc = smb2_validate_iov(le16_to_cpu(rsp->OutputBufferOffset),

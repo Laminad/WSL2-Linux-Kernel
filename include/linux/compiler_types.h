@@ -380,6 +380,10 @@ struct ftrace_likely_data {
 #define asm_inline asm
 #endif
 
+#ifndef asm_volatile_goto
+#define asm_volatile_goto(x...) asm goto(x)
+#endif
+
 /* Are two types/vars the same type (ignoring qualifiers)? */
 #define __same_type(a, b) __builtin_types_compatible_p(typeof(a), typeof(b))
 
@@ -453,6 +457,10 @@ struct ftrace_likely_data {
 
 #ifndef __diag_GCC
 #define __diag_GCC(version, severity, string)
+#endif
+
+#ifndef __copy
+# define __copy(symbol)
 #endif
 
 #define __diag_push()	__diag(push)

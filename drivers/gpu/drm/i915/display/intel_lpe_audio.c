@@ -305,10 +305,17 @@ void intel_lpe_audio_teardown(struct drm_i915_private *dev_priv)
 
 	lpe_audio_platdev_destroy(dev_priv);
 
+<<<<<<< HEAD:drivers/gpu/drm/i915/display/intel_lpe_audio.c
 	irq_free_desc(dev_priv->display.audio.lpe.irq);
 
 	dev_priv->display.audio.lpe.irq = -1;
 	dev_priv->display.audio.lpe.platdev = NULL;
+=======
+	irq_free_desc(dev_priv->lpe_audio.irq);
+
+	dev_priv->lpe_audio.irq = -1;
+	dev_priv->lpe_audio.platdev = NULL;
+>>>>>>> master:drivers/gpu/drm/i915/intel_lpe_audio.c
 }
 
 /**

@@ -103,16 +103,20 @@ static inline int virtio_net_hdr_to_skb(struct sk_buff *skb,
 
 		if (!skb_partial_csum_set(skb, start, off))
 			return -EINVAL;
+<<<<<<< HEAD
 
 		nh_min_len = max_t(u32, nh_min_len, skb_transport_offset(skb));
 		p_off = nh_min_len + thlen;
 		if (!pskb_may_pull(skb, p_off))
 			return -EINVAL;
+=======
+>>>>>>> master
 	} else {
 		/* gso packets without NEEDS_CSUM do not set transport_offset.
 		 * probe and drop if does not match one of the above types.
 		 */
 		if (gso_type && skb->network_header) {
+<<<<<<< HEAD
 			struct flow_keys_basic keys;
 
 			if (!skb->protocol) {
@@ -129,6 +133,13 @@ retry:
 			if (!skb_flow_dissect_flow_keys_basic(NULL, skb, &keys,
 							      NULL, 0, 0, 0,
 							      0)) {
+=======
+			if (!skb->protocol)
+				virtio_net_hdr_set_proto(skb, hdr);
+retry:
+			skb_probe_transport_header(skb, -1);
+			if (!skb_transport_header_was_set(skb)) {
+>>>>>>> master
 				/* UFO does not specify ipv4 or 6: try both */
 				if (gso_type & SKB_GSO_UDP &&
 				    skb->protocol == htons(ETH_P_IP)) {
@@ -137,6 +148,7 @@ retry:
 				}
 				return -EINVAL;
 			}
+<<<<<<< HEAD
 
 			p_off = keys.control.thoff + thlen;
 			if (!pskb_may_pull(skb, p_off) ||
@@ -148,6 +160,8 @@ retry:
 			p_off = nh_min_len + thlen;
 			if (!pskb_may_pull(skb, p_off))
 				return -EINVAL;
+=======
+>>>>>>> master
 		}
 	}
 

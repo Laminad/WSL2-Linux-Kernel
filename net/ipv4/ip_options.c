@@ -460,7 +460,10 @@ error:
 		*info = htonl((pp_ptr-iph)<<24);
 	return -EINVAL;
 }
+<<<<<<< HEAD
 EXPORT_SYMBOL(__ip_options_compile);
+=======
+>>>>>>> master
 
 int ip_options_compile(struct net *net,
 		       struct ip_options *opt, struct sk_buff *skb)

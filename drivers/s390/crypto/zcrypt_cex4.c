@@ -713,12 +713,17 @@ static void zcrypt_cex4_queue_remove(struct ap_device *ap_dev)
 	struct zcrypt_queue *zq = dev_get_drvdata(&ap_dev->device);
 	struct ap_queue *aq = to_ap_queue(&ap_dev->device);
 
+<<<<<<< HEAD
 	if (ap_test_bit(&aq->card->functions, AP_FUNC_COPRO))
 		sysfs_remove_group(&ap_dev->device.kobj, &cca_queue_attr_grp);
 	else if (ap_test_bit(&aq->card->functions, AP_FUNC_EP11))
 		sysfs_remove_group(&ap_dev->device.kobj, &ep11_queue_attr_grp);
 
 	zcrypt_queue_unregister(zq);
+=======
+	if (zq)
+		zcrypt_queue_unregister(zq);
+>>>>>>> master
 }
 
 static struct ap_driver zcrypt_cex4_queue_driver = {

@@ -1264,7 +1264,16 @@ static int __init aspeed_gpio_probe(struct platform_device *pdev)
 	if (rc < 0)
 		return rc;
 
+<<<<<<< HEAD
 	return 0;
+=======
+	gpio->offset_timer =
+		devm_kzalloc(&pdev->dev, gpio->chip.ngpio, GFP_KERNEL);
+	if (!gpio->offset_timer)
+		return -ENOMEM;
+
+	return aspeed_gpio_setup_irqs(gpio, pdev);
+>>>>>>> master
 }
 
 static struct platform_driver aspeed_gpio_driver = {

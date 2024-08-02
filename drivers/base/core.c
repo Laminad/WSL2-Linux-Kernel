@@ -8,7 +8,10 @@
  * Copyright (c) 2006 Novell, Inc.
  */
 
+<<<<<<< HEAD
 #include <linux/acpi.h>
+=======
+>>>>>>> master
 #include <linux/cpufreq.h>
 #include <linux/device.h>
 #include <linux/err.h>
@@ -2688,7 +2691,11 @@ static ssize_t uevent_store(struct device *dev, struct device_attribute *attr,
 	rc = kobject_synth_uevent(&dev->kobj, buf, count);
 
 	if (rc) {
+<<<<<<< HEAD
 		dev_err(dev, "uevent: failed to send synthetic uevent: %d\n", rc);
+=======
+		dev_err(dev, "uevent: failed to send synthetic uevent\n");
+>>>>>>> master
 		return rc;
 	}
 
@@ -3767,7 +3774,11 @@ bool kill_device(struct device *dev)
 	 * to run while we are tearing out the bus/class/sysfs from
 	 * underneath the device.
 	 */
+<<<<<<< HEAD
 	device_lock_assert(dev);
+=======
+	lockdep_assert_held(&dev->mutex);
+>>>>>>> master
 
 	if (dev->p->dead)
 		return false;
@@ -3803,6 +3814,10 @@ void device_del(struct device *dev)
 
 	if (dev->fwnode && dev->fwnode->dev == dev)
 		dev->fwnode->dev = NULL;
+
+	device_lock(dev);
+	kill_device(dev);
+	device_unlock(dev);
 
 	/* Notify clients of device removal.  This call must come
 	 * before dpm_sysfs_remove().

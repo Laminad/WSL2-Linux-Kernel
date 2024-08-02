@@ -296,7 +296,11 @@ static enum pool_mode get_pool_mode(struct pool *pool)
 
 static void notify_of_pool_mode_change(struct pool *pool)
 {
+<<<<<<< HEAD
 	static const char *descs[] = {
+=======
+	const char *descs[] = {
+>>>>>>> master
 		"write",
 		"out-of-data-space",
 		"read-only",
@@ -963,6 +967,10 @@ static void process_prepared_mapping_fail(struct dm_thin_new_mapping *m)
 static void complete_overwrite_bio(struct thin_c *tc, struct bio *bio)
 {
 	struct pool *pool = tc->pool;
+<<<<<<< HEAD
+=======
+	unsigned long flags;
+>>>>>>> master
 
 	/*
 	 * If the bio has the REQ_FUA flag set we must commit the metadata
@@ -987,9 +995,15 @@ static void complete_overwrite_bio(struct thin_c *tc, struct bio *bio)
 	 * Batch together any bios that trigger commits and then issue a
 	 * single commit for them in process_deferred_bios().
 	 */
+<<<<<<< HEAD
 	spin_lock_irq(&pool->lock);
 	bio_list_add(&pool->deferred_flush_completions, bio);
 	spin_unlock_irq(&pool->lock);
+=======
+	spin_lock_irqsave(&pool->lock, flags);
+	bio_list_add(&pool->deferred_flush_completions, bio);
+	spin_unlock_irqrestore(&pool->lock, flags);
+>>>>>>> master
 }
 
 static void process_prepared_mapping(struct dm_thin_new_mapping *m)
@@ -2380,6 +2394,7 @@ static void process_deferred_bios(struct pool *pool)
 	bio_list_init(&bios);
 	bio_list_init(&bio_completions);
 
+<<<<<<< HEAD
 	spin_lock_irq(&pool->lock);
 	bio_list_merge(&bios, &pool->deferred_flush_bios);
 	bio_list_init(&pool->deferred_flush_bios);
@@ -2388,6 +2403,16 @@ static void process_deferred_bios(struct pool *pool)
 	bio_list_init(&pool->deferred_flush_completions);
 	spin_unlock_irq(&pool->lock);
 
+=======
+	spin_lock_irqsave(&pool->lock, flags);
+	bio_list_merge(&bios, &pool->deferred_flush_bios);
+	bio_list_init(&pool->deferred_flush_bios);
+
+	bio_list_merge(&bio_completions, &pool->deferred_flush_completions);
+	bio_list_init(&pool->deferred_flush_completions);
+	spin_unlock_irqrestore(&pool->lock, flags);
+
+>>>>>>> master
 	if (bio_list_empty(&bios) && bio_list_empty(&bio_completions) &&
 	    !(dm_pool_changed_this_transaction(pool->pmd) && need_commit_due_to_time(pool)))
 		return;
@@ -2404,6 +2429,7 @@ static void process_deferred_bios(struct pool *pool)
 	while ((bio = bio_list_pop(&bio_completions)))
 		bio_endio(bio);
 
+<<<<<<< HEAD
 	while ((bio = bio_list_pop(&bios))) {
 		/*
 		 * The data device was flushed as part of metadata commit,
@@ -2414,6 +2440,10 @@ static void process_deferred_bios(struct pool *pool)
 		else
 			dm_submit_bio_remap(bio, NULL);
 	}
+=======
+	while ((bio = bio_list_pop(&bios)))
+		generic_make_request(bio);
+>>>>>>> master
 }
 
 static void do_worker(struct work_struct *ws)
@@ -2527,6 +2557,14 @@ static void noflush_work(struct thin_c *tc, void (*fn)(struct work_struct *))
 
 /*----------------------------------------------------------------*/
 
+<<<<<<< HEAD
+=======
+static bool passdown_enabled(struct pool_c *pt)
+{
+	return pt->adjusted_pf.discard_passdown;
+}
+
+>>>>>>> master
 static void set_discard_callbacks(struct pool *pool)
 {
 	struct pool_c *pt = pool->ti->private;
@@ -4217,7 +4255,11 @@ static int thin_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 			goto bad_origin_dev;
 		}
 
+<<<<<<< HEAD
 		r = dm_get_device(ti, argv[2], BLK_OPEN_READ, &origin_dev);
+=======
+		r = dm_get_device(ti, argv[2], FMODE_READ, &origin_dev);
+>>>>>>> master
 		if (r) {
 			ti->error = "Error opening origin device";
 			goto bad_origin_dev;

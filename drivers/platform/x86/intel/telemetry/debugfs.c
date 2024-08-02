@@ -308,8 +308,13 @@ static struct telemetry_debugfs_conf telem_apl_debugfs_conf = {
 };
 
 static const struct x86_cpu_id telemetry_debugfs_cpu_ids[] = {
+<<<<<<< HEAD:drivers/platform/x86/intel/telemetry/debugfs.c
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT,	&telem_apl_debugfs_conf),
 	X86_MATCH_INTEL_FAM6_MODEL(ATOM_GOLDMONT_PLUS,	&telem_apl_debugfs_conf),
+=======
+	TELEM_DEBUGFS_CPU(INTEL_FAM6_ATOM_GOLDMONT, telem_apl_debugfs_conf),
+	TELEM_DEBUGFS_CPU(INTEL_FAM6_ATOM_GOLDMONT_PLUS, telem_apl_debugfs_conf),
+>>>>>>> master:drivers/platform/x86/intel_telemetry_debugfs.c
 	{}
 };
 MODULE_DEVICE_TABLE(x86cpu, telemetry_debugfs_cpu_ids);
@@ -914,7 +919,12 @@ static int __init telemetry_debugfs_init(void)
 
 	debugfs_conf = (struct telemetry_debugfs_conf *)id->driver_data;
 
+<<<<<<< HEAD:drivers/platform/x86/intel/telemetry/debugfs.c
 	if (!telemetry_get_pltdata()) {
+=======
+	err = telemetry_pltconfig_valid();
+	if (err < 0) {
+>>>>>>> master:drivers/platform/x86/intel_telemetry_debugfs.c
 		pr_info("Invalid pltconfig, ensure IPC1 device is enabled in BIOS\n");
 		return -ENODEV;
 	}

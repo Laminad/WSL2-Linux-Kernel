@@ -3444,7 +3444,11 @@ static int pqi_process_io_intr(struct pqi_ctrl_info *ctrl_info, struct pqi_queue
 		case PQI_RESPONSE_IU_AIO_PATH_IO_SUCCESS:
 			if (io_request->scmd)
 				io_request->scmd->result = 0;
+<<<<<<< HEAD
 			fallthrough;
+=======
+			/* fall through */
+>>>>>>> master
 		case PQI_RESPONSE_IU_GENERAL_MANAGEMENT:
 			break;
 		case PQI_RESPONSE_IU_VENDOR_GENERAL:
@@ -4615,7 +4619,25 @@ static int pqi_submit_raid_request_synchronous(struct pqi_ctrl_info *ctrl_info,
 		if (down_interruptible(&ctrl_info->sync_request_sem))
 			return -ERESTARTSYS;
 	} else {
+<<<<<<< HEAD
 		down(&ctrl_info->sync_request_sem);
+=======
+		if (timeout_msecs == NO_TIMEOUT) {
+			down(&ctrl_info->sync_request_sem);
+		} else {
+			start_jiffies = jiffies;
+			if (down_timeout(&ctrl_info->sync_request_sem,
+				msecs_to_jiffies(timeout_msecs)))
+				return -ETIMEDOUT;
+			msecs_blocked =
+				jiffies_to_msecs(jiffies - start_jiffies);
+			if (msecs_blocked >= timeout_msecs) {
+				rc = -ETIMEDOUT;
+				goto out;
+			}
+			timeout_msecs -= msecs_blocked;
+		}
+>>>>>>> master
 	}
 
 	pqi_ctrl_busy(ctrl_info);
@@ -9239,10 +9261,18 @@ static void pqi_shutdown(struct pci_dev *pci_dev)
 	 * Write all data in the controller's battery-backed cache to
 	 * storage.
 	 */
+<<<<<<< HEAD
 	rc = pqi_flush_cache(ctrl_info, shutdown_event);
 	if (rc)
 		dev_err(&pci_dev->dev,
 			"unable to flush controller cache during shutdown\n");
+=======
+	rc = pqi_flush_cache(ctrl_info, SHUTDOWN);
+	pqi_free_interrupts(ctrl_info);
+	pqi_reset(ctrl_info);
+	if (rc == 0)
+		return;
+>>>>>>> master
 
 	pqi_crash_if_pending_command(ctrl_info);
 	pqi_reset(ctrl_info);

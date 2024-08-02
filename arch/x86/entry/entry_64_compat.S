@@ -287,9 +287,90 @@ SYM_CODE_END(entry_SYSCALL_compat)
  * scrubbing needs to take place in assembly code prior to entering any C
  * routines.
  */
+<<<<<<< HEAD
 SYM_CODE_START(int80_emulation)
 	ANNOTATE_NOENDBR
 	UNWIND_HINT_FUNC
 	CLEAR_BRANCH_HISTORY
 	jmp do_int80_emulation
 SYM_CODE_END(int80_emulation)
+=======
+ENTRY(entry_INT80_compat)
+	/*
+	 * Interrupts are off on entry.
+	 */
+	ASM_CLAC			/* Do this early to minimize exposure */
+	SWAPGS
+
+	/*
+	 * User tracing code (ptrace or signal handlers) might assume that
+	 * the saved RAX contains a 32-bit number when we're invoking a 32-bit
+	 * syscall.  Just in case the high bits are nonzero, zero-extend
+	 * the syscall number.  (This could almost certainly be deleted
+	 * with no ill effects.)
+	 */
+	movl	%eax, %eax
+
+	/* switch to thread stack expects orig_ax and rdi to be pushed */
+	pushq	%rax			/* pt_regs->orig_ax */
+	pushq	%rdi			/* pt_regs->di */
+
+	/* Need to switch before accessing the thread stack. */
+	SWITCH_TO_KERNEL_CR3 scratch_reg=%rdi
+	/* In the Xen PV case we already run on the thread stack. */
+	ALTERNATIVE "movq %rsp, %rdi", "jmp .Lint80_keep_stack", X86_FEATURE_XENPV
+	movq	PER_CPU_VAR(cpu_current_top_of_stack), %rsp
+
+	pushq	6*8(%rdi)		/* regs->ss */
+	pushq	5*8(%rdi)		/* regs->rsp */
+	pushq	4*8(%rdi)		/* regs->eflags */
+	pushq	3*8(%rdi)		/* regs->cs */
+	pushq	2*8(%rdi)		/* regs->ip */
+	pushq	1*8(%rdi)		/* regs->orig_ax */
+	pushq	(%rdi)			/* pt_regs->di */
+.Lint80_keep_stack:
+
+	pushq	%rsi			/* pt_regs->si */
+	xorl	%esi, %esi		/* nospec   si */
+	pushq	%rdx			/* pt_regs->dx */
+	xorl	%edx, %edx		/* nospec   dx */
+	pushq	%rcx			/* pt_regs->cx */
+	xorl	%ecx, %ecx		/* nospec   cx */
+	pushq	$-ENOSYS		/* pt_regs->ax */
+	pushq   %r8			/* pt_regs->r8 */
+	xorl	%r8d, %r8d		/* nospec   r8 */
+	pushq   %r9			/* pt_regs->r9 */
+	xorl	%r9d, %r9d		/* nospec   r9 */
+	pushq   %r10			/* pt_regs->r10*/
+	xorl	%r10d, %r10d		/* nospec   r10 */
+	pushq   %r11			/* pt_regs->r11 */
+	xorl	%r11d, %r11d		/* nospec   r11 */
+	pushq   %rbx                    /* pt_regs->rbx */
+	xorl	%ebx, %ebx		/* nospec   rbx */
+	pushq   %rbp                    /* pt_regs->rbp */
+	xorl	%ebp, %ebp		/* nospec   rbp */
+	pushq   %r12                    /* pt_regs->r12 */
+	xorl	%r12d, %r12d		/* nospec   r12 */
+	pushq   %r13                    /* pt_regs->r13 */
+	xorl	%r13d, %r13d		/* nospec   r13 */
+	pushq   %r14                    /* pt_regs->r14 */
+	xorl	%r14d, %r14d		/* nospec   r14 */
+	pushq   %r15                    /* pt_regs->r15 */
+	xorl	%r15d, %r15d		/* nospec   r15 */
+	cld
+
+	/*
+	 * User mode is traced as though IRQs are on, and the interrupt
+	 * gate turned them off.
+	 */
+	TRACE_IRQS_OFF
+
+	movq	%rsp, %rdi
+	call	do_int80_syscall_32
+.Lsyscall_32_done:
+
+	/* Go back to user mode. */
+	TRACE_IRQS_ON
+	jmp	swapgs_restore_regs_and_return_to_usermode
+END(entry_INT80_compat)
+>>>>>>> master

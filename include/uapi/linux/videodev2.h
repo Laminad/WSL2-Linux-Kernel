@@ -423,6 +423,17 @@ enum v4l2_quantization {
 #define V4L2_XFER_FUNC_ADOBERGB  V4L2_XFER_FUNC_OPRGB
 #endif
 
+/*
+ * Deprecated names for opRGB colorspace (IEC 61966-2-5)
+ *
+ * WARNING: Please don't use these deprecated defines in your code, as
+ * there is a chance we have to remove them in the future.
+ */
+#ifndef __KERNEL__
+#define V4L2_COLORSPACE_ADOBERGB V4L2_COLORSPACE_OPRGB
+#define V4L2_XFER_FUNC_ADOBERGB  V4L2_XFER_FUNC_OPRGB
+#endif
+
 enum v4l2_priority {
 	V4L2_PRIORITY_UNSET       = 0,  /* not initialized */
 	V4L2_PRIORITY_BACKGROUND  = 1,

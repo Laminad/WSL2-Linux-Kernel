@@ -3148,11 +3148,102 @@ static int relocate_file_extent_cluster(struct inode *inode,
 		goto out;
 
 	last_index = (cluster->end - offset) >> PAGE_SHIFT;
+<<<<<<< HEAD
 	for (index = (cluster->start - offset) >> PAGE_SHIFT;
 	     index <= last_index && !ret; index++)
 		ret = relocate_one_page(inode, ra, cluster, &cluster_nr, index);
 	if (ret == 0)
 		WARN_ON(cluster_nr != cluster->nr);
+=======
+	while (index <= last_index) {
+		ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode),
+				PAGE_SIZE);
+		if (ret)
+			goto out;
+
+		page = find_lock_page(inode->i_mapping, index);
+		if (!page) {
+			page_cache_sync_readahead(inode->i_mapping,
+						  ra, NULL, index,
+						  last_index + 1 - index);
+			page = find_or_create_page(inode->i_mapping, index,
+						   mask);
+			if (!page) {
+				btrfs_delalloc_release_metadata(BTRFS_I(inode),
+							PAGE_SIZE, true);
+				btrfs_delalloc_release_extents(BTRFS_I(inode),
+							PAGE_SIZE);
+				ret = -ENOMEM;
+				goto out;
+			}
+		}
+
+		if (PageReadahead(page)) {
+			page_cache_async_readahead(inode->i_mapping,
+						   ra, NULL, page, index,
+						   last_index + 1 - index);
+		}
+
+		if (!PageUptodate(page)) {
+			btrfs_readpage(NULL, page);
+			lock_page(page);
+			if (!PageUptodate(page)) {
+				unlock_page(page);
+				put_page(page);
+				btrfs_delalloc_release_metadata(BTRFS_I(inode),
+							PAGE_SIZE, true);
+				btrfs_delalloc_release_extents(BTRFS_I(inode),
+							       PAGE_SIZE);
+				ret = -EIO;
+				goto out;
+			}
+		}
+
+		page_start = page_offset(page);
+		page_end = page_start + PAGE_SIZE - 1;
+
+		lock_extent(&BTRFS_I(inode)->io_tree, page_start, page_end);
+
+		set_page_extent_mapped(page);
+
+		if (nr < cluster->nr &&
+		    page_start + offset == cluster->boundary[nr]) {
+			set_extent_bits(&BTRFS_I(inode)->io_tree,
+					page_start, page_end,
+					EXTENT_BOUNDARY);
+			nr++;
+		}
+
+		ret = btrfs_set_extent_delalloc(inode, page_start, page_end, 0,
+						NULL, 0);
+		if (ret) {
+			unlock_page(page);
+			put_page(page);
+			btrfs_delalloc_release_metadata(BTRFS_I(inode),
+							 PAGE_SIZE, true);
+			btrfs_delalloc_release_extents(BTRFS_I(inode),
+			                               PAGE_SIZE);
+
+			clear_extent_bits(&BTRFS_I(inode)->io_tree,
+					  page_start, page_end,
+					  EXTENT_LOCKED | EXTENT_BOUNDARY);
+			goto out;
+
+		}
+		set_page_dirty(page);
+
+		unlock_extent(&BTRFS_I(inode)->io_tree,
+			      page_start, page_end);
+		unlock_page(page);
+		put_page(page);
+
+		index++;
+		btrfs_delalloc_release_extents(BTRFS_I(inode), PAGE_SIZE);
+		balance_dirty_pages_ratelimited(inode->i_mapping);
+		btrfs_throttle(fs_info);
+	}
+	WARN_ON(nr != cluster->nr);
+>>>>>>> master
 out:
 	kfree(ra);
 	return ret;
@@ -4127,6 +4218,7 @@ int btrfs_relocate_block_group(struct btrfs_fs_info *fs_info, u64 group_start)
 		mutex_unlock(&fs_info->cleaner_mutex);
 		if (ret < 0)
 			err = ret;
+<<<<<<< HEAD
 
 		finishes_stage = rc->stage;
 		/*
@@ -4156,6 +4248,36 @@ int btrfs_relocate_block_group(struct btrfs_fs_info *fs_info, u64 group_start)
 
 		btrfs_info(fs_info, "found %llu extents, stage: %s",
 			   rc->extents_found, stage_to_string(finishes_stage));
+=======
+
+		/*
+		 * We may have gotten ENOSPC after we already dirtied some
+		 * extents.  If writeout happens while we're relocating a
+		 * different block group we could end up hitting the
+		 * BUG_ON(rc->stage == UPDATE_DATA_PTRS) in
+		 * btrfs_reloc_cow_block.  Make sure we write everything out
+		 * properly so we don't trip over this problem, and then break
+		 * out of the loop if we hit an error.
+		 */
+		if (rc->stage == MOVE_DATA_EXTENTS && rc->found_file_extent) {
+			ret = btrfs_wait_ordered_range(rc->data_inode, 0,
+						       (u64)-1);
+			if (ret)
+				err = ret;
+			invalidate_mapping_pages(rc->data_inode->i_mapping,
+						 0, -1);
+			rc->stage = UPDATE_DATA_PTRS;
+		}
+
+		if (err < 0)
+			goto out;
+
+		if (rc->extents_found == 0)
+			break;
+
+		btrfs_info(fs_info, "found %llu extents", rc->extents_found);
+
+>>>>>>> master
 	}
 
 	WARN_ON(rc->block_group->pinned > 0);

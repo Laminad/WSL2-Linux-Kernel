@@ -528,6 +528,13 @@ static void update_mba_bw(struct rdtgroup *rgrp, struct rdt_domain *dom_mbm)
 
 	r_mba = &rdt_resources_all[RDT_RESOURCE_MBA].r_resctrl;
 
+<<<<<<< HEAD:arch/x86/kernel/cpu/resctrl/monitor.c
+=======
+	if (!is_mbm_local_enabled())
+		return;
+
+	r_mba = &rdt_resources_all[RDT_RESOURCE_MBA];
+>>>>>>> master:arch/x86/kernel/cpu/intel_rdt_monitor.c
 	closid = rgrp->closid;
 	rmid = rgrp->mon.rmid;
 	pmbm_data = &dom_mbm->mbm_local[rmid];

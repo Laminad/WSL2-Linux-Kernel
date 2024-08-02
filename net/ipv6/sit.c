@@ -706,8 +706,11 @@ static int ipip6_rcv(struct sk_buff *skb)
 		 * old iph is no longer valid
 		 */
 		iph = (const struct iphdr *)skb_mac_header(skb);
+<<<<<<< HEAD
 		skb_reset_mac_header(skb);
 
+=======
+>>>>>>> master
 		err = IP_ECN_decapsulate(iph, skb);
 		if (unlikely(err)) {
 			if (log_ecn_error)
@@ -1124,7 +1127,11 @@ static void ipip6_tunnel_bind_dev(struct net_device *dev)
 		tdev = __dev_get_by_index(tunnel->net, tunnel->parms.link);
 
 	if (tdev && !netif_is_l3_master(tdev)) {
+<<<<<<< HEAD
 		int mtu;
+=======
+		int t_hlen = tunnel->hlen + sizeof(struct iphdr);
+>>>>>>> master
 
 		mtu = tdev->mtu - t_hlen;
 		if (mtu < IPV6_MIN_MTU)
@@ -1871,6 +1878,10 @@ static int __net_init sit_init_net(struct net *net)
 	return 0;
 
 err_reg_dev:
+<<<<<<< HEAD
+=======
+	ipip6_dev_free(sitn->fb_tunnel_dev);
+>>>>>>> master
 	free_netdev(sitn->fb_tunnel_dev);
 err_alloc_dev:
 	return err;

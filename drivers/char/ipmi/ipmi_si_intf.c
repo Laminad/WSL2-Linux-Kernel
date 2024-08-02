@@ -1874,8 +1874,13 @@ int ipmi_si_add_smi(struct si_sm_io *io)
 	 * address, they presumably want us to use it and not what is
 	 * in the firmware.
 	 */
+<<<<<<< HEAD
 	if (io->addr_source != SI_HARDCODED && io->addr_source != SI_HOTMOD &&
 	    ipmi_si_hardcode_match(io->addr_space, io->addr_data)) {
+=======
+	if (io->addr_source != SI_HARDCODED &&
+	    ipmi_si_hardcode_match(io->addr_type, io->addr_data)) {
+>>>>>>> master
 		dev_info(io->dev,
 			 "Hard-coded device at this address already exists");
 		return -ENODEV;
@@ -2082,11 +2087,15 @@ static int try_smi_init(struct smi_info *new_smi)
 		new_smi->io.io_cleanup = NULL;
 	}
 
+<<<<<<< HEAD
 	if (rv && new_smi->si_sm) {
 		kfree(new_smi->si_sm);
 		new_smi->si_sm = NULL;
 	}
 
+=======
+	kfree(init_name);
+>>>>>>> master
 	return rv;
 }
 
@@ -2099,9 +2108,14 @@ static int __init init_ipmi_si(void)
 		return 0;
 
 	ipmi_hardcode_init();
+<<<<<<< HEAD
 
 	pr_info("IPMI System Interface driver\n");
 
+=======
+	pr_info("IPMI System Interface driver.\n");
+
+>>>>>>> master
 	ipmi_si_platform_init();
 
 	ipmi_si_pci_init();
@@ -2297,7 +2311,10 @@ static void cleanup_ipmi_si(void)
 	mutex_unlock(&smi_infos_lock);
 
 	ipmi_si_hardcode_exit();
+<<<<<<< HEAD
 	ipmi_si_hotmod_exit();
+=======
+>>>>>>> master
 }
 module_exit(cleanup_ipmi_si);
 

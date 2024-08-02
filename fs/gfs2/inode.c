@@ -757,6 +757,7 @@ retry:
 	if (error)
 		goto fail_gunlock2;
 
+<<<<<<< HEAD
 	error = gfs2_glock_nq_init(io_gl, LM_ST_SHARED, GL_EXACT | GL_NOPID,
 				   &ip->i_iopen_gh);
 	if (error)
@@ -794,6 +795,31 @@ retry:
 		acl = NULL;
 	}
 
+=======
+	glock_set_object(ip->i_iopen_gh.gh_gl, ip);
+	gfs2_glock_put(io_gl);
+	gfs2_set_iop(inode);
+	insert_inode_hash(inode);
+
+	free_vfs_inode = 0; /* After this point, the inode is no longer
+			       considered free. Any failures need to undo
+			       the gfs2 structures. */
+	if (default_acl) {
+		error = __gfs2_set_acl(inode, default_acl, ACL_TYPE_DEFAULT);
+		if (error)
+			goto fail_gunlock3;
+		posix_acl_release(default_acl);
+		default_acl = NULL;
+	}
+	if (acl) {
+		error = __gfs2_set_acl(inode, acl, ACL_TYPE_ACCESS);
+		if (error)
+			goto fail_gunlock3;
+		posix_acl_release(acl);
+		acl = NULL;
+	}
+
+>>>>>>> master
 	error = security_inode_init_security(&ip->i_inode, &dip->i_inode, name,
 					     &gfs2_initxattrs, NULL);
 	if (error)

@@ -1113,8 +1113,12 @@ void hclge_mbx_handler(struct hclge_dev *hdev)
 	param.resp_msg = &resp_msg;
 	/* handle all the mailbox requests in the queue */
 	while (!hclge_cmd_crq_empty(&hdev->hw)) {
+<<<<<<< HEAD
 		if (test_bit(HCLGE_COMM_STATE_CMD_DISABLE,
 			     &hdev->hw.hw.comm_state)) {
+=======
+		if (test_bit(HCLGE_STATE_CMD_DISABLE, &hdev->state)) {
+>>>>>>> master
 			dev_warn(&hdev->pdev->dev,
 				 "command queue needs re-initializing\n");
 			return;

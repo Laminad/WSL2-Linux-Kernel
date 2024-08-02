@@ -194,9 +194,24 @@ do {								\
 		"2:\n"						\
 		"	sw %z4, %2\n"				\
 		"3:\n"						\
+<<<<<<< HEAD
 		_ASM_EXTABLE_UACCESS_ERR(1b, 3b, %0)		\
 		_ASM_EXTABLE_UACCESS_ERR(2b, 3b, %0)		\
 		: "+r" (err),					\
+=======
+		"	.section .fixup,\"ax\"\n"		\
+		"	.balign 4\n"				\
+		"4:\n"						\
+		"	li %0, %6\n"				\
+		"	jump 3b, %1\n"				\
+		"	.previous\n"				\
+		"	.section __ex_table,\"a\"\n"		\
+		"	.balign " RISCV_SZPTR "\n"			\
+		"	" RISCV_PTR " 1b, 4b\n"			\
+		"	" RISCV_PTR " 2b, 4b\n"			\
+		"	.previous"				\
+		: "+r" (err), "=r" (__tmp),			\
+>>>>>>> master
 			"=m" (__ptr[__LSW]),			\
 			"=m" (__ptr[__MSW])			\
 		: "rJ" (__x), "rJ" (__x >> 32));		\

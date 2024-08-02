@@ -16,7 +16,10 @@ struct patch {
 	unsigned int insn;
 };
 
+<<<<<<< HEAD
 #ifdef CONFIG_MMU
+=======
+>>>>>>> master
 static DEFINE_RAW_SPINLOCK(patch_lock);
 
 static void __kprobes *patch_map(void *addr, int fixmap, unsigned long *flags)
@@ -34,6 +37,11 @@ static void __kprobes *patch_map(void *addr, int fixmap, unsigned long *flags)
 
 	if (flags)
 		raw_spin_lock_irqsave(&patch_lock, *flags);
+<<<<<<< HEAD
+=======
+	else
+		__acquire(&patch_lock);
+>>>>>>> master
 
 	set_fixmap(fixmap, page_to_phys(page));
 
@@ -46,6 +54,11 @@ static void __kprobes patch_unmap(int fixmap, unsigned long *flags)
 
 	if (flags)
 		raw_spin_unlock_irqrestore(&patch_lock, *flags);
+<<<<<<< HEAD
+=======
+	else
+		__release(&patch_lock);
+>>>>>>> master
 }
 #else
 static void __kprobes *patch_map(void *addr, int fixmap, unsigned long *flags)

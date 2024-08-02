@@ -3320,6 +3320,10 @@ rcu_torture_cleanup(void)
 		rcu_gp_slow_unregister(NULL);
 		return;
 	}
+	if (!cur_ops) {
+		torture_cleanup_end();
+		return;
+	}
 
 	rcutorture_test_nmis(test_nmis);
 

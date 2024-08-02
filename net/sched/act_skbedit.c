@@ -221,7 +221,11 @@ static int tcf_skbedit_init(struct net *net, struct nlattr *nla,
 
 	if (!exists) {
 		ret = tcf_idr_create(tn, index, est, a,
+<<<<<<< HEAD
 				     &act_skbedit_ops, bind, true, act_flags);
+=======
+				     &act_skbedit_ops, bind, true);
+>>>>>>> master
 		if (ret) {
 			tcf_idr_cleanup(tn, index);
 			return ret;
@@ -242,8 +246,13 @@ static int tcf_skbedit_init(struct net *net, struct nlattr *nla,
 
 	params_new = kzalloc(sizeof(*params_new), GFP_KERNEL);
 	if (unlikely(!params_new)) {
+<<<<<<< HEAD
 		err = -ENOMEM;
 		goto put_chain;
+=======
+		tcf_idr_release(*a, bind);
+		return -ENOMEM;
+>>>>>>> master
 	}
 
 	params_new->flags = flags;

@@ -72,6 +72,7 @@ config KPROBES
 	  If in doubt, say "N".
 
 config JUMP_LABEL
+<<<<<<< HEAD
 	bool "Optimize very unlikely/likely branches"
 	depends on HAVE_ARCH_JUMP_LABEL
 	select OBJTOOL if HAVE_JUMP_LABEL_HACK
@@ -79,6 +80,15 @@ config JUMP_LABEL
 	  This option enables a transparent branch optimization that
 	  makes certain almost-always-true or almost-always-false branch
 	  conditions even cheaper to execute within the kernel.
+=======
+       bool "Optimize very unlikely/likely branches"
+       depends on HAVE_ARCH_JUMP_LABEL
+       depends on CC_HAS_ASM_GOTO
+       help
+         This option enables a transparent branch optimization that
+	 makes certain almost-always-true or almost-always-false branch
+	 conditions even cheaper to execute within the kernel.
+>>>>>>> master
 
 	  Certain performance-sensitive kernel code, such as trace points,
 	  scheduler functionality, networking code and KVM have such

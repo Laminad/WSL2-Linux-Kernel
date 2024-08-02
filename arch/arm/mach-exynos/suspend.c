@@ -456,7 +456,11 @@ static void exynos5420_prepare_pm_resume(void)
 	mpidr = read_cpuid_mpidr();
 	cluster = MPIDR_AFFINITY_LEVEL(mpidr, 1);
 
+<<<<<<< HEAD
 	if (IS_ENABLED(CONFIG_EXYNOS_MCPM))
+=======
+	if (IS_ENABLED(CONFIG_EXYNOS5420_MCPM))
+>>>>>>> master
 		WARN_ON(mcpm_cpu_powered_up());
 
 	if (IS_ENABLED(CONFIG_HW_PERF_EVENTS) && cluster != 0) {

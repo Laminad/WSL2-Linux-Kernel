@@ -5,6 +5,7 @@
 
 /* Compiler specific definitions for Clang compiler */
 
+<<<<<<< HEAD
 /*
  * Clang prior to 17 is being silly and considers many __cleanup() variables
  * as unused (because they are, their sole purpose is to go out of scope).
@@ -13,6 +14,9 @@
  */
 #undef __cleanup
 #define __cleanup(func) __maybe_unused __attribute__((__cleanup__(func)))
+=======
+#define uninitialized_var(x) x = *(&(x))
+>>>>>>> master
 
 /* same as gcc, this was present in clang-2.6 so we can assume it works
  * with any version that can compile the kernel

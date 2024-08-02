@@ -39,6 +39,7 @@
 
 #define MLX5E_XDP_MIN_INLINE (ETH_HLEN + VLAN_HLEN)
 
+<<<<<<< HEAD
 #define MLX5E_XDP_INLINE_WQE_MAX_DS_CNT 16
 #define MLX5E_XDP_INLINE_WQE_SZ_THRSD \
 	(MLX5E_XDP_INLINE_WQE_MAX_DS_CNT * MLX5_SEND_WQE_DS - \
@@ -104,6 +105,11 @@ int mlx5e_xdp_max_mtu(struct mlx5e_params *params, struct mlx5e_xsk_param *xsk);
 bool mlx5e_xdp_handle(struct mlx5e_rq *rq,
 		      struct bpf_prog *prog, struct mlx5e_xdp_buff *mlctx);
 void mlx5e_xdp_mpwqe_complete(struct mlx5e_xdpsq *sq);
+=======
+int mlx5e_xdp_max_mtu(struct mlx5e_params *params);
+bool mlx5e_xdp_handle(struct mlx5e_rq *rq, struct mlx5e_dma_info *di,
+		      void *va, u16 *rx_headroom, u32 *len);
+>>>>>>> master
 bool mlx5e_poll_xdpsq_cq(struct mlx5e_cq *cq);
 void mlx5e_free_xdpsq_descs(struct mlx5e_xdpsq *sq);
 void mlx5e_set_xmit_fp(struct mlx5e_xdpsq *sq, bool is_mpw);
@@ -111,6 +117,7 @@ void mlx5e_xdp_rx_poll_complete(struct mlx5e_rq *rq);
 int mlx5e_xdp_xmit(struct net_device *dev, int n, struct xdp_frame **frames,
 		   u32 flags);
 
+<<<<<<< HEAD
 extern const struct xdp_metadata_ops mlx5e_xdp_metadata_ops;
 
 INDIRECT_CALLABLE_DECLARE(bool mlx5e_xmit_xdp_frame_mpwqe(struct mlx5e_xdpsq *sq,
@@ -123,6 +130,26 @@ INDIRECT_CALLABLE_DECLARE(int mlx5e_xmit_xdp_frame_check_mpwqe(struct mlx5e_xdps
 INDIRECT_CALLABLE_DECLARE(int mlx5e_xmit_xdp_frame_check(struct mlx5e_xdpsq *sq));
 
 static inline void mlx5e_xdp_tx_enable(struct mlx5e_priv *priv)
+=======
+static inline void mlx5e_xdp_tx_enable(struct mlx5e_priv *priv)
+{
+	set_bit(MLX5E_STATE_XDP_TX_ENABLED, &priv->state);
+}
+
+static inline void mlx5e_xdp_tx_disable(struct mlx5e_priv *priv)
+{
+	clear_bit(MLX5E_STATE_XDP_TX_ENABLED, &priv->state);
+	/* let other device's napi(s) see our new state */
+	synchronize_rcu();
+}
+
+static inline bool mlx5e_xdp_tx_is_enabled(struct mlx5e_priv *priv)
+{
+	return test_bit(MLX5E_STATE_XDP_TX_ENABLED, &priv->state);
+}
+
+static inline void mlx5e_xmit_xdp_doorbell(struct mlx5e_xdpsq *sq)
+>>>>>>> master
 {
 	set_bit(MLX5E_STATE_XDP_TX_ENABLED, &priv->state);
 

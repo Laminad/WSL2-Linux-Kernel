@@ -819,7 +819,11 @@ void ftrace_graph_graph_time_control(bool enable)
 
 static int profile_graph_entry(struct ftrace_graph_ent *trace)
 {
+<<<<<<< HEAD
 	struct ftrace_ret_stack *ret_stack;
+=======
+	int index = current->curr_ret_stack;
+>>>>>>> master
 
 	function_profile_call(trace->func, 0, NULL, NULL);
 
@@ -854,6 +858,12 @@ static void profile_graph_return(struct ftrace_graph_ret *trace)
 	calltime = trace->rettime - trace->calltime;
 
 	if (!fgraph_graph_time) {
+<<<<<<< HEAD
+=======
+		int index;
+
+		index = current->curr_ret_stack;
+>>>>>>> master
 
 		/* Append this call time to the parent time to subtract */
 		ret_stack = ftrace_graph_get_ret_stack(current, 1);
@@ -1677,6 +1687,7 @@ static bool test_rec_ops_needs_regs(struct dyn_ftrace *rec)
 static struct ftrace_ops *
 ftrace_find_tramp_ops_any(struct dyn_ftrace *rec);
 static struct ftrace_ops *
+<<<<<<< HEAD
 ftrace_find_tramp_ops_any_other(struct dyn_ftrace *rec, struct ftrace_ops *op_exclude);
 static struct ftrace_ops *
 ftrace_find_tramp_ops_next(struct dyn_ftrace *rec, struct ftrace_ops *ops);
@@ -1693,6 +1704,10 @@ static bool skip_record(struct dyn_ftrace *rec)
 		!(rec->flags & FTRACE_FL_ENABLED);
 }
 
+=======
+ftrace_find_tramp_ops_next(struct dyn_ftrace *rec, struct ftrace_ops *ops);
+
+>>>>>>> master
 static bool __ftrace_hash_rec_update(struct ftrace_ops *ops,
 				     int filter_hash,
 				     bool inc)
@@ -1840,7 +1855,11 @@ static bool __ftrace_hash_rec_update(struct ftrace_ops *ops,
 			 * to it.
 			 */
 			if (ftrace_rec_count(rec) == 1 &&
+<<<<<<< HEAD
 			    ftrace_find_tramp_ops_any_other(rec, ops))
+=======
+			    ftrace_find_tramp_ops_any(rec))
+>>>>>>> master
 				rec->flags |= FTRACE_FL_TRAMP;
 			else
 				rec->flags &= ~FTRACE_FL_TRAMP;
@@ -3221,7 +3240,12 @@ static int ftrace_update_code(struct module *mod, struct ftrace_page *new_pgs)
 			 * Do the initial record conversion from mcount jump
 			 * to the NOP instructions.
 			 */
+<<<<<<< HEAD
 			if (init_nop && !ftrace_nop_initialize(mod, p))
+=======
+			if (!__is_defined(CC_USING_NOP_MCOUNT) &&
+			    !ftrace_code_disable(mod, p))
+>>>>>>> master
 				break;
 
 			update_cnt++;
@@ -4026,7 +4050,11 @@ ftrace_regex_open(struct ftrace_ops *ops, int flag,
 	if (unlikely(ftrace_disabled))
 		return -ENODEV;
 
+<<<<<<< HEAD
 	if (tracing_check_open_get_tr(tr))
+=======
+	if (tr && trace_array_get(tr) < 0)
+>>>>>>> master
 		return -ENODEV;
 
 	iter = kzalloc(sizeof(*iter), GFP_KERNEL);
@@ -4842,7 +4870,11 @@ register_ftrace_function_probe(char *glob, struct trace_array *tr,
 
 	/*
 	 * Note, there's a small window here that the func_hash->filter_hash
+<<<<<<< HEAD
 	 * may be NULL or empty. Need to be careful when reading the loop.
+=======
+	 * may be NULL or empty. Need to be carefule when reading the loop.
+>>>>>>> master
 	 */
 	mutex_lock(&probe->ops.func_hash->regex_lock);
 
@@ -7412,11 +7444,13 @@ void arch_ftrace_ops_list_func(unsigned long ip, unsigned long parent_ip,
 {
 	__ftrace_ops_list_func(ip, parent_ip, NULL, fregs);
 }
+NOKPROBE_SYMBOL(ftrace_ops_list_func);
 #else
 void arch_ftrace_ops_list_func(unsigned long ip, unsigned long parent_ip)
 {
 	__ftrace_ops_list_func(ip, parent_ip, NULL, NULL);
 }
+NOKPROBE_SYMBOL(ftrace_ops_no_ops);
 #endif
 NOKPROBE_SYMBOL(arch_ftrace_ops_list_func);
 
@@ -8284,5 +8318,327 @@ static int __init ftrace_sysctl_init(void)
 	register_sysctl_init("kernel", ftrace_sysctls);
 	return 0;
 }
+<<<<<<< HEAD
 late_initcall(ftrace_sysctl_init);
+=======
+
+/* The callbacks that hook a function */
+trace_func_graph_ret_t ftrace_graph_return =
+			(trace_func_graph_ret_t)ftrace_stub;
+trace_func_graph_ent_t ftrace_graph_entry = ftrace_graph_entry_stub;
+static trace_func_graph_ent_t __ftrace_graph_entry = ftrace_graph_entry_stub;
+
+/* Try to assign a return stack array on FTRACE_RETSTACK_ALLOC_SIZE tasks. */
+static int alloc_retstack_tasklist(struct ftrace_ret_stack **ret_stack_list)
+{
+	int i;
+	int ret = 0;
+	int start = 0, end = FTRACE_RETSTACK_ALLOC_SIZE;
+	struct task_struct *g, *t;
+
+	for (i = 0; i < FTRACE_RETSTACK_ALLOC_SIZE; i++) {
+		ret_stack_list[i] =
+			kmalloc_array(FTRACE_RETFUNC_DEPTH,
+				      sizeof(struct ftrace_ret_stack),
+				      GFP_KERNEL);
+		if (!ret_stack_list[i]) {
+			start = 0;
+			end = i;
+			ret = -ENOMEM;
+			goto free;
+		}
+	}
+
+	read_lock(&tasklist_lock);
+	do_each_thread(g, t) {
+		if (start == end) {
+			ret = -EAGAIN;
+			goto unlock;
+		}
+
+		if (t->ret_stack == NULL) {
+			atomic_set(&t->tracing_graph_pause, 0);
+			atomic_set(&t->trace_overrun, 0);
+			t->curr_ret_stack = -1;
+			t->curr_ret_depth = -1;
+			/* Make sure the tasks see the -1 first: */
+			smp_wmb();
+			t->ret_stack = ret_stack_list[start++];
+		}
+	} while_each_thread(g, t);
+
+unlock:
+	read_unlock(&tasklist_lock);
+free:
+	for (i = start; i < end; i++)
+		kfree(ret_stack_list[i]);
+	return ret;
+}
+
+static void
+ftrace_graph_probe_sched_switch(void *ignore, bool preempt,
+			struct task_struct *prev, struct task_struct *next)
+{
+	unsigned long long timestamp;
+	int index;
+
+	/*
+	 * Does the user want to count the time a function was asleep.
+	 * If so, do not update the time stamps.
+	 */
+	if (fgraph_sleep_time)
+		return;
+
+	timestamp = trace_clock_local();
+
+	prev->ftrace_timestamp = timestamp;
+
+	/* only process tasks that we timestamped */
+	if (!next->ftrace_timestamp)
+		return;
+
+	/*
+	 * Update all the counters in next to make up for the
+	 * time next was sleeping.
+	 */
+	timestamp -= next->ftrace_timestamp;
+
+	for (index = next->curr_ret_stack; index >= 0; index--)
+		next->ret_stack[index].calltime += timestamp;
+}
+
+/* Allocate a return stack for each task */
+static int start_graph_tracing(void)
+{
+	struct ftrace_ret_stack **ret_stack_list;
+	int ret, cpu;
+
+	ret_stack_list = kmalloc_array(FTRACE_RETSTACK_ALLOC_SIZE,
+				       sizeof(struct ftrace_ret_stack *),
+				       GFP_KERNEL);
+
+	if (!ret_stack_list)
+		return -ENOMEM;
+
+	/* The cpu_boot init_task->ret_stack will never be freed */
+	for_each_online_cpu(cpu) {
+		if (!idle_task(cpu)->ret_stack)
+			ftrace_graph_init_idle_task(idle_task(cpu), cpu);
+	}
+
+	do {
+		ret = alloc_retstack_tasklist(ret_stack_list);
+	} while (ret == -EAGAIN);
+
+	if (!ret) {
+		ret = register_trace_sched_switch(ftrace_graph_probe_sched_switch, NULL);
+		if (ret)
+			pr_info("ftrace_graph: Couldn't activate tracepoint"
+				" probe to kernel_sched_switch\n");
+	}
+
+	kfree(ret_stack_list);
+	return ret;
+}
+
+/*
+ * Hibernation protection.
+ * The state of the current task is too much unstable during
+ * suspend/restore to disk. We want to protect against that.
+ */
+static int
+ftrace_suspend_notifier_call(struct notifier_block *bl, unsigned long state,
+							void *unused)
+{
+	switch (state) {
+	case PM_HIBERNATION_PREPARE:
+		pause_graph_tracing();
+		break;
+
+	case PM_POST_HIBERNATION:
+		unpause_graph_tracing();
+		break;
+	}
+	return NOTIFY_DONE;
+}
+
+static int ftrace_graph_entry_test(struct ftrace_graph_ent *trace)
+{
+	if (!ftrace_ops_test(&global_ops, trace->func, NULL))
+		return 0;
+	return __ftrace_graph_entry(trace);
+}
+
+/*
+ * The function graph tracer should only trace the functions defined
+ * by set_ftrace_filter and set_ftrace_notrace. If another function
+ * tracer ops is registered, the graph tracer requires testing the
+ * function against the global ops, and not just trace any function
+ * that any ftrace_ops registered.
+ */
+static void update_function_graph_func(void)
+{
+	struct ftrace_ops *op;
+	bool do_test = false;
+
+	/*
+	 * The graph and global ops share the same set of functions
+	 * to test. If any other ops is on the list, then
+	 * the graph tracing needs to test if its the function
+	 * it should call.
+	 */
+	do_for_each_ftrace_op(op, ftrace_ops_list) {
+		if (op != &global_ops && op != &graph_ops &&
+		    op != &ftrace_list_end) {
+			do_test = true;
+			/* in double loop, break out with goto */
+			goto out;
+		}
+	} while_for_each_ftrace_op(op);
+ out:
+	if (do_test)
+		ftrace_graph_entry = ftrace_graph_entry_test;
+	else
+		ftrace_graph_entry = __ftrace_graph_entry;
+}
+
+static struct notifier_block ftrace_suspend_notifier = {
+	.notifier_call = ftrace_suspend_notifier_call,
+};
+
+int register_ftrace_graph(trace_func_graph_ret_t retfunc,
+			trace_func_graph_ent_t entryfunc)
+{
+	int ret = 0;
+
+	mutex_lock(&ftrace_lock);
+
+	/* we currently allow only one tracer registered at a time */
+	if (ftrace_graph_active) {
+		ret = -EBUSY;
+		goto out;
+	}
+
+	register_pm_notifier(&ftrace_suspend_notifier);
+
+	ftrace_graph_active++;
+	ret = start_graph_tracing();
+	if (ret) {
+		ftrace_graph_active--;
+		goto out;
+	}
+
+	ftrace_graph_return = retfunc;
+
+	/*
+	 * Update the indirect function to the entryfunc, and the
+	 * function that gets called to the entry_test first. Then
+	 * call the update fgraph entry function to determine if
+	 * the entryfunc should be called directly or not.
+	 */
+	__ftrace_graph_entry = entryfunc;
+	ftrace_graph_entry = ftrace_graph_entry_test;
+	update_function_graph_func();
+
+	ret = ftrace_startup(&graph_ops, FTRACE_START_FUNC_RET);
+out:
+	mutex_unlock(&ftrace_lock);
+	return ret;
+}
+
+void unregister_ftrace_graph(void)
+{
+	mutex_lock(&ftrace_lock);
+
+	if (unlikely(!ftrace_graph_active))
+		goto out;
+
+	ftrace_graph_active--;
+	ftrace_graph_return = (trace_func_graph_ret_t)ftrace_stub;
+	ftrace_graph_entry = ftrace_graph_entry_stub;
+	__ftrace_graph_entry = ftrace_graph_entry_stub;
+	ftrace_shutdown(&graph_ops, FTRACE_STOP_FUNC_RET);
+	unregister_pm_notifier(&ftrace_suspend_notifier);
+	unregister_trace_sched_switch(ftrace_graph_probe_sched_switch, NULL);
+
+ out:
+	mutex_unlock(&ftrace_lock);
+}
+
+static DEFINE_PER_CPU(struct ftrace_ret_stack *, idle_ret_stack);
+
+static void
+graph_init_task(struct task_struct *t, struct ftrace_ret_stack *ret_stack)
+{
+	atomic_set(&t->tracing_graph_pause, 0);
+	atomic_set(&t->trace_overrun, 0);
+	t->ftrace_timestamp = 0;
+	/* make curr_ret_stack visible before we add the ret_stack */
+	smp_wmb();
+	t->ret_stack = ret_stack;
+}
+
+/*
+ * Allocate a return stack for the idle task. May be the first
+ * time through, or it may be done by CPU hotplug online.
+ */
+void ftrace_graph_init_idle_task(struct task_struct *t, int cpu)
+{
+	t->curr_ret_stack = -1;
+	t->curr_ret_depth = -1;
+	/*
+	 * The idle task has no parent, it either has its own
+	 * stack or no stack at all.
+	 */
+	if (t->ret_stack)
+		WARN_ON(t->ret_stack != per_cpu(idle_ret_stack, cpu));
+
+	if (ftrace_graph_active) {
+		struct ftrace_ret_stack *ret_stack;
+
+		ret_stack = per_cpu(idle_ret_stack, cpu);
+		if (!ret_stack) {
+			ret_stack =
+				kmalloc_array(FTRACE_RETFUNC_DEPTH,
+					      sizeof(struct ftrace_ret_stack),
+					      GFP_KERNEL);
+			if (!ret_stack)
+				return;
+			per_cpu(idle_ret_stack, cpu) = ret_stack;
+		}
+		graph_init_task(t, ret_stack);
+	}
+}
+
+/* Allocate a return stack for newly created task */
+void ftrace_graph_init_task(struct task_struct *t)
+{
+	/* Make sure we do not use the parent ret_stack */
+	t->ret_stack = NULL;
+	t->curr_ret_stack = -1;
+	t->curr_ret_depth = -1;
+
+	if (ftrace_graph_active) {
+		struct ftrace_ret_stack *ret_stack;
+
+		ret_stack = kmalloc_array(FTRACE_RETFUNC_DEPTH,
+					  sizeof(struct ftrace_ret_stack),
+					  GFP_KERNEL);
+		if (!ret_stack)
+			return;
+		graph_init_task(t, ret_stack);
+	}
+}
+
+void ftrace_graph_exit_task(struct task_struct *t)
+{
+	struct ftrace_ret_stack	*ret_stack = t->ret_stack;
+
+	t->ret_stack = NULL;
+	/* NULL must become visible to IRQs before we free it: */
+	barrier();
+
+	kfree(ret_stack);
+}
+>>>>>>> master
 #endif

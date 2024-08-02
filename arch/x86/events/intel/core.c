@@ -2393,7 +2393,11 @@ static void intel_tfa_commit_scheduling(struct cpu_hw_events *cpuc, int idx, int
 	/*
 	 * We're going to use PMC3, make sure TFA is set before we touch it.
 	 */
+<<<<<<< HEAD
 	if (cntr == 3)
+=======
+	if (cntr == 3 && !cpuc->is_fake)
+>>>>>>> master
 		intel_set_tfa(cpuc, true);
 }
 
@@ -2494,6 +2498,7 @@ static void intel_pmu_disable_event(struct perf_event *event)
 		intel_pmu_disable_bts();
 		intel_pmu_drain_bts_buffer();
 		return;
+<<<<<<< HEAD
 	case INTEL_PMC_IDX_FIXED_VLBR:
 		intel_clear_masks(event, idx);
 		break;
@@ -2504,18 +2509,34 @@ static void intel_pmu_disable_event(struct perf_event *event)
 		return;
 	}
 
+=======
+	}
+
+	cpuc->intel_ctrl_guest_mask &= ~(1ull << hwc->idx);
+	cpuc->intel_ctrl_host_mask &= ~(1ull << hwc->idx);
+	cpuc->intel_cp_status &= ~(1ull << hwc->idx);
+
+	if (unlikely(hwc->config_base == MSR_ARCH_PERFMON_FIXED_CTR_CTRL))
+		intel_pmu_disable_fixed(hwc);
+	else
+		x86_pmu_disable_event(event);
+
+>>>>>>> master
 	/*
 	 * Needs to be called after x86_pmu_disable_event,
 	 * so we don't trigger the event without PEBS bit set.
 	 */
 	if (unlikely(event->attr.precise_ip))
 		intel_pmu_pebs_disable(event);
+<<<<<<< HEAD
 }
 
 static void intel_pmu_assign_event(struct perf_event *event, int idx)
 {
 	if (is_pebs_pt(event))
 		perf_report_aux_output_id(event, idx);
+=======
+>>>>>>> master
 }
 
 static void intel_pmu_del_event(struct perf_event *event)
@@ -3844,6 +3865,7 @@ static int core_pmu_hw_config(struct perf_event *event)
 	return intel_pmu_bts_config(event);
 }
 
+<<<<<<< HEAD
 #define INTEL_TD_METRIC_AVAILABLE_MAX	(INTEL_TD_METRIC_RETIRING + \
 					 ((x86_pmu.num_topdown_events - 1) << 8))
 
@@ -3881,6 +3903,8 @@ static inline bool intel_pmu_has_cap(struct perf_event *event, int idx)
 	return test_bit(idx, (unsigned long *)&intel_cap->capabilities);
 }
 
+=======
+>>>>>>> master
 static int intel_pmu_hw_config(struct perf_event *event)
 {
 	int ret = x86_pmu_hw_config(event);
@@ -3893,9 +3917,12 @@ static int intel_pmu_hw_config(struct perf_event *event)
 		return ret;
 
 	if (event->attr.precise_ip) {
+<<<<<<< HEAD
 		if ((event->attr.config & INTEL_ARCH_EVENT_MASK) == INTEL_FIXED_VLBR_EVENT)
 			return -EINVAL;
 
+=======
+>>>>>>> master
 		if (!(event->attr.freq || (event->attr.wakeup_events && !event->attr.watermark))) {
 			event->hw.flags |= PERF_X86_EVENT_AUTO_RELOAD;
 			if (!(event->attr.sample_type &
@@ -4317,6 +4344,7 @@ glp_get_event_constraints(struct cpu_hw_events *cpuc, int idx,
 	return c;
 }
 
+<<<<<<< HEAD
 static struct event_constraint *
 tnt_get_event_constraints(struct cpu_hw_events *cpuc, int idx,
 			  struct perf_event *event)
@@ -4340,6 +4368,8 @@ tnt_get_event_constraints(struct cpu_hw_events *cpuc, int idx,
 	return c;
 }
 
+=======
+>>>>>>> master
 static bool allow_tsx_force_abort = true;
 
 static struct event_constraint *
@@ -4351,7 +4381,11 @@ tfa_get_event_constraints(struct cpu_hw_events *cpuc, int idx,
 	/*
 	 * Without TFA we must not use PMC3.
 	 */
+<<<<<<< HEAD
 	if (!allow_tsx_force_abort && test_bit(3, c->idxmsk)) {
+=======
+	if (!allow_tsx_force_abort && test_bit(3, c->idxmsk) && idx >= 0) {
+>>>>>>> master
 		c = dyn_constraint(cpuc, c, idx);
 		c->idxmsk64 &= ~(1ULL << 3);
 		c->weight--;
@@ -4360,6 +4394,7 @@ tfa_get_event_constraints(struct cpu_hw_events *cpuc, int idx,
 	return c;
 }
 
+<<<<<<< HEAD
 static struct event_constraint *
 adl_get_event_constraints(struct cpu_hw_events *cpuc, int idx,
 			  struct perf_event *event)
@@ -4465,6 +4500,8 @@ static u8 adl_get_hybrid_cpu_type(void)
 	return hybrid_big;
 }
 
+=======
+>>>>>>> master
 /*
  * Broadwell:
  *
@@ -4499,6 +4536,11 @@ static void spr_limit_period(struct perf_event *event, s64 *left)
 {
 	if (event->attr.precise_ip == 3)
 		*left = max(*left, 128LL);
+}
+
+static u64 nhm_limit_period(struct perf_event *event, u64 left)
+{
+	return max(left, 32ULL);
 }
 
 PMU_FORMAT_ATTR(event,	"config:0-7"	);
@@ -4563,9 +4605,13 @@ static struct intel_excl_cntrs *allocate_excl_cntrs(int cpu)
 
 int intel_cpuc_prepare(struct cpu_hw_events *cpuc, int cpu)
 {
+<<<<<<< HEAD
 	cpuc->pebs_record_size = x86_pmu.pebs_record_size;
 
 	if (is_hybrid() || x86_pmu.extra_regs || x86_pmu.lbr_sel_map) {
+=======
+	if (x86_pmu.extra_regs || x86_pmu.lbr_sel_map) {
+>>>>>>> master
 		cpuc->shared_regs = allocate_shared_regs(cpu);
 		if (!cpuc->shared_regs)
 			goto err;
@@ -4804,6 +4850,14 @@ void intel_cpuc_finish(struct cpu_hw_events *cpuc)
 	}
 
 	free_excl_cntrs(cpuc);
+<<<<<<< HEAD
+=======
+}
+
+static void intel_pmu_cpu_dead(int cpu)
+{
+	intel_cpuc_finish(&per_cpu(cpu_hw_events, cpu));
+>>>>>>> master
 }
 
 static void intel_pmu_cpu_dead(int cpu)
@@ -4855,6 +4909,11 @@ static void intel_pmu_filter(struct pmu *pmu, int cpu, bool *ret)
 	struct x86_hybrid_pmu *hpmu = hybrid_pmu(pmu);
 
 	*ret = !cpumask_test_cpu(cpu, &hpmu->supported_cpus);
+}
+
+static int intel_pmu_check_period(struct perf_event *event, u64 value)
+{
+	return intel_pmu_has_bts_period(event, value) ? -EINVAL : 0;
 }
 
 PMU_FORMAT_ATTR(offcore_rsp, "config1:0-63");
@@ -4946,6 +5005,12 @@ static __initconst const struct x86_pmu core_pmu = {
 	.cpu_starting		= intel_pmu_cpu_starting,
 	.cpu_dying		= intel_pmu_cpu_dying,
 	.cpu_dead		= intel_pmu_cpu_dead,
+<<<<<<< HEAD
+=======
+
+	.check_period		= intel_pmu_check_period,
+};
+>>>>>>> master
 
 	.check_period		= intel_pmu_check_period,
 
@@ -4995,6 +5060,7 @@ static __initconst const struct x86_pmu intel_pmu = {
 
 	.guest_get_msrs		= intel_guest_get_msrs,
 	.sched_task		= intel_pmu_sched_task,
+<<<<<<< HEAD
 	.swap_task_ctx		= intel_pmu_swap_task_ctx,
 
 	.check_period		= intel_pmu_check_period,
@@ -5018,6 +5084,10 @@ static __initconst const struct x86_pmu intel_pmu = {
 	 * counting SMM by default.
 	 */
 	.attr_freeze_on_smi	= 1,
+=======
+
+	.check_period		= intel_pmu_check_period,
+>>>>>>> master
 };
 
 static __init void intel_clovertown_quirk(void)
@@ -5489,6 +5559,7 @@ static struct attribute *intel_pmu_caps_attrs[] = {
        NULL
 };
 
+<<<<<<< HEAD
 static DEVICE_ATTR(allow_tsx_force_abort, 0644,
 		   show_sysctl_tfa,
 		   set_sysctl_tfa);
@@ -5496,6 +5567,13 @@ static DEVICE_ATTR(allow_tsx_force_abort, 0644,
 static struct attribute *intel_pmu_attrs[] = {
 	&dev_attr_freeze_on_smi.attr,
 	&dev_attr_allow_tsx_force_abort.attr,
+=======
+static DEVICE_BOOL_ATTR(allow_tsx_force_abort, 0644, allow_tsx_force_abort);
+
+static struct attribute *intel_pmu_attrs[] = {
+	&dev_attr_freeze_on_smi.attr,
+	NULL, /* &dev_attr_allow_tsx_force_abort.attr.attr */
+>>>>>>> master
 	NULL,
 };
 
@@ -6092,7 +6170,11 @@ __init int intel_pmu_init(void)
 		break;
 
 	case INTEL_FAM6_ATOM_SILVERMONT:
+<<<<<<< HEAD
 	case INTEL_FAM6_ATOM_SILVERMONT_D:
+=======
+	case INTEL_FAM6_ATOM_SILVERMONT_X:
+>>>>>>> master
 	case INTEL_FAM6_ATOM_SILVERMONT_MID:
 	case INTEL_FAM6_ATOM_AIRMONT:
 	case INTEL_FAM6_ATOM_AIRMONT_MID:
@@ -6114,7 +6196,11 @@ __init int intel_pmu_init(void)
 		break;
 
 	case INTEL_FAM6_ATOM_GOLDMONT:
+<<<<<<< HEAD
 	case INTEL_FAM6_ATOM_GOLDMONT_D:
+=======
+	case INTEL_FAM6_ATOM_GOLDMONT_X:
+>>>>>>> master
 		memcpy(hw_cache_event_ids, glm_hw_cache_event_ids,
 		       sizeof(hw_cache_event_ids));
 		memcpy(hw_cache_extra_regs, glm_hw_cache_extra_regs,
@@ -6498,6 +6584,7 @@ __init int intel_pmu_init(void)
 		x86_pmu.get_event_constraints = hsw_get_event_constraints;
 		extra_attr = boot_cpu_has(X86_FEATURE_RTM) ?
 			hsw_format_attr : nhm_format_attr;
+<<<<<<< HEAD
 		extra_skl_attr = skl_format_attr;
 		td_attr  = hsw_events_attrs;
 		mem_attr = hsw_mem_events_attrs;
@@ -6511,10 +6598,23 @@ __init int intel_pmu_init(void)
 		 */
 		if (boot_cpu_has(X86_FEATURE_TSX_FORCE_ABORT) &&
 		   !boot_cpu_has(X86_FEATURE_RTM_ALWAYS_ABORT)) {
+=======
+		extra_attr = merge_attr(extra_attr, skl_format_attr);
+		to_free = extra_attr;
+		x86_pmu.cpu_events = get_hsw_events_attrs();
+		intel_pmu_pebs_data_source_skl(
+			boot_cpu_data.x86_model == INTEL_FAM6_SKYLAKE_X);
+
+		if (boot_cpu_has(X86_FEATURE_TSX_FORCE_ABORT)) {
+>>>>>>> master
 			x86_pmu.flags |= PMU_FL_TFA;
 			x86_pmu.get_event_constraints = tfa_get_event_constraints;
 			x86_pmu.enable_all = intel_tfa_pmu_enable_all;
 			x86_pmu.commit_scheduling = intel_tfa_commit_scheduling;
+<<<<<<< HEAD
+=======
+			intel_pmu_attrs[1] = &dev_attr_allow_tsx_force_abort.attr.attr;
+>>>>>>> master
 		}
 
 		pr_cont("Skylake events, ");

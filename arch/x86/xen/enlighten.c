@@ -351,6 +351,7 @@ void xen_arch_unregister_cpu(int num)
 }
 EXPORT_SYMBOL(xen_arch_unregister_cpu);
 #endif
+<<<<<<< HEAD
 
 /* Amount of extra memory space we add to the e820 ranges */
 struct xen_memory_region xen_extra_mem[XEN_EXTRA_MEM_MAX_REGIONS] __initdata;
@@ -415,3 +416,5 @@ int __init arch_xen_unpopulated_init(struct resource **res)
 	return 0;
 }
 #endif
+=======
+>>>>>>> master

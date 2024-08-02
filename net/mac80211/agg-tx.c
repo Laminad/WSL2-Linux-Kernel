@@ -9,7 +9,15 @@
  * Copyright 2007, Michael Wu <flamingice@sourmilk.net>
  * Copyright 2007-2010, Intel Corporation
  * Copyright(c) 2015-2017 Intel Deutschland GmbH
+<<<<<<< HEAD
  * Copyright (C) 2018 - 2023 Intel Corporation
+=======
+ * Copyright (C) 2018 - 2019 Intel Corporation
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+>>>>>>> master
  */
 
 #include <linux/ieee80211.h>

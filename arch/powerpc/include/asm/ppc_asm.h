@@ -857,6 +857,7 @@ END_FTR_SECTION_NESTED(CPU_FTR_CELL_TB_BUG, CPU_FTR_CELL_TB_BUG, 96)
 	stringify_in_c(.llong (_end);)		\
 	stringify_in_c(.previous)
 
+<<<<<<< HEAD
 #define RESTART_TABLE(_start, _end, _target)	\
 	stringify_in_c(.section __restart_table,"a";)\
 	stringify_in_c(.balign 8;)		\
@@ -866,6 +867,9 @@ END_FTR_SECTION_NESTED(CPU_FTR_CELL_TB_BUG, CPU_FTR_CELL_TB_BUG, 96)
 	stringify_in_c(.previous)
 
 #ifdef CONFIG_PPC_E500
+=======
+#ifdef CONFIG_PPC_FSL_BOOK3E
+>>>>>>> master
 #define BTB_FLUSH(reg)			\
 	lis reg,BUCSR_INIT@h;		\
 	ori reg,reg,BUCSR_INIT@l;	\
@@ -873,6 +877,7 @@ END_FTR_SECTION_NESTED(CPU_FTR_CELL_TB_BUG, CPU_FTR_CELL_TB_BUG, 96)
 	isync;
 #else
 #define BTB_FLUSH(reg)
+<<<<<<< HEAD
 #endif /* CONFIG_PPC_E500 */
 
 #if defined(CONFIG_PPC64_ELF_ABI_V1)
@@ -882,5 +887,8 @@ END_FTR_SECTION_NESTED(CPU_FTR_CELL_TB_BUG, CPU_FTR_CELL_TB_BUG, 96)
 #elif defined(CONFIG_PPC32)
 #define STACK_FRAME_PARAMS 8
 #endif
+=======
+#endif /* CONFIG_PPC_FSL_BOOK3E */
+>>>>>>> master
 
 #endif /* _ASM_POWERPC_PPC_ASM_H */

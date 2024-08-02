@@ -3,6 +3,16 @@
 # Makefile for the linux kernel.
 #
 
+<<<<<<< HEAD
+=======
+CFLAGS_ptrace.o		+= -DUTS_MACHINE='"$(UTS_MACHINE)"'
+
+# Disable clang warning for using setjmp without setjmp.h header
+CFLAGS_crash.o		+= $(call cc-disable-warning, builtin-requires-header)
+
+subdir-ccflags-$(CONFIG_PPC_WERROR) := -Werror
+
+>>>>>>> master
 ifdef CONFIG_PPC64
 CFLAGS_prom_init.o	+= $(NO_MINIMAL_TOC)
 endif

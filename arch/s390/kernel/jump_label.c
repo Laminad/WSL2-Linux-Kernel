@@ -75,8 +75,11 @@ bool arch_jump_label_transform_queue(struct jump_entry *entry,
 	jump_label_transform(entry, type);
 	return true;
 }
+<<<<<<< HEAD
 
 void arch_jump_label_transform_apply(void)
 {
 	text_poke_sync();
 }
+=======
+>>>>>>> master

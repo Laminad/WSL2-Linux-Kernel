@@ -92,8 +92,11 @@ static int rwdt_start(struct watchdog_device *wdev)
 	/* Stop the timer before we modify any register */
 	val = readb_relaxed(priv->base + RWTCSRA) & ~RWTCSRA_TME;
 	rwdt_write(priv, val, RWTCSRA);
+<<<<<<< HEAD
 	/* Delay 2 cycles before setting watchdog counter */
 	rwdt_wait_cycles(priv, 2);
+=======
+>>>>>>> master
 
 	rwdt_init_timeout(wdev);
 	rwdt_write(priv, priv->cks, RWTCSRA);

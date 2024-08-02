@@ -329,7 +329,11 @@ static void init_mqd_hiq(struct mqd_manager *mm, void **mqd,
 		struct kfd_mem_obj *mqd_mem_obj, uint64_t *gart_addr,
 		struct queue_properties *q)
 {
+<<<<<<< HEAD
 	init_mqd(mm, mqd, mqd_mem_obj, gart_addr, q);
+=======
+	return init_mqd(mm, mqd, mqd_mem_obj, gart_addr, q);
+>>>>>>> master
 }
 
 static void update_mqd_hiq(struct mqd_manager *mm, void *mqd,

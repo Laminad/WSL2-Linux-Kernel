@@ -843,6 +843,7 @@ static int ad5064_request_vref(struct ad5064_state *st, struct device *dev)
 	return ret;
 }
 
+<<<<<<< HEAD
 static void ad5064_bulk_reg_disable(void *data)
 {
 	struct ad5064_state *st = data;
@@ -850,6 +851,8 @@ static void ad5064_bulk_reg_disable(void *data)
 	regulator_bulk_disable(ad5064_num_vref(st), st->vref_reg);
 }
 
+=======
+>>>>>>> master
 static int ad5064_probe(struct device *dev, enum ad5064_type type,
 			const char *name, ad5064_write_func write)
 {

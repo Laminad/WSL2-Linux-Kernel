@@ -40,9 +40,162 @@ struct fscache_cache {
 	atomic_t		n_volumes;	/* Number of active volumes; */
 	atomic_t		n_accesses;	/* Number of in-progress accesses on the cache */
 	atomic_t		object_count;	/* no. of live objects in this cache */
+<<<<<<< HEAD
 	unsigned int		debug_id;
 	enum fscache_cache_state state;
 	char			*name;
+=======
+	struct fscache_object	*fsdef;		/* object for the fsdef index */
+	unsigned long		flags;
+#define FSCACHE_IOERROR		0	/* cache stopped on I/O error */
+#define FSCACHE_CACHE_WITHDRAWN	1	/* cache has been withdrawn */
+};
+
+extern wait_queue_head_t fscache_cache_cleared_wq;
+
+/*
+ * operation to be applied to a cache object
+ * - retrieval initiation operations are done in the context of the process
+ *   that issued them, and not in an async thread pool
+ */
+typedef void (*fscache_operation_release_t)(struct fscache_operation *op);
+typedef void (*fscache_operation_processor_t)(struct fscache_operation *op);
+typedef void (*fscache_operation_cancel_t)(struct fscache_operation *op);
+
+enum fscache_operation_state {
+	FSCACHE_OP_ST_BLANK,		/* Op is not yet submitted */
+	FSCACHE_OP_ST_INITIALISED,	/* Op is initialised */
+	FSCACHE_OP_ST_PENDING,		/* Op is blocked from running */
+	FSCACHE_OP_ST_IN_PROGRESS,	/* Op is in progress */
+	FSCACHE_OP_ST_COMPLETE,		/* Op is complete */
+	FSCACHE_OP_ST_CANCELLED,	/* Op has been cancelled */
+	FSCACHE_OP_ST_DEAD		/* Op is now dead */
+};
+
+struct fscache_operation {
+	struct work_struct	work;		/* record for async ops */
+	struct list_head	pend_link;	/* link in object->pending_ops */
+	struct fscache_object	*object;	/* object to be operated upon */
+
+	unsigned long		flags;
+#define FSCACHE_OP_TYPE		0x000f	/* operation type */
+#define FSCACHE_OP_ASYNC	0x0001	/* - async op, processor may sleep for disk */
+#define FSCACHE_OP_MYTHREAD	0x0002	/* - processing is done be issuing thread, not pool */
+#define FSCACHE_OP_WAITING	4	/* cleared when op is woken */
+#define FSCACHE_OP_EXCLUSIVE	5	/* exclusive op, other ops must wait */
+#define FSCACHE_OP_DEC_READ_CNT	6	/* decrement object->n_reads on destruction */
+#define FSCACHE_OP_UNUSE_COOKIE	7	/* call fscache_unuse_cookie() on completion */
+#define FSCACHE_OP_KEEP_FLAGS	0x00f0	/* flags to keep when repurposing an op */
+
+	enum fscache_operation_state state;
+	atomic_t		usage;
+	unsigned		debug_id;	/* debugging ID */
+
+	/* operation processor callback
+	 * - can be NULL if FSCACHE_OP_WAITING is going to be used to perform
+	 *   the op in a non-pool thread */
+	fscache_operation_processor_t processor;
+
+	/* Operation cancellation cleanup (optional) */
+	fscache_operation_cancel_t cancel;
+
+	/* operation releaser */
+	fscache_operation_release_t release;
+};
+
+extern atomic_t fscache_op_debug_id;
+extern void fscache_op_work_func(struct work_struct *work);
+
+extern void fscache_enqueue_operation(struct fscache_operation *);
+extern void fscache_op_complete(struct fscache_operation *, bool);
+extern void fscache_put_operation(struct fscache_operation *);
+extern void fscache_operation_init(struct fscache_cookie *,
+				   struct fscache_operation *,
+				   fscache_operation_processor_t,
+				   fscache_operation_cancel_t,
+				   fscache_operation_release_t);
+
+/*
+ * data read operation
+ */
+struct fscache_retrieval {
+	struct fscache_operation op;
+	struct fscache_cookie	*cookie;	/* The netfs cookie */
+	struct address_space	*mapping;	/* netfs pages */
+	fscache_rw_complete_t	end_io_func;	/* function to call on I/O completion */
+	void			*context;	/* netfs read context (pinned) */
+	struct list_head	to_do;		/* list of things to be done by the backend */
+	unsigned long		start_time;	/* time at which retrieval started */
+	atomic_t		n_pages;	/* number of pages to be retrieved */
+};
+
+typedef int (*fscache_page_retrieval_func_t)(struct fscache_retrieval *op,
+					     struct page *page,
+					     gfp_t gfp);
+
+typedef int (*fscache_pages_retrieval_func_t)(struct fscache_retrieval *op,
+					      struct list_head *pages,
+					      unsigned *nr_pages,
+					      gfp_t gfp);
+
+/**
+ * fscache_get_retrieval - Get an extra reference on a retrieval operation
+ * @op: The retrieval operation to get a reference on
+ *
+ * Get an extra reference on a retrieval operation.
+ */
+static inline
+struct fscache_retrieval *fscache_get_retrieval(struct fscache_retrieval *op)
+{
+	atomic_inc(&op->op.usage);
+	return op;
+}
+
+/**
+ * fscache_enqueue_retrieval - Enqueue a retrieval operation for processing
+ * @op: The retrieval operation affected
+ *
+ * Enqueue a retrieval operation for processing by the FS-Cache thread pool.
+ */
+static inline void fscache_enqueue_retrieval(struct fscache_retrieval *op)
+{
+	fscache_enqueue_operation(&op->op);
+}
+
+/**
+ * fscache_retrieval_complete - Record (partial) completion of a retrieval
+ * @op: The retrieval operation affected
+ * @n_pages: The number of pages to account for
+ */
+static inline void fscache_retrieval_complete(struct fscache_retrieval *op,
+					      int n_pages)
+{
+	if (atomic_sub_return_relaxed(n_pages, &op->n_pages) <= 0)
+		fscache_op_complete(&op->op, false);
+}
+
+/**
+ * fscache_put_retrieval - Drop a reference to a retrieval operation
+ * @op: The retrieval operation affected
+ *
+ * Drop a reference to a retrieval operation.
+ */
+static inline void fscache_put_retrieval(struct fscache_retrieval *op)
+{
+	fscache_put_operation(&op->op);
+}
+
+/*
+ * cached page storage work item
+ * - used to do three things:
+ *   - batch writes to the cache
+ *   - do cache writes asynchronously
+ *   - defer writes until cache object lookup completion
+ */
+struct fscache_storage {
+	struct fscache_operation op;
+	pgoff_t			store_limit;	/* don't write more than this */
+>>>>>>> master
 };
 
 /*

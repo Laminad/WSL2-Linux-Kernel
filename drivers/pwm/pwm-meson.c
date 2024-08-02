@@ -106,6 +106,10 @@ struct meson_pwm {
 	const struct meson_pwm_data *data;
 	struct meson_pwm_channel channels[MESON_NUM_PWMS];
 	void __iomem *base;
+<<<<<<< HEAD
+=======
+	u8 inverter_mask;
+>>>>>>> master
 	/*
 	 * Protects register (write) access to the REG_MISC_AB register
 	 * that is shared between the two PWMs.
@@ -284,8 +288,135 @@ static int meson_pwm_apply(struct pwm_chip *chip, struct pwm_device *pwm,
 	return 0;
 }
 
+<<<<<<< HEAD
 static u64 meson_pwm_cnt_to_ns(struct pwm_chip *chip, struct pwm_device *pwm,
 			       u32 cnt)
+=======
+static void meson_pwm_enable(struct meson_pwm *meson,
+			     struct meson_pwm_channel *channel,
+			     unsigned int id)
+{
+	u32 value, clk_shift, clk_enable, enable;
+	unsigned int offset;
+	unsigned long flags;
+
+	switch (id) {
+	case 0:
+		clk_shift = MISC_A_CLK_DIV_SHIFT;
+		clk_enable = MISC_A_CLK_EN;
+		enable = MISC_A_EN;
+		offset = REG_PWM_A;
+		break;
+
+	case 1:
+		clk_shift = MISC_B_CLK_DIV_SHIFT;
+		clk_enable = MISC_B_CLK_EN;
+		enable = MISC_B_EN;
+		offset = REG_PWM_B;
+		break;
+
+	default:
+		return;
+	}
+
+	spin_lock_irqsave(&meson->lock, flags);
+
+	value = readl(meson->base + REG_MISC_AB);
+	value &= ~(MISC_CLK_DIV_MASK << clk_shift);
+	value |= channel->pre_div << clk_shift;
+	value |= clk_enable;
+	writel(value, meson->base + REG_MISC_AB);
+
+	value = (channel->hi << PWM_HIGH_SHIFT) | channel->lo;
+	writel(value, meson->base + offset);
+
+	value = readl(meson->base + REG_MISC_AB);
+	value |= enable;
+	writel(value, meson->base + REG_MISC_AB);
+
+	spin_unlock_irqrestore(&meson->lock, flags);
+}
+
+static void meson_pwm_disable(struct meson_pwm *meson, unsigned int id)
+{
+	u32 value, enable;
+	unsigned long flags;
+
+	switch (id) {
+	case 0:
+		enable = MISC_A_EN;
+		break;
+
+	case 1:
+		enable = MISC_B_EN;
+		break;
+
+	default:
+		return;
+	}
+
+	spin_lock_irqsave(&meson->lock, flags);
+
+	value = readl(meson->base + REG_MISC_AB);
+	value &= ~enable;
+	writel(value, meson->base + REG_MISC_AB);
+
+	spin_unlock_irqrestore(&meson->lock, flags);
+}
+
+static int meson_pwm_apply(struct pwm_chip *chip, struct pwm_device *pwm,
+			   struct pwm_state *state)
+{
+	struct meson_pwm_channel *channel = pwm_get_chip_data(pwm);
+	struct meson_pwm *meson = to_meson_pwm(chip);
+	int err = 0;
+
+	if (!state)
+		return -EINVAL;
+
+	if (!state->enabled) {
+		meson_pwm_disable(meson, pwm->hwpwm);
+		channel->state.enabled = false;
+
+		return 0;
+	}
+
+	if (state->period != channel->state.period ||
+	    state->duty_cycle != channel->state.duty_cycle ||
+	    state->polarity != channel->state.polarity) {
+		if (channel->state.enabled) {
+			meson_pwm_disable(meson, pwm->hwpwm);
+			channel->state.enabled = false;
+		}
+
+		if (state->polarity != channel->state.polarity) {
+			if (state->polarity == PWM_POLARITY_NORMAL)
+				meson->inverter_mask |= BIT(pwm->hwpwm);
+			else
+				meson->inverter_mask &= ~BIT(pwm->hwpwm);
+		}
+
+		err = meson_pwm_calc(meson, channel, pwm->hwpwm,
+				     state->duty_cycle, state->period);
+		if (err < 0)
+			return err;
+
+		channel->state.polarity = state->polarity;
+		channel->state.period = state->period;
+		channel->state.duty_cycle = state->duty_cycle;
+	}
+
+	if (state->enabled && !channel->state.enabled) {
+		meson_pwm_enable(meson, channel, pwm->hwpwm);
+		channel->state.enabled = true;
+	}
+
+	return 0;
+}
+
+static void meson_pwm_get_state(struct pwm_chip *chip, struct pwm_device *pwm,
+				struct pwm_state *state)
+>>>>>>> master
 {
 	struct meson_pwm *meson = to_meson_pwm(chip);
 	struct meson_pwm_channel *channel;

@@ -18,7 +18,10 @@
 #include <linux/spinlock.h>
 #include <linux/export.h>
 #include <linux/hugetlb.h>
+<<<<<<< HEAD:arch/powerpc/mm/book3s64/slice.c
 #include <linux/sched/mm.h>
+=======
+>>>>>>> master:arch/powerpc/mm/slice.c
 #include <linux/security.h>
 #include <asm/mman.h>
 #include <asm/mmu.h>
@@ -50,7 +53,11 @@ static void slice_print_mask(const char *label, const struct slice_mask *mask) {
 
 #endif
 
+<<<<<<< HEAD:arch/powerpc/mm/book3s64/slice.c
 static inline notrace bool slice_addr_is_low(unsigned long addr)
+=======
+static inline bool slice_addr_is_low(unsigned long addr)
+>>>>>>> master:arch/powerpc/mm/slice.c
 {
 	u64 tmp = (u64)addr;
 
@@ -669,7 +676,11 @@ unsigned int notrace get_slice_psize(struct mm_struct *mm, unsigned long addr)
 	VM_BUG_ON(radix_enabled());
 
 	if (slice_addr_is_low(addr)) {
+<<<<<<< HEAD:arch/powerpc/mm/book3s64/slice.c
 		psizes = mm_ctx_low_slices(&mm->context);
+=======
+		psizes = mm->context.low_slices_psize;
+>>>>>>> master:arch/powerpc/mm/slice.c
 		index = GET_LOW_SLICE_INDEX(addr);
 	} else {
 		psizes = mm_ctx_high_slices(&mm->context);

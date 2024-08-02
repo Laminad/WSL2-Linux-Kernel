@@ -493,11 +493,20 @@ int drm_release(struct inode *inode, struct file *filp)
 
 	drm_close_helper(filp);
 
+<<<<<<< HEAD
 	if (atomic_dec_and_test(&dev->open_count))
 		drm_lastclose(dev);
 
 	if (drm_dev_needs_global_mutex(dev))
 		mutex_unlock(&drm_global_mutex);
+=======
+	drm_file_free(file_priv);
+
+	if (!--dev->open_count)
+		drm_lastclose(dev);
+
+	mutex_unlock(&drm_global_mutex);
+>>>>>>> master
 
 	drm_minor_release(minor);
 
@@ -646,8 +655,12 @@ put_back_event:
 				file_priv->event_space -= length;
 				list_add(&e->link, &file_priv->event_list);
 				spin_unlock_irq(&dev->event_lock);
+<<<<<<< HEAD
 				wake_up_interruptible_poll(&file_priv->event_wait,
 					EPOLLIN | EPOLLRDNORM);
+=======
+				wake_up_interruptible(&file_priv->event_wait);
+>>>>>>> master
 				break;
 			}
 

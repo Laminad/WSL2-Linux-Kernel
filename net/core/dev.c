@@ -1220,6 +1220,25 @@ int dev_change_name(struct net_device *dev, const char *newname)
 	BUG_ON(!dev_net(dev));
 
 	net = dev_net(dev);
+<<<<<<< HEAD
+=======
+
+	/* Some auto-enslaved devices e.g. failover slaves are
+	 * special, as userspace might rename the device after
+	 * the interface had been brought up and running since
+	 * the point kernel initiated auto-enslavement. Allow
+	 * live name change even when these slave devices are
+	 * up and running.
+	 *
+	 * Typically, users of these auto-enslaving devices
+	 * don't actually care about slave name change, as
+	 * they are supposed to operate on master interface
+	 * directly.
+	 */
+	if (dev->flags & IFF_UP &&
+	    likely(!(dev->priv_flags & IFF_LIVE_RENAME_OK)))
+		return -EBUSY;
+>>>>>>> master
 
 	down_write(&devnet_rename_sem);
 
@@ -2102,8 +2121,12 @@ void net_dec_egress_queue(void)
 EXPORT_SYMBOL_GPL(net_dec_egress_queue);
 #endif
 
+<<<<<<< HEAD
 DEFINE_STATIC_KEY_FALSE(netstamp_needed_key);
 EXPORT_SYMBOL(netstamp_needed_key);
+=======
+static DEFINE_STATIC_KEY_FALSE(netstamp_needed_key);
+>>>>>>> master
 #ifdef CONFIG_JUMP_LABEL
 static atomic_t netstamp_needed_deferred;
 static atomic_t netstamp_wanted;
@@ -2124,7 +2147,11 @@ static DECLARE_WORK(netstamp_work, netstamp_clear);
 void net_enable_timestamp(void)
 {
 #ifdef CONFIG_JUMP_LABEL
+<<<<<<< HEAD
 	int wanted = atomic_read(&netstamp_wanted);
+=======
+	int wanted;
+>>>>>>> master
 
 	while (wanted > 0) {
 		if (atomic_try_cmpxchg(&netstamp_wanted, &wanted, wanted + 1))
@@ -2141,7 +2168,11 @@ EXPORT_SYMBOL(net_enable_timestamp);
 void net_disable_timestamp(void)
 {
 #ifdef CONFIG_JUMP_LABEL
+<<<<<<< HEAD
 	int wanted = atomic_read(&netstamp_wanted);
+=======
+	int wanted;
+>>>>>>> master
 
 	while (wanted > 1) {
 		if (atomic_try_cmpxchg(&netstamp_wanted, &wanted, wanted - 1))
@@ -2464,7 +2495,25 @@ static bool remove_xps_queue_cpu(struct net_device *dev,
 
 static void reset_xps_maps(struct net_device *dev,
 			   struct xps_dev_maps *dev_maps,
+<<<<<<< HEAD
 			   enum xps_map_type type)
+=======
+			   bool is_rxqs_map)
+{
+	if (is_rxqs_map) {
+		static_key_slow_dec_cpuslocked(&xps_rxqs_needed);
+		RCU_INIT_POINTER(dev->xps_rxqs_map, NULL);
+	} else {
+		RCU_INIT_POINTER(dev->xps_cpus_map, NULL);
+	}
+	static_key_slow_dec_cpuslocked(&xps_needed);
+	kfree_rcu(dev_maps, rcu);
+}
+
+static void clean_xps_maps(struct net_device *dev, const unsigned long *mask,
+			   struct xps_dev_maps *dev_maps, unsigned int nr_ids,
+			   u16 offset, u16 count, bool is_rxqs_map)
+>>>>>>> master
 {
 	static_key_slow_dec_cpuslocked(&xps_needed);
 	if (type == XPS_RXQS)
@@ -2482,6 +2531,7 @@ static void clean_xps_maps(struct net_device *dev, enum xps_map_type type,
 	bool active = false;
 	int i, j;
 
+<<<<<<< HEAD
 	dev_maps = xmap_dereference(dev->xps_maps[type]);
 	if (!dev_maps)
 		return;
@@ -2495,6 +2545,21 @@ static void clean_xps_maps(struct net_device *dev, enum xps_map_type type,
 		for (i = offset + (count - 1); count--; i--)
 			netdev_queue_numa_node_write(
 				netdev_get_tx_queue(dev, i), NUMA_NO_NODE);
+=======
+	for (j = -1; j = netif_attrmask_next(j, mask, nr_ids),
+	     j < nr_ids;)
+		active |= remove_xps_queue_cpu(dev, dev_maps, j, offset,
+					       count);
+	if (!active)
+		reset_xps_maps(dev, dev_maps, is_rxqs_map);
+
+	if (!is_rxqs_map) {
+		for (i = offset + (count - 1); count--; i--) {
+			netdev_queue_numa_node_write(
+				netdev_get_tx_queue(dev, i),
+				NUMA_NO_NODE);
+		}
+>>>>>>> master
 	}
 }
 
@@ -2512,6 +2577,16 @@ static void netif_reset_xps_queues(struct net_device *dev, u16 offset,
 
 	clean_xps_maps(dev, XPS_CPUS, offset, count);
 
+<<<<<<< HEAD
+=======
+	if (num_possible_cpus() > 1)
+		possible_mask = cpumask_bits(cpu_possible_mask);
+	nr_ids = nr_cpu_ids;
+	clean_xps_maps(dev, possible_mask, dev_maps, nr_ids, offset, count,
+		       false);
+
+out_no_maps:
+>>>>>>> master
 	mutex_unlock(&xps_map_mutex);
 	cpus_read_unlock();
 }
@@ -2663,7 +2738,11 @@ int __netif_set_xps_queue(struct net_device *dev, const unsigned long *mask,
 	if (!dev_maps) {
 		/* Increment static keys at most once per type */
 		static_key_slow_inc_cpuslocked(&xps_needed);
+<<<<<<< HEAD
 		if (type == XPS_RXQS)
+=======
+		if (is_rxqs_map)
+>>>>>>> master
 			static_key_slow_inc_cpuslocked(&xps_rxqs_needed);
 	}
 
@@ -2759,7 +2838,11 @@ out_no_new_maps:
 
 	/* free map if not active */
 	if (!active)
+<<<<<<< HEAD
 		reset_xps_maps(dev, dev_maps, type);
+=======
+		reset_xps_maps(dev, dev_maps, is_rxqs_map);
+>>>>>>> master
 
 out_no_maps:
 	mutex_unlock(&xps_map_mutex);
@@ -5628,7 +5711,11 @@ static void __netif_receive_skb_list_core(struct list_head *head, bool pfmemallo
 		struct packet_type *pt_prev = NULL;
 
 		skb_list_del_init(skb);
+<<<<<<< HEAD
 		__netif_receive_skb_core(&skb, pfmemalloc, &pt_prev);
+=======
+		__netif_receive_skb_core(skb, pfmemalloc, &pt_prev);
+>>>>>>> master
 		if (!pt_prev)
 			continue;
 		if (pt_curr != pt_prev || od_curr != orig_dev) {
@@ -5764,13 +5851,35 @@ void netif_receive_skb_list_internal(struct list_head *head)
 
 	INIT_LIST_HEAD(&sublist);
 	list_for_each_entry_safe(skb, next, head, list) {
+<<<<<<< HEAD
 		net_timestamp_check(READ_ONCE(netdev_tstamp_prequeue), skb);
+=======
+		net_timestamp_check(netdev_tstamp_prequeue, skb);
+>>>>>>> master
 		skb_list_del_init(skb);
 		if (!skb_defer_rx_timestamp(skb))
 			list_add_tail(&skb->list, &sublist);
 	}
 	list_splice_init(&sublist, head);
 
+<<<<<<< HEAD
+=======
+	if (static_branch_unlikely(&generic_xdp_needed_key)) {
+		preempt_disable();
+		rcu_read_lock();
+		list_for_each_entry_safe(skb, next, head, list) {
+			xdp_prog = rcu_dereference(skb->dev->xdp_prog);
+			skb_list_del_init(skb);
+			if (do_xdp_generic(xdp_prog, skb) == XDP_PASS)
+				list_add_tail(&skb->list, &sublist);
+		}
+		rcu_read_unlock();
+		preempt_enable();
+		/* Put passed packets back on main list */
+		list_splice_init(&sublist, head);
+	}
+
+>>>>>>> master
 	rcu_read_lock();
 #ifdef CONFIG_RPS
 	if (static_branch_unlikely(&rps_needed)) {
@@ -5931,6 +6040,506 @@ static void flush_all_backlogs(void)
 	cpus_read_unlock();
 }
 
+<<<<<<< HEAD
+=======
+static int napi_gro_complete(struct sk_buff *skb)
+{
+	struct packet_offload *ptype;
+	__be16 type = skb->protocol;
+	struct list_head *head = &offload_base;
+	int err = -ENOENT;
+
+	BUILD_BUG_ON(sizeof(struct napi_gro_cb) > sizeof(skb->cb));
+
+	if (NAPI_GRO_CB(skb)->count == 1) {
+		skb_shinfo(skb)->gso_size = 0;
+		goto out;
+	}
+
+	rcu_read_lock();
+	list_for_each_entry_rcu(ptype, head, list) {
+		if (ptype->type != type || !ptype->callbacks.gro_complete)
+			continue;
+
+		err = ptype->callbacks.gro_complete(skb, 0);
+		break;
+	}
+	rcu_read_unlock();
+
+	if (err) {
+		WARN_ON(&ptype->list == head);
+		kfree_skb(skb);
+		return NET_RX_SUCCESS;
+	}
+
+out:
+	return netif_receive_skb_internal(skb);
+}
+
+static void __napi_gro_flush_chain(struct napi_struct *napi, u32 index,
+				   bool flush_old)
+{
+	struct list_head *head = &napi->gro_hash[index].list;
+	struct sk_buff *skb, *p;
+
+	list_for_each_entry_safe_reverse(skb, p, head, list) {
+		if (flush_old && NAPI_GRO_CB(skb)->age == jiffies)
+			return;
+		list_del(&skb->list);
+		skb->next = NULL;
+		napi_gro_complete(skb);
+		napi->gro_hash[index].count--;
+	}
+
+	if (!napi->gro_hash[index].count)
+		__clear_bit(index, &napi->gro_bitmask);
+}
+
+/* napi->gro_hash[].list contains packets ordered by age.
+ * youngest packets at the head of it.
+ * Complete skbs in reverse order to reduce latencies.
+ */
+void napi_gro_flush(struct napi_struct *napi, bool flush_old)
+{
+	u32 i;
+
+	for (i = 0; i < GRO_HASH_BUCKETS; i++) {
+		if (test_bit(i, &napi->gro_bitmask))
+			__napi_gro_flush_chain(napi, i, flush_old);
+	}
+}
+EXPORT_SYMBOL(napi_gro_flush);
+
+static struct list_head *gro_list_prepare(struct napi_struct *napi,
+					  struct sk_buff *skb)
+{
+	unsigned int maclen = skb->dev->hard_header_len;
+	u32 hash = skb_get_hash_raw(skb);
+	struct list_head *head;
+	struct sk_buff *p;
+
+	head = &napi->gro_hash[hash & (GRO_HASH_BUCKETS - 1)].list;
+	list_for_each_entry(p, head, list) {
+		unsigned long diffs;
+
+		NAPI_GRO_CB(p)->flush = 0;
+
+		if (hash != skb_get_hash_raw(p)) {
+			NAPI_GRO_CB(p)->same_flow = 0;
+			continue;
+		}
+
+		diffs = (unsigned long)p->dev ^ (unsigned long)skb->dev;
+		diffs |= p->vlan_tci ^ skb->vlan_tci;
+		diffs |= skb_metadata_dst_cmp(p, skb);
+		diffs |= skb_metadata_differs(p, skb);
+		if (maclen == ETH_HLEN)
+			diffs |= compare_ether_header(skb_mac_header(p),
+						      skb_mac_header(skb));
+		else if (!diffs)
+			diffs = memcmp(skb_mac_header(p),
+				       skb_mac_header(skb),
+				       maclen);
+		NAPI_GRO_CB(p)->same_flow = !diffs;
+	}
+
+	return head;
+}
+
+static void skb_gro_reset_offset(struct sk_buff *skb)
+{
+	const struct skb_shared_info *pinfo = skb_shinfo(skb);
+	const skb_frag_t *frag0 = &pinfo->frags[0];
+
+	NAPI_GRO_CB(skb)->data_offset = 0;
+	NAPI_GRO_CB(skb)->frag0 = NULL;
+	NAPI_GRO_CB(skb)->frag0_len = 0;
+
+	if (skb_mac_header(skb) == skb_tail_pointer(skb) &&
+	    pinfo->nr_frags &&
+	    !PageHighMem(skb_frag_page(frag0))) {
+		NAPI_GRO_CB(skb)->frag0 = skb_frag_address(frag0);
+		NAPI_GRO_CB(skb)->frag0_len = min_t(unsigned int,
+						    skb_frag_size(frag0),
+						    skb->end - skb->tail);
+	}
+}
+
+static void gro_pull_from_frag0(struct sk_buff *skb, int grow)
+{
+	struct skb_shared_info *pinfo = skb_shinfo(skb);
+
+	BUG_ON(skb->end - skb->tail < grow);
+
+	memcpy(skb_tail_pointer(skb), NAPI_GRO_CB(skb)->frag0, grow);
+
+	skb->data_len -= grow;
+	skb->tail += grow;
+
+	pinfo->frags[0].page_offset += grow;
+	skb_frag_size_sub(&pinfo->frags[0], grow);
+
+	if (unlikely(!skb_frag_size(&pinfo->frags[0]))) {
+		skb_frag_unref(skb, 0);
+		memmove(pinfo->frags, pinfo->frags + 1,
+			--pinfo->nr_frags * sizeof(pinfo->frags[0]));
+	}
+}
+
+static void gro_flush_oldest(struct list_head *head)
+{
+	struct sk_buff *oldest;
+
+	oldest = list_last_entry(head, struct sk_buff, list);
+
+	/* We are called with head length >= MAX_GRO_SKBS, so this is
+	 * impossible.
+	 */
+	if (WARN_ON_ONCE(!oldest))
+		return;
+
+	/* Do not adjust napi->gro_hash[].count, caller is adding a new
+	 * SKB to the chain.
+	 */
+	list_del(&oldest->list);
+	oldest->next = NULL;
+	napi_gro_complete(oldest);
+}
+
+static enum gro_result dev_gro_receive(struct napi_struct *napi, struct sk_buff *skb)
+{
+	u32 hash = skb_get_hash_raw(skb) & (GRO_HASH_BUCKETS - 1);
+	struct list_head *head = &offload_base;
+	struct packet_offload *ptype;
+	__be16 type = skb->protocol;
+	struct list_head *gro_head;
+	struct sk_buff *pp = NULL;
+	enum gro_result ret;
+	int same_flow;
+	int grow;
+
+	if (netif_elide_gro(skb->dev))
+		goto normal;
+
+	gro_head = gro_list_prepare(napi, skb);
+
+	rcu_read_lock();
+	list_for_each_entry_rcu(ptype, head, list) {
+		if (ptype->type != type || !ptype->callbacks.gro_receive)
+			continue;
+
+		skb_set_network_header(skb, skb_gro_offset(skb));
+		skb_reset_mac_len(skb);
+		NAPI_GRO_CB(skb)->same_flow = 0;
+		NAPI_GRO_CB(skb)->flush = skb_is_gso(skb) || skb_has_frag_list(skb);
+		NAPI_GRO_CB(skb)->free = 0;
+		NAPI_GRO_CB(skb)->encap_mark = 0;
+		NAPI_GRO_CB(skb)->recursion_counter = 0;
+		NAPI_GRO_CB(skb)->is_fou = 0;
+		NAPI_GRO_CB(skb)->is_atomic = 1;
+		NAPI_GRO_CB(skb)->gro_remcsum_start = 0;
+
+		/* Setup for GRO checksum validation */
+		switch (skb->ip_summed) {
+		case CHECKSUM_COMPLETE:
+			NAPI_GRO_CB(skb)->csum = skb->csum;
+			NAPI_GRO_CB(skb)->csum_valid = 1;
+			NAPI_GRO_CB(skb)->csum_cnt = 0;
+			break;
+		case CHECKSUM_UNNECESSARY:
+			NAPI_GRO_CB(skb)->csum_cnt = skb->csum_level + 1;
+			NAPI_GRO_CB(skb)->csum_valid = 0;
+			break;
+		default:
+			NAPI_GRO_CB(skb)->csum_cnt = 0;
+			NAPI_GRO_CB(skb)->csum_valid = 0;
+		}
+
+		pp = ptype->callbacks.gro_receive(gro_head, skb);
+		break;
+	}
+	rcu_read_unlock();
+
+	if (&ptype->list == head)
+		goto normal;
+
+	if (IS_ERR(pp) && PTR_ERR(pp) == -EINPROGRESS) {
+		ret = GRO_CONSUMED;
+		goto ok;
+	}
+
+	same_flow = NAPI_GRO_CB(skb)->same_flow;
+	ret = NAPI_GRO_CB(skb)->free ? GRO_MERGED_FREE : GRO_MERGED;
+
+	if (pp) {
+		list_del(&pp->list);
+		pp->next = NULL;
+		napi_gro_complete(pp);
+		napi->gro_hash[hash].count--;
+	}
+
+	if (same_flow)
+		goto ok;
+
+	if (NAPI_GRO_CB(skb)->flush)
+		goto normal;
+
+	if (unlikely(napi->gro_hash[hash].count >= MAX_GRO_SKBS)) {
+		gro_flush_oldest(gro_head);
+	} else {
+		napi->gro_hash[hash].count++;
+	}
+	NAPI_GRO_CB(skb)->count = 1;
+	NAPI_GRO_CB(skb)->age = jiffies;
+	NAPI_GRO_CB(skb)->last = skb;
+	skb_shinfo(skb)->gso_size = skb_gro_len(skb);
+	list_add(&skb->list, gro_head);
+	ret = GRO_HELD;
+
+pull:
+	grow = skb_gro_offset(skb) - skb_headlen(skb);
+	if (grow > 0)
+		gro_pull_from_frag0(skb, grow);
+ok:
+	if (napi->gro_hash[hash].count) {
+		if (!test_bit(hash, &napi->gro_bitmask))
+			__set_bit(hash, &napi->gro_bitmask);
+	} else if (test_bit(hash, &napi->gro_bitmask)) {
+		__clear_bit(hash, &napi->gro_bitmask);
+	}
+
+	return ret;
+
+normal:
+	ret = GRO_NORMAL;
+	goto pull;
+}
+
+struct packet_offload *gro_find_receive_by_type(__be16 type)
+{
+	struct list_head *offload_head = &offload_base;
+	struct packet_offload *ptype;
+
+	list_for_each_entry_rcu(ptype, offload_head, list) {
+		if (ptype->type != type || !ptype->callbacks.gro_receive)
+			continue;
+		return ptype;
+	}
+	return NULL;
+}
+EXPORT_SYMBOL(gro_find_receive_by_type);
+
+struct packet_offload *gro_find_complete_by_type(__be16 type)
+{
+	struct list_head *offload_head = &offload_base;
+	struct packet_offload *ptype;
+
+	list_for_each_entry_rcu(ptype, offload_head, list) {
+		if (ptype->type != type || !ptype->callbacks.gro_complete)
+			continue;
+		return ptype;
+	}
+	return NULL;
+}
+EXPORT_SYMBOL(gro_find_complete_by_type);
+
+static void napi_skb_free_stolen_head(struct sk_buff *skb)
+{
+	skb_dst_drop(skb);
+	secpath_reset(skb);
+	kmem_cache_free(skbuff_head_cache, skb);
+}
+
+static gro_result_t napi_skb_finish(gro_result_t ret, struct sk_buff *skb)
+{
+	switch (ret) {
+	case GRO_NORMAL:
+		if (netif_receive_skb_internal(skb))
+			ret = GRO_DROP;
+		break;
+
+	case GRO_DROP:
+		kfree_skb(skb);
+		break;
+
+	case GRO_MERGED_FREE:
+		if (NAPI_GRO_CB(skb)->free == NAPI_GRO_FREE_STOLEN_HEAD)
+			napi_skb_free_stolen_head(skb);
+		else
+			__kfree_skb(skb);
+		break;
+
+	case GRO_HELD:
+	case GRO_MERGED:
+	case GRO_CONSUMED:
+		break;
+	}
+
+	return ret;
+}
+
+gro_result_t napi_gro_receive(struct napi_struct *napi, struct sk_buff *skb)
+{
+	skb_mark_napi_id(skb, napi);
+	trace_napi_gro_receive_entry(skb);
+
+	skb_gro_reset_offset(skb);
+
+	return napi_skb_finish(dev_gro_receive(napi, skb), skb);
+}
+EXPORT_SYMBOL(napi_gro_receive);
+
+static void napi_reuse_skb(struct napi_struct *napi, struct sk_buff *skb)
+{
+	if (unlikely(skb->pfmemalloc)) {
+		consume_skb(skb);
+		return;
+	}
+	__skb_pull(skb, skb_headlen(skb));
+	/* restore the reserve we had after netdev_alloc_skb_ip_align() */
+	skb_reserve(skb, NET_SKB_PAD + NET_IP_ALIGN - skb_headroom(skb));
+	skb->vlan_tci = 0;
+	skb->dev = napi->dev;
+	skb->skb_iif = 0;
+
+	/* eth_type_trans() assumes pkt_type is PACKET_HOST */
+	skb->pkt_type = PACKET_HOST;
+
+	skb->encapsulation = 0;
+	skb_shinfo(skb)->gso_type = 0;
+	skb->truesize = SKB_TRUESIZE(skb_end_offset(skb));
+	secpath_reset(skb);
+
+	napi->skb = skb;
+}
+
+struct sk_buff *napi_get_frags(struct napi_struct *napi)
+{
+	struct sk_buff *skb = napi->skb;
+
+	if (!skb) {
+		skb = napi_alloc_skb(napi, GRO_MAX_HEAD);
+		if (skb) {
+			napi->skb = skb;
+			skb_mark_napi_id(skb, napi);
+		}
+	}
+	return skb;
+}
+EXPORT_SYMBOL(napi_get_frags);
+
+static gro_result_t napi_frags_finish(struct napi_struct *napi,
+				      struct sk_buff *skb,
+				      gro_result_t ret)
+{
+	switch (ret) {
+	case GRO_NORMAL:
+	case GRO_HELD:
+		__skb_push(skb, ETH_HLEN);
+		skb->protocol = eth_type_trans(skb, skb->dev);
+		if (ret == GRO_NORMAL && netif_receive_skb_internal(skb))
+			ret = GRO_DROP;
+		break;
+
+	case GRO_DROP:
+		napi_reuse_skb(napi, skb);
+		break;
+
+	case GRO_MERGED_FREE:
+		if (NAPI_GRO_CB(skb)->free == NAPI_GRO_FREE_STOLEN_HEAD)
+			napi_skb_free_stolen_head(skb);
+		else
+			napi_reuse_skb(napi, skb);
+		break;
+
+	case GRO_MERGED:
+	case GRO_CONSUMED:
+		break;
+	}
+
+	return ret;
+}
+
+/* Upper GRO stack assumes network header starts at gro_offset=0
+ * Drivers could call both napi_gro_frags() and napi_gro_receive()
+ * We copy ethernet header into skb->data to have a common layout.
+ */
+static struct sk_buff *napi_frags_skb(struct napi_struct *napi)
+{
+	struct sk_buff *skb = napi->skb;
+	const struct ethhdr *eth;
+	unsigned int hlen = sizeof(*eth);
+
+	napi->skb = NULL;
+
+	skb_reset_mac_header(skb);
+	skb_gro_reset_offset(skb);
+
+	if (unlikely(skb_gro_header_hard(skb, hlen))) {
+		eth = skb_gro_header_slow(skb, hlen, 0);
+		if (unlikely(!eth)) {
+			net_warn_ratelimited("%s: dropping impossible skb from %s\n",
+					     __func__, napi->dev->name);
+			napi_reuse_skb(napi, skb);
+			return NULL;
+		}
+	} else {
+		eth = (const struct ethhdr *)skb->data;
+		gro_pull_from_frag0(skb, hlen);
+		NAPI_GRO_CB(skb)->frag0 += hlen;
+		NAPI_GRO_CB(skb)->frag0_len -= hlen;
+	}
+	__skb_pull(skb, hlen);
+
+	/*
+	 * This works because the only protocols we care about don't require
+	 * special handling.
+	 * We'll fix it up properly in napi_frags_finish()
+	 */
+	skb->protocol = eth->h_proto;
+
+	return skb;
+}
+
+gro_result_t napi_gro_frags(struct napi_struct *napi)
+{
+	struct sk_buff *skb = napi_frags_skb(napi);
+
+	if (!skb)
+		return GRO_DROP;
+
+	trace_napi_gro_frags_entry(skb);
+
+	return napi_frags_finish(napi, skb, dev_gro_receive(napi, skb));
+}
+EXPORT_SYMBOL(napi_gro_frags);
+
+/* Compute the checksum from gro_offset and return the folded value
+ * after adding in any pseudo checksum.
+ */
+__sum16 __skb_gro_checksum_complete(struct sk_buff *skb)
+{
+	__wsum wsum;
+	__sum16 sum;
+
+	wsum = skb_checksum(skb, skb_gro_offset(skb), skb_gro_len(skb), 0);
+
+	/* NAPI_GRO_CB(skb)->csum holds pseudo checksum */
+	sum = csum_fold(csum_add(NAPI_GRO_CB(skb)->csum, wsum));
+	if (likely(!sum)) {
+		if (unlikely(skb->ip_summed == CHECKSUM_COMPLETE) &&
+		    !skb->csum_complete_sw)
+			netdev_rx_csum_fault(skb->dev);
+	}
+
+	NAPI_GRO_CB(skb)->csum = wsum;
+	NAPI_GRO_CB(skb)->csum_valid = 1;
+
+	return sum;
+}
+EXPORT_SYMBOL(__skb_gro_checksum_complete);
+
+>>>>>>> master
 static void net_rps_send_ipi(struct softnet_data *remsd)
 {
 #ifdef CONFIG_RPS
@@ -6107,10 +6716,27 @@ bool napi_complete_done(struct napi_struct *n, int work_done)
 				 NAPIF_STATE_IN_BUSY_POLL)))
 		return false;
 
+<<<<<<< HEAD
 	if (work_done) {
 		if (n->gro_bitmask)
 			timeout = READ_ONCE(n->dev->gro_flush_timeout);
 		n->defer_hard_irqs_count = READ_ONCE(n->dev->napi_defer_hard_irqs);
+=======
+	if (n->gro_bitmask) {
+		unsigned long timeout = 0;
+
+		if (work_done)
+			timeout = n->dev->gro_flush_timeout;
+
+		/* When the NAPI instance uses a timeout and keeps postponing
+		 * it, we need to bound somehow the time packets are kept in
+		 * the GRO layer
+		 */
+		napi_gro_flush(n, !!timeout);
+		if (timeout)
+			hrtimer_start(&n->timer, ns_to_ktime(timeout),
+				      HRTIMER_MODE_REL_PINNED);
+>>>>>>> master
 	}
 	if (n->defer_hard_irqs_count > 0) {
 		n->defer_hard_irqs_count--;
@@ -10256,10 +10882,17 @@ int register_netdevice(struct net_device *dev)
 	ret = call_netdevice_notifiers(NETDEV_REGISTER, dev);
 	ret = notifier_to_errno(ret);
 	if (ret) {
+<<<<<<< HEAD
 		/* Expect explicit free_netdev() on failure */
 		dev->needs_free_netdev = false;
 		unregister_netdevice_queue(dev, NULL);
 		goto out;
+=======
+		rollback_registered(dev);
+		rcu_barrier();
+
+		dev->reg_state = NETREG_UNREGISTERED;
+>>>>>>> master
 	}
 	/*
 	 *	Prevent userspace races by waiting until the network
@@ -10451,6 +11084,12 @@ static struct net_device *netdev_wait_allrefs_any(struct list_head *list)
 				ref_tracker_dir_print(&dev->refcnt_tracker, 10);
 			}
 
+<<<<<<< HEAD
+=======
+		if (refcnt && time_after(jiffies, warning_time + 10 * HZ)) {
+			pr_emerg("unregister_netdevice: waiting for %s to become free. Usage count = %d\n",
+				 dev->name, refcnt);
+>>>>>>> master
 			warning_time = jiffies;
 		}
 	}
@@ -11204,6 +11843,14 @@ int __dev_change_net_namespace(struct net_device *dev, struct net *net,
 	rcu_barrier();
 
 	new_nsid = peernet2id_alloc(dev_net(dev), net, GFP_KERNEL);
+<<<<<<< HEAD
+=======
+	/* If there is an ifindex conflict assign a new one */
+	if (__dev_get_by_index(net, dev->ifindex))
+		new_ifindex = dev_new_index(net);
+	else
+		new_ifindex = dev->ifindex;
+>>>>>>> master
 
 	rtmsg_ifinfo_newnet(RTM_DELLINK, dev, ~0U, GFP_KERNEL, &new_nsid,
 			    new_ifindex);
@@ -11516,6 +12163,7 @@ static void __net_exit default_device_exit_net(struct net *net)
 
 		/* Push remaining network devices to init_net */
 		snprintf(fb_name, IFNAMSIZ, "dev%d", dev->ifindex);
+<<<<<<< HEAD
 		if (netdev_name_in_use(&init_net, fb_name))
 			snprintf(fb_name, IFNAMSIZ, "dev%%d");
 
@@ -11526,6 +12174,10 @@ static void __net_exit default_device_exit_net(struct net *net)
 				__netdev_name_node_alt_destroy(name_node);
 			}
 
+=======
+		if (__dev_get_by_name(&init_net, fb_name))
+			snprintf(fb_name, IFNAMSIZ, "dev%%d");
+>>>>>>> master
 		err = dev_change_net_namespace(dev, &init_net, fb_name);
 		if (err) {
 			pr_emerg("%s: failed to move %s to init_net: %d\n",

@@ -111,6 +111,7 @@ static inline void hardlockup_detector_perf_restart(void) { }
 static inline void hardlockup_detector_perf_cleanup(void) { }
 #endif
 
+<<<<<<< HEAD
 void watchdog_hardlockup_stop(void);
 void watchdog_hardlockup_start(void);
 int watchdog_hardlockup_probe(void);
@@ -124,6 +125,13 @@ void watchdog_buddy_check_hardlockup(int hrtimer_interrupts);
 #else
 static inline void watchdog_buddy_check_hardlockup(int hrtimer_interrupts) {}
 #endif
+=======
+void watchdog_nmi_stop(void);
+void watchdog_nmi_start(void);
+int watchdog_nmi_probe(void);
+int watchdog_nmi_enable(unsigned int cpu);
+void watchdog_nmi_disable(unsigned int cpu);
+>>>>>>> master
 
 /**
  * touch_nmi_watchdog - manually reset the hardlockup watchdog timeout.

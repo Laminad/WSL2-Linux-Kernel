@@ -293,10 +293,15 @@ int tpm_class_shutdown(struct device *dev)
 
 	down_write(&chip->ops_sem);
 	if (chip->flags & TPM_CHIP_FLAG_TPM2) {
+<<<<<<< HEAD
 		if (!tpm_chip_start(chip)) {
 			tpm2_shutdown(chip, TPM2_SU_CLEAR);
 			tpm_chip_stop(chip);
 		}
+=======
+		tpm2_shutdown(chip, TPM2_SU_CLEAR);
+		chip->ops = NULL;
+>>>>>>> master
 	}
 	chip->ops = NULL;
 	up_write(&chip->ops_sem);

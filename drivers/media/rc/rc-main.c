@@ -747,7 +747,11 @@ void rc_repeat(struct rc_dev *dev)
 	};
 
 	if (dev->allowed_protocols != RC_PROTO_BIT_CEC)
+<<<<<<< HEAD
 		lirc_scancode_event(dev, &sc);
+=======
+		ir_lirc_scancode_event(dev, &sc);
+>>>>>>> master
 
 	spin_lock_irqsave(&dev->keylock, flags);
 
@@ -792,7 +796,11 @@ static void ir_do_keydown(struct rc_dev *dev, enum rc_proto protocol,
 	};
 
 	if (dev->allowed_protocols != RC_PROTO_BIT_CEC)
+<<<<<<< HEAD
 		lirc_scancode_event(dev, &sc);
+=======
+		ir_lirc_scancode_event(dev, &sc);
+>>>>>>> master
 
 	if (new_event && dev->keypressed)
 		ir_do_keyup(dev, false);

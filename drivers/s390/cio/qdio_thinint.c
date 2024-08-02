@@ -67,6 +67,36 @@ static void put_indicator(u32 *addr)
 	atomic_dec(&ind->count);
 }
 
+<<<<<<< HEAD
+=======
+void tiqdio_add_input_queues(struct qdio_irq *irq_ptr)
+{
+	mutex_lock(&tiq_list_lock);
+	list_add_rcu(&irq_ptr->input_qs[0]->entry, &tiq_list);
+	mutex_unlock(&tiq_list_lock);
+}
+
+void tiqdio_remove_input_queues(struct qdio_irq *irq_ptr)
+{
+	struct qdio_q *q;
+
+	q = irq_ptr->input_qs[0];
+	if (!q)
+		return;
+
+	mutex_lock(&tiq_list_lock);
+	list_del_rcu(&q->entry);
+	mutex_unlock(&tiq_list_lock);
+	synchronize_rcu();
+	INIT_LIST_HEAD(&q->entry);
+}
+
+static inline int has_multiple_inq_on_dsci(struct qdio_irq *irq_ptr)
+{
+	return irq_ptr->nr_input_qs > 1;
+}
+
+>>>>>>> master
 static inline int references_shared_dsci(struct qdio_irq *irq_ptr)
 {
 	return irq_ptr->dsci == &q_indicators[TIQDIO_SHARED_IND].ind;

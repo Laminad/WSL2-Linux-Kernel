@@ -49,7 +49,7 @@ static int jumbo_frm(struct stmmac_tx_queue *tx_q, struct sk_buff *skb,
 
 		desc->des3 = cpu_to_le32(des2 + BUF_SIZE_4KiB);
 		stmmac_prepare_tx_desc(priv, desc, 1, bmax, csum,
-				STMMAC_RING_MODE, 0, false, skb->len);
+				STMMAC_RING_MODE, 1, false, skb->len);
 		tx_q->tx_skbuff[entry] = NULL;
 		entry = STMMAC_GET_ENTRY(entry, priv->dma_conf.dma_tx_size);
 
@@ -82,8 +82,12 @@ static int jumbo_frm(struct stmmac_tx_queue *tx_q, struct sk_buff *skb,
 		tx_q->tx_skbuff_dma[entry].is_jumbo = true;
 		desc->des3 = cpu_to_le32(des2 + BUF_SIZE_4KiB);
 		stmmac_prepare_tx_desc(priv, desc, 1, nopaged_len, csum,
+<<<<<<< HEAD
 				STMMAC_RING_MODE, 0, !skb_is_nonlinear(skb),
 				skb->len);
+=======
+				STMMAC_RING_MODE, 1, true, skb->len);
+>>>>>>> master
 	}
 
 	tx_q->cur_tx = entry;
@@ -103,10 +107,18 @@ static unsigned int is_jumbo_frm(int len, int enh_desc)
 
 static void refill_desc3(struct stmmac_rx_queue *rx_q, struct dma_desc *p)
 {
+<<<<<<< HEAD
 	struct stmmac_priv *priv = rx_q->priv_data;
 
 	/* Fill DES3 in case of RING mode */
 	if (priv->dma_conf.dma_buf_sz == BUF_SIZE_16KiB)
+=======
+	struct stmmac_rx_queue *rx_q = priv_ptr;
+	struct stmmac_priv *priv = rx_q->priv_data;
+
+	/* Fill DES3 in case of RING mode */
+	if (priv->dma_buf_sz == BUF_SIZE_16KiB)
+>>>>>>> master
 		p->des3 = cpu_to_le32(le32_to_cpu(p->des2) + BUF_SIZE_8KiB);
 }
 

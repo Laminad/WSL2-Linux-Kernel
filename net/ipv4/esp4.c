@@ -346,6 +346,26 @@ static struct ip_esp_hdr *esp_output_udp_encap(struct sk_buff *skb,
 					       __be16 sport,
 					       __be16 dport)
 {
+<<<<<<< HEAD
+=======
+	/* Fill padding... */
+	if (tfclen) {
+		memset(tail, 0, tfclen);
+		tail += tfclen;
+	}
+	do {
+		int i;
+		for (i = 0; i < plen - 2; i++)
+			tail[i] = i + 1;
+	} while (0);
+	tail[plen - 2] = plen - 2;
+	tail[plen - 1] = proto;
+}
+
+static int esp_output_udp_encap(struct xfrm_state *x, struct sk_buff *skb, struct esp_info *esp)
+{
+	int encap_type;
+>>>>>>> master
 	struct udphdr *uh;
 	__be32 *udpdata32;
 	unsigned int len;
@@ -410,9 +430,14 @@ static int esp_output_encap(struct xfrm_state *x, struct sk_buff *skb,
 			    struct esp_info *esp)
 {
 	struct xfrm_encap_tmpl *encap = x->encap;
+<<<<<<< HEAD
 	struct ip_esp_hdr *esph;
 	__be16 sport, dport;
 	int encap_type;
+=======
+	struct ip_esp_hdr *esph = esp->esph;
+	unsigned int len;
+>>>>>>> master
 
 	spin_lock_bh(&x->lock);
 	sport = encap->encap_sport;
@@ -420,6 +445,19 @@ static int esp_output_encap(struct xfrm_state *x, struct sk_buff *skb,
 	encap_type = encap->encap_type;
 	spin_unlock_bh(&x->lock);
 
+<<<<<<< HEAD
+=======
+	len = skb->len + esp->tailen - skb_transport_offset(skb);
+	if (len + sizeof(struct iphdr) >= IP_MAX_MTU)
+		return -EMSGSIZE;
+
+	uh = (struct udphdr *)esph;
+	uh->source = sport;
+	uh->dest = dport;
+	uh->len = htons(len);
+	uh->check = 0;
+
+>>>>>>> master
 	switch (encap_type) {
 	default:
 	case UDP_ENCAP_ESPINUDP:
@@ -448,17 +486,26 @@ int esp_output_head(struct xfrm_state *x, struct sk_buff *skb, struct esp_info *
 	struct sk_buff *trailer;
 	int tailen = esp->tailen;
 
+<<<<<<< HEAD
 	/* this is non-NULL only with TCP/UDP Encapsulation */
 	if (x->encap) {
 		int err = esp_output_encap(x, skb, esp);
+=======
+	/* this is non-NULL only with UDP Encapsulation */
+	if (x->encap) {
+		int err = esp_output_udp_encap(x, skb, esp);
+>>>>>>> master
 
 		if (err < 0)
 			return err;
 	}
+<<<<<<< HEAD
 
 	if (ALIGN(tailen, L1_CACHE_BYTES) > PAGE_SIZE ||
 	    ALIGN(skb->data_len, L1_CACHE_BYTES) > PAGE_SIZE)
 		goto cow;
+=======
+>>>>>>> master
 
 	if (!skb_cloned(skb)) {
 		if (tailen <= skb_tailroom(skb)) {
@@ -503,7 +550,13 @@ int esp_output_head(struct xfrm_state *x, struct sk_buff *skb, struct esp_info *
 
 			nfrags++;
 
+<<<<<<< HEAD
 			skb_len_add(skb, tailen);
+=======
+			skb->len += tailen;
+			skb->data_len += tailen;
+			skb->truesize += tailen;
+>>>>>>> master
 			if (sk && sk_fullsock(sk))
 				refcount_add(tailen, &sk->sk_wmem_alloc);
 

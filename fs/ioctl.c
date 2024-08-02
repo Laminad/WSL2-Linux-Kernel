@@ -814,8 +814,12 @@ static int do_vfs_ioctl(struct file *filp, unsigned int fd,
 		/* anon_bdev filesystems may not have a block size */
 		if (!inode->i_sb->s_blocksize)
 			return -EINVAL;
+<<<<<<< HEAD
 
 		return put_user(inode->i_sb->s_blocksize, (int __user *)argp);
+=======
+		return put_user(inode->i_sb->s_blocksize, argp);
+>>>>>>> master
 
 	case FICLONE:
 		return ioctl_file_clone(filp, arg, 0, 0, 0);

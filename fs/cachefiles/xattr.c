@@ -63,6 +63,7 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object)
 	if (len > 0)
 		memcpy(buf->data, fscache_get_aux(object->cookie), len);
 
+<<<<<<< HEAD
 	ret = cachefiles_inject_write_error();
 	if (ret == 0)
 		ret = vfs_setxattr(&nop_mnt_idmap, dentry, cachefiles_xattr_cache,
@@ -82,6 +83,37 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object)
 					   buf->content,
 					   cachefiles_coherency_set_ok);
 	}
+=======
+	_leave(" = %d", ret);
+	return ret;
+}
+
+/*
+ * update the state xattr on a cache file
+ */
+int cachefiles_update_object_xattr(struct cachefiles_object *object,
+				   struct cachefiles_xattr *auxdata)
+{
+	struct dentry *dentry = object->dentry;
+	int ret;
+
+	if (!dentry)
+		return -ESTALE;
+
+	_enter("%p,#%d", object, auxdata->len);
+
+	/* attempt to install the cache metadata directly */
+	_debug("SET #%u", auxdata->len);
+
+	clear_bit(FSCACHE_COOKIE_AUX_UPDATED, &object->fscache.cookie->flags);
+	ret = vfs_setxattr(dentry, cachefiles_xattr_cache,
+			   &auxdata->type, auxdata->len,
+			   XATTR_REPLACE);
+	if (ret < 0 && ret != -ENOMEM)
+		cachefiles_io_error_obj(
+			object,
+			"Failed to update xattr with error %d", ret);
+>>>>>>> master
 
 	kfree(buf);
 	_leave(" = %d", ret);

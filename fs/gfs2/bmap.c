@@ -524,11 +524,16 @@ lower_metapath:
 
 		/* Advance in metadata tree. */
 		(mp->mp_list[hgt])++;
+<<<<<<< HEAD
 		if (hgt) {
 			if (mp->mp_list[hgt] >= sdp->sd_inptrs)
 				goto lower_metapath;
 		} else {
 			if (mp->mp_list[hgt] >= sdp->sd_diptrs)
+=======
+		if (mp->mp_list[hgt] >= sdp->sd_inptrs) {
+			if (!hgt)
+>>>>>>> master
 				break;
 		}
 
@@ -1015,18 +1020,28 @@ static int gfs2_iomap_begin_write(struct inode *inode, loff_t pos,
 	unstuff = gfs2_is_stuffed(ip) &&
 		  pos + length > gfs2_max_stuffed_size(ip);
 
+<<<<<<< HEAD
 	if (unstuff || iomap->type == IOMAP_HOLE) {
 		unsigned int data_blocks, ind_blocks;
 		struct gfs2_alloc_parms ap = {};
 		unsigned int rblocks;
 		struct gfs2_trans *tr;
+=======
+	ret = gfs2_iomap_get(inode, pos, length, flags, iomap, mp);
+	if (ret)
+		goto out_unlock;
+>>>>>>> master
 
 		gfs2_write_calc_reserv(ip, iomap->length, &data_blocks,
 				       &ind_blocks);
 		ap.target = data_blocks + ind_blocks;
 		ret = gfs2_quota_lock_check(ip, &ap);
 		if (ret)
+<<<<<<< HEAD
 			return ret;
+=======
+			goto out_unlock;
+>>>>>>> master
 
 		ret = gfs2_inplace_reserve(ip, &ap);
 		if (ret)
@@ -1044,6 +1059,7 @@ static int gfs2_iomap_begin_write(struct inode *inode, loff_t pos,
 		ret = gfs2_trans_begin(sdp, rblocks,
 				       iomap->length >> inode->i_blkbits);
 		if (ret)
+<<<<<<< HEAD
 			goto out_trans_fail;
 
 		if (unstuff) {
@@ -1055,6 +1071,23 @@ static int gfs2_iomap_begin_write(struct inode *inode, loff_t pos,
 					       iomap->length, flags, iomap, mp);
 			if (ret)
 				goto out_trans_end;
+=======
+			goto out_trans_end;
+		release_metapath(mp);
+		ret = gfs2_iomap_get(inode, iomap->offset, iomap->length,
+				     flags, iomap, mp);
+		if (ret)
+			goto out_trans_end;
+	}
+
+	if (iomap->type == IOMAP_HOLE) {
+		ret = gfs2_iomap_alloc(inode, iomap, flags, mp);
+		if (ret) {
+			gfs2_trans_end(sdp);
+			gfs2_inplace_release(ip);
+			punch_hole(ip, iomap->offset, iomap->length);
+			goto out_qunlock;
+>>>>>>> master
 		}
 
 		if (iomap->type == IOMAP_HOLE) {
@@ -1073,9 +1106,14 @@ static int gfs2_iomap_begin_write(struct inode *inode, loff_t pos,
 
 		gfs2_trans_end(sdp);
 	}
+<<<<<<< HEAD
 
 	if (gfs2_is_stuffed(ip) || gfs2_is_jdata(ip))
 		iomap->folio_ops = &gfs2_iomap_folio_ops;
+=======
+	if (!gfs2_is_stuffed(ip) && gfs2_is_jdata(ip))
+		iomap->page_done = gfs2_iomap_journaled_page_done;
+>>>>>>> master
 	return 0;
 
 out_trans_end:
@@ -1083,7 +1121,14 @@ out_trans_end:
 out_trans_fail:
 	gfs2_inplace_release(ip);
 out_qunlock:
+<<<<<<< HEAD
 	gfs2_quota_unlock(ip);
+=======
+	if (alloc_required)
+		gfs2_quota_unlock(ip);
+out_unlock:
+	gfs2_write_unlock(inode);
+>>>>>>> master
 	return ret;
 }
 
@@ -1099,6 +1144,7 @@ static int gfs2_iomap_begin(struct inode *inode, loff_t pos, loff_t length,
 		iomap->flags |= IOMAP_F_BUFFER_HEAD;
 
 	trace_gfs2_iomap_start(ip, pos, length, flags);
+<<<<<<< HEAD
 	ret = __gfs2_iomap_get(inode, pos, length, flags, iomap, &mp);
 	if (ret)
 		goto out_unlock;
@@ -1126,6 +1172,25 @@ static int gfs2_iomap_begin(struct inode *inode, loff_t pos, loff_t length,
 	ret = gfs2_iomap_begin_write(inode, pos, length, flags, iomap, &mp);
 
 out_unlock:
+=======
+	if ((flags & IOMAP_WRITE) && !(flags & IOMAP_DIRECT)) {
+		ret = gfs2_iomap_begin_write(inode, pos, length, flags, iomap, &mp);
+	} else {
+		ret = gfs2_iomap_get(inode, pos, length, flags, iomap, &mp);
+
+		/*
+		 * Silently fall back to buffered I/O for stuffed files or if
+		 * we've hot a hole (see gfs2_file_direct_write).
+		 */
+		if ((flags & IOMAP_WRITE) && (flags & IOMAP_DIRECT) &&
+		    iomap->type != IOMAP_MAPPED)
+			ret = -ENOTBLK;
+	}
+	if (!ret) {
+		get_bh(mp.mp_bh[0]);
+		iomap->private = mp.mp_bh[0];
+	}
+>>>>>>> master
 	release_metapath(&mp);
 	trace_gfs2_iomap_end(ip, iomap, ret);
 	return ret;

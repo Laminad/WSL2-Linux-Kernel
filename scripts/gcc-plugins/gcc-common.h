@@ -98,6 +98,18 @@
 void debug_dominance_info(enum cdi_direction dir);
 void debug_dominance_tree(enum cdi_direction dir, basic_block root);
 
+<<<<<<< HEAD
+=======
+#if BUILDING_GCC_VERSION == 4006
+void debug_gimple_stmt(gimple);
+void debug_gimple_seq(gimple_seq);
+void print_gimple_seq(FILE *, gimple_seq, int, int);
+void print_gimple_stmt(FILE *, gimple, int, int);
+void print_gimple_expr(FILE *, gimple, int, int);
+void dump_gimple_stmt(pretty_printer *, gimple, int, int);
+#endif
+
+>>>>>>> master
 #ifndef __unused
 #define __unused __attribute__((__unused__))
 #endif

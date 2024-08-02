@@ -5,7 +5,10 @@
 #include <linux/types.h>
 #include <linux/in6.h>
 #include <linux/siphash.h>
+<<<<<<< HEAD
 #include <linux/string.h>
+=======
+>>>>>>> master
 #include <uapi/linux/if_ether.h>
 
 struct bpf_prog;

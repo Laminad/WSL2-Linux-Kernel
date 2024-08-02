@@ -3417,7 +3417,11 @@ qla2x00_probe_one(struct pci_dev *pdev, const struct pci_device_id *id)
 	    "req->req_q_in=%p req->req_q_out=%p rsp->rsp_q_in=%p rsp->rsp_q_out=%p.\n",
 	    req->req_q_in, req->req_q_out, rsp->rsp_q_in, rsp->rsp_q_out);
 
+<<<<<<< HEAD
 	ha->wq = alloc_workqueue("qla2xxx_wq", WQ_MEM_RECLAIM, 0);
+=======
+	ha->wq = alloc_workqueue("qla2xxx_wq", 0, 0);
+>>>>>>> master
 	if (unlikely(!ha->wq)) {
 		ret = -ENOMEM;
 		goto probe_failed;
@@ -3627,9 +3631,12 @@ skip_dpc:
 	return 0;
 
 probe_failed:
+<<<<<<< HEAD
 	qla_enode_stop(base_vha);
 	qla_edb_stop(base_vha);
 	vfree(base_vha->scan.l);
+=======
+>>>>>>> master
 	if (base_vha->gnl.l) {
 		dma_free_coherent(&ha->pdev->dev, base_vha->gnl.size,
 				base_vha->gnl.l, base_vha->gnl.ldma);
@@ -3931,8 +3938,11 @@ qla2x00_remove_one(struct pci_dev *pdev)
 		base_vha->gnl.size, base_vha->gnl.l, base_vha->gnl.ldma);
 
 	base_vha->gnl.l = NULL;
+<<<<<<< HEAD
 	qla_enode_stop(base_vha);
 	qla_edb_stop(base_vha);
+=======
+>>>>>>> master
 
 	vfree(base_vha->scan.l);
 
@@ -5118,7 +5128,11 @@ struct scsi_qla_host *qla2x00_create_host(const struct scsi_host_template *sht,
 		dma_free_coherent(&ha->pdev->dev, vha->gnl.size,
 		    vha->gnl.l, vha->gnl.ldma);
 		vha->gnl.l = NULL;
+<<<<<<< HEAD
 		scsi_host_put(vha->host);
+=======
+		scsi_remove_host(vha->host);
+>>>>>>> master
 		return NULL;
 	}
 	INIT_DELAYED_WORK(&vha->scan.scan_work, qla_scan_work_fn);

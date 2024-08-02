@@ -13,7 +13,10 @@
 #include <linux/perf_event.h>
 #include <linux/tboot.h>
 #include <linux/dmi.h>
+<<<<<<< HEAD
 #include <linux/pgtable.h>
+=======
+>>>>>>> master
 
 #include <asm/proto.h>
 #include <asm/mtrr.h>
@@ -26,7 +29,10 @@
 #include <asm/cacheinfo.h>
 #include <asm/mmu_context.h>
 #include <asm/cpu_device_id.h>
+<<<<<<< HEAD
 #include <asm/microcode.h>
+=======
+>>>>>>> master
 
 #ifdef CONFIG_X86_32
 __visible unsigned long saved_context_ebx;
@@ -397,10 +403,15 @@ static int msr_build_context(const u32 *msr_id, const int num)
 	}
 
 	for (i = saved_msrs->num, j = 0; i < total_num; i++, j++) {
+<<<<<<< HEAD
 		u64 dummy;
 
 		msr_array[i].info.msr_no	= msr_id[j];
 		msr_array[i].valid		= !rdmsrl_safe(msr_id[j], &dummy);
+=======
+		msr_array[i].info.msr_no	= msr_id[j];
+		msr_array[i].valid		= false;
+>>>>>>> master
 		msr_array[i].info.reg.q		= 0;
 	}
 	saved_msrs->num   = total_num;
@@ -453,8 +464,25 @@ static int msr_save_cpuid_features(const struct x86_cpu_id *c)
 }
 
 static const struct x86_cpu_id msr_save_cpu_table[] = {
+<<<<<<< HEAD
 	X86_MATCH_VENDOR_FAM(AMD, 0x15, &msr_save_cpuid_features),
 	X86_MATCH_VENDOR_FAM(AMD, 0x16, &msr_save_cpuid_features),
+=======
+	{
+		.vendor = X86_VENDOR_AMD,
+		.family = 0x15,
+		.model = X86_MODEL_ANY,
+		.feature = X86_FEATURE_ANY,
+		.driver_data = (kernel_ulong_t)msr_save_cpuid_features,
+	},
+	{
+		.vendor = X86_VENDOR_AMD,
+		.family = 0x16,
+		.model = X86_MODEL_ANY,
+		.feature = X86_FEATURE_ANY,
+		.driver_data = (kernel_ulong_t)msr_save_cpuid_features,
+	},
+>>>>>>> master
 	{}
 };
 
@@ -475,6 +503,7 @@ static int pm_cpu_check(const struct x86_cpu_id *c)
 	return ret;
 }
 
+<<<<<<< HEAD
 static void pm_save_spec_msr(void)
 {
 	struct msr_enumeration {
@@ -496,11 +525,16 @@ static void pm_save_spec_msr(void)
 	}
 }
 
+=======
+>>>>>>> master
 static int pm_check_save_msr(void)
 {
 	dmi_check_system(msr_save_dmi_table);
 	pm_cpu_check(msr_save_cpu_table);
+<<<<<<< HEAD
 	pm_save_spec_msr();
+=======
+>>>>>>> master
 
 	return 0;
 }

@@ -108,10 +108,18 @@ atomic_t nr_rotate_swap = ATOMIC_INIT(0);
 
 static struct swap_info_struct *swap_type_to_swap_info(int type)
 {
+<<<<<<< HEAD
 	if (type >= MAX_SWAPFILES)
 		return NULL;
 
 	return READ_ONCE(swap_info[type]); /* rcu_dereference() */
+=======
+	if (type >= READ_ONCE(nr_swapfiles))
+		return NULL;
+
+	smp_rmb();	/* Pairs with smp_wmb in alloc_swap_info. */
+	return READ_ONCE(swap_info[type]);
+>>>>>>> master
 }
 
 static inline unsigned char swap_count(unsigned char ent)
@@ -1128,17 +1136,54 @@ noswap:
 	return n_ret;
 }
 
+<<<<<<< HEAD
 static struct swap_info_struct *_swap_info_get(swp_entry_t entry)
+=======
+/* The only caller of this function is now suspend routine */
+swp_entry_t get_swap_page_of_type(int type)
+{
+	struct swap_info_struct *si = swap_type_to_swap_info(type);
+	pgoff_t offset;
+
+	if (!si)
+		goto fail;
+
+	spin_lock(&si->lock);
+	if (si->flags & SWP_WRITEOK) {
+		atomic_long_dec(&nr_swap_pages);
+		/* This is called for allocating swap entry, not cache */
+		offset = scan_swap_map(si, 1);
+		if (offset) {
+			spin_unlock(&si->lock);
+			return swp_entry(type, offset);
+		}
+		atomic_long_inc(&nr_swap_pages);
+	}
+	spin_unlock(&si->lock);
+fail:
+	return (swp_entry_t) {0};
+}
+
+static struct swap_info_struct *__swap_info_get(swp_entry_t entry)
+>>>>>>> master
 {
 	struct swap_info_struct *p;
 	unsigned long offset;
 
 	if (!entry.val)
 		goto out;
+<<<<<<< HEAD
 	p = swp_swap_info(entry);
 	if (!p)
 		goto bad_nofile;
 	if (data_race(!(p->flags & SWP_USED)))
+=======
+	type = swp_type(entry);
+	p = swap_type_to_swap_info(type);
+	if (!p)
+		goto bad_nofile;
+	if (!(p->flags & SWP_USED))
+>>>>>>> master
 		goto bad_device;
 	offset = swp_offset(entry);
 	if (offset >= p->max)
@@ -1703,6 +1748,7 @@ int find_first_swap(dev_t *device)
  */
 sector_t swapdev_block(int type, pgoff_t offset)
 {
+<<<<<<< HEAD
 	struct swap_info_struct *si = swap_type_to_swap_info(type);
 	struct swap_extent *se;
 
@@ -1710,6 +1756,14 @@ sector_t swapdev_block(int type, pgoff_t offset)
 		return 0;
 	se = offset_to_swap_extent(si, offset);
 	return se->start_block + (offset - se->start_page);
+=======
+	struct block_device *bdev;
+	struct swap_info_struct *si = swap_type_to_swap_info(type);
+
+	if (!si || !(si->flags & SWP_WRITEOK))
+		return 0;
+	return map_swap_entry(swp_entry(type, offset), &bdev);
+>>>>>>> master
 }
 
 /*
@@ -2087,6 +2141,61 @@ retry:
 		}
 
 		/*
+<<<<<<< HEAD
+=======
+		 * If a reference remains (rare), we would like to leave
+		 * the page in the swap cache; but try_to_unmap could
+		 * then re-duplicate the entry once we drop page lock,
+		 * so we might loop indefinitely; also, that page could
+		 * not be swapped out to other storage meanwhile.  So:
+		 * delete from cache even if there's another reference,
+		 * after ensuring that the data has been saved to disk -
+		 * since if the reference remains (rarer), it will be
+		 * read from disk into another page.  Splitting into two
+		 * pages would be incorrect if swap supported "shared
+		 * private" pages, but they are handled by tmpfs files.
+		 *
+		 * Given how unuse_vma() targets one particular offset
+		 * in an anon_vma, once the anon_vma has been determined,
+		 * this splitting happens to be just what is needed to
+		 * handle where KSM pages have been swapped out: re-reading
+		 * is unnecessarily slow, but we can fix that later on.
+		 */
+		if (swap_count(*swap_map) &&
+		     PageDirty(page) && PageSwapCache(page)) {
+			struct writeback_control wbc = {
+				.sync_mode = WB_SYNC_NONE,
+			};
+
+			swap_writepage(compound_head(page), &wbc);
+			lock_page(page);
+			wait_on_page_writeback(page);
+		}
+
+		/*
+		 * It is conceivable that a racing task removed this page from
+		 * swap cache just before we acquired the page lock at the top,
+		 * or while we dropped it in unuse_mm().  The page might even
+		 * be back in swap cache on another swap area: that we must not
+		 * delete, since it may not have been written out to swap yet.
+		 */
+		if (PageSwapCache(page) &&
+		    likely(page_private(page) == entry.val) &&
+		    (!PageTransCompound(page) ||
+		     !swap_page_trans_huge_swapped(si, entry)))
+			delete_from_swap_cache(compound_head(page));
+
+		/*
+		 * So we could skip searching mms once swap count went
+		 * to 1, we did not mark any present ptes as dirty: must
+		 * mark page dirty so shrink_page_list will preserve it.
+		 */
+		SetPageDirty(page);
+		unlock_page(page);
+		put_page(page);
+
+		/*
+>>>>>>> master
 		 * Make sure that we aren't completely killing
 		 * interactive performance.
 		 */
@@ -2163,6 +2272,50 @@ static void drain_mmlist(void)
 }
 
 /*
+<<<<<<< HEAD
+=======
+ * Use this swapdev's extent info to locate the (PAGE_SIZE) block which
+ * corresponds to page offset for the specified swap entry.
+ * Note that the type of this function is sector_t, but it returns page offset
+ * into the bdev, not sector offset.
+ */
+static sector_t map_swap_entry(swp_entry_t entry, struct block_device **bdev)
+{
+	struct swap_info_struct *sis;
+	struct swap_extent *start_se;
+	struct swap_extent *se;
+	pgoff_t offset;
+
+	sis = swp_swap_info(entry);
+	*bdev = sis->bdev;
+
+	offset = swp_offset(entry);
+	start_se = sis->curr_swap_extent;
+	se = start_se;
+
+	for ( ; ; ) {
+		if (se->start_page <= offset &&
+				offset < (se->start_page + se->nr_pages)) {
+			return se->start_block + (offset - se->start_page);
+		}
+		se = list_next_entry(se, list);
+		sis->curr_swap_extent = se;
+		BUG_ON(se == start_se);		/* It *must* be present */
+	}
+}
+
+/*
+ * Returns the page offset into bdev for the specified page's swap entry.
+ */
+sector_t map_swap_page(struct page *page, struct block_device **bdev)
+{
+	swp_entry_t entry;
+	entry.val = page_private(page);
+	return map_swap_entry(entry, bdev);
+}
+
+/*
+>>>>>>> master
  * Free all of a swapdev's extent information
  */
 static void destroy_swap_extents(struct swap_info_struct *sis)
@@ -2620,7 +2773,10 @@ static void *swap_next(struct seq_file *swap, void *v, loff_t *pos)
 	else
 		type = si->type + 1;
 
+<<<<<<< HEAD
 	++(*pos);
+=======
+>>>>>>> master
 	for (; (si = swap_type_to_swap_info(type)); type++) {
 		if (!(si->flags & SWP_USED) || !si->swap_map)
 			continue;
@@ -2715,8 +2871,13 @@ static struct swap_info_struct *alloc_swap_info(void)
 	struct swap_info_struct *defer = NULL;
 	unsigned int type;
 	int i;
+	int size = sizeof(*p) + nr_node_ids * sizeof(struct plist_node);
 
+<<<<<<< HEAD
 	p = kvzalloc(struct_size(p, avail_lists, nr_node_ids), GFP_KERNEL);
+=======
+	p = kvzalloc(size, GFP_KERNEL);
+>>>>>>> master
 	if (!p)
 		return ERR_PTR(-ENOMEM);
 
@@ -2733,20 +2894,34 @@ static struct swap_info_struct *alloc_swap_info(void)
 	}
 	if (type >= MAX_SWAPFILES) {
 		spin_unlock(&swap_lock);
+<<<<<<< HEAD
 		percpu_ref_exit(&p->users);
+=======
+>>>>>>> master
 		kvfree(p);
 		return ERR_PTR(-EPERM);
 	}
 	if (type >= nr_swapfiles) {
 		p->type = type;
+<<<<<<< HEAD
+=======
+		WRITE_ONCE(swap_info[type], p);
+>>>>>>> master
 		/*
 		 * Publish the swap_info_struct after initializing it.
 		 * Note that kvzalloc() above zeroes all its fields.
 		 */
+<<<<<<< HEAD
 		smp_store_release(&swap_info[type], p); /* rcu_assign_pointer() */
 		nr_swapfiles++;
 	} else {
 		defer = p;
+=======
+		smp_wmb();
+		WRITE_ONCE(nr_swapfiles, nr_swapfiles + 1);
+	} else {
+		kvfree(p);
+>>>>>>> master
 		p = swap_info[type];
 		/*
 		 * Do not memset this entry: a racing procfs swap_next()
@@ -3287,6 +3462,13 @@ static int __swap_duplicate(swp_entry_t entry, unsigned char usage)
 
 	p = swp_swap_info(entry);
 
+<<<<<<< HEAD
+=======
+	p = swp_swap_info(entry);
+	if (!p)
+		goto bad_file;
+
+>>>>>>> master
 	offset = swp_offset(entry);
 	ci = lock_cluster_or_swap_info(p, offset);
 

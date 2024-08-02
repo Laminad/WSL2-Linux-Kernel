@@ -11,9 +11,13 @@
  * Licensed under the GNU General Public License, version 2.0 (GPLv2)
  */
 
+<<<<<<< HEAD
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+=======
+#define _GNU_SOURCE
+>>>>>>> master
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -165,6 +169,14 @@ static int printf_json(void *out, const char *fmt, va_list ap)
 	if (err < 0)
 		return -1;
 
+<<<<<<< HEAD
+=======
+	va_start(ap, fmt);
+	if (vasprintf(&s, fmt, ap) < 0)
+		return -1;
+	va_end(ap);
+
+>>>>>>> master
 	if (!oper_count) {
 		int i;
 

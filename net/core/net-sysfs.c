@@ -1088,6 +1088,8 @@ static int rx_queue_add_kobject(struct net_device *dev, int index)
 	if (error)
 		goto err;
 
+	dev_hold(queue->dev);
+
 	if (dev->sysfs_rx_queue_group) {
 		error = sysfs_create_group(kobj, dev->sysfs_rx_queue_group);
 		if (error)
@@ -1099,6 +1101,7 @@ static int rx_queue_add_kobject(struct net_device *dev, int index)
 		goto err;
 
 	kobject_uevent(kobj, KOBJ_ADD);
+<<<<<<< HEAD
 
 	return error;
 
@@ -1121,6 +1124,8 @@ static int rx_queue_change_owner(struct net_device *dev, int index, kuid_t kuid,
 	if (dev->sysfs_rx_queue_group)
 		error = sysfs_group_change_owner(
 			kobj, dev->sysfs_rx_queue_group, kuid, kgid);
+=======
+>>>>>>> master
 
 	return error;
 }
@@ -1695,6 +1700,8 @@ static int netdev_queue_add_kobject(struct net_device *dev, int index)
 	if (error)
 		goto err;
 
+	dev_hold(queue->dev);
+
 #ifdef CONFIG_BQL
 	error = sysfs_create_group(kobj, &dql_group);
 	if (error)
@@ -1702,6 +1709,10 @@ static int netdev_queue_add_kobject(struct net_device *dev, int index)
 #endif
 
 	kobject_uevent(kobj, KOBJ_ADD);
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
 	return 0;
 
 err:
